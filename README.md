@@ -13,7 +13,6 @@ git checkout 728e82d883b9f26d63a5ebe7c0d3bdea7e6eb60c
 make build
 ```
 
-
 ```
 ignite chain serve
 ```
