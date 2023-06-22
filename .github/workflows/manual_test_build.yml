@@ -20,12 +20,15 @@ jobs:
           allowed_users=("FranklinWaller" "gluax" "jamesondh" "mariocao" "mennatbuelnaga" "Thomasvdam")
           for user in "${allowed_users[@]}"
           do
-            if [[ "${{ github.actor }}" == "${user}" && "${{ github.event.inputs.triggering_actor }}" == "${user}" ]]; then
-              echo "::set-output name=is_allowed::true"
+            # The if statement checks who was the actor that triggered the CI seeing if it's an approved user.
+            # The triggering_actor is the person who possibly tried to re-run the CI from the actions page.
+            # If this exists we check if it's also an approved user.
+            if [[ "${{ github.actor }}" == "${user}" && ("${{ github.event.inputs.triggering_actor }}" == "${user}" || "${{ github.event.inputs.triggering_actor }}" == "") ]]; then
+              echo "is_allowed=true" >> $GITHUB_OUTPUT
               exit 0
             fi
           done
-          echo "::set-output name=is_allowed::false"
+          echo "is_allowed=false" >> $GITHUB_OUTPUT
 
   test_release:
     needs: check_actor
@@ -57,7 +60,7 @@ jobs:
         id: upload
         run: |
           TRANSFER_URL=$(curl --upload-file release/seda-chain_linux_arm64.tar.gz https://transfer.sh/release.zip)
-          echo "::set-output name=transfer_url::$TRANSFER_URL"
+          echo "transfer_url=$TRANSFER_URL" >> $GITHUB_OUTPUT
 
       - name: Use transfer URL
         run: echo "The binary can be downloaded from ${{ steps.upload.outputs.transfer_url }}"
