@@ -1,0 +1,61 @@
+# This workflow is useful if you need to make a new release manually for testing purposes.
+#
+# This uploads the zip release bundle to `transfer.sh`. Where it will remain for 14 days.
+# NOTE: This file can be overwritten so be cautious when downloading.
+# The idea behind this process is to avoid publishing a test version to our Github Release page.
+on: workflow_dispatch
+
+jobs:
+  check_actor:
+    runs-on: ubuntu-latest
+    outputs:
+      is_allowed: ${{ steps.check.outputs.is_allowed }}
+    steps:
+      - id: check
+        run: |
+          echo -e "actor: ${{ github.actor }}"
+          echo -e "triggering_actor: ${{ github.event.inputs.triggering_actor }}"
+          allowed_users=("FranklinWaller" "gluax" "jamesondh" "mariocao" "mennatbuelnaga" "Thomasvdam")
+          for user in "${allowed_users[@]}"
+          do
+            if [[ "${{ github.actor }}" == "${user}" && "${{ github.event.inputs.triggering_actor }}" == "${user}" ]]; then
+              echo "::set-output name=is_allowed::true"
+              exit 0
+            fi
+          done
+          echo "::set-output name=is_allowed::false"
+
+  test_release:
+    needs: check_actor
+    if: ${{ needs.check_actor.outputs.is_allowed == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        
+      - name: Prepare Release Variables 
+        id: vars
+        uses: ignite/cli/actions/release/vars@main
+
+      - name: Issue Release Assets 
+        uses: ignite/cli/actions/cli@main
+        if: ${{ steps.vars.outputs.should_release == 'true' }}
+        with:
+          args: chain build --release --release.prefix ${{ steps.vars.outputs.tarball_prefix }} -t linux:arm64
+
+      - name: Delete the "latest" Release
+        uses: dev-drprasad/delete-tag-and-release@v1.0.1
+        if: ${{ steps.vars.outputs.is_release_type_latest == 'true' }}
+        with:
+          tag_name: ${{ steps.vars.outputs.tag_name }}
+          delete_release: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to transfer.sh
+        id: upload
+        run: |
+          TRANSFER_URL=$(curl --upload-file release/seda-chain_linux_arm64.tar.gz https://transfer.sh/release.zip)
+          echo "::set-output name=transfer_url::$TRANSFER_URL"
+
+      - name: Use transfer URL
+        run: echo "The binary can be downloaded from ${{ steps.upload.outputs.transfer_url }}"
