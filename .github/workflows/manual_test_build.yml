@@ -4,6 +4,7 @@
 # NOTE: This file can be overwritten so be cautious when downloading.
 # The idea behind this process is to avoid publishing a test version to our Github Release page.
 on:
+  push:
   workflow_dispatch:
 
 jobs:
