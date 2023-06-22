@@ -31,16 +31,14 @@ jobs:
           echo "is_allowed=false" >> $GITHUB_OUTPUT
 
   test_release:
-    needs: check_actor
-    if: ${{ needs.check_actor.outputs.is_allowed == 'true' }}
+    # needs: check_actor
+    # if: ${{ needs.check_actor.outputs.is_allowed == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        
-      - name: Debug Files
-        run: |
-          ls -la
+        with:
+          fetch-depth: 0
 
       - name: Debug ingite 
         uses: ignite/cli/actions/cli@main
