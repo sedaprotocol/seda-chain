@@ -4,7 +4,6 @@
 # NOTE: This file can be overwritten so be cautious when downloading.
 # The idea behind this process is to avoid publishing a test version to our Github Release page.
 on:
-  push:
   workflow_dispatch:
 
 jobs:
@@ -31,8 +30,8 @@ jobs:
           echo "is_allowed=false" >> $GITHUB_OUTPUT
 
   test_release:
-    # needs: check_actor
-    # if: ${{ needs.check_actor.outputs.is_allowed == 'true' }}
+    needs: check_actor
+    if: ${{ needs.check_actor.outputs.is_allowed == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -50,7 +49,6 @@ jobs:
       - name: Upload to transfer.sh
         id: upload
         run: |
-          ls -la release
           TRANSFER_URL=$(curl --upload-file release/seda-chain_linux_arm64.tar.gz https://transfer.sh/seda-chain_linux_arm64.tar.gz)
           echo "transfer_url=$TRANSFER_URL" >> $GITHUB_OUTPUT
 
