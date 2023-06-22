@@ -38,14 +38,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         
-      - name: Prepare Release Variables 
-        id: vars
-        uses: ignite/cli/actions/release/vars@main
+      - name: Debug Files
+        run: |
+          ls -la
+          ls -la release
+
+      - name: Debug ingite 
+        uses: ignite/cli/actions/cli@main
+        with:
+            args: -h
 
       - name: Create Arm Node Binary
         uses: ignite/cli/actions/cli@main
         with:
-          args: chain build --release --release.prefix ${{ steps.vars.outputs.tarball_prefix }} -t linux:arm64
+          args: chain build --release -t linux:arm64
 
       - name: Upload to transfer.sh
         id: upload
