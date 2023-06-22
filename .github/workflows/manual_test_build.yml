@@ -3,7 +3,8 @@
 # This uploads the zip release bundle to `transfer.sh`. Where it will remain for 14 days.
 # NOTE: This file can be overwritten so be cautious when downloading.
 # The idea behind this process is to avoid publishing a test version to our Github Release page.
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 
 jobs:
   check_actor:
