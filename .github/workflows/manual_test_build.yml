@@ -14,8 +14,6 @@ jobs:
     steps:
       - id: check
         run: |
-          echo -e "actor: ${{ github.actor }}"
-          echo -e "triggering_actor: ${{ github.event.inputs.triggering_actor }}"
           allowed_users=("FranklinWaller" "gluax" "jamesondh" "mariocao" "mennatbuelnaga" "Thomasvdam")
           for user in "${allowed_users[@]}"
           do
