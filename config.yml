@@ -1,4 +1,11 @@
 version: 1
+
+genesis:
+  app_state:
+    staking:
+      params:
+        bond_denom: "seda"
+
 accounts:
 - name: alice
   coins:
