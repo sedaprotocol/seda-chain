@@ -42,6 +42,10 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install --no-install-recommends gcc-aarch64-linux-gnu
 
+      - name: Debug
+        run: |
+          which gcc-aarch64-linux-gnu
+
       - name: Create Arm Node Binary
         uses: ignite/cli/actions/cli@main
         env: 
