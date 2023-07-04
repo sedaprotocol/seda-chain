@@ -40,8 +40,8 @@ jobs:
           fetch-depth: 0
 
       - name: Create Arm Node Binary
-        uses: ignite/cli/actions/cli@main
-        uses: uraimo/run-on-arch-action@v2
+        - uses: ignite/cli/actions/cli@main
+        - uses: uraimo/run-on-arch-action@v2
         env: 
           GOFLAGS: '-buildvcs=false'
           CGO_ENABLED: 1
