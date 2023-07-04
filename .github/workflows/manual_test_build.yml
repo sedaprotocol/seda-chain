@@ -44,7 +44,7 @@ jobs:
 
       - name: Debug
         run: |
-          which gcc-aarch64-linux-gnu
+          which aarch64-linux-gnu-gcc
 
       - name: Create Arm Node Binary
         uses: ignite/cli/actions/cli@main
