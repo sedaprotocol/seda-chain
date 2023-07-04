@@ -38,12 +38,12 @@ jobs:
           fetch-depth: 0
 
       - name: Create Arm Node Binary
-        uses: ignite/cli/actions/cli@728e82d883b9f26d63a5ebe7c0d3bdea7e6eb60c
+        uses: ignite/cli/actions/cli@main
         env: 
           GOFLAGS: '-buildvcs=false'
           CGO_ENABLED: 1
         with:
-          args: chain build --release -t linux:arm64 -y
+          args: chain build --release -t linux:arm64
 
       - name: Upload to transfer.sh
         id: upload
