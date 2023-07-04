@@ -31,22 +31,25 @@ jobs:
     needs: check_actor
     if: ${{ needs.check_actor.outputs.is_allowed == 'true' }}
     runs-on: ubuntu-latest
-    # container:
-      # image: arm64v8/ubuntu:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      - name: Install arm Arch
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install --no-install-recommends gcc-aarch64-linux-gnu
+
       - name: Create Arm Node Binary
-        - uses: ignite/cli/actions/cli@main
-        - uses: uraimo/run-on-arch-action@v2
+        uses: ignite/cli/actions/cli@main
         env: 
           GOFLAGS: '-buildvcs=false'
           CGO_ENABLED: 1
+          CC: 'aarch64-linux-gnu-gcc'
+          CXX: 'aarch64-linux-gnu-g++'
         with:
-          arch: armv7
           args: chain build --release -t linux:arm64
 
       - name: Upload to transfer.sh
