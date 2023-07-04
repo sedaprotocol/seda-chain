@@ -43,7 +43,7 @@ jobs:
           GOFLAGS: '-buildvcs=false'
           CGO_ENABLED: 1
         with:
-          args: chain build --release -t linux:arm64 -n
+          args: chain build --release -t linux:arm64 -y
 
       - name: Upload to transfer.sh
         id: upload
