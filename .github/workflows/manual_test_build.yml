@@ -41,21 +41,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y install --no-install-recommends gcc-aarch64-linux-gnu
-      
-      - name: Checkout Ignite
-        uses: actions/checkout@v3
-        with:
-          repository: ignite/cli
-          fetch-depth: 0
-          ref: 728e82d883b9f26d63a5ebe7c0d3bdea7e6eb60c
-          path: cli
 
       - name: Install Ignite
         run: |
-          cd cli
-          make build
-          make install
-
+          curl https://get.ignite.com/cli! | bash
+          
       - name: Debug
         run: |
           which aarch64-linux-gnu-gcc
