@@ -40,7 +40,7 @@ jobs:
       - name: Install arm Arch
         run: |
           sudo apt-get update
-          sudo apt-get -y install --no-install-recommends gcc-aarch64-linux-gnu
+          sudo apt-get -y install --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross
 
       - name: Install Ignite
         run: |
