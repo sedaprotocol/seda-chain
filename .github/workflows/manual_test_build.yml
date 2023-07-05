@@ -53,6 +53,7 @@ jobs:
       - name: Install Ignite
         run: |
           cd cli
+          make build
           make install
 
       - name: Debug
