@@ -48,6 +48,7 @@ jobs:
           repository: ignite/cli
           fetch-depth: 0
           ref: 728e82d883b9f26d63a5ebe7c0d3bdea7e6eb60c
+          path: cli
 
       - name: Install Ignite
         run: |
@@ -68,6 +69,7 @@ jobs:
           CC: 'aarch64-linux-gnu-gcc'
           CXX: 'aarch64-linux-gnu-g++'
         run: |
+          rm -rf cli
           ignite chain build --release -t linux:arm64
 
       - name: Upload to transfer.sh
