@@ -51,6 +51,7 @@ jobs:
         run: |
           which aarch64-linux-gnu-gcc
           go version
+          which go
 
       - name: Create Arm Node Binary
         uses: ignite/cli/actions/cli@main
