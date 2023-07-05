@@ -45,7 +45,7 @@ jobs:
       - name: Install Ignite
         run: |
           curl https://get.ignite.com/cli! | bash
-          
+
       - name: Debug
         run: |
           which aarch64-linux-gnu-gcc
@@ -60,8 +60,7 @@ jobs:
           CC: 'aarch64-linux-gnu-gcc'
           CXX: 'aarch64-linux-gnu-g++'
         run: |
-          rm -rf cli
-          ignite chain build --release -t linux:arm64
+          ignite chain build --release -t linux:arm64 -y
 
       - name: Upload to transfer.sh
         id: upload
