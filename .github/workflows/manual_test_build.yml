@@ -3,8 +3,8 @@
 # This uploads the zip release bundle to `transfer.sh`. Where it will remain for 14 days.
 # NOTE: This file can be overwritten so be cautious when downloading.
 # The idea behind this process is to avoid publishing a test version to our Github Release page.
-on:
-  workflow_dispatch:
+on: push
+  # workflow_dispatch:
 
 jobs:
   check_actor:
@@ -37,12 +37,23 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install arm Arch
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+
+      - name: Install Ignite
+        run: |
+          curl https://get.ignite.com/cli! | bash
+
       - name: Create Arm Node Binary
-        uses: ignite/cli/actions/cli@main
         env: 
           GOFLAGS: '-buildvcs=false'
-        with:
-          args: chain build --release -t linux:arm64
+          CGO_ENABLED: 1
+          CC: 'aarch64-linux-gnu-gcc'
+          CXX: 'aarch64-linux-gnu-g++'
+        run: |
+          ignite chain build --release -t linux:arm64 -y -v
 
       - name: Upload to transfer.sh
         id: upload
