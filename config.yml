@@ -4,7 +4,7 @@ genesis:
   app_state:
     staking:
       params:
-        bond_denom: "useda"
+        bond_denom: "aseda"
 
 accounts:
 - name: alice
@@ -22,4 +22,4 @@ faucet:
   - 100000seda
 validators:
 - name: alice
-  bonded: 100000000seda
+  bonded: 1000000seda
