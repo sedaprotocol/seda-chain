@@ -19,6 +19,11 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 	// get the original command
 	originalCmd := genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome)
 
+	// Check if this is testnet or mainnet
+	originalCmd.Flags().BoolP("testnet", "t", false, "Initialize for a testnet")
+	// if we want to add more networks in the future
+	// originalCmd.Flags().StringP("network", "n", "mainnet", "Specify the type of network to initialize (e.g., 'mainnet', 'testnet')")
+
 	// store the original RunE function
 	originalRunE := originalCmd.RunE
 
@@ -32,6 +37,16 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 
 		// TODO how to tell if initing a node for testnet vs mainnet vs etc.
 		fmt.Println("Changed the init command")
+
+		// get the value of the testnet flag
+		testnet, _ := cmd.Flags().GetBool("testnet")
+
+		if testnet {
+			fmt.Println("This is for testnet")
+		} else {
+			fmt.Println("This is for mainnet")
+
+		}
 
 		return nil
 	}
