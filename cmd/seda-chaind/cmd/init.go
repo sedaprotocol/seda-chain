@@ -186,9 +186,25 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 
 			// get the value of the network flag
 			network, _ := cmd.Flags().GetString("network")
-			// TODO make this work
-			// overwrite, _ := cmd.Flags().GetBool(FlagOverwrite)
+			overwrite, _ := cmd.Flags().GetBool(FlagOverwrite)
 			configDir := filepath.Join(config.RootDir, "config")
+			genesisFilePath := filepath.Join(configDir, "genesis.json")
+			// use os.Stat to check if the file exists
+			_, err := os.Stat(genesisFilePath)
+			if !overwrite && !os.IsNotExist(err) {
+				return fmt.Errorf("genesis.json file already exists: %v", genesisFilePath)
+			}
+
+			// If we are overwriting the genesis make sure to remove gentx folder
+			// this is in case they are switching to a different network
+			if overwrite {
+				gentxDir := filepath.Join(configDir, "gentx")
+				err = os.RemoveAll(gentxDir)
+				if err != nil {
+					return err
+				}
+			}
+
 			// TODO should turn the insides here into a function for when we have more than one network
 			switch network {
 			case "testnet":
@@ -196,8 +212,6 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 				if err != nil {
 					return errors.Wrap(err, "failed to download network `testnet` genesis files")
 				}
-
-				genesisFilePath := filepath.Join(configDir, "genesis.json")
 
 				bytes, err := ioutil.ReadFile(genesisFilePath)
 				if err != nil {
@@ -231,7 +245,6 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 
 	cmd.Flags().Bool(FlagRecover, false, "provide seed phrase to recover existing key instead of creating")
 	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
-	// We will need to add more networks in the future
 	cmd.Flags().StringP("network", "n", "testnet", "Specify the type of network to initialize (e.g., 'mainnet', 'testnet')")
 
 	return cmd
