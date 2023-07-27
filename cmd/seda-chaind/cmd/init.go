@@ -2,11 +2,15 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"seda-chain/app"
+	"seda-chain/cmd/seda-chaind/utils"
 
 	"time"
 
 	tmcfg "github.com/cometbft/cometbft/config"
+	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
@@ -19,33 +23,34 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 	// get the original command
 	originalCmd := genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome)
 
-	// Check if this is testnet or mainnet
-	originalCmd.Flags().BoolP("testnet", "t", false, "Initialize for a testnet")
 	// if we want to add more networks in the future
-	// originalCmd.Flags().StringP("network", "n", "mainnet", "Specify the type of network to initialize (e.g., 'mainnet', 'testnet')")
+	originalCmd.Flags().StringP("network", "n", "testnet", "Specify the type of network to initialize (e.g., 'mainnet', 'testnet')")
 
 	// store the original RunE function
 	originalRunE := originalCmd.RunE
 
 	// wrap the RunE function to add additional behavior
 	originalCmd.RunE = func(cmd *cobra.Command, args []string) error {
+		serverCtx := server.GetServerContextFromCmd(cmd)
+		config := serverCtx.Config
+
 		// call the original RunE function
 		err := originalRunE(cmd, args)
 		if err != nil {
 			return err
 		}
 
-		// TODO how to tell if initing a node for testnet vs mainnet vs etc.
-		fmt.Println("Changed the init command")
+		// first remove the generated genesis.json
+		os.Remove(config.GenesisFile())
+		// get the value of the network flag
+		network, _ := cmd.Flags().GetString("network")
 
-		// get the value of the testnet flag
-		testnet, _ := cmd.Flags().GetBool("testnet")
-
-		if testnet {
-			fmt.Println("This is for testnet")
-		} else {
-			fmt.Println("This is for mainnet")
-
+		configDir := filepath.Join(config.RootDir, "config")
+		switch network {
+		case "testnet":
+			utils.DownloadGitFiles("testnet", configDir)
+		default:
+			return fmt.Errorf("unsupported network type: %s", network)
 		}
 
 		return nil
