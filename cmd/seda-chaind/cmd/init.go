@@ -65,7 +65,7 @@ func initTendermintConfig() *tmcfg.Config {
 	// cfg.LogLevel
 
 	// RPC Settings
-	cfg.RPC.GRPCListenAddress = "0.0.0.0:26657"
+	cfg.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 
 	// Consensus Settings
 	cfg.Consensus.TimeoutPropose = time.Duration(7.5 * float64(time.Second))
