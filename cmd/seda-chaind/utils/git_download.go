@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -41,6 +42,8 @@ func DownloadGitFiles(path, downloadPath string) error {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
+	} else if resp.StatusCode == 401 {
+		return errors.New("Github Authorization Failed")
 	}
 	defer resp.Body.Close()
 
