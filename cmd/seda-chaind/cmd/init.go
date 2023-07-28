@@ -168,6 +168,38 @@ func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Comma
 	return cmd
 }
 
+func joinNetwork(network, configDir, genesisFilePath, mnemonic string, config *cfg.Config) error {
+	err := utils.DownloadGitFiles(network, configDir)
+	if err != nil {
+		return errors.Wrapf(err, "failed to download network `%s` genesis files", network)
+	}
+
+	bytes, err := ioutil.ReadFile(genesisFilePath)
+	if err != nil {
+		return err
+	}
+
+	var genesisExistingState map[string]json.RawMessage
+	err = json.Unmarshal(bytes, &genesisExistingState)
+	if err != nil {
+		return err
+	}
+
+	genesisState, err := json.MarshalIndent(genesisExistingState, "", " ")
+	if err != nil {
+		return errors.Wrapf(err, "Failed to marshal network `%s` genesis state", network)
+	}
+
+	nodeID, _, err := genutil.InitializeNodeValidatorFilesFromMnemonic(config, mnemonic)
+	if err != nil {
+		return err
+	}
+
+	toPrint := newPrintInfo(config.Moniker, ChainID, nodeID, "", genesisState)
+
+	return displayInfo(toPrint)
+}
+
 func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "network [moniker]",
@@ -208,35 +240,7 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 			// TODO should turn the insides here into a function for when we have more than one network
 			switch network {
 			case "devnet":
-				err := utils.DownloadGitFiles("devnet", configDir)
-				if err != nil {
-					return errors.Wrap(err, "failed to download network `devnet` genesis files")
-				}
-
-				bytes, err := ioutil.ReadFile(genesisFilePath)
-				if err != nil {
-					return err
-				}
-
-				var genesisExistingState map[string]json.RawMessage
-				err = json.Unmarshal(bytes, &genesisExistingState)
-				if err != nil {
-					return err
-				}
-
-				genesisState, err := json.MarshalIndent(genesisExistingState, "", " ")
-				if err != nil {
-					return errors.Wrap(err, "Failed to marshal network genesis state")
-				}
-
-				nodeID, _, err := genutil.InitializeNodeValidatorFilesFromMnemonic(config, mnemonic)
-				if err != nil {
-					return err
-				}
-
-				toPrint := newPrintInfo(config.Moniker, ChainID, nodeID, "", genesisState)
-
-				return displayInfo(toPrint)
+				return joinNetwork(network, configDir, genesisFilePath, mnemonic, config)
 			default:
 				return fmt.Errorf("unsupported network type: %s", network)
 			}
