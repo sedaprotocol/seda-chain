@@ -207,10 +207,10 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 
 			// TODO should turn the insides here into a function for when we have more than one network
 			switch network {
-			case "testnet":
-				err := utils.DownloadGitFiles("testnet", configDir)
+			case "devnet":
+				err := utils.DownloadGitFiles("devnet", configDir)
 				if err != nil {
-					return errors.Wrap(err, "failed to download network `testnet` genesis files")
+					return errors.Wrap(err, "failed to download network `devnet` genesis files")
 				}
 
 				bytes, err := ioutil.ReadFile(genesisFilePath)
@@ -245,7 +245,7 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 
 	cmd.Flags().Bool(FlagRecover, false, "provide seed phrase to recover existing key instead of creating")
 	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
-	cmd.Flags().StringP("network", "n", "testnet", "Specify the type of network to initialize (e.g., 'mainnet', 'testnet')")
+	cmd.Flags().StringP("network", "n", "devnet", "Specify the type of network to initialize (e.g., 'mainnet', 'testnet', 'devnet')")
 
 	return cmd
 
