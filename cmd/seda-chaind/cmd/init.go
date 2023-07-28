@@ -64,6 +64,24 @@ func displayInfo(info printInfo) error {
 	return err
 }
 
+func validateOrGenerateMnemonic(recover bool, cmd *cobra.Command) (string, error) {
+	var mnemonic string
+	if recover {
+		inBuf := bufio.NewReader(cmd.InOrStdin())
+		value, err := input.GetString("Enter your bip39 mnemonic", inBuf)
+		if err != nil {
+			return "", err
+		}
+
+		mnemonic = value
+		if !bip39.IsMnemonicValid(mnemonic) {
+			return "", errors.New("invalid mnemonic")
+		}
+	}
+
+	return mnemonic, nil
+}
+
 // preserve old logic for if we want to create a new network
 // though its slightly modified to set default settings.
 func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
@@ -80,19 +98,10 @@ func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Comma
 			config := serverCtx.Config
 			config.SetRoot(clientCtx.HomeDir)
 
-			var mnemonic string
 			recover, _ := cmd.Flags().GetBool(FlagRecover)
-			if recover {
-				inBuf := bufio.NewReader(cmd.InOrStdin())
-				value, err := input.GetString("Enter your bip39 mnemonic", inBuf)
-				if err != nil {
-					return err
-				}
-
-				mnemonic = value
-				if !bip39.IsMnemonicValid(mnemonic) {
-					return errors.New("invalid mnemonic")
-				}
+			mnemonic, err := validateOrGenerateMnemonic(recover, cmd)
+			if err != nil {
+				return err
 			}
 
 			// Get initial height
@@ -169,19 +178,10 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 			serverCtx := server.GetServerContextFromCmd(cmd)
 			config := serverCtx.Config
 
-			var mnemonic string
 			recover, _ := cmd.Flags().GetBool(FlagRecover)
-			if recover {
-				inBuf := bufio.NewReader(cmd.InOrStdin())
-				value, err := input.GetString("Enter your bip39 mnemonic", inBuf)
-				if err != nil {
-					return err
-				}
-
-				mnemonic = value
-				if !bip39.IsMnemonicValid(mnemonic) {
-					return errors.New("invalid mnemonic")
-				}
+			mnemonic, err := validateOrGenerateMnemonic(recover, cmd)
+			if err != nil {
+				return err
 			}
 
 			// get the value of the network flag
@@ -190,7 +190,7 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 			configDir := filepath.Join(config.RootDir, "config")
 			genesisFilePath := filepath.Join(configDir, "genesis.json")
 			// use os.Stat to check if the file exists
-			_, err := os.Stat(genesisFilePath)
+			_, err = os.Stat(genesisFilePath)
 			if !overwrite && !os.IsNotExist(err) {
 				return fmt.Errorf("genesis.json file already exists: %v", genesisFilePath)
 			}
