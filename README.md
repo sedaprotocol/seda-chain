@@ -26,8 +26,6 @@
 [twitter-url]: https://twitter.com/SedaProtocol
 
 This repo contains the our blockchain layer, written with the help of the [CosmosSDK](https://github.com/cosmos/cosmos-sdk).
-<!-- TODO uncomment once we know the license -->
-<!-- **NOTE** this repo adheres to the [GPLv3 license](LICENSE.md). -->
 
 To learn how to build a local version, please read [developing](DEVELOPING.md).
 To learn how to contribute, please read [contributing](CONTRIBUTING.md).
@@ -39,3 +37,7 @@ Our node uses CosmWASM as such it requires the `libwasmvm` library to be on your
 ## Installation
 
 At this time we don't have a public release ready. If you want to check out our node please check out how to build a local version.
+
+## License
+
+Contents of this repository are open source under [GNU General Public License v3.0](LICENSE).
