@@ -38,7 +38,7 @@ Otherwise please see the [dev dependencies](#dev-dependencies).
 
 ## Building
 
-**NOTE**: you must have the enviornment variable `CGO_ENABLED` set to `1`. THis is becuase we use CosmWASM.
+**NOTE**: you must have the enviornment variable `CGO_ENABLED` set to `1`. This is becuase we use CosmWASM.
 
 - `ignite chain build` will build and install the binary for you.
     - 

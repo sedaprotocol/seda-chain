@@ -5,7 +5,7 @@
 </p>
 
 <h1 align="center">
-  Project Name
+  SEDA Chain
 </h1>
 
 <!-- The line below is for once the repo has CI to show build status. -->
