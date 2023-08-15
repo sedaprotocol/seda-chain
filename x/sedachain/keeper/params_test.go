@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	testkeeper "seda-chain/testutil/keeper"
-	"seda-chain/x/sedachain/types"
+
+	testkeeper "github.com/sedaprotocol/seda-chain/testutil/keeper"
+	"github.com/sedaprotocol/seda-chain/x/sedachain/types"
 )
 
 func TestGetParams(t *testing.T) {

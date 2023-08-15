@@ -1,11 +1,12 @@
 package cli
 
 import (
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"seda-chain/x/sedachain/types"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+
+	"github.com/sedaprotocol/seda-chain/x/sedachain/types"
 )
 
 func CmdQueryParams() *cobra.Command {

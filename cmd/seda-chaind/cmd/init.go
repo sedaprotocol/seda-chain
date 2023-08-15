@@ -4,14 +4,16 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"seda-chain/cmd/seda-chaind/utils"
 
 	cfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/types"
+	"github.com/cosmos/go-bip39"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -19,9 +21,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
-	"github.com/cosmos/go-bip39"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
+
+	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 )
 
 const (
@@ -156,7 +157,6 @@ func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Comma
 			toPrint := newPrintInfo(config.Moniker, ChainID, nodeID, "", appState)
 			cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
 			return displayInfo(toPrint)
-
 		},
 	}
 
@@ -174,7 +174,7 @@ func joinNetwork(network, configDir, genesisFilePath, mnemonic string, config *c
 		return errors.Wrapf(err, "failed to download network `%s` genesis files", network)
 	}
 
-	bytes, err := ioutil.ReadFile(genesisFilePath)
+	bytes, err := os.ReadFile(genesisFilePath)
 	if err != nil {
 		return err
 	}
@@ -252,7 +252,6 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 	cmd.Flags().StringP("network", "n", "devnet", "Specify the type of network to initialize (e.g., 'mainnet', 'testnet', 'devnet')")
 
 	return cmd
-
 }
 
 // InitCmd returns a command that initializes all files needed for Tendermint

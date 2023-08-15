@@ -8,9 +8,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	"seda-chain/testutil/sample"
-	sedachainsimulation "seda-chain/x/sedachain/simulation"
-	"seda-chain/x/sedachain/types"
+
+	"github.com/sedaprotocol/seda-chain/testutil/sample"
+	sedachainsimulation "github.com/sedaprotocol/seda-chain/x/sedachain/simulation"
+	"github.com/sedaprotocol/seda-chain/x/sedachain/types"
 )
 
 // avoid unused import issue
@@ -43,7 +44,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 
 // ProposalContents doesn't return any content functions for governance proposals.
-func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
+func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalMsg {
 	return nil
 }
 

@@ -1,7 +1,7 @@
 syntax = "proto3";
 package sedachain.sedachain;
 
-option go_package = "seda-chain/x/sedachain/types";
+option go_package = "github.com/sedaprotocol/seda-chain/x/sedachain/types";
 
 // Msg defines the Msg service.
 service Msg {}

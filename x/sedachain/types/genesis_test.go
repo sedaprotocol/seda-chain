@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"seda-chain/x/sedachain/types"
+
+	"github.com/sedaprotocol/seda-chain/x/sedachain/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {

@@ -30,10 +30,8 @@ ifeq ($(LEDGER_ENABLED),true)
 	endif
 endif
 
-# DB backend selection
-ifeq (cleveldb,$(findstring cleveldb,$(SEDA_CHAIN_BUILD_OPTIONS)))
-  build_tags += gcc
-endif
+build_tags += $(BUILD_TAGS)
+build_tags := $(strip $(build_tags))
 
 whitespace :=
 whitespace += $(whitespace)
@@ -53,9 +51,6 @@ endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
-build_tags += $(BUILD_TAGS)
-build_tags := $(strip $(build_tags))
-
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 # check for nostrip option
 ifeq (,$(findstring nostrip,$(SEDA_CHAIN_BUILD_OPTIONS)))
@@ -74,12 +69,12 @@ all: tools build lint test
 ###############################################################################
 
 build: go.sum
-	go build -mod=readonly $(BUILD_FLAGS) -o build/seda-chaind ./cmd/seda-chaind
+	CGO_ENABLED=1 go build -mod=readonly $(BUILD_FLAGS) -o build/seda-chaind ./cmd/seda-chaind
 
 install: go.sum
-	go install -mod=readonly $(BUILD_FLAGS) ./cmd/seda-chaind
+	CGO_ENABLED=1 go install -mod=readonly $(BUILD_FLAGS) ./cmd/seda-chaind
 
-.PHONY: build
+.PHONY: build install
 
 ###############################################################################
 ###                          Tools & Dependencies                           ###

@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	keepertest "seda-chain/testutil/keeper"
-	"seda-chain/testutil/nullify"
-	"seda-chain/x/sedachain"
-	"seda-chain/x/sedachain/types"
+
+	keepertest "github.com/sedaprotocol/seda-chain/testutil/keeper"
+	"github.com/sedaprotocol/seda-chain/testutil/nullify"
+	"github.com/sedaprotocol/seda-chain/x/sedachain"
+	"github.com/sedaprotocol/seda-chain/x/sedachain/types"
 )
 
 func TestGenesis(t *testing.T) {

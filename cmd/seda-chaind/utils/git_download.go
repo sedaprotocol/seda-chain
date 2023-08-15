@@ -16,9 +16,7 @@ const (
 	RepoName = "seda-networks"
 )
 
-var (
-	Token = ""
-)
+var Token = ""
 
 func init() {
 	Token = os.Getenv("SEDA_NETWORKS_GITHUB_TOKEN")
@@ -43,7 +41,7 @@ func DownloadGitFiles(path, downloadPath string) error {
 	if err != nil {
 		return err
 	} else if resp.StatusCode == 401 {
-		return errors.New("Github Authorization Failed")
+		return errors.New("github authorization failure")
 	}
 	defer resp.Body.Close()
 

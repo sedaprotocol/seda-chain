@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"seda-chain/x/sedachain/types"
+	"github.com/sedaprotocol/seda-chain/x/sedachain/types"
 )
 
 type msgServer struct {

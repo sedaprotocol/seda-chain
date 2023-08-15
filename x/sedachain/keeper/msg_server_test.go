@@ -4,14 +4,18 @@ import (
 	"context"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	keepertest "seda-chain/testutil/keeper"
-	"seda-chain/x/sedachain/keeper"
-	"seda-chain/x/sedachain/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	keepertest "github.com/sedaprotocol/seda-chain/testutil/keeper"
+	"github.com/sedaprotocol/seda-chain/x/sedachain/keeper"
+	"github.com/sedaprotocol/seda-chain/x/sedachain/types"
 )
 
-func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {
+func setupMsgServer(t *testing.T) (types.MsgServer, context.Context) {
+	t.Helper()
+
 	k, ctx := keepertest.SedachainKeeper(t)
 	return keeper.NewMsgServerImpl(*k), sdk.WrapSDKContext(ctx)
 }

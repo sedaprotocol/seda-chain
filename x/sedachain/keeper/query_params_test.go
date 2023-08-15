@@ -3,10 +3,12 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	testkeeper "seda-chain/testutil/keeper"
-	"seda-chain/x/sedachain/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	testkeeper "github.com/sedaprotocol/seda-chain/testutil/keeper"
+	"github.com/sedaprotocol/seda-chain/x/sedachain/types"
 )
 
 func TestParamsQuery(t *testing.T) {

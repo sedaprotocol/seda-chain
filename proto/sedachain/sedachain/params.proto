@@ -3,7 +3,7 @@ package sedachain.sedachain;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "seda-chain/x/sedachain/types";
+option go_package = "github.com/sedaprotocol/seda-chain/x/sedachain/types";
 
 // Params defines the parameters for the module.
 message Params {

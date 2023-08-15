@@ -2,8 +2,9 @@ package sedachain
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"seda-chain/x/sedachain/keeper"
-	"seda-chain/x/sedachain/types"
+
+	"github.com/sedaprotocol/seda-chain/x/sedachain/keeper"
+	"github.com/sedaprotocol/seda-chain/x/sedachain/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

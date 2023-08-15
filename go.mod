@@ -1,4 +1,4 @@
-module seda-chain
+module github.com/sedaprotocol/seda-chain
 
 go 1.19
 

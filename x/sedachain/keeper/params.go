@@ -2,7 +2,8 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"seda-chain/x/sedachain/types"
+
+	"github.com/sedaprotocol/seda-chain/x/sedachain/types"
 )
 
 // GetParams get all parameters as types.Params
