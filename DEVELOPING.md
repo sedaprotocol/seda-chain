@@ -19,8 +19,16 @@ Otherwise please see the [dev dependencies](#dev-dependencies).
     - Linux: Use your distribution's packagae manager.
     - Mac: Use `macports` or `brew`.
     - Windows: Use `scoop`
-
-### [Ignite](https://docs.ignite.com/)
+- Ensure that `$GOPATH` and `$PATH` have been set properly. On a Mac, you may have to run the following:
+```bash
+mkdir -p $HOME/go/bin
+echo "export GOPATH=$HOME/go" >> ~/.zprofile
+echo "export PATH=\$PATH:\$GOPATH/bin" >> ~/.zprofile
+echo "export GO111MODULE=on" >> ~/.zprofile
+source ~/.zprofile
+```
+ 
+### [Ignite (Optional)](https://docs.ignite.com/)
 
 - Windows
   - Unfortunately ignite does not work for windows
@@ -36,7 +44,19 @@ Otherwise please see the [dev dependencies](#dev-dependencies).
 
 - **NOTE**: This is currently not working on Windows.
 
-## Building
+## Building using Make
+
+To build, run:
+```bash
+$ make build
+```
+
+To install (builds and moves the executable to `$GOPATH/bin`, which should be in `$PATH`), run:
+```bash
+$ make install
+```
+
+## Building Using Ignite
 
 **NOTE**: you must have the enviornment variable `CGO_ENABLED` set to `1`. This is becuase we use CosmWASM.
 
@@ -44,9 +64,22 @@ Otherwise please see the [dev dependencies](#dev-dependencies).
     - 
 - `ignite chain serve` will build and run the chain without installing it.
 
-## Formatting & Cleanliness
+## Linting
 
-TODO
+If you have not install a Go linters runner, install it first:
+```bash
+$ make lint-install
+```
+
+Run linters with auto-fix
+```bash
+$ make lint-fix
+```
+
+or without auto-fix:
+```bash
+$ make lint
+```
 
 ## Running
 
