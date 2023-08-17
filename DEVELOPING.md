@@ -19,8 +19,8 @@ Otherwise please see the [dev dependencies](#dev-dependencies).
     - Linux: Use your distribution's packagae manager.
     - Mac: Use `macports` or `brew`.
     - Windows: Use `scoop`
-- Ensure that `$GOPATH` and `$PATH` have been set properly. On a Mac, you may have to run the following:
-```bash
+- Ensure that `$GOPATH` and `$PATH` have been set properly. On a Mac that uses the Z shell, you may have to run the following:
+```zsh
 mkdir -p $HOME/go/bin
 echo "export GOPATH=$HOME/go" >> ~/.zprofile
 echo "export PATH=\$PATH:\$GOPATH/bin" >> ~/.zprofile
