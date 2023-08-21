@@ -19,7 +19,9 @@ func TestGenesis(t *testing.T) {
 	}
 
 	k, ctx := keepertest.SedachainKeeper(t)
-	sedachain.InitGenesis(ctx, *k, genesisState)
+	err := sedachain.InitGenesis(ctx, *k, genesisState)
+	require.NoError(t, err)
+
 	got := sedachain.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)
 

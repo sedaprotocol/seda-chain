@@ -79,8 +79,8 @@ linters-settings:
     sections:
       - standard # Standard section: captures all standard packages.
       - default # Default section: contains all imports that could not be matched to another section type.
-      - prefix(cosmossdk.io)
-      - prefix(github.com/cosmos/cosmos-sdk)
+      - prefix(github.com/cometbft)
+      - prefix(github.com/cosmos,github.com/CosmWasm)
       - prefix(github.com/sedaprotocol/seda-chain)
 
   revive:

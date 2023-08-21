@@ -10,11 +10,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -88,7 +89,7 @@ func BenchmarkSimulation(b *testing.B) {
 	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
-	bApp := app.New(
+	bApp := app.NewApp(
 		logger,
 		db,
 		nil,
@@ -164,7 +165,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			config.ChainID = chainID
 
 			db := dbm.NewMemDB()
-			bApp := app.New(
+			bApp := app.NewApp(
 				logger,
 				db,
 				nil,
@@ -242,7 +243,7 @@ func TestAppImportExport(t *testing.T) {
 	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
-	bApp := app.New(
+	bApp := app.NewApp(
 		logger,
 		db,
 		nil,
@@ -303,7 +304,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := app.New(
+	newApp := app.NewApp(
 		log.NewNopLogger(),
 		newDB,
 		nil,
@@ -396,7 +397,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
-	bApp := app.New(
+	bApp := app.NewApp(
 		logger,
 		db,
 		nil,
@@ -463,7 +464,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := app.New(
+	newApp := app.NewApp(
 		log.NewNopLogger(),
 		newDB,
 		nil,

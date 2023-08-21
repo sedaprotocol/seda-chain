@@ -61,7 +61,6 @@ $ make install
 **NOTE**: you must have the enviornment variable `CGO_ENABLED` set to `1`. This is becuase we use CosmWASM.
 
 - `ignite chain build` will build and install the binary for you.
-    - 
 - `ignite chain serve` will build and run the chain without installing it.
 
 ## Linting

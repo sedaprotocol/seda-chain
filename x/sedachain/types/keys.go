@@ -1,5 +1,7 @@
 package types
 
+var ParamsKey = []byte{0x00}
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "sedachain"
@@ -9,11 +11,4 @@ const (
 
 	// RouterKey defines the module's message routing key
 	RouterKey = ModuleName
-
-	// MemStoreKey defines the in-memory store key
-	MemStoreKey = "mem_sedachain"
 )
-
-func KeyPrefix(p string) []byte {
-	return []byte(p)
-}
