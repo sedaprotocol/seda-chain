@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/hyperledger/burrow/crypto"
@@ -32,15 +33,16 @@ func (k msgServer) Store(goCtx context.Context, msg *types.MsgStore) (*types.Msg
 	}
 	k.Keeper.SetData(ctx, msg.Data, hash)
 
+	hashString := hex.EncodeToString(hash)
+
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeStore,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeHash, string(hash)),
+			sdk.NewAttribute(types.AttributeHash, hashString),
 		),
 	)
-
 	return &types.MsgStoreResponse{
-		Hash: string(hash),
+		Hash: hashString,
 	}, nil
 }

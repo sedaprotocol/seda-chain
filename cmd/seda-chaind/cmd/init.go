@@ -23,6 +23,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/go-bip39"
 
+	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 )
 
@@ -33,8 +34,8 @@ const (
 	FlagRecover = "recover"
 
 	// Default things
-	BondDenom = "seda"
-	ChainID   = "sedachain"
+	// BondDenom = "seda"
+	ChainID = "sedachain"
 )
 
 type printInfo struct {
@@ -127,7 +128,7 @@ func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Comma
 				return fmt.Errorf("genesis.json file already exists: %v", genFile)
 			}
 
-			sdk.DefaultBondDenom = BondDenom
+			sdk.DefaultBondDenom = params.DefaultBondDenom
 			appGenState := mbm.DefaultGenesis(cdc)
 
 			appState, err := json.MarshalIndent(appGenState, "", " ")

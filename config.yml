@@ -4,7 +4,7 @@ genesis:
   app_state:
     staking:
       params:
-        bond_denom: "aseda"
+        bond_denom: "useda"
 
 accounts:
 - name: alice
