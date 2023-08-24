@@ -16,5 +16,5 @@ message MsgStore { bytes data = 1 [ (gogoproto.moretags) = "yaml:\"data\"" ]; }
 
 // MsgStoreResponse defines the Msg/MsgStore response type.
 message MsgStoreResponse {
-  string key = 1 [ (gogoproto.moretags) = "yaml:\"key\"" ];
+  string hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
 }

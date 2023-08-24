@@ -11,4 +11,8 @@ const (
 	RouterKey = ModuleName
 )
 
-var ParamsKey = []byte{0x00}
+var DataStoreKeyPrefix = []byte{0x00}
+
+func DataStoreKey(hash []byte) []byte {
+	return append(DataStoreKeyPrefix, hash...)
+}
