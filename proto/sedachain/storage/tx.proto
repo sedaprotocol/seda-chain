@@ -1,0 +1,20 @@
+syntax = "proto3";
+package sedachain.storage;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/storage/types";
+
+// Msg defines the storage Msg service.
+service Msg {
+  // Store defines a method for storing data.
+  rpc Store(MsgStore) returns (MsgStoreResponse);
+}
+
+// MsgStore defines an SDK message for storing data.
+message MsgStore { bytes data = 1 [ (gogoproto.moretags) = "yaml:\"data\"" ]; }
+
+// MsgStoreResponse defines the Msg/MsgStore response type.
+message MsgStoreResponse {
+  string key = 1 [ (gogoproto.moretags) = "yaml:\"key\"" ];
+}

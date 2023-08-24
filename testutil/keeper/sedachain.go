@@ -15,8 +15,8 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-chain/x/sedachain/keeper"
-	"github.com/sedaprotocol/seda-chain/x/sedachain/types"
+	"github.com/sedaprotocol/seda-chain/x/storage/keeper"
+	"github.com/sedaprotocol/seda-chain/x/storage/types"
 )
 
 func SedachainKeeper(t *testing.T) (*keeper.Keeper, sdk.Context) {
