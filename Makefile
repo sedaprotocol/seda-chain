@@ -106,3 +106,20 @@ lint-fix:
 	@./scripts/go-lint-all.bash --fix
 
 .PHONY: lint lint-fix
+
+###############################################################################
+###                                Protobuf                                 ###
+###############################################################################
+
+protoVer=0.14.0
+protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
+protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
+
+proto-gen:
+	@echo "Generating Protobuf files"
+	@$(protoImage) sh ./scripts/protocgen.sh
+
+proto-format:
+	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
+
+.PHONY: proto-gen proto-format
