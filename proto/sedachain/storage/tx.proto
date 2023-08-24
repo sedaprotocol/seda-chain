@@ -12,7 +12,10 @@ service Msg {
 }
 
 // MsgStore defines an SDK message for storing data.
-message MsgStore { bytes data = 1 [ (gogoproto.moretags) = "yaml:\"data\"" ]; }
+message MsgStore {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  bytes data = 2 [ (gogoproto.moretags) = "yaml:\"data\"" ];
+}
 
 // MsgStoreResponse defines the Msg/MsgStore response type.
 message MsgStoreResponse {

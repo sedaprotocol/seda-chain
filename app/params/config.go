@@ -10,7 +10,7 @@ import (
 
 const (
 	HumanCoinUnit = "seda"
-	BaseCoinUnit  = "aseda"
+	BaseCoinUnit  = "useda"
 	SedaExponent  = 18
 
 	DefaultBondDenom = BaseCoinUnit

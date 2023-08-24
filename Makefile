@@ -119,7 +119,7 @@ proto-gen:
 	@echo "Generating Protobuf files"
 	@$(protoImage) sh ./scripts/protocgen.sh
 
-proto-format:
+proto-lint:
 	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
 
-.PHONY: proto-gen proto-format
+.PHONY: proto-gen proto-lint
