@@ -173,4 +173,13 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+replace (
+	github.com/CosmWasm/token-factory => github.com/CosmosContracts/token-factory v1.2.1-juno
+	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+	// use cosmos flavored gogo/protobuf
+	// https://github.com/cosmos/cosmos-sdk/issues/8469
+	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+	github.com/cosmos/cosmos-sdk/simapp => github.com/cosmos/cosmos-sdk/simapp v0.47.4
+	github.com/tendermint/tendermint => github.com/tendermint/tendermint v0.16.0
+	github.com/tendermint/go-wire => github.com/tendermint/go-amino v0.16.0
+)

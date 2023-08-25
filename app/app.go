@@ -121,6 +121,12 @@ import (
 	sedachainmodule "github.com/sedaprotocol/seda-chain/x/sedachain"
 	sedachainmodulekeeper "github.com/sedaprotocol/seda-chain/x/sedachain/keeper"
 	sedachainmoduletypes "github.com/sedaprotocol/seda-chain/x/sedachain/types"
+
+	tokenappparams "github.com/CosmWasm/token-factory/app/params"
+	"github.com/CosmWasm/token-factory/x/tokenfactory"
+	"github.com/CosmWasm/token-factory/x/tokenfactory/bindings"
+	tokenfactorykeeper "github.com/CosmWasm/token-factory/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/CosmWasm/token-factory/x/tokenfactory/types"
 )
 
 const (
