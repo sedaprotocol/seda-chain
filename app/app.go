@@ -122,11 +122,10 @@ import (
 	sedachainmodulekeeper "github.com/sedaprotocol/seda-chain/x/sedachain/keeper"
 	sedachainmoduletypes "github.com/sedaprotocol/seda-chain/x/sedachain/types"
 
-	tokenappparams "github.com/CosmWasm/token-factory/app/params"
-	"github.com/CosmWasm/token-factory/x/tokenfactory"
-	"github.com/CosmWasm/token-factory/x/tokenfactory/bindings"
-	tokenfactorykeeper "github.com/CosmWasm/token-factory/x/tokenfactory/keeper"
-	tokenfactorytypes "github.com/CosmWasm/token-factory/x/tokenfactory/types"
+	"github.com/CosmosContracts/juno/v17/x/tokenfactory"
+	"github.com/CosmosContracts/juno/v17/x/tokenfactory/bindings"
+	tokenfactorykeeper "github.com/CosmosContracts/juno/v17/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/CosmosContracts/juno/v17/x/tokenfactory/types"
 )
 
 const (
@@ -184,6 +183,7 @@ var (
 		consensus.AppModuleBasic{},
 		sedachainmodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		tokenfactory.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -198,6 +198,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		wasmtypes.ModuleName:           {authtypes.Burner},
+		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -257,6 +258,7 @@ type App struct {
 	GroupKeeper           groupkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 	WasmKeeper            wasmkeeper.Keeper
+	TokenFactoryKeeper tokenfactorykeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -311,7 +313,7 @@ func NewApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibcexported.StoreKey, upgradetypes.StoreKey,
 		feegrant.StoreKey, evidencetypes.StoreKey, ibctransfertypes.StoreKey, icahosttypes.StoreKey,
 		capabilitytypes.StoreKey, group.StoreKey, icacontrollertypes.StoreKey, consensusparamtypes.StoreKey,
-		sedachainmoduletypes.StoreKey, wasmtypes.StoreKey,
+		sedachainmoduletypes.StoreKey, wasmtypes.StoreKey, tokenfactorytypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -509,6 +511,24 @@ func NewApp(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
+	tokenFactoryCapabilities := []string{
+		tokenfactorytypes.EnableBurnFrom,
+		tokenfactorytypes.EnableForceTransfer,
+		tokenfactorytypes.EnableSetMetadata,
+	}
+
+	govModAddress := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+
+	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
+		appCodec,
+		keys[tokenfactorytypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.DistrKeeper,
+		tokenFactoryCapabilities,
+		govModAddress,
+	)
+
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
@@ -516,6 +536,7 @@ func NewApp(
 	}
 
 	var wasmOpts []wasmkeeper.Option
+	wasmOpts = append(bindings.RegisterCustomPlugins(&bankkeeper.BaseKeeper{}, &app.TokenFactoryKeeper), wasmOpts...)
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
@@ -633,6 +654,7 @@ func NewApp(
 		transferModule,
 		icaModule,
 		sedachainModule,
+		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(tokenfactorytypes.ModuleName)),
 		// this line is used by starport scaffolding # stargate/app/appModule
 
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
@@ -668,6 +690,7 @@ func NewApp(
 		consensusparamtypes.ModuleName,
 		sedachainmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
+		tokenfactorytypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -694,6 +717,7 @@ func NewApp(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		sedachainmoduletypes.ModuleName,
+		tokenfactorytypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -726,6 +750,7 @@ func NewApp(
 		consensusparamtypes.ModuleName,
 		sedachainmoduletypes.ModuleName,
 		wasmtypes.ModuleName,
+		tokenfactorytypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
@@ -949,6 +974,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
+	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
 
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
