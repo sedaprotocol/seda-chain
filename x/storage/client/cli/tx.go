@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+
 	"github.com/sedaprotocol/seda-chain/x/storage/types"
 )
 
@@ -39,14 +40,24 @@ func GetCmdStore() *cobra.Command {
 				return err
 			}
 
-			data, err := os.ReadFile(args[0])
+			wasm, err := os.ReadFile(args[0])
 			if err != nil {
 				return err
 			}
 
+			// gzip the wasm file
+			if ioutils.IsWasm(wasm) {
+				wasm, err = ioutils.GzipIt(wasm)
+				if err != nil {
+					return err
+				}
+			} else if !ioutils.IsGzip(wasm) {
+				return fmt.Errorf("invalid input file. Use wasm binary or gzip")
+			}
+
 			msg := &types.MsgStore{
 				Sender: clientCtx.GetFromAddress().String(),
-				Data:   data,
+				Data:   wasm,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
