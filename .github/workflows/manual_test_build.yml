@@ -5,31 +5,29 @@
 # The idea behind this process is to avoid publishing a test version to our Github Release page.
 on:
   workflow_dispatch:
+    inputs:
+      password:
+        required: true
 
 jobs:
-  check_actor:
+  check_pass:
+    name: Check password
     runs-on: ubuntu-latest
     outputs:
       is_allowed: ${{ steps.check.outputs.is_allowed }}
     steps:
       - id: check
         run: |
-          allowed_users=("FranklinWaller" "gluax" "jamesondh" "mariocao" "mennatbuelnaga" "Thomasvdam")
-          for user in "${allowed_users[@]}"
-          do
-            # The if statement checks who was the actor that triggered the CI seeing if it's an approved user.
-            # The triggering_actor is the person who possibly tried to re-run the CI from the actions page.
-            # If this exists we check if it's also an approved user.
-            if [[ "${{ github.actor }}" == "${user}" && ("${{ github.event.inputs.triggering_actor }}" == "${user}" || "${{ github.event.inputs.triggering_actor }}" == "") ]]; then
-              echo "is_allowed=true" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-          done
-          echo "is_allowed=false" >> $GITHUB_OUTPUT
+          password=${{ secrets.CI_PASSWORD }}
+          if [[ "${{ github.event.inputs.password }}" == "${password}" ]]; then
+            echo "is_allowed=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_allowed=false" >> $GITHUB_OUTPUT
+          fi
 
   test_release:
-    needs: check_actor
-    if: ${{ needs.check_actor.outputs.is_allowed == 'true' }}
+    needs: check_pass
+    if: ${{ needs.check_pass.outputs.is_allowed == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
