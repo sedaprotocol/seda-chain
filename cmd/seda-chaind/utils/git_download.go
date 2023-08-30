@@ -16,12 +16,6 @@ const (
 	RepoName = "seda-networks"
 )
 
-var Token = ""
-
-func init() {
-	Token = os.Getenv("SEDA_NETWORKS_GITHUB_TOKEN")
-}
-
 type GitFile struct {
 	Name string `json:"name"`
 	Path string `json:"path"`
@@ -35,7 +29,6 @@ func DownloadGitFiles(path, downloadPath string) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Authorization", "token "+Token)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
