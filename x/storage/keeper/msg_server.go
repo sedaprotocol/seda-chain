@@ -32,8 +32,6 @@ func (k msgServer) Store(goCtx context.Context, msg *types.MsgStore) (*types.Msg
 
 	var err error
 	if ioutils.IsGzip(data) {
-		// TO-DO
-		// ctx.GasMeter().ConsumeGas(k.gasRegister.UncompressCosts(len(msg.Data)), "Uncompress gzip bytecode")
 		data, err = ioutils.Uncompress(data, int64(800*1024))
 		if err != nil {
 			return nil, err

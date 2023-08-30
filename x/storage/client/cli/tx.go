@@ -28,11 +28,11 @@ func GetTxCmd() *cobra.Command {
 	return cmd
 }
 
-// GetCmdDeploy returns the CVM contract deploy transaction command.
+// GetCmdStore returns the store tx.
 func GetCmdStore() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "store <filename>",
-		Short: "Deploy CVM contract(s)",
+		Short: "Store Wasm or gzip file",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
