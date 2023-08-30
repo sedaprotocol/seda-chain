@@ -34,7 +34,6 @@ const (
 	FlagRecover = "recover"
 
 	// Default things
-	// BondDenom = "seda"
 	ChainID = "sedachain"
 )
 
