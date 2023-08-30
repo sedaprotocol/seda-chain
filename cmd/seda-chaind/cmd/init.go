@@ -242,6 +242,8 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 			switch network {
 			case "devnet":
 				return joinNetwork(network, configDir, genesisFilePath, mnemonic, config)
+			case "localnet":
+				return joinNetwork(network, configDir, genesisFilePath, mnemonic, config)
 			default:
 				return fmt.Errorf("unsupported network type: %s", network)
 			}
