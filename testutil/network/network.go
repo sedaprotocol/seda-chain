@@ -21,6 +21,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
+	"github.com/sedaprotocol/seda-chain/app/params"
 )
 
 type (
@@ -83,8 +84,8 @@ func DefaultConfig() network.Config {
 		TimeoutCommit:   2 * time.Second,
 		ChainID:         chainID,
 		NumValidators:   1,
-		BondDenom:       sdk.DefaultBondDenom,
-		MinGasPrices:    fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
+		BondDenom:       params.DefaultBondDenom,
+		MinGasPrices:    fmt.Sprintf("0.000006%s", params.DefaultBondDenom),
 		AccountTokens:   sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens:   sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		BondedTokens:    sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
