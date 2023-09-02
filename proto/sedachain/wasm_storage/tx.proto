@@ -1,0 +1,31 @@
+syntax = "proto3";
+package sedachain.wasm_storage;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
+
+service Msg {
+  rpc StoreDataRequestWasm(MsgStoreDataRequestWasm)
+      returns (MsgStoreDataRequestWasmResponse);
+  rpc StoreOverlayWasm(MsgStoreOverlayWasm)
+      returns (MsgStoreOverlayWasmResponse);
+}
+
+message MsgStoreDataRequestWasm {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  bytes wasm = 2 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
+}
+
+message MsgStoreDataRequestWasmResponse {
+  string hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
+}
+
+message MsgStoreOverlayWasm {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  bytes wasm = 2 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
+}
+
+message MsgStoreOverlayWasmResponse {
+  string hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
+}

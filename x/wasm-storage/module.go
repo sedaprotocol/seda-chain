@@ -1,4 +1,4 @@
-package storage
+package wasm_storage
 
 import (
 	"context"
@@ -15,9 +15,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/sedaprotocol/seda-chain/x/storage/client/cli"
-	"github.com/sedaprotocol/seda-chain/x/storage/keeper"
-	"github.com/sedaprotocol/seda-chain/x/storage/types"
+	"github.com/sedaprotocol/seda-chain/x/wasm-storage/client/cli"
+	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
+	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 var (

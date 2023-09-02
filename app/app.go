@@ -118,9 +118,9 @@ import (
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/docs"
-	"github.com/sedaprotocol/seda-chain/x/storage"
-	storagekeeper "github.com/sedaprotocol/seda-chain/x/storage/keeper"
-	storagetypes "github.com/sedaprotocol/seda-chain/x/storage/types"
+	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
+	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
+	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 const (
@@ -176,7 +176,7 @@ var (
 		ica.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		consensus.AppModuleBasic{},
-		storage.AppModuleBasic{},
+		wasmstorage.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
@@ -258,7 +258,7 @@ type App struct {
 	ScopedICAHostKeeper  capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
 
-	SedachainKeeper storagekeeper.Keeper
+	SedachainKeeper wasmstoragekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -305,7 +305,7 @@ func NewApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibcexported.StoreKey, upgradetypes.StoreKey,
 		feegrant.StoreKey, evidencetypes.StoreKey, ibctransfertypes.StoreKey, icahosttypes.StoreKey,
 		capabilitytypes.StoreKey, group.StoreKey, icacontrollertypes.StoreKey, consensusparamtypes.StoreKey,
-		storagetypes.StoreKey, wasmtypes.StoreKey,
+		wasmstoragetypes.StoreKey, wasmtypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -563,11 +563,11 @@ func NewApp(
 		),
 	)
 
-	app.SedachainKeeper = *storagekeeper.NewKeeper(
+	app.SedachainKeeper = *wasmstoragekeeper.NewKeeper(
 		appCodec,
-		keys[storagetypes.StoreKey],
+		keys[wasmstoragetypes.StoreKey],
 	)
-	sedachainModule := storage.NewAppModule(appCodec, app.SedachainKeeper, app.AccountKeeper, app.BankKeeper)
+	sedachainModule := wasmstorage.NewAppModule(appCodec, app.SedachainKeeper, app.AccountKeeper, app.BankKeeper)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
@@ -660,7 +660,7 @@ func NewApp(
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
-		storagetypes.ModuleName,
+		wasmstoragetypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -687,7 +687,7 @@ func NewApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
-		storagetypes.ModuleName,
+		wasmstoragetypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -718,7 +718,7 @@ func NewApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
-		storagetypes.ModuleName,
+		wasmstoragetypes.ModuleName,
 		wasmtypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	}

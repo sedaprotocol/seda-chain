@@ -1,0 +1,39 @@
+syntax = "proto3";
+package sedachain.wasm_storage;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // DataRequestWasm returns Data Request Wasm given its hash.
+  rpc DataRequestWasm(QueryDataRequestWasmRequest)
+      returns (QueryDataRequestWasmResponse) {
+    option (google.api.http).get =
+        "/seda-chain/wasm-storage/data_request_wasm/{hash}";
+  }
+
+  // OverlayWasm returns Overlay Wasm given its hash.
+  rpc OverlayWasm(QueryOverlayWasmRequest) returns (QueryOverlayWasmResponse) {
+    option (google.api.http).get =
+        "/seda-chain/wasm-storage/overlay_wasm/{hash}";
+  }
+}
+
+message QueryDataRequestWasmRequest {
+  string hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
+}
+
+message QueryDataRequestWasmResponse {
+  bytes wasm = 1 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
+}
+
+message QueryOverlayWasmRequest {
+  string hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
+}
+
+message QueryOverlayWasmResponse {
+  bytes wasm = 1 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
+}
