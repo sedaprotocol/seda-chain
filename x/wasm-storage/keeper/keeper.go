@@ -25,23 +25,35 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey) *Keeper {
 }
 
 // SetDataRequestWasm stores Data Request Wasm using its hash as the key.
-func (k Keeper) SetDataRequestWasm(ctx sdk.Context, data, hash []byte) {
-	ctx.KVStore(k.storeKey).Set(types.GetDataRequestWasmKey(hash), data)
+func (k Keeper) SetDataRequestWasm(ctx sdk.Context, wasm *types.Wasm) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalLengthPrefixed(wasm)
+	store.Set(types.GetDataRequestWasmKey(wasm.Hash), bz)
 }
 
 // GetDataRequestWasm returns Data Request Wasm given its key.
-func (k Keeper) GetDataRequestWasm(ctx sdk.Context, hash []byte) []byte {
-	return ctx.KVStore(k.storeKey).Get(types.GetDataRequestWasmKey(hash))
+func (k Keeper) GetDataRequestWasm(ctx sdk.Context, hash []byte) *types.Wasm {
+	var wasm *types.Wasm
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetDataRequestWasmKey(hash))
+	k.cdc.MustUnmarshalLengthPrefixed(bz, wasm)
+	return wasm
 }
 
 // SetOverlayWasm stores Overlay Wasm using its hash as the key.
-func (k Keeper) SetOverlayWasm(ctx sdk.Context, data, hash []byte) {
-	ctx.KVStore(k.storeKey).Set(types.GetOverlayWasmKey(hash), data)
+func (k Keeper) SetOverlayWasm(ctx sdk.Context, wasm *types.Wasm) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalLengthPrefixed(wasm)
+	store.Set(types.GetDataRequestWasmKey(wasm.Hash), bz)
 }
 
 // GetOverlayWasm returns Overlay Wasm given its key.
-func (k Keeper) GetOverlayWasm(ctx sdk.Context, hash []byte) []byte {
-	return ctx.KVStore(k.storeKey).Get(types.GetOverlayWasmKey(hash))
+func (k Keeper) GetOverlayWasm(ctx sdk.Context, hash []byte) *types.Wasm {
+	var wasm *types.Wasm
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetOverlayWasmKey(hash))
+	k.cdc.MustUnmarshalLengthPrefixed(bz, wasm)
+	return wasm
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

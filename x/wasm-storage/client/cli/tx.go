@@ -6,6 +6,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -13,6 +14,8 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
+
+const FlagWasmType = "wasm-type"
 
 // GetTxCmd returns the CLI transaction commands for this module
 func GetTxCmd() *cobra.Command {
@@ -47,13 +50,15 @@ func GetCmdStoreDataRequestWasm() *cobra.Command {
 			}
 
 			msg := &types.MsgStoreDataRequestWasm{
-				Sender: clientCtx.GetFromAddress().String(),
-				Wasm:   wasm,
+				Sender:   clientCtx.GetFromAddress().String(),
+				Wasm:     wasm,
+				WasmType: types.WasmTypeFromString(viper.GetString(FlagWasmType)),
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
+	cmd.Flags().String(FlagWasmType, "", "Wasm type")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
@@ -76,13 +81,15 @@ func GetCmdStoreOverlayWasm() *cobra.Command {
 			}
 
 			msg := &types.MsgStoreOverlayWasm{
-				Sender: clientCtx.GetFromAddress().String(),
-				Wasm:   wasm,
+				Sender:   clientCtx.GetFromAddress().String(),
+				Wasm:     wasm,
+				WasmType: types.WasmTypeFromString(viper.GetString(FlagWasmType)),
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
+	cmd.Flags().String(FlagWasmType, "", "Wasm type")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

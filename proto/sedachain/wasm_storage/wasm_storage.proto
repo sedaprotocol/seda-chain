@@ -1,0 +1,26 @@
+syntax = "proto3";
+package sedachain.wasm_storage;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
+
+message Wasm {
+  bytes hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
+  bytes bytecode = 2 [ (gogoproto.moretags) = "yaml:\"bytecode\"" ];
+  WasmType wasmType = 3 [ (gogoproto.moretags) = "yaml:\"wasm_type\"" ];
+}
+
+enum WasmType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  WASM_TYPE_UNSPECIFIED = 0
+      [ (gogoproto.enumvalue_customname) = "WasmTypeNil" ];
+  WASM_TYPE_DATA_REQUEST = 1
+      [ (gogoproto.enumvalue_customname) = "WasmTypeDataRequest" ];
+  WASM_TYPE_TALLY = 2 [ (gogoproto.enumvalue_customname) = "WasmTypeTally" ];
+  WASM_TYPE_DATA_REQUEST_EXECUTOR = 3
+      [ (gogoproto.enumvalue_customname) = "WasmTypeDataRequestExecutor" ];
+  WASM_TYPE_RELAYER = 4
+      [ (gogoproto.enumvalue_customname) = "WasmTypeRelayer" ];
+}

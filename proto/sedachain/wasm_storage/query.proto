@@ -3,6 +3,7 @@ package sedachain.wasm_storage;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "sedachain/wasm_storage/wasm_storage.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
@@ -27,7 +28,7 @@ message QueryDataRequestWasmRequest {
 }
 
 message QueryDataRequestWasmResponse {
-  bytes wasm = 1 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
+  Wasm wasm = 1 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
 }
 
 message QueryOverlayWasmRequest {
@@ -35,5 +36,5 @@ message QueryOverlayWasmRequest {
 }
 
 message QueryOverlayWasmResponse {
-  bytes wasm = 1 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
+  Wasm wasm = 1 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
 }

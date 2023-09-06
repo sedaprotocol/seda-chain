@@ -2,6 +2,7 @@ syntax = "proto3";
 package sedachain.wasm_storage;
 
 import "gogoproto/gogo.proto";
+import "sedachain/wasm_storage/wasm_storage.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
@@ -15,6 +16,7 @@ service Msg {
 message MsgStoreDataRequestWasm {
   string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
   bytes wasm = 2 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
+  WasmType wasmType = 3 [ (gogoproto.moretags) = "yaml:\"wasm_type\"" ];
 }
 
 message MsgStoreDataRequestWasmResponse {
@@ -24,6 +26,7 @@ message MsgStoreDataRequestWasmResponse {
 message MsgStoreOverlayWasm {
   string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
   bytes wasm = 2 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
+  WasmType wasmType = 3 [ (gogoproto.moretags) = "yaml:\"wasm_type\"" ];
 }
 
 message MsgStoreOverlayWasmResponse {

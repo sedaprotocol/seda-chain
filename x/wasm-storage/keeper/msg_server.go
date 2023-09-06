@@ -3,10 +3,8 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
-	"github.com/hyperledger/burrow/crypto"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -42,13 +40,10 @@ func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	// if !ioutils.IsWasm(unzipped) {
 	// }
 
-	hash := crypto.Keccak256(unzipped)
-	if hash == nil {
-		return nil, fmt.Errorf("hash of Wasm is nil")
-	}
-	k.Keeper.SetDataRequestWasm(ctx, unzipped, hash)
+	wasm := types.NewWasm(unzipped, msg.WasmType)
+	k.Keeper.SetDataRequestWasm(ctx, wasm)
 
-	hashString := hex.EncodeToString(hash)
+	hashString := hex.EncodeToString(wasm.Hash)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeStore,
@@ -78,13 +73,10 @@ func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 	// if !ioutils.IsWasm(unzipped) {
 	// }
 
-	hash := crypto.Keccak256(unzipped)
-	if hash == nil {
-		return nil, fmt.Errorf("hash of Wasm is nil")
-	}
-	k.Keeper.SetDataRequestWasm(ctx, unzipped, hash)
+	wasm := types.NewWasm(unzipped, msg.WasmType)
+	k.Keeper.SetOverlayWasm(ctx, wasm)
 
-	hashString := hex.EncodeToString(hash)
+	hashString := hex.EncodeToString(wasm.Hash)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeStore,

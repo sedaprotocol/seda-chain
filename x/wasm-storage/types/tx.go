@@ -1,6 +1,8 @@
 package types
 
 import (
+	fmt "fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -15,6 +17,9 @@ func (msg MsgStoreDataRequestWasm) Type() string {
 func (msg MsgStoreDataRequestWasm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
+	}
+	if msg.WasmType != WasmTypeDataRequest && msg.WasmType != WasmTypeTally {
+		return fmt.Errorf("Wasm type must be data request or tally")
 	}
 	return nil
 }
@@ -42,6 +47,9 @@ func (msg MsgStoreOverlayWasm) Type() string {
 func (msg MsgStoreOverlayWasm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
+	}
+	if msg.WasmType != WasmTypeDataRequestExecutor && msg.WasmType != WasmTypeRelayer {
+		return fmt.Errorf("Wasm type must be data request executor or relayer")
 	}
 	return nil
 }

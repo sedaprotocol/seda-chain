@@ -1,0 +1,11 @@
+syntax = "proto3";
+package sedachain.wasm_storage;
+
+import "gogoproto/gogo.proto";
+import "sedachain/wasm_storage/wasm_storage.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
+
+message GenesisState {
+  repeated Wasm wasms = 1 [ (gogoproto.nullable) = false ];
+}
