@@ -41,6 +41,12 @@ func (k Keeper) GetDataRequestWasm(ctx sdk.Context, hash []byte) *types.Wasm {
 	return wasm
 }
 
+// HasDataRequestWasm checks if a given Data Request Wasm exists.
+func (k Keeper) HasDataRequestWasm(ctx sdk.Context, wasm *types.Wasm) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetDataRequestWasmKey(wasm.Hash))
+}
+
 // SetOverlayWasm stores Overlay Wasm using its hash as the key.
 func (k Keeper) SetOverlayWasm(ctx sdk.Context, wasm *types.Wasm) {
 	store := ctx.KVStore(k.storeKey)
@@ -55,6 +61,12 @@ func (k Keeper) GetOverlayWasm(ctx sdk.Context, hash []byte) *types.Wasm {
 	bz := store.Get(types.GetOverlayWasmKey(hash))
 	k.cdc.MustUnmarshal(bz, wasm)
 	return wasm
+}
+
+// HasOverlayWasm checks if a given Overlay Wasm exists.
+func (k Keeper) HasOverlayWasm(ctx sdk.Context, wasm *types.Wasm) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetOverlayWasmKey(wasm.Hash))
 }
 
 // IterateAllDataRequestWasms iterates over the all the stored Data Request

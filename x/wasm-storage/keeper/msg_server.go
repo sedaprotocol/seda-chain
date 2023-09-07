@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,6 +28,9 @@ func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 
 	unzipped := unzipWasm(msg.Wasm)
 	wasm := types.NewWasm(unzipped, msg.WasmType)
+	if k.Keeper.HasDataRequestWasm(ctx, wasm) {
+		return nil, fmt.Errorf("Data Request Wasm with given hash already exists")
+	}
 	k.Keeper.SetDataRequestWasm(ctx, wasm)
 
 	hashString := hex.EncodeToString(wasm.Hash)
@@ -47,6 +51,9 @@ func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 
 	unzipped := unzipWasm(msg.Wasm)
 	wasm := types.NewWasm(unzipped, msg.WasmType)
+	if k.Keeper.HasOverlayWasm(ctx, wasm) {
+		return nil, fmt.Errorf("Overlay Wasm with given hash already exists")
+	}
 	k.Keeper.SetOverlayWasm(ctx, wasm)
 
 	hashString := hex.EncodeToString(wasm.Hash)
