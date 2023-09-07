@@ -29,7 +29,7 @@ func (q Querier) DataRequestWasm(c context.Context, req *types.QueryDataRequestW
 func (q Querier) DataRequestWasms(c context.Context, req *types.QueryDataRequestWasmsRequest) (*types.QueryDataRequestWasmsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryDataRequestWasmsResponse{
-		WasmHashes: q.GetDataRequestWasmHashes(ctx),
+		HashTypePairs: q.ListDataRequestWasms(ctx),
 	}, nil
 }
 
@@ -47,6 +47,6 @@ func (q Querier) OverlayWasm(c context.Context, req *types.QueryOverlayWasmReque
 func (q Querier) OverlayWasms(c context.Context, req *types.QueryOverlayWasmsRequest) (*types.QueryOverlayWasmsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryOverlayWasmsResponse{
-		WasmHashes: q.GetOverlayWasmHashes(ctx),
+		HashTypePairs: q.ListOverlayWasms(ctx),
 	}, nil
 }

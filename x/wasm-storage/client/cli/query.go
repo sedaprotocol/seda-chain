@@ -23,6 +23,8 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 	cmd.AddCommand(GetCmdQueryDataRequestWasm())
 	cmd.AddCommand(GetCmdQueryOverlayWasm())
+	cmd.AddCommand(GetCmdQueryDataRequestWasms())
+	cmd.AddCommand(GetCmdQueryOverlayWasms())
 	return cmd
 }
 
@@ -71,6 +73,58 @@ func GetCmdQueryOverlayWasm() *cobra.Command {
 				Hash: args[0],
 			}
 			res, err := queryClient.OverlayWasm(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryDataRequestWasms returns the command for querying
+// hashes and types of all Data Request Wasms.
+func GetCmdQueryDataRequestWasms() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list-data-request-wasms",
+		Short: "List hashes and types of all Data Request Wasms",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.DataRequestWasms(cmd.Context(), &types.QueryDataRequestWasmsRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryOverlayWasms returns the command for querying
+// hashes and types of all Overlay Wasms.
+func GetCmdQueryOverlayWasms() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list-overlay-wasms",
+		Short: "List hashes and types of all Overlay Wasms",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.OverlayWasms(cmd.Context(), &types.QueryOverlayWasmsRequest{})
 			if err != nil {
 				return err
 			}

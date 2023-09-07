@@ -41,6 +41,22 @@ func (k Keeper) GetDataRequestWasm(ctx sdk.Context, hash []byte) *types.Wasm {
 	return wasm
 }
 
+// SetOverlayWasm stores Overlay Wasm using its hash as the key.
+func (k Keeper) SetOverlayWasm(ctx sdk.Context, wasm *types.Wasm) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshal(wasm)
+	store.Set(types.GetDataRequestWasmKey(wasm.Hash), bz)
+}
+
+// GetOverlayWasm returns Overlay Wasm given its key.
+func (k Keeper) GetOverlayWasm(ctx sdk.Context, hash []byte) *types.Wasm {
+	var wasm *types.Wasm
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetOverlayWasmKey(hash))
+	k.cdc.MustUnmarshal(bz, wasm)
+	return wasm
+}
+
 // IterateAllDataRequestWasms iterates over the all the stored Data Request
 // Wasms and performs a given callback function.
 func (k Keeper) IterateAllDataRequestWasms(ctx sdk.Context, callback func(wasm types.Wasm) (stop bool)) {
@@ -56,33 +72,6 @@ func (k Keeper) IterateAllDataRequestWasms(ctx sdk.Context, callback func(wasm t
 			break
 		}
 	}
-}
-
-// GetDataRequestWasmHashes returns hashes of all Data Request Wasms
-// in the store.
-func (k Keeper) GetDataRequestWasmHashes(ctx sdk.Context) []string {
-	var hashes []string
-	k.IterateAllDataRequestWasms(ctx, func(w types.Wasm) bool {
-		hashes = append(hashes, hex.EncodeToString(w.Hash))
-		return false
-	})
-	return hashes
-}
-
-// SetOverlayWasm stores Overlay Wasm using its hash as the key.
-func (k Keeper) SetOverlayWasm(ctx sdk.Context, wasm *types.Wasm) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(wasm)
-	store.Set(types.GetDataRequestWasmKey(wasm.Hash), bz)
-}
-
-// GetOverlayWasm returns Overlay Wasm given its key.
-func (k Keeper) GetOverlayWasm(ctx sdk.Context, hash []byte) *types.Wasm {
-	var wasm *types.Wasm
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetOverlayWasmKey(hash))
-	k.cdc.MustUnmarshal(bz, wasm)
-	return wasm
 }
 
 // IterateAllOverlayWasms iterates over the all the stored Overlay Wasms
@@ -102,14 +91,25 @@ func (k Keeper) IterateAllOverlayWasms(ctx sdk.Context, callback func(wasm types
 	}
 }
 
-// GetOverlayWasmHashes returns hashes of all Overlay Wasms in the store.
-func (k Keeper) GetOverlayWasmHashes(ctx sdk.Context) []string {
-	var hashes []string
-	k.IterateAllOverlayWasms(ctx, func(w types.Wasm) bool {
-		hashes = append(hashes, hex.EncodeToString(w.Hash))
+// ListDataRequestWasms returns hashes and types of all Data Request Wasms
+// in the store.
+func (k Keeper) ListDataRequestWasms(ctx sdk.Context) []string {
+	var hashTypePairs []string
+	k.IterateAllDataRequestWasms(ctx, func(w types.Wasm) bool {
+		hashTypePairs = append(hashTypePairs, hex.EncodeToString(w.Hash)+","+w.WasmType.String())
 		return false
 	})
-	return hashes
+	return hashTypePairs
+}
+
+// ListOverlayWasms returns hashes and types of all Overlay Wasms in the store.
+func (k Keeper) ListOverlayWasms(ctx sdk.Context) []string {
+	var hashTypePairs []string
+	k.IterateAllOverlayWasms(ctx, func(w types.Wasm) bool {
+		hashTypePairs = append(hashTypePairs, hex.EncodeToString(w.Hash)+","+w.WasmType.String())
+		return false
+	})
+	return hashTypePairs
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

@@ -45,8 +45,8 @@ message QueryDataRequestWasmResponse {
 message QueryDataRequestWasmsRequest {}
 
 message QueryDataRequestWasmsResponse {
-  repeated string wasm_hashes = 1
-      [ (gogoproto.moretags) = "yaml:\"wasm_hashes\"" ];
+  repeated string hash_type_pairs = 1
+      [ (gogoproto.moretags) = "yaml:\"hash_type_pairs\"" ];
 }
 
 message QueryOverlayWasmRequest {
@@ -60,6 +60,6 @@ message QueryOverlayWasmResponse {
 message QueryOverlayWasmsRequest {}
 
 message QueryOverlayWasmsResponse {
-  repeated string wasm_hashes = 1
-      [ (gogoproto.moretags) = "yaml:\"wasm_hashes\"" ];
+  repeated string hash_type_pairs = 1
+      [ (gogoproto.moretags) = "yaml:\"hash_type_pairs\"" ];
 }
