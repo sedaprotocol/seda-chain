@@ -17,5 +17,3 @@ done
 cd ..
 cp -r github.com/sedaprotocol/seda-chain/x/* x/
 rm -rf github.com
-
-go mod tidy

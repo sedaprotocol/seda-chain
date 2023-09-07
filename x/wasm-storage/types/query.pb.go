@@ -117,6 +117,86 @@ func (m *QueryDataRequestWasmResponse) GetWasm() *Wasm {
 	return nil
 }
 
+type QueryDataRequestWasmsRequest struct {
+}
+
+func (m *QueryDataRequestWasmsRequest) Reset()         { *m = QueryDataRequestWasmsRequest{} }
+func (m *QueryDataRequestWasmsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryDataRequestWasmsRequest) ProtoMessage()    {}
+func (*QueryDataRequestWasmsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7fd64a9f2096b960, []int{2}
+}
+func (m *QueryDataRequestWasmsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDataRequestWasmsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDataRequestWasmsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDataRequestWasmsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataRequestWasmsRequest.Merge(m, src)
+}
+func (m *QueryDataRequestWasmsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDataRequestWasmsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataRequestWasmsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDataRequestWasmsRequest proto.InternalMessageInfo
+
+type QueryDataRequestWasmsResponse struct {
+	WasmHashes []string `protobuf:"bytes,1,rep,name=wasm_hashes,json=wasmHashes,proto3" json:"wasm_hashes,omitempty" yaml:"wasm_hashes"`
+}
+
+func (m *QueryDataRequestWasmsResponse) Reset()         { *m = QueryDataRequestWasmsResponse{} }
+func (m *QueryDataRequestWasmsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryDataRequestWasmsResponse) ProtoMessage()    {}
+func (*QueryDataRequestWasmsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7fd64a9f2096b960, []int{3}
+}
+func (m *QueryDataRequestWasmsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDataRequestWasmsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDataRequestWasmsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDataRequestWasmsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataRequestWasmsResponse.Merge(m, src)
+}
+func (m *QueryDataRequestWasmsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDataRequestWasmsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataRequestWasmsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDataRequestWasmsResponse proto.InternalMessageInfo
+
+func (m *QueryDataRequestWasmsResponse) GetWasmHashes() []string {
+	if m != nil {
+		return m.WasmHashes
+	}
+	return nil
+}
+
 type QueryOverlayWasmRequest struct {
 	Hash string `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty" yaml:"hash"`
 }
@@ -125,7 +205,7 @@ func (m *QueryOverlayWasmRequest) Reset()         { *m = QueryOverlayWasmRequest
 func (m *QueryOverlayWasmRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryOverlayWasmRequest) ProtoMessage()    {}
 func (*QueryOverlayWasmRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7fd64a9f2096b960, []int{2}
+	return fileDescriptor_7fd64a9f2096b960, []int{4}
 }
 func (m *QueryOverlayWasmRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -169,7 +249,7 @@ func (m *QueryOverlayWasmResponse) Reset()         { *m = QueryOverlayWasmRespon
 func (m *QueryOverlayWasmResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryOverlayWasmResponse) ProtoMessage()    {}
 func (*QueryOverlayWasmResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7fd64a9f2096b960, []int{3}
+	return fileDescriptor_7fd64a9f2096b960, []int{5}
 }
 func (m *QueryOverlayWasmResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -205,11 +285,95 @@ func (m *QueryOverlayWasmResponse) GetWasm() *Wasm {
 	return nil
 }
 
+type QueryOverlayWasmsRequest struct {
+}
+
+func (m *QueryOverlayWasmsRequest) Reset()         { *m = QueryOverlayWasmsRequest{} }
+func (m *QueryOverlayWasmsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryOverlayWasmsRequest) ProtoMessage()    {}
+func (*QueryOverlayWasmsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7fd64a9f2096b960, []int{6}
+}
+func (m *QueryOverlayWasmsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryOverlayWasmsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryOverlayWasmsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryOverlayWasmsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOverlayWasmsRequest.Merge(m, src)
+}
+func (m *QueryOverlayWasmsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryOverlayWasmsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOverlayWasmsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryOverlayWasmsRequest proto.InternalMessageInfo
+
+type QueryOverlayWasmsResponse struct {
+	WasmHashes []string `protobuf:"bytes,1,rep,name=wasm_hashes,json=wasmHashes,proto3" json:"wasm_hashes,omitempty" yaml:"wasm_hashes"`
+}
+
+func (m *QueryOverlayWasmsResponse) Reset()         { *m = QueryOverlayWasmsResponse{} }
+func (m *QueryOverlayWasmsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryOverlayWasmsResponse) ProtoMessage()    {}
+func (*QueryOverlayWasmsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7fd64a9f2096b960, []int{7}
+}
+func (m *QueryOverlayWasmsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryOverlayWasmsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryOverlayWasmsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryOverlayWasmsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOverlayWasmsResponse.Merge(m, src)
+}
+func (m *QueryOverlayWasmsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryOverlayWasmsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOverlayWasmsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryOverlayWasmsResponse proto.InternalMessageInfo
+
+func (m *QueryOverlayWasmsResponse) GetWasmHashes() []string {
+	if m != nil {
+		return m.WasmHashes
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*QueryDataRequestWasmRequest)(nil), "sedachain.wasm_storage.QueryDataRequestWasmRequest")
 	proto.RegisterType((*QueryDataRequestWasmResponse)(nil), "sedachain.wasm_storage.QueryDataRequestWasmResponse")
+	proto.RegisterType((*QueryDataRequestWasmsRequest)(nil), "sedachain.wasm_storage.QueryDataRequestWasmsRequest")
+	proto.RegisterType((*QueryDataRequestWasmsResponse)(nil), "sedachain.wasm_storage.QueryDataRequestWasmsResponse")
 	proto.RegisterType((*QueryOverlayWasmRequest)(nil), "sedachain.wasm_storage.QueryOverlayWasmRequest")
 	proto.RegisterType((*QueryOverlayWasmResponse)(nil), "sedachain.wasm_storage.QueryOverlayWasmResponse")
+	proto.RegisterType((*QueryOverlayWasmsRequest)(nil), "sedachain.wasm_storage.QueryOverlayWasmsRequest")
+	proto.RegisterType((*QueryOverlayWasmsResponse)(nil), "sedachain.wasm_storage.QueryOverlayWasmsResponse")
 }
 
 func init() {
@@ -217,32 +381,39 @@ func init() {
 }
 
 var fileDescriptor_7fd64a9f2096b960 = []byte{
-	// 394 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x2a, 0x4e, 0x4d, 0x49,
-	0x4c, 0xce, 0x48, 0xcc, 0xcc, 0xd3, 0x2f, 0x4f, 0x2c, 0xce, 0x8d, 0x2f, 0x2e, 0xc9, 0x2f, 0x4a,
-	0x4c, 0x4f, 0xd5, 0x2f, 0x2c, 0x4d, 0x2d, 0xaa, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12,
-	0x83, 0xab, 0xd1, 0x43, 0x56, 0x23, 0x25, 0x92, 0x9e, 0x9f, 0x9e, 0x0f, 0x56, 0xa2, 0x0f, 0x62,
-	0x41, 0x54, 0x4b, 0xc9, 0xa4, 0xe7, 0xe7, 0xa7, 0xe7, 0xa4, 0xea, 0x27, 0x16, 0x64, 0xea, 0x27,
-	0xe6, 0xe5, 0xe5, 0x97, 0x24, 0x96, 0x64, 0xe6, 0xe7, 0x15, 0x43, 0x65, 0x35, 0x71, 0xd8, 0x87,
-	0xcc, 0x81, 0x28, 0x55, 0x72, 0xe2, 0x92, 0x0e, 0x04, 0xb9, 0xc2, 0x25, 0xb1, 0x24, 0x31, 0x28,
-	0xb5, 0xb0, 0x34, 0xb5, 0xb8, 0x24, 0x3c, 0xb1, 0x38, 0x17, 0xca, 0x14, 0x52, 0xe6, 0x62, 0xc9,
-	0x48, 0x2c, 0xce, 0x90, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x74, 0xe2, 0xff, 0x74, 0x4f, 0x9e, 0xbb,
-	0x32, 0x31, 0x37, 0xc7, 0x4a, 0x09, 0x24, 0xaa, 0x14, 0x04, 0x96, 0x54, 0x4a, 0xe4, 0x92, 0xc1,
-	0x6e, 0x46, 0x71, 0x41, 0x7e, 0x5e, 0x71, 0xaa, 0x90, 0x23, 0x17, 0x0b, 0xc8, 0x66, 0xb0, 0x21,
-	0xdc, 0x46, 0x32, 0x7a, 0xd8, 0x7d, 0xaa, 0x07, 0xd2, 0x83, 0x6c, 0x05, 0x48, 0x52, 0x29, 0x08,
-	0xac, 0x55, 0xc9, 0x8e, 0x4b, 0x1c, 0x6c, 0x85, 0x7f, 0x59, 0x6a, 0x51, 0x4e, 0x62, 0x25, 0xc9,
-	0x4e, 0x8c, 0xe5, 0x92, 0xc0, 0xd4, 0x4f, 0x35, 0xe7, 0x19, 0xbd, 0x62, 0xe2, 0x62, 0x05, 0x9b,
-	0x2f, 0xb4, 0x9d, 0x91, 0x8b, 0x1f, 0x2d, 0x1c, 0x84, 0x8c, 0x71, 0x19, 0x89, 0x27, 0xe4, 0xa5,
-	0x4c, 0x48, 0xd3, 0x04, 0xf1, 0x8b, 0x92, 0x65, 0xd3, 0xe5, 0x27, 0x93, 0x99, 0x8c, 0x85, 0x0c,
-	0xf5, 0x41, 0xba, 0x75, 0x11, 0x69, 0x40, 0x17, 0x96, 0x06, 0x52, 0x12, 0x4b, 0x12, 0xe3, 0x8b,
-	0x20, 0x5a, 0xe3, 0x41, 0x32, 0xfa, 0xd5, 0xa0, 0x10, 0xaa, 0x15, 0x5a, 0xc6, 0xc8, 0xc5, 0x8d,
-	0x14, 0x3c, 0x42, 0xfa, 0x78, 0x1d, 0x80, 0x19, 0x11, 0x52, 0x06, 0xc4, 0x6b, 0x80, 0xba, 0xd6,
-	0x04, 0xec, 0x5a, 0x3d, 0x21, 0x1d, 0x9c, 0xae, 0xcd, 0x87, 0xe8, 0x42, 0x76, 0xa8, 0x53, 0xe0,
-	0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38, 0xe1, 0xb1, 0x1c,
-	0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0x99, 0xa7, 0x67, 0x96, 0x64, 0x94,
-	0x26, 0xe9, 0x25, 0xe7, 0xe7, 0x82, 0x4d, 0x04, 0x27, 0xf1, 0xe4, 0xfc, 0x1c, 0x64, 0xe3, 0x2b,
-	0x50, 0x2d, 0x28, 0xa9, 0x2c, 0x48, 0x2d, 0x4e, 0x62, 0x03, 0xab, 0x34, 0x06, 0x04, 0x00, 0x00,
-	0xff, 0xff, 0x63, 0x80, 0x60, 0xc6, 0xa9, 0x03, 0x00, 0x00,
+	// 511 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x54, 0xcf, 0x6a, 0x13, 0x41,
+	0x18, 0xcf, 0x68, 0x2b, 0xf4, 0x8b, 0x50, 0x19, 0xa4, 0xc6, 0x35, 0x6e, 0xcb, 0x08, 0x12, 0xd1,
+	0xec, 0xd8, 0xa6, 0x52, 0xf4, 0x20, 0x18, 0x3c, 0x78, 0x93, 0x06, 0x41, 0x11, 0x24, 0x7c, 0x4d,
+	0x87, 0x4d, 0x20, 0xd9, 0x49, 0x77, 0x26, 0x6a, 0x10, 0x2f, 0x3e, 0x81, 0xe0, 0x23, 0x08, 0x3e,
+	0x81, 0xe0, 0x23, 0xe8, 0xb1, 0xe0, 0xc5, 0x53, 0x91, 0xc4, 0x27, 0xe8, 0x13, 0xc8, 0xcc, 0x4e,
+	0xd3, 0x6d, 0x93, 0x94, 0x5d, 0xf4, 0x36, 0x93, 0xdf, 0xf7, 0xfb, 0x33, 0xbf, 0x7c, 0x2c, 0x30,
+	0x25, 0x76, 0xb1, 0xd5, 0xc6, 0x4e, 0xc4, 0xdf, 0xa0, 0xea, 0x35, 0x95, 0x96, 0x31, 0x86, 0x82,
+	0xef, 0x0d, 0x44, 0x3c, 0x0c, 0xfa, 0xb1, 0xd4, 0x92, 0xae, 0x4c, 0x66, 0x82, 0xf4, 0x8c, 0x77,
+	0x39, 0x94, 0xa1, 0xb4, 0x23, 0xdc, 0x9c, 0x92, 0x69, 0xaf, 0x1c, 0x4a, 0x19, 0x76, 0x05, 0xc7,
+	0x7e, 0x87, 0x63, 0x14, 0x49, 0x8d, 0xba, 0x23, 0x23, 0xe5, 0xd0, 0x5b, 0x73, 0xfc, 0xd2, 0x97,
+	0x64, 0x94, 0xd5, 0xe1, 0xda, 0xb6, 0x49, 0xf1, 0x18, 0x35, 0x36, 0xc4, 0xde, 0x40, 0x28, 0xfd,
+	0x1c, 0x55, 0xcf, 0x1d, 0xe9, 0x0d, 0x58, 0x68, 0xa3, 0x6a, 0x97, 0xc8, 0x1a, 0xa9, 0x2c, 0xd5,
+	0x97, 0x0f, 0x0f, 0x56, 0x8b, 0x43, 0xec, 0x75, 0x1f, 0x30, 0xf3, 0x2b, 0x6b, 0x58, 0x90, 0x21,
+	0x94, 0x67, 0x6b, 0xa8, 0xbe, 0x8c, 0x94, 0xa0, 0x8f, 0x60, 0xc1, 0x38, 0x5b, 0x91, 0xe2, 0x46,
+	0x39, 0x98, 0xfd, 0xd2, 0xc0, 0x70, 0xd2, 0x16, 0x06, 0x64, 0x0d, 0x4b, 0x65, 0xfe, 0x6c, 0x0b,
+	0xe5, 0xce, 0xec, 0x05, 0x5c, 0x9f, 0x83, 0xbb, 0x0c, 0x5b, 0x50, 0xb4, 0x66, 0x26, 0xb0, 0x50,
+	0x25, 0xb2, 0x76, 0xbe, 0xb2, 0x54, 0x5f, 0x39, 0x3c, 0x58, 0xa5, 0xc7, 0x66, 0x0e, 0x64, 0x0d,
+	0x30, 0xb7, 0x27, 0xc9, 0xe5, 0x21, 0x5c, 0xb1, 0xca, 0x4f, 0x5f, 0x8b, 0xb8, 0x8b, 0xc3, 0xdc,
+	0xe5, 0xbc, 0x82, 0xd2, 0x34, 0xff, 0xff, 0x15, 0xe3, 0x4d, 0xcb, 0x4f, 0x4a, 0x79, 0x06, 0x57,
+	0x67, 0x60, 0xff, 0x58, 0xc8, 0xc6, 0xf7, 0x45, 0x58, 0xb4, 0xb2, 0xf4, 0x1b, 0x81, 0xe5, 0x53,
+	0x85, 0xd3, 0xda, 0xbc, 0x47, 0x9c, 0xb1, 0x65, 0xde, 0x66, 0x3e, 0x52, 0xf2, 0x02, 0x76, 0xff,
+	0xc3, 0xcf, 0x3f, 0x9f, 0xce, 0xd5, 0xe8, 0x3a, 0x37, 0xec, 0xea, 0xf1, 0xbe, 0x57, 0x8f, 0xf6,
+	0x7d, 0x17, 0x35, 0x36, 0xe3, 0x84, 0xda, 0x34, 0x08, 0x7f, 0x67, 0x5e, 0xf4, 0x9e, 0x7e, 0x25,
+	0x70, 0xe9, 0xf4, 0xaa, 0xd0, 0x5c, 0x29, 0x8e, 0x4a, 0xf6, 0xee, 0xe5, 0x64, 0xb9, 0xf0, 0x35,
+	0x1b, 0xbe, 0x4a, 0x6f, 0x67, 0x0f, 0xaf, 0xe8, 0x17, 0x02, 0xc5, 0xd4, 0x9f, 0x49, 0xf9, 0x99,
+	0xde, 0xd3, 0x1b, 0xeb, 0xdd, 0xcd, 0x4e, 0x70, 0x39, 0x37, 0x6d, 0xce, 0x80, 0xde, 0x99, 0x9b,
+	0x53, 0x26, 0xac, 0x13, 0xfd, 0x7e, 0x26, 0x70, 0x31, 0xbd, 0x75, 0x34, 0xb3, 0xf1, 0xa4, 0xd7,
+	0xf5, 0x1c, 0x0c, 0x97, 0x35, 0xb0, 0x59, 0x2b, 0xf4, 0x66, 0xa6, 0xac, 0xaa, 0xbe, 0xfd, 0x63,
+	0xe4, 0x93, 0xfd, 0x91, 0x4f, 0x7e, 0x8f, 0x7c, 0xf2, 0x71, 0xec, 0x17, 0xf6, 0xc7, 0x7e, 0xe1,
+	0xd7, 0xd8, 0x2f, 0xbc, 0xdc, 0x0a, 0x3b, 0xba, 0x3d, 0xd8, 0x09, 0x5a, 0xb2, 0x67, 0xb5, 0xec,
+	0xb7, 0xb2, 0x25, 0xbb, 0x69, 0xe1, 0xb7, 0x27, 0xa5, 0xf5, 0xb0, 0x2f, 0xd4, 0xce, 0x05, 0x3b,
+	0x59, 0xfb, 0x1b, 0x00, 0x00, 0xff, 0xff, 0xb8, 0xdf, 0xf9, 0x41, 0xf2, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -259,8 +430,10 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// DataRequestWasm returns Data Request Wasm given its hash.
 	DataRequestWasm(ctx context.Context, in *QueryDataRequestWasmRequest, opts ...grpc.CallOption) (*QueryDataRequestWasmResponse, error)
+	DataRequestWasms(ctx context.Context, in *QueryDataRequestWasmsRequest, opts ...grpc.CallOption) (*QueryDataRequestWasmsResponse, error)
 	// OverlayWasm returns Overlay Wasm given its hash.
 	OverlayWasm(ctx context.Context, in *QueryOverlayWasmRequest, opts ...grpc.CallOption) (*QueryOverlayWasmResponse, error)
+	OverlayWasms(ctx context.Context, in *QueryOverlayWasmsRequest, opts ...grpc.CallOption) (*QueryOverlayWasmsResponse, error)
 }
 
 type queryClient struct {
@@ -280,9 +453,27 @@ func (c *queryClient) DataRequestWasm(ctx context.Context, in *QueryDataRequestW
 	return out, nil
 }
 
+func (c *queryClient) DataRequestWasms(ctx context.Context, in *QueryDataRequestWasmsRequest, opts ...grpc.CallOption) (*QueryDataRequestWasmsResponse, error) {
+	out := new(QueryDataRequestWasmsResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.Query/DataRequestWasms", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *queryClient) OverlayWasm(ctx context.Context, in *QueryOverlayWasmRequest, opts ...grpc.CallOption) (*QueryOverlayWasmResponse, error) {
 	out := new(QueryOverlayWasmResponse)
 	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.Query/OverlayWasm", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) OverlayWasms(ctx context.Context, in *QueryOverlayWasmsRequest, opts ...grpc.CallOption) (*QueryOverlayWasmsResponse, error) {
+	out := new(QueryOverlayWasmsResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.Query/OverlayWasms", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -293,8 +484,10 @@ func (c *queryClient) OverlayWasm(ctx context.Context, in *QueryOverlayWasmReque
 type QueryServer interface {
 	// DataRequestWasm returns Data Request Wasm given its hash.
 	DataRequestWasm(context.Context, *QueryDataRequestWasmRequest) (*QueryDataRequestWasmResponse, error)
+	DataRequestWasms(context.Context, *QueryDataRequestWasmsRequest) (*QueryDataRequestWasmsResponse, error)
 	// OverlayWasm returns Overlay Wasm given its hash.
 	OverlayWasm(context.Context, *QueryOverlayWasmRequest) (*QueryOverlayWasmResponse, error)
+	OverlayWasms(context.Context, *QueryOverlayWasmsRequest) (*QueryOverlayWasmsResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -304,8 +497,14 @@ type UnimplementedQueryServer struct {
 func (*UnimplementedQueryServer) DataRequestWasm(ctx context.Context, req *QueryDataRequestWasmRequest) (*QueryDataRequestWasmResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DataRequestWasm not implemented")
 }
+func (*UnimplementedQueryServer) DataRequestWasms(ctx context.Context, req *QueryDataRequestWasmsRequest) (*QueryDataRequestWasmsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DataRequestWasms not implemented")
+}
 func (*UnimplementedQueryServer) OverlayWasm(ctx context.Context, req *QueryOverlayWasmRequest) (*QueryOverlayWasmResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OverlayWasm not implemented")
+}
+func (*UnimplementedQueryServer) OverlayWasms(ctx context.Context, req *QueryOverlayWasmsRequest) (*QueryOverlayWasmsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OverlayWasms not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -330,6 +529,24 @@ func _Query_DataRequestWasm_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_DataRequestWasms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDataRequestWasmsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).DataRequestWasms(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.wasm_storage.Query/DataRequestWasms",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).DataRequestWasms(ctx, req.(*QueryDataRequestWasmsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Query_OverlayWasm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryOverlayWasmRequest)
 	if err := dec(in); err != nil {
@@ -348,6 +565,24 @@ func _Query_OverlayWasm_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_OverlayWasms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryOverlayWasmsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).OverlayWasms(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.wasm_storage.Query/OverlayWasms",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).OverlayWasms(ctx, req.(*QueryOverlayWasmsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "sedachain.wasm_storage.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -357,8 +592,16 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_DataRequestWasm_Handler,
 		},
 		{
+			MethodName: "DataRequestWasms",
+			Handler:    _Query_DataRequestWasms_Handler,
+		},
+		{
 			MethodName: "OverlayWasm",
 			Handler:    _Query_OverlayWasm_Handler,
+		},
+		{
+			MethodName: "OverlayWasms",
+			Handler:    _Query_OverlayWasms_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -430,6 +673,61 @@ func (m *QueryDataRequestWasmResponse) MarshalToSizedBuffer(dAtA []byte) (int, e
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryDataRequestWasmsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDataRequestWasmsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDataRequestWasmsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDataRequestWasmsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDataRequestWasmsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDataRequestWasmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.WasmHashes) > 0 {
+		for iNdEx := len(m.WasmHashes) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.WasmHashes[iNdEx])
+			copy(dAtA[i:], m.WasmHashes[iNdEx])
+			i = encodeVarintQuery(dAtA, i, uint64(len(m.WasmHashes[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *QueryOverlayWasmRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -495,6 +793,61 @@ func (m *QueryOverlayWasmResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryOverlayWasmsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryOverlayWasmsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryOverlayWasmsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryOverlayWasmsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryOverlayWasmsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryOverlayWasmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.WasmHashes) > 0 {
+		for iNdEx := len(m.WasmHashes) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.WasmHashes[iNdEx])
+			copy(dAtA[i:], m.WasmHashes[iNdEx])
+			i = encodeVarintQuery(dAtA, i, uint64(len(m.WasmHashes[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -532,6 +885,30 @@ func (m *QueryDataRequestWasmResponse) Size() (n int) {
 	return n
 }
 
+func (m *QueryDataRequestWasmsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryDataRequestWasmsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.WasmHashes) > 0 {
+		for _, s := range m.WasmHashes {
+			l = len(s)
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
 func (m *QueryOverlayWasmRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -554,6 +931,30 @@ func (m *QueryOverlayWasmResponse) Size() (n int) {
 	if m.Wasm != nil {
 		l = m.Wasm.Size()
 		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryOverlayWasmsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryOverlayWasmsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.WasmHashes) > 0 {
+		for _, s := range m.WasmHashes {
+			l = len(s)
+			n += 1 + l + sovQuery(uint64(l))
+		}
 	}
 	return n
 }
@@ -732,6 +1133,138 @@ func (m *QueryDataRequestWasmResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *QueryDataRequestWasmsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDataRequestWasmsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDataRequestWasmsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDataRequestWasmsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDataRequestWasmsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDataRequestWasmsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WasmHashes", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WasmHashes = append(m.WasmHashes, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *QueryOverlayWasmRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -878,6 +1411,138 @@ func (m *QueryOverlayWasmResponse) Unmarshal(dAtA []byte) error {
 			if err := m.Wasm.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryOverlayWasmsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryOverlayWasmsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryOverlayWasmsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryOverlayWasmsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryOverlayWasmsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryOverlayWasmsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WasmHashes", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WasmHashes = append(m.WasmHashes, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

@@ -58,7 +58,7 @@ func GetCmdStoreDataRequestWasm() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(FlagWasmType, "", "Wasm type")
+	cmd.Flags().String(FlagWasmType, "", "Data Request Wasm type: data-request or tally")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
@@ -89,7 +89,7 @@ func GetCmdStoreOverlayWasm() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(FlagWasmType, "", "Wasm type")
+	cmd.Flags().String(FlagWasmType, "", "Overlay Wasm type: data-request-executor or relayer")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

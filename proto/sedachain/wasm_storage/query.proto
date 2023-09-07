@@ -16,10 +16,21 @@ service Query {
         "/seda-chain/wasm-storage/data_request_wasm/{hash}";
   }
 
+  rpc DataRequestWasms(QueryDataRequestWasmsRequest)
+      returns (QueryDataRequestWasmsResponse) {
+    option (google.api.http).get =
+        "/seda-chain/wasm-storage/data_request_wasms";
+  }
+
   // OverlayWasm returns Overlay Wasm given its hash.
   rpc OverlayWasm(QueryOverlayWasmRequest) returns (QueryOverlayWasmResponse) {
     option (google.api.http).get =
         "/seda-chain/wasm-storage/overlay_wasm/{hash}";
+  }
+
+  rpc OverlayWasms(QueryOverlayWasmsRequest)
+      returns (QueryOverlayWasmsResponse) {
+    option (google.api.http).get = "/seda-chain/wasm-storage/overlay_wasms";
   }
 }
 
@@ -31,10 +42,24 @@ message QueryDataRequestWasmResponse {
   Wasm wasm = 1 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
 }
 
+message QueryDataRequestWasmsRequest {}
+
+message QueryDataRequestWasmsResponse {
+  repeated string wasm_hashes = 1
+      [ (gogoproto.moretags) = "yaml:\"wasm_hashes\"" ];
+}
+
 message QueryOverlayWasmRequest {
   string hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
 }
 
 message QueryOverlayWasmResponse {
   Wasm wasm = 1 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
+}
+
+message QueryOverlayWasmsRequest {}
+
+message QueryOverlayWasmsResponse {
+  repeated string wasm_hashes = 1
+      [ (gogoproto.moretags) = "yaml:\"wasm_hashes\"" ];
 }

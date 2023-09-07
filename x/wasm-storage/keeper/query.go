@@ -17,26 +17,36 @@ type Querier struct {
 
 func (q Querier) DataRequestWasm(c context.Context, req *types.QueryDataRequestWasmRequest) (*types.QueryDataRequestWasmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-
 	hash, err := hex.DecodeString(req.Hash)
 	if err != nil {
 		return nil, err
 	}
-
 	return &types.QueryDataRequestWasmResponse{
 		Wasm: q.GetDataRequestWasm(ctx, hash),
 	}, nil
 }
 
+func (q Querier) DataRequestWasms(c context.Context, req *types.QueryDataRequestWasmsRequest) (*types.QueryDataRequestWasmsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	return &types.QueryDataRequestWasmsResponse{
+		WasmHashes: q.GetDataRequestWasmHashes(ctx),
+	}, nil
+}
+
 func (q Querier) OverlayWasm(c context.Context, req *types.QueryOverlayWasmRequest) (*types.QueryOverlayWasmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-
 	hash, err := hex.DecodeString(req.Hash)
 	if err != nil {
 		return nil, err
 	}
-
 	return &types.QueryOverlayWasmResponse{
 		Wasm: q.GetOverlayWasm(ctx, hash),
+	}, nil
+}
+
+func (q Querier) OverlayWasms(c context.Context, req *types.QueryOverlayWasmsRequest) (*types.QueryOverlayWasmsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	return &types.QueryOverlayWasmsResponse{
+		WasmHashes: q.GetOverlayWasmHashes(ctx),
 	}, nil
 }

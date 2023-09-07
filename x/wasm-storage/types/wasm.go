@@ -23,13 +23,13 @@ func NewWasm(bytecode []byte, wasmType WasmType) *Wasm {
 
 func WasmTypeFromString(s string) WasmType {
 	switch strings.ToUpper(s) {
-	case "DATA_REQUEST", "WASM_TYPE_DATA_REQUEST":
+	case "DATA-REQUEST":
 		return WasmTypeDataRequest
-	case "TALLY", "WASM_TYPE_TALLY":
+	case "TALLY":
 		return WasmTypeTally
-	case "DATA_REQUEST_EXECUTOR", "WASM_TYPE_DATA_REQUEST_EXECUTOR":
+	case "DATA-REQUEST-EXECUTOR":
 		return WasmTypeDataRequestExecutor
-	case "RELAYER", "WASM_TYPE_RELAYER":
+	case "RELAYER":
 		return WasmTypeRelayer
 	default:
 		return WasmTypeNil
