@@ -124,6 +124,19 @@ func (k Keeper) ListOverlayWasms(ctx sdk.Context) []string {
 	return hashTypePairs
 }
 
+func (k Keeper) GetAllWasms(ctx sdk.Context) []types.Wasm {
+	var wasms []types.Wasm
+	k.IterateAllDataRequestWasms(ctx, func(wasm types.Wasm) bool {
+		wasms = append(wasms, wasm)
+		return false
+	})
+	k.IterateAllOverlayWasms(ctx, func(wasm types.Wasm) bool {
+		wasms = append(wasms, wasm)
+		return false
+	})
+	return wasms
+}
+
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
