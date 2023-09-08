@@ -1,7 +1,9 @@
 package types
 
 const (
-	EventTypeStore = "store"
+	EventTypeStoreDataRequestWasm = "store_data_request_wasm"
+	EventTypeOverlayWasm          = "store_overlay_wasm"
 
-	AttributeHash = "hash"
+	AttributeHash     = "hash"
+	AttributeWasmType = "wasm_type"
 )

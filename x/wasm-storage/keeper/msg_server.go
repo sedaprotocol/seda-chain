@@ -36,9 +36,10 @@ func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	hashString := hex.EncodeToString(wasm.Hash)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeStore,
+			types.EventTypeStoreDataRequestWasm,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeHash, hashString),
+			sdk.NewAttribute(types.AttributeWasmType, msg.WasmType.String()),
 		),
 	)
 	return &types.MsgStoreDataRequestWasmResponse{
@@ -59,9 +60,10 @@ func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 	hashString := hex.EncodeToString(wasm.Hash)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeStore,
+			types.EventTypeOverlayWasm,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeHash, hashString),
+			sdk.NewAttribute(types.AttributeWasmType, msg.WasmType.String()),
 		),
 	)
 	return &types.MsgStoreOverlayWasmResponse{
