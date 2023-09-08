@@ -51,7 +51,7 @@ func (k Keeper) HasDataRequestWasm(ctx sdk.Context, wasm *types.Wasm) bool {
 func (k Keeper) SetOverlayWasm(ctx sdk.Context, wasm *types.Wasm) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(wasm)
-	store.Set(types.GetDataRequestWasmKey(wasm.Hash), bz)
+	store.Set(types.GetOverlayWasmKey(wasm.Hash), bz)
 }
 
 // GetOverlayWasm returns Overlay Wasm given its key.
