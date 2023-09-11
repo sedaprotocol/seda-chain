@@ -258,7 +258,7 @@ type App struct {
 	ScopedICAHostKeeper  capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
 
-	SedachainKeeper wasmstoragekeeper.Keeper
+	WasmStorageKeeper wasmstoragekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -563,11 +563,11 @@ func NewApp(
 		),
 	)
 
-	app.SedachainKeeper = *wasmstoragekeeper.NewKeeper(
+	app.WasmStorageKeeper = *wasmstoragekeeper.NewKeeper(
 		appCodec,
 		keys[wasmstoragetypes.StoreKey],
 	)
-	sedachainModule := wasmstorage.NewAppModule(appCodec, app.SedachainKeeper, app.AccountKeeper, app.BankKeeper)
+	wasmStorageModule := wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper, app.AccountKeeper, app.BankKeeper)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
@@ -626,7 +626,7 @@ func NewApp(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		icaModule,
-		sedachainModule,
+		wasmStorageModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
