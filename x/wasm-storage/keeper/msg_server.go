@@ -76,15 +76,10 @@ func unzipWasm(wasm []byte) []byte {
 	var unzipped []byte
 	var err error
 	if ioutils.IsGzip(wasm) {
-		unzipped, err = ioutils.Uncompress(wasm, int64(800*1024))
+		unzipped, err = ioutils.Uncompress(wasm, types.MaxWasmSize)
 		if err != nil {
 			panic(err)
 		}
 	}
-
-	// // TO-DO: Check if Wasm?
-	// if !ioutils.IsWasm(unzipped) {
-	// }
-
 	return unzipped
 }
