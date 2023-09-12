@@ -34,32 +34,18 @@ service Query {
   }
 }
 
-message QueryDataRequestWasmRequest {
-  string hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
-}
+message QueryDataRequestWasmRequest { string hash = 1; }
 
-message QueryDataRequestWasmResponse {
-  Wasm wasm = 1 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
-}
+message QueryDataRequestWasmResponse { Wasm wasm = 1; }
 
 message QueryDataRequestWasmsRequest {}
 
-message QueryDataRequestWasmsResponse {
-  repeated string hash_type_pairs = 1
-      [ (gogoproto.moretags) = "yaml:\"hash_type_pairs\"" ];
-}
+message QueryDataRequestWasmsResponse { repeated string hash_type_pairs = 1; }
 
-message QueryOverlayWasmRequest {
-  string hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
-}
+message QueryOverlayWasmRequest { string hash = 1; }
 
-message QueryOverlayWasmResponse {
-  Wasm wasm = 1 [ (gogoproto.moretags) = "yaml:\"wasm\"" ];
-}
+message QueryOverlayWasmResponse { Wasm wasm = 1; }
 
 message QueryOverlayWasmsRequest {}
 
-message QueryOverlayWasmsResponse {
-  repeated string hash_type_pairs = 1
-      [ (gogoproto.moretags) = "yaml:\"hash_type_pairs\"" ];
-}
+message QueryOverlayWasmsResponse { repeated string hash_type_pairs = 1; }

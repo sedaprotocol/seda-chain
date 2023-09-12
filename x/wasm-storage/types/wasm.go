@@ -3,12 +3,15 @@ package types
 import (
 	fmt "fmt"
 	"strings"
+	"time"
 
 	"github.com/hyperledger/burrow/crypto"
 )
 
-// MaxWasmSize is the maximum size of Wasm bytecode.
-const MaxWasmSize = 800 * 1024
+const (
+	// MaxWasmSize is the maximum size of Wasm bytecode.
+	MaxWasmSize = 800 * 1024
+)
 
 func validateWasmCode(s []byte) error {
 	if len(s) == 0 {
@@ -22,7 +25,7 @@ func validateWasmCode(s []byte) error {
 
 // NewWasm constructs a new Wasm object given bytecode and Wasm type.
 // It panics if it fails to compute hash of bytecode.
-func NewWasm(bytecode []byte, wasmType WasmType) *Wasm {
+func NewWasm(bytecode []byte, wasmType WasmType, addedAt time.Time) *Wasm {
 	hash := crypto.Keccak256(bytecode)
 	if hash == nil {
 		panic("failed to compute hash")
@@ -32,6 +35,7 @@ func NewWasm(bytecode []byte, wasmType WasmType) *Wasm {
 		Hash:     hash,
 		Bytecode: bytecode,
 		WasmType: wasmType,
+		AddedAt:  addedAt,
 	}
 }
 

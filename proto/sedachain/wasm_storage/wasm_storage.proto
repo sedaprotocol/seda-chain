@@ -2,13 +2,16 @@ syntax = "proto3";
 package sedachain.wasm_storage;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
 message Wasm {
-  bytes hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
-  bytes bytecode = 2 [ (gogoproto.moretags) = "yaml:\"bytecode\"" ];
-  WasmType wasmType = 3 [ (gogoproto.moretags) = "yaml:\"wasm_type\"" ];
+  bytes hash = 1;
+  bytes bytecode = 2;
+  WasmType wasmType = 3;
+  google.protobuf.Timestamp added_at = 4
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 
 enum WasmType {
@@ -24,3 +27,5 @@ enum WasmType {
   WASM_TYPE_RELAYER = 4
       [ (gogoproto.enumvalue_customname) = "WasmTypeRelayer" ];
 }
+
+message Params { uint64 max_wasm_size = 1; }

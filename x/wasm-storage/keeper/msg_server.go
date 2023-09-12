@@ -27,7 +27,7 @@ func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	unzipped := unzipWasm(msg.Wasm)
-	wasm := types.NewWasm(unzipped, msg.WasmType)
+	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
 	if k.Keeper.HasDataRequestWasm(ctx, wasm) {
 		return nil, fmt.Errorf("Data Request Wasm with given hash already exists")
 	}
@@ -51,7 +51,7 @@ func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	unzipped := unzipWasm(msg.Wasm)
-	wasm := types.NewWasm(unzipped, msg.WasmType)
+	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
 	if k.Keeper.HasOverlayWasm(ctx, wasm) {
 		return nil, fmt.Errorf("Overlay Wasm with given hash already exists")
 	}
