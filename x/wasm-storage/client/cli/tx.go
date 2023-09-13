@@ -29,7 +29,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		GetCmdStoreDataRequestWasm(),
-		// GetCmdStoreOverlayWasm(),
+		GetCmdStoreOverlayWasm(),
 		SubmitProposalCmd(),
 	)
 	return cmd
@@ -67,7 +67,6 @@ func GetCmdStoreDataRequestWasm() *cobra.Command {
 	return cmd
 }
 
-/*
 // GetCmdStoreOverlayWasm returns the command for storing Overlay Wasm.
 func GetCmdStoreOverlayWasm() *cobra.Command {
 	cmd := &cobra.Command{
@@ -99,7 +98,6 @@ func GetCmdStoreOverlayWasm() *cobra.Command {
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
-*/
 
 func gzipWasmFile(filename string) ([]byte, error) {
 	wasm, err := os.ReadFile(filename)
