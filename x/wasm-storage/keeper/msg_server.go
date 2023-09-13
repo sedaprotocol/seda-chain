@@ -26,6 +26,10 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgStoreDataRequestWasm) (*types.MsgStoreDataRequestWasmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	if msg.Sender != k.authority {
+		return nil, fmt.Errorf("invalid authority %s", msg.Sender)
+	}
+
 	unzipped := unzipWasm(msg.Wasm)
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
 	if k.Keeper.HasDataRequestWasm(ctx, wasm) {

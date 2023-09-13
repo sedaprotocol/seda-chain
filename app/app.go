@@ -566,6 +566,7 @@ func NewApp(
 	app.WasmStorageKeeper = *wasmstoragekeeper.NewKeeper(
 		appCodec,
 		keys[wasmstoragetypes.StoreKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	wasmStorageModule := wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper, app.AccountKeeper, app.BankKeeper)
 
