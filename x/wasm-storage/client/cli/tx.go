@@ -29,7 +29,6 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		GetCmdStoreDataRequestWasm(),
-		GetCmdStoreOverlayWasm(),
 		SubmitProposalCmd(),
 	)
 	return cmd
@@ -62,38 +61,6 @@ func GetCmdStoreDataRequestWasm() *cobra.Command {
 	}
 
 	cmd.Flags().String(FlagWasmType, "", "Data Request Wasm type: data-request or tally")
-	cmd.MarkFlagRequired(FlagWasmType)
-	flags.AddTxFlagsToCmd(cmd)
-	return cmd
-}
-
-// GetCmdStoreOverlayWasm returns the command for storing Overlay Wasm.
-func GetCmdStoreOverlayWasm() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "store-overlay-wasm <filename>",
-		Short: "Store Overlay Wasm file",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			wasm, err := gzipWasmFile(args[0])
-			if err != nil {
-				return err
-			}
-
-			msg := &types.MsgStoreOverlayWasm{
-				Sender:   clientCtx.GetFromAddress().String(),
-				Wasm:     wasm,
-				WasmType: types.WasmTypeFromString(viper.GetString(FlagWasmType)),
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	cmd.Flags().String(FlagWasmType, "", "Overlay Wasm type: data-request-executor or relayer")
 	cmd.MarkFlagRequired(FlagWasmType)
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
