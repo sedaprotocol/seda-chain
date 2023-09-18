@@ -3,7 +3,7 @@ package sedachain.wasm_storage;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "sedachain/wasm_storage/wasm_storage.proto";
+import "sedachain/wasm_storage/v1/wasm_storage.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 

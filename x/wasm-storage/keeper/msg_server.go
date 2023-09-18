@@ -37,14 +37,16 @@ func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	k.Keeper.SetDataRequestWasm(ctx, wasm)
 
 	hashString := hex.EncodeToString(wasm.Hash)
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeStoreDataRequestWasm,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeHash, hashString),
-			sdk.NewAttribute(types.AttributeWasmType, msg.WasmType.String()),
-		),
-	)
+
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.EventStoreDataRequestWasm{
+			Hash:     hashString,
+			WasmType: msg.WasmType,
+		})
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.MsgStoreDataRequestWasmResponse{
 		Hash: hashString,
 	}, nil
@@ -68,14 +70,15 @@ func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 	k.Keeper.SetOverlayWasm(ctx, wasm)
 
 	hashString := hex.EncodeToString(wasm.Hash)
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeOverlayWasm,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeHash, hashString),
-			sdk.NewAttribute(types.AttributeWasmType, msg.WasmType.String()),
-		),
-	)
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.EventStoreOverlayWasm{
+			Hash:     hashString,
+			WasmType: msg.WasmType,
+		})
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.MsgStoreOverlayWasmResponse{
 		Hash: hashString,
 	}, nil
