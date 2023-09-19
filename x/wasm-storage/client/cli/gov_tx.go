@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -76,7 +75,7 @@ func ProposalStoreOverlayCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err = proposalMsg.ValidateBasic(); err != nil { //TO-DO remove??
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
@@ -87,7 +86,6 @@ func ProposalStoreOverlayCmd() *cobra.Command {
 
 	cmd.Flags().String(FlagWasmType, "", "Overlay Wasm type: data-request-executor or relayer")
 	cmd.MarkFlagRequired(FlagWasmType)
-	// proposal flags
 	addCommonProposalFlags(cmd)
 	return cmd
 }
@@ -97,62 +95,43 @@ func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "instantiate-and-register-proxy-contract [code_id_int64] [json_encoded_init_args] [salt] --label [text] --admin [address,optional] --amount [coins,optional] " +
 			"--fix-msg [bool,optional]",
-		Short: "Instantiate Proxy contract and register its address",
+		Short: "Submit a proposal to instantiate a proxy contract and register its address",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// clientCtx, _, _, _, err := getProposalInfo(cmd)
-			clientCtx, err := client.GetClientTxContext(cmd)
-			salt, err := decoder.DecodeString(args[2])
-			if err != nil {
-				return fmt.Errorf("salt: %w", err)
-			}
-			fixMsg, err := cmd.Flags().GetBool(flagFixMsg)
-			if err != nil {
-				return fmt.Errorf("fix msg: %w", err)
-			}
-
-			// clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
-			// if err != nil {
-			// 	return err
-			// }
-
-			// authority, err := cmd.Flags().GetString(flagAuthority)
-			// if err != nil {
-			// 	return fmt.Errorf("authority: %s", err)
-			// }
-
-			// if len(authority) == 0 {
-			// 	return errors.New("authority address is required")
-			// }
-
-			// TO-DO: clientCtx.GetFromAddress().String() to authority
-			src, err := parseInstantiateAndRegisterProxyContractArgs(args[0], args[1], clientCtx.Keyring, clientCtx.GetFromAddress().String(), cmd.Flags())
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
 
-			proposalMsg := src
-			proposalMsg.Salt = salt
-			proposalMsg.FixMsg = fixMsg
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
 
-			// TO-DO
-			// proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
-			// if err != nil {
-			// 	return err
-			// }
-			// if err = proposalMsg.ValidateBasic(); err != nil { //TO-DO remove??
-			// 	return err
-			// }
+			src, err := parseInstantiateAndRegisterProxyContractArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
+			if err != nil {
+				return err
+			}
+			salt, err := decoder.DecodeString(args[2])
+			if err != nil {
+				return fmt.Errorf("salt: %w", err)
+			}
+			src.Salt = salt
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
+			if err != nil {
+				return err
+			}
+			if err = proposalMsg.ValidateBasic(); err != nil {
+				return err
+			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 	}
-
-	// or addCommonProposalFlags(cmd)
-	// cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	// cmd.Flags().String(cli.FlagSummary, "", "Summary of proposal")
-	// cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	// cmd.Flags().String(flagAuthority, DefaultGovAuthority.String(), "The address of the governance account. Default is the sdk gov module account")
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
@@ -160,7 +139,8 @@ func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
 	decoder.RegisterFlags(cmd.PersistentFlags(), "salt")
-	flags.AddTxFlagsToCmd(cmd)
+	addCommonProposalFlags(cmd)
+
 	return cmd
 }
 
@@ -178,51 +158,7 @@ func parseStoreOverlayArgs(file string, sender string, flags *flag.FlagSet) (*ty
 	return msg, nil
 }
 
-type argumentDecoder struct {
-	// dec is the default decoder
-	dec                func(string) ([]byte, error)
-	asciiF, hexF, b64F bool
-}
-
-func newArgDecoder(def func(string) ([]byte, error)) *argumentDecoder {
-	return &argumentDecoder{dec: def}
-}
-
-func (a *argumentDecoder) RegisterFlags(f *flag.FlagSet, argName string) {
-	f.BoolVar(&a.asciiF, "ascii", false, "ascii encoded "+argName)
-	f.BoolVar(&a.hexF, "hex", false, "hex encoded "+argName)
-	f.BoolVar(&a.b64F, "b64", false, "base64 encoded "+argName)
-}
-
-func (a *argumentDecoder) DecodeString(s string) ([]byte, error) {
-	found := -1
-	for i, v := range []*bool{&a.asciiF, &a.hexF, &a.b64F} {
-		if !*v {
-			continue
-		}
-		if found != -1 {
-			return nil, errors.New("multiple decoding flags used")
-		}
-		found = i
-	}
-	switch found {
-	case 0:
-		return asciiDecodeString(s)
-	case 1:
-		return hex.DecodeString(s)
-	case 2:
-		return base64.StdEncoding.DecodeString(s)
-	default:
-		return a.dec(s)
-	}
-}
-
-func asciiDecodeString(s string) ([]byte, error) {
-	return []byte(s), nil
-}
-
 func parseInstantiateAndRegisterProxyContractArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender string, flags *flag.FlagSet) (*types.MsgInstantiateAndRegisterProxyContract, error) {
-	// get the id of the code to instantiate
 	codeID, err := strconv.ParseUint(rawCodeID, 10, 64)
 	if err != nil {
 		return nil, err
@@ -278,6 +214,11 @@ func parseInstantiateAndRegisterProxyContractArgs(rawCodeID, initMsg string, kr 
 		}
 	}
 
+	fixMsg, err := flags.GetBool(flagFixMsg)
+	if err != nil {
+		return nil, fmt.Errorf("fix msg: %w", err)
+	}
+
 	msg := types.MsgInstantiateAndRegisterProxyContract{
 		Sender: sender,
 		CodeID: codeID,
@@ -285,6 +226,7 @@ func parseInstantiateAndRegisterProxyContractArgs(rawCodeID, initMsg string, kr 
 		Funds:  amount,
 		Msg:    []byte(initMsg),
 		Admin:  adminStr,
+		FixMsg: fixMsg,
 	}
 	return &msg, nil
 }
