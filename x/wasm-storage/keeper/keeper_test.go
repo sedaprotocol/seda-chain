@@ -2,39 +2,11 @@ package keeper_test
 
 import (
 	"encoding/hex"
-	"testing"
-	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
-
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 var mockedByteArray = []byte("82a9dda829eb7f8ffe9fbe49e45d47d2dad9664fbb7adf72492e3c81ebd3e29134d9bc12212bf83c6840f10e8246b9db54a4859b7ccd0123d86e5872c1e5082")
-
-type KeeperTestSuite struct {
-	suite.Suite
-
-	ctx               sdk.Context
-	wasmStorageKeeper *keeper.Keeper
-	blockTime         time.Time
-	cdc               codec.Codec
-}
-
-func (s *KeeperTestSuite) SetupTest() {
-	storageKeeper, enCfg, ctx := setupKeeper(s.T())
-	s.wasmStorageKeeper = storageKeeper
-	s.ctx = ctx
-	s.cdc = enCfg.Codec
-
-}
-
-func TestKeeperTestSuite(t *testing.T) {
-	suite.Run(t, new(KeeperTestSuite))
-}
 
 func (s *KeeperTestSuite) TestSetDataRequestWasm() {
 	s.SetupTest()

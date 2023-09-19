@@ -2,19 +2,52 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/stretchr/testify/suite"
 
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-func setupKeeper(t *testing.T) (*keeper.Keeper, moduletestutil.TestEncodingConfig, sdk.Context) {
+type KeeperTestSuite struct {
+	suite.Suite
+
+	ctx               sdk.Context
+	wasmStorageKeeper *keeper.Keeper
+	blockTime         time.Time
+	cdc               codec.Codec
+	msgSrvr           wasmstoragetypes.MsgServer
+	authority         string
+}
+
+func (s *KeeperTestSuite) SetupTest() {
+	s.authority = authtypes.NewModuleAddress("gov").String()
+	wasmStorageKeeper, enCfg, ctx := setupKeeper(s.T(), s.authority)
+	s.wasmStorageKeeper = wasmStorageKeeper
+	s.ctx = ctx
+	s.cdc = enCfg.Codec
+
+	msr := keeper.NewMsgServerImpl(*wasmStorageKeeper)
+	//msr.SetInterfaceRegistry(enCfg.InterfaceRegistry)
+	//
+	//wasmstoragetypes.RegisterMsgServer(msr, keeper.NewMsgServerImpl(*wasmStorageKeeper))
+
+	s.msgSrvr = msr
+
+}
+
+func TestKeeperTestSuite(t *testing.T) {
+	suite.Run(t, new(KeeperTestSuite))
+}
+
+func setupKeeper(t *testing.T, authority string) (*keeper.Keeper, moduletestutil.TestEncodingConfig, sdk.Context) {
 	t.Helper()
 	key := sdk.NewKVStoreKey(wasmstoragetypes.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(t, key, sdk.NewTransientStoreKey("transient_test"))
@@ -22,12 +55,7 @@ func setupKeeper(t *testing.T) (*keeper.Keeper, moduletestutil.TestEncodingConfi
 	encCfg := moduletestutil.MakeTestEncodingConfig(wasmstorage.AppModuleBasic{})
 	wasmstoragetypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 
-	msr := baseapp.NewMsgServiceRouter()
+	wasmStorageKeeper := keeper.NewKeeper(encCfg.Codec, key, authority)
 
-	wasmStorageKeeper := keeper.NewKeeper(encCfg.Codec, key, authtypes.NewModuleAddress("gov").String())
-
-	msr.SetInterfaceRegistry(encCfg.InterfaceRegistry)
-
-	wasmstoragetypes.RegisterMsgServer(msr, keeper.NewMsgServerImpl(*wasmStorageKeeper))
 	return wasmStorageKeeper, encCfg, ctx
 }
