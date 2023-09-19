@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,6 +17,9 @@ import (
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
+var mockedByteArray = []byte("82a9dda829eb7f8ffe9fbe49e45d47d2dad9664fbb7adf72492e3c81ebd3e29134d9bc12212bf83c6840f10e8246b9db54a4859b7ccd0123d86e5872c1e5082")
+var mockedByteArray2 = []byte("a9dda829eb7f8ffe9fbesfa49e45d47d2dad9664fbb7adf72492e3c81ebd3e29134d9bc12212bf83c6840f10e8246b9db54a4859b7ccd0123d86e5872c1e50829a")
+
 type KeeperTestSuite struct {
 	suite.Suite
 
@@ -24,6 +28,7 @@ type KeeperTestSuite struct {
 	blockTime         time.Time
 	cdc               codec.Codec
 	msgSrvr           wasmstoragetypes.MsgServer
+	queryClient       wasmstoragetypes.QueryClient
 	authority         string
 }
 
@@ -35,11 +40,12 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.cdc = enCfg.Codec
 
 	msr := keeper.NewMsgServerImpl(*wasmStorageKeeper)
-	//msr.SetInterfaceRegistry(enCfg.InterfaceRegistry)
-	//
-	//wasmstoragetypes.RegisterMsgServer(msr, keeper.NewMsgServerImpl(*wasmStorageKeeper))
-
 	s.msgSrvr = msr
+
+	queryHelper := baseapp.NewQueryServerTestHelper(ctx, enCfg.InterfaceRegistry)
+	querier := keeper.NewQuerierImpl(*s.wasmStorageKeeper)
+	wasmstoragetypes.RegisterQueryServer(queryHelper, querier)
+	s.queryClient = wasmstoragetypes.NewQueryClient(queryHelper)
 
 }
 

@@ -2,17 +2,22 @@ package keeper_test
 
 import (
 	"encoding/hex"
+	"os"
+
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
+	"github.com/hyperledger/burrow/crypto"
 
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-var mockedByteArray = []byte("82a9dda829eb7f8ffe9fbe49e45d47d2dad9664fbb7adf72492e3c81ebd3e29134d9bc12212bf83c6840f10e8246b9db54a4859b7ccd0123d86e5872c1e5082")
-
 func (s *KeeperTestSuite) TestSetDataRequestWasm() {
 	s.SetupTest()
+	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	s.Require().NoError(err)
+	compWasm, err := ioutils.GzipIt(wasm)
 	mockWasm := &wasmstoragetypes.Wasm{
-		Hash:     mockedByteArray,
-		Bytecode: mockedByteArray,
+		Hash:     crypto.Keccak256(compWasm),
+		Bytecode: compWasm,
 		WasmType: wasmstoragetypes.WasmTypeDataRequest,
 	}
 	s.wasmStorageKeeper.SetDataRequestWasm(s.ctx, mockWasm)

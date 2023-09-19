@@ -26,10 +26,13 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgStoreDataRequestWasm) (*types.MsgStoreDataRequestWasmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	unzipped := unzipWasm(msg.Wasm)
+	unzipped, err := unzipWasm(msg.Wasm)
+	if err != nil {
+		return nil, err
+	}
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
 	if k.Keeper.HasDataRequestWasm(ctx, wasm) {
-		return nil, fmt.Errorf("Data Request Wasm with given hash already exists")
+		return nil, fmt.Errorf("data Request Wasm with given hash already exists")
 	}
 	k.Keeper.SetDataRequestWasm(ctx, wasm)
 
@@ -54,10 +57,13 @@ func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 		return nil, fmt.Errorf("invalid authority %s", msg.Sender)
 	}
 
-	unzipped := unzipWasm(msg.Wasm)
+	unzipped, err := unzipWasm(msg.Wasm)
+	if err != nil {
+		return nil, err
+	}
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
 	if k.Keeper.HasOverlayWasm(ctx, wasm) {
-		return nil, fmt.Errorf("Overlay Wasm with given hash already exists")
+		return nil, fmt.Errorf("overlay Wasm with given hash already exists")
 	}
 	k.Keeper.SetOverlayWasm(ctx, wasm)
 
@@ -76,14 +82,15 @@ func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 }
 
 // unzipWasm unzips a gzipped Wasm into
-func unzipWasm(wasm []byte) []byte {
+func unzipWasm(wasm []byte) ([]byte, error) {
 	var unzipped []byte
 	var err error
-	if ioutils.IsGzip(wasm) {
-		unzipped, err = ioutils.Uncompress(wasm, types.MaxWasmSize)
-		if err != nil {
-			panic(err)
-		}
+	if !ioutils.IsGzip(wasm) {
+		return nil, fmt.Errorf("wasm is not gzip compressed")
 	}
-	return unzipped
+	unzipped, err = ioutils.Uncompress(wasm, types.MaxWasmSize)
+	if err != nil {
+		return unzipped, nil
+	}
+	return unzipped, nil
 }

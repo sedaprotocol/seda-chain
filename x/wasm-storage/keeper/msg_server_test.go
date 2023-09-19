@@ -1,8 +1,20 @@
 package keeper_test
 
-import "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
+import (
+	"encoding/hex"
+	"os"
+
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
+	"github.com/hyperledger/burrow/crypto"
+
+	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
+)
 
 func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
+	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	s.Require().NoError(err)
+	compWasm, err := ioutils.GzipIt(wasm)
+
 	cases := []struct {
 		name      string
 		preRun    func()
@@ -16,25 +28,25 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 			preRun: func() {},
 			input: types.MsgStoreDataRequestWasm{
 				Sender:   s.authority,
-				Wasm:     mockedByteArray,
+				Wasm:     compWasm,
 				WasmType: types.WasmTypeDataRequest,
 			},
 			expErr: false,
 			expOutput: types.MsgStoreDataRequestWasmResponse{
-				Hash: "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+				Hash: hex.EncodeToString(crypto.Keccak256(wasm)),
 			},
 		},
 		{
 			name: "Overlay wasm already exist",
 			input: types.MsgStoreDataRequestWasm{
 				Sender:   s.authority,
-				Wasm:     mockedByteArray,
+				Wasm:     compWasm,
 				WasmType: types.WasmTypeDataRequest,
 			},
 			preRun: func() {
 				input := types.MsgStoreDataRequestWasm{
 					Sender:   s.authority,
-					Wasm:     mockedByteArray,
+					Wasm:     compWasm,
 					WasmType: types.WasmTypeDataRequest,
 				}
 				_, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &input)
@@ -60,6 +72,9 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 }
 
 func (s *KeeperTestSuite) TestStoreOverlayWasm() {
+	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	s.Require().NoError(err)
+	compWasm, err := ioutils.GzipIt(wasm)
 	cases := []struct {
 		name      string
 		preRun    func()
@@ -72,21 +87,21 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			name: "happy path",
 			input: types.MsgStoreOverlayWasm{
 				Sender:   s.authority,
-				Wasm:     mockedByteArray,
+				Wasm:     compWasm,
 				WasmType: types.WasmTypeDataRequest,
 			},
 			preRun:    func() {},
 			expErr:    false,
 			expErrMsg: "",
 			expOutput: types.MsgStoreOverlayWasmResponse{
-				Hash: "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+				Hash: hex.EncodeToString(crypto.Keccak256(wasm)),
 			},
 		},
 		{
 			name: "invalid authority",
 			input: types.MsgStoreOverlayWasm{
 				Sender:   "this-is-not-valid",
-				Wasm:     mockedByteArray,
+				Wasm:     compWasm,
 				WasmType: types.WasmTypeDataRequest,
 			},
 			preRun:    func() {},
@@ -97,13 +112,13 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			name: "Overlay wasm already exist",
 			input: types.MsgStoreOverlayWasm{
 				Sender:   s.authority,
-				Wasm:     mockedByteArray,
+				Wasm:     compWasm,
 				WasmType: types.WasmTypeDataRequest,
 			},
 			preRun: func() {
 				input := types.MsgStoreOverlayWasm{
 					Sender:   s.authority,
-					Wasm:     mockedByteArray,
+					Wasm:     compWasm,
 					WasmType: types.WasmTypeDataRequest,
 				}
 				_, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)

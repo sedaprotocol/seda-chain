@@ -15,6 +15,12 @@ type Querier struct {
 	Keeper
 }
 
+func NewQuerierImpl(keeper Keeper) types.QueryServer {
+	return &Querier{
+		keeper,
+	}
+}
+
 func (q Querier) DataRequestWasm(c context.Context, req *types.QueryDataRequestWasmRequest) (*types.QueryDataRequestWasmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	hash, err := hex.DecodeString(req.Hash)
@@ -26,7 +32,7 @@ func (q Querier) DataRequestWasm(c context.Context, req *types.QueryDataRequestW
 	}, nil
 }
 
-func (q Querier) DataRequestWasms(c context.Context, req *types.QueryDataRequestWasmsRequest) (*types.QueryDataRequestWasmsResponse, error) {
+func (q Querier) DataRequestWasms(c context.Context, _ *types.QueryDataRequestWasmsRequest) (*types.QueryDataRequestWasmsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryDataRequestWasmsResponse{
 		HashTypePairs: q.ListDataRequestWasms(ctx),
