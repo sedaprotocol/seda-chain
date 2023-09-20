@@ -1,6 +1,5 @@
-# This module represents buf.build/cosmos/cosmos-sdk
 version: v1
-name: buf.build/cosmos/cosmos-sdk
+name: buf.build/sedaprotocol/seda-chain
 deps:
   - buf.build/cosmos/cosmos-proto
   - buf.build/cosmos/gogo-proto

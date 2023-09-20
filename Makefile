@@ -119,6 +119,10 @@ proto-gen:
 	@echo "Generating Protobuf files"
 	@$(protoImage) sh ./scripts/protocgen.sh
 
+proto-gen-rust:
+	@echo "Generating Rust Protobuf files"
+	@$(protoImage) sh ./scripts/protocgen-rust.sh
+
 proto-lint:
 	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
 
