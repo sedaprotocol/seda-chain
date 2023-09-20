@@ -2,3 +2,5 @@ version: v1
 plugins:
   - plugin: buf.build/community/neoeinstein-prost:v0.2.3
     out: ./gen-rust
+  - plugin: buf.build/community/neoeinstein-tonic:v0.3.0
+    out: ./gen-rust
