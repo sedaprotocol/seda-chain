@@ -22,7 +22,6 @@ var mockedByteArray2 = []byte("a9dda829eb7f8ffe9fbesfa49e45d47d2dad9664fbb7adf72
 
 type KeeperTestSuite struct {
 	suite.Suite
-
 	ctx               sdk.Context
 	wasmStorageKeeper *keeper.Keeper
 	blockTime         time.Time
@@ -46,7 +45,6 @@ func (s *KeeperTestSuite) SetupTest() {
 	querier := keeper.NewQuerierImpl(*s.wasmStorageKeeper)
 	wasmstoragetypes.RegisterQueryServer(queryHelper, querier)
 	s.queryClient = wasmstoragetypes.NewQueryClient(queryHelper)
-
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -61,7 +59,7 @@ func setupKeeper(t *testing.T, authority string) (*keeper.Keeper, moduletestutil
 	encCfg := moduletestutil.MakeTestEncodingConfig(wasmstorage.AppModuleBasic{})
 	wasmstoragetypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 
-	wasmStorageKeeper := keeper.NewKeeper(encCfg.Codec, key, authority)
+	wasmStorageKeeper := keeper.NewKeeper(encCfg.Codec, key, authority, nil)
 
 	return wasmStorageKeeper, encCfg, ctx
 }
