@@ -563,10 +563,13 @@ func NewApp(
 		),
 	)
 
+	contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
+
 	app.WasmStorageKeeper = *wasmstoragekeeper.NewKeeper(
 		appCodec,
 		keys[wasmstoragetypes.StoreKey],
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		contractKeeper,
 	)
 	wasmStorageModule := wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper, app.AccountKeeper, app.BankKeeper)
 

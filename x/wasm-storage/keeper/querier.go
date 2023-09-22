@@ -56,3 +56,10 @@ func (q Querier) OverlayWasms(c context.Context, req *types.QueryOverlayWasmsReq
 		HashTypePairs: q.ListOverlayWasms(ctx),
 	}, nil
 }
+
+func (q Querier) ProxyContractRegistry(c context.Context, req *types.QueryProxyContractRegistryRequest) (*types.QueryProxyContractRegistryResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	return &types.QueryProxyContractRegistryResponse{
+		Address: q.GetProxyContractRegistry(ctx).String(),
+	}, nil
+}

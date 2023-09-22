@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -14,16 +15,18 @@ import (
 )
 
 type Keeper struct {
-	cdc       codec.BinaryCodec
-	storeKey  storetypes.StoreKey
-	authority string
+	cdc        codec.BinaryCodec
+	storeKey   storetypes.StoreKey
+	authority  string
+	wasmKeeper wasmtypes.ContractOpsKeeper
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey, authority string) *Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey, authority string, wk wasmtypes.ContractOpsKeeper) *Keeper {
 	return &Keeper{
-		cdc:       cdc,
-		storeKey:  storeKey,
-		authority: authority,
+		cdc:        cdc,
+		storeKey:   storeKey,
+		authority:  authority,
+		wasmKeeper: wk,
 	}
 }
 

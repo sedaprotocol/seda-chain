@@ -43,6 +43,7 @@ func SubmitProposalCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		ProposalStoreOverlayCmd(),
+		ProposalInstantiateAndRegisterProxyContract(),
 	)
 	return cmd
 }
@@ -97,30 +98,44 @@ func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
 		Use: "instantiate-and-register-proxy-contract [code_id_int64] [json_encoded_init_args] [salt] --label [text] --admin [address,optional] --amount [coins,optional] " +
 			"--fix-msg [bool,optional]",
 		Short: "Instantiate Proxy contract and register its address",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, _, _, _, err := getProposalInfo(cmd)
+			// clientCtx, _, _, _, err := getProposalInfo(cmd)
+			clientCtx, err := client.GetClientTxContext(cmd)
+			salt, err := decoder.DecodeString(args[2])
+			if err != nil {
+				return fmt.Errorf("salt: %w", err)
+			}
+			fixMsg, err := cmd.Flags().GetBool(flagFixMsg)
+			if err != nil {
+				return fmt.Errorf("fix msg: %w", err)
+			}
+
 			// clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			// if err != nil {
+			// 	return err
+			// }
+
+			// authority, err := cmd.Flags().GetString(flagAuthority)
+			// if err != nil {
+			// 	return fmt.Errorf("authority: %s", err)
+			// }
+
+			// if len(authority) == 0 {
+			// 	return errors.New("authority address is required")
+			// }
+
+			// TO-DO: clientCtx.GetFromAddress().String() to authority
+			src, err := parseInstantiateAndRegisterProxyContractArgs(args[0], args[1], clientCtx.Keyring, clientCtx.GetFromAddress().String(), cmd.Flags())
 			if err != nil {
 				return err
 			}
 
-			authority, err := cmd.Flags().GetString(flagAuthority)
-			if err != nil {
-				return fmt.Errorf("authority: %s", err)
-			}
-
-			if len(authority) == 0 {
-				return errors.New("authority address is required")
-			}
-
-			src, err := parseInstantiateAndRegisterProxyContractArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
-			if err != nil {
-				return err
-			}
+			proposalMsg := src
+			proposalMsg.Salt = salt
+			proposalMsg.FixMsg = fixMsg
 
 			// TO-DO
-			proposalMsg := src
 			// proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			// if err != nil {
 			// 	return err
@@ -132,6 +147,12 @@ func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 	}
+
+	// or addCommonProposalFlags(cmd)
+	// cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
+	// cmd.Flags().String(cli.FlagSummary, "", "Summary of proposal")
+	// cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	// cmd.Flags().String(flagAuthority, DefaultGovAuthority.String(), "The address of the governance account. Default is the sdk gov module account")
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")

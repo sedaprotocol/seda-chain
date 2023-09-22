@@ -32,6 +32,12 @@ service Query {
       returns (QueryOverlayWasmsResponse) {
     option (google.api.http).get = "/seda-chain/wasm-storage/overlay_wasms";
   }
+
+  rpc ProxyContractRegistry(QueryProxyContractRegistryRequest)
+      returns (QueryProxyContractRegistryResponse) {
+    option (google.api.http).get =
+        "/seda-chain/wasm-storage/proxy_contract_registry";
+  }
 }
 
 message QueryDataRequestWasmRequest { string hash = 1; }
@@ -49,3 +55,7 @@ message QueryOverlayWasmResponse { Wasm wasm = 1; }
 message QueryOverlayWasmsRequest {}
 
 message QueryOverlayWasmsResponse { repeated string hash_type_pairs = 1; }
+
+message QueryProxyContractRegistryRequest {}
+
+message QueryProxyContractRegistryResponse { string address = 1; }

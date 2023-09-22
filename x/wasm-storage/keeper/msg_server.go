@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -14,7 +13,6 @@ import (
 
 type msgServer struct {
 	Keeper
-	wasmKeeper wasmtypes.ContractOpsKeeper
 }
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
