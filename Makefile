@@ -122,4 +122,8 @@ proto-gen:
 proto-lint:
 	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
 
-.PHONY: proto-gen proto-lint
+proto-update-deps:
+	@echo "Updating Protobuf dependencies"
+	$(DOCKER) run --rm -v $(CURDIR)/proto:/workspace --workdir /workspace $(protoImageName) buf mod update
+
+.PHONY: proto-gen proto-lint proto-update-deps

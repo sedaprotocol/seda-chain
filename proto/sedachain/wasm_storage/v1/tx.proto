@@ -3,6 +3,7 @@ package sedachain.wasm_storage;
 
 import "gogoproto/gogo.proto";
 import "sedachain/wasm_storage/v1/wasm_storage.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
@@ -11,6 +12,9 @@ service Msg {
       returns (MsgStoreDataRequestWasmResponse);
   rpc StoreOverlayWasm(MsgStoreOverlayWasm)
       returns (MsgStoreOverlayWasmResponse);
+  rpc InstantiateAndRegisterProxyContract(
+      MsgInstantiateAndRegisterProxyContract)
+      returns (MsgInstantiateAndRegisterProxyContractResponse);
 }
 
 message MsgStoreDataRequestWasm {
@@ -28,3 +32,23 @@ message MsgStoreOverlayWasm {
 }
 
 message MsgStoreOverlayWasmResponse { string hash = 1; }
+
+message MsgInstantiateAndRegisterProxyContract {
+  string sender = 1;
+  string admin = 2;
+  uint64 code_id = 3 [ (gogoproto.customname) = "CodeID" ];
+  string label = 4;
+  bytes msg = 5
+      [ (gogoproto.casttype) =
+            "github.com/CosmWasm/wasmd/x/wasm/types.RawContractMessage" ];
+  repeated cosmos.base.v1beta1.Coin funds = 6 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  bytes salt = 7;
+  bool fix_msg = 8;
+}
+
+message MsgInstantiateAndRegisterProxyContractResponse {
+  string contract_address = 1;
+}

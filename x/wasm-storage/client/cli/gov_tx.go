@@ -1,11 +1,15 @@
 package cli
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
@@ -22,7 +26,14 @@ import (
 // Extension point for chains to overwrite the default
 var DefaultGovAuthority = sdk.AccAddress(address.Module("gov"))
 
-const flagAuthority = "authority"
+const (
+	flagAuthority = "authority"
+	flagAmount    = "amount"
+	flagLabel     = "label"
+	flagAdmin     = "admin"
+	flagNoAdmin   = "no-admin"
+	flagFixMsg    = "fix-msg"
+)
 
 func SubmitProposalCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -31,12 +42,12 @@ func SubmitProposalCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 	cmd.AddCommand(
-		ProposalStoreCodeCmd(),
+		ProposalStoreOverlayCmd(),
 	)
 	return cmd
 }
 
-func ProposalStoreCodeCmd() *cobra.Command {
+func ProposalStoreOverlayCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "store-overlay-wasm [wasm file] --wasm-type [wasm_type] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a proposal to store a new Overlay Wasm",
@@ -55,16 +66,16 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				return errors.New("authority address is required")
 			}
 
-			src, err := parseStoreCodeArgs(args[0], authority, cmd.Flags())
+			src, err := parseStoreOverlayArgs(args[0], authority, cmd.Flags())
 			if err != nil {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			if err = proposalMsg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil { //TO-DO remove??
 				return err
 			}
 
@@ -80,18 +91,181 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	return cmd
 }
 
-func parseStoreCodeArgs(file string, sender string, flags *flag.FlagSet) (types.MsgStoreOverlayWasm, error) {
-	zipped, err := gzipWasmFile(file)
-	if err != nil {
-		return types.MsgStoreOverlayWasm{}, err
+func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
+	decoder := newArgDecoder(hex.DecodeString)
+	cmd := &cobra.Command{
+		Use: "instantiate-and-register-proxy-contract [code_id_int64] [json_encoded_init_args] [salt] --label [text] --admin [address,optional] --amount [coins,optional] " +
+			"--fix-msg [bool,optional]",
+		Short: "Instantiate Proxy contract and register its address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, _, _, _, err := getProposalInfo(cmd)
+			// clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			src, err := parseInstantiateAndRegisterProxyContractArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			// TO-DO
+			proposalMsg := src
+			// proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
+			// if err != nil {
+			// 	return err
+			// }
+			// if err = proposalMsg.ValidateBasic(); err != nil { //TO-DO remove??
+			// 	return err
+			// }
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
+		},
 	}
 
-	msg := types.MsgStoreOverlayWasm{
+	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
+	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
+	cmd.Flags().String(flagAdmin, "", "Address or key name of an admin")
+	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
+	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
+	decoder.RegisterFlags(cmd.PersistentFlags(), "salt")
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func parseStoreOverlayArgs(file string, sender string, flags *flag.FlagSet) (*types.MsgStoreOverlayWasm, error) {
+	zipped, err := gzipWasmFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := &types.MsgStoreOverlayWasm{
 		Sender:   sender,
 		Wasm:     zipped,
 		WasmType: types.WasmTypeFromString(viper.GetString(FlagWasmType)),
 	}
 	return msg, nil
+}
+
+type argumentDecoder struct {
+	// dec is the default decoder
+	dec                func(string) ([]byte, error)
+	asciiF, hexF, b64F bool
+}
+
+func newArgDecoder(def func(string) ([]byte, error)) *argumentDecoder {
+	return &argumentDecoder{dec: def}
+}
+
+func (a *argumentDecoder) RegisterFlags(f *flag.FlagSet, argName string) {
+	f.BoolVar(&a.asciiF, "ascii", false, "ascii encoded "+argName)
+	f.BoolVar(&a.hexF, "hex", false, "hex encoded "+argName)
+	f.BoolVar(&a.b64F, "b64", false, "base64 encoded "+argName)
+}
+
+func (a *argumentDecoder) DecodeString(s string) ([]byte, error) {
+	found := -1
+	for i, v := range []*bool{&a.asciiF, &a.hexF, &a.b64F} {
+		if !*v {
+			continue
+		}
+		if found != -1 {
+			return nil, errors.New("multiple decoding flags used")
+		}
+		found = i
+	}
+	switch found {
+	case 0:
+		return asciiDecodeString(s)
+	case 1:
+		return hex.DecodeString(s)
+	case 2:
+		return base64.StdEncoding.DecodeString(s)
+	default:
+		return a.dec(s)
+	}
+}
+
+func asciiDecodeString(s string) ([]byte, error) {
+	return []byte(s), nil
+}
+
+func parseInstantiateAndRegisterProxyContractArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender string, flags *flag.FlagSet) (*types.MsgInstantiateAndRegisterProxyContract, error) {
+	// get the id of the code to instantiate
+	codeID, err := strconv.ParseUint(rawCodeID, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	amountStr, err := flags.GetString(flagAmount)
+	if err != nil {
+		return nil, fmt.Errorf("amount: %s", err)
+	}
+	amount, err := sdk.ParseCoinsNormalized(amountStr)
+	if err != nil {
+		return nil, fmt.Errorf("amount: %s", err)
+	}
+	label, err := flags.GetString(flagLabel)
+	if err != nil {
+		return nil, fmt.Errorf("label: %s", err)
+	}
+	if label == "" {
+		return nil, errors.New("label is required on all contracts")
+	}
+	adminStr, err := flags.GetString(flagAdmin)
+	if err != nil {
+		return nil, fmt.Errorf("admin: %s", err)
+	}
+
+	noAdmin, err := flags.GetBool(flagNoAdmin)
+	if err != nil {
+		return nil, fmt.Errorf("no-admin: %s", err)
+	}
+
+	// ensure sensible admin is set (or explicitly immutable)
+	if adminStr == "" && !noAdmin {
+		return nil, fmt.Errorf("you must set an admin or explicitly pass --no-admin to make it immutible (wasmd issue #719)")
+	}
+	if adminStr != "" && noAdmin {
+		return nil, fmt.Errorf("you set an admin and passed --no-admin, those cannot both be true")
+	}
+
+	if adminStr != "" {
+		addr, err := sdk.AccAddressFromBech32(adminStr)
+		if err != nil {
+			info, err := kr.Key(adminStr)
+			if err != nil {
+				return nil, fmt.Errorf("admin %s", err)
+			}
+			admin, err := info.GetAddress()
+			if err != nil {
+				return nil, err
+			}
+			adminStr = admin.String()
+		} else {
+			adminStr = addr.String()
+		}
+	}
+
+	msg := types.MsgInstantiateAndRegisterProxyContract{
+		Sender: sender,
+		CodeID: codeID,
+		Label:  label,
+		Funds:  amount,
+		Msg:    []byte(initMsg),
+		Admin:  adminStr,
+	}
+	return &msg, nil
 }
 
 func addCommonProposalFlags(cmd *cobra.Command) {

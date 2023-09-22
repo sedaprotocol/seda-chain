@@ -24,9 +24,13 @@ var (
 	// KeyPrefixOverlay defines prefix to store Overlay Wasm binaries.
 	KeyPrefixOverlay = []byte{0x01}
 
-	// KeyPrefixDataRequestQueue defines prefix for the queue that contains
+	// KeyPrefixDataRequestQueue defines prefix to store the queue that contains
 	// the hashes of Data Request Wasm binaries.
 	KeyPrefixDataRequestQueue = []byte{0x02}
+
+	// KeyPrefixProxyContractRegistry defines prefix to store address of
+	// Proxy Contract.
+	KeyPrefixProxyContractRegistry = []byte{0x03}
 )
 
 func GetDataRequestWasmKey(hash []byte) []byte {

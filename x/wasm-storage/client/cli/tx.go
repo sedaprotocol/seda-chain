@@ -37,7 +37,7 @@ func GetTxCmd() *cobra.Command {
 // GetCmdStoreDataRequestWasm returns the command for storing Data Request Wasm.
 func GetCmdStoreDataRequestWasm() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store-data-request-wasm <filename>",
+		Use:   "store-data-request-wasm [wasm file]",
 		Short: "Store Data Request Wasm file",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

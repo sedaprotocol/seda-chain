@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -13,6 +14,7 @@ import (
 
 type msgServer struct {
 	Keeper
+	wasmKeeper wasmtypes.ContractOpsKeeper
 }
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
@@ -53,6 +55,10 @@ func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 }
 
 func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOverlayWasm) (*types.MsgStoreOverlayWasmResponse, error) {
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if msg.Sender != k.authority {
@@ -81,6 +87,39 @@ func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 
 	return &types.MsgStoreOverlayWasmResponse{
 		Hash: hashString,
+	}, nil
+}
+
+// InstantiateAndRegisterProxyContract instantiate a new contract with
+// a predictable address and updates the Proxy Contract registry.
+func (m msgServer) InstantiateAndRegisterProxyContract(goCtx context.Context, msg *types.MsgInstantiateAndRegisterProxyContract) (*types.MsgInstantiateAndRegisterProxyContractResponse, error) {
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, fmt.Errorf("invalid sender address: %s", err)
+	}
+	var adminAddr sdk.AccAddress
+	if msg.Admin != "" {
+		if adminAddr, err = sdk.AccAddressFromBech32(msg.Admin); err != nil {
+			return nil, fmt.Errorf("invalid admin address: %s", err)
+		}
+	}
+
+	contractAddr, _, err := m.wasmKeeper.Instantiate2(ctx, msg.CodeID, senderAddr, adminAddr, msg.Msg, msg.Label, msg.Funds, msg.Salt, msg.FixMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	// update Proxy Contract registry
+	m.SetProxyContractRegistry(ctx, contractAddr)
+
+	return &types.MsgInstantiateAndRegisterProxyContractResponse{
+		ContractAddress: contractAddr.String(),
 	}, nil
 }
 
