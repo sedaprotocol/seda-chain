@@ -71,6 +71,9 @@ all: tools build lint test
 build: go.sum
 	CGO_ENABLED=1 go build -mod=readonly $(BUILD_FLAGS) -o build/seda-chaind ./cmd/seda-chaind
 
+build-linux: go.sum
+	LEDGER_ENABLED=false GOOS=linux CGO_ENABLED=1 go build -mod=readonly $(BUILD_FLAGS) -o build/seda-chaind-linux ./cmd/seda-chaind
+
 install: go.sum
 	CGO_ENABLED=1 go install -mod=readonly $(BUILD_FLAGS) ./cmd/seda-chaind
 

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package sedachain.wasm_storage;
+package sedachain.wasm_storage.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
