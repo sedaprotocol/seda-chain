@@ -1,0 +1,81 @@
+name: Tests / Code Coverage
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}-tests
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+        targetos: [darwin, linux]
+    name: sedad ${{ matrix.targetos }}-${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache binaries
+        id: cache-binaries
+        uses: actions/cache@v3
+        with:
+          path: ./cmd/sedad/sedad
+          key: sedad-${{ matrix.targetos }}-${{ matrix.arch }}
+      - uses: technote-space/get-diff-action@v6.1.2
+        with:
+          PATTERNS: |
+            **/**.go
+            go.mod
+            go.sum
+      - name: Setup go
+        if: steps.cache-binaries.outputs.cache-hit != 'true' && env.GIT_DIFF
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.19"
+          cache: true
+        env:
+          GOOS: ${{ matrix.targetos }}
+          GOARCH: ${{ matrix.arch }}
+      - name: Compile
+        if: steps.cache-binaries.outputs.cache-hit != 'true' && env.GIT_DIFF
+        run: |
+          go mod download
+          make build  
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.19"
+          check-latest: true
+          cache: true
+          cache-dependency-path: go.sum
+      - uses: technote-space/get-diff-action@v6.1.2
+        id: git_diff
+        with:
+          PATTERNS: |
+            **/*.go
+            go.mod
+            go.sum
+            **/go.mod
+            **/go.sum
+            **/Makefile
+            Makefile
+      - name: test & coverage report creation
+        if: env.GIT_DIFF
+        run: make test-unit-cover
+      - uses: actions/upload-artifact@v3
+        if: env.GIT_DIFF
+        with:
+          name: "${{ github.sha }}-${{ matrix.part }}-coverage"
+          path: ./${{ matrix.part }}profile.out
+

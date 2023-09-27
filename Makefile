@@ -131,3 +131,45 @@ proto-update-deps:
 	$(DOCKER) run --rm -v $(CURDIR)/proto:/workspace --workdir /workspace $(protoImageName) buf mod update
 
 .PHONY: proto-gen proto-lint proto-update-deps
+
+###############################################################################
+##                                   Tests                                   ##
+###############################################################################
+
+PACKAGES_UNIT=$(shell go list ./...)
+TEST_PACKAGES=./...
+TEST_TARGETS := test-unit test-unit-cover test-race
+TEST_COVERAGE_PROFILE=coverage.txt
+
+UNIT_TEST_TAGS = norace
+TEST_RACE_TAGS = ""
+
+ifeq ($(EXPERIMENTAL),true)
+	UNIT_TEST_TAGS += experimental
+	TEST_RACE_TAGS += experimental
+endif
+
+test-unit: ARGS=-timeout=10m -tags='$(UNIT_TEST_TAGS)'
+test-unit: TEST_PACKAGES=$(PACKAGES_UNIT)
+test-unit-cover: ARGS=-timeout=10m -tags='$(UNIT_TEST_TAGS)' -coverprofile=$(TEST_COVERAGE_PROFILE) -covermode=atomic
+test-unit-cover: TEST_PACKAGES=$(PACKAGES_UNIT)
+test-race: ARGS=-timeout=10m -race -tags='$(TEST_RACE_TAGS)'
+test-race: TEST_PACKAGES=$(PACKAGES_UNIT)
+$(TEST_TARGETS): run-tests
+
+run-tests:
+ifneq (,$(shell which tparse 2>/dev/null))
+	@echo "--> Running tests"
+	@go test -mod=readonly -json $(ARGS) $(TEST_PACKAGES) | tparse
+else
+	@echo "--> Running tests"
+	@go test -mod=readonly $(ARGS) $(TEST_PACKAGES)
+endif
+
+cover-html: test-unit-cover
+	@echo "--> Opening in the browser"
+	@go tool cover -html=$(TEST_COVERAGE_PROFILE)
+
+.PHONY: cover-html run-tests $(TEST_TARGETS)
+
+
