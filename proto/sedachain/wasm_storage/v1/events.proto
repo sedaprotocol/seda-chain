@@ -11,9 +11,11 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 message EventStoreDataRequestWasm {
   string hash = 1;
   WasmType wasm_type = 2;
+  bytes bytecode = 3;
 }
 
 message EventStoreOverlayWasm {
   string hash = 1;
   WasmType wasm_type = 2;
+  bytes bytecode = 3;
 }

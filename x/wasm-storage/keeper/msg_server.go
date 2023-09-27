@@ -42,6 +42,7 @@ func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 		&types.EventStoreDataRequestWasm{
 			Hash:     hashString,
 			WasmType: msg.WasmType,
+			Bytecode: msg.Wasm,
 		})
 	if err != nil {
 		return nil, err
@@ -78,6 +79,7 @@ func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 		&types.EventStoreOverlayWasm{
 			Hash:     hashString,
 			WasmType: msg.WasmType,
+			Bytecode: msg.Wasm,
 		})
 	if err != nil {
 		return nil, err
