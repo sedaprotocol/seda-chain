@@ -7,6 +7,6 @@ import "sedachain/wasm_storage/v1/wasm_storage.proto";
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
 message GenesisState {
-  Params params = 1 [ (gogoproto.nullable) = false ];
-  repeated Wasm wasms = 2 [ (gogoproto.nullable) = false ];
+  repeated Wasm wasms = 1 [ (gogoproto.nullable) = false ];
+  string proxy_contract_registry = 2;
 }

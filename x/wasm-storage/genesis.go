@@ -19,10 +19,18 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 			k.SetOverlayWasm(ctx, &wasm)
 		}
 	}
+	if data.ProxyContractRegistry != "" {
+		proxyAddr, err := sdk.AccAddressFromBech32(data.ProxyContractRegistry)
+		if err != nil {
+			panic(err)
+		}
+		k.SetProxyContractRegistry(ctx, proxyAddr)
+	}
 }
 
 // ExportGenesis extracts all data from store to genesis state.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	wasms := k.GetAllWasms(ctx)
-	return types.NewGenesisState(wasms)
+	proxy := k.GetProxyContractRegistry(ctx)
+	return types.NewGenesisState(wasms, proxy.String())
 }

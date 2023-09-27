@@ -1,6 +1,6 @@
 module github.com/sedaprotocol/seda-chain
 
-go 1.20
+go 1.19
 
 require (
 	cosmossdk.io/api v0.3.1
