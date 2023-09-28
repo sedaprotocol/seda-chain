@@ -38,7 +38,7 @@ func (s *KeeperTestSuite) TestOverlayWasm() {
 	input := types.MsgStoreOverlayWasm{
 		Sender:   s.authority,
 		Wasm:     compWasm,
-		WasmType: types.WasmTypeDataRequest,
+		WasmType: types.WasmTypeDataRequestExecutor,
 	}
 	storedWasm, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
 	s.Require().NoError(err)
@@ -91,7 +91,7 @@ func (s *KeeperTestSuite) TestOverlayWasms() {
 	input := types.MsgStoreOverlayWasm{
 		Sender:   s.authority,
 		Wasm:     compWasm,
-		WasmType: types.WasmTypeDataRequest,
+		WasmType: types.WasmTypeRelayer,
 	}
 	storedWasm, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
 	s.Require().NoError(err)
@@ -102,7 +102,7 @@ func (s *KeeperTestSuite) TestOverlayWasms() {
 	input2 := types.MsgStoreOverlayWasm{
 		Sender:   s.authority,
 		Wasm:     compWasm2,
-		WasmType: types.WasmTypeDataRequest,
+		WasmType: types.WasmTypeRelayer,
 	}
 	storedWasm2, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input2)
 	s.Require().NoError(err)
@@ -111,6 +111,6 @@ func (s *KeeperTestSuite) TestOverlayWasms() {
 	res, err := s.queryClient.OverlayWasms(s.ctx, &req)
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
-	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm.Hash, "WASM_TYPE_DATA_REQUEST"), res.HashTypePairs[0])
-	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm2.Hash, "WASM_TYPE_DATA_REQUEST"), res.HashTypePairs[1])
+	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm.Hash, "WASM_TYPE_RELAYER"), res.HashTypePairs[0])
+	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm2.Hash, "WASM_TYPE_RELAYER"), res.HashTypePairs[1])
 }

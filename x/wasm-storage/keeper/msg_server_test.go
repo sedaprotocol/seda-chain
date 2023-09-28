@@ -16,7 +16,7 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 	regWasmZipped, err := ioutils.GzipIt(regWasm)
 	s.Require().NoError(err)
 
-	oversizedWasm, err := os.ReadFile("test_utils/simple-dr.wasm")
+	oversizedWasm, err := os.ReadFile("test_utils/oversized.wasm")
 	s.Require().NoError(err)
 	oversizedWasmZipped, err := ioutils.GzipIt(oversizedWasm)
 	s.Require().NoError(err)
@@ -117,7 +117,7 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 	regWasmZipped, err := ioutils.GzipIt(regWasm)
 	s.Require().NoError(err)
 
-	oversizedWasm, err := os.ReadFile("test_utils/simple-dr.wasm")
+	oversizedWasm, err := os.ReadFile("test_utils/oversized.wasm")
 	s.Require().NoError(err)
 	oversizedWasmZipped, err := ioutils.GzipIt(oversizedWasm)
 	s.Require().NoError(err)
@@ -143,6 +143,17 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			expOutput: types.MsgStoreOverlayWasmResponse{
 				Hash: hex.EncodeToString(crypto.Keccak256(regWasm)),
 			},
+		},
+		{
+			name: "invalid wasm type",
+			input: types.MsgStoreOverlayWasm{
+				Sender:   s.authority,
+				Wasm:     regWasm,
+				WasmType: types.WasmTypeDataRequest,
+			},
+			preRun:    func() {},
+			expErr:    true,
+			expErrMsg: "Overlay Wasm type must be data-request-executor or relayer",
 		},
 		{
 			name: "invalid authority",
