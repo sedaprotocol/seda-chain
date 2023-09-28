@@ -132,7 +132,7 @@ func unzipWasm(wasm []byte) ([]byte, error) {
 	}
 	unzipped, err = ioutils.Uncompress(wasm, types.MaxWasmSize)
 	if err != nil {
-		return unzipped, nil
+		return nil, err
 	}
 	return unzipped, nil
 }
