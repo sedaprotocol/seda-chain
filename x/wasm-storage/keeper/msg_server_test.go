@@ -11,9 +11,15 @@ import (
 )
 
 func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
-	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	regWasm, err := os.ReadFile("test_utils/hello-world.wasm")
 	s.Require().NoError(err)
-	compWasm, err := ioutils.GzipIt(wasm)
+	regWasmZipped, err := ioutils.GzipIt(regWasm)
+	s.Require().NoError(err)
+
+	oversizedWasm, err := os.ReadFile("test_utils/simple-dr.wasm")
+	s.Require().NoError(err)
+	oversizedWasmZipped, err := ioutils.GzipIt(oversizedWasm)
+	s.Require().NoError(err)
 
 	cases := []struct {
 		name      string
@@ -28,32 +34,66 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 			preRun: func() {},
 			input: types.MsgStoreDataRequestWasm{
 				Sender:   s.authority,
-				Wasm:     compWasm,
+				Wasm:     regWasmZipped,
 				WasmType: types.WasmTypeDataRequest,
 			},
 			expErr: false,
 			expOutput: types.MsgStoreDataRequestWasmResponse{
-				Hash: hex.EncodeToString(crypto.Keccak256(wasm)),
+				Hash: hex.EncodeToString(crypto.Keccak256(regWasm)),
 			},
 		},
 		{
-			name: "Overlay wasm already exist",
+			name: "Data Request wasm already exist",
 			input: types.MsgStoreDataRequestWasm{
 				Sender:   s.authority,
-				Wasm:     compWasm,
+				Wasm:     regWasmZipped,
 				WasmType: types.WasmTypeDataRequest,
 			},
 			preRun: func() {
 				input := types.MsgStoreDataRequestWasm{
 					Sender:   s.authority,
-					Wasm:     compWasm,
+					Wasm:     regWasmZipped,
 					WasmType: types.WasmTypeDataRequest,
 				}
 				_, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &input)
 				s.Require().Nil(err)
 			},
 			expErr:    true,
-			expErrMsg: "Data Request Wasm with given hash already exists",
+			expErrMsg: "data Request Wasm with given hash already exists",
+		},
+		// TO-DO: Add after migrating ValidateBasic logic
+		// {
+		// 	name: "inconsistent Wasm type",
+		// 	input: types.MsgStoreDataRequestWasm{
+		// 		Sender:   s.authority,
+		// 		Wasm:     regWasmZipped,
+		// 		WasmType: types.WasmTypeRelayer,
+		// 	},
+		// 	preRun:    func() {},
+		// 	expErr:    true,
+		// 	expErrMsg: "not a Data Request Wasm",
+		// },
+		{
+			name: "unzipped Wasm",
+			input: types.MsgStoreDataRequestWasm{
+				Sender:   s.authority,
+				Wasm:     regWasm,
+				WasmType: types.WasmTypeDataRequest,
+			},
+			preRun:    func() {},
+			expErr:    true,
+			expErrMsg: "wasm is not gzip compressed",
+		},
+		{
+			name: "oversized Wasm",
+			input: types.MsgStoreDataRequestWasm{
+				Sender:   s.authority,
+				Wasm:     oversizedWasmZipped,
+				WasmType: types.WasmTypeDataRequest,
+			},
+			preRun:    func() {},
+			expErr:    true,
+			expErrMsg: "",
 		},
 	}
 	for _, tc := range cases {
@@ -62,7 +102,7 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 			tc.preRun()
 			res, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &tc.input)
 			if tc.expErr {
-				s.Require().Error(err, tc.expErrMsg)
+				s.Require().ErrorContains(err, tc.expErrMsg)
 			} else {
 				s.Require().Nil(err)
 				s.Require().Equal(tc.expOutput, *res)
@@ -72,9 +112,16 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 }
 
 func (s *KeeperTestSuite) TestStoreOverlayWasm() {
-	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	regWasm, err := os.ReadFile("test_utils/hello-world.wasm")
 	s.Require().NoError(err)
-	compWasm, err := ioutils.GzipIt(wasm)
+	regWasmZipped, err := ioutils.GzipIt(regWasm)
+	s.Require().NoError(err)
+
+	oversizedWasm, err := os.ReadFile("test_utils/simple-dr.wasm")
+	s.Require().NoError(err)
+	oversizedWasmZipped, err := ioutils.GzipIt(oversizedWasm)
+	s.Require().NoError(err)
+
 	cases := []struct {
 		name      string
 		preRun    func()
@@ -87,45 +134,67 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			name: "happy path",
 			input: types.MsgStoreOverlayWasm{
 				Sender:   s.authority,
-				Wasm:     compWasm,
-				WasmType: types.WasmTypeDataRequest,
+				Wasm:     regWasmZipped,
+				WasmType: types.WasmTypeRelayer,
 			},
 			preRun:    func() {},
 			expErr:    false,
 			expErrMsg: "",
 			expOutput: types.MsgStoreOverlayWasmResponse{
-				Hash: hex.EncodeToString(crypto.Keccak256(wasm)),
+				Hash: hex.EncodeToString(crypto.Keccak256(regWasm)),
 			},
 		},
 		{
 			name: "invalid authority",
 			input: types.MsgStoreOverlayWasm{
-				Sender:   "this-is-not-valid",
-				Wasm:     compWasm,
-				WasmType: types.WasmTypeDataRequest,
+				Sender:   "cosmos16wfryel63g7axeamw68630wglalcnk3l0zuadc",
+				Wasm:     regWasmZipped,
+				WasmType: types.WasmTypeRelayer,
 			},
 			preRun:    func() {},
 			expErr:    true,
-			expErrMsg: "invalid authority this-is-not-valid",
+			expErrMsg: "invalid authority",
 		},
 		{
 			name: "Overlay wasm already exist",
 			input: types.MsgStoreOverlayWasm{
 				Sender:   s.authority,
-				Wasm:     compWasm,
-				WasmType: types.WasmTypeDataRequest,
+				Wasm:     regWasmZipped,
+				WasmType: types.WasmTypeRelayer,
 			},
 			preRun: func() {
 				input := types.MsgStoreOverlayWasm{
 					Sender:   s.authority,
-					Wasm:     compWasm,
-					WasmType: types.WasmTypeDataRequest,
+					Wasm:     regWasmZipped,
+					WasmType: types.WasmTypeRelayer,
 				}
 				_, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
 				s.Require().Nil(err)
 			},
 			expErr:    true,
-			expErrMsg: "Overlay Wasm with given hash already exists",
+			expErrMsg: "overlay Wasm with given hash already exists",
+		},
+		{
+			name: "unzipped Wasm",
+			input: types.MsgStoreOverlayWasm{
+				Sender:   s.authority,
+				Wasm:     regWasm,
+				WasmType: types.WasmTypeRelayer,
+			},
+			preRun:    func() {},
+			expErr:    true,
+			expErrMsg: "wasm is not gzip compressed",
+		},
+		{
+			name: "oversized Wasm",
+			input: types.MsgStoreOverlayWasm{
+				Sender:   s.authority,
+				Wasm:     oversizedWasmZipped,
+				WasmType: types.WasmTypeRelayer,
+			},
+			preRun:    func() {},
+			expErr:    true,
+			expErrMsg: "",
 		},
 	}
 	for _, tc := range cases {
@@ -134,7 +203,7 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			tc.preRun()
 			res, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &tc.input)
 			if tc.expErr {
-				s.Require().Error(err, tc.expErrMsg)
+				s.Require().ErrorContains(err, tc.expErrMsg)
 			} else {
 				s.Require().Nil(err)
 				s.Require().Equal(tc.expOutput, *res)
