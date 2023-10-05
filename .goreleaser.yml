@@ -1,0 +1,50 @@
+project_name: seda
+
+env:
+  - CGO_ENABLED=1
+#  - GOOS=linux # for local m1 mac run
+
+before:
+  hooks:
+    - go mod download
+    - go mod tidy
+
+builds:
+  - main: ./cmd/seda-chaind
+    id: "sedad"
+    binary: sedad
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -tags=badgerdb ledger netgo
+      - -trimpath
+    ldflags:
+      - -s -w -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.Name=seda-chain -X github.com/cosmos/cosmos-sdk/version.AppName=sedad-chain -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger -X github.com/cometbft/cometbft/version.TMCoreSemVer={{ .Env.COMET_VERSION }}
+    goos:
+      - linux
+    goarch:
+      - amd64
+#      - arm64 # github only supports linux @ amd64 :'(
+
+archives:
+  - id: tarball
+    format: tar.gz
+    wrap_in_directory: false # must not wrap into directory to support cosmwasm
+    name_template: "{{ .Binary }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    files:
+      - LICENSE
+      - README.md
+
+release:
+  github:
+    owner: sedaprotocol
+    name: seda
+
+snapshot:
+  name_template: SNAPSHOT-{{ .Commit }}
+
+checksum:
+  name_template: SHA256SUMS-v{{.Version}}.txt
+  algorithm: sha256
+
+changelog:
+  skip: false

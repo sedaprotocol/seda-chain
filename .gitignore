@@ -5,3 +5,7 @@ build/
 .idea/
 .vscode/
 .DS_Store
+
+dist/
+
+/.act-event-file
