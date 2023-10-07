@@ -65,19 +65,141 @@ endif
 all: tools build lint test
 
 ###############################################################################
-###                                  Build                                  ###
+##                                   Build                                   ##
 ###############################################################################
 
-build: go.sum
-	CGO_ENABLED=1 go build -mod=readonly $(BUILD_FLAGS) -o build/seda-chaind ./cmd/seda-chaind
+build_tags = netgo
 
-build-linux: go.sum
-	LEDGER_ENABLED=false GOOS=linux CGO_ENABLED=1 go build -mod=readonly $(BUILD_FLAGS) -o build/seda-chaind-linux ./cmd/seda-chaind
+#  experimental feature
+ifeq ($(EXPERIMENTAL),true)
+	build_tags += experimental
+endif
 
-install: go.sum
-	CGO_ENABLED=1 go install -mod=readonly $(BUILD_FLAGS) ./cmd/seda-chaind
+ifeq ($(LEDGER_ENABLED),true)
+  ifeq ($(OS),Windows_NT)
+    GCCEXE = $(shell where gcc.exe 2> NUL)
+    ifeq ($(GCCEXE),)
+      $(error gcc.exe not installed for ledger support, please install or set LEDGER_ENABLED=false)
+    else
+      build_tags += ledger
+    endif
+  else
+    UNAME_S = $(shell uname -s)
+    ifeq ($(UNAME_S),OpenBSD)
+      $(warning OpenBSD detected, disabling ledger support (https://github.com/cosmos/cosmos-sdk/issues/1988))
+    else
+      GCC = $(shell command -v gcc 2> /dev/null)
+      ifeq ($(GCC),)
+        $(error gcc not installed for ledger support, please install or set LEDGER_ENABLED=false)
+      else
+        build_tags += ledger
+      endif
+    endif
+  endif
+endif
 
-.PHONY: build install
+ifeq (secp,$(findstring secp,$(COSMOS_BUILD_OPTIONS)))
+  build_tags += libsecp256k1_sdk
+endif
+
+whitespace :=
+whitespace += $(whitespace)
+comma := ,
+build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
+
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=seda-chain \
+		  -X github.com/cosmos/cosmos-sdk/version.AppName=seda-chaind \
+		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
+			-X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TMVERSION)
+
+ifeq ($(ENABLE_ROCKSDB),true)
+  BUILD_TAGS += rocksdb
+  test_tags += rocksdb
+endif
+
+# DB backend selection
+ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))
+  build_tags += gcc
+endif
+ifeq (badgerdb,$(findstring badgerdb,$(COSMOS_BUILD_OPTIONS)))
+  BUILD_TAGS += badgerdb
+endif
+# handle rocksdb
+ifeq (rocksdb,$(findstring rocksdb,$(COSMOS_BUILD_OPTIONS)))
+  ifneq ($(ENABLE_ROCKSDB),true)
+    $(error Cannot use RocksDB backend unless ENABLE_ROCKSDB=true)
+  endif
+  CGO_ENABLED=1
+endif
+
+ifeq ($(LINK_STATICALLY),true)
+	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
+endif
+
+ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
+  ldflags += -w -s
+endif
+ldflags += $(LDFLAGS)
+ldflags := $(strip $(ldflags))
+
+build_tags += $(BUILD_TAGS)
+build_tags := $(strip $(build_tags))
+
+BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
+# check for nostrip option
+ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
+  BUILD_FLAGS += -trimpath
+endif
+
+# Check for debug option
+ifeq (debug,$(findstring debug,$(COSMOS_BUILD_OPTIONS)))
+  BUILD_FLAGS += -gcflags "all=-N -l"
+endif
+
+all: tools build lint test
+
+echo-build-tags:
+	echo ${BUILD_TAGS}
+
+BUILD_TARGETS := build install
+
+build: BUILD_ARGS=-o $(BUILDDIR)/
+build-linux:
+	@if [ "${ENABLE_ROCKSDB}" != "true" ]; then \
+		echo "RocksDB support is disabled; to build and test with RocksDB support, set ENABLE_ROCKSDB=true"; fi
+	GOOS=linux GOARCH=$(if $(findstring aarch64,$(shell uname -m)) || $(findstring arm64,$(shell uname -m)),arm64,amd64) LEDGER_ENABLED=false $(MAKE) build
+
+$(BUILD_TARGETS): go.sum $(BUILDDIR)/
+	@if [ "${ENABLE_ROCKSDB}" != "true" ]; then \
+		echo "RocksDB support is disabled; to build and test with RocksDB support, set ENABLE_ROCKSDB=true"; fi
+	go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
+
+$(BUILDDIR)/:
+	mkdir -p $(BUILDDIR)/
+
+build-experimental: go.sum
+	@echo "--> Building Experimental version..."
+	EXPERIMENTAL=true $(MAKE) build
+
+build-no_cgo:
+	@echo "--> Building static binary with no CGO nor GLIBC dynamic linking..."
+	ifneq ($(ENABLE_ROCKSDB),true)
+		$(error RocksDB requires CGO)
+	endif
+	CGO_ENABLED=0 CGO_LDFLAGS="-static" $(MAKE) build
+
+
+go-mod-tidy:
+	@contrib/scripts/go-mod-tidy-all.sh
+
+clean:
+	@echo "--> Cleaning..."
+	@rm -rf $(BUILD_DIR)/**  $(DIST_DIR)/**
+
+.PHONY: build build-linux build-experimental build-no_cgo clean go-mod-tidy
+
 
 ###############################################################################
 ###                          Tools & Dependencies                           ###
