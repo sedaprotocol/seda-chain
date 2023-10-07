@@ -7,7 +7,6 @@ env:
 before:
   hooks:
     - go mod download
-    - go mod tidy
 
 builds:
   - main: ./cmd/seda-chaind
@@ -33,11 +32,6 @@ archives:
     files:
       - LICENSE
       - README.md
-
-release:
-  github:
-    owner: sedaprotocol
-    name: seda
 
 snapshot:
   name_template: SNAPSHOT-{{ .Commit }}
