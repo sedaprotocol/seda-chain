@@ -20,21 +20,13 @@ LINUX_BIN=../../build/seda-chaind-linux # linux version of chain binary
 NODE_DIR=./nodes # OUT_DIR in other scripts
 DESTINATIONS=(
 	# devnet
-	# "ec2-user@ec2-18-169-59-167.eu-west-2.compute.amazonaws.com"
-	# "ec2-user@ec2-35-178-98-62.eu-west-2.compute.amazonaws.com"
-
-	# testnet
-	"ec2-user@ec2-3-8-185-95.eu-west-2.compute.amazonaws.com"
-	"ec2-user@ec2-13-41-201-46.eu-west-2.compute.amazonaws.com"
+	"ec2-user@ec2-18-169-59-167.eu-west-2.compute.amazonaws.com"
+	"ec2-user@ec2-35-178-98-62.eu-west-2.compute.amazonaws.com"
 )
 IPS=(
 	# devnet
-	# "18.169.59.167:26656"
-	# "35.178.98.62:26656"
-
-	# testnet
-	"3.8.185.95:26656"
-	"13.41.201.46:26656"
+	"18.169.59.167:26656"
+	"35.178.98.62:26656"
 )
 
 # prelimiary checks on parameters
