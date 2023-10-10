@@ -10,24 +10,34 @@ set -euxo pipefail
 # connection closing after every ssh command
 #
 
-#
-#   PARAMETERS
-#
+################################################
+################## Parameters ##################
+################################################
+
 SSH_KEY=~/.ssh/id_rsa # key used for ssh
 BIN=../../build/seda-chaind # chain binary executable on your machine
 LINUX_BIN=../../build/seda-chaind-linux # linux version of chain binary
 NODE_DIR=./nodes # OUT_DIR in other scripts
 DESTINATIONS=(
-	"ec2-user@ec2-18-169-59-167.eu-west-2.compute.amazonaws.com"
-	"ec2-user@ec2-35-178-98-62.eu-west-2.compute.amazonaws.com"
+	# devnet
+	# "ec2-user@ec2-18-169-59-167.eu-west-2.compute.amazonaws.com"
+	# "ec2-user@ec2-35-178-98-62.eu-west-2.compute.amazonaws.com"
+
+	# testnet
+	"ec2-user@ec2-3-8-185-95.eu-west-2.compute.amazonaws.com"
+	"ec2-user@ec2-13-41-201-46.eu-west-2.compute.amazonaws.com"
 )
 IPS=(
-	"18.169.59.167:26656"
-	"35.178.98.62:26656"
+	# devnet
+	# "18.169.59.167:26656"
+	# "35.178.98.62:26656"
+
+	# testnet
+	"3.8.185.95:26656"
+	"13.41.201.46:26656"
 )
 
-
-# Prelimiary checks
+# prelimiary checks on parameters
 if [ ! -f "$SSH_KEY" ]; then
   echo "ssh key file not found."
   exit 1
@@ -40,6 +50,24 @@ if [ ! -f "$LINUX_BIN" ]; then
   echo "linux binary file not found."
   exit 1
 fi
+
+
+################################################
+############# Set up for new nodes #############
+################################################
+
+# NOTE: Assumes ami-0a1ab4a3fcf997a9d
+#
+for i in ${!DESTINATIONS[@]}; do
+	scp -i $SSH_KEY -r ./node_setup.sh ${DESTINATIONS[$i]}:/home/ec2-user
+	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} '/home/ec2-user/node_setup.sh'
+	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} 'rm /home/ec2-user/node_setup.sh'
+done
+
+
+#################################################
+############	Upload and start chain ############
+#################################################
 
 SEEDS=()
 for i in ${!DESTINATIONS[@]}; do
