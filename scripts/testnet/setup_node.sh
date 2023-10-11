@@ -2,8 +2,8 @@
 set -e
 
 #
-# This script set up a node for chain deployment by configuring
-# cosmovisor, shared library, and systemctl service.
+# This script is run on a node to configure cosmovisor, shared library,
+# and systemctl service.
 #
 # NOTE: Assumes ami-0a1ab4a3fcf997a9d
 

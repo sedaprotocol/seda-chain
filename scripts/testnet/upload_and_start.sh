@@ -9,25 +9,12 @@ set -euxo pipefail
 # To FIX:
 # connection closing after every ssh command
 #
+source config.sh
+
 
 ################################################
-################## Parameters ##################
+############### Parameter checks ###############
 ################################################
-
-SSH_KEY=~/.ssh/id_rsa # key used for ssh
-BIN=../../build/seda-chaind # chain binary executable on your machine
-LINUX_BIN=../../build/seda-chaind-linux # linux version of chain binary
-NODE_DIR=./nodes # OUT_DIR in other scripts
-DESTINATIONS=(
-	# devnet
-	"ec2-user@ec2-18-169-59-167.eu-west-2.compute.amazonaws.com"
-	"ec2-user@ec2-35-178-98-62.eu-west-2.compute.amazonaws.com"
-)
-IPS=(
-	# devnet
-	"18.169.59.167:26656"
-	"35.178.98.62:26656"
-)
 
 # prelimiary checks on parameters
 if [ ! -f "$SSH_KEY" ]; then
@@ -48,49 +35,56 @@ fi
 ############# Set up for new nodes #############
 ################################################
 
-# NOTE: Assumes ami-0a1ab4a3fcf997a9d
-#
-for i in ${!DESTINATIONS[@]}; do
-	scp -i $SSH_KEY -r ./node_setup.sh ${DESTINATIONS[$i]}:/home/ec2-user
-	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} '/home/ec2-user/node_setup.sh'
-	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} 'rm /home/ec2-user/node_setup.sh'
+# upload setup script and run it
+for i in ${!IPS[@]}; do
+	scp -i $SSH_KEY -o StrictHostKeyChecking=no -r ./setup_node.sh ec2-user@${IPS[$i]}:/home/ec2-user
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} '/home/ec2-user/setup_node.sh'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'rm /home/ec2-user/setup_node.sh'
 done
 
 
 #################################################
-############	Upload and start chain ############
+############ Upload and start chain #############
 #################################################
 
 SEEDS=()
-for i in ${!DESTINATIONS[@]}; do
+for i in ${!IPS[@]}; do
 	SEED=$($BIN tendermint show-node-id --home ./$NODE_DIR/node$i)
-	SEEDS+=("$SEED@${IPS[$i]}")
+	SEEDS+=("$SEED@${IPS[$i]}:26656")
 done
 
 printf -v list '%s,' "${SEEDS[@]}"
 SEEDS_LIST="${list%,}"
 echo $SEEDS_LIST
 
-for i in ${!DESTINATIONS[@]}; do
+for i in ${!IPS[@]}; do
 	cp $NODE_DIR/genesis.json $NODE_DIR/node$i/config/genesis.json
 
-	sed -i '' "s/seeds = \"\"/seeds = \"${SEEDS_LIST}\"/g" ./$NODE_DIR/node$i/config/config.toml
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		sed -i '' "s/seeds = \"\"/seeds = \"${SEEDS_LIST}\"/g" ./$NODE_DIR/node$i/config/config.toml
+	else
+		sed "s/seeds = \"\"/seeds = \"${SEEDS_LIST}\"/g" ./$NODE_DIR/node$i/config/config.toml > tmp
+		cat tmp > ./$NODE_DIR/node$i/config/config.toml
+		rm tmp
+	fi
 
 	# stop and remove
-	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} 'sudo systemctl stop seda-node.service'
-	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} 'sudo rm -f /var/log/seda-chain-error.log'
-	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} 'sudo rm -f /var/log/seda-chain-output.log'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo systemctl stop seda-node.service'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -f /var/log/seda-chain-error.log'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -f /var/log/seda-chain-output.log'
 
-	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} 'sudo rm -rf /home/ec2-user/.seda-chain'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -rf /home/ec2-user/.seda-chain'
 
 	# upload
-	scp -i $SSH_KEY -r ./$NODE_DIR/node$i ${DESTINATIONS[$i]}:/home/ec2-user/.seda-chain
+	scp -i $SSH_KEY -r ./$NODE_DIR/node$i ec2-user@${IPS[$i]}:/home/ec2-user/.seda-chain
 
-	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} 'mkdir -p /home/ec2-user/.seda-chain/cosmovisor/genesis/bin'
-	scp -i $SSH_KEY $LINUX_BIN ${DESTINATIONS[$i]}:/home/ec2-user/.seda-chain/cosmovisor/genesis/bin/seda-chaind
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'mkdir -p /home/ec2-user/.seda-chain/cosmovisor/genesis/bin'
+	scp -i $SSH_KEY $LINUX_BIN ec2-user@${IPS[$i]}:/home/ec2-user/.seda-chain/cosmovisor/genesis/bin/seda-chaind
 
 	# start
-	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} 'chmod 755 /home/ec2-user/.seda-chain/cosmovisor/genesis/bin/seda-chaind'
-	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} 'sudo systemctl daemon-reload'
-	ssh -i $SSH_KEY -t ${DESTINATIONS[$i]} 'sudo systemctl start seda-node.service'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'chmod 755 /home/ec2-user/.seda-chain/cosmovisor/genesis/bin/seda-chaind'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo systemctl daemon-reload'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo systemctl start seda-node.service'
 done
+
+echo "Script has finished running."

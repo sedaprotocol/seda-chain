@@ -6,20 +6,14 @@ set -euxo pipefail
 # Then, it adds these states to a given original genesis file.
 # The final genesis file is placed in the current directory as genesis.json.
 #
-
-#
-#   PARAMETERS
-#
-WASM_DIR=./artifacts # where Wasm files are located
-BIN=../../build/seda-chaind # chain binary executable on your machine
-ORIGINAL_GENESIS=./nodes/genesis.json # genesis file to be modified by this script
-
+source config.sh
 
 #
 #   PRELIMINARY CHECKS
 #
+ORIGINAL_GENESIS=$NODE_DIR/genesis.json
 if [ ! -f "$ORIGINAL_GENESIS" ]; then
-  echo "Original genesis file not found."
+  echo "Original genesis file not found inside node directory."
   exit 1
 fi
 
@@ -51,7 +45,6 @@ store_and_instantiate() {
     
     echo $CONTRACT_ADDRESS
 }
-
 
 #
 #   SCRIPT BEGINS - START CHAIN
@@ -89,21 +82,16 @@ $BIN tx wasm execute $PROXY_ADDR '{"set_data_requests":{"contract":"'$DR_ADDR'"}
 sleep 10
 
 
-
 #
 #   TERMINATE CHAIN PROCESS, EXPORT, AND MODIFY GIVEN GENESIS
 #
 pkill seda-chaind
-
+sleep 5
 
 $BIN export --home $TMP_HOME > $TMP_HOME/exported
 python3 -m json.tool $TMP_HOME/exported > $TMP_HOME/genesis.json
 rm $TMP_HOME/exported
 
-
-EXPORTED_GENESIS=$TMP_HOME/genesis.json
-TMP_GENESIS=$TMP_HOME/tmp_genesis.json
-TMP_TMP_GENESIS=$TMP_HOME/tmp_tmp_genesis.json
 
 #
 # Modify
@@ -112,6 +100,10 @@ TMP_TMP_GENESIS=$TMP_HOME/tmp_tmp_genesis.json
 # - wasm.sequences
 # - wasm-storage.proxy_contract_registry
 #
+EXPORTED_GENESIS=$TMP_HOME/genesis.json
+TMP_GENESIS=$TMP_HOME/tmp_genesis.json
+TMP_TMP_GENESIS=$TMP_HOME/tmp_tmp_genesis.json
+
 jq '.app_state["wasm"]["codes"]' $EXPORTED_GENESIS > $TMP_HOME/codes.tmp
 jq '.app_state["wasm"]["contracts"]' $EXPORTED_GENESIS > $TMP_HOME/contracts.tmp
 jq '.app_state["wasm"]["sequences"]' $EXPORTED_GENESIS > $TMP_HOME/sequences.tmp
@@ -122,4 +114,7 @@ jq --slurpfile contracts $TMP_HOME/contracts.tmp '.app_state["wasm"]["contracts"
 jq --slurpfile sequences $TMP_HOME/sequences.tmp '.app_state["wasm"]["sequences"] = $sequences[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 
 mv $TMP_GENESIS $ORIGINAL_GENESIS
+
+# clean up
 rm -rf $TMP_HOME
+rm chain_output.log
