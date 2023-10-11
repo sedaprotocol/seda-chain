@@ -112,14 +112,14 @@ TMP_TMP_GENESIS=$TMP_HOME/tmp_tmp_genesis.json
 # - wasm.sequences
 # - wasm-storage.proxy_contract_registry
 #
-CODES=$(jq '.app_state["wasm"]["codes"]' $EXPORTED_GENESIS)
-CONTRACTS=$(jq '.app_state["wasm"]["contracts"]' $EXPORTED_GENESIS)
-SEQUENCES=$(jq '.app_state["wasm"]["sequences"]' $EXPORTED_GENESIS)
+jq '.app_state["wasm"]["codes"]' $EXPORTED_GENESIS > $TMP_HOME/codes.tmp
+jq '.app_state["wasm"]["contracts"]' $EXPORTED_GENESIS > $TMP_HOME/contracts.tmp
+jq '.app_state["wasm"]["sequences"]' $EXPORTED_GENESIS > $TMP_HOME/sequences.tmp
 
-jq '.app_state["wasm-storage"]["proxy_contract_registry"]="'$PROXY_ADDR'"' "$ORIGINAL_GENESIS" > "$TMP_TMP_GENESIS" && mv $TMP_TMP_GENESIS $TMP_GENESIS
-jq '.app_state["wasm"]["codes"]='"$CODES"'' "$TMP_GENESIS" > "$TMP_TMP_GENESIS" && mv $TMP_TMP_GENESIS $TMP_GENESIS
-jq '.app_state["wasm"]["contracts"]='"$CONTRACTS"'' "$TMP_GENESIS" > "$TMP_TMP_GENESIS" && mv $TMP_TMP_GENESIS $TMP_GENESIS
-jq '.app_state["wasm"]["sequences"]='"$SEQUENCES"'' "$TMP_GENESIS" > "$TMP_TMP_GENESIS" && mv $TMP_TMP_GENESIS $TMP_GENESIS
+jq '.app_state["wasm-storage"]["proxy_contract_registry"]="'$PROXY_ADDR'"' $ORIGINAL_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+jq --argfile codes $TMP_HOME/codes.tmp '.app_state["wasm"]["codes"] = $codes' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+jq --argfile contracts $TMP_HOME/contracts.tmp '.app_state["wasm"]["contracts"] = $contracts' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+jq --argfile sequences $TMP_HOME/sequences.tmp '.app_state["wasm"]["sequences"] = $sequences' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 
 mv $TMP_GENESIS $ORIGINAL_GENESIS
 rm -rf $TMP_HOME
