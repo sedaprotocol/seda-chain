@@ -38,20 +38,18 @@ const (
 )
 
 type printInfo struct {
-	Moniker    string          `json:"moniker" yaml:"moniker"`
-	ChainID    string          `json:"chain_id" yaml:"chain_id"`
-	NodeID     string          `json:"node_id" yaml:"node_id"`
-	GenTxsDir  string          `json:"gentxs_dir" yaml:"gentxs_dir"`
-	AppMessage json.RawMessage `json:"app_message" yaml:"app_message"`
+	Moniker string `json:"moniker" yaml:"moniker"`
+	ChainID string `json:"chain_id" yaml:"chain_id"`
+	NodeID  string `json:"node_id" yaml:"node_id"`
+	Seeds   string `json:"seeds" yaml:"seeds"`
 }
 
-func newPrintInfo(moniker, chainID, nodeID, genTxsDir string, appMessage json.RawMessage) printInfo {
+func newPrintInfo(moniker, chainID, nodeID, seeds string) printInfo {
 	return printInfo{
-		Moniker:    moniker,
-		ChainID:    chainID,
-		NodeID:     nodeID,
-		GenTxsDir:  genTxsDir,
-		AppMessage: appMessage,
+		Moniker: moniker,
+		ChainID: chainID,
+		NodeID:  nodeID,
+		Seeds:   seeds,
 	}
 }
 
@@ -62,7 +60,6 @@ func displayInfo(info printInfo) error {
 	}
 
 	_, err = fmt.Fprintf(os.Stderr, "%s\n", sdk.MustSortJSON(out))
-
 	return err
 }
 
@@ -155,7 +152,7 @@ func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Comma
 			if err = genutil.ExportGenesisFile(genDoc, genFile); err != nil {
 				return errors.Wrap(err, "Failed to export genesis file")
 			}
-			toPrint := newPrintInfo(config.Moniker, ChainID, nodeID, "", appState)
+			toPrint := newPrintInfo(config.Moniker, ChainID, nodeID, "")
 			cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
 			return displayInfo(toPrint)
 		},
@@ -169,7 +166,7 @@ func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Comma
 	return cmd
 }
 
-func joinNetwork(network, configDir, genesisFilePath, mnemonic string, config *cfg.Config) error {
+func joinNetwork(network, configDir, genesisFilePath, seedsFilePath, configFilePath, mnemonic string, config *cfg.Config) error {
 	err := utils.DownloadGitFiles(network, configDir)
 	if err != nil {
 		return errors.Wrapf(err, "failed to download network `%s` genesis files", network)
@@ -179,31 +176,38 @@ func joinNetwork(network, configDir, genesisFilePath, mnemonic string, config *c
 	if err != nil {
 		return err
 	}
-
 	var genesisExistingState map[string]json.RawMessage
 	err = json.Unmarshal(bytes, &genesisExistingState)
 	if err != nil {
 		return err
 	}
-
-	genesisState, err := json.MarshalIndent(genesisExistingState, "", " ")
+	_, err = json.MarshalIndent(genesisExistingState, "", " ")
 	if err != nil {
 		return errors.Wrapf(err, "Failed to marshal network `%s` genesis state", network)
 	}
+
+	// obtain seeds from seeds file and write to config file
+	seedsBytes, err := os.ReadFile(seedsFilePath)
+	if err != nil {
+		return err
+	}
+	seeds := string(seedsBytes)
+
+	config.P2P.Seeds = seeds
+	cfg.WriteConfigFile(configFilePath, config)
 
 	nodeID, _, err := genutil.InitializeNodeValidatorFilesFromMnemonic(config, mnemonic)
 	if err != nil {
 		return err
 	}
 
-	toPrint := newPrintInfo(config.Moniker, ChainID, nodeID, "", genesisState)
-
+	toPrint := newPrintInfo(config.Moniker, ChainID, nodeID, seeds)
 	return displayInfo(toPrint)
 }
 
 func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "network [moniker]",
+		Use:   "join [moniker]",
 		Short: "Grabs an existing network genesis configuration.",
 		Long:  `Initialize validators's and node's configuration files from an existing configuration.`,
 		Args:  cobra.ExactArgs(1),
@@ -222,6 +226,9 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 			overwrite, _ := cmd.Flags().GetBool(FlagOverwrite)
 			configDir := filepath.Join(config.RootDir, "config")
 			genesisFilePath := filepath.Join(configDir, "genesis.json")
+			seedsFilePath := filepath.Join(configDir, "seeds.txt")
+			configFilePath := filepath.Join(configDir, "config.toml")
+
 			// use os.Stat to check if the file exists
 			_, err = os.Stat(genesisFilePath)
 			if !overwrite && !os.IsNotExist(err) {
@@ -239,14 +246,10 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 			}
 
 			// TODO should turn the insides here into a function for when we have more than one network
-			switch network {
-			case "devnet":
-				return joinNetwork(network, configDir, genesisFilePath, mnemonic, config)
-			case "localnet":
-				return joinNetwork(network, configDir, genesisFilePath, mnemonic, config)
-			default:
-				return fmt.Errorf("unsupported network type: %s", network)
+			if network == "devnet" || network == "testnet" || network == "localnet" {
+				return joinNetwork(network, configDir, genesisFilePath, seedsFilePath, configFilePath, mnemonic, config)
 			}
+			return fmt.Errorf("unsupported network type: %s", network)
 		},
 	}
 
@@ -261,7 +264,7 @@ func existingNetworkComand(mbm module.BasicManager, defaultNodeHome string) *cob
 // and the respective application.
 func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "init <new | newtwork> [moniker]",
+		Use:   "init <new | join> [moniker]",
 		Short: "Initialize private validator, p2p, genesis, and application configuration files",
 		Long:  `Initialize validators's and node's configuration files.`,
 		Args:  cobra.ExactArgs(1),
@@ -269,6 +272,5 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 
 	cmd.AddCommand(newNetworkCmd(mbm, defaultNodeHome))
 	cmd.AddCommand(existingNetworkComand(mbm, defaultNodeHome))
-
 	return cmd
 }
