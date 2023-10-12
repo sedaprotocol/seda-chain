@@ -9,3 +9,6 @@ build/
 dist/
 
 /.act-event-file
+
+scripts/testnet/config.sh
+scripts/testnet/nodes
