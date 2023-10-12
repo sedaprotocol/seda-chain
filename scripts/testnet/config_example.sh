@@ -15,6 +15,7 @@ LINUX_BIN=$(git rev-parse --show-toplevel)/build/seda-chaind-linux # linux versi
 # Validators
 # NOTE: Assumes 26656 port for p2p communication
 # NOTE: Assumes user is ec2-user
+# NOTE: The setup node script assumes ami-0a1ab4a3fcf997a9d
 IPS=(
     "xx.xx.xx.xx"
     "xx.xx.xx.xx"
@@ -32,6 +33,8 @@ SSH_KEY=~/.ssh/id_rsa # key used for ssh
 
 
 # Genesis acoounts addresses
+# NOTE: The script will create operators of the nodes defined above and
+# add them as genesis accounts in addition to the ones defined below. 
 GENESIS_ADDRESSES=(
     "seda..."
     "seda..."
