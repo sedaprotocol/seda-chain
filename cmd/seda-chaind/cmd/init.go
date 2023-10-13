@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	cfg "github.com/cometbft/cometbft/config"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/types"
 
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -71,9 +72,12 @@ func downloadAndApplyNetworkConfig(network, moniker string, config *cfg.Config) 
 	configDir := filepath.Join(config.RootDir, "config")
 
 	// use os.Stat to check if the file exists
-	_, err = os.Stat(config.GenesisFile())
-	if !os.IsNotExist(err) {
+	if cmtos.FileExists(config.GenesisFile()) {
 		return "", "", fmt.Errorf("genesis.json file already exists: %v", config.GenesisFile())
+	}
+	seedsFile := filepath.Join(configDir, "seeds.txt")
+	if cmtos.FileExists(seedsFile) {
+		return "", "", fmt.Errorf("seeds.txt file already exists: %v", seedsFile)
 	}
 
 	// download files from seda-networks repo
@@ -95,7 +99,7 @@ func downloadAndApplyNetworkConfig(network, moniker string, config *cfg.Config) 
 	chainID = genDoc.ChainID
 
 	// obtain seeds from seeds file, if exists, and write to config file
-	seedsBytes, err := os.ReadFile(filepath.Join(configDir, "seeds.txt"))
+	seedsBytes, err := os.ReadFile(seedsFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return "", "", err
