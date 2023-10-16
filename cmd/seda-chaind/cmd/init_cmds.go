@@ -61,10 +61,13 @@ func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Comma
 			config := serverCtx.Config
 			config.SetRoot(clientCtx.HomeDir)
 
-			recover, _ := cmd.Flags().GetBool(FlagRecover)
-			mnemonic, err := validateOrGenerateMnemonic(recover, cmd)
-			if err != nil {
-				return err
+			var mnemonic string
+			var err error
+			if recover, _ := cmd.Flags().GetBool(FlagRecover); recover {
+				mnemonic, err = readInMnemonic(cmd)
+				if err != nil {
+					return err
+				}
 			}
 
 			// get chain ID
@@ -148,10 +151,13 @@ func joinNetworkCommand(mbm module.BasicManager, defaultNodeHome string) *cobra.
 			config := serverCtx.Config
 			config.SetRoot(clientCtx.HomeDir)
 
-			recover, _ := cmd.Flags().GetBool(FlagRecover)
-			mnemonic, err := validateOrGenerateMnemonic(recover, cmd)
-			if err != nil {
-				return err
+			var mnemonic string
+			var err error
+			if recover, _ := cmd.Flags().GetBool(FlagRecover); recover {
+				mnemonic, err = readInMnemonic(cmd)
+				if err != nil {
+					return err
+				}
 			}
 
 			network, _ := cmd.Flags().GetString(FlagNetwork)
@@ -163,6 +169,12 @@ func joinNetworkCommand(mbm module.BasicManager, defaultNodeHome string) *cobra.
 				}
 			} else {
 				return fmt.Errorf("unsupported network type: %s", network)
+			}
+
+			// configure validator files
+			err = configureValidatorFiles(config)
+			if err != nil {
+				return err
 			}
 
 			// initialize the node

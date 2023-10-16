@@ -12,6 +12,7 @@ import (
 
 	cfg "github.com/cometbft/cometbft/config"
 	cmtos "github.com/cometbft/cometbft/libs/os"
+	"github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/types"
 
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -47,22 +48,38 @@ func displayInfo(info printInfo) error {
 	return err
 }
 
-func validateOrGenerateMnemonic(recover bool, cmd *cobra.Command) (string, error) {
+func readInMnemonic(cmd *cobra.Command) (string, error) {
 	var mnemonic string
-	if recover {
-		inBuf := bufio.NewReader(cmd.InOrStdin())
-		value, err := input.GetString("Enter your bip39 mnemonic", inBuf)
-		if err != nil {
-			return "", err
-		}
-
-		mnemonic = value
-		if !bip39.IsMnemonicValid(mnemonic) {
-			return "", errors.New("invalid mnemonic")
-		}
+	inBuf := bufio.NewReader(cmd.InOrStdin())
+	value, err := input.GetString("Enter your bip39 mnemonic", inBuf)
+	if err != nil {
+		return "", err
 	}
 
+	mnemonic = value
+	if !bip39.IsMnemonicValid(mnemonic) {
+		return "", errors.New("invalid mnemonic")
+	}
 	return mnemonic, nil
+}
+
+// If validator key file exists, create and save an empty validator state file.
+func configureValidatorFiles(config *cfg.Config) error {
+	keyFilePath := config.PrivValidatorKeyFile()
+	if err := os.MkdirAll(filepath.Dir(keyFilePath), 0o777); err != nil {
+		return fmt.Errorf("could not create directory %q: %w", filepath.Dir(keyFilePath), err)
+	}
+	stateFilePath := config.PrivValidatorStateFile()
+	if err := os.MkdirAll(filepath.Dir(stateFilePath), 0o777); err != nil {
+		return fmt.Errorf("could not create directory %q: %w", filepath.Dir(stateFilePath), err)
+	}
+
+	var pv *privval.FilePV
+	if cmtos.FileExists(keyFilePath) {
+		pv = privval.LoadFilePVEmptyState(keyFilePath, stateFilePath)
+		pv.Save()
+	}
+	return nil
 }
 
 // downloadAndApplyNetworkConfig() downloads network files from seda-networks
