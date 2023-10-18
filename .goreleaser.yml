@@ -10,8 +10,8 @@ before:
 
 builds:
   - main: ./cmd/seda-chaind
-    id: "sedad"
-    binary: sedad
+    id: "seda-chaind"
+    binary: seda-chaind
     mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -tags=badgerdb ledger netgo
@@ -45,6 +45,5 @@ changelog:
 
 dockers:
   - image_templates:
-      - ghcr.io/sedaprotocol/seda-chain:{{.Version}}
-  - dockerfile: "gorelease.Dockerfile"
+      - ghcr.io/sedaprotocol/seda-chaind:{{.Version}}
   - skip_push: false

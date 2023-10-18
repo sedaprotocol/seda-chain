@@ -1,3 +1,3 @@
 FROM scratch
-ENTRYPOINT ["/sedad"]
-COPY sedad /
+ENTRYPOINT ["/seda-chaind"]
+COPY seda-chaind /
