@@ -42,8 +42,3 @@ checksum:
 
 changelog:
   skip: false
-
-dockers:
-  - image_templates:
-      - ghcr.io/sedaprotocol/seda-chaind:{{.Version}}
-  - skip_push: false
