@@ -5,7 +5,14 @@ on:
     tags:
 #       SemVer regex taken from https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
 #       Added option to start with a v for cases like v0.0.1
-      - "^v?(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$"
+      - "[0-9]+.[0-9]+.[0-9]+-rc"
+      - "[0-9]+.[0-9]+.[0-9]+-alpha"
+      - "[0-9]+.[0-9]+.[0-9]+-beta"
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-rc"
+      - "v[0-9]+.[0-9]+.[0-9]+-alpha"
+      - "v[0-9]+.[0-9]+.[0-9]+-beta"
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 
 concurrency:
