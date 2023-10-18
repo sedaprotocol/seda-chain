@@ -20,7 +20,7 @@ rm -rf $NODE_DIR
 #
 #   CREATE GENESIS AND ADJUST GOV PARAMETERS
 #
-$BIN init new node0
+$BIN init new node0 --chain-id $CHAIN_ID
 
 cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="180s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
 cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="180s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
@@ -34,9 +34,17 @@ cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["params"]["max
 #   ADD GENESIS ACCOUNTS
 #
 for i in ${!GENESIS_ADDRESSES[@]}; do
-    $BIN add-genesis-account ${GENESIS_ADDRESSES[$i]} 100000000000000000seda --keyring-backend test
+    $BIN add-genesis-account ${GENESIS_ADDRESSES[$i]} 100000000000000000seda
 done
 
+set +u
+if [ ! -z "$SATOSHI" ]; then
+    $BIN add-genesis-account $SATOSHI 10000000000000000000seda
+fi
+if [ ! -z "$FAUCET" ]; then
+    $BIN add-genesis-account $FAUCET 1000000000000000000seda
+fi
+set -u
 
 #
 # CREATE NODE KEY, VALIDATOR KEY, AND GENTX FOR EACH NODE
@@ -54,9 +62,9 @@ for i in ${!MONIKERS[@]}; do
     VALIDATOR_ADDRESS=$($BIN keys show ${MONIKERS[$i]} --keyring-backend test --home $INDIVIDUAL_VAL_HOME_DIR -a)
 
     # to create their gentx
-    $BIN add-genesis-account $VALIDATOR_ADDRESS 100000000000000000seda --home $INDIVIDUAL_VAL_HOME_DIR
+    $BIN add-genesis-account $VALIDATOR_ADDRESS 500000000000000000seda --home $INDIVIDUAL_VAL_HOME_DIR
     # to output geneis file
-    $BIN add-genesis-account $VALIDATOR_ADDRESS 100000000000000000seda
+    $BIN add-genesis-account $VALIDATOR_ADDRESS 500000000000000000seda
 
     $BIN gentx ${MONIKERS[$i]} ${SELF_DELEGATION_AMOUNTS[$i]} --moniker=${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR --ip=${IPS[$i]}
 

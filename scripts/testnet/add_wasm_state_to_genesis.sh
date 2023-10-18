@@ -6,26 +6,46 @@ set -euxo pipefail
 # Then, it adds these states to a given original genesis file.
 # The final genesis file is placed in the current directory as genesis.json.
 #
-source config.sh
 
-#
-#   PRELIMINARY CHECKS
-#
-ORIGINAL_GENESIS=$NODE_DIR/genesis.json
-if [ ! -f "$ORIGINAL_GENESIS" ]; then
-  echo "Original genesis file not found inside node directory."
-  exit 1
-fi
+# download_contract_release() downloads a file from seda-chain-contracts repo.
+# Argument:
+#   $1: Wasm contract file name
+function download_contract_release() {
+  local repo="sedaprotocol/seda-chain-contracts"
+  local url="https://api.github.com"
 
-TMP_HOME=./tmp
-rm -rf $TMP_HOME
+  mkdir -p $WASM_DIR
 
+  function gh_curl() {
+    curl -H "Authorization: token $GITHUB_TOKEN" \
+         -H "Accept: application/vnd.github.v3.raw" \
+         $@
+  }
+
+  if [ "$CONTRACTS_VERSION" = "latest" ]; then
+    # Github should return the latest release first.
+    parser=".[0].assets | map(select(.name == \"${1}\"))[0].id"
+  else
+    parser=". | map(select(.tag_name == \"$CONTRACTS_VERSION\"))[0].assets | map(select(.name == \"${1}\"))[0].id"
+  fi;
+
+  asset_id=`gh_curl -s $url/repos/$repo/releases | jq "$parser"`
+  if [ "$asset_id" = "null" ]; then
+    >&2 echo "ERROR: asset not found: version $CONTRACTS_VERSION, file $1"
+    exit 1
+  fi;
+
+  curl -sL --header "Authorization: token $GITHUB_TOKEN" \
+    --header 'Accept: application/octet-stream' \
+    https://$GITHUB_TOKEN:@api.github.com/repos/$repo/releases/assets/$asset_id \
+    --output-dir $WASM_DIR --output ${1}
+}
 
 # store_and_instantiate() stores and instantiates a contract and returns its address
-# Accept arguments:
+# Arguments:
 #   $1: Contract file name
 #   $2: Initial state
-store_and_instantiate() {
+function store_and_instantiate() {
     local TX_OUTPUT=$($BIN tx wasm store $WASM_DIR/$1 --from $ADDR --keyring-backend test --gas auto --gas-adjustment 1.2 --home $TMP_HOME -y --output json)
     [[ -z "$TX_OUTPUT" ]] && { echo "failed to get tx output" ; exit 1; }
     local TX_HASH=$(echo $TX_OUTPUT | jq -r .txhash)
@@ -46,15 +66,36 @@ store_and_instantiate() {
     echo $CONTRACT_ADDRESS
 }
 
+
+source config.sh
+
+#
+#   PRELIMINARY CHECKS AND DOWNLOADS
+#
+ORIGINAL_GENESIS=$NODE_DIR/genesis.json
+if [ ! -f "$ORIGINAL_GENESIS" ]; then
+  echo "Original genesis file not found inside node directory."
+  exit 1
+fi
+
+TMP_HOME=./tmp
+rm -rf $TMP_HOME
+
+rm -rf $WASM_DIR
+download_contract_release proxy_contract.wasm
+download_contract_release staking.wasm
+download_contract_release data_requests.wasm
+
+
 #
 #   SCRIPT BEGINS - START CHAIN
 #
 $BIN init new node0 --home $TMP_HOME
 
-$BIN keys add satoshi --home $TMP_HOME --keyring-backend test
-ADDR=$($BIN keys show satoshi --home $TMP_HOME --keyring-backend test -a)
+$BIN keys add deployer --home $TMP_HOME --keyring-backend test
+ADDR=$($BIN keys show deployer --home $TMP_HOME --keyring-backend test -a)
 $BIN add-genesis-account $ADDR 100000000000000000seda --home $TMP_HOME --keyring-backend test
-$BIN gentx satoshi 10000000000000000seda --home $TMP_HOME --keyring-backend test
+$BIN gentx deployer 10000000000000000seda --home $TMP_HOME --keyring-backend test
 $BIN collect-gentxs --home $TMP_HOME
 
 
