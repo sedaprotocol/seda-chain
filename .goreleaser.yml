@@ -42,3 +42,9 @@ checksum:
 
 changelog:
   skip: false
+
+dockers:
+  - image_templates:
+      - ghcr.io/sedaprotocol/seda-chain:{{.Version}}
+  - dockerfile: "gorelease.Dockerfile"
+  - skip_push: false

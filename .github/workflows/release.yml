@@ -3,11 +3,8 @@ name: Release
 on:
   push:
     tags:
-      - "*"
-      - "v[0-9]+\\.[0-9]+\\.[0-9]+-alpha[0-9]+" # vX.X.X-alphaX
-      - "v[0-9]+\\.[0-9]+\\.[0-9]+-beta[0-9]+" # vX.X.X-betaX
-      - "v[0-9]+\\.[0-9]+\\.[0-9]+-rc[0-9]+" # vX.X.X-rcX
-      - "v[0-9]+\\.[0-9]+\\.[0-9]+" # vX.X.X
+      # SemVer regex taken from https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
+      - "^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 concurrency:
   group: ci-${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true

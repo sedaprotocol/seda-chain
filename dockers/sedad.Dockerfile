@@ -1,0 +1,30 @@
+FROM golang:1.21-bookworm AS builder
+
+WORKDIR /src/
+COPY go.mod ./
+RUN go mod download
+
+COPY . .
+
+
+RUN make install
+
+
+FROM ubuntu:23.04
+EXPOSE 26656 26657 1317 9090
+CMD ["seda-chaind", "start"]
+STOPSIGNAL SIGTERM
+
+
+RUN apt-get update && apt-get install ca-certificates git jq  -y \
+    && groupadd seda && useradd -g seda -m seda
+
+
+
+COPY --from=builder /go/bin/seda-chaind /usr/local/bin/
+COPY --from=builder /go/pkg/mod/github.com/\!cosm\!wasm/wasmvm\@v*/internal/api/libwasmvm.*.so /usr/lib/
+
+COPY scripts/validator_setup/validator_setup.sh /usr/local/bin/validator_setup.sh
+RUN chmod +x /usr/local/bin/validator_setup.sh
+
+ENTRYPOINT ["validator_setup.sh"]
