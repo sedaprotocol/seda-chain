@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -119,12 +120,13 @@ func downloadAndApplyNetworkConfig(network, moniker string, config *cfg.Config) 
 	seedsBytes, err := os.ReadFile(seedsFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return "", "", err
+			return "", "", errors.Wrapf(err, "error reading seeds file at %s", seedsFile)
 		}
+	} else {
+		seeds = strings.TrimRight(string(seedsBytes), " \n")
+		config.P2P.Seeds = seeds
 	}
-	seeds = string(seedsBytes)
 
-	config.P2P.Seeds = seeds
 	config.Moniker = moniker
 	cfg.WriteConfigFile(filepath.Join(configDir, "config.toml"), config)
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -18,6 +19,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
@@ -141,10 +143,18 @@ func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Comma
 
 func joinNetworkCommand(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "join [moniker] [network]",
+		Use:   "join [moniker]",
 		Short: "Grabs an existing network configuration and initializes node based on it",
-		Long:  `Initialize validator and node configuration files for an existing network.`,
-		Args:  cobra.ExactArgs(1),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Initialize validator and node configuration files for an existing network.
+
+Example:
+$ %s init join moniker --network devnet
+`,
+				version.AppName,
+			),
+		),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			serverCtx := server.GetServerContextFromCmd(cmd)
