@@ -26,31 +26,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.inputs.release_tag }}
+
       - uses: actions/setup-go@v4
         with:
           go-version: "1.21"
           cache: true
 
-      - name: Set ENV
-        run: echo "COMET_VERSION=$(go list -m github.com/cometbft/cometbft | sed 's:.* ::')" >> $GITHUB_ENV
-
-      - name: goreleaser test-build
-        uses: goreleaser/goreleaser-action@v5
-        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'Enable:ReleaseBuild')
-        with:
-          version: latest
-          args: build --clean --skip=validate
-        env:
-          COMET_VERSION: ${{ env.COMET_VERSION }}
-      - name: Release
-        uses: goreleaser/goreleaser-action@v5
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          version: latest
-          args: release --clean
+      - name: Make release and publish
+        run: |
+          make release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMET_VERSION: ${{ env.COMET_VERSION }}
+      - name: Cleanup
+        run: |
+          sudo rm -rf dist
 
   build_push_node_image:
     name: Build and Push Docker Image to GHCR

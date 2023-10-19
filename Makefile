@@ -228,3 +228,55 @@ cover-html: test-unit-cover
 .PHONY: cover-html run-tests $(TEST_TARGETS)
 
 
+###############################################################################
+###                                Release                                  ###
+###############################################################################
+
+GO_VERSION=1.21
+GORELEASER_IMAGE := ghcr.io/goreleaser/goreleaser-cross:v$(GO_VERSION)
+COSMWASM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm | sed 's/.* //')
+ifdef GITHUB_TOKEN
+release:
+	docker run \
+		--rm \
+		-e GITHUB_TOKEN=$(GITHUB_TOKEN) \
+		-e COSMWASM_VERSION=$(COSMWASM_VERSION) \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/seda-chaind \
+		-w /go/src/seda-chaind \
+		$(GORELEASER_IMAGE) \
+		release \
+		--clean
+else
+release:
+	@echo "Error: GITHUB_TOKEN variable required to 'make release'."
+
+endif
+
+release-dry-run:
+	docker run \
+		--rm \
+		-e COSMWASM_VERSION=$(COSMWASM_VERSION) \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/seda-chaind \
+		-w /go/src/seda-chaind \
+		$(GORELEASER_IMAGE) \
+		release \
+		--clean \
+		--skip=publish
+
+release-snapshot:
+	docker run \
+		--rm \
+		-e COSMWASM_VERSION=$(COSMWASM_VERSION) \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/seda-chaind \
+		-w /go/src/seda-chaind \
+		$(GORELEASER_IMAGE) \
+		release \
+		--clean \
+		--snapshot \
+		--skip-validate\
+		--skip-publish
+
+.PHONY: release release-dry-run release-snapshot
