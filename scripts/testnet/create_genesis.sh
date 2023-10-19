@@ -56,7 +56,7 @@ for i in ${!MONIKERS[@]}; do
     INDIVIDUAL_VAL_HOME_DIR=$NODE_DIR/${MONIKERS[$i]}
     INDIVIDUAL_VAL_CONFIG_DIR="$INDIVIDUAL_VAL_HOME_DIR/config"
 
-    $BIN init new ${MONIKERS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR
+    $BIN init new ${MONIKERS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR  --chain-id $CHAIN_ID
     $BIN keys add ${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR
 
     VALIDATOR_ADDRESS=$($BIN keys show ${MONIKERS[$i]} --keyring-backend test --home $INDIVIDUAL_VAL_HOME_DIR -a)
