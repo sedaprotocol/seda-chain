@@ -16,7 +16,6 @@ builds:
       - amd64
     env:
       - CC=x86_64-linux-gnu-gcc
-      - CXX=x86_64-linux-gnu-g++
     flags:
       - -mod=readonly
       - -trimpath
