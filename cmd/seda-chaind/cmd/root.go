@@ -111,7 +111,6 @@ func initRootCmd(
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
 		config.Cmd(),
-		// this line is used by starport scaffolding # root/commands
 	)
 
 	a := appCreator{
@@ -190,7 +189,6 @@ func txCommand() *cobra.Command {
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
-	// this line is used by starport scaffolding # root/arguments
 }
 
 func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {

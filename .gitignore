@@ -12,3 +12,4 @@ dist/
 
 scripts/testnet/config.sh
 scripts/testnet/nodes
+scripts/testnet/artifacts

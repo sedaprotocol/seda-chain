@@ -70,7 +70,7 @@ func BenchmarkSimulation(b *testing.B) {
 	simcli.FlagEnabledValue = true
 
 	config := simcli.NewConfigFromFlags()
-	config.ChainID = "mars-simapp"
+	config.ChainID = "seda-simapp"
 	db, dir, logger, _, err := simtestutil.SetupSimulation(
 		config,
 		"leveldb-bApp-sim",
@@ -220,7 +220,7 @@ func TestAppStateDeterminism(t *testing.T) {
 
 func TestAppImportExport(t *testing.T) {
 	config := simcli.NewConfigFromFlags()
-	config.ChainID = "mars-simapp-import"
+	config.ChainID = "seda-simapp-import"
 
 	db, dir, logger, skip, err := simtestutil.SetupSimulation(
 		config,
@@ -374,7 +374,7 @@ func TestAppImportExport(t *testing.T) {
 
 func TestAppSimulationAfterImport(t *testing.T) {
 	config := simcli.NewConfigFromFlags()
-	config.ChainID = "mars-simapp-after-import"
+	config.ChainID = "seda-simapp-after-import"
 
 	db, dir, logger, skip, err := simtestutil.SetupSimulation(
 		config,
