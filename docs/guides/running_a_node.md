@@ -133,7 +133,7 @@ For docker the prosses is considerably essier
 
 To start a SEDA chain node, an operator could run directly a docker run command as:
 
-```jsx
+```bash
 docker run --name <container-name> \
     --env-file seda.env \
     --volume <volume-name>:/root/.seda-chain \
@@ -142,7 +142,7 @@ docker run --name <container-name> \
 
 where `seda.env` is a dotenv file with:
 
-```jsx
+```bash
 MONIKER=
 MNEMONIC=
 KEYRING_PASSWORD=
@@ -153,7 +153,7 @@ NODE_ADDRESS=
 
 Alternatively, the docker command can be run as:
 
-```jsx
+```bash
 docker run --name seda_node. \
 --env 'MONIKER=' \
 --env 'MNEMONIC=' \
@@ -170,7 +170,7 @@ ghcr.io/sedaprotocol/node:v0.0.1-rc start
 
 The docker container should be stoppable and resumed as:
 
-```jsx
+```bash
 docker stop seda_node
 
 docker start seda_node
