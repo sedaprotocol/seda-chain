@@ -280,12 +280,22 @@ release-snapshot:
 ###                                Docker                                  ###
 ###############################################################################
 RUNNER_BASE_IMAGE_DISTROLESS := gcr.io/distroless/static-debian11
+RUNNER_BASE_IMAGE_ALPINE := alpine:3.17
 
-docker-build:
+docker-static-build:
 	@DOCKER_BUILDKIT=1 docker build \
-		-t seda-chaind \
+		-t seda-chain/seda-chaind-static-distroless \
 		--build-arg GO_VERSION=$(GO_VERSION) \
 		--build-arg RUNNER_IMAGE=$(RUNNER_BASE_IMAGE_DISTROLESS) \
+		--build-arg GIT_VERSION=$(VERSION) \
+		--build-arg GIT_COMMIT=$(COMMIT) \
+		-f static.Dockerfile .
+
+docker-static-build-alpine:
+	@DOCKER_BUILDKIT=1 docker build \
+		-t seda-chain/seda-chaind-static-alpine \
+		--build-arg GO_VERSION=$(GO_VERSION) \
+		--build-arg RUNNER_IMAGE=$(RUNNER_BASE_IMAGE_ALPINE) \
 		--build-arg GIT_VERSION=$(VERSION) \
 		--build-arg GIT_COMMIT=$(COMMIT) \
 		-f static.Dockerfile .
