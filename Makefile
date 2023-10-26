@@ -120,11 +120,6 @@ build-experimental: go.sum
 	@echo "--> Building Experimental version..."
 	EXPERIMENTAL=true $(MAKE) build
 
-build-no_cgo:
-	@echo "--> Building static binary with no CGO nor GLIBC dynamic linking..."
-	CGO_ENABLED=0 CGO_LDFLAGS="-static" $(MAKE) build
-
-
 go-mod-tidy:
 	@contrib/scripts/go-mod-tidy-all.sh
 
@@ -280,3 +275,17 @@ release-snapshot:
 		--skip-publish
 
 .PHONY: release release-dry-run release-snapshot
+
+###############################################################################
+###                                Docker                                  ###
+###############################################################################
+RUNNER_BASE_IMAGE_DISTROLESS := gcr.io/distroless/static-debian11
+
+docker-build:
+	@DOCKER_BUILDKIT=1 docker build \
+		-t seda-chaind \
+		--build-arg GO_VERSION=$(GO_VERSION) \
+		--build-arg RUNNER_IMAGE=$(RUNNER_BASE_IMAGE_DISTROLESS) \
+		--build-arg GIT_VERSION=$(VERSION) \
+		--build-arg GIT_COMMIT=$(COMMIT) \
+		-f static.Dockerfile .
