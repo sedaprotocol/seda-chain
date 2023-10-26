@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	gaiadBinary    = "seda-chaind"
+	gaiadBinary    = "seda-chaind" // TO-DO
 	txCommand      = "tx"
 	queryCommand   = "query"
 	keysCommand    = "keys"
@@ -348,7 +348,7 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 			Mounts: []string{
 				fmt.Sprintf("%s/:%s", val.configDir(), gaiaHomePath),
 			},
-			Repository: "cosmos/gaiad-e2e",
+			Repository: "seda-chaind-e2e",
 		}
 
 		s.Require().NoError(exec.Command("chmod", "-R", "0777", val.configDir()).Run()) //nolint:gosec // this is a test

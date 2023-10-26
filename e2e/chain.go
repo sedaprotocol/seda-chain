@@ -15,7 +15,9 @@ import (
 
 	// gaia "github.com/cosmos/gaia/v14/app"
 	// "github.com/cosmos/gaia/v14/app/params"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+
+	"github.com/sedaprotocol/seda-chain/app"
+	"github.com/sedaprotocol/seda-chain/app/params"
 )
 
 const (
@@ -24,17 +26,17 @@ const (
 )
 
 var (
-	encodingConfig moduletestutil.TestEncodingConfig
+	encodingConfig params.EncodingConfig
 	cdc            codec.Codec
 	txConfig       client.TxConfig
 )
 
 func init() {
-	encodingConfig = moduletestutil.MakeTestEncodingConfig()
+	encodingConfig = app.MakeEncodingConfig()
 	authvesting.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	stakingtypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	evidencetypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	cdc = encodingConfig.Codec
+	cdc = encodingConfig.Marshaler
 	txConfig = encodingConfig.TxConfig
 }
 
