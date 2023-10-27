@@ -1,7 +1,7 @@
 package e2e
 
 func (s *IntegrationTestSuite) testBankTokenTransfer() {
-	s.Run("send_photon_between_accounts", func() {
+	s.Run("send_between_accounts", func() {
 		senderAddress, err := s.chainA.validators[0].keyInfo.GetAddress()
 		s.Require().NoError(err)
 		sender := senderAddress.String()
@@ -19,10 +19,10 @@ func (s *IntegrationTestSuite) testBankTokenTransfer() {
 
 		// s.Require().Eventually(
 		// 	func() bool {
-		// 		beforeSenderUAtomBalance, err = getSpecificBalance(chainAAPIEndpoint, sender, uatomDenom)
+		// 		beforeSenderUAtomBalance, err = getSpecificBalance(chainAAPIEndpoint, sender, asedaDenom)
 		// 		s.Require().NoError(err)
 
-		// 		beforeRecipientUAtomBalance, err = getSpecificBalance(chainAAPIEndpoint, recipient, uatomDenom)
+		// 		beforeRecipientUAtomBalance, err = getSpecificBalance(chainAAPIEndpoint, recipient, asedaDenom)
 		// 		s.Require().NoError(err)
 
 		// 		return beforeSenderUAtomBalance.IsValid() && beforeRecipientUAtomBalance.IsValid()
@@ -35,10 +35,10 @@ func (s *IntegrationTestSuite) testBankTokenTransfer() {
 
 		// s.Require().Eventually(
 		// 	func() bool {
-		// 		afterSenderUAtomBalance, err := getSpecificBalance(chainAAPIEndpoint, sender, uatomDenom)
+		// 		afterSenderUAtomBalance, err := getSpecificBalance(chainAAPIEndpoint, sender, asedaDenom)
 		// 		s.Require().NoError(err)
 
-		// 		afterRecipientUAtomBalance, err := getSpecificBalance(chainAAPIEndpoint, recipient, uatomDenom)
+		// 		afterRecipientUAtomBalance, err := getSpecificBalance(chainAAPIEndpoint, recipient, asedaDenom)
 		// 		s.Require().NoError(err)
 
 		// 		decremented := beforeSenderUAtomBalance.Sub(tokenAmount).Sub(standardFees).IsEqual(afterSenderUAtomBalance)

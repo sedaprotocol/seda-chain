@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"cosmossdk.io/math"
 	tmtypes "github.com/cometbft/cometbft/types"
 
 	"github.com/cosmos/cosmos-sdk/server"
@@ -15,8 +16,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -120,16 +122,26 @@ func modifyGenesis(path, moniker, amountStr string, addrAll []sdk.AccAddress, gl
 	}
 	appState[stakingtypes.ModuleName] = stakingGenStateBz
 
-	// Refactor to separate method
-	amnt := sdk.NewInt(10000)
-	quorum, _ := sdk.NewDecFromStr("0.000000000000000001")
-	threshold, _ := sdk.NewDecFromStr("0.000000000000000001")
+	crisisGenState := crisistypes.NewGenesisState(sdk.NewCoin(denom, math.NewInt(1000)))
+	crisisGenStateBz, err := cdc.MarshalJSON(crisisGenState)
+	if err != nil {
+		return fmt.Errorf("failed to marshal crisis genesis state: %s", err)
+	}
+	appState[crisistypes.ModuleName] = crisisGenStateBz
 
-	govState := govv1beta1.NewGenesisState(1,
-		govv1beta1.NewDepositParams(sdk.NewCoins(sdk.NewCoin(denom, amnt)), 10*time.Minute),
-		govv1beta1.NewVotingParams(15*time.Second),
-		govv1beta1.NewTallyParams(quorum, threshold, govv1beta1.DefaultVetoThreshold),
-	)
+	govparams := govv1.DefaultParams()
+	votingPeriod := time.Duration(15) * time.Second
+	govparams.VotingPeriod = &votingPeriod
+	govparams.MinDeposit = sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(10000000)))
+
+	// amnt := sdk.NewInt(10000)
+	// quorum, _ := sdk.NewDecFromStr("0.000000000000000001")
+	// threshold, _ := sdk.NewDecFromStr("0.000000000000000001")
+	// _ = govv1beta1.NewDepositParams(sdk.NewCoins(sdk.NewCoin(denom, amnt)), 10*time.Minute)
+	// _ = govv1beta1.NewVotingParams(15*time.Second)
+	// _ = govv1beta1.NewTallyParams(quorum, threshold, govv1beta1.DefaultVetoThreshold)
+
+	govState := govv1.NewGenesisState(1, govparams)
 
 	govGenStateBz, err := cdc.MarshalJSON(govState)
 	if err != nil {

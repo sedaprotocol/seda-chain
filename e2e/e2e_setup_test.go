@@ -30,16 +30,18 @@ import (
 )
 
 const (
-	gaiadBinary    = "seda-chaind" // TO-DO
-	txCommand      = "tx"
-	queryCommand   = "query"
-	keysCommand    = "keys"
-	gaiaHomePath   = "/home/nonroot/.gaia"
-	photonDenom    = "photon"
-	uatomDenom     = "aseda"
-	stakeDenom     = "aseda"
-	initBalanceStr = "100000000000000000aseda"
-	minGasPrice    = "0.00001"
+	gaiadBinary  = "seda-chaind" // TO-DO
+	txCommand    = "tx"
+	queryCommand = "query"
+	keysCommand  = "keys"
+	gaiaHomePath = "/seda-chain/.seda-chain"
+	// photonDenom    = "photon"
+	sedaDenom         = "seda"
+	asedaDenom        = "aseda"
+	stakeDenom        = "aseda"
+	initBalanceStr    = "100000000000000000seda"
+	selfDelegationStr = "100000000000000000000000000000000000aseda"
+	minGasPrice       = "0.00001"
 	// the test globalfee in genesis is the same as minGasPrice
 	// global fee lower/higher than min_gas_price
 	initialGlobalFeeAmt                   = "0.00001"
@@ -68,12 +70,10 @@ const (
 )
 
 var (
-	gaiaConfigPath    = filepath.Join(gaiaHomePath, "config")
-	stakingAmount     = sdk.NewInt(100000000000)
-	stakingAmountCoin = sdk.NewCoin(uatomDenom, stakingAmount)
-	tokenAmount       = sdk.NewCoin(uatomDenom, sdk.NewInt(3300000000)) // 3,300uatom
-	standardFees      = sdk.NewCoin(uatomDenom, sdk.NewInt(330000))     // 0.33uatom
-	// depositAmount         = sdk.NewCoin(uatomDenom, sdk.NewInt(330000000))  // 3,300uatom
+	gaiaConfigPath = filepath.Join(gaiaHomePath, "config")
+	tokenAmount    = sdk.NewCoin(asedaDenom, sdk.NewInt(3300000000)) // 3,300uatom
+	standardFees   = sdk.NewCoin(asedaDenom, sdk.NewInt(330000))     // 0.33uatom
+	// depositAmount         = sdk.NewCoin(asedaDenom, sdk.NewInt(330000000))  // 3,300uatom
 	// distModuleAddress     = authtypes.NewModuleAddress(distrtypes.ModuleName).String()
 	// proposalCounter       = 0
 	HermesResource0Purged = false
@@ -183,7 +183,9 @@ func (s *IntegrationTestSuite) initNodes(c *chain) {
 	c.genesisAccounts[3]: Test Account 2
 	c.genesisAccounts[4]: Relayer1 Wallet
 	*/
-	s.Require().NoError(c.addAccountFromMnemonic(5))
+	err := c.addAccountFromMnemonic(5)
+	s.Require().NoError(err)
+
 	// Initialize a genesis file for the first validator
 	val0ConfigDir := c.validators[0].configDir()
 	var addrAll []sdk.AccAddress
@@ -199,9 +201,9 @@ func (s *IntegrationTestSuite) initNodes(c *chain) {
 		addrAll = append(addrAll, acctAddr)
 	}
 
-	s.Require().NoError(
-		modifyGenesis(val0ConfigDir, "", initBalanceStr, addrAll, initialGlobalFeeAmt+uatomDenom, uatomDenom),
-	)
+	err = modifyGenesis(val0ConfigDir, "", initBalanceStr, addrAll, initialGlobalFeeAmt+asedaDenom, asedaDenom)
+	s.Require().NoError(err)
+
 	// copy the genesis file to the remaining validators
 	for _, val := range c.validators[1:] {
 		_, err := copyFile(
@@ -251,7 +253,10 @@ func (s *IntegrationTestSuite) initGenesis(c *chain, vestingMnemonic, jailedValM
 	// generate genesis txs
 	genTxs := make([]json.RawMessage, len(c.validators))
 	for i, val := range c.validators {
-		createValmsg, err := val.buildCreateValidatorMsg(stakingAmountCoin)
+		selfDelegationCoin, err := sdk.ParseCoinNormalized(selfDelegationStr)
+		s.Require().NoError(err)
+
+		createValmsg, err := val.buildCreateValidatorMsg(selfDelegationCoin)
 		s.Require().NoError(err)
 		signedTx, err := val.signMsg(createValmsg)
 
@@ -329,7 +334,7 @@ func (s *IntegrationTestSuite) initValidatorConfigs(c *chain) {
 
 		appConfig := srvconfig.DefaultConfig()
 		appConfig.API.Enable = true
-		appConfig.MinGasPrices = fmt.Sprintf("%s%s", minGasPrice, uatomDenom)
+		appConfig.MinGasPrices = fmt.Sprintf("%s%s", minGasPrice, asedaDenom)
 
 		srvconfig.SetConfigTemplate(srvconfig.DefaultConfigTemplate)
 		srvconfig.WriteConfigFile(appCfgPath, appConfig)

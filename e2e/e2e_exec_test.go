@@ -510,7 +510,7 @@ func (s *IntegrationTestSuite) getLatestBlockHeight(c *chain, valIdx int) int {
 func (s *IntegrationTestSuite) verifyBalanceChange(endpoint string, expectedAmount sdk.Coin, recipientAddress string) {
 	s.Require().Eventually(
 		func() bool {
-			afterAtomBalance, err := getSpecificBalance(endpoint, recipientAddress, uatomDenom)
+			afterAtomBalance, err := getSpecificBalance(endpoint, recipientAddress, asedaDenom)
 			s.Require().NoError(err)
 
 			return afterAtomBalance.IsEqual(expectedAmount)
