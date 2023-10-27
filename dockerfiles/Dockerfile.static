@@ -63,11 +63,6 @@ COPY --from=builder /seda-chain/build/seda-chaind /bin/seda-chaind
 ENV HOME /seda-chain
 WORKDIR $HOME
 
-EXPOSE 26656
-EXPOSE 26657
-EXPOSE 1317
-# Note: uncomment the line below if you need pprof
-# We disable it by default in out main Dockerfile for security reasons
-# EXPOSE 6060
+EXPOSE 26656 26657 1317 9090
 
 ENTRYPOINT ["seda-chaind"]
