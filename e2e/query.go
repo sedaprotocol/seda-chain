@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func queryGaiaTx(endpoint, txHash string) error {
+func queryTx(endpoint, txHash string) error {
 	resp, err := http.Get(fmt.Sprintf("%s/cosmos/tx/v1beta1/txs/%s", endpoint, txHash))
 	if err != nil {
 		return fmt.Errorf("failed to execute HTTP request: %w", err)
@@ -36,7 +36,7 @@ func queryGaiaTx(endpoint, txHash string) error {
 
 // if coin is zero, return empty coin.
 func getSpecificBalance(endpoint, addr, denom string) (amt sdk.Coin, err error) {
-	balances, err := queryGaiaAllBalances(endpoint, addr)
+	balances, err := queryAllBalances(endpoint, addr)
 	if err != nil {
 		return amt, err
 	}
@@ -50,7 +50,7 @@ func getSpecificBalance(endpoint, addr, denom string) (amt sdk.Coin, err error) 
 }
 
 // TO-DO
-func queryGaiaAllBalances(endpoint, addr string) (sdk.Coins, error) {
+func queryAllBalances(endpoint, addr string) (sdk.Coins, error) {
 	return nil, fmt.Errorf("not implemented yet")
 
 	// body, err := httpGet(fmt.Sprintf("%s/cosmos/bank/v1beta1/balances/%s", endpoint, addr))
@@ -76,20 +76,6 @@ func queryStakingParams(endpoint string) (stakingtypes.QueryParamsResponse, erro
 	var params stakingtypes.QueryParamsResponse
 	if err := cdc.UnmarshalJSON(body, &params); err != nil {
 		return stakingtypes.QueryParamsResponse{}, err
-	}
-
-	return params, nil
-}
-
-func queryGlobalFeeParams(endpoint string) (types.QueryParamsResponse, error) {
-	body, err := httpGet(fmt.Sprintf("%s/gaia/globalfee/v1beta1/params", endpoint))
-	if err != nil {
-		return types.QueryParamsResponse{}, fmt.Errorf("failed to execute HTTP request: %w", err)
-	}
-
-	var params types.QueryParamsResponse
-	if err := cdc.UnmarshalJSON(body, &params); err != nil {
-		return types.QueryParamsResponse{}, err
 	}
 
 	return params, nil

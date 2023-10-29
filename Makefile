@@ -217,10 +217,10 @@ cover-html: test-unit-cover
 ###                                Docker                                   ###
 ###############################################################################
 
-docker-build-debug:
+docker-build-e2e:
 	@docker build -t seda-chaind-e2e -f dockerfiles/Dockerfile.e2e .
 
-.PHONY: docker-build-debug
+.PHONY: docker-build-e2e
 
 
 ###############################################################################

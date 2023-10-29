@@ -65,6 +65,6 @@ WORKDIR $HOME
 
 EXPOSE 26656 26657 1317 9090
 
-USER nonroot
+# USER nonroot
 
-ENTRYPOINT ["seda-chaind", "start"]
+CMD ["seda-chaind", "start"]

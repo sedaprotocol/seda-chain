@@ -9,12 +9,8 @@ import (
 	evidencetypes "cosmossdk.io/x/evidence/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	// gaia "github.com/cosmos/gaia/v14/app"
-	// "github.com/cosmos/gaia/v14/app/params"
 
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
@@ -46,12 +42,11 @@ type chain struct {
 	validators []*validator
 	accounts   []*account //nolint:unused
 	// initial accounts in genesis
-	genesisAccounts        []*account
-	genesisVestingAccounts map[string]sdk.AccAddress
+	genesisAccounts []*account
 }
 
 func newChain() (*chain, error) {
-	tmpDir, err := os.MkdirTemp("", "gaia-e2e-testnet-")
+	tmpDir, err := os.MkdirTemp("", "e2e-testnet-")
 	if err != nil {
 		return nil, err
 	}
@@ -123,6 +118,6 @@ func (c *chain) createValidator(index int) *validator {
 	return &validator{
 		chain:   c,
 		index:   index,
-		moniker: fmt.Sprintf("%s-gaia-%d", c.id, index),
+		moniker: fmt.Sprintf("%s-seda-%d", c.id, index),
 	}
 }

@@ -30,18 +30,19 @@ import (
 )
 
 const (
-	gaiadBinary  = "seda-chaind" // TO-DO
-	txCommand    = "tx"
-	queryCommand = "query"
-	keysCommand  = "keys"
-	gaiaHomePath = "/seda-chain/.seda-chain"
-	// photonDenom    = "photon"
-	sedaDenom         = "seda"
-	asedaDenom        = "aseda"
-	stakeDenom        = "aseda"
-	initBalanceStr    = "100000000000000000seda"
-	selfDelegationStr = "100000000000000000000000000000000000aseda"
-	minGasPrice       = "0.00001"
+	binary                 = "seda-chaind"
+	txCommand              = "tx"
+	queryCommand           = "query"
+	keysCommand            = "keys"
+	containerChainHomePath = "/seda-chain/.seda-chain"
+	containerHomePath      = "/seda-chain/"
+	sedaDenom              = "seda"
+	asedaDenom             = "aseda"
+	stakeDenom             = asedaDenom
+	initBalanceStr         = "100000000000000000seda"
+	selfDelegationStr      = "10000000000000000000000000000000000aseda"
+	minGasPrice            = "0.00001"
+
 	// the test globalfee in genesis is the same as minGasPrice
 	// global fee lower/higher than min_gas_price
 	initialGlobalFeeAmt                   = "0.00001"
@@ -54,37 +55,18 @@ const (
 	relayerAccountIndexHermes1            = 1
 	numberOfEvidences                     = 10
 	slashingShares                  int64 = 10000
-
-	// proposalGlobalFeeFilename           = "proposal_globalfee.json"
-	// proposalBypassMsgFilename           = "proposal_bypass_msg.json"
-	// proposalMaxTotalBypassFilename      = "proposal_max_total_bypass.json"
-	// proposalCommunitySpendFilename      = "proposal_community_spend.json"
-	// proposalAddConsumerChainFilename    = "proposal_add_consumer.json"
-	// proposalRemoveConsumerChainFilename = "proposal_remove_consumer.json"
-	// proposalLSMParamUpdateFilename      = "proposal_lsm_param_update.json"
-
-	// hermesBinary              = "hermes"
-	// hermesConfigWithGasPrices = "/root/.hermes/config.toml"
-	// hermesConfigNoGasPrices   = "/root/.hermes/config-zero.toml"
-	// transferChannel           = "channel-0"
 )
 
 var (
-	gaiaConfigPath = filepath.Join(gaiaHomePath, "config")
-	tokenAmount    = sdk.NewCoin(asedaDenom, sdk.NewInt(3300000000)) // 3,300uatom
-	standardFees   = sdk.NewCoin(asedaDenom, sdk.NewInt(330000))     // 0.33uatom
-	// depositAmount         = sdk.NewCoin(asedaDenom, sdk.NewInt(330000000))  // 3,300uatom
-	// distModuleAddress     = authtypes.NewModuleAddress(distrtypes.ModuleName).String()
-	// proposalCounter       = 0
-	HermesResource0Purged = false
+	tokenAmount  = sdk.NewCoin(asedaDenom, sdk.NewInt(3300000000))
+	standardFees = sdk.NewCoin(asedaDenom, sdk.NewInt(330000))
 )
 
 type IntegrationTestSuite struct {
 	suite.Suite
 
 	tmpDirs []string
-	chainA  *chain
-	chainB  *chain
+	chain   *chain
 	dkrPool *dockertest.Pool
 	dkrNet  *dockertest.Network
 
@@ -106,48 +88,26 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 
 	var err error
-	s.chainA, err = newChain()
-	s.Require().NoError(err)
-
-	s.chainB, err = newChain()
+	s.chain, err = newChain()
 	s.Require().NoError(err)
 
 	s.dkrPool, err = dockertest.NewPool("")
 	s.Require().NoError(err)
 
-	s.dkrNet, err = s.dkrPool.CreateNetwork(fmt.Sprintf("%s-%s-testnet", s.chainA.id, s.chainB.id))
+	s.dkrNet, err = s.dkrPool.CreateNetwork(fmt.Sprintf("%s-testnet", s.chain.id))
 	s.Require().NoError(err)
 
 	s.valResources = make(map[string][]*dockertest.Resource)
 
-	vestingMnemonic, err := createMnemonic()
-	s.Require().NoError(err)
-
-	jailedValMnemonic, err := createMnemonic()
-	s.Require().NoError(err)
-
-	// The boostrapping phase is as follows:
-	//
-	// 1. Initialize Gaia validator nodes.
-	// 2. Create and initialize Gaia validator genesis files (both chains)
-	// 3. Start both networks.
-	// 4. Create and run IBC relayer (Hermes) containers.
-
-	s.T().Logf("starting e2e infrastructure for chain A; chain-id: %s; datadir: %s", s.chainA.id, s.chainA.dataDir)
-	s.initNodes(s.chainA)
-	s.initGenesis(s.chainA, vestingMnemonic, jailedValMnemonic)
-	s.initValidatorConfigs(s.chainA)
-	s.runValidators(s.chainA, 0)
-
-	s.T().Logf("starting e2e infrastructure for chain B; chain-id: %s; datadir: %s", s.chainB.id, s.chainB.dataDir)
-	s.initNodes(s.chainB)
-	s.initGenesis(s.chainB, vestingMnemonic, jailedValMnemonic)
-	s.initValidatorConfigs(s.chainB)
-	s.runValidators(s.chainB, 10)
+	s.T().Logf("starting e2e infrastructure; chain-id: %s; datadir: %s", s.chain.id, s.chain.dataDir)
+	s.initNodes(s.chain)
+	s.initGenesis(s.chain)
+	s.initValidatorConfigs(s.chain)
+	s.runValidators(s.chain, 0)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
-	if str := os.Getenv("GAIA_E2E_SKIP_CLEANUP"); len(str) > 0 {
+	if str := os.Getenv("E2E_SKIP_CLEANUP"); len(str) > 0 {
 		skipCleanup, err := strconv.ParseBool(str)
 		s.Require().NoError(err)
 
@@ -166,8 +126,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 	s.Require().NoError(s.dkrPool.RemoveNetwork(s.dkrNet))
 
-	os.RemoveAll(s.chainA.dataDir)
-	os.RemoveAll(s.chainB.dataDir)
+	os.RemoveAll(s.chain.dataDir)
 
 	for _, td := range s.tmpDirs {
 		os.RemoveAll(td)
@@ -175,15 +134,10 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 }
 
 func (s *IntegrationTestSuite) initNodes(c *chain) {
-	s.Require().NoError(c.createAndInitValidators(2))
-	/* Adding 4 accounts to val0 local directory
-	c.genesisAccounts[0]: Relayer0 Wallet
-	c.genesisAccounts[1]: ICA Owner
-	c.genesisAccounts[2]: Test Account 1
-	c.genesisAccounts[3]: Test Account 2
-	c.genesisAccounts[4]: Relayer1 Wallet
-	*/
-	err := c.addAccountFromMnemonic(5)
+	err := c.createAndInitValidators(2)
+	s.Require().NoError(err)
+
+	err = c.addAccountFromMnemonic(5) // add 5 accounts to val0 local directory
 	s.Require().NoError(err)
 
 	// Initialize a genesis file for the first validator
@@ -214,7 +168,7 @@ func (s *IntegrationTestSuite) initNodes(c *chain) {
 	}
 }
 
-func (s *IntegrationTestSuite) initGenesis(c *chain, vestingMnemonic, jailedValMnemonic string) {
+func (s *IntegrationTestSuite) initGenesis(c *chain) {
 	var (
 		serverCtx = server.NewDefaultContext()
 		config    = serverCtx.Config
@@ -279,17 +233,10 @@ func (s *IntegrationTestSuite) initGenesis(c *chain, vestingMnemonic, jailedValM
 	bz, err := tmjson.MarshalIndent(genDoc, "", "  ")
 	s.Require().NoError(err)
 
-	// TO-DO
-	// rawTx, _, err := buildRawTx()
-	// s.Require().NoError(err)
-
 	// write the updated genesis file to each validator.
 	for _, val := range c.validators {
 		err = writeFile(filepath.Join(val.configDir(), "config", "genesis.json"), bz)
 		s.Require().NoError(err)
-
-		// err = writeFile(filepath.Join(val.configDir(), rawTxFile), rawTx)
-		// s.Require().NoError(err)
 	}
 }
 
@@ -335,6 +282,7 @@ func (s *IntegrationTestSuite) initValidatorConfigs(c *chain) {
 		appConfig := srvconfig.DefaultConfig()
 		appConfig.API.Enable = true
 		appConfig.MinGasPrices = fmt.Sprintf("%s%s", minGasPrice, asedaDenom)
+		appConfig.API.Address = "tcp://0.0.0.0:1317"
 
 		srvconfig.SetConfigTemplate(srvconfig.DefaultConfigTemplate)
 		srvconfig.WriteConfigFile(appCfgPath, appConfig)
@@ -343,7 +291,7 @@ func (s *IntegrationTestSuite) initValidatorConfigs(c *chain) {
 
 // runValidators runs the validators in the chain
 func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
-	s.T().Logf("starting Gaia %s validator containers...", c.id)
+	s.T().Logf("starting %s validator containers...", c.id)
 
 	s.valResources[c.id] = make([]*dockertest.Resource, len(c.validators))
 	for i, val := range c.validators {
@@ -351,7 +299,7 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 			Name:      val.instanceName(),
 			NetworkID: s.dkrNet.Network.ID,
 			Mounts: []string{
-				fmt.Sprintf("%s/:%s", val.configDir(), gaiaHomePath),
+				fmt.Sprintf("%s/:%s", val.configDir(), containerChainHomePath),
 			},
 			Repository: "seda-chaind-e2e",
 		}
@@ -374,11 +322,11 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 			}
 		}
 
-		resource, err := s.dkrPool.RunWithOptions(runOpts, noRestart)
+		resource, err := s.dkrPool.RunWithOptions(runOpts, noRestartAndMountWasmDir)
 		s.Require().NoError(err)
 
 		s.valResources[c.id][i] = resource
-		s.T().Logf("started Gaia %s validator container: %s", c.id, resource.Container.ID)
+		s.T().Logf("started %s validator container: %s", c.id, resource.Container.ID)
 	}
 
 	rpcClient, err := rpchttp.New("tcp://localhost:26657", "/websocket")
@@ -403,18 +351,26 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 		},
 		5*time.Minute,
 		time.Second,
-		"Gaia node failed to produce blocks",
+		"Node has failed to produce blocks",
 	)
 }
 
-func noRestart(config *docker.HostConfig) {
-	// in this case we don't want the nodes to restart on failure
-	config.RestartPolicy = docker.RestartPolicy{
+func noRestartAndMountWasmDir(hc *docker.HostConfig) {
+	hc.RestartPolicy = docker.RestartPolicy{
 		Name: "no",
 	}
-}
 
-func configFile(filename string) string {
-	filepath := filepath.Join(gaiaConfigPath, filename)
-	return filepath
+	testWasmsDir, err := filepath.Abs("testwasms") // TO-DO
+	if err != nil {
+		panic(err)
+	}
+
+	hc.Mounts = append(hc.Mounts,
+		docker.HostMount{
+			Type:     "bind",
+			Target:   containerHomePath,
+			Source:   testWasmsDir,
+			ReadOnly: true,
+		},
+	)
 }
