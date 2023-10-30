@@ -52,7 +52,7 @@ echo "Initializing Node ..."
 
 # Check if configuration directory seda-chain config directory exist if it does not
 # exist initialize the node with the given MNEMONIC, MONIKER and NETWORK_ID
-if ! [ -f /root/.seda-chain/config/genesis.json ]; then
+if ! [ -f /seda-chain/.seda-chain/config/genesis.json ]; then
     echo "Setting Up seda configuration"
     $BIN config keyring-backend file                             # use file backend
     echo $MNEMONIC | $BIN init join ${MONIKER} --network ${NETWORK_ID} --recover
