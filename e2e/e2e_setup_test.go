@@ -36,6 +36,7 @@ const (
 	keysCommand            = "keys"
 	containerChainHomePath = "/seda-chain/.seda-chain"
 	containerHomePath      = "/seda-chain/"
+	containerWasmDirPath   = "/seda-chain/testwasms"
 	sedaDenom              = "seda"
 	asedaDenom             = "aseda"
 	stakeDenom             = asedaDenom
@@ -368,7 +369,7 @@ func noRestartAndMountWasmDir(hc *docker.HostConfig) {
 	hc.Mounts = append(hc.Mounts,
 		docker.HostMount{
 			Type:     "bind",
-			Target:   containerHomePath,
+			Target:   containerWasmDirPath,
 			Source:   testWasmsDir,
 			ReadOnly: true,
 		},

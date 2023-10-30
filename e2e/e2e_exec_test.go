@@ -183,6 +183,8 @@ func (s *IntegrationTestSuite) runGovExec(c *chain, valIdx int, submitterAddr, g
 }
 
 func (s *IntegrationTestSuite) executeTx(ctx context.Context, c *chain, command []string, valIdx int, validation func([]byte, []byte) bool) {
+	s.T().Logf("executing command %s", command)
+
 	if validation == nil {
 		validation = s.defaultExecValidation(s.chain, 0)
 	}

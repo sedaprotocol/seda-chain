@@ -7,6 +7,9 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
+	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 func queryTx(endpoint, txHash string) error {
@@ -32,6 +35,22 @@ func queryTx(endpoint, txHash string) error {
 	}
 
 	return nil
+}
+
+func queryGovProposal(endpoint string, proposalID int) (govtypes.QueryProposalResponse, error) {
+	var govProposalResp govtypes.QueryProposalResponse
+
+	path := fmt.Sprintf("%s/cosmos/gov/v1beta1/proposals/%d", endpoint, proposalID)
+
+	body, err := httpGet(path)
+	if err != nil {
+		return govProposalResp, fmt.Errorf("failed to execute HTTP request: %w", err)
+	}
+	if err := cdc.UnmarshalJSON(body, &govProposalResp); err != nil {
+		return govProposalResp, err
+	}
+
+	return govProposalResp, nil
 }
 
 // if coin is zero, return empty coin.
@@ -66,98 +85,21 @@ func queryAllBalances(endpoint, addr string) (sdk.Coins, error) {
 	// return balancesResp.Balances, nil
 }
 
+func queryDataRequestWasm(endpoint string, drHash string) (wasmstoragetypes.QueryDataRequestWasmResponse, error) {
+	var res wasmstoragetypes.QueryDataRequestWasmResponse
+
+	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/data_request_wasm/%s", endpoint, drHash))
+	if err != nil {
+		return res, err
+	}
+
+	if err = cdc.UnmarshalJSON(body, &res); err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
 /*
-func queryStakingParams(endpoint string) (stakingtypes.QueryParamsResponse, error) {
-	body, err := httpGet(fmt.Sprintf("%s/cosmos/staking/v1beta1/params", endpoint))
-	if err != nil {
-		return stakingtypes.QueryParamsResponse{}, fmt.Errorf("failed to execute HTTP request: %w", err)
-	}
-
-	var params stakingtypes.QueryParamsResponse
-	if err := cdc.UnmarshalJSON(body, &params); err != nil {
-		return stakingtypes.QueryParamsResponse{}, err
-	}
-
-	return params, nil
-}
-
-func queryGlobalFees(endpoint string) (sdk.DecCoins, error) {
-	p, err := queryGlobalFeeParams(endpoint)
-
-	return p.Params.MinimumGasPrices, err
-}
-
-func queryBypassMsgs(endpoint string) ([]string, error) {
-	p, err := queryGlobalFeeParams(endpoint)
-
-	return p.Params.BypassMinFeeMsgTypes, err
-}
-
-func queryMaxTotalBypassMinFeeMsgGasUsage(endpoint string) (uint64, error) {
-	p, err := queryGlobalFeeParams(endpoint)
-
-	return p.Params.MaxTotalBypassMinFeeMsgGasUsage, err
-}
-
-func queryDelegation(endpoint string, validatorAddr string, delegatorAddr string) (stakingtypes.QueryDelegationResponse, error) {
-	var res stakingtypes.QueryDelegationResponse
-
-	body, err := httpGet(fmt.Sprintf("%s/cosmos/staking/v1beta1/validators/%s/delegations/%s", endpoint, validatorAddr, delegatorAddr))
-	if err != nil {
-		return res, err
-	}
-
-	if err = cdc.UnmarshalJSON(body, &res); err != nil {
-		return res, err
-	}
-	return res, nil
-}
-
-func queryDelegatorWithdrawalAddress(endpoint string, delegatorAddr string) (disttypes.QueryDelegatorWithdrawAddressResponse, error) {
-	var res disttypes.QueryDelegatorWithdrawAddressResponse
-
-	body, err := httpGet(fmt.Sprintf("%s/cosmos/distribution/v1beta1/delegators/%s/withdraw_address", endpoint, delegatorAddr))
-	if err != nil {
-		return res, err
-	}
-
-	if err = cdc.UnmarshalJSON(body, &res); err != nil {
-		return res, err
-	}
-	return res, nil
-}
-
-func queryDelegatorTotalRewards(endpoint, delegatorAddr string) (disttypes.QueryDelegationTotalRewardsResponse, error) {
-	var res disttypes.QueryDelegationTotalRewardsResponse
-
-	body, err := httpGet(fmt.Sprintf("%s/cosmos/distribution/v1beta1/delegators/%s/rewards", endpoint, delegatorAddr))
-	if err != nil {
-		return res, err
-	}
-
-	if err = cdc.UnmarshalJSON(body, &res); err != nil {
-		return res, err
-	}
-
-	return res, nil
-}
-
-func queryGovProposal(endpoint string, proposalID int) (govtypes.QueryProposalResponse, error) {
-	var govProposalResp govtypes.QueryProposalResponse
-
-	path := fmt.Sprintf("%s/cosmos/gov/v1beta1/proposals/%d", endpoint, proposalID)
-
-	body, err := httpGet(path)
-	if err != nil {
-		return govProposalResp, fmt.Errorf("failed to execute HTTP request: %w", err)
-	}
-	if err := cdc.UnmarshalJSON(body, &govProposalResp); err != nil {
-		return govProposalResp, err
-	}
-
-	return govProposalResp, nil
-}
-
 func queryAccount(endpoint, address string) (acc authtypes.AccountI, err error) {
 	var res authtypes.QueryAccountResponse
 	resp, err := http.Get(fmt.Sprintf("%s/cosmos/auth/v1beta1/accounts/%s", endpoint, address))
