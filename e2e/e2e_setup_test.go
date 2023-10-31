@@ -37,6 +37,7 @@ const (
 	containerChainHomePath = "/seda-chain/.seda-chain"
 	containerHomePath      = "/seda-chain/"
 	containerWasmDirPath   = "/seda-chain/testwasms"
+	localWasmDirPath       = "./testwasms/" // relative path is ok
 	sedaDenom              = "seda"
 	asedaDenom             = "aseda"
 	stakeDenom             = asedaDenom
@@ -361,7 +362,7 @@ func noRestartAndMountWasmDir(hc *docker.HostConfig) {
 		Name: "no",
 	}
 
-	testWasmsDir, err := filepath.Abs("testwasms") // TO-DO
+	testWasmsDir, err := filepath.Abs(localWasmDirPath)
 	if err != nil {
 		panic(err)
 	}

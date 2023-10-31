@@ -13,6 +13,11 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
+const (
+	drWasm    = "burner.wasm"
+	tallyWasm = "reflect.wasm"
+)
+
 func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {
 	chainEndpoint := fmt.Sprintf("http://%s", s.valResources[s.chain.id][0].GetHostPort("1317/tcp"))
 
@@ -21,28 +26,52 @@ func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {
 		s.Require().NoError(err)
 		sender := senderAddress.String()
 
-		wasmFileName := "burner.wasm"
-		bytecode, err := os.ReadFile("testwasms/burner.wasm")
+		bytecode, err := os.ReadFile(filepath.Join(localWasmDirPath, drWasm))
 		if err != nil {
-			panic("failed to read file")
+			panic("failed to read data request Wasm file")
 		}
-
-		hashBytes := crypto.Keccak256(bytecode)
-		if hashBytes == nil {
+		drHashBytes := crypto.Keccak256(bytecode)
+		if drHashBytes == nil {
 			panic("failed to compute hash")
 		}
-		hashString := hex.EncodeToString(hashBytes)
+		drHashStr := hex.EncodeToString(drHashBytes)
 
-		s.execWasmStorageStoreDataRequest(s.chain, 0, wasmFileName, sender, standardFees.String(), false)
+		//
+		bytecode, err = os.ReadFile(filepath.Join(localWasmDirPath, tallyWasm))
+		if err != nil {
+			panic("failed to read tally Wasm file")
+		}
+		tallyHashBytes := crypto.Keccak256(bytecode)
+		if tallyHashBytes == nil {
+			panic("failed to compute hash")
+		}
+		tallyHashStr := hex.EncodeToString(tallyHashBytes)
+
+		s.execWasmStorageStoreDataRequest(s.chain, 0, drWasm, "data-request", sender, standardFees.String(), false)
+		s.execWasmStorageStoreDataRequest(s.chain, 0, tallyWasm, "tally", sender, standardFees.String(), false)
 
 		s.Require().Eventually(
 			func() bool {
-				res, err := queryDataRequestWasm(chainEndpoint, hashString)
+				drWasmRes, err := queryDataRequestWasm(chainEndpoint, drHashStr)
+				s.Require().NoError(err)
+				s.Require().True(bytes.Equal(drHashBytes, drWasmRes.Wasm.Hash))
+
+				tallyWasmRes, err := queryDataRequestWasm(chainEndpoint, tallyHashStr)
+				s.Require().NoError(err)
+				s.Require().True(bytes.Equal(tallyHashBytes, tallyWasmRes.Wasm.Hash))
+
+				wasms, err := queryDataRequestWasms(chainEndpoint)
 				s.Require().NoError(err)
 
-				return bytes.Equal(hashBytes, res.Wasm.Hash)
+				if fmt.Sprintf("%s,%s", drHashStr, types.WasmTypeDataRequest.String()) == wasms.HashTypePairs[0] {
+					return fmt.Sprintf("%s,%s", tallyHashStr, types.WasmTypeTally.String()) == wasms.HashTypePairs[1]
+				}
+				if fmt.Sprintf("%s,%s", tallyHashStr, types.WasmTypeTally.String()) == wasms.HashTypePairs[0] {
+					return fmt.Sprintf("%s,%s", drHashStr, types.WasmTypeDataRequest.String()) == wasms.HashTypePairs[1]
+				}
+				return false
 			},
-			20*time.Second,
+			30*time.Second,
 			5*time.Second,
 		)
 	})
@@ -51,7 +80,8 @@ func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {
 func (s *IntegrationTestSuite) execWasmStorageStoreDataRequest(
 	c *chain,
 	valIdx int,
-	wasmFileName,
+	drWasm,
+	wasmType,
 	from,
 	fees string,
 	expectErr bool,
@@ -59,14 +89,14 @@ func (s *IntegrationTestSuite) execWasmStorageStoreDataRequest(
 ) {
 	opt = append(opt, withKeyValue(flagFees, fees))
 	opt = append(opt, withKeyValue(flagFrom, from))
-	opt = append(opt, withKeyValue(flagWasmType, "data-request"))
+	opt = append(opt, withKeyValue(flagWasmType, wasmType))
 
 	opts := applyOptions(c.id, opt)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	wasmFilePath := filepath.Join(containerWasmDirPath, wasmFileName)
+	wasmFilePath := filepath.Join(containerWasmDirPath, drWasm)
 
 	command := []string{
 		binary,

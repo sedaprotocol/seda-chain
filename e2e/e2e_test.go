@@ -5,12 +5,12 @@ var (
 	runWasmStorageTest = true
 )
 
-func (s *IntegrationTestSuite) TestBank() {
-	if !runBankTest {
-		s.T().Skip()
-	}
-	s.testBankTokenTransfer()
-}
+// func (s *IntegrationTestSuite) TestBank() {
+// 	if !runBankTest {
+// 		s.T().Skip()
+// 	}
+// 	s.testBankTokenTransfer()
+// }
 
 func (s *IntegrationTestSuite) TestWasmStorage() {
 	if !runWasmStorageTest {

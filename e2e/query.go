@@ -99,6 +99,20 @@ func queryDataRequestWasm(endpoint string, drHash string) (wasmstoragetypes.Quer
 	return res, nil
 }
 
+func queryDataRequestWasms(endpoint string) (wasmstoragetypes.QueryDataRequestWasmsResponse, error) {
+	var res wasmstoragetypes.QueryDataRequestWasmsResponse
+
+	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/data_request_wasms", endpoint))
+	if err != nil {
+		return res, err
+	}
+
+	if err = cdc.UnmarshalJSON(body, &res); err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
 /*
 func queryAccount(endpoint, address string) (acc authtypes.AccountI, err error) {
 	var res authtypes.QueryAccountResponse

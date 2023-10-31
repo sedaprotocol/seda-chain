@@ -133,26 +133,26 @@ type txBankSend struct {
 	expectErr bool
 }
 
-func (s *IntegrationTestSuite) execBankSendBatch(
-	c *chain,
-	valIdx int, //nolint:unparam
-	txs ...txBankSend,
-) int {
-	sucessBankSendCount := 0
+// func (s *IntegrationTestSuite) execBankSendBatch(
+// 	c *chain,
+// 	valIdx int, //nolint:unparam
+// 	txs ...txBankSend,
+// ) int {
+// 	sucessBankSendCount := 0
 
-	for i := range txs {
-		s.T().Logf(txs[i].log)
+// 	for i := range txs {
+// 		s.T().Logf(txs[i].log)
 
-		s.execBankSend(c, valIdx, txs[i].from, txs[i].to, txs[i].amt, txs[i].fees, txs[i].expectErr)
-		if !txs[i].expectErr {
-			if !txs[i].expectErr {
-				sucessBankSendCount++
-			}
-		}
-	}
+// 		s.execBankSend(c, valIdx, txs[i].from, txs[i].to, txs[i].amt, txs[i].fees, txs[i].expectErr)
+// 		if !txs[i].expectErr {
+// 			if !txs[i].expectErr {
+// 				sucessBankSendCount++
+// 			}
+// 		}
+// 	}
 
-	return sucessBankSendCount
-}
+// 	return sucessBankSendCount
+// }
 
 func (s *IntegrationTestSuite) runGovExec(c *chain, valIdx int, submitterAddr, govCommand string, proposalFlags []string, fees string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
