@@ -3,6 +3,7 @@ package e2e
 var (
 	runBankTest        = true
 	runWasmStorageTest = true
+	runGovTest         = true
 )
 
 // func (s *IntegrationTestSuite) TestBank() {
@@ -17,4 +18,11 @@ func (s *IntegrationTestSuite) TestWasmStorage() {
 		s.T().Skip()
 	}
 	s.testWasmStorageStoreDataRequestWasm()
+}
+
+func (s *IntegrationTestSuite) TestGov() {
+	if !runGovTest {
+		s.T().Skip()
+	}
+	s.testWasmStorageStoreOverlayWasm()
 }

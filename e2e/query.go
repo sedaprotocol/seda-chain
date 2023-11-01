@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -40,7 +40,7 @@ func queryTx(endpoint, txHash string) error {
 func queryGovProposal(endpoint string, proposalID int) (govtypes.QueryProposalResponse, error) {
 	var govProposalResp govtypes.QueryProposalResponse
 
-	path := fmt.Sprintf("%s/cosmos/gov/v1beta1/proposals/%d", endpoint, proposalID)
+	path := fmt.Sprintf("%s/cosmos/gov/v1/proposals/%d", endpoint, proposalID)
 
 	body, err := httpGet(path)
 	if err != nil {
@@ -49,7 +49,6 @@ func queryGovProposal(endpoint string, proposalID int) (govtypes.QueryProposalRe
 	if err := cdc.UnmarshalJSON(body, &govProposalResp); err != nil {
 		return govProposalResp, err
 	}
-
 	return govProposalResp, nil
 }
 
@@ -72,7 +71,7 @@ func getSpecificBalance(endpoint, addr, denom string) (amt sdk.Coin, err error) 
 func queryAllBalances(endpoint, addr string) (sdk.Coins, error) {
 	return nil, fmt.Errorf("not implemented yet")
 
-	// body, err := httpGet(fmt.Sprintf("%s/cosmos/bank/v1beta1/balances/%s", endpoint, addr))
+	// body, err := httpGet(fmt.Sprintf("%s/cosmos/bank/v1/balances/%s", endpoint, addr))
 	// if err != nil {
 	// 	return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
 	// }
@@ -116,7 +115,7 @@ func queryDataRequestWasms(endpoint string) (wasmstoragetypes.QueryDataRequestWa
 /*
 func queryAccount(endpoint, address string) (acc authtypes.AccountI, err error) {
 	var res authtypes.QueryAccountResponse
-	resp, err := http.Get(fmt.Sprintf("%s/cosmos/auth/v1beta1/accounts/%s", endpoint, address))
+	resp, err := http.Get(fmt.Sprintf("%s/cosmos/auth/v1/accounts/%s", endpoint, address))
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
@@ -187,7 +186,7 @@ func queryPeriodicVestingAccount(endpoint, address string) (authvesting.Periodic
 func queryValidator(endpoint, address string) (stakingtypes.Validator, error) {
 	var res stakingtypes.QueryValidatorResponse
 
-	body, err := httpGet(fmt.Sprintf("%s/cosmos/staking/v1beta1/validators/%s", endpoint, address))
+	body, err := httpGet(fmt.Sprintf("%s/cosmos/staking/v1/validators/%s", endpoint, address))
 	if err != nil {
 		return stakingtypes.Validator{}, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
@@ -200,7 +199,7 @@ func queryValidator(endpoint, address string) (stakingtypes.Validator, error) {
 
 func queryValidators(endpoint string) (stakingtypes.Validators, error) {
 	var res stakingtypes.QueryValidatorsResponse
-	body, err := httpGet(fmt.Sprintf("%s/cosmos/staking/v1beta1/validators", endpoint))
+	body, err := httpGet(fmt.Sprintf("%s/cosmos/staking/v1/validators", endpoint))
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
@@ -213,7 +212,7 @@ func queryValidators(endpoint string) (stakingtypes.Validators, error) {
 
 func queryEvidence(endpoint, hash string) (evidencetypes.QueryEvidenceResponse, error) { //nolint:unused // this is called during e2e tests
 	var res evidencetypes.QueryEvidenceResponse
-	body, err := httpGet(fmt.Sprintf("%s/cosmos/evidence/v1beta1/evidence/%s", endpoint, hash))
+	body, err := httpGet(fmt.Sprintf("%s/cosmos/evidence/v1/evidence/%s", endpoint, hash))
 	if err != nil {
 		return res, err
 	}
@@ -226,7 +225,7 @@ func queryEvidence(endpoint, hash string) (evidencetypes.QueryEvidenceResponse, 
 
 func queryAllEvidence(endpoint string) (evidencetypes.QueryAllEvidenceResponse, error) {
 	var res evidencetypes.QueryAllEvidenceResponse
-	body, err := httpGet(fmt.Sprintf("%s/cosmos/evidence/v1beta1/evidence", endpoint))
+	body, err := httpGet(fmt.Sprintf("%s/cosmos/evidence/v1/evidence", endpoint))
 	if err != nil {
 		return res, err
 	}
@@ -240,7 +239,7 @@ func queryAllEvidence(endpoint string) (evidencetypes.QueryAllEvidenceResponse, 
 func queryTokenizeShareRecordByID(endpoint string, recordID int) (stakingtypes.TokenizeShareRecord, error) {
 	var res stakingtypes.QueryTokenizeShareRecordByIdResponse
 
-	body, err := httpGet(fmt.Sprintf("%s/cosmos/staking/v1beta1/tokenize_share_record_by_id/%d", endpoint, recordID))
+	body, err := httpGet(fmt.Sprintf("%s/cosmos/staking/v1/tokenize_share_record_by_id/%d", endpoint, recordID))
 	if err != nil {
 		return stakingtypes.TokenizeShareRecord{}, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}

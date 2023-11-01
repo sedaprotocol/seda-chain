@@ -60,8 +60,9 @@ const (
 )
 
 var (
-	tokenAmount  = sdk.NewCoin(asedaDenom, sdk.NewInt(3300000000))
 	standardFees = sdk.NewCoin(asedaDenom, sdk.NewInt(330000))
+
+	proposalCounter = 0
 )
 
 type IntegrationTestSuite struct {

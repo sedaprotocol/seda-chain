@@ -17,7 +17,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -72,7 +72,7 @@ func ProposalStoreOverlayCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := govv1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
 			if err != nil {
 				return err
 			}
@@ -119,7 +119,7 @@ func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
 			}
 			src.Salt = salt
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
+			proposalMsg, err := govv1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
 			if err != nil {
 				return err
 			}

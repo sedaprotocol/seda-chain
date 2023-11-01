@@ -37,8 +37,9 @@ func init() {
 }
 
 type chain struct {
-	dataDir    string
-	id         string
+	dataDir string
+	id      string
+	// endpoint   string // TO-DO
 	validators []*validator
 	accounts   []*account //nolint:unused
 	// initial accounts in genesis

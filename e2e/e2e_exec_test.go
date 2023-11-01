@@ -10,9 +10,7 @@ import (
 
 	"github.com/ory/dockertest/v3/docker"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 const (
@@ -30,7 +28,11 @@ const (
 	flagAllowedMessages = "allowed-messages"
 
 	// wasm-storage flags
-	flagWasmType = "wasm-type"
+	flagWasmType  = "wasm-type"
+	flagTitle     = "title"
+	flagSummary   = "summary"
+	flagAuthority = "authority"
+	flagDeposit   = "deposit"
 )
 
 type flagOption func(map[string]interface{})
@@ -154,33 +156,33 @@ type txBankSend struct {
 // 	return sucessBankSendCount
 // }
 
-func (s *IntegrationTestSuite) runGovExec(c *chain, valIdx int, submitterAddr, govCommand string, proposalFlags []string, fees string) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
+// func (s *IntegrationTestSuite) runGovExec(c *chain, valIdx int, submitterAddr, govCommand string, proposalFlags []string, fees string) {
+// 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+// 	defer cancel()
 
-	command := []string{
-		binary,
-		txCommand,
-		govtypes.ModuleName,
-		govCommand,
-	}
+// 	command := []string{
+// 		binary,
+// 		txCommand,
+// 		govtypes.ModuleName,
+// 		govCommand,
+// 	}
 
-	generalFlags := []string{
-		fmt.Sprintf("--%s=%s", flags.FlagFrom, submitterAddr),
-		fmt.Sprintf("--%s=%s", flags.FlagGas, "300000"), // default 200000 isn't enough
-		fmt.Sprintf("--%s=%s", flags.FlagGasPrices, fees),
-		fmt.Sprintf("--%s=%s", flags.FlagChainID, c.id),
-		"--keyring-backend=test",
-		"--output=json",
-		"-y",
-	}
+// 	generalFlags := []string{
+// 		fmt.Sprintf("--%s=%s", flags.FlagFrom, submitterAddr),
+// 		fmt.Sprintf("--%s=%s", flags.FlagGas, "300000"), // default 200000 isn't enough
+// 		fmt.Sprintf("--%s=%s", flags.FlagGasPrices, fees),
+// 		fmt.Sprintf("--%s=%s", flags.FlagChainID, c.id),
+// 		"--keyring-backend=test",
+// 		"--output=json",
+// 		"-y",
+// 	}
 
-	command = concatFlags(command, proposalFlags, generalFlags)
+// 	command = concatFlags(command, proposalFlags, generalFlags)
 
-	s.T().Logf("Executing seda-chain tx gov %s on chain %s", govCommand, c.id)
-	s.executeTx(ctx, c, command, valIdx, s.defaultExecValidation(c, valIdx))
-	s.T().Logf("Successfully executed %s", govCommand)
-}
+// 	s.T().Logf("Executing seda-chain tx gov %s on chain %s", govCommand, c.id)
+// 	s.executeTx(ctx, c, command, valIdx, s.defaultExecValidation(c, valIdx))
+// 	s.T().Logf("Successfully executed %s", govCommand)
+// }
 
 func (s *IntegrationTestSuite) executeTx(ctx context.Context, c *chain, command []string, valIdx int, validation func([]byte, []byte) bool) {
 	s.T().Logf("executing command %s", command)
@@ -226,6 +228,7 @@ func (s *IntegrationTestSuite) expectErrExecValidation(chain *chain, valIdx int,
 		gotErr := cdc.UnmarshalJSON(stdOut, &txResp) != nil
 		if gotErr {
 			fmt.Println("stdout: " + string(stdOut))
+			fmt.Println("stderr: " + string(stdErr))
 			s.Require().True(expectErr)
 		}
 
