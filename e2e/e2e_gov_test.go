@@ -1,8 +1,11 @@
 package e2e
 
 import (
+	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -10,6 +13,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	"github.com/hyperledger/burrow/crypto"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -24,8 +28,33 @@ func (s *IntegrationTestSuite) testWasmStorageStoreOverlayWasm() {
 	s.Require().NoError(err)
 	sender := senderAddress.String()
 
-	s.execWasmStorageStoreOverlay(chainEndpoint, s.chain, 0, drWasm, "clean_title", "sustainable_summary", "data-request-executor", sender, standardFees.String(), false, proposalID)
+	bytecode, err := os.ReadFile(filepath.Join(localWasmDirPath, overlayWasm))
+	if err != nil {
+		panic("failed to read data request Wasm file")
+	}
+	overlayHashBytes := crypto.Keccak256(bytecode)
+	if overlayHashBytes == nil {
+		panic("failed to compute hash")
+	}
+	overlayHashStr := hex.EncodeToString(overlayHashBytes)
+
+	s.execWasmStorageStoreOverlay(chainEndpoint, s.chain, 0, overlayWasm, "clean_title", "sustainable_summary", "data-request-executor", sender, standardFees.String(), false, proposalID)
 	s.execGovVoteYes(chainEndpoint, s.chain, 0, sender, standardFees.String(), false, proposalID)
+
+	s.Require().Eventually(
+		func() bool {
+			overlayWasmRes, err := queryOverlayWasm(chainEndpoint, overlayHashStr)
+			s.Require().NoError(err)
+			s.Require().True(bytes.Equal(overlayHashBytes, overlayWasmRes.Wasm.Hash))
+
+			wasms, err := queryOverlayWasms(chainEndpoint)
+			s.Require().NoError(err)
+
+			return fmt.Sprintf("%s,%s", overlayHashStr, types.WasmTypeDataRequestExecutor.String()) == wasms.HashTypePairs[0]
+		},
+		30*time.Second,
+		5*time.Second,
+	)
 
 	// TO-DO test negative cases
 	// - Overlay queries
@@ -135,8 +164,6 @@ func (s *IntegrationTestSuite) execGovVoteYes(
 		func() bool {
 			proposal, err := queryGovProposal(endpoint, proposalID)
 			s.Require().NoError(err)
-
-			s.T().Logf("queried proposal %s  \n\n  got: %s\n\n", strconv.Itoa(proposalID), proposal.GetProposal().Status)
 
 			return proposal.GetProposal().Status == govtypesv1.StatusPassed
 		},

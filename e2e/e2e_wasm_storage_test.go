@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	drWasm    = "burner.wasm"
-	tallyWasm = "reflect.wasm"
+	drWasm      = "burner.wasm"
+	tallyWasm   = "reflect.wasm"
+	overlayWasm = "staking.wasm"
 )
 
 func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {
