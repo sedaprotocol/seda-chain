@@ -14,6 +14,6 @@ scripts/testnet/config.sh
 scripts/testnet/nodes
 scripts/testnet/artifacts
 
-# Ignore local env files
+# Ignore the env file one may actually fill out
 seda.env
 .env
