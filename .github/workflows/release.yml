@@ -71,10 +71,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./dockers/Dockerfile.node-static
+          file: ./dockerfiles/Dockerfile.node-static
           platforms: linux/amd64,linux/arm64
-          GO_VERSION: "1.21"
-          RUNNER_IMAGE: "gcr.io/distroless/static-debian11:nonroot"
 
           push: true
           tags: ${{ steps.meta.outputs.tags }}
