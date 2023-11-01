@@ -58,3 +58,4 @@ For creating the PR, please follow the instructions below.
    - [mariocao](https://github.com/mariocao)
    - [mennatabuelnaga](https://github.com/mennatabuelnaga)
    - [Thomasvdam](https://github.com/Thomasvdam)
+   - [hacheigriega](https://github.com/hacheigriega)
