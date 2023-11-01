@@ -94,8 +94,13 @@ This section is for those linking to an external node, so if you want to run com
 **NOTE**:
 When connecting externally, choose a trustworthy node operator. Unscrupulous operators might tamper with query outcomes or block transactions. The Seda team currently supports these RPC endpoints:
 
+<<<<<<< HEAD
 - Testnet-seda-node-1: `http://3.10.185.200:26657`
 - Testnet-seda-node-2: `http://35.179.10.147:26657`
+=======
+- Testnet-seda-node-1: `https://3.10.185.200:26657`
+- Testnet-seda-node-2: `https://35.179.10.147:26657`
+>>>>>>> 02a0177 (docs: fixing some errors & simplifying)
 
 ### Running the Node Yourself
 How to run the node without `docker` coming soon.
@@ -123,6 +128,7 @@ To start a SEDA chain node with `docker`
 
 ```bash
 docker run -d --name seda_node \
+<<<<<<< HEAD
 --env-file seda.env \
 --volume ~/.seda-chain:/root/.seda-chain \
 --volume $(pwd)/seda.env:/seda-chain/.env \
@@ -130,6 +136,30 @@ ghcr.io/sedaprotocol/node:latest start
 ```
 
 where `seda.env` is a `dotenv` described [here](#env-variables-configuration).
+=======
+    --env-file seda.env \
+    --volume ~/.seda-chain:/root/.seda-chain \
+    ghcr.io/sedaprotocol/node:latest start
+```
+
+where `seda.env` is a `dotenv` described [here](#env-variables-configuration)
+
+Alternatively, you can pass the env variables manually:
+
+```bash
+docker run -d --name seda_node \
+--env 'MONIKER=' \
+--env 'MNEMONIC=' \
+--env 'KEYRING_PASSWORD=' \
+--env 'NETWORK_ID=' \
+--env 'NODE_ADDRESS=' \
+--env-file seda.env \
+--volume ~/.seda-chain:/root/.seda-chain \
+ghcr.io/sedaprotocol/node:latest start
+```
+
+**NOTE**: To run you must have these fields filled out. So to generate a mnemonic check out [here](#key-creation).
+>>>>>>> 02a0177 (docs: fixing some errors & simplifying)
 
 ##### Stop and Start
 
@@ -238,6 +268,7 @@ txhash: 1BA768C240B379E7BBFF74D68148E95A64BFB167497C341842F4C2AF94376A77
 You can then monitor your validator status by running:
 **NOTE**: To be a validator you must be one of the top 100 stakers.
 
+<<<<<<< HEAD
 ```bash
 docker exec seda_node /bin/bash -c "./check_validator.sh"
 
@@ -275,3 +306,33 @@ unbonding_time: "1970-01-01T00:00:00Z"
 ## License
 
 Contents of this repository are open source under [GNU General Public License v3.0](LICENSE).
+=======
+You can check if the dockerized node is currently a validator by running `docker exec seda_node seda-chaind status`.
+
+Otherwise to become a validator you must run a few commands:
+
+1. `docker exec -it seda_node bash`
+   - This opens the shell inside the `docker` container.
+2. Then you have to run the following:
+```bash
+seda-chaind tx staking create-validator \
+  --amount=1000000seda\
+  --pubkey=$($BIN tendermint show-validator) \
+  --moniker=$MONIKER \
+  --chain-id=$CHAIN_ID \
+  --commission-rate="0.10" \
+  --commission-max-rate="0.20" \
+  --commission-max-change-rate="0.01" \
+  --gas="auto" \
+  --gas-adjustment="1.2" \
+  --gas-prices="0.0025seda" \
+  --from=$KEY_NAME \
+  --min-self-delegation 1 \
+  --yes
+  ```
+3. Now you can type `exit` to exit the `docker` shell.
+
+## License
+
+Contents of this repository are open source under [GNU General Public License v3.0](LICENSE).
+>>>>>>> 02a0177 (docs: fixing some errors & simplifying)
