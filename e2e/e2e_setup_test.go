@@ -60,28 +60,18 @@ const (
 )
 
 var (
-	standardFees = sdk.NewCoin(asedaDenom, sdk.NewInt(330000))
-
+	standardFees    = sdk.NewCoin(asedaDenom, sdk.NewInt(330000))
 	proposalCounter = 0
 )
 
 type IntegrationTestSuite struct {
 	suite.Suite
-
-	tmpDirs []string
-	chain   *chain
-	dkrPool *dockertest.Pool
-	dkrNet  *dockertest.Network
-
+	tmpDirs      []string
+	chain        *chain
+	dkrPool      *dockertest.Pool
+	dkrNet       *dockertest.Network
 	valResources map[string][]*dockertest.Resource
 	endpoint     string
-}
-
-type AddressResponse struct {
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	Address  string `json:"address"`
-	Mnemonic string `json:"mnemonic"`
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
