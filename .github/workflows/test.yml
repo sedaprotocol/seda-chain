@@ -75,7 +75,7 @@ jobs:
             Makefile
       - name: Build e2e Docker Image
         run: make docker-build-e2e
-      - name: test & coverage report creation
+      - name: Test & coverage report creation
         if: env.GIT_DIFF
         run: make test-unit-cover
       - uses: actions/upload-artifact@v3

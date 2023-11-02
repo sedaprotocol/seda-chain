@@ -295,7 +295,7 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 			Mounts: []string{
 				fmt.Sprintf("%s/:%s", val.configDir(), containerChainHomePath),
 			},
-			Repository: "seda-chaind-e2e",
+			Repository: "sedaprotocol/seda-chaind-e2e",
 		}
 
 		s.Require().NoError(exec.Command("chmod", "-R", "0777", val.configDir()).Run()) //nolint:gosec // this is a test
