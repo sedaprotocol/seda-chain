@@ -17,11 +17,10 @@ const (
 	drWasm      = "burner.wasm"
 	tallyWasm   = "reflect.wasm"
 	overlayWasm = "staking.wasm"
+	proxyWasm   = "proxy_contract.wasm"
 )
 
 func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {
-	chainEndpoint := fmt.Sprintf("http://%s", s.valResources[s.chain.id][0].GetHostPort("1317/tcp"))
-
 	s.Run("store_a_data_request_wasm", func() {
 		senderAddress, err := s.chain.validators[0].keyInfo.GetAddress()
 		s.Require().NoError(err)
@@ -53,15 +52,15 @@ func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {
 
 		s.Require().Eventually(
 			func() bool {
-				drWasmRes, err := queryDataRequestWasm(chainEndpoint, drHashStr)
+				drWasmRes, err := queryDataRequestWasm(s.endpoint, drHashStr)
 				s.Require().NoError(err)
 				s.Require().True(bytes.Equal(drHashBytes, drWasmRes.Wasm.Hash))
 
-				tallyWasmRes, err := queryDataRequestWasm(chainEndpoint, tallyHashStr)
+				tallyWasmRes, err := queryDataRequestWasm(s.endpoint, tallyHashStr)
 				s.Require().NoError(err)
 				s.Require().True(bytes.Equal(tallyHashBytes, tallyWasmRes.Wasm.Hash))
 
-				wasms, err := queryDataRequestWasms(chainEndpoint)
+				wasms, err := queryDataRequestWasms(s.endpoint)
 				s.Require().NoError(err)
 
 				if fmt.Sprintf("%s,%s", drHashStr, types.WasmTypeDataRequest.String()) == wasms.HashTypePairs[0] {

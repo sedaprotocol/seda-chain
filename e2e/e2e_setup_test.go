@@ -37,7 +37,7 @@ const (
 	containerChainHomePath = "/seda-chain/.seda-chain"
 	containerHomePath      = "/seda-chain/"
 	containerWasmDirPath   = "/seda-chain/testwasms"
-	localWasmDirPath       = "./testwasms/" // relative path is ok
+	localWasmDirPath       = "../testutil/testwasms" // relative path is ok
 	sedaDenom              = "seda"
 	asedaDenom             = "aseda"
 	stakeDenom             = asedaDenom
@@ -74,6 +74,7 @@ type IntegrationTestSuite struct {
 	dkrNet  *dockertest.Network
 
 	valResources map[string][]*dockertest.Resource
+	endpoint     string
 }
 
 type AddressResponse struct {
@@ -331,6 +332,8 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 		s.valResources[c.id][i] = resource
 		s.T().Logf("started %s validator container: %s", c.id, resource.Container.ID)
 	}
+
+	s.endpoint = fmt.Sprintf("http://%s", s.valResources[s.chain.id][0].GetHostPort("1317/tcp"))
 
 	rpcClient, err := rpchttp.New("tcp://localhost:26657", "/websocket")
 	s.Require().NoError(err)

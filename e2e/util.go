@@ -1,14 +1,67 @@
 package e2e
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/cosmos/cosmos-sdk/codec/unknownproto"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
+	"github.com/cosmos/go-bip39"
 )
+
+// createMnemonic creates a random string mnemonic
+func createMnemonic() (string, error) {
+	entropySeed, err := bip39.NewEntropy(256)
+	if err != nil {
+		return "", err
+	}
+
+	mnemonic, err := bip39.NewMnemonic(entropySeed)
+	if err != nil {
+		return "", err
+	}
+
+	return mnemonic, nil
+}
+
+// copyFile copy file from src to dst
+func copyFile(src, dst string) (int64, error) { //nolint:unparam
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
+}
+
+// writeFile write a byte slice into a file path
+func writeFile(path string, body []byte) error {
+	_, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, body, 0o600)
+}
 
 func decodeTx(txBytes []byte) (*sdktx.Tx, error) {
 	var raw sdktx.TxRaw
@@ -47,15 +100,8 @@ func decodeTx(txBytes []byte) (*sdktx.Tx, error) {
 	}, nil
 }
 
-func concatFlags(originalCollection []string, commandFlags []string, generalFlags []string) []string {
-	originalCollection = append(originalCollection, commandFlags...)
-	originalCollection = append(originalCollection, generalFlags...)
-
-	return originalCollection
-}
-
 func httpGet(endpoint string) ([]byte, error) {
-	resp, err := http.Get(endpoint) //nolint:gosec // this is only used during tests
+	resp, err := http.Get(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
@@ -67,21 +113,4 @@ func httpGet(endpoint string) ([]byte, error) {
 	}
 
 	return body, nil
-}
-
-func readJSON(resp *http.Response) (map[string]interface{}, error) {
-	defer resp.Body.Close()
-
-	body, readErr := io.ReadAll(resp.Body)
-	if readErr != nil {
-		return nil, fmt.Errorf("failed to read Body")
-	}
-
-	var data map[string]interface{}
-	err := json.Unmarshal(body, &data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response body")
-	}
-
-	return data, nil
 }

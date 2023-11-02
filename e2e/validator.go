@@ -29,7 +29,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/app"
 )
 
-//nolint:unused
 type validator struct {
 	chain            *chain
 	index            int

@@ -33,6 +33,9 @@ const (
 	flagSummary   = "summary"
 	flagAuthority = "authority"
 	flagDeposit   = "deposit"
+	flagLabel     = "label"
+	flagFixMsg    = "fix-msg"
+	flagNoAdmin   = "no-admin"
 )
 
 type flagOption func(map[string]interface{})
@@ -61,128 +64,6 @@ func applyOptions(chainID string, options []flagOption) map[string]interface{} {
 	}
 	return opts
 }
-
-func (s *IntegrationTestSuite) execEncode(
-	c *chain,
-	txPath string,
-	opt ...flagOption,
-) string {
-	opts := applyOptions(c.id, opt)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-
-	s.T().Logf("%s - Executing seda-chain encoding with %v", c.id, txPath)
-	command := []string{
-		binary,
-		txCommand,
-		"encode",
-		txPath,
-	}
-	for flag, value := range opts {
-		command = append(command, fmt.Sprintf("--%s=%v", flag, value))
-	}
-
-	var encoded string
-	s.executeTx(ctx, c, command, 0, func(stdOut []byte, stdErr []byte) bool {
-		if stdErr != nil {
-			return false
-		}
-		encoded = strings.TrimSuffix(string(stdOut), "\n")
-		return true
-	})
-	s.T().Logf("successfully encode with %v", txPath)
-	return encoded
-}
-
-func (s *IntegrationTestSuite) execDecode(
-	c *chain,
-	txPath string,
-	opt ...flagOption,
-) string {
-	opts := applyOptions(c.id, opt)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-
-	s.T().Logf("%s - Executing seda-chain decoding with %v", c.id, txPath)
-	command := []string{
-		binary,
-		txCommand,
-		"decode",
-		txPath,
-	}
-	for flag, value := range opts {
-		command = append(command, fmt.Sprintf("--%s=%v", flag, value))
-	}
-
-	var decoded string
-	s.executeTx(ctx, c, command, 0, func(stdOut []byte, stdErr []byte) bool {
-		if stdErr != nil {
-			return false
-		}
-		decoded = strings.TrimSuffix(string(stdOut), "\n")
-		return true
-	})
-	s.T().Logf("successfully decode %v", txPath)
-	return decoded
-}
-
-type txBankSend struct {
-	from      string
-	to        string
-	amt       string
-	fees      string
-	log       string
-	expectErr bool
-}
-
-// func (s *IntegrationTestSuite) execBankSendBatch(
-// 	c *chain,
-// 	valIdx int, //nolint:unparam
-// 	txs ...txBankSend,
-// ) int {
-// 	sucessBankSendCount := 0
-
-// 	for i := range txs {
-// 		s.T().Logf(txs[i].log)
-
-// 		s.execBankSend(c, valIdx, txs[i].from, txs[i].to, txs[i].amt, txs[i].fees, txs[i].expectErr)
-// 		if !txs[i].expectErr {
-// 			if !txs[i].expectErr {
-// 				sucessBankSendCount++
-// 			}
-// 		}
-// 	}
-
-// 	return sucessBankSendCount
-// }
-
-// func (s *IntegrationTestSuite) runGovExec(c *chain, valIdx int, submitterAddr, govCommand string, proposalFlags []string, fees string) {
-// 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-// 	defer cancel()
-
-// 	command := []string{
-// 		binary,
-// 		txCommand,
-// 		govtypes.ModuleName,
-// 		govCommand,
-// 	}
-
-// 	generalFlags := []string{
-// 		fmt.Sprintf("--%s=%s", flags.FlagFrom, submitterAddr),
-// 		fmt.Sprintf("--%s=%s", flags.FlagGas, "300000"), // default 200000 isn't enough
-// 		fmt.Sprintf("--%s=%s", flags.FlagGasPrices, fees),
-// 		fmt.Sprintf("--%s=%s", flags.FlagChainID, c.id),
-// 		"--keyring-backend=test",
-// 		"--output=json",
-// 		"-y",
-// 	}
-
-// 	command = concatFlags(command, proposalFlags, generalFlags)
-
-// 	s.T().Logf("Executing seda-chain tx gov %s on chain %s", govCommand, c.id)
-// 	s.executeTx(ctx, c, command, valIdx, s.defaultExecValidation(c, valIdx))
-// 	s.T().Logf("Successfully executed %s", govCommand)
-// }
 
 func (s *IntegrationTestSuite) executeTx(ctx context.Context, c *chain, command []string, valIdx int, validation func([]byte, []byte) bool) {
 	s.T().Logf("executing command %s", command)
