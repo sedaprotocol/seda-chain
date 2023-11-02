@@ -13,3 +13,7 @@ dist/
 scripts/testnet/config.sh
 scripts/testnet/nodes
 scripts/testnet/artifacts
+
+# Ignore local env files
+seda.env
+.env
