@@ -52,35 +52,6 @@ jobs:
           go mod download
           make build  
 
-  build_push_e2e_image:
-    name: Build and Push e2e Image to GHCR
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/sedaprotocol/seda-chaind-e2e
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./dockerfiles/Dockerfile.e2e
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
   tests:
     runs-on: ubuntu-latest
     steps:
@@ -102,6 +73,8 @@ jobs:
             **/go.sum
             **/Makefile
             Makefile
+      - name: Build e2e Docker Image
+        run: make docker-build-e2e
       - name: test & coverage report creation
         if: env.GIT_DIFF
         run: make test-unit-cover
