@@ -140,7 +140,7 @@ docker run -d --name seda_node \
 --env 'MONIKER=' \
 --env 'MNEMONIC=' \
 --env 'KEYRING_PASSWORD=' \
---env 'NETWORK_ID=' \
+--env 'NETWORK=' \
 --env 'NODE_ADDRESS=' \
 --volume ~/.seda-chain:/root/.seda-chain \
 --volume $(pwd)/seda.env:/seda-chain/.env \
@@ -194,29 +194,23 @@ Otherwise simply have that field filled out, and it will add the account automat
 
 There are a few things you may like to check as an operator(these assume your container is running):
 
-1. If your node is synced. This can be done with the following command:
+1. The current height of the chain:
     ```bash
-    docker exec seda_node seda-chaind status | jq '.SyncInfo.catching_up'
-    ```
-    In which it outputs:
-    - `true`: if the node is **not** synced.
-    - `false`: if the node is synced.
-
-2. The current height of the chain:
-    ```bash
-    docker exec seda_node seda-chaind query block | jq '.block.header.height'
+    docker exec seda_node /bin/bash -c "seda-chaind query block | jq '.block.header.height'"
     ```
 
     Which outputs a number, the current chain height.
+2. More commands coming soon.
 
-#### Becoming a Validator
+#### Staking
 
 **NOTE**: This assumes you already have funds in your account. If you don't please add some funds to your account before trying.
 
 To become a validator run the following command:
 **NOTE**: The amount at the end is the amount of tokens in `aseda` to stake.
+
 ```bash
-docker exec seda_node /bin/bash -c "./become_validator.sh 1000"
+docker exec seda_node /bin/bash -c "./staking.sh 1000"
 
 # Which should produce some output:
 gas estimate: 181315
@@ -235,7 +229,36 @@ tx: null
 txhash: 6C8A6C1925F3B373BBEA4DF609D8F1FAE6CDA094586763652557B527E88893A6
 ```
 
+#### Unstaking
+
+**NOTE**: This assumes you have already staked.
+
+To become a validator run the following command:
+**NOTE**: The amount at the end is the amount of tokens in `aseda` to stake.
+```bash
+docker exec seda_node /bin/bash -c "./unstaking.sh 1000"
+
+# Which should produce some output:
+gas estimate: 181315
+code: 0
+codespace: ""
+data: ""
+events: []
+gas_used: "0"
+gas_wanted: "0"
+height: "0"
+info: ""
+logs: []
+raw_log: '[]'
+timestamp: ""
+tx: null
+txhash: 6C8A6C1925F3B373BBEA4DF609D8F1FAE6CDA094586763652557B527E88893A6
+```
+
+#### Checking Validator Status
+
 You can then monitor your validator status by running:
+**NOTE**: To be a validator you must be one of the top 100 stakers.
 
 ```bash
 docker exec seda_node /bin/bash -c "./check_validator.sh"
