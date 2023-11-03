@@ -131,23 +131,7 @@ docker run -d --name seda_node \
 ghcr.io/sedaprotocol/node:latest start
 ```
 
-where `seda.env` is a `dotenv` described [here](#env-variables-configuration)
-
-Alternatively, you can pass the env variables manually:
-
-```bash
-docker run -d --name seda_node \
---env 'MONIKER=' \
---env 'MNEMONIC=' \
---env 'KEYRING_PASSWORD=' \
---env 'NETWORK=' \
---env 'NODE_ADDRESS=' \
---volume ~/.seda-chain:/root/.seda-chain \
---volume $(pwd)/seda.env:/seda-chain/.env \
-ghcr.io/sedaprotocol/node:latest start
-```
-
-**NOTE**: To run you must have these fields filled out. So to generate a mnemonic check out [here](#key-creation).
+where `seda.env` is a `dotenv` described [here](#env-variables-configuration).
 
 ##### Stop and Start
 
@@ -172,8 +156,8 @@ docker logs seda_node -n 100
 
 Sometimes you may need to execute commands for example:
 - To generate a [key](#key-creation)
-- Check if the dockerized node is a validator.
-- Or to make the dockerized node a validator.
+- Check if the dockerized node is a [validator](#checking-validator-status).
+- Or how to [stake](#staking)/[unstake](#unstaking).
 
 These commands will all start with `docker exec seda_node`.
 
@@ -188,7 +172,6 @@ We have an example `.env` file [`.env.example`](./.env.example) file you can loo
 The `docker` image will handle this for you. If in your passed in env file the mnemonic is empty, i.e. `MNEMONIC=`, it will generate one for you and update your file.
 
 Otherwise simply have that field filled out, and it will add the account automatically.
-
 
 #### Checking Chain Status
 
@@ -206,7 +189,7 @@ There are a few things you may like to check as an operator(these assume your co
 
 **NOTE**: This assumes you already have funds in your account. If you don't please add some funds to your account before trying.
 
-To become a validator run the following command:
+To stake run the following command:
 **NOTE**: The amount at the end is the amount of tokens in `aseda` to stake.
 
 ```bash
@@ -233,13 +216,13 @@ txhash: 6C8A6C1925F3B373BBEA4DF609D8F1FAE6CDA094586763652557B527E88893A6
 
 **NOTE**: This assumes you have already staked.
 
-To become a validator run the following command:
+To unstake run the following command:
 **NOTE**: The amount at the end is the amount of tokens in `aseda` to stake.
 ```bash
 docker exec seda_node /bin/bash -c "./unstaking.sh 1000"
 
 # Which should produce some output:
-gas estimate: 181315
+gas estimate: 164451
 code: 0
 codespace: ""
 data: ""
@@ -249,10 +232,7 @@ gas_wanted: "0"
 height: "0"
 info: ""
 logs: []
-raw_log: '[]'
-timestamp: ""
-tx: null
-txhash: 6C8A6C1925F3B373BBEA4DF609D8F1FAE6CDA094586763652557B527E88893A6
+txhash: 1BA768C240B379E7BBFF74D68148E95A64BFB167497C341842F4C2AF94376A77
 ```
 
 #### Checking Validator Status
