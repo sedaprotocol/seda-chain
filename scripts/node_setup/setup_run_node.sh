@@ -96,7 +96,7 @@ else
   echo "NOTE: This is done in the file backend..."
   echo "We recommend storing this somewhere secure..."
   output=$(create_or_import_key "$KEY_NAME" "" "")
-  # We greb the mnemonic from the output.
+  # We grab the mnemonic from the output.
   mnemonic=$(echo "$output" | awk '/Important/,0' | tail -n 1)
   # We check if the `env` file had a MNEMONIC variable in general...
   awk -v mnemonic="$mnemonic" 'BEGIN{OFS=FS="="} $1=="MNEMONIC"{$2=mnemonic}1' .env > .env.tmp && cat .env.tmp > .env && rm .env.tmp
@@ -124,9 +124,8 @@ echo "Node Initialized !"
 
 
 # It creates a Client to the seda-chain network
-echo "Connecting to Network `$NETWORK`..."
+echo "Setting client Network to `$NETWORK`..."
 $BIN config node $NODE_ADDRESS
-echo "Connected to network !"
 
 # Run node
 echo "Running Node ..."
