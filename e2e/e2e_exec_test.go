@@ -108,8 +108,8 @@ func (s *IntegrationTestSuite) expectErrExecValidation(chain *chain, valIdx int,
 		var txResp sdk.TxResponse
 		gotErr := cdc.UnmarshalJSON(stdOut, &txResp) != nil
 		if gotErr {
-			fmt.Println("stdout: " + string(stdOut))
-			fmt.Println("stderr: " + string(stdErr))
+			s.T().Logf("got tx error - stdout: %s", string(stdOut))
+			s.T().Logf("got tx error - stderr: %s", string(stdErr))
 			s.Require().True(expectErr)
 		}
 

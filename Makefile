@@ -177,7 +177,9 @@ proto-update-deps:
 ##                                   Tests                                   ##
 ###############################################################################
 
-PACKAGES_UNIT=$(shell go list ./...)
+PACKAGES_UNIT=$(shell go list ./... | grep -v /e2e)
+PACKAGES_E2E=$(shell go list ./... | grep /e2e)
+
 TEST_PACKAGES=./...
 TEST_TARGETS := test-unit test-unit-cover test-unit-race
 TEST_COVERAGE_PROFILE=coverage.txt
@@ -195,6 +197,8 @@ test-unit-cover: ARGS=-timeout=10m -tags='$(UNIT_TEST_TAGS)' -coverprofile=$(TES
 test-unit-cover: TEST_PACKAGES=$(PACKAGES_UNIT)
 test-unit-race: ARGS=-timeout=10m -race -tags='$(TEST_RACE_TAGS)'
 test-unit-race: TEST_PACKAGES=$(PACKAGES_UNIT)
+test-e2e: ARGS=-timeout=10m -v
+test-e2e: TEST_PACKAGES=$(PACKAGES_E2E)
 $(TEST_TARGETS): run-tests
 
 run-tests:

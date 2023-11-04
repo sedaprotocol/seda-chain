@@ -60,7 +60,7 @@ func (s *IntegrationTestSuite) execInstantiateAndRegisterProxyContract(
 	opt = append(opt, withKeyValue(flagFees, fees))
 	opt = append(opt, withKeyValue(flagFrom, from))
 
-	opt = append(opt, withKeyValue(flagNoAdmin, "true")) // TO-DO
+	opt = append(opt, withKeyValue(flagNoAdmin, "true"))
 	opt = append(opt, withKeyValue(flagFixMsg, "true"))
 
 	opt = append(opt, withKeyValue(flagDeposit, "10000000aseda"))

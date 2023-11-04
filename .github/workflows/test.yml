@@ -73,8 +73,6 @@ jobs:
             **/go.sum
             **/Makefile
             Makefile
-      - name: Build e2e Docker Image
-        run: make docker-build-e2e
       - name: Test & coverage report creation
         if: env.GIT_DIFF
         run: make test-unit-cover
@@ -83,4 +81,23 @@ jobs:
         with:
           name: "${{ github.sha }}-${{ matrix.part }}-coverage"
           path: ./${{ matrix.part }}profile.out
+  
+  test-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+      - uses: actions/checkout@v4
+      - uses: technote-space/get-diff-action@v6.0.1
+        with:
+          PATTERNS: |
+            **/**.go
+            go.mod
+            go.sum
+      - name: Build e2e Docker Image
+        run: make docker-build-e2e
+      - name: Test E2E
+        run: make test-e2e
 

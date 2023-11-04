@@ -134,15 +134,7 @@ func modifyGenesis(path, moniker, amountStr string, addrAll []sdk.AccAddress, gl
 	govparams.VotingPeriod = &votingPeriod
 	govparams.MinDeposit = sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(10000000)))
 
-	// amnt := sdk.NewInt(10000)
-	// quorum, _ := sdk.NewDecFromStr("0.000000000000000001")
-	// threshold, _ := sdk.NewDecFromStr("0.000000000000000001")
-	// _ = govv1beta1.NewDepositParams(sdk.NewCoins(sdk.NewCoin(denom, amnt)), 10*time.Minute)
-	// _ = govv1beta1.NewVotingParams(15*time.Second)
-	// _ = govv1beta1.NewTallyParams(quorum, threshold, govv1beta1.DefaultVetoThreshold)
-
 	govState := govv1.NewGenesisState(1, govparams)
-
 	govGenStateBz, err := cdc.MarshalJSON(govState)
 	if err != nil {
 		return fmt.Errorf("failed to marshal gov genesis state: %w", err)
