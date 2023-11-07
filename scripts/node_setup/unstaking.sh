@@ -8,8 +8,7 @@ STAKE_AMOUNT="$1aseda"
 
 source common.sh
 
-validator_pub_key=$($BIN tendermint show-validator --home=$HOME/.seda-chain)
+validator_address=$(auth_seda_chaind_command keys show $KEY_NAME --bech val | grep "address:" | awk '{print $3}')  
 
 chain_id=$(cat $HOME/.seda-chain/config/genesis.json | jq .chain_id | tr -d '"')
-auth_seda_chaind_command tx unbond $validator_pub_key --amount=$STAKE_AMOUNT --pubkey=$validator_pub_key --moniker=$MONIKER --commission-rate=0.10 --commission-max-rate=0.20 --commission-max-change-rate=0.01 --gas=auto --gas-adjustment=1.2 --gas-prices=0.0025aseda --from=$KEY_NAME --min-self-delegation=1 --yes --home=$HOME/.seda-chain --chain-id=$chain_id
-
+auth_seda_chaind_command tx staking unbond $validator_address  --gas=auto --gas-adjustment=1.2 --gas-prices=0.0025aseda --from=$KEY_NAME --yes --home=$HOME/.seda-chain --chain-id=$chain_id $STAKE_AMOUNT
