@@ -109,9 +109,9 @@ To pull the `docker` image check [here](#pulling-the-container).
 This section will go over:
 - [docker commands](#docker-commands)
 - Setting up [env variables](#env-variables-configuration) for `docker`
-- How to create a [key](#key-creation)
+<!-- - How to create a [key](#key-creation) -->
 
-We recommend looking at the commands section first so if you need to run `seda-chaind` commands to create a key you can do so from within docker.
+<!-- We recommend looking at the commands section first so if you need to run `seda-chaind` commands to create a key you can do so from within docker. -->
 
 #### Docker Commands
 
@@ -153,7 +153,7 @@ docker logs seda_node -n 100
 ##### Executing `seda-chaind` Commands in Docker
 
 Sometimes you may need to execute commands for example:
-- To generate a [key](#key-creation)
+<!-- - To generate a [key](#key-creation) -->
 - Check if the dockerized node is a [validator](#checking-validator-status).
 - Or how to [stake](#staking)/[unstake](#unstaking).
 
@@ -165,11 +165,11 @@ For the dockerized node to run it requires several [Environment Variables](https
 
 We have an example `.env` file [`.env.example`](./.env.example) file you can look at. It also describes what the env variables do.
 
-#### Key Creation
+<!-- #### Key Creation
 
 The `docker` image will handle this for you. If in your passed in env file the mnemonic is empty, i.e. `MNEMONIC=`, it will generate one for you and update your file.
 
-Otherwise simply have that field filled out, and it will add the account automatically.
+Otherwise simply have that field filled out, and it will add the account automatically. -->
 
 #### Checking Chain Status
 
