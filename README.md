@@ -94,8 +94,8 @@ This section is for those linking to an external node, so if you want to run com
 **NOTE**:
 When connecting externally, choose a trustworthy node operator. Unscrupulous operators might tamper with query outcomes or block transactions. The Seda team currently supports these RPC endpoints:
 
-- Testnet-seda-node-1: `https://3.10.185.200:26657`
-- Testnet-seda-node-2: `https://35.179.10.147:26657`
+- Testnet-seda-node-1: `http://3.10.185.200:26657`
+- Testnet-seda-node-2: `http://35.179.10.147:26657`
 
 ### Running the Node Yourself
 How to run the node without `docker` coming soon.
@@ -104,9 +104,7 @@ How to run the node without `docker` coming soon.
 
 For instructions how to run the node yourself as a normal node or a validator in [docker](https://www.docker.com/). 
 
-To pull the `docker` image check [here]
-
-(#pulling-the-container).
+To pull the `docker` image check [here](#pulling-the-container).
 
 This section will go over:
 - [docker commands](#docker-commands)
