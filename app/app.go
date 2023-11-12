@@ -118,6 +118,9 @@ import (
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/docs"
+	randomness "github.com/sedaprotocol/seda-chain/x/randomness"
+	randomnesskeeper "github.com/sedaprotocol/seda-chain/x/randomness/keeper"
+	randomnesstypes "github.com/sedaprotocol/seda-chain/x/randomness/types"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -174,6 +177,7 @@ var (
 		consensus.AppModuleBasic{},
 		wasmstorage.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		randomness.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -253,6 +257,7 @@ type App struct {
 	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
 
 	WasmStorageKeeper wasmstoragekeeper.Keeper
+	RandomnessKeeper  randomnesskeeper.Keeper
 
 	// mm is the module manager
 	mm *module.Manager
@@ -298,7 +303,7 @@ func NewApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibcexported.StoreKey, upgradetypes.StoreKey,
 		feegrant.StoreKey, evidencetypes.StoreKey, ibctransfertypes.StoreKey, icahosttypes.StoreKey,
 		capabilitytypes.StoreKey, group.StoreKey, icacontrollertypes.StoreKey, consensusparamtypes.StoreKey,
-		wasmstoragetypes.StoreKey, wasmtypes.StoreKey,
+		wasmstoragetypes.StoreKey, wasmtypes.StoreKey, randomnesstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -564,6 +569,12 @@ func NewApp(
 	)
 	wasmStorageModule := wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper, app.AccountKeeper, app.BankKeeper)
 
+	app.RandomnessKeeper = *randomnesskeeper.NewKeeper(
+		appCodec,
+		keys[randomnesstypes.StoreKey],
+	)
+	randomnessModule := randomness.NewAppModule(appCodec, app.RandomnessKeeper)
+
 	/**** IBC Routing ****/
 
 	// Sealing prevents other modules from creating scoped sub-keepers
@@ -619,6 +630,7 @@ func NewApp(
 		transferModule,
 		icaModule,
 		wasmStorageModule,
+		randomnessModule,
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -651,6 +663,7 @@ func NewApp(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		wasmstoragetypes.ModuleName,
+		randomnesstypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -677,6 +690,7 @@ func NewApp(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		wasmstoragetypes.ModuleName,
+		randomnesstypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -708,6 +722,7 @@ func NewApp(
 		consensusparamtypes.ModuleName,
 		wasmstoragetypes.ModuleName,
 		wasmtypes.ModuleName,
+		randomnesstypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)

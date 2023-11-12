@@ -1,0 +1,20 @@
+syntax = "proto3";
+package sedachain.randomness.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/randomness/types";
+
+service Query {
+  rpc Seed(QuerySeedRequest) returns (QuerySeedResponse) {
+    option (google.api.http).get = "/seda-chain/randomness/seed";
+  }
+}
+
+message QuerySeedRequest {}
+
+message QuerySeedResponse {
+  string seed = 1;
+  int64 block_height = 2;
+}
