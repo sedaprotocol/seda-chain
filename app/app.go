@@ -119,6 +119,7 @@ import (
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/docs"
 	randomness "github.com/sedaprotocol/seda-chain/x/randomness"
+	"github.com/sedaprotocol/seda-chain/x/randomness/keeper"
 	randomnesskeeper "github.com/sedaprotocol/seda-chain/x/randomness/keeper"
 	randomnesstypes "github.com/sedaprotocol/seda-chain/x/randomness/types"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
@@ -506,6 +507,12 @@ func NewApp(
 	}
 
 	var wasmOpts []wasmkeeper.Option
+
+	wasmQueryPlugin := keeper.NewQuerierImpl(app.RandomnessKeeper)
+	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
+		Custom: keeper.CustomQuerier(wasmQueryPlugin),
+	})
+	wasmOpts = append([]wasm.Option{queryPluginOpt}, wasmOpts...)
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks

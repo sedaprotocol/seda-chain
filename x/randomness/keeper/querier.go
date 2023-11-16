@@ -8,13 +8,19 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/randomness/types"
 )
 
-var _ types.QueryServer = Querier{}
+// var _ types.QueryServer = Querier{}
 
 type Querier struct {
 	Keeper
 }
 
-func NewQuerierImpl(keeper Keeper) types.QueryServer {
+// func NewQuerierImpl(keeper Keeper) types.QueryServer {
+// 	return &Querier{
+// 		keeper,
+// 	}
+// }
+
+func NewQuerierImpl(keeper Keeper) *Querier {
 	return &Querier{
 		keeper,
 	}
