@@ -12,7 +12,7 @@ import (
 func CustomQuerier(randomnessKeeper *Querier) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 		ctx.Logger().Info("Received request", request)
-		ctx.Logger().Info(fmt.Sprintf("% x", request))
+		ctx.Logger().Info(fmt.Sprintf("% x", string(request)))
 
 		var contractQuery types.QuerySeedRequest
 		if err := json.Unmarshal(request, &contractQuery); err != nil {

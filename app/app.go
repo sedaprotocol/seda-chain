@@ -500,6 +500,12 @@ func NewApp(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
+	app.RandomnessKeeper = *randomnesskeeper.NewKeeper(
+		appCodec,
+		keys[randomnesstypes.StoreKey],
+	)
+	randomnessModule := randomness.NewAppModule(appCodec, app.RandomnessKeeper)
+
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
@@ -508,9 +514,9 @@ func NewApp(
 
 	var wasmOpts []wasmkeeper.Option
 
-	wasmQueryPlugin := keeper.NewQuerierImpl(app.RandomnessKeeper)
+	randomnessQueryPlugin := keeper.NewQuerierImpl(app.RandomnessKeeper)
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
-		Custom: keeper.CustomQuerier(wasmQueryPlugin),
+		Custom: keeper.CustomQuerier(randomnessQueryPlugin),
 	})
 	wasmOpts = append([]wasm.Option{queryPluginOpt}, wasmOpts...)
 
@@ -575,12 +581,6 @@ func NewApp(
 		contractKeeper,
 	)
 	wasmStorageModule := wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper, app.AccountKeeper, app.BankKeeper)
-
-	app.RandomnessKeeper = *randomnesskeeper.NewKeeper(
-		appCodec,
-		keys[randomnesstypes.StoreKey],
-	)
-	randomnessModule := randomness.NewAppModule(appCodec, app.RandomnessKeeper)
 
 	/**** IBC Routing ****/
 
