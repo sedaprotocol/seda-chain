@@ -22,5 +22,10 @@ $BIN keys add satoshi --keyring-backend test
 ADDR=$($BIN keys show satoshi --keyring-backend test -a)
 $BIN add-genesis-account $ADDR 100000000000000000seda --keyring-backend test
 $BIN gentx satoshi 10000000000000000seda --keyring-backend test
+
+$BIN keys add acc1 --keyring-backend test
+ADDR=$($BIN keys show acc1 --keyring-backend test -a)
+$BIN add-genesis-account $ADDR 100000000000000000seda --keyring-backend test
+
 $BIN collect-gentxs
 $BIN start

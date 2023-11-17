@@ -11,7 +11,7 @@ import (
 
 func CustomQuerier(randomnessKeeper *Querier) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
-		ctx.Logger().Info("Received request", request)
+		ctx.Logger().Info("Received request")
 		ctx.Logger().Info(fmt.Sprintf("% x", string(request)))
 
 		var contractQuery types.QuerySeedRequest
@@ -29,11 +29,7 @@ func CustomQuerier(randomnessKeeper *Querier) func(ctx sdk.Context, request json
 		ctx.Logger().Info("Get seed")
 		ctx.Logger().Info(seedQueryResponse.Seed)
 
-		res := types.QuerySeedResponse{
-			Seed:        seedQueryResponse.Seed,
-			BlockHeight: seedQueryResponse.BlockHeight,
-		}
-		bz, err := json.Marshal(res)
+		bz, err := json.Marshal(seedQueryResponse)
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "seed query response")
 		}
