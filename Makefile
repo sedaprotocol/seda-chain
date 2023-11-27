@@ -100,9 +100,7 @@ ifeq (debug,$(findstring debug,$(COSMOS_BUILD_OPTIONS)))
 endif
 
 # default make command
-all: clean-all go.sum fmt lint build
-
-clean-all: clean
+all: clean go.sum fmt lint build
 
 ###############################################################################
 ##                                   Build                                   ##
@@ -188,19 +186,22 @@ proto-update-deps:
 
 PACKAGES_UNIT=$(shell go list ./...)
 TEST_PACKAGES=./...
-TEST_TARGETS := test-unit test-unit-cover test-race
+TEST_TARGETS := test-unit test-unit-cover test-unit-race
 TEST_COVERAGE_PROFILE=coverage.txt
 
 UNIT_TEST_TAGS = norace
 TEST_RACE_TAGS = ""
 
+# runs all tests
+test: test-unit
+test-race: test-unit-race
 
 test-unit: ARGS=-timeout=10m -tags='$(UNIT_TEST_TAGS)'
 test-unit: TEST_PACKAGES=$(PACKAGES_UNIT)
 test-unit-cover: ARGS=-timeout=10m -tags='$(UNIT_TEST_TAGS)' -coverprofile=$(TEST_COVERAGE_PROFILE) -covermode=atomic
 test-unit-cover: TEST_PACKAGES=$(PACKAGES_UNIT)
-test-race: ARGS=-timeout=10m -race -tags='$(TEST_RACE_TAGS)'
-test-race: TEST_PACKAGES=$(PACKAGES_UNIT)
+test-unit-race: ARGS=-timeout=10m -race -tags='$(TEST_RACE_TAGS)'
+test-unit-race: TEST_PACKAGES=$(PACKAGES_UNIT)
 $(TEST_TARGETS): run-tests
 
 run-tests:
@@ -216,7 +217,7 @@ cover-html: test-unit-cover
 	@echo "--> Opening in the browser"
 	@go tool cover -html=$(TEST_COVERAGE_PROFILE)
 
-.PHONY: cover-html run-tests $(TEST_TARGETS)
+.PHONY: cover-html run-tests $(TEST_TARGETS) test test-race
 
 
 ###############################################################################
