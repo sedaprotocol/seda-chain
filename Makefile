@@ -11,11 +11,6 @@ DOCKER := $(shell which docker)
 
 build_tags = netgo
 
-#  experimental feature
-ifeq ($(EXPERIMENTAL),true)
-	build_tags += experimental
-endif
-
 ifeq ($(LEDGER_ENABLED),true)
   ifeq ($(OS),Windows_NT)
     GCCEXE = $(shell where gcc.exe 2> NUL)
@@ -116,10 +111,6 @@ $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 $(BUILDDIR)/:
 	@mkdir -p $(BUILDDIR)/
 
-build-experimental: go.sum
-	@echo "--> Building Experimental version..."
-	EXPERIMENTAL=true $(MAKE) build
-
 go-mod-tidy:
 	@contrib/scripts/go-mod-tidy-all.sh
 
@@ -127,7 +118,7 @@ clean:
 	@echo "--> Cleaning..."
 	@rm -rf $(BUILD_DIR)/**  $(DIST_DIR)/**
 
-.PHONY: build build-linux build-experimental build-no_cgo clean go-mod-tidy
+.PHONY: build build-linux build-no_cgo clean go-mod-tidy
 
 ###############################################################################
 ###                          Tools & Dependencies                           ###
@@ -170,15 +161,15 @@ protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(pro
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	@$(protoImage) sh ./scripts/proto_gen.sh
+	@sh ./scripts/proto_gen.sh
 
 proto-lint:
 	@echo "Linting Protobuf files"
-	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
+	@find ./ -name "*.proto" -exec clang-format -i {} \;
 
 proto-update-deps:
 	@echo "Updating Protobuf dependencies"
-	$(DOCKER) run --rm -v $(CURDIR)/proto:/workspace --workdir /workspace $(protoImageName) buf mod update
+	@buf mod update
 
 .PHONY: proto-gen proto-lint proto-update-deps
 
@@ -194,10 +185,6 @@ TEST_COVERAGE_PROFILE=coverage.txt
 UNIT_TEST_TAGS = norace
 TEST_RACE_TAGS = ""
 
-ifeq ($(EXPERIMENTAL),true)
-	UNIT_TEST_TAGS += experimental
-	TEST_RACE_TAGS += experimental
-endif
 
 test-unit: ARGS=-timeout=10m -tags='$(UNIT_TEST_TAGS)'
 test-unit: TEST_PACKAGES=$(PACKAGES_UNIT)
