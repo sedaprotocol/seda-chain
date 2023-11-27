@@ -1,16 +1,20 @@
 #!/usr/bin/env make -f
+###############################################################################
+##                                   Set Env Vars                            ##
+###############################################################################
+export CGO_ENABLED=1
 export VERSION := $(shell echo $(shell git describe --tags --always --match "v*") | sed 's/^v//')
 export COMMIT := $(shell git log -1 --format='%H')
+
+###############################################################################
+##                                   Set Local Vars                          ##
+###############################################################################
 LEDGER_ENABLED ?= true
 BUILDDIR ?= $(CURDIR)/build
 DOCKER := $(shell which docker)
-
-###############################################################################
-##                                   Build                                   ##
-###############################################################################
-
 build_tags = netgo
 
+# If we are building ledger support
 ifeq ($(LEDGER_ENABLED),true)
   ifeq ($(OS),Windows_NT)
     GCCEXE = $(shell where gcc.exe 2> NUL)
@@ -50,6 +54,7 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=seda-chain \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
 			-X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TMVERSION)
 
+# DB Selection
 ifeq ($(ENABLE_ROCKSDB),true)
   BUILD_TAGS += rocksdb
   test_tags += rocksdb
@@ -67,9 +72,9 @@ ifeq (rocksdb,$(findstring rocksdb,$(COSMOS_BUILD_OPTIONS)))
   ifneq ($(ENABLE_ROCKSDB),true)
     $(error Cannot use RocksDB backend unless ENABLE_ROCKSDB=true)
   endif
-  CGO_ENABLED=1
 endif
 
+# For building statically linked binaries
 ifeq ($(LINK_STATICALLY),true)
 	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
 endif
@@ -94,16 +99,18 @@ ifeq (debug,$(findstring debug,$(COSMOS_BUILD_OPTIONS)))
   BUILD_FLAGS += -gcflags "all=-N -l"
 endif
 
-all: tools build lint test
+# default make command
+all: clean-all go.sum fmt lint build
 
-echo-build-tags:
-	@echo ${BUILD_TAGS}
+clean-all: clean
+
+###############################################################################
+##                                   Build                                   ##
+###############################################################################
 
 BUILD_TARGETS := build install
 
 build: BUILD_ARGS=-o $(BUILDDIR)/
-build-linux:
-	GOOS=linux GOARCH=$(if $(findstring aarch64,$(shell uname -m)) || $(findstring arm64,$(shell uname -m)),arm64,amd64) LEDGER_ENABLED=false $(MAKE) build
 
 $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 	@go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
@@ -113,9 +120,9 @@ $(BUILDDIR)/:
 
 clean:
 	@echo "--> Cleaning..."
-	@rm -rf $(BUILD_DIR)/**  $(DIST_DIR)/**
+	@rm -rf $(BUILDDIR)/** 
 
-.PHONY: build build-linux build-no_cgo clean go-mod-tidy
+.PHONY: build clean
 
 ###############################################################################
 ###                          Tools & Dependencies                           ###
@@ -125,6 +132,10 @@ go.sum: go.mod
 	@echo "Ensure dependencies have not been modified ..." >&2
 	@go mod verify
 	@go mod tidy
+
+fmt:
+	@echo "--> Running go fmt"
+	$(shell go fmt ./...)
 
 ###############################################################################
 ###                                Linting                                  ###
@@ -138,35 +149,36 @@ lint-install:
 
 lint:
 	@echo "--> Running linter"
-	$(MAKE) lint-install
 	@./scripts/go-lint-all.bash --timeout=15m
 
-lint-fix:
-	@echo "--> Running linter"
-	$(MAKE) lint-install
-	@./scripts/go-lint-all.bash --fix
-
-.PHONY: lint lint-fix
+.PHONY: lint lint-install
 
 ###############################################################################
 ###                                Protobuf                                 ###
 ###############################################################################
 
-protoVer=0.14.0
-protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
+proto-all: proto-gen proto-format proto-lint
+
+proto-dep-install:
+	@go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway@latest
+	@go install github.com/cosmos/gogoproto/protoc-gen-gocosmos@latest
+	@go install github.com/cosmos/gogoproto/protoc-gen-gogo@latest
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	@sh ./scripts/proto_gen.sh
+	@./scripts/proto_gen.sh
+
+proto-fmt:
+	@echo "Formatting Protobuf files"
+	@find ./ -name "*.proto" -exec clang-format -i {} \;
 
 proto-lint:
 	@echo "Linting Protobuf files"
-	@find ./ -name "*.proto" -exec clang-format -i {} \;
+	@buf lint --error-format=json ./proto
 
 proto-update-deps:
 	@echo "Updating Protobuf dependencies"
-	@buf mod update
+	@buf mod update ./proto
 
 .PHONY: proto-gen proto-lint proto-update-deps
 
