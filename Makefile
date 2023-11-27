@@ -1,4 +1,4 @@
-#!/usr/bin/make -f
+#!/usr/bin/env make -f
 export VERSION := $(shell echo $(shell git describe --tags --always --match "v*") | sed 's/^v//')
 export COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
@@ -102,7 +102,7 @@ endif
 all: tools build lint test
 
 echo-build-tags:
-	echo ${BUILD_TAGS}
+	@echo ${BUILD_TAGS}
 
 BUILD_TARGETS := build install
 
@@ -111,10 +111,10 @@ build-linux:
 	GOOS=linux GOARCH=$(if $(findstring aarch64,$(shell uname -m)) || $(findstring arm64,$(shell uname -m)),arm64,amd64) LEDGER_ENABLED=false $(MAKE) build
 
 $(BUILD_TARGETS): go.sum $(BUILDDIR)/
-	go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
+	@go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 
 $(BUILDDIR)/:
-	mkdir -p $(BUILDDIR)/
+	@mkdir -p $(BUILDDIR)/
 
 build-experimental: go.sum
 	@echo "--> Building Experimental version..."
@@ -249,7 +249,7 @@ release:
 endif
 
 release-dry-run:
-	docker run \
+	@docker run \
 		--rm \
 		-e COSMWASM_VERSION=$(COSMWASM_VERSION) \
 		-v /var/run/docker.sock:/var/run/docker.sock \
@@ -261,7 +261,7 @@ release-dry-run:
 		--skip=publish
 
 release-snapshot:
-	docker run \
+	@docker run \
 		--rm \
 		-e COSMWASM_VERSION=$(COSMWASM_VERSION) \
 		-v /var/run/docker.sock:/var/run/docker.sock \
