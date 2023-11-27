@@ -296,3 +296,5 @@ docker-static-build-alpine:
 		--build-arg GIT_VERSION=$(VERSION) \
 		--build-arg GIT_COMMIT=$(COMMIT) \
 		-f $(CURDIR)/dockerfiles/Dockerfile.static .
+
+.PHONY: docker-static-build docker-static-build-alpine
