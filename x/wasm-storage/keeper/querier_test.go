@@ -82,6 +82,7 @@ func (s *KeeperTestSuite) TestDataRequestWasms() {
 	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm.Hash, "WASM_TYPE_DATA_REQUEST"), res.HashTypePairs[0])
 	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm2.Hash, "WASM_TYPE_DATA_REQUEST"), res.HashTypePairs[1])
 }
+
 func (s *KeeperTestSuite) TestOverlayWasms() {
 	s.SetupTest()
 	wasm, err := os.ReadFile("test_utils/hello-world.wasm")

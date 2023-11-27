@@ -4,8 +4,9 @@ import (
 	"encoding/hex"
 	"os"
 
-	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/hyperledger/burrow/crypto"
+
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )

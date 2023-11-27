@@ -5,6 +5,11 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
+	"github.com/spf13/viper"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -13,10 +18,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
-	"github.com/spf13/viper"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -144,7 +145,7 @@ func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
 	return cmd
 }
 
-func parseStoreOverlayArgs(file string, sender string, flags *flag.FlagSet) (*types.MsgStoreOverlayWasm, error) {
+func parseStoreOverlayArgs(file, sender string, flags *flag.FlagSet) (*types.MsgStoreOverlayWasm, error) {
 	zipped, err := gzipWasmFile(file)
 	if err != nil {
 		return nil, err

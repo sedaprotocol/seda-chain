@@ -11,7 +11,5 @@ const (
 	RouterKey = ModuleName
 )
 
-var (
-	// KeyPrefixSeed defines prefix to store the current block's seed.
-	KeyPrefixSeed = []byte{0x00}
-)
+// KeyPrefixSeed defines prefix to store the current block's seed.
+var KeyPrefixSeed = []byte{0x00}
