@@ -15,7 +15,24 @@ Otherwise please see the [dev dependencies](#dev-dependencies).
 
 ## Dev Dependencies
 
-### [clang-format]()
+### [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
+We use clang format to format our protobuf generated code.
+
+- Linux
+  - Please see your distro specific installation tool(i.e `apt`) and use that to install it.
+- Macos:
+  - Using [brew](https://brew.sh/): `brew install clang-format`
+  - Using [macports](https://www.macports.org/): `sudo port install clang-format`
+
+# TODO don't rely on docker for this
+### [docker](https://www.docker.com/)
+Docker is used to help make release and static builds locally.
+
+- Linux
+  - Please see your distro specific installation tool(i.e `apt`) and use that to install it.
+- Macos:
+  - Using [brew](https://brew.sh/): `brew install --cask docker`
+  - Using [macports](https://www.macports.org/): `sudo port install docker`
 
 ### [Golang](https://go.dev/)
 We use Golang as the language to develop `seda-chaind` as it has the [CosmosSDK](https://v1.cosmos.network/sdk).
@@ -23,7 +40,6 @@ We use Golang as the language to develop `seda-chaind` as it has the [CosmosSDK]
 - [Golang](https://go.dev/dl/): you can download it from the linked page or:
     - Linux: Use your distribution's packagae manager.
     - Mac: Use `macports` or `brew`.
-    - Windows: Use `scoop`
 - Ensure that `$GOPATH` and `$PATH` have been set properly. On a Mac that uses the Z shell, you may have to run the following:
 ```zsh
 mkdir -p $HOME/go/bin
@@ -33,7 +49,6 @@ echo "export GO111MODULE=on" >> ~/.zprofile
 source ~/.zprofile
 ```
 ### [make](https://www.gnu.org/software/make/)
-
 We use GNU Make to help us built, lint, fmt, and etc for our project.
 
 - Linux:
@@ -45,6 +60,7 @@ We use GNU Make to help us built, lint, fmt, and etc for our project.
 
 <!-- It actually uses docker to run protobuf commmands... this should be fixed -->
 ### [Protobuf](https://protobuf.dev/)
+A necessary tool for generating protobuf code.
 
 - Linux:
   - Please see your distro specific installation tool(i.e `apt`) and use that to install it.
@@ -53,22 +69,30 @@ We use GNU Make to help us built, lint, fmt, and etc for our project.
   - Using [macports](https://www.macports.org/): `sudo port install protobuf-cpp`
 
 #### Protobuf Sub-Deps
+We also need some dependencies to make protobuf work for cosmos.
 
+##### Buf
+The `buf` tool.
 
-<!-- TODO this needs to be tested more -->
+- Linux:
+  - `curl -sSL https://github.com/bufbuild/buf/releases/download/v1.0.0-rc1/buf-Linux-x86_64 -o buf && chmod +x buf && sudo mv buf /usr/local/bin`
+- Macos:
+  - Using [brew](https://brew.sh/): `brew install bufbuild/buf/buf`
+  - Using [macports](https://www.macports.org/): `sudo port install buf`
+
 ### [WasmVM](https://github.com/CosmWasm/wasmvm)
+WasmVM is the library that makes CosmWASM possible.
 
-- `git clone https://github.com/CosmWasm/wasmvm`
-- `make build-go`
-- `make test`
-- Make sure you put the shared library in your path by moving it to an appropriate location or adding it to your path.
-
-- **NOTE**: This is currently not working on Windows.
+You can install that by running:
+```bash
+sudo ./scripts/install_wasmvm.sh
+```
 
 ## Building using Make
 
 To build the protobuf(only necessary if you change the protobuf) you will need to run,:
 ```bash
+make prot-dep-install
 make proto-update-deps
 make proto-gen
 ```
@@ -101,12 +125,11 @@ $BIN collect-gentxs
 $BIN start
 ```
 
-## Linting
+## Linting & Formatting
 
-<!-- @gluax add clang-format as a dep -->
-<!-- @gluax this cmd doesn't work... -->
-To lint the protobuf(only necessary if you mess with protobuf):
+To lint and format the protobuf(only necessary if you mess with protobuf):
 ```bash
+make proto-fmt
 make proto-lint
 ```
 
@@ -115,13 +138,9 @@ If you have not install a Go linters runner, install it first:
 make lint-install
 ```
 
-Run linters with auto-fix
+Run format and run linter for go sided:
 ```bash
-make lint-fix
-```
-
-or without auto-fix:
-```bash
+make fmt
 make lint
 ```
 
@@ -131,7 +150,13 @@ After running the `make install` command you should be able to use `seda-chaind 
 
 ## Testing
 
-To test the node so far we only have unit tests:
+To test run all tests:
 ```bash
-make test-unit
+make test
+```
+
+To see test coverage:
+To test run all tests:
+```bash
+make cover-html
 ```

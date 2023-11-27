@@ -17,3 +17,6 @@ scripts/testnet/artifacts
 # Ignore the env file one may actually fill out
 seda.env
 .env
+
+# coverage files
+coverage.txt
