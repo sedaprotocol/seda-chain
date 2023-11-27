@@ -111,9 +111,6 @@ $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 $(BUILDDIR)/:
 	@mkdir -p $(BUILDDIR)/
 
-go-mod-tidy:
-	@contrib/scripts/go-mod-tidy-all.sh
-
 clean:
 	@echo "--> Cleaning..."
 	@rm -rf $(BUILD_DIR)/**  $(DIST_DIR)/**
