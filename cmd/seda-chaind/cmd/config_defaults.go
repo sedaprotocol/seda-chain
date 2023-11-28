@@ -61,8 +61,6 @@ func initAppConfig() (string, interface{}) {
 
 	// GRPC Web Settings
 	srvCfg.GRPCWeb.Enable = true
-	srvCfg.GRPCWeb.Address = "0.0.0.0:9091"
-	srvCfg.GRPCWeb.EnableUnsafeCORS = true
 
 	// API Settings
 	srvCfg.API.Enable = true

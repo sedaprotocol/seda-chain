@@ -12,7 +12,6 @@ import (
 
 	cfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/libs/cli"
-	"github.com/cometbft/cometbft/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -21,6 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
 )
@@ -106,24 +106,22 @@ func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Comma
 				return errors.Wrap(err, "Failed to marshal default genesis state")
 			}
 
-			genDoc := &types.GenesisDoc{}
 			if _, err := os.Stat(genFile); err != nil {
 				if !os.IsNotExist(err) {
 					return err
 				}
-			} else {
-				genDoc, err = types.GenesisDocFromFile(genFile)
-				if err != nil {
-					return errors.Wrap(err, "Failed to read genesis doc from file")
-				}
 			}
 
-			genDoc.ChainID = chainID
-			genDoc.Validators = nil
-			genDoc.AppState = appState
-			genDoc.InitialHeight = initHeight
+			appGenesis := &genutiltypes.AppGenesis{
+				ChainID:  chainID,
+				AppState: appState,
+				Consensus: &genutiltypes.ConsensusGenesis{
+					Validators: nil,
+				},
+				InitialHeight: initHeight,
+			}
 
-			if err = genutil.ExportGenesisFile(genDoc, genFile); err != nil {
+			if err = genutil.ExportGenesisFile(appGenesis, genFile); err != nil {
 				return errors.Wrap(err, "Failed to export genesis file")
 			}
 			toPrint := newPrintInfo(config.Moniker, chainID, nodeID, "")

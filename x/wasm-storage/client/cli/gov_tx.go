@@ -72,11 +72,8 @@ func ProposalStoreOverlayCmd() *cobra.Command {
 				return err
 			}
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
 			if err != nil {
-				return err
-			}
-			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
@@ -122,11 +119,8 @@ func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
 			}
 			src.Salt = salt
 
-			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
 			if err != nil {
-				return err
-			}
-			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 

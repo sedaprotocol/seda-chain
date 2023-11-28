@@ -61,13 +61,6 @@ ifeq ($(ENABLE_ROCKSDB),true)
 endif
 
 # DB backend selection
-ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))
-  build_tags += gcc
-endif
-ifeq (badgerdb,$(findstring badgerdb,$(COSMOS_BUILD_OPTIONS)))
-  BUILD_TAGS += badgerdb
-endif
-# handle rocksdb
 ifeq (rocksdb,$(findstring rocksdb,$(COSMOS_BUILD_OPTIONS)))
   ifneq ($(ENABLE_ROCKSDB),true)
     $(error Cannot use RocksDB backend unless ENABLE_ROCKSDB=true)

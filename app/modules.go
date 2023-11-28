@@ -3,8 +3,8 @@ package app
 import (
 	"encoding/json"
 
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/mint"
@@ -38,7 +38,7 @@ type distrModule struct {
 // DefaultGenesis returns custom x/distribution default genesis state.
 func (distrModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	genesis := distrtypes.DefaultGenesisState()
-	genesis.Params.CommunityTax = sdk.ZeroDec()
+	genesis.Params.CommunityTax = math.LegacyZeroDec()
 
 	return cdc.MustMarshalJSON(genesis)
 }

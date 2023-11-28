@@ -4,11 +4,10 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/log"
-
+	"cosmossdk.io/log"
+	storetypes "cosmossdk.io/store/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -78,7 +77,7 @@ func (k Keeper) HasOverlayWasm(ctx sdk.Context, wasm *types.Wasm) bool {
 // Wasms and performs a given callback function.
 func (k Keeper) IterateAllDataRequestWasms(ctx sdk.Context, callback func(wasm types.Wasm) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefixDataRequest)
+	iterator := storetypes.KVStorePrefixIterator(store, types.KeyPrefixDataRequest)
 
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
@@ -95,7 +94,7 @@ func (k Keeper) IterateAllDataRequestWasms(ctx sdk.Context, callback func(wasm t
 // and performs a given callback function.
 func (k Keeper) IterateAllOverlayWasms(ctx sdk.Context, callback func(wasm types.Wasm) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefixOverlay)
+	iterator := storetypes.KVStorePrefixIterator(store, types.KeyPrefixOverlay)
 
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
