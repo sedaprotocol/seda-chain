@@ -264,7 +264,6 @@ type App struct {
 	mm  *module.Manager
 	bmm module.BasicManager
 
-	// sm is the simulation manager
 	sm           *module.SimulationManager
 	configurator module.Configurator
 }
@@ -687,10 +686,10 @@ func NewApp(
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
-	// // bmm defines the module BasicManager is in charge of setting up basic,
-	// // non-dependant module elements, such as codec registration and genesis verification.
-	// // By default it is composed of all the module from the module manager.
-	// // Additionally, app module basics can be overwritten by passing them as argument.
+	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
+	// non-dependant module elements, such as codec registration and genesis verification.
+	// By default it is composed of all the module from the module manager.
+	// Additionally, app module basics can be overwritten by passing them as argument.
 	app.bmm = module.NewBasicManagerFromManager(
 		app.mm,
 		map[string]module.AppModuleBasic{
