@@ -34685,7 +34685,7 @@ paths:
 
         This rpc is deprecated now that IBC has its own replacement
 
-        (https://github.com/cosmos/ibc-go/blob/2c880a22e9f9cc75f62b527ca94aa75ce1106001/proto/ibc/core/client/v1/query.proto#L54)
+        (https://github.com/cosmos/ibc-go/v8/blob/2c880a22e9f9cc75f62b527ca94aa75ce1106001/proto/ibc/core/client/v1/query.proto#L54)
       operationId: CosmosUpgradeV1Beta1UpgradedConsensusState
       responses:
         '200':
