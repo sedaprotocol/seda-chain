@@ -860,6 +860,14 @@ func NewApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 
+	// Pseudorandomness beacon
+	app.SetPrepareProposal(
+		randomnesskeeper.PrepareProposalHandler(txConfig, app.RandomnessKeeper),
+	)
+	app.SetProcessProposal(
+		randomnesskeeper.ProcessProposalHandler(txConfig, app.RandomnessKeeper),
+	)
+
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
