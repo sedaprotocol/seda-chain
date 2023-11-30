@@ -31,6 +31,7 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -40,12 +41,11 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
-	"github.com/sedaprotocol/seda-chain/app/params"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 )
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
-func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
+func NewRootCmd() *cobra.Command {
 	cfg := sdk.GetConfig()
 	cfg.SetBech32PrefixForAccount(appparams.Bech32PrefixAccAddr, appparams.Bech32PrefixAccPub)
 	cfg.SetBech32PrefixForValidator(appparams.Bech32PrefixValAddr, appparams.Bech32PrefixValPub)
@@ -54,6 +54,8 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 	cfg.Seal()
 
 	// TO-DO depinject
+	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
+	// note, this is not necessary when using app wiring, as depinject can be directly used (see root_v2.go)
 	tempApp := app.NewApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
@@ -65,7 +67,7 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 		simtestutil.NewAppOptionsWithFlagHome(tempDir()),
 		baseapp.SetChainID("tempid"),
 	)
-	encodingConfig := params.EncodingConfig{
+	encodingConfig := app.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
 		Marshaler:         tempApp.AppCodec(),
 		TxConfig:          tempApp.TxConfig(),
@@ -110,19 +112,22 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 		},
 	}
 
-	initRootCmd(rootCmd, encodingConfig)
+	initRootCmd(rootCmd, encodingConfig, tempApp.BasicModuleManager())
 	overwriteFlagDefaults(rootCmd, map[string]string{
 		flags.FlagChainID:        strings.ReplaceAll(app.Name, "-", ""),
 		flags.FlagKeyringBackend: "test",
 	})
 
-	return rootCmd, encodingConfig
+	return rootCmd
 }
 
-func initRootCmd(rootCmd *cobra.Command, encodingConfig appparams.EncodingConfig) {
+func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig, basicManager module.BasicManager) {
+	cfg := sdk.GetConfig()
+	cfg.Seal()
+
 	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 	rootCmd.AddCommand(
-		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
+		InitCmd(basicManager, app.DefaultNodeHome),
 		genutilcli.CollectGenTxsCmd(
 			banktypes.GenesisBalancesIterator{},
 			app.DefaultNodeHome,
@@ -130,13 +135,13 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig appparams.EncodingConfig
 			encodingConfig.InterfaceRegistry.SigningContext().ValidatorAddressCodec(),
 		),
 		genutilcli.GenTxCmd(
-			app.ModuleBasics,
+			basicManager,
 			encodingConfig.TxConfig,
 			banktypes.GenesisBalancesIterator{},
 			app.DefaultNodeHome,
 			encodingConfig.InterfaceRegistry.SigningContext().ValidatorAddressCodec(),
 		),
-		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
+		genutilcli.ValidateGenesisCmd(basicManager),
 		addGenesisAccountCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
@@ -144,25 +149,19 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig appparams.EncodingConfig
 	)
 
 	// add server commands
-	server.AddCommands(
-		rootCmd,
-		app.DefaultNodeHome,
-		newApp,
-		appExport,
-		addModuleInitFlags,
-	)
+	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		server.StatusCommand(),
-		queryCommand(),
-		txCommand(),
+		queryCommand(basicManager),
+		txCommand(basicManager),
 		keys.Commands(),
 	)
 }
 
 // queryCommand returns the sub-command to send queries to the app
-func queryCommand() *cobra.Command {
+func queryCommand(basicManager module.BasicManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "query",
 		Aliases:                    []string{"q"},
@@ -181,14 +180,14 @@ func queryCommand() *cobra.Command {
 		server.QueryBlockResultsCmd(),
 	)
 
-	app.ModuleBasics.AddQueryCommands(cmd)
+	basicManager.AddQueryCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
 	return cmd
 }
 
 // txCommand returns the sub-command to send transactions to the app
-func txCommand() *cobra.Command {
+func txCommand(basicManager module.BasicManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "tx",
 		Short:                      "Transactions subcommands",
@@ -207,6 +206,9 @@ func txCommand() *cobra.Command {
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
 	)
+
+	basicManager.AddTxCommands(cmd)
+	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
 	return cmd
 }

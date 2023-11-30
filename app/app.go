@@ -119,8 +119,6 @@ import (
 	ibcporttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	solomachine "github.com/cosmos/ibc-go/v8/modules/light-clients/06-solomachine"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/docs"
@@ -145,32 +143,34 @@ var (
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
+		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 		auth.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
-		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+		vesting.AppModuleBasic{},
 		bank.AppModuleBasic{},
-		capability.AppModuleBasic{},
-		stakingModule{},
-		mintModule{},
-		distrModule{},
-		gov.NewAppModuleBasic([]govclient.ProposalHandler{}),
-		params.AppModuleBasic{},
-		crisis.AppModuleBasic{},
-		slashing.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
 		groupmodule.AppModuleBasic{},
-		ibc.AppModuleBasic{},
-		ibctm.AppModuleBasic{},
-		solomachine.AppModuleBasic{},
+		gov.NewAppModuleBasic([]govclient.ProposalHandler{}),
+		mintModule{}, // custom modifications
+		slashing.AppModuleBasic{},
+		distrModule{},   // custom modifications
+		stakingModule{}, // custom modifications
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
+		consensus.AppModuleBasic{},
+		circuit.AppModuleBasic{},
+		capability.AppModuleBasic{},
+		wasm.AppModuleBasic{},
+		ibc.AppModuleBasic{},
+		ibcfee.AppModuleBasic{},
+		params.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		ica.AppModuleBasic{},
-		vesting.AppModuleBasic{},
-		consensus.AppModuleBasic{},
 		wasmstorage.AppModuleBasic{},
-		wasm.AppModuleBasic{},
 		randomness.AppModuleBasic{},
+		crisis.AppModuleBasic{},
+		// ibctm.AppModuleBasic{},
+		// solomachine.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -259,7 +259,6 @@ type App struct {
 	WasmStorageKeeper wasmstoragekeeper.Keeper
 	RandomnessKeeper  randomnesskeeper.Keeper
 
-	// mm is the module manager
 	mm  *module.Manager
 	bmm module.BasicManager
 
@@ -280,6 +279,7 @@ func NewApp(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
+	// building encodings
 	interfaceRegistry, err := types.NewInterfaceRegistryWithOptions(types.InterfaceRegistryOptions{
 		ProtoFiles: proto.HybridResolver,
 		SigningOptions: signing.Options{
@@ -297,9 +297,11 @@ func NewApp(
 	appCodec := codec.NewProtoCodec(interfaceRegistry)
 	legacyAmino := codec.NewLegacyAmino()
 	txConfig := authtx.NewTxConfig(appCodec, authtx.DefaultSignModes)
+
 	std.RegisterLegacyAminoCodec(legacyAmino)
 	std.RegisterInterfaces(interfaceRegistry)
 
+	// building BaseApp
 	bApp := baseapp.NewBaseApp(Name, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
@@ -683,18 +685,23 @@ func NewApp(
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
-	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
-	// non-dependant module elements, such as codec registration and genesis verification.
-	// By default it is composed of all the module from the module manager.
-	// Additionally, app module basics can be overwritten by passing them as argument.
+	// // bmm defines the module BasicManager is in charge of setting up basic,
+	// // non-dependant module elements, such as codec registration and genesis verification.
+	// // By default it is composed of all the module from the module manager.
+	// // Additionally, app module basics can be overwritten by passing them as argument.
 	app.bmm = module.NewBasicManagerFromManager(
 		app.mm,
 		map[string]module.AppModuleBasic{
 			genutiltypes.ModuleName: genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
-			govtypes.ModuleName:     gov.NewAppModuleBasic([]govclient.ProposalHandler{}),
+			govtypes.ModuleName: gov.NewAppModuleBasic(
+				[]govclient.ProposalHandler{
+					// paramsclient.ProposalHandler,
+				},
+			),
 		})
 	app.bmm.RegisterLegacyAminoCodec(legacyAmino)
 	app.bmm.RegisterInterfaces(interfaceRegistry)
+	legacyAmino.Seal()
 
 	// During begin block slashing happens after distr.BeginBlocker so that
 	// there is nothing left over in the validator fee pool, so as to keep the
@@ -988,7 +995,7 @@ func (app *App) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig
 	nodeservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// Register grpc-gateway routes for all modules.
-	app.bmm.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+	app.BasicModuleManager().RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// register app's OpenAPI routes.
 	docs.RegisterOpenAPIService(Name, apiSvr.Router)
@@ -1034,4 +1041,9 @@ func (app *App) SimulationManager() *module.SimulationManager {
 // ModuleManager returns the app ModuleManager
 func (app *App) ModuleManager() *module.Manager {
 	return app.mm
+}
+
+// BasicModuleManager returns the app BasicModuleManager
+func (app *App) BasicModuleManager() module.BasicManager {
+	return app.bmm
 }

@@ -97,7 +97,7 @@ func BenchmarkSimulation(b *testing.B) {
 		map[int64]bool{},
 		app.DefaultNodeHome,
 		0,
-		app.MakeEncodingConfig(),
+		app.makeEncodingConfig(),
 		appOptions,
 		baseapp.SetChainID(config.ChainID),
 	)
