@@ -28,18 +28,6 @@ func (msg MsgStoreDataRequestWasm) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgStoreDataRequestWasm) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
-}
-
-func (msg MsgStoreDataRequestWasm) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as ValidateBasic() rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
-}
-
 func (msg MsgStoreOverlayWasm) Route() string {
 	return RouterKey
 }
@@ -59,18 +47,6 @@ func (msg MsgStoreOverlayWasm) ValidateBasic() error {
 		return fmt.Errorf("invalid request: code bytes %s", err.Error())
 	}
 	return nil
-}
-
-func (msg MsgStoreOverlayWasm) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
-}
-
-func (msg MsgStoreOverlayWasm) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as ValidateBasic() rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
 }
 
 func (msg MsgInstantiateAndRegisterProxyContract) Route() string {
@@ -110,16 +86,4 @@ func (msg MsgInstantiateAndRegisterProxyContract) ValidateBasic() error {
 		return fmt.Errorf("invalid salt: %s", err)
 	}
 	return nil
-}
-
-func (msg MsgInstantiateAndRegisterProxyContract) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
-}
-
-func (msg MsgInstantiateAndRegisterProxyContract) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as ValidateBasic() rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
 }

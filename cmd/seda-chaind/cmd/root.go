@@ -65,7 +65,7 @@ func NewRootCmd() *cobra.Command {
 		app.DefaultNodeHome,
 		0,
 		simtestutil.NewAppOptionsWithFlagHome(tempDir()),
-		baseapp.SetChainID("tempid"),
+		baseapp.SetChainID("tempchainid"),
 	)
 	encodingConfig := app.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
@@ -347,7 +347,7 @@ func appExport(
 }
 
 var tempDir = func() string {
-	dir, err := os.MkdirTemp("", "sedachain")
+	dir, err := os.MkdirTemp("", "tempchain")
 	if err != nil {
 		panic("failed to create temp dir: " + err.Error())
 	}
