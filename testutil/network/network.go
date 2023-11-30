@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	tmdb "github.com/cometbft/cometbft-db"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 
 	pruningtypes "cosmossdk.io/store/pruning/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -55,7 +55,7 @@ func New(t *testing.T, configs ...Config) *Network {
 // genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig
 func DefaultConfig() network.Config {
 	var (
-		encoding = app.MakeEncodingConfig()
+		encoding = app.GetEncodingConfig()
 		chainID  = "chain-" + tmrand.NewRand().Str(6)
 	)
 	return network.Config{
@@ -67,13 +67,12 @@ func DefaultConfig() network.Config {
 		AppConstructor: func(val network.ValidatorI) servertypes.Application {
 			return app.NewApp(
 				val.GetCtx().Logger,
-				tmdb.NewMemDB(),
+				dbm.NewMemDB(),
 				nil,
 				true,
 				map[int64]bool{},
 				val.GetCtx().Config.RootDir,
 				0,
-				encoding,
 				simtestutil.EmptyAppOptions{},
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
 				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
