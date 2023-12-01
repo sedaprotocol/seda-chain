@@ -516,7 +516,7 @@ func NewApp(
 
 	randomnessQueryPlugin := keeper.NewQuerierImpl(app.RandomnessKeeper)
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
-		Custom: keeper.CustomQuerier(randomnessQueryPlugin),
+		Custom: keeper.SeedQueryPlugin(randomnessQueryPlugin),
 	})
 	wasmOpts = append([]wasm.Option{queryPluginOpt}, wasmOpts...)
 
