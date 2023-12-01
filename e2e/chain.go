@@ -6,14 +6,10 @@ import (
 
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 
-	evidencetypes "cosmossdk.io/x/evidence/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
-	authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
-	"github.com/sedaprotocol/seda-chain/app/params"
 )
 
 const (
@@ -22,16 +18,13 @@ const (
 )
 
 var (
-	encodingConfig params.EncodingConfig
+	encodingConfig app.EncodingConfig
 	cdc            codec.Codec
 	txConfig       client.TxConfig
 )
 
 func init() {
-	encodingConfig = app.MakeEncodingConfig()
-	authvesting.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	stakingtypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	evidencetypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	encodingConfig = app.GetEncodingConfig()
 	cdc = encodingConfig.Marshaler
 	txConfig = encodingConfig.TxConfig
 }

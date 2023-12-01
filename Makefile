@@ -187,16 +187,13 @@ TEST_COVERAGE_PROFILE=coverage.txt
 UNIT_TEST_TAGS = norace
 TEST_RACE_TAGS = ""
 
-# runs all tests
-test: test-unit
-test-race: test-unit-race
-
 test-unit: ARGS=-timeout=10m -tags='$(UNIT_TEST_TAGS)'
 test-unit: TEST_PACKAGES=$(PACKAGES_UNIT)
 test-unit-cover: ARGS=-timeout=10m -tags='$(UNIT_TEST_TAGS)' -coverprofile=$(TEST_COVERAGE_PROFILE) -covermode=atomic
 test-unit-cover: TEST_PACKAGES=$(PACKAGES_UNIT)
 test-unit-race: ARGS=-timeout=10m -race -tags='$(TEST_RACE_TAGS)'
 test-unit-race: TEST_PACKAGES=$(PACKAGES_UNIT)
+test-e2e: docker-build-e2e
 test-e2e: ARGS=-timeout=10m -v
 test-e2e: TEST_PACKAGES=$(PACKAGES_E2E)
 $(TEST_TARGETS): run-tests
@@ -214,17 +211,10 @@ cover-html: test-unit-cover
 	@echo "--> Opening in the browser"
 	@go tool cover -html=$(TEST_COVERAGE_PROFILE)
 
-.PHONY: cover-html run-tests $(TEST_TARGETS) test test-race
-
-
-###############################################################################
-###                                Docker                                   ###
-###############################################################################
-
 docker-build-e2e:
 	@docker build -t sedaprotocol/seda-chaind-e2e -f dockerfiles/Dockerfile.e2e .
 
-.PHONY: docker-build-e2e
+.PHONY: cover-html run-tests $(TEST_TARGETS) test test-race docker-build-e2e
 
 
 ###############################################################################

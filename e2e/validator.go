@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -23,7 +24,7 @@ import (
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
@@ -72,22 +73,17 @@ func (v *validator) init() error {
 	config.SetRoot(v.configDir())
 	config.Moniker = v.moniker
 
-	genDoc, err := getGenDoc(v.configDir())
-	if err != nil {
-		return err
-	}
-
+	// TO-DO use existing genesis, if exists?
 	appState, err := json.MarshalIndent(app.ModuleBasics.DefaultGenesis(cdc), "", " ")
 	if err != nil {
 		return fmt.Errorf("failed to JSON encode app genesis state: %w", err)
 	}
 
-	genDoc.ChainID = v.chain.id
-	genDoc.Validators = nil
-	genDoc.AppState = appState
+	appGenesis := genutiltypes.NewAppGenesisWithVersion(v.chain.id, appState)
 
-	if err = genutil.ExportGenesisFile(genDoc, config.GenesisFile()); err != nil {
-		return fmt.Errorf("failed to export app genesis state: %w", err)
+	err = appGenesis.SaveAs(config.GenesisFile())
+	if err != nil {
+		return err
 	}
 
 	tmcfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
@@ -223,9 +219,9 @@ func (v *validator) createKey(name string) error {
 func (v *validator) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
 	description := stakingtypes.NewDescription(v.moniker, "", "", "", "")
 	commissionRates := stakingtypes.CommissionRates{
-		Rate:          sdk.MustNewDecFromStr("0.1"),
-		MaxRate:       sdk.MustNewDecFromStr("0.2"),
-		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+		Rate:          math.LegacyMustNewDecFromStr("0.1"),
+		MaxRate:       math.LegacyMustNewDecFromStr("0.2"),
+		MaxChangeRate: math.LegacyMustNewDecFromStr("0.01"),
 	}
 
 	valPubKey, err := cryptocodec.FromTmPubKeyInterface(v.consensusKey.PubKey)
@@ -239,7 +235,7 @@ func (v *validator) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
 	}
 
 	return stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(valAddr),
+		sdk.ValAddress(valAddr).String(),
 		valPubKey,
 		amount,
 		description,
@@ -259,10 +255,17 @@ func (v *validator) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 	txBuilder.SetFeeAmount(sdk.NewCoins())
 	txBuilder.SetGasLimit(200000)
 
+	pk, err := v.keyInfo.GetPubKey()
+	if err != nil {
+		return nil, err
+	}
+
 	signerData := authsigning.SignerData{
 		ChainID:       v.chain.id,
 		AccountNumber: 0,
 		Sequence:      0,
+		PubKey:        pk,
+		Address:       sdk.AccAddress(pk.Address()).String(),
 	}
 
 	// For SIGN_MODE_DIRECT, calling SetSignatures calls setSignerInfos on
@@ -273,11 +276,6 @@ func (v *validator) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 	// Note: This line is not needed for SIGN_MODE_LEGACY_AMINO, but putting it
 	// also doesn't affect its generated sign bytes, so for code's simplicity
 	// sake, we put it here.
-	pk, err := v.keyInfo.GetPubKey()
-	if err != nil {
-		return nil, err
-	}
-
 	sig := txsigning.SignatureV2{
 		PubKey: pk,
 		Data: &txsigning.SingleSignatureData{
@@ -291,7 +289,9 @@ func (v *validator) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 		return nil, err
 	}
 
-	bytesToSign, err := encodingConfig.TxConfig.SignModeHandler().GetSignBytes(
+	bytesToSign, err := authsigning.GetSignBytesAdapter(
+		context.Background(),
+		encodingConfig.TxConfig.SignModeHandler(),
 		txsigning.SignMode_SIGN_MODE_DIRECT,
 		signerData,
 		txBuilder.GetTx(),

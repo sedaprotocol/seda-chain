@@ -3,11 +3,9 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"time"
 
 	"cosmossdk.io/math"
-	tmtypes "github.com/cometbft/cometbft/types"
 
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,30 +19,6 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
-
-func getGenDoc(path string) (*tmtypes.GenesisDoc, error) {
-	serverCtx := server.NewDefaultContext()
-	config := serverCtx.Config
-	config.SetRoot(path)
-
-	genFile := config.GenesisFile()
-	doc := &tmtypes.GenesisDoc{}
-
-	if _, err := os.Stat(genFile); err != nil {
-		if !os.IsNotExist(err) {
-			return nil, err
-		}
-	} else {
-		var err error
-
-		doc, err = tmtypes.GenesisDocFromFile(genFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read genesis doc from file: %w", err)
-		}
-	}
-
-	return doc, nil
-}
 
 func modifyGenesis(path, moniker, amountStr string, addrAll []sdk.AccAddress, globfees string, denom string) error {
 	serverCtx := server.NewDefaultContext()

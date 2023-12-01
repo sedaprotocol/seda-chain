@@ -150,13 +150,17 @@ After running the `make install` command you should be able to use `seda-chaind 
 
 ## Testing
 
-To test run all tests:
+To run all unit tests:
 ```bash
-make test
+make test-unit
 ```
 
 To see test coverage:
-To test run all tests:
 ```bash
 make cover-html
+```
+
+To run end-to-end tests:
+```bash
+make test-e2e
 ```

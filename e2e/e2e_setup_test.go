@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 
+	"cosmossdk.io/math"
 	evidencetypes "cosmossdk.io/x/evidence/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -60,7 +61,7 @@ const (
 )
 
 var (
-	standardFees    = sdk.NewCoin(asedaDenom, sdk.NewInt(330000))
+	standardFees    = sdk.NewCoin(asedaDenom, math.NewInt(330000))
 	proposalCounter = 0
 )
 
@@ -206,8 +207,8 @@ func (s *IntegrationTestSuite) initGenesis(c *chain) {
 
 		createValmsg, err := val.buildCreateValidatorMsg(selfDelegationCoin)
 		s.Require().NoError(err)
-		signedTx, err := val.signMsg(createValmsg)
 
+		signedTx, err := val.signMsg(createValmsg)
 		s.Require().NoError(err)
 
 		txRaw, err := cdc.MarshalJSON(signedTx)
