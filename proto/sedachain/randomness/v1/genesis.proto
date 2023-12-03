@@ -1,0 +1,10 @@
+syntax = "proto3";
+package sedachain.randomness.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/randomness/types";
+
+message GenesisState {
+  string seed = 1;
+}

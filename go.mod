@@ -32,7 +32,7 @@ require (
 	github.com/hyperledger/burrow v0.34.4
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
-	github.com/sedaprotocol/vrf-go v0.0.0-20231128010622-13deb847d981
+	github.com/sedaprotocol/vrf-go v0.0.0-20231202231847-9ca3f58655e6
 	github.com/spf13/cast v1.5.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
@@ -101,7 +101,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
 	github.com/emicklei/dot v1.6.0 // indirect
-	github.com/ethereum/go-ethereum v1.13.4 // indirect
+	github.com/ethereum/go-ethereum v1.13.5 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect

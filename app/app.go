@@ -51,6 +51,7 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -302,7 +303,12 @@ func NewApp(
 	std.RegisterLegacyAminoCodec(legacyAmino)
 	std.RegisterInterfaces(interfaceRegistry)
 
+	// TO-DO
 	// building BaseApp
+	nonceMempool := mempool.NewSenderNonceMempool()
+	mempoolOpt := baseapp.SetMempool(nonceMempool)
+	baseAppOptions = append(baseAppOptions, mempoolOpt)
+
 	bApp := baseapp.NewBaseApp(Name, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
@@ -793,7 +799,6 @@ func NewApp(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		circuittypes.ModuleName,
-		wasmstoragetypes.ModuleName,
 		// ibc modules
 		capabilitytypes.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -862,10 +867,10 @@ func NewApp(
 
 	// Pseudorandomness beacon
 	app.SetPrepareProposal(
-		randomnesskeeper.PrepareProposalHandler(txConfig, app.RandomnessKeeper),
+		randomnesskeeper.PrepareProposalHandler(txConfig, app.RandomnessKeeper, app.AccountKeeper, app.StakingKeeper, nonceMempool),
 	)
 	app.SetProcessProposal(
-		randomnesskeeper.ProcessProposalHandler(txConfig, app.RandomnessKeeper),
+		randomnesskeeper.ProcessProposalHandler(txConfig, app.RandomnessKeeper, app.StakingKeeper),
 	)
 
 	if loadLatest {
