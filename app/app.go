@@ -98,7 +98,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -129,6 +128,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/randomness/keeper"
 	randomnesskeeper "github.com/sedaprotocol/seda-chain/x/randomness/keeper"
 	randomnesstypes "github.com/sedaprotocol/seda-chain/x/randomness/types"
+	customstaking "github.com/sedaprotocol/seda-chain/x/staking"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -675,7 +675,7 @@ func NewApp(
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
-		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
+		customstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
@@ -867,10 +867,23 @@ func NewApp(
 
 	// Pseudorandomness beacon
 	app.SetPrepareProposal(
-		randomnesskeeper.PrepareProposalHandler(txConfig, app.RandomnessKeeper, app.AccountKeeper, app.StakingKeeper, nonceMempool),
+		randomnesskeeper.PrepareProposalHandler(
+			txConfig,
+			homePath,
+			cast.ToString(appOpts.Get("priv_validator_key_file")),
+			app.RandomnessKeeper,
+			app.AccountKeeper,
+			app.StakingKeeper,
+			nonceMempool,
+		),
 	)
+
 	app.SetProcessProposal(
-		randomnesskeeper.ProcessProposalHandler(txConfig, app.RandomnessKeeper, app.StakingKeeper),
+		randomnesskeeper.ProcessProposalHandler(
+			txConfig,
+			app.RandomnessKeeper,
+			app.StakingKeeper,
+		),
 	)
 
 	if loadLatest {
