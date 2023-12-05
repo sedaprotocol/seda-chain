@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	vrf "github.com/sedaprotocol/vrf-go"
 
@@ -26,6 +27,8 @@ import (
 
 func PrepareProposalHandler(
 	txConfig client.TxConfig,
+	homePath string,
+	pvFile string,
 	keeper Keeper,
 	authKeeper types.AccountKeeper,
 	stakingKeeper types.StakingKeeper,
@@ -46,7 +49,7 @@ func PrepareProposalHandler(
 		alpha := append([]byte(prevSeed), timestamp...)
 
 		// prepare secret key
-		secretKey, err := readPrivKey("/Users/hykim/.seda-chain/config/priv_validator_key.json")
+		secretKey, err := readPrivKey(filepath.Join(homePath, pvFile))
 		if err != nil {
 			return nil, err
 		}
