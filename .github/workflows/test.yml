@@ -18,6 +18,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: github.com/fabianMendez/privatemodule
+      GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -46,6 +49,7 @@ jobs:
         env:
           GOOS: ${{ matrix.targetos }}
           GOARCH: ${{ matrix.arch }}
+      - run: git config --global url.https://$GITHUB_TOKEN@github.com/.insteadOf https://github.com/
       - name: Compile
         if: steps.cache-binaries.outputs.cache-hit != 'true' && env.GIT_DIFF
         run: |
@@ -54,6 +58,9 @@ jobs:
 
   tests:
     runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: github.com/fabianMendez/privatemodule
+      GH_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
@@ -62,6 +69,7 @@ jobs:
           check-latest: true
           cache: true
           cache-dependency-path: go.sum
+      - run: git config --global url.https://$GITHUB_TOKEN@github.com/.insteadOf https://github.com/
       - uses: technote-space/get-diff-action@v6.1.2
         id: git_diff
         with:
@@ -84,12 +92,16 @@ jobs:
   
   test-e2e:
     runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: github.com/fabianMendez/privatemodule
+      GH_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     timeout-minutes: 10
     steps:
       - uses: actions/setup-go@v4
         with:
           go-version: "1.21"
       - uses: actions/checkout@v4
+      - run: git config --global url.https://$GITHUB_TOKEN@github.com/.insteadOf https://github.com/
       - uses: technote-space/get-diff-action@v6.0.1
         with:
           PATTERNS: |

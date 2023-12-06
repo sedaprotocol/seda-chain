@@ -212,7 +212,9 @@ cover-html: test-unit-cover
 	@go tool cover -html=$(TEST_COVERAGE_PROFILE)
 
 docker-build-e2e:
-	@docker build -t sedaprotocol/seda-chaind-e2e -f dockerfiles/Dockerfile.e2e .
+	@docker build \
+		-t sedaprotocol/seda-chaind-e2e \
+		-f dockerfiles/Dockerfile.e2e .
 
 .PHONY: cover-html run-tests $(TEST_TARGETS) test test-race docker-build-e2e
 
