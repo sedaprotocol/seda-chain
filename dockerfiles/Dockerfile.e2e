@@ -15,9 +15,19 @@ ARG GIT_COMMIT
 RUN apk add --no-cache \
     ca-certificates \
     build-base \
-    linux-headers
+    linux-headers \
+    git
 
-# Download go dependencies
+# # Download go dependencies
+COPY .netrc /root/
+# CMD echo $GITHUB_TOKEN
+
+# ENV GOPRIVATE=github.com/sedaprotocol/*
+# ENV GIT_TERMINAL_PROMPT=0
+
+# RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+
+
 WORKDIR /seda-chain
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/root/.cache/go-build \

@@ -118,9 +118,13 @@ func ProcessProposalHandler(
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
+		if msg.Proposer != string(sdk.AccAddress(req.ProposerAddress).String()) {
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT},
+				fmt.Errorf("the NewSeed transaction must be from the block proposer")
+		}
+
 		// TO-DO run DefaultProposalHandler.ProcessProposalHandler first?
 		// TO-DO Validate()?
-		// TO-DO Ensure that msg was signed by block proposer?
 
 		// get block proposer's validator public key
 		validator, err := stakingKeeper.GetValidatorByConsAddr(ctx, sdk.ConsAddress(req.ProposerAddress))
