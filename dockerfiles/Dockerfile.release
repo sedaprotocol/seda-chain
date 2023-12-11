@@ -1,0 +1,19 @@
+FROM alpine:latest
+ARG TARGETARCH
+
+RUN mkdir -p /seda-chain/.seda-chain
+COPY ./build/seda-chaind-${TARGETARCH} /bin/seda-chaind
+
+RUN apk add --no-cache bash expect jq
+
+ENV HOME /seda-chain
+WORKDIR $HOME
+
+EXPOSE 26656
+EXPOSE 26657
+EXPOSE 1317
+EXPOSE 9090
+
+COPY scripts/node_setup/* .
+RUN find . -type f -name "*.sh" -exec chmod +x {} \;
+ENTRYPOINT ["bash", "setup_run_node.sh"]

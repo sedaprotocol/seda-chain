@@ -1,4 +1,3 @@
-# triggered when a semantic version tag is pushed (vX.X.X)
 name: Release
 on:
   push:
@@ -14,9 +13,17 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+-beta[0-9]*"
       - "v[0-9]+.[0-9]+.[0-9]+"
 
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+
 concurrency:
   group: ci-${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
+
+env:
+  REGISTRY_IMAGE: ghcr.io/sedaprotocol/seda-chain
 
 jobs:
   release:
@@ -27,53 +34,69 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.inputs.release_tag }}
 
-      - uses: actions/setup-go@v4
-        with:
-          go-version: "1.21"
-          cache: true
-
-      - name: Make release and publish
-        run: |
-          make release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Cleanup
-        run: |
-          sudo rm -rf dist
-
-  build_push_node_image:
-    name: Build and Push Docker Image to GHCR
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels) for Docker
+      - name: 🐳 Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/sedaprotocol/node
+          images: ${{ env.REGISTRY_IMAGE }}
 
-      - name: Build and push Docker image
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔨 Build Binaries
+        run: |
+          export VERSION=$(echo $(git describe --tags --always --match "v*") | sed 's/^v//')
+          export COMMIT=$(git log -1 --format='%H')
+          docker build -t seda-static -f ./dockerfiles/Dockerfile.build-static \
+            --build-arg VERSION="$VERSION" \
+            --build-arg COMMIT="$COMMIT" .
+          mkdir build
+          docker run --rm -v $(pwd)/build:/output seda-static cp -r /build/. /output/
+
+      - name: 🐳 Build and Push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./dockerfiles/Dockerfile.node-static
-          platforms: linux/amd64,linux/arm64
-
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          file: ./dockerfiles/Dockerfile.release
           labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          platforms: linux/amd64,linux/arm64
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},name-canonical=true,push=true
+          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}, ${{ env.REGISTRY_IMAGE }}:latest
+
+      - name: 🪵 Conventional Changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v3
+        with:
+          github-token: ${{ secrets.github_token }}
+          output-file: "false"
+          skip-commit: true
+          skip-tag: true
+          skip-git-pull: true
+          git-push: false
+
+      - name: 🧾 Generate Checksum
+        uses: jmgilman/actions-generate-checksum@v1
+        with:
+          patterns: |
+            build/seda-chaind-amd64
+            build/seda-chaind-arm64
+
+      - name: 📦 Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          generateReleaseNotes: true
+          body: ${{ steps.changelog.outputs.clean_changelog }}
+          artifacts: "checksum.txt,build/seda-chaind-amd64,build/seda-chaind-arm64"
