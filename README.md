@@ -175,13 +175,7 @@ Otherwise simply have that field filled out, and it will add the account automat
 
 There are a few things you may like to check as an operator(these assume your container is running):
 
-1. The current height of the chain:
-    ```bash
-    docker exec seda_node /bin/bash -c "seda-chaind query block | jq '.block.header.height'"
-    ```
-
-    Which outputs a number, the current chain height.
-2. More commands coming soon.
+1. More commands coming soon.
 
 #### Staking
 
