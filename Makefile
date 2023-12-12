@@ -148,6 +148,10 @@ lint:
 ###                                Protobuf                                 ###
 ###############################################################################
 
+protoVer=0.14.0
+protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
+protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
+
 proto-all: proto-gen proto-format proto-lint
 
 proto-dep-install:
@@ -157,19 +161,21 @@ proto-dep-install:
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	@./scripts/proto_gen.sh
+	@$(protoImage) sh ./scripts/protocgen.sh
+	@go mod tidy
 
 proto-fmt:
 	@echo "Formatting Protobuf files"
-	@find ./ -name "*.proto" -exec clang-format -i {} \;
+	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
 
 proto-lint:
 	@echo "Linting Protobuf files"
-	@buf lint --error-format=json ./proto
+	@$(protoImage) buf lint proto/ --error-format=json
 
 proto-update-deps:
 	@echo "Updating Protobuf dependencies"
 	@buf mod update ./proto
+	@$(protoImage) buf mod update ./proto
 
 .PHONY: proto-gen proto-lint proto-update-deps
 
