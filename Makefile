@@ -161,7 +161,7 @@ proto-dep-install:
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	@$(protoImage) sh ./scripts/protocgen.sh
+	@$(protoImage) sh ./scripts/proto_gen.sh
 	@go mod tidy
 
 proto-fmt:
