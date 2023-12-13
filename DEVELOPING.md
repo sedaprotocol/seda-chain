@@ -167,7 +167,8 @@ machine github.com
         password <YOUR_GITHUB_TOKEN>
 ```
 
-The e2e testing can now be run with the following command:
+Change the permissions of `.netrc` and run e2e with the following commands:
 ```bash
+chmod 600 .netrc
 make test-e2e
 ```
