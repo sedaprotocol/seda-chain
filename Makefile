@@ -193,7 +193,7 @@ test-unit-cover: ARGS=-timeout=10m -tags='$(UNIT_TEST_TAGS)' -coverprofile=$(TES
 test-unit-cover: TEST_PACKAGES=$(PACKAGES_UNIT)
 test-unit-race: ARGS=-timeout=10m -race -tags='$(TEST_RACE_TAGS)'
 test-unit-race: TEST_PACKAGES=$(PACKAGES_UNIT)
-# test-e2e: docker-build-e2e
+test-e2e: docker-build-e2e
 test-e2e: ARGS=-timeout=10m -v
 test-e2e: TEST_PACKAGES=$(PACKAGES_E2E)
 $(TEST_TARGETS): run-tests
