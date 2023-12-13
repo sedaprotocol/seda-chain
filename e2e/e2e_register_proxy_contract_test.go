@@ -37,8 +37,12 @@ func (s *IntegrationTestSuite) testInstantiateAndRegisterProxyContract() {
 
 			_, err = sdktypes.AccAddressFromBech32(res.Address)
 			s.Require().NoError(err)
+			s.Require().NotEmpty(res.Address)
 
-			return res.Address != ""
+			s.execGetSeedQuery(s.chain, 0, res.Address, false)
+			s.Require().NoError(err)
+
+			return true
 		},
 		30*time.Second,
 		5*time.Second,
@@ -70,7 +74,7 @@ func (s *IntegrationTestSuite) execInstantiateAndRegisterProxyContract(
 
 	opt = append(opt, withKeyValue(flagAuthority, authtypes.NewModuleAddress("gov").String()))
 
-	opts := applyOptions(c.id, opt)
+	opts := applyTxOptions(c.id, opt)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -118,7 +122,7 @@ func (s *IntegrationTestSuite) execWasmStore(
 ) {
 	opt = append(opt, withKeyValue(flagFees, fees))
 	opt = append(opt, withKeyValue(flagFrom, from))
-	opts := applyOptions(c.id, opt)
+	opts := applyTxOptions(c.id, opt)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()

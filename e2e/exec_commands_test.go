@@ -47,7 +47,7 @@ func withKeyValue(key string, value interface{}) flagOption {
 	}
 }
 
-func applyOptions(chainID string, options []flagOption) map[string]interface{} {
+func applyTxOptions(chainID string, options []flagOption) map[string]interface{} {
 	opts := map[string]interface{}{
 		flagKeyringBackend: "test",
 		flagOutput:         "json",
@@ -63,6 +63,53 @@ func applyOptions(chainID string, options []flagOption) map[string]interface{} {
 		apply(opts)
 	}
 	return opts
+}
+
+func applyQueryOptions(chainID string, options []flagOption) map[string]interface{} {
+	opts := map[string]interface{}{
+		flagOutput: "json",
+	}
+	for _, apply := range options {
+		apply(opts)
+	}
+	return opts
+}
+
+func (s *IntegrationTestSuite) executeQuery(ctx context.Context, c *chain, command []string, valIdx int, validation func([]byte, []byte) bool) {
+	s.T().Logf("executing command %s", command)
+
+	if validation == nil {
+		validation = s.defaultExecValidation(s.chain, 0)
+	}
+	var (
+		outBuf bytes.Buffer
+		errBuf bytes.Buffer
+	)
+	exec, err := s.dkrPool.Client.CreateExec(docker.CreateExecOptions{
+		Context:      ctx,
+		AttachStdout: true,
+		AttachStderr: true,
+		Container:    s.valResources[c.id][valIdx].Container.ID,
+		User:         "root",
+		Cmd:          command,
+	})
+	s.Require().NoError(err)
+
+	err = s.dkrPool.Client.StartExec(exec.ID, docker.StartExecOptions{
+		Context:      ctx,
+		Detach:       false,
+		OutputStream: &outBuf,
+		ErrorStream:  &errBuf,
+	})
+	s.Require().NoError(err)
+
+	stdOut := outBuf.Bytes()
+	stdErr := errBuf.Bytes()
+
+	if !validation(stdOut, stdErr) {
+		s.Require().FailNowf("Query execution validation failed", "stdout: %s, stderr: %s",
+			string(stdOut), string(stdErr))
+	}
 }
 
 func (s *IntegrationTestSuite) executeTx(ctx context.Context, c *chain, command []string, valIdx int, validation func([]byte, []byte) bool) {
@@ -102,7 +149,6 @@ func (s *IntegrationTestSuite) executeTx(ctx context.Context, c *chain, command 
 	}
 }
 
-// TO-DO refactor
 func (s *IntegrationTestSuite) expectErrExecValidation(chain *chain, valIdx int, expectErr bool) func([]byte, []byte) bool {
 	return func(stdOut []byte, stdErr []byte) bool {
 		var txResp sdk.TxResponse

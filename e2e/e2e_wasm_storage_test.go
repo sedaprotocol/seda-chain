@@ -91,7 +91,7 @@ func (s *IntegrationTestSuite) execWasmStorageStoreDataRequest(
 	opt = append(opt, withKeyValue(flagFrom, from))
 	opt = append(opt, withKeyValue(flagWasmType, wasmType))
 
-	opts := applyOptions(c.id, opt)
+	opts := applyTxOptions(c.id, opt)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
