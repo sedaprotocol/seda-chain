@@ -160,7 +160,14 @@ To see test coverage:
 make cover-html
 ```
 
-To run end-to-end tests:
+To run end-to-end tests, you first need to create a file `.netrc` containing GitHub credentials in the project root. This enables an access to the private repositories during the Docker build process. The `.netrc` file should look as follows:
+```bash
+machine github.com
+        login <YOUR_USERNAME>
+        password <YOUR_GITHUB_TOKEN>
+```
+
+The e2e testing can now be run with the following command:
 ```bash
 make test-e2e
 ```
