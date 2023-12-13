@@ -332,7 +332,6 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 	}
 
 	s.endpoint = fmt.Sprintf("http://%s", s.valResources[s.chain.id][0].GetHostPort("1317/tcp"))
-	s.grpcEndpoint = s.valResources[s.chain.id][0].GetHostPort("9090/tcp")
 
 	rpcClient, err := rpchttp.New("tcp://localhost:26657", "/websocket")
 	s.Require().NoError(err)
