@@ -32,7 +32,6 @@ func NewAppModule(
 	ak AccountKeeper,
 	bk stakingtypes.BankKeeper,
 	ls exported.Subspace,
-
 ) AppModule {
 	am := staking.NewAppModule(cdc, keeper, ak, bk, ls)
 	return AppModule{

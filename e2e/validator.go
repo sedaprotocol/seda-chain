@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	tmcfg "github.com/cometbft/cometbft/config"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/p2p"
 	"github.com/cometbft/cometbft/privval"
@@ -73,7 +74,6 @@ func (v *validator) init() error {
 	config.SetRoot(v.configDir())
 	config.Moniker = v.moniker
 
-	// TO-DO use existing genesis, if exists?
 	appState, err := json.MarshalIndent(app.ModuleBasics.DefaultGenesis(cdc), "", " ")
 	if err != nil {
 		return fmt.Errorf("failed to JSON encode app genesis state: %w", err)
@@ -123,7 +123,9 @@ func (v *validator) createConsensusKey() error {
 		return err
 	}
 
-	filePV := privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
+	filePV := privval.NewFilePV(secp256k1.GenPrivKey(), config.PrivValidatorKeyFile(), config.PrivValidatorStateFile())
+	filePV.Save()
+
 	v.consensusKey = filePV.Key
 
 	return nil

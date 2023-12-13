@@ -12,13 +12,13 @@ import (
 	"testing"
 	"time"
 
-	tmconfig "github.com/cometbft/cometbft/config"
-	tmjson "github.com/cometbft/cometbft/libs/json"
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
+
+	tmconfig "github.com/cometbft/cometbft/config"
+	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 
 	"cosmossdk.io/math"
 	evidencetypes "cosmossdk.io/x/evidence/types"
@@ -27,6 +27,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 )
 
@@ -174,7 +175,7 @@ func (s *IntegrationTestSuite) initGenesis(c *chain) {
 	config.Moniker = validator.moniker
 
 	genFilePath := config.GenesisFile()
-	appGenState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFilePath)
+	appGenState, appGenesis, err := genutiltypes.GenesisStateFromGenFile(genFilePath)
 	s.Require().NoError(err)
 
 	var evidenceGenState evidencetypes.GenesisState
@@ -222,10 +223,15 @@ func (s *IntegrationTestSuite) initGenesis(c *chain) {
 	appGenState[genutiltypes.ModuleName], err = cdc.MarshalJSON(&genUtilGenState)
 	s.Require().NoError(err)
 
-	genDoc.AppState, err = json.MarshalIndent(appGenState, "", "  ")
+	appGenesis.AppState, err = json.MarshalIndent(appGenState, "", "  ")
 	s.Require().NoError(err)
 
-	bz, err := tmjson.MarshalIndent(genDoc, "", "  ")
+	genutil.ExportGenesisFile(appGenesis, genFilePath)
+
+	err = appGenesis.ValidateAndComplete()
+	s.Require().NoError(err)
+
+	bz, err := json.MarshalIndent(appGenesis, "", "  ")
 	s.Require().NoError(err)
 
 	// write the updated genesis file to each validator.

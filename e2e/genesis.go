@@ -7,14 +7,15 @@ import (
 
 	"cosmossdk.io/math"
 
+	cmttypes "github.com/cometbft/cometbft/types"
+
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -46,6 +47,7 @@ func modifyGenesis(path, moniker, amountStr string, addrAll []sdk.AccAddress, gl
 		return fmt.Errorf("failed to unmarshal genesis state: %w", err)
 	}
 
+	// modify AppState
 	authGenState := authtypes.GetGenesisStateFromAppState(cdc, appState)
 	accs, err := authtypes.UnpackAccounts(authGenState.Accounts)
 	if err != nil {
@@ -106,6 +108,8 @@ func modifyGenesis(path, moniker, amountStr string, addrAll []sdk.AccAddress, gl
 	govparams := govv1.DefaultParams()
 	votingPeriod := time.Duration(15) * time.Second
 	govparams.VotingPeriod = &votingPeriod
+	expeditedVotingPeriod := time.Duration(10) * time.Second
+	govparams.ExpeditedVotingPeriod = &expeditedVotingPeriod
 	govparams.MinDeposit = sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(10000000)))
 
 	govState := govv1.NewGenesisState(1, govparams)
@@ -119,7 +123,21 @@ func modifyGenesis(path, moniker, amountStr string, addrAll []sdk.AccAddress, gl
 	if err != nil {
 		return fmt.Errorf("failed to marshal application genesis state: %w", err)
 	}
-	genDoc.AppState = appStateJSON
 
-	return genutil.ExportGenesisFile(genDoc, genFile)
+	// modify CometBFT consensus genesis
+	consensusParams := cmttypes.DefaultConsensusParams()
+	consensusParams.Validator.PubKeyTypes = []string{"secp256k1"}
+
+	// collect modified data and overwrite genesis file
+	appGenesis := &genutiltypes.AppGenesis{
+		ChainID:  genDoc.ChainID,
+		AppState: appStateJSON,
+		Consensus: &genutiltypes.ConsensusGenesis{
+			Validators: nil,
+			Params:     consensusParams,
+		},
+		InitialHeight: int64(1),
+	}
+
+	return genutil.ExportGenesisFile(appGenesis, genFile)
 }

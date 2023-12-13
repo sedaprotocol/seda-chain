@@ -32,7 +32,7 @@ require (
 	github.com/hyperledger/burrow v0.34.4
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
-	github.com/sedaprotocol/vrf-go v0.0.0-20231202231847-9ca3f58655e6
+	github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c
 	github.com/spf13/cast v1.5.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5

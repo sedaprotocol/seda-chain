@@ -566,13 +566,11 @@ func NewApp(
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
-	var wasmOpts []wasmkeeper.Option
-
 	randomnessQueryPlugin := keeper.NewQuerierImpl(app.RandomnessKeeper)
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
 		Custom: keeper.SeedQueryPlugin(randomnessQueryPlugin),
 	})
-	wasmOpts = append([]wasm.Option{queryPluginOpt}, wasmOpts...)
+	wasmOpts := []wasmkeeper.Option{queryPluginOpt}
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks

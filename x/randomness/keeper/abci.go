@@ -55,25 +55,16 @@ func PrepareProposalHandler(
 		}
 
 		// produce VRF proof
-		k256vrf := vrf.NewK256VRF(0xFE)
+		k256vrf := vrf.NewK256VRF()
 		pi, err := k256vrf.Prove(secretKey.Bytes(), alpha)
 		if err != nil {
 			return nil, err
 		}
 
-		// debug
-		fmt.Println(alpha)
-		fmt.Println(secretKey.Bytes())
-		fmt.Println(pi)
-
 		beta, err := k256vrf.ProofToHash(pi)
 		if err != nil {
 			return nil, err
 		}
-		// // zero it out
-		// for i := range secretKey {
-		// 	secretKey[i] = 0
-		// }
 
 		validator, err := stakingKeeper.GetValidatorByConsAddr(ctx, sdk.ConsAddress(req.ProposerAddress))
 		if err != nil {
@@ -152,7 +143,7 @@ func ProcessProposalHandler(
 		}
 
 		// verify VRF proof
-		k256vrf := vrf.NewK256VRF(0xFE)
+		k256vrf := vrf.NewK256VRF()
 		beta, err := k256vrf.Verify(publicKey.Bytes(), pi, alpha)
 		if err != nil {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
@@ -225,7 +216,6 @@ func encodeNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, privKey crypto.P
 	}
 
 	sigBytes, err := privKey.Sign(bytesToSign)
-	// sigBytes, err := v.privateKey.Sign(bytesToSign)
 	if err != nil {
 		return nil, nil, err
 	}
