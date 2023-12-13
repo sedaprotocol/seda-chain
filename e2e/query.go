@@ -3,6 +3,7 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -10,21 +11,30 @@ import (
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-func queryTx(endpoint, txHash string) error {
-	resp, err := http.Get(fmt.Sprintf("%s/cosmos/tx/v1beta1/txs/%s", endpoint, txHash))
+func query(endpoint, path string, v interface{}) error {
+	resp, err := http.Get(fmt.Sprintf("%s/%s", endpoint, path))
 	if err != nil {
 		return fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
-
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("tx query returned non-200 status: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("query returned non-200 status: %d, body: %s", resp.StatusCode, body)
 	}
 
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
 		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	return nil
+}
+
+func queryTx(endpoint, txHash string) error {
+	var result map[string]interface{}
+	err := query(endpoint, fmt.Sprintf("cosmos/tx/v1beta1/txs/%s", txHash), &result)
+	if err != nil {
+		return err
 	}
 
 	txResp := result["tx_response"].(map[string]interface{})
@@ -37,85 +47,36 @@ func queryTx(endpoint, txHash string) error {
 
 func queryGovProposal(endpoint string, proposalID int) (govtypes.QueryProposalResponse, error) {
 	var govProposalResp govtypes.QueryProposalResponse
-
-	path := fmt.Sprintf("%s/cosmos/gov/v1/proposals/%d", endpoint, proposalID)
-
-	body, err := httpGet(path)
-	if err != nil {
-		return govProposalResp, fmt.Errorf("failed to execute HTTP request: %w", err)
-	}
-	if err := cdc.UnmarshalJSON(body, &govProposalResp); err != nil {
-		return govProposalResp, err
-	}
-	return govProposalResp, nil
+	err := query(endpoint, fmt.Sprintf("cosmos/gov/v1/proposals/%d", proposalID), &govProposalResp)
+	return govProposalResp, err
 }
 
 func queryDataRequestWasm(endpoint string, drHash string) (wasmstoragetypes.QueryDataRequestWasmResponse, error) {
 	var res wasmstoragetypes.QueryDataRequestWasmResponse
-
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/data_request_wasm/%s", endpoint, drHash))
-	if err != nil {
-		return res, err
-	}
-
-	if err = cdc.UnmarshalJSON(body, &res); err != nil {
-		return res, err
-	}
-	return res, nil
+	err := query(endpoint, fmt.Sprintf("seda-chain/wasm-storage/data_request_wasm/%s", drHash), &res)
+	return res, err
 }
 
 func queryOverlayWasm(endpoint string, hash string) (wasmstoragetypes.QueryOverlayWasmResponse, error) {
 	var res wasmstoragetypes.QueryOverlayWasmResponse
-
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/overlay_wasm/%s", endpoint, hash))
-	if err != nil {
-		return res, err
-	}
-
-	if err = cdc.UnmarshalJSON(body, &res); err != nil {
-		return res, err
-	}
-	return res, nil
+	err := query(endpoint, fmt.Sprintf("seda-chain/wasm-storage/overlay_wasm/%s", hash), &res)
+	return res, err
 }
 
 func queryDataRequestWasms(endpoint string) (wasmstoragetypes.QueryDataRequestWasmsResponse, error) {
 	var res wasmstoragetypes.QueryDataRequestWasmsResponse
-
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/data_request_wasms", endpoint))
-	if err != nil {
-		return res, err
-	}
-
-	if err = cdc.UnmarshalJSON(body, &res); err != nil {
-		return res, err
-	}
-	return res, nil
+	err := query(endpoint, "seda-chain/wasm-storage/data_request_wasms", &res)
+	return res, err
 }
 
 func queryOverlayWasms(endpoint string) (wasmstoragetypes.QueryOverlayWasmsResponse, error) {
 	var res wasmstoragetypes.QueryOverlayWasmsResponse
-
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/overlay_wasms", endpoint))
-	if err != nil {
-		return res, err
-	}
-
-	if err = cdc.UnmarshalJSON(body, &res); err != nil {
-		return res, err
-	}
-	return res, nil
+	err := query(endpoint, "seda-chain/wasm-storage/overlay_wasms", &res)
+	return res, err
 }
 
 func queryProxyContractRegistry(endpoint string) (wasmstoragetypes.QueryProxyContractRegistryResponse, error) {
 	var res wasmstoragetypes.QueryProxyContractRegistryResponse
-
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/proxy_contract_registry", endpoint))
-	if err != nil {
-		return res, err
-	}
-
-	if err = cdc.UnmarshalJSON(body, &res); err != nil {
-		return res, err
-	}
-	return res, nil
+	err := query(endpoint, "seda-chain/wasm-storage/proxy_contract_registry", &res)
+	return res, err
 }

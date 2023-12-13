@@ -3,6 +3,7 @@ package e2e
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 
@@ -53,28 +54,55 @@ func (c *chain) configDir() string {
 }
 
 func (c *chain) createAndInitValidators(count int) error {
+	// Preallocate with a capacity to avoid rellocation
+	c.validators = make([]*validator, 0, count)
+
+	var wg sync.WaitGroup
+	errChan := make(chan error, count)
+
 	for i := 0; i < count; i++ {
-		node := c.createValidator(i)
+		wg.Add(1)
+		go func(index int) {
+			defer wg.Done()
 
-		// generate genesis files
-		if err := node.init(); err != nil {
-			return err
-		}
+			node := c.createValidator(index)
 
-		c.validators = append(c.validators, node)
+			// generate genesis files
+			if err := node.init(); err != nil {
+				errChan <- err
+				return
+			}
 
-		// create keys
-		if err := node.createKey("val"); err != nil {
-			return err
-		}
-		if err := node.createNodeKey(); err != nil {
-			return err
-		}
-		if err := node.createConsensusKey(); err != nil {
+			// create keys
+			if err := c.createKeys(node); err != nil {
+				errChan <- err
+				return
+			}
+
+			c.validators = append(c.validators, node)
+		}(i)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	// Return the first error that occurred, if any
+	for err := range errChan {
+		if err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+func (c *chain) createKeys(node *validator) error {
+	keys := []string{"val", "node", "consensus"}
+	for _, key := range keys {
+		if err := node.createKey(key); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
