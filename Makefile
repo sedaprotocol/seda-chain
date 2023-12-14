@@ -213,6 +213,7 @@ cover-html: test-unit-cover
 
 docker-build-e2e:
 	@docker build \
+		--build-arg GITHUB_TOKEN=$(GITHUB_TOKEN) \
 		-t sedaprotocol/seda-chaind-e2e \
 		-f dockerfiles/Dockerfile.e2e .
 

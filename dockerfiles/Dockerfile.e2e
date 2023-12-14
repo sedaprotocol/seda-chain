@@ -11,6 +11,7 @@ FROM golang:${GO_VERSION}-alpine as builder
 
 ARG GIT_VERSION
 ARG GIT_COMMIT
+ARG GITHUB_TOKEN
 
 RUN apk add --no-cache \
     ca-certificates \
@@ -19,11 +20,12 @@ RUN apk add --no-cache \
     git
 
 # Download go dependencies
-COPY .netrc /root/
-RUN chmod 600 /root/.netrc
-
 WORKDIR /seda-chain
 COPY go.mod go.sum ./
+
+# Configure Git to use the PAT for authentication
+RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/root/go/pkg/mod \
     go mod download

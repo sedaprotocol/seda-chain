@@ -16,6 +16,7 @@ Otherwise please see the [dev dependencies](#dev-dependencies).
 ## Dev Dependencies
 
 ### [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
+
 We use clang format to format our protobuf generated code.
 
 - Linux
@@ -25,7 +26,9 @@ We use clang format to format our protobuf generated code.
   - Using [macports](https://www.macports.org/): `sudo port install clang-format`
 
 # TODO don't rely on docker for this
+
 ### [docker](https://www.docker.com/)
+
 Docker is used to help make release and static builds locally.
 
 - Linux
@@ -35,12 +38,14 @@ Docker is used to help make release and static builds locally.
   - Using [macports](https://www.macports.org/): `sudo port install docker`
 
 ### [Golang](https://go.dev/)
+
 We use Golang as the language to develop `seda-chaind` as it has the [CosmosSDK](https://v1.cosmos.network/sdk).
 
 - [Golang](https://go.dev/dl/): you can download it from the linked page or:
-    - Linux: Use your distribution's packagae manager.
-    - Mac: Use `macports` or `brew`.
+  - Linux: Use your distribution's packagae manager.
+  - Mac: Use `macports` or `brew`.
 - Ensure that `$GOPATH` and `$PATH` have been set properly. On a Mac that uses the Z shell, you may have to run the following:
+
 ```zsh
 mkdir -p $HOME/go/bin
 echo "export GOPATH=$HOME/go" >> ~/.zprofile
@@ -48,7 +53,9 @@ echo "export PATH=\$PATH:\$GOPATH/bin" >> ~/.zprofile
 echo "export GO111MODULE=on" >> ~/.zprofile
 source ~/.zprofile
 ```
+
 ### [make](https://www.gnu.org/software/make/)
+
 We use GNU Make to help us built, lint, fmt, and etc for our project.
 
 - Linux:
@@ -59,7 +66,9 @@ We use GNU Make to help us built, lint, fmt, and etc for our project.
   - Otherwise use [brew](https://brew.sh/) or [macports](https://www.macports.org/) to install it.
 
 <!-- It actually uses docker to run protobuf commmands... this should be fixed -->
+
 ### [Protobuf](https://protobuf.dev/)
+
 A necessary tool for generating protobuf code.
 
 - Linux:
@@ -69,9 +78,11 @@ A necessary tool for generating protobuf code.
   - Using [macports](https://www.macports.org/): `sudo port install protobuf-cpp`
 
 #### Protobuf Sub-Deps
+
 We also need some dependencies to make protobuf work for cosmos.
 
 ##### Buf
+
 The `buf` tool.
 
 - Linux:
@@ -81,9 +92,11 @@ The `buf` tool.
   - Using [macports](https://www.macports.org/): `sudo port install buf`
 
 ### [WasmVM](https://github.com/CosmWasm/wasmvm)
+
 WasmVM is the library that makes CosmWASM possible.
 
 You can install that by running:
+
 ```bash
 sudo ./scripts/install_wasmvm.sh
 ```
@@ -91,6 +104,7 @@ sudo ./scripts/install_wasmvm.sh
 ## Building using Make
 
 To build the protobuf(only necessary if you change the protobuf) you will need to run,:
+
 ```bash
 make prot-dep-install
 make proto-update-deps
@@ -98,11 +112,13 @@ make proto-gen
 ```
 
 To build, run:
+
 ```bash
 make build
 ```
 
 To install (builds and moves the executable to `$GOPATH/bin`, which should be in `$PATH`), run:
+
 ```bash
 make install
 ```
@@ -110,6 +126,7 @@ make install
 ## Running a Single-node Local Testnet
 
 To run a single-node testnet locally:
+
 ```bash
 make build
 BIN=./build/seda-chaind
@@ -128,17 +145,20 @@ $BIN start
 ## Linting & Formatting
 
 To lint and format the protobuf(only necessary if you mess with protobuf):
+
 ```bash
 make proto-fmt
 make proto-lint
 ```
 
 If you have not install a Go linters runner, install it first:
+
 ```bash
 make lint-install
 ```
 
 Run format and run linter for go sided:
+
 ```bash
 make fmt
 make lint
@@ -151,24 +171,19 @@ After running the `make install` command you should be able to use `seda-chaind 
 ## Testing
 
 To run all unit tests:
+
 ```bash
 make test-unit
 ```
 
 To see test coverage:
+
 ```bash
 make cover-html
 ```
 
-To run end-to-end tests, you first need to create a file `.netrc` containing GitHub credentials in the project root. This enables an access to the private repositories during the Docker build process. The `.netrc` file should look as follows:
-```bash
-machine github.com
-        login <YOUR_USERNAME>
-        password <YOUR_GITHUB_TOKEN>
-```
+To run end-to-end tests:
 
-Change the permissions of `.netrc` and run e2e with the following commands:
 ```bash
-chmod 600 .netrc
-make test-e2e
+GITHUB_TOKEN=<your_github_pat> make test-e2e
 ```
