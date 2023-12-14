@@ -131,6 +131,7 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
+	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 	"github.com/sedaprotocol/seda-chain/docs"
 	randomness "github.com/sedaprotocol/seda-chain/x/randomness"
 	randomnesskeeper "github.com/sedaprotocol/seda-chain/x/randomness/keeper"
@@ -915,11 +916,17 @@ func NewApp(
 	app.SetEndBlocker(app.EndBlocker)
 
 	// Pseudorandomness beacon
+	// homePath,
+	// cast.ToString(appOpts.Get("priv_validator_key_file")),
+	vrfKey, err := utils.LoadOrGenVRFKey("~/.seda-chain/config/vrf_key.json")
+	if err != nil {
+		panic(fmt.Errorf("failed to load of generate VRF key: %w", err))
+	}
+
 	app.SetPrepareProposal(
 		randomnesskeeper.PrepareProposalHandler(
 			txConfig,
-			homePath,
-			cast.ToString(appOpts.Get("priv_validator_key_file")),
+			vrfKey,
 			app.RandomnessKeeper,
 			app.AccountKeeper,
 			app.StakingKeeper,
