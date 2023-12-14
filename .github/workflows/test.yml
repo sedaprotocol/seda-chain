@@ -98,27 +98,19 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOPRIVATE: github.com/sedaprotocol/vrf-go
-      USERNAME:  hacheigriega
-      PAT: ${{ secrets.PAT }}
+      GITHUB_TOKEN: ${{ secrets.PAT }}
     timeout-minutes: 10
     steps:
       - uses: actions/setup-go@v4
         with:
           go-version: "1.21"
       - uses: actions/checkout@v4
-      - run: git config --global url.https://${GITHUB_TOKEN}@github.com/.insteadOf https://github.com/
       - uses: technote-space/get-diff-action@v6.0.1
         with:
           PATTERNS: |
             **/**.go
             go.mod
             go.sum
-      - name: Create .netrc file
-        run: |
-          echo "machine github.com" > ${GITHUB_WORKSPACE}/.netrc
-          echo "  login ${USERNAME}" >> ${GITHUB_WORKSPACE}/.netrc
-          echo "  password ${PAT}" >> ${GITHUB_WORKSPACE}/.netrc
-          chmod 600 ${GITHUB_WORKSPACE}/.netrc
       - name: Test e2e
         run: |
           make test-e2e
