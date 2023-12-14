@@ -1,6 +1,6 @@
 # [Choice] Debian OS version (use bullseye on local arm64/Apple Silicon): buster, bullseye
 ARG VARIANT="bullseye"
-FROM golang:1.20.4
+FROM golang:1.21
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -13,10 +13,6 @@ RUN apt-get -y install --no-install-recommends vim
 
 # WASM dependencies + Rustup
 RUN apt-get -y install --no-install-recommends binaryen
-
-# Cosmos dependencies
-# Sadly Ignite + Cosmos SDK v0.47.x is broken atm
-# RUN curl https://get.ignite.com/cli@nightly! | bash
 
 # Go language extension dependencies
 RUN go install github.com/cweill/gotests/gotests@v1.6.0

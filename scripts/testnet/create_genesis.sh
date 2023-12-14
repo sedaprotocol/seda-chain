@@ -25,6 +25,7 @@ $BIN init new node0 --chain-id $CHAIN_ID
 cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="180s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
 cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="180s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
 cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["params"]["max_deposit_period"]="180s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
+cat $HOME/.seda-chain/config/genesis.json | jq '.consensus["params"]["validator"]["pub_key_types"]=["secp256k1"]' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
 
 # TO-DO?
 # - chain id
@@ -66,7 +67,7 @@ for i in ${!MONIKERS[@]}; do
     # to output geneis file
     $BIN add-genesis-account $VALIDATOR_ADDRESS 500000000000000000seda
 
-    $BIN gentx ${MONIKERS[$i]} ${SELF_DELEGATION_AMOUNTS[$i]} --moniker=${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR --ip=${IPS[$i]}
+    $BIN gentx ${MONIKERS[$i]} ${SELF_DELEGATION_AMOUNTS[$i]} --moniker=${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR --ip=${IPS[$i]} --chain-id $CHAIN_ID
 
     cp -a $INDIVIDUAL_VAL_CONFIG_DIR/gentx/. $GENTX_DIR
 done
