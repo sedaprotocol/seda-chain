@@ -148,10 +148,6 @@ lint:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-protoVer=0.14.0
-protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
-
 proto-all: proto-gen proto-format proto-lint
 
 proto-dep-install:
@@ -161,21 +157,19 @@ proto-dep-install:
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	@$(protoImage) sh ./scripts/proto_gen.sh
-	@go mod tidy
+	@./scripts/proto_gen.sh
 
 proto-fmt:
 	@echo "Formatting Protobuf files"
-	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
+	@find ./ -name "*.proto" -exec clang-format -i {} \;
 
 proto-lint:
 	@echo "Linting Protobuf files"
-	@$(protoImage) buf lint proto/ --error-format=json
+	@buf lint --error-format=json ./proto
 
 proto-update-deps:
 	@echo "Updating Protobuf dependencies"
 	@buf mod update ./proto
-	@$(protoImage) buf mod update ./proto
 
 .PHONY: proto-gen proto-lint proto-update-deps
 
@@ -218,7 +212,9 @@ cover-html: test-unit-cover
 	@go tool cover -html=$(TEST_COVERAGE_PROFILE)
 
 docker-build-e2e:
-	@docker build -t sedaprotocol/seda-chaind-e2e -f dockerfiles/Dockerfile.e2e .
+	@docker build \
+		-t sedaprotocol/seda-chaind-e2e \
+		-f dockerfiles/Dockerfile.e2e .
 
 .PHONY: cover-html run-tests $(TEST_TARGETS) test test-race docker-build-e2e
 
