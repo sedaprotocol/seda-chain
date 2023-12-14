@@ -2,33 +2,26 @@ package keeper
 
 import (
 	"bytes"
-	"context"
 	"encoding/hex"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	vrf "github.com/sedaprotocol/vrf-go"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/crypto"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	"github.com/cometbft/cometbft/privval"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 
+	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 	"github.com/sedaprotocol/seda-chain/x/randomness/types"
 )
 
 func PrepareProposalHandler(
 	txConfig client.TxConfig,
-	homePath string,
-	pvFile string,
+	vrfSigner utils.VRFSigner,
 	keeper Keeper,
 	authKeeper types.AccountKeeper,
 	stakingKeeper types.StakingKeeper,
@@ -48,20 +41,8 @@ func PrepareProposalHandler(
 		}
 		alpha := append([]byte(prevSeed), timestamp...)
 
-		// prepare secret key
-		secretKey, err := readPrivKey(filepath.Join(homePath, pvFile))
-		if err != nil {
-			return nil, err
-		}
-
 		// produce VRF proof
-		k256vrf := vrf.NewK256VRF()
-		pi, err := k256vrf.Prove(secretKey.Bytes(), alpha)
-		if err != nil {
-			return nil, err
-		}
-
-		beta, err := k256vrf.ProofToHash(pi)
+		pi, beta, err := vrfSigner.VRFProve(alpha)
 		if err != nil {
 			return nil, err
 		}
@@ -76,7 +57,7 @@ func PrepareProposalHandler(
 		}
 		account := authKeeper.GetAccount(ctx, sdk.AccAddress(publicKey.Address().Bytes()))
 
-		newSeedTx, _, err := encodeNewSeedTx(ctx, txConfig, secretKey, publicKey, account, &types.MsgNewSeed{
+		newSeedTx, err := generateAndSignNewSeedTx(ctx, txConfig, vrfSigner, publicKey, account, &types.MsgNewSeed{
 			Proposer: sdk.AccAddress(req.ProposerAddress).String(),
 			Pi:       hex.EncodeToString(pi),
 			Beta:     hex.EncodeToString(beta),
@@ -85,7 +66,7 @@ func PrepareProposalHandler(
 			return nil, err
 		}
 
-		// TO-DO mempool
+		// TO-DO mempool?
 		// err = mempool.Insert(ctx, tx)
 		// if err != nil {
 		// 	return nil, err
@@ -162,35 +143,24 @@ func ProcessProposalHandler(
 	}
 }
 
-func encodeNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, privKey crypto.PrivKey, pubKey cryptotypes.PubKey, account sdk.AccountI, msg *types.MsgNewSeed) ([]byte, sdk.Tx, error) {
+// generateAndSignNewSeedTx generates and signs a transaction containing
+// a given NewSeed message. It returns a transaction encoded into bytes.
+func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSigner utils.VRFSigner, pubKey cryptotypes.PubKey, account sdk.AccountI, msg *types.MsgNewSeed) ([]byte, error) {
+	// build a transaction containing the given message
 	txBuilder := txConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msg)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	txBuilder.SetFeePayer(account.GetAddress())
-	txBuilder.SetFeeAmount(sdk.NewCoins())
 	txBuilder.SetGasLimit(200000) // TO-DO what number to put here?
+	txBuilder.SetFeeAmount(sdk.NewCoins())
+	txBuilder.SetFeePayer(account.GetAddress())
 
-	signerData := authsigning.SignerData{
-		ChainID:       ctx.ChainID(),
-		AccountNumber: account.GetAccountNumber(),
-		Sequence:      account.GetSequence(),
-		PubKey:        pubKey,
-		Address:       account.GetAddress().String(),
-	}
+	// sign the transaction
 
-	// TO-DO re-examine signing logic
-
-	// For SIGN_MODE_DIRECT, calling SetSignatures calls setSignerInfos on
-	// TxBuilder under the hood, and SignerInfos is needed to generate the sign
-	// bytes. This is the reason for setting SetSignatures here, with a nil
-	// signature.
-	//
-	// Note: This line is not needed for SIGN_MODE_LEGACY_AMINO, but putting it
-	// also doesn't affect its generated sign bytes, so for code's simplicity
-	// sake, we put it here.
+	// gather signing info without actually signing
+	// TO-DO check if this step can be skipped
 	sig := txsigning.SignatureV2{
 		PubKey: pubKey,
 		Data: &txsigning.SingleSignatureData{
@@ -201,48 +171,29 @@ func encodeNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, privKey crypto.P
 	}
 
 	if err := txBuilder.SetSignatures(sig); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	bytesToSign, err := authsigning.GetSignBytesAdapter(
-		context.Background(),
-		txConfig.SignModeHandler(),
+	// sign
+	sig, err = vrfSigner.SignTransaction(
+		ctx,
 		txsigning.SignMode_SIGN_MODE_DIRECT,
-		signerData,
-		txBuilder.GetTx(),
+		txBuilder,
+		txConfig,
+		account,
 	)
-	if err != nil {
-		return nil, nil, err
-	}
 
-	sigBytes, err := privKey.Sign(bytesToSign)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	sig = txsigning.SignatureV2{
-		PubKey: pubKey,
-		Data: &txsigning.SingleSignatureData{
-			SignMode:  txsigning.SignMode_SIGN_MODE_DIRECT,
-			Signature: sigBytes,
-		},
-		Sequence: account.GetSequence(),
-	}
 	if err := txBuilder.SetSignatures(sig); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	signedTx := txBuilder.GetTx()
-	txBytes, err := txConfig.TxEncoder()(signedTx)
+	tx := txBuilder.GetTx()
+	txBytes, err := txConfig.TxEncoder()(tx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	tx, err := txConfig.TxDecoder()(txBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-	return txBytes, tx, nil
+	return txBytes, nil
 }
 
 func decodeNewSeedTx(txConfig client.TxConfig, txBytes []byte) (*types.MsgNewSeed, error) {
@@ -259,17 +210,4 @@ func decodeNewSeedTx(txConfig client.TxConfig, txBytes []byte) (*types.MsgNewSee
 		return nil, err
 	}
 	return msgNewSeed, nil
-}
-
-func readPrivKey(keyFilePath string) (crypto.PrivKey, error) {
-	keyJSONBytes, err := os.ReadFile(keyFilePath)
-	if err != nil {
-		return nil, err
-	}
-	pvKey := privval.FilePVKey{}
-	err = cmtjson.Unmarshal(keyJSONBytes, &pvKey)
-	if err != nil {
-		return nil, fmt.Errorf("error reading PrivValidator key from %v: %w", keyFilePath, err)
-	}
-	return pvKey.PrivKey, nil
 }
