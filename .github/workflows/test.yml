@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOPRIVATE: github.com/sedaprotocol/vrf-go
-      PAT: ${{ secrets.PAT }}
+      GITHUB_TOKEN: ${{ secrets.PAT }}
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -58,7 +58,7 @@ jobs:
         if: steps.cache-binaries.outputs.cache-hit != 'true' && env.GIT_DIFF
         run: |
           go mod download
-          make build  
+          make build
 
   tests:
     runs-on: ubuntu-latest
@@ -93,7 +93,7 @@ jobs:
         with:
           name: "${{ github.sha }}-${{ matrix.part }}-coverage"
           path: ./${{ matrix.part }}profile.out
-  
+
   test-e2e:
     runs-on: ubuntu-latest
     env:
