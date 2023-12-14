@@ -34,6 +34,7 @@ $BIN init new node0
 cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="30s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
 cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="30s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
 cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["params"]["expedited_voting_period"]="15s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
+cat $HOME/.seda-chain/config/genesis.json | jq '.consensus["params"]["validator"]["pub_key_types"]=["secp256k1"]' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
 
 # update genesis
 add_key_and_account "satoshi" "100000000000000000seda"
@@ -46,4 +47,4 @@ $BIN gentx satoshi 10000000000000000seda --keyring-backend test
 $BIN collect-gentxs
 
 # start the chain
-$BIN start || echo "Failed to start the chain"
+$BIN start --log_level debug || echo "Failed to start the chain"

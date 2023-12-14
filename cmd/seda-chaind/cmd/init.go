@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	cfg "github.com/cometbft/cometbft/config"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/types"
@@ -64,7 +65,21 @@ func readInMnemonic(cmd *cobra.Command) (string, error) {
 	return mnemonic, nil
 }
 
-// If validator key file exists, create and save an empty validator state file.
+func generateValidatorWithSecp256k1Key(config *cfg.Config) error {
+	pvKeyFile := config.PrivValidatorKeyFile()
+	if err := os.MkdirAll(filepath.Dir(pvKeyFile), 0o777); err != nil {
+		return fmt.Errorf("could not create directory %q: %w", filepath.Dir(pvKeyFile), err)
+	}
+	pvStateFile := config.PrivValidatorStateFile()
+	if err := os.MkdirAll(filepath.Dir(pvStateFile), 0o777); err != nil {
+		return fmt.Errorf("could not create directory %q: %w", filepath.Dir(pvStateFile), err)
+	}
+
+	pv := privval.NewFilePV(secp256k1.GenPrivKey(), config.PrivValidatorKeyFile(), config.PrivValidatorStateFile())
+	pv.Save()
+	return nil
+}
+
 func configureValidatorFiles(config *cfg.Config) error {
 	keyFilePath := config.PrivValidatorKeyFile()
 	if err := os.MkdirAll(filepath.Dir(keyFilePath), 0o777); err != nil {

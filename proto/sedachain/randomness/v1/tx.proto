@@ -13,9 +13,9 @@ service Msg {
 message MsgNewSeed {
   option (cosmos.msg.v1.signer) = "proposer";
     
-  string seed = 1;
-  string pi = 2;
-  string proposer = 3;
+  string proposer = 1;
+  string pi = 2; // VRF proof
+  string beta = 3; // VRF hash
 }
 
 message MsgNewSeedResponse {}
