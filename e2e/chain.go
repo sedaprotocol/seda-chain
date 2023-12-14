@@ -58,6 +58,7 @@ func (c *chain) createAndInitValidators(count int) error {
 	c.validators = make([]*validator, 0, count)
 
 	var wg sync.WaitGroup
+	var mu sync.Mutex // Mutex for synchronizing access to c.validators
 	errChan := make(chan error, count)
 
 	for i := 0; i < count; i++ {
@@ -79,7 +80,9 @@ func (c *chain) createAndInitValidators(count int) error {
 				return
 			}
 
+			mu.Lock() // Lock the mutex before appending to c.validators
 			c.validators = append(c.validators, node)
+			mu.Unlock() // Unlock the mutex after appending
 		}(i)
 	}
 
