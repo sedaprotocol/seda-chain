@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
@@ -13,6 +14,38 @@ import (
 
 type msgServer struct {
 	Keeper
+}
+type EventStoreDataRequestWasmWrapper struct {
+	*types.EventStoreDataRequestWasm
+}
+
+// MarshalJSON customizes the JSON encoding of the type that implements it
+func (e EventStoreDataRequestWasmWrapper) MarshalJSON() ([]byte, error) {
+	// avoid infinite recursion when calling json.Marshal
+	type Alias types.EventStoreDataRequestWasm
+
+	return json.Marshal(&struct {
+		Hash json.RawMessage `json:"hash"`
+		*Alias
+	}{
+		Hash:  json.RawMessage(`"` + e.Hash + `"`),   // wrap the raw json value in double quotes
+		Alias: (*Alias)(e.EventStoreDataRequestWasm), // cast to embedded type
+	})
+}
+
+type EventStoreOverlayWasmWrapper struct {
+	*types.EventStoreOverlayWasm
+}
+
+func (e EventStoreOverlayWasmWrapper) MarshalJSON() ([]byte, error) {
+	type Alias types.EventStoreOverlayWasm
+	return json.Marshal(&struct {
+		Hash json.RawMessage `json:"hash"`
+		*Alias
+	}{
+		Hash:  json.RawMessage(`"` + e.Hash + `"`),
+		Alias: (*Alias)(e.EventStoreOverlayWasm),
+	})
 }
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
@@ -39,10 +72,12 @@ func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	hashString := hex.EncodeToString(wasm.Hash)
 
 	err = ctx.EventManager().EmitTypedEvent(
-		&types.EventStoreDataRequestWasm{
-			Hash:     hashString,
-			WasmType: msg.WasmType,
-			Bytecode: msg.Wasm,
+		&EventStoreDataRequestWasmWrapper{
+			EventStoreDataRequestWasm: &types.EventStoreDataRequestWasm{
+				Hash:     hashString,
+				WasmType: msg.WasmType,
+				Bytecode: msg.Wasm,
+			},
 		})
 	if err != nil {
 		return nil, err
@@ -76,10 +111,12 @@ func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 
 	hashString := hex.EncodeToString(wasm.Hash)
 	err = ctx.EventManager().EmitTypedEvent(
-		&types.EventStoreOverlayWasm{
-			Hash:     hashString,
-			WasmType: msg.WasmType,
-			Bytecode: msg.Wasm,
+		&EventStoreOverlayWasmWrapper{
+			EventStoreOverlayWasm: &types.EventStoreOverlayWasm{
+				Hash:     hashString,
+				WasmType: msg.WasmType,
+				Bytecode: msg.Wasm,
+			},
 		})
 	if err != nil {
 		return nil, err

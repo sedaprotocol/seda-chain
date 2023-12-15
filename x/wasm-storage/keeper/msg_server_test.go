@@ -2,12 +2,14 @@ package keeper_test
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"os"
 
 	"github.com/hyperledger/burrow/crypto"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
+	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -220,6 +222,42 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 				s.Require().Nil(err)
 				s.Require().Equal(tc.expOutput, *res)
 			}
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestMarshalJSON() {
+	cases := []struct {
+		name     string
+		hash     string
+		body     *types.EventStoreDataRequestWasm
+		expected string
+	}{
+		{
+			name: "Test WasmTypeDataRequest",
+			hash: "8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261",
+			body: &types.EventStoreDataRequestWasm{
+				Hash:     "8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261",
+				WasmType: types.WasmTypeDataRequest,
+				Bytecode: []byte("test WasmTypeDataRequest"),
+			},
+			expected: `{"hash":"8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261","wasm_type":1,"bytecode":"dGVzdCBXYXNtVHlwZURhdGFSZXF1ZXN0"}`,
+		},
+	}
+
+	for _, tc := range cases {
+		s.Run(tc.name, func() {
+			wrapper := &keeper.EventStoreDataRequestWasmWrapper{
+				EventStoreDataRequestWasm: &types.EventStoreDataRequestWasm{
+					Hash:     tc.hash,
+					WasmType: tc.body.WasmType,
+					Bytecode: tc.body.Bytecode,
+				},
+			}
+
+			data, err := json.Marshal(wrapper)
+			s.Require().NoError(err)
+			s.Require().Equal(tc.expected, string(data))
 		})
 	}
 }
