@@ -98,6 +98,7 @@ TEMP_CHAIN_ID=temp-seda-chain
 $BIN init new node0 --home $TMP_HOME --chain-id $TEMP_CHAIN_ID
 
 cat $TMP_HOME/config/genesis.json | jq '.consensus["params"]["validator"]["pub_key_types"]=["secp256k1"]' > $TMP_HOME/config/tmp_genesis.json && mv $TMP_HOME/config/tmp_genesis.json $TMP_HOME/config/genesis.json
+cat $TMP_HOME/config/genesis.json | jq '.consensus_params["block"]["max_gas"]="100000000"' > $TMP_HOME/config/tmp_genesis.json && mv $TMP_HOME/config/tmp_genesis.json $TMP_HOME/config/genesis.json
 
 $BIN keys add deployer --home $TMP_HOME --keyring-backend test
 ADDR=$($BIN keys show deployer --home $TMP_HOME --keyring-backend test -a)
