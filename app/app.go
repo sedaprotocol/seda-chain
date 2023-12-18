@@ -154,7 +154,7 @@ var (
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
-		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+		genutil.NewAppModuleBasic(CustomGenTxValidator),
 		auth.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
@@ -723,7 +723,7 @@ func NewApp(
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
-		customstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
+		customstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.RandomnessKeeper),
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
@@ -747,7 +747,7 @@ func NewApp(
 	app.bmm = module.NewBasicManagerFromManager(
 		app.mm,
 		map[string]module.AppModuleBasic{
-			genutiltypes.ModuleName: genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+			genutiltypes.ModuleName: genutil.NewAppModuleBasic(CustomGenTxValidator),
 			govtypes.ModuleName: gov.NewAppModuleBasic(
 				[]govclient.ProposalHandler{
 					// paramsclient.ProposalHandler,
@@ -916,11 +916,13 @@ func NewApp(
 	app.SetEndBlocker(app.EndBlocker)
 
 	// Pseudorandomness beacon
-	// homePath,
-	// cast.ToString(appOpts.Get("priv_validator_key_file")),
-	vrfKey, err := utils.LoadOrGenVRFKey("~/.seda-chain/config/vrf_key.json")
-	if err != nil {
-		panic(fmt.Errorf("failed to load of generate VRF key: %w", err))
+	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
+	vrfKeyFile := utils.PrivValidatorKeyFileToVRFKeyFile(pvKeyFile)
+	vrfKey, err := utils.LoadVRFKey(vrfKeyFile)
+	if vrfKey == nil || err != nil {
+		// TO-DO if validator, panic
+		app.Logger().Info("failed to load vrf key")
+		vrfKey = nil
 	}
 
 	app.SetPrepareProposal(

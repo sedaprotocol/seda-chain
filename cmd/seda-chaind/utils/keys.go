@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
+	cfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
@@ -47,7 +49,13 @@ func (key VRFKey) Save() error {
 		return fmt.Errorf("key's file path is empty")
 	}
 
-	jsonBytes, err := cmtjson.MarshalIndent(key, "", "  ")
+	vrfKeyFile := struct {
+		PrivKey crypto.PrivKey `json:"priv_key"` // TO-DO can we not export it?
+	}{
+		PrivKey: key.PrivKey,
+	}
+
+	jsonBytes, err := cmtjson.MarshalIndent(vrfKeyFile, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal key: %v", err)
 	}
@@ -116,7 +124,7 @@ func (v *VRFKey) SignTransaction(
 
 // NewVRFKey generates a new VRFKey from the given key and key file path.
 func NewVRFKey(privKey crypto.PrivKey, keyFilePath string) (*VRFKey, error) {
-	vrfStruct := vrf.NewK256VRF(0xFE)
+	vrfStruct := vrf.NewK256VRF()
 	pubKey, err := cryptocodec.FromCmtPubKeyInterface(privKey.PubKey())
 	if err != nil {
 		return nil, err
@@ -136,15 +144,24 @@ func GenVRFKey(keyFilePath string) (*VRFKey, error) {
 }
 
 func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
+	vrfKeyFile := struct {
+		PrivKey crypto.PrivKey `json:"priv_key"` // TO-DO can we not export it?
+	}{}
+
 	keyJSONBytes, err := os.ReadFile(keyFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading VRF key from %v: %v", keyFilePath, err)
 	}
-	vrfKey := new(VRFKey)
-	err = cmtjson.Unmarshal(keyJSONBytes, vrfKey)
+	err = cmtjson.Unmarshal(keyJSONBytes, &vrfKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling VRF key from %v: %v", keyFilePath, err)
 	}
+
+	vrfKey, err := NewVRFKey(vrfKeyFile.PrivKey, keyFilePath)
+	if err != nil {
+		return nil, err
+	}
+
 	return vrfKey, nil
 }
 
@@ -169,4 +186,35 @@ func LoadOrGenVRFKey(keyFilePath string) (*VRFKey, error) {
 		}
 	}
 	return vrfKey, nil
+}
+
+func InitializeVRFKey(config *cfg.Config) (vrfPubKey sdkcrypto.PubKey, err error) {
+	pvKeyFile := config.PrivValidatorKeyFile()
+	if err := os.MkdirAll(filepath.Dir(pvKeyFile), 0o777); err != nil {
+		return nil, fmt.Errorf("could not create directory %q: %w", filepath.Dir(pvKeyFile), err)
+	}
+
+	vrfKeyFile := PrivValidatorKeyFileToVRFKeyFile(config.PrivValidatorKeyFile())
+	vrfKey, err := LoadOrGenVRFKey(vrfKeyFile)
+	if err != nil {
+		return nil, err
+	}
+
+	// TO-DO
+	// tmValPubKey, err := filePV.GetPubKey()
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// valPubKey, err = cryptocodec.FromCmtPubKeyInterface(tmValPubKey)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	return vrfKey.PubKey, nil
+}
+
+// TO-DO
+func PrivValidatorKeyFileToVRFKeyFile(pvFile string) string {
+	return filepath.Join(filepath.Dir(pvFile), "vrf_key.json")
 }

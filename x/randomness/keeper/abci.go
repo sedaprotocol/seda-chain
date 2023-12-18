@@ -28,6 +28,11 @@ func PrepareProposalHandler(
 	mempool mempool.Mempool,
 ) sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (*abci.ResponsePrepareProposal, error) {
+		// TO-DO place in app.go if there is a way to detect if validator
+		if vrfSigner == nil {
+			return &abci.ResponsePrepareProposal{Txs: [][]byte{}}, nil
+		}
+
 		// TO-DO run DefaultProposalHandler.PrepareProposalHandler first?
 
 		// alpha = (seed_{i-1} || timestamp)
@@ -47,17 +52,13 @@ func PrepareProposalHandler(
 			return nil, err
 		}
 
-		validator, err := stakingKeeper.GetValidatorByConsAddr(ctx, sdk.ConsAddress(req.ProposerAddress))
+		pubKey, err := keeper.GetValidatorVRFPubKey(ctx, sdk.ConsAddress(req.ProposerAddress).String())
 		if err != nil {
 			return nil, err
 		}
-		publicKey, err := validator.ConsPubKey()
-		if err != nil {
-			return nil, err
-		}
-		account := authKeeper.GetAccount(ctx, sdk.AccAddress(publicKey.Address().Bytes()))
+		account := authKeeper.GetAccount(ctx, sdk.AccAddress(pubKey.Address().Bytes()))
 
-		newSeedTx, err := generateAndSignNewSeedTx(ctx, txConfig, vrfSigner, publicKey, account, &types.MsgNewSeed{
+		newSeedTx, err := generateAndSignNewSeedTx(ctx, txConfig, vrfSigner, pubKey, account, &types.MsgNewSeed{
 			Proposer: sdk.AccAddress(req.ProposerAddress).String(),
 			Pi:       hex.EncodeToString(pi),
 			Beta:     hex.EncodeToString(beta),
@@ -65,12 +66,6 @@ func PrepareProposalHandler(
 		if err != nil {
 			return nil, err
 		}
-
-		// TO-DO mempool?
-		// err = mempool.Insert(ctx, tx)
-		// if err != nil {
-		// 	return nil, err
-		// }
 
 		// prepend to list of txs and return
 		res := new(abci.ResponsePrepareProposal)
@@ -99,13 +94,17 @@ func ProcessProposalHandler(
 		// TO-DO Validate()?
 
 		// get block proposer's validator public key
-		validator, err := stakingKeeper.GetValidatorByConsAddr(ctx, sdk.ConsAddress(req.ProposerAddress))
+		// validator, err := stakingKeeper.GetValidatorByConsAddr(ctx, sdk.ConsAddress(req.ProposerAddress))
+		// if err != nil {
+		// 	return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+		// }
+		// publicKey, err := validator.ConsPubKey()
+		// if err != nil {
+		// 	return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+		// }
+		pubKey, err := keeper.GetValidatorVRFPubKey(ctx, sdk.ConsAddress(req.ProposerAddress).String())
 		if err != nil {
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
-		}
-		publicKey, err := validator.ConsPubKey()
-		if err != nil {
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+			return nil, err
 		}
 
 		prevSeed := keeper.GetSeed(ctx)
@@ -125,7 +124,7 @@ func ProcessProposalHandler(
 
 		// verify VRF proof
 		k256vrf := vrf.NewK256VRF()
-		beta, err := k256vrf.Verify(publicKey.Bytes(), pi, alpha)
+		beta, err := k256vrf.Verify(pubKey.Bytes(), pi, alpha)
 		if err != nil {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
