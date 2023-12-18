@@ -119,9 +119,9 @@ func NewRootCmd() *cobra.Command {
 	initClientCtx, _ = config.ReadFromClientConfig(initClientCtx)
 	autoCliOpts.Keyring, _ = keyring.NewAutoCLIKeyring(initClientCtx.Keyring)
 	autoCliOpts.ClientCtx = initClientCtx
-	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
-		panic(err)
-	}
+	// if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
+	// 	panic(err)
+	// }
 
 	return rootCmd
 }
@@ -133,13 +133,13 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig, basi
 	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 	rootCmd.AddCommand(
 		InitCmd(basicManager, app.DefaultNodeHome),
-		genutilcli.CollectGenTxsCmd(
+		CollectGenTxsCmd(
 			banktypes.GenesisBalancesIterator{},
 			app.DefaultNodeHome,
 			gentxModule.GenTxValidator,
 			encodingConfig.InterfaceRegistry.SigningContext().ValidatorAddressCodec(),
 		),
-		genutilcli.GenTxCmd(
+		GenTxCmd(
 			basicManager,
 			encodingConfig.TxConfig,
 			banktypes.GenesisBalancesIterator{},

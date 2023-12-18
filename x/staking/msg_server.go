@@ -10,16 +10,18 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
 var _ stakingtypes.MsgServer = msgServer{}
 
 type msgServer struct {
 	stakingtypes.MsgServer
-	accountKeeper AccountKeeper
+	accountKeeper types.AccountKeeper
 }
 
-func NewMsgServerImpl(keeper *stakingkeeper.Keeper, accKeeper AccountKeeper) stakingtypes.MsgServer {
+func NewMsgServerImpl(keeper *stakingkeeper.Keeper, accKeeper types.AccountKeeper) stakingtypes.MsgServer {
 	ms := &msgServer{
 		MsgServer:     stakingkeeper.NewMsgServerImpl(keeper),
 		accountKeeper: accKeeper,

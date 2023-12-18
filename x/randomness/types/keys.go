@@ -1,5 +1,10 @@
 package types
 
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
+)
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "randomness"
@@ -13,3 +18,11 @@ const (
 
 // KeyPrefixSeed defines prefix to store the current block's seed.
 var KeyPrefixSeed = []byte{0x00}
+
+// KeyPrefixValidatorVRF defines prefix to store the validator VRF object.
+var KeyPrefixValidatorVRF = []byte{0x01}
+
+// GetValidatorVRFKey gets the key for the validator VRF object.
+func GetValidatorVRFKey(operatorAddr sdk.ConsAddress) []byte {
+	return append(KeyPrefixValidatorVRF, address.MustLengthPrefix(operatorAddr)...)
+}
