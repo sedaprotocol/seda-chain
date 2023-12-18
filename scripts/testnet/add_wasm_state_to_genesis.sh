@@ -97,8 +97,6 @@ TEMP_CHAIN_ID=temp-seda-chain
 #
 $BIN init node0 --home $TMP_HOME --chain-id $TEMP_CHAIN_ID --default-denom aseda
 
-cat $TMP_HOME/config/genesis.json | jq '.consensus["params"]["validator"]["pub_key_types"]=["secp256k1"]' > $TMP_HOME/config/tmp_genesis.json && mv $TMP_HOME/config/tmp_genesis.json $TMP_HOME/config/genesis.json
-
 $BIN keys add deployer --home $TMP_HOME --keyring-backend test
 ADDR=$($BIN keys show deployer --home $TMP_HOME --keyring-backend test -a)
 $BIN add-genesis-account $ADDR 100000000000000000seda --home $TMP_HOME --keyring-backend test

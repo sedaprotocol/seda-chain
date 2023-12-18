@@ -6,8 +6,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cmtos "github.com/cometbft/cometbft/libs/os"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -69,16 +67,6 @@ $ %s join moniker --network devnet
 			err = configureValidatorFiles(config)
 			if err != nil {
 				return err
-			}
-
-			// Before initializing the node, if a mnemonic is not given and
-			// the private validator key file does not exist, create a validator
-			// using a key generated on secp256k1.
-			if len(mnemonic) == 0 && !cmtos.FileExists(config.PrivValidatorKeyFile()) {
-				err = generateValidatorWithSecp256k1Key(config)
-				if err != nil {
-					return err
-				}
 			}
 
 			// initialize the node
