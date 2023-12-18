@@ -12,7 +12,6 @@ import (
 
 	cfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/libs/cli"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -80,16 +79,6 @@ func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Comma
 			initHeight, _ := cmd.Flags().GetInt64(flags.FlagInitHeight)
 			if initHeight < 1 {
 				initHeight = 1
-			}
-
-			// Before initializing the node, if a mnemonic is not given and
-			// the private validator key file does not exist, create a validator
-			// using a key generated on secp256k1.
-			if len(mnemonic) == 0 && !cmtos.FileExists(config.PrivValidatorKeyFile()) {
-				err = generateValidatorWithSecp256k1Key(config)
-				if err != nil {
-					return err
-				}
 			}
 
 			// initialize node
@@ -195,16 +184,6 @@ $ %s init join moniker --network devnet
 			err = configureValidatorFiles(config)
 			if err != nil {
 				return err
-			}
-
-			// Before initializing the node, if a mnemonic is not given and
-			// the private validator key file does not exist, create a validator
-			// using a key generated on secp256k1.
-			if len(mnemonic) == 0 && !cmtos.FileExists(config.PrivValidatorKeyFile()) {
-				err = generateValidatorWithSecp256k1Key(config)
-				if err != nil {
-					return err
-				}
 			}
 
 			// initialize the node
