@@ -23,6 +23,7 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
+	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 )
 
 const (
@@ -124,9 +125,9 @@ func newNetworkCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Comma
 			if err = genutil.ExportGenesisFile(appGenesis, genFile); err != nil {
 				return errors.Wrap(err, "Failed to export genesis file")
 			}
-			toPrint := newPrintInfo(config.Moniker, chainID, nodeID, "")
+			toPrint := utils.NewPrintInfo(config.Moniker, chainID, nodeID, "")
 			cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
-			return displayInfo(toPrint)
+			return utils.DisplayInfo(toPrint)
 		},
 	}
 
@@ -193,8 +194,8 @@ $ %s init join moniker --network devnet
 			}
 
 			// genesis and config files already written - display info
-			toPrint := newPrintInfo(config.Moniker, chainID, nodeID, seeds)
-			return displayInfo(toPrint)
+			toPrint := utils.NewPrintInfo(config.Moniker, chainID, nodeID, seeds)
+			return utils.DisplayInfo(toPrint)
 		},
 	}
 

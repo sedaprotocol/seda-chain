@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -24,14 +25,16 @@ import (
 	vrf "github.com/sedaprotocol/vrf-go"
 )
 
-var _ VRFSigner = &VRFKey{}
+const VRFKeyFileName = "vrf_key.json"
 
 type VRFSigner interface {
 	VRFProve(alpha []byte) (pi, beta []byte, err error)
-	SignTransaction(ctx sdk.Context,
-		signMode signing.SignMode,
-		txBuilder client.TxBuilder, txConfig client.TxConfig, account sdk.AccountI) (signing.SignatureV2, error)
+	VRFVerify(publicKey, alpha, pi []byte) (beta []byte, err error)
+	SignTransaction(ctx sdk.Context, txBuilder client.TxBuilder, txConfig client.TxConfig,
+		signMode signing.SignMode, account sdk.AccountI) (signing.SignatureV2, error)
 }
+
+var _ VRFSigner = &VRFKey{}
 
 type VRFKey struct {
 	Address types.Address    `json:"address"`
@@ -67,6 +70,8 @@ func (key VRFKey) Save() error {
 	return nil
 }
 
+// VRFProve uses the VRF key to compute the VRF hash output (beta)
+// and the proof that it was computed correctly (pi).
 func (v *VRFKey) VRFProve(alpha []byte) (pi, beta []byte, err error) {
 	pi, err = v.vrf.Prove(v.PrivKey.Bytes(), alpha)
 	if err != nil {
@@ -79,12 +84,29 @@ func (v *VRFKey) VRFProve(alpha []byte) (pi, beta []byte, err error) {
 	return pi, beta, nil
 }
 
+// VRFVerify verifies that beta is the correct VRF hash of the alpha
+// under private key associated with the given public key. It also
+// outputs the hash output beta.
+func (v *VRFKey) VRFVerify(publicKey, alpha, pi []byte) (beta []byte, err error) {
+	beta, err = v.vrf.Verify(publicKey, alpha, pi)
+	if err != nil {
+		return nil, err
+	}
+	return beta, nil
+}
+
+// SignTransaction signs a given transaction with the VRF key and
+// returns the resulting signature. The given account must belong
+// to the VRF key.
 func (v *VRFKey) SignTransaction(
-	ctx sdk.Context,
-	signMode signing.SignMode,
-	txBuilder client.TxBuilder, txConfig client.TxConfig, account sdk.AccountI,
+	ctx sdk.Context, txBuilder client.TxBuilder, txConfig client.TxConfig,
+	signMode signing.SignMode, account sdk.AccountI,
 ) (signing.SignatureV2, error) {
 	var sigV2 signing.SignatureV2
+
+	if !bytes.Equal(account.GetPubKey().Bytes(), v.PubKey.Bytes()) {
+		return sigV2, fmt.Errorf("the account does not belong to the vrf key")
+	}
 
 	signerData := authsigning.SignerData{
 		ChainID:       ctx.ChainID(),
@@ -118,7 +140,6 @@ func (v *VRFKey) SignTransaction(
 		},
 		Sequence: account.GetSequence(),
 	}
-
 	return sigV2, nil
 }
 
@@ -138,33 +159,6 @@ func NewVRFKey(privKey crypto.PrivKey, keyFilePath string) (*VRFKey, error) {
 	}, nil
 }
 
-// GenVRFKey generates a new VRFKey with a randomly generated private key.
-func GenVRFKey(keyFilePath string) (*VRFKey, error) {
-	return NewVRFKey(secp256k1.GenPrivKey(), keyFilePath)
-}
-
-func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
-	vrfKeyFile := struct {
-		PrivKey crypto.PrivKey `json:"priv_key"` // TO-DO can we not export it?
-	}{}
-
-	keyJSONBytes, err := os.ReadFile(keyFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("error reading VRF key from %v: %v", keyFilePath, err)
-	}
-	err = cmtjson.Unmarshal(keyJSONBytes, &vrfKeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling VRF key from %v: %v", keyFilePath, err)
-	}
-
-	vrfKey, err := NewVRFKey(vrfKeyFile.PrivKey, keyFilePath)
-	if err != nil {
-		return nil, err
-	}
-
-	return vrfKey, nil
-}
-
 // LoadOrGenVRFKey loads a VRFKey from the given file path
 // or else generates a new one and saves it to the file path.
 func LoadOrGenVRFKey(keyFilePath string) (*VRFKey, error) {
@@ -176,7 +170,7 @@ func LoadOrGenVRFKey(keyFilePath string) (*VRFKey, error) {
 			return nil, err
 		}
 	} else {
-		vrfKey, err = GenVRFKey(keyFilePath)
+		vrfKey, err = NewVRFKey(secp256k1.GenPrivKey(), keyFilePath)
 		if err != nil {
 			return nil, err
 		}
@@ -185,6 +179,28 @@ func LoadOrGenVRFKey(keyFilePath string) (*VRFKey, error) {
 			return nil, err
 		}
 	}
+	return vrfKey, nil
+}
+
+func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
+	keyJSONBytes, err := os.ReadFile(keyFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading VRF key from %v: %v", keyFilePath, err)
+	}
+
+	vrfKeyFile := struct {
+		PrivKey crypto.PrivKey `json:"priv_key"` // TO-DO can we not export it?
+	}{}
+	err = cmtjson.Unmarshal(keyJSONBytes, &vrfKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling VRF key from %v: %v", keyFilePath, err)
+	}
+
+	vrfKey, err := NewVRFKey(vrfKeyFile.PrivKey, keyFilePath)
+	if err != nil {
+		return nil, err
+	}
+
 	return vrfKey, nil
 }
 
@@ -199,22 +215,12 @@ func InitializeVRFKey(config *cfg.Config) (vrfPubKey sdkcrypto.PubKey, err error
 	if err != nil {
 		return nil, err
 	}
-
-	// TO-DO
-	// tmValPubKey, err := filePV.GetPubKey()
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// valPubKey, err = cryptocodec.FromCmtPubKeyInterface(tmValPubKey)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	return vrfKey.PubKey, nil
 }
 
-// TO-DO
+// PrivValidatorKeyFileToVRFKeyFile returns the path to the VRF key file
+// given a path to the private validator key file. The two files should
+// be placed in the same directory.
 func PrivValidatorKeyFileToVRFKeyFile(pvFile string) string {
-	return filepath.Join(filepath.Dir(pvFile), "vrf_key.json")
+	return filepath.Join(filepath.Dir(pvFile), VRFKeyFileName)
 }

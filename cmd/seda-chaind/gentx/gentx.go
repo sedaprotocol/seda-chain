@@ -1,4 +1,4 @@
-package cmd
+package gentx
 
 import (
 	"bufio"
@@ -29,7 +29,25 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 	customcli "github.com/sedaprotocol/seda-chain/x/staking/client/cli"
+	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 )
+
+func GenTxValidator(msgs []sdk.Msg) error {
+	if len(msgs) != 1 {
+		return fmt.Errorf("unexpected number of GenTx messages; got: %d, expected: 1", len(msgs))
+	}
+	if _, ok := msgs[0].(*stakingtypes.MsgCreateValidatorWithVRF); !ok {
+		return fmt.Errorf("unexpected GenTx message type; expected: MsgCreateValidatorWithVRF, got: %T", msgs[0])
+	}
+
+	if m, ok := msgs[0].(sdk.HasValidateBasic); ok {
+		if err := m.ValidateBasic(); err != nil {
+			return fmt.Errorf("invalid GenTx '%s': %w", msgs[0], err)
+		}
+	}
+
+	return nil
+}
 
 // GenTxCmd builds the application's gentx command.
 func GenTxCmd(mbm module.BasicManager, txEncCfg client.TxEncodingConfig, genBalIterator types.GenesisBalancesIterator, defaultNodeHome string, valAdddressCodec address.Codec) *cobra.Command {
@@ -47,7 +65,7 @@ file. The following default parameters are included:
     %s
 
 Example:
-$ %s gentx my-key-name 1000000stake --home=/path/to/home/dir --keyring-backend=os --chain-id=test-chain-1 \
+$ %s gentx my-key-name 1000000seda --home=/path/to/home/dir --keyring-backend=os --chain-id=sedachain \
     --moniker="myvalidator" \
     --commission-max-change-rate=0.01 \
     --commission-max-rate=1.0 \

@@ -15,7 +15,6 @@ func initTendermintConfig() *tmcfg.Config {
 
 	// Log Settings
 	cfg.LogFormat = "json"
-	// TODO how to tell if initing a node for testnet vs mainnet vs etc.
 	// cfg.LogLevel
 
 	// RPC Settings

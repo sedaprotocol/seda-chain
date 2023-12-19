@@ -131,6 +131,7 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
+	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/gentx"
 	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 	"github.com/sedaprotocol/seda-chain/docs"
 	randomness "github.com/sedaprotocol/seda-chain/x/randomness"
@@ -154,7 +155,7 @@ var (
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
-		genutil.NewAppModuleBasic(CustomGenTxValidator),
+		genutil.NewAppModuleBasic(gentx.GenTxValidator),
 		auth.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
@@ -747,7 +748,7 @@ func NewApp(
 	app.bmm = module.NewBasicManagerFromManager(
 		app.mm,
 		map[string]module.AppModuleBasic{
-			genutiltypes.ModuleName: genutil.NewAppModuleBasic(CustomGenTxValidator),
+			genutiltypes.ModuleName: genutil.NewAppModuleBasic(gentx.GenTxValidator),
 			govtypes.ModuleName: gov.NewAppModuleBasic(
 				[]govclient.ProposalHandler{
 					// paramsclient.ProposalHandler,
@@ -932,13 +933,13 @@ func NewApp(
 			app.RandomnessKeeper,
 			app.AccountKeeper,
 			app.StakingKeeper,
-			nonceMempool,
 		),
 	)
 
 	app.SetProcessProposal(
 		randomnesskeeper.ProcessProposalHandler(
 			txConfig,
+			vrfKey,
 			app.RandomnessKeeper,
 			app.StakingKeeper,
 		),
