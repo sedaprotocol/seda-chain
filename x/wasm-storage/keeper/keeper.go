@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"cosmossdk.io/log"
@@ -10,7 +11,6 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -144,4 +144,34 @@ func (k Keeper) GetAllWasms(ctx sdk.Context) []types.Wasm {
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// GetParams returns all the parameters for the module.
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get([]byte(types.KeyParams))
+
+	var params types.Params
+	k.cdc.MustUnmarshal(bz, &params)
+	return params
+}
+
+// SetParams sets the parameters in the store.
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshal(&params)
+	store.Set([]byte(types.KeyParams), bz)
+}
+
+// SetMaxWasmSize updates the MaxWasmSize parameter.
+func (k Keeper) SetMaxWasmSize(ctx sdk.Context, maxWasmSize uint64) error {
+	if maxWasmSize == 0 {
+		return errors.New("MaxWasmSize cannot be zero")
+	}
+
+	params := k.GetParams(ctx)
+	params.MaxWasmSize = maxWasmSize
+	k.SetParams(ctx, params)
+
+	return nil
 }

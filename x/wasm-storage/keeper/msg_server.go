@@ -173,3 +173,15 @@ func unzipWasm(wasm []byte) ([]byte, error) {
 	}
 	return unzipped, nil
 }
+
+// SetMaxWasmSize sets the MaxWasmSize parameter in the store.
+func (k msgServer) SetMaxWasmSize(goCtx context.Context, msg *types.MsgSetMaxWasmSize) (*types.MsgSetMaxWasmSizeResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	err := k.Keeper.SetMaxWasmSize(ctx, msg.MaxWasmSize)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgSetMaxWasmSizeResponse{}, nil
+}

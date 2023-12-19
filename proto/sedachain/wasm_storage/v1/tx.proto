@@ -17,6 +17,7 @@ service Msg {
   rpc InstantiateAndRegisterProxyContract(
       MsgInstantiateAndRegisterProxyContract)
       returns (MsgInstantiateAndRegisterProxyContractResponse);
+  rpc SetMaxWasmSize(MsgSetMaxWasmSize) returns (MsgSetMaxWasmSizeResponse);
 }
 
 message MsgStoreDataRequestWasm {
@@ -61,3 +62,10 @@ message MsgInstantiateAndRegisterProxyContractResponse {
   string contract_address = 1
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
+
+message MsgSetMaxWasmSize {
+  uint64 max_wasm_size = 1;
+}
+
+// no data needs to be returned
+message MsgSetMaxWasmSizeResponse {}

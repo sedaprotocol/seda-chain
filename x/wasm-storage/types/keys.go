@@ -15,6 +15,12 @@ const (
 
 	// RouterKey defines the module's message routing key
 	RouterKey = ModuleName
+
+	// KeyParams is the store key for the parameters.
+	KeyParams = "params"
+
+	// KeyMaxWasmSize defines the key for the MaxWasmSize parameter
+	KeyMaxWasmSize = "max-wasm-size"
 )
 
 var (

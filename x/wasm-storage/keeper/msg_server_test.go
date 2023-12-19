@@ -265,3 +265,50 @@ func (s *KeeperTestSuite) TestMarshalJSON() {
 		})
 	}
 }
+
+func (s *KeeperTestSuite) TestSetMaxWasmSize() {
+	cases := []struct {
+		name      string
+		preRun    func()
+		input     types.MsgSetMaxWasmSize
+		expErr    bool
+		expErrMsg string
+	}{
+		{
+			name: "happy path",
+			input: types.MsgSetMaxWasmSize{
+				MaxWasmSize: 1000000, // 1 MB
+			},
+			preRun:    func() {},
+			expErr:    false,
+			expErrMsg: "",
+		},
+		{
+			name: "zero size",
+			input: types.MsgSetMaxWasmSize{
+				MaxWasmSize: 0,
+			},
+			preRun:    func() {},
+			expErr:    true,
+			expErrMsg: "MaxWasmSize cannot be zero",
+		},
+	}
+
+	for _, tc := range cases {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			tc.preRun()
+			_, err := s.msgSrvr.SetMaxWasmSize(s.ctx, &tc.input)
+			if tc.expErr {
+				s.Require().Error(err)
+				s.Require().Equal(tc.expErrMsg, err.Error())
+			} else {
+				s.Require().NoError(err)
+
+				// Check that the MaxWasmSize parameter was correctly set
+				params := s.wasmStorageKeeper.GetParams(s.ctx)
+				s.Require().Equal(tc.input.MaxWasmSize, params.MaxWasmSize)
+			}
+		})
+	}
+}
