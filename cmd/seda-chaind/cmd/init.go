@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,37 +16,10 @@ import (
 	"github.com/cometbft/cometbft/types"
 
 	"github.com/cosmos/cosmos-sdk/client/input"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/go-bip39"
 
 	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 )
-
-type printInfo struct {
-	Moniker string `json:"moniker" yaml:"moniker"`
-	ChainID string `json:"chain_id" yaml:"chain_id"`
-	NodeID  string `json:"node_id" yaml:"node_id"`
-	Seeds   string `json:"seeds" yaml:"seeds"`
-}
-
-func newPrintInfo(moniker, chainID, nodeID, seeds string) printInfo {
-	return printInfo{
-		Moniker: moniker,
-		ChainID: chainID,
-		NodeID:  nodeID,
-		Seeds:   seeds,
-	}
-}
-
-func displayInfo(info printInfo) error {
-	out, err := json.MarshalIndent(info, "", " ")
-	if err != nil {
-		return err
-	}
-
-	_, err = fmt.Fprintf(os.Stderr, "%s\n", sdk.MustSortJSON(out))
-	return err
-}
 
 func readInMnemonic(cmd *cobra.Command) (string, error) {
 	var mnemonic string

@@ -11,6 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+
+	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 )
 
 const (
@@ -76,8 +78,8 @@ $ %s join moniker --network devnet
 			}
 
 			// genesis and config files already written - display info
-			toPrint := newPrintInfo(config.Moniker, chainID, nodeID, seeds)
-			return displayInfo(toPrint)
+			toPrint := utils.NewPrintInfo(config.Moniker, chainID, nodeID, seeds)
+			return utils.DisplayInfo(toPrint)
 		},
 	}
 

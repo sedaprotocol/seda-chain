@@ -47,6 +47,7 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
+	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/gentx"
 )
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
@@ -124,9 +125,6 @@ func NewRootCmd() *cobra.Command {
 	initClientCtx, _ = config.ReadFromClientConfig(initClientCtx)
 	autoCliOpts.Keyring, _ = keyring.NewAutoCLIKeyring(initClientCtx.Keyring)
 	autoCliOpts.ClientCtx = initClientCtx
-	// if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
-	// 	panic(err)
-	// }
 
 	builder := &autocli.Builder{
 		Builder: flag.Builder{
@@ -160,13 +158,13 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig, basi
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(basicManager, app.DefaultNodeHome),
 		JoinNetworkCommand(basicManager, app.DefaultNodeHome),
-		CollectGenTxsCmd(
+		gentx.CollectGenTxsCmd(
 			banktypes.GenesisBalancesIterator{},
 			app.DefaultNodeHome,
 			gentxModule.GenTxValidator,
 			encodingConfig.InterfaceRegistry.SigningContext().ValidatorAddressCodec(),
 		),
-		GenTxCmd(
+		gentx.GenTxCmd(
 			basicManager,
 			encodingConfig.TxConfig,
 			banktypes.GenesisBalancesIterator{},

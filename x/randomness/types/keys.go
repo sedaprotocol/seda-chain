@@ -23,6 +23,6 @@ var KeyPrefixSeed = []byte{0x00}
 var KeyPrefixValidatorVRF = []byte{0x01}
 
 // GetValidatorVRFKey gets the key for the validator VRF object.
-func GetValidatorVRFKey(operatorAddr sdk.ConsAddress) []byte {
-	return append(KeyPrefixValidatorVRF, address.MustLengthPrefix(operatorAddr)...)
+func GetValidatorVRFKey(consensusAddr sdk.ConsAddress) []byte {
+	return append(KeyPrefixValidatorVRF, address.MustLengthPrefix(consensusAddr)...)
 }

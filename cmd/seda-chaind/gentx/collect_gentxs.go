@@ -1,4 +1,4 @@
-package cmd
+package gentx
 
 import (
 	"encoding/json"
@@ -24,12 +24,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 
+	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
 const flagGenTxDir = "gentx-dir"
 
-// CollectGenTxsCmd - return the cobra command to collect genesis transactions
+// CollectGenTxsCmd returns the cobra command to collect genesis transactions.
 func CollectGenTxsCmd(genBalIterator types.GenesisBalancesIterator, defaultNodeHome string, validator types.MessageValidator, valAddrCodec sdkruntime.ValidatorAddressCodec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "collect-gentxs",
@@ -59,7 +60,7 @@ func CollectGenTxsCmd(genBalIterator types.GenesisBalancesIterator, defaultNodeH
 				genTxsDir = filepath.Join(config.RootDir, "config", "gentx")
 			}
 
-			toPrint := newPrintInfo(config.Moniker, appGenesis.ChainID, nodeID, genTxsDir)
+			toPrint := utils.NewPrintInfo(config.Moniker, appGenesis.ChainID, nodeID, genTxsDir)
 			initCfg := types.NewInitConfig(appGenesis.ChainID, genTxsDir, nodeID, valPubKey)
 
 			_, err = GenAppStateFromConfig(cdc, clientCtx.TxConfig, config, initCfg, appGenesis, genBalIterator, validator, valAddrCodec)
@@ -67,9 +68,7 @@ func CollectGenTxsCmd(genBalIterator types.GenesisBalancesIterator, defaultNodeH
 				return errors.Wrap(err, "failed to get genesis app state from config")
 			}
 
-			// toPrint.AppMessage = appMessage
-
-			return displayInfo(toPrint)
+			return utils.DisplayInfo(toPrint)
 		},
 	}
 
@@ -121,8 +120,9 @@ func GenAppStateFromConfig(cdc codec.JSONCodec, txEncodingConfig client.TxEncodi
 	return appState, err
 }
 
-// CollectTxs processes and validates application's genesis Txs and returns
-// the list of appGenTxs, and persistent peers required to generate genesis.json.
+// CollectTxs processes and validates application's genesis Txs of type
+// MsgCreateValidatorWithVRF and returns the list of appGenTxs and
+// persistent peers required to generate genesis.json.
 func CollectTxs(cdc codec.JSONCodec, txJSONDecoder sdk.TxDecoder, moniker, genTxsDir string,
 	genesis *types.AppGenesis, genBalIterator types.GenesisBalancesIterator,
 	validator types.MessageValidator, valAddrCodec sdkruntime.ValidatorAddressCodec,
@@ -187,8 +187,6 @@ func CollectTxs(cdc codec.JSONCodec, txJSONDecoder sdk.TxDecoder, moniker, genTx
 
 		// genesis transactions must be single-message
 		msgs := genTx.GetMsgs()
-
-		// TODO abstract out staking message validation back to staking
 		msg := msgs[0].(*stakingtypes.MsgCreateValidatorWithVRF)
 
 		// validate validator addresses and funds against the accounts in the state

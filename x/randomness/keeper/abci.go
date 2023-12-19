@@ -5,14 +5,11 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	vrf "github.com/sedaprotocol/vrf-go"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 
 	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
@@ -25,10 +22,8 @@ func PrepareProposalHandler(
 	keeper Keeper,
 	authKeeper types.AccountKeeper,
 	stakingKeeper types.StakingKeeper,
-	mempool mempool.Mempool,
 ) sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (*abci.ResponsePrepareProposal, error) {
-		// TO-DO place in app.go if there is a way to detect if validator
 		if vrfSigner == nil {
 			return &abci.ResponsePrepareProposal{Txs: [][]byte{}}, nil
 		}
@@ -52,6 +47,7 @@ func PrepareProposalHandler(
 			return nil, err
 		}
 
+		// create a NewSeed tx
 		pubKey, err := keeper.GetValidatorVRFPubKey(ctx, sdk.ConsAddress(req.ProposerAddress).String())
 		if err != nil {
 			return nil, err
@@ -76,6 +72,7 @@ func PrepareProposalHandler(
 
 func ProcessProposalHandler(
 	txConfig client.TxConfig,
+	vrfSigner utils.VRFSigner,
 	keeper Keeper,
 	stakingKeeper types.StakingKeeper,
 ) sdk.ProcessProposalHandler {
@@ -94,14 +91,6 @@ func ProcessProposalHandler(
 		// TO-DO Validate()?
 
 		// get block proposer's validator public key
-		// validator, err := stakingKeeper.GetValidatorByConsAddr(ctx, sdk.ConsAddress(req.ProposerAddress))
-		// if err != nil {
-		// 	return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
-		// }
-		// publicKey, err := validator.ConsPubKey()
-		// if err != nil {
-		// 	return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
-		// }
 		pubKey, err := keeper.GetValidatorVRFPubKey(ctx, sdk.ConsAddress(req.ProposerAddress).String())
 		if err != nil {
 			return nil, err
@@ -123,8 +112,7 @@ func ProcessProposalHandler(
 		}
 
 		// verify VRF proof
-		k256vrf := vrf.NewK256VRF()
-		beta, err := k256vrf.Verify(pubKey.Bytes(), pi, alpha)
+		beta, err := vrfSigner.VRFVerify(pubKey.Bytes(), pi, alpha)
 		if err != nil {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
@@ -135,7 +123,7 @@ func ProcessProposalHandler(
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 		if !bytes.Equal(beta, msgBeta) {
-			panic(err)
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
 		return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
@@ -151,37 +139,18 @@ func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSign
 	if err != nil {
 		return nil, err
 	}
-
 	txBuilder.SetGasLimit(200000) // TO-DO what number to put here?
 	txBuilder.SetFeeAmount(sdk.NewCoins())
 	txBuilder.SetFeePayer(account.GetAddress())
 
 	// sign the transaction
-
-	// gather signing info without actually signing
-	// TO-DO check if this step can be skipped
-	sig := txsigning.SignatureV2{
-		PubKey: pubKey,
-		Data: &txsigning.SingleSignatureData{
-			SignMode:  txsigning.SignMode_SIGN_MODE_DIRECT,
-			Signature: nil,
-		},
-		Sequence: account.GetSequence(),
-	}
-
-	if err := txBuilder.SetSignatures(sig); err != nil {
-		return nil, err
-	}
-
-	// sign
-	sig, err = vrfSigner.SignTransaction(
+	sig, err := vrfSigner.SignTransaction(
 		ctx,
-		txsigning.SignMode_SIGN_MODE_DIRECT,
 		txBuilder,
 		txConfig,
+		txsigning.SignMode_SIGN_MODE_DIRECT,
 		account,
 	)
-
 	if err := txBuilder.SetSignatures(sig); err != nil {
 		return nil, err
 	}
@@ -191,7 +160,6 @@ func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSign
 	if err != nil {
 		return nil, err
 	}
-
 	return txBytes, nil
 }
 
