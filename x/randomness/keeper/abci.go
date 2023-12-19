@@ -8,7 +8,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 
@@ -53,8 +52,11 @@ func PrepareProposalHandler(
 			return nil, err
 		}
 		account := authKeeper.GetAccount(ctx, sdk.AccAddress(pubKey.Address().Bytes()))
-
-		newSeedTx, err := generateAndSignNewSeedTx(ctx, txConfig, vrfSigner, pubKey, account, &types.MsgNewSeed{
+		err = account.SetPubKey(pubKey) // checked later when signing tx with VRF key
+		if err != nil {
+			return nil, err
+		}
+		newSeedTx, err := generateAndSignNewSeedTx(ctx, txConfig, vrfSigner, account, &types.MsgNewSeed{
 			Proposer: sdk.AccAddress(req.ProposerAddress).String(),
 			Pi:       hex.EncodeToString(pi),
 			Beta:     hex.EncodeToString(beta),
@@ -132,7 +134,7 @@ func ProcessProposalHandler(
 
 // generateAndSignNewSeedTx generates and signs a transaction containing
 // a given NewSeed message. It returns a transaction encoded into bytes.
-func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSigner utils.VRFSigner, pubKey cryptotypes.PubKey, account sdk.AccountI, msg *types.MsgNewSeed) ([]byte, error) {
+func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSigner utils.VRFSigner, account sdk.AccountI, msg *types.MsgNewSeed) ([]byte, error) {
 	// build a transaction containing the given message
 	txBuilder := txConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msg)

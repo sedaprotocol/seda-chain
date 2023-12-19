@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"cosmossdk.io/math"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -42,47 +44,13 @@ func NewMsgCreateValidatorWithVRF(
 	}, nil
 }
 
-// // Validate validates the MsgCreateValidator sdk msg.
-// func (msg MsgCreateValidatorWithVRF) Validate(ac address.Codec) error {
-// 	// note that unmarshaling from bech32 ensures both non-empty and valid
-// 	_, err := ac.StringToBytes(msg.ValidatorAddress)
-// 	if err != nil {
-// 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
-// 	}
-
-// 	if msg.Pubkey == nil {
-// 		return ErrEmptyValidatorPubKey
-// 	}
-
-// 	if !msg.Value.IsValid() || !msg.Value.Amount.IsPositive() {
-// 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid delegation amount")
-// 	}
-
-// 	if msg.Description == (Description{}) {
-// 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty description")
-// 	}
-
-// 	if msg.Commission == (CommissionRates{}) {
-// 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty commission")
-// 	}
-
-// 	if err := msg.Commission.Validate(); err != nil {
-// 		return err
-// 	}
-
-// 	if !msg.MinSelfDelegation.IsPositive() {
-// 		return errorsmod.Wrap(
-// 			sdkerrors.ErrInvalidRequest,
-// 			"minimum self delegation must be a positive integer",
-// 		)
-// 	}
-
-// 	if msg.Value.Amount.LT(msg.MinSelfDelegation) {
-// 		return ErrSelfDelegationBelowMinimum
-// 	}
-
-// 	return nil
-// }
+// Validate validates the MsgCreateValidatorWithVRF sdk msg.
+func (msg MsgCreateValidatorWithVRF) Validate() error {
+	if msg.Pubkey == nil || msg.VrfPubkey == nil {
+		return fmt.Errorf("empty validator public key or VRF public key")
+	}
+	return nil
+}
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
 func (msg MsgCreateValidatorWithVRF) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
