@@ -9,7 +9,11 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/reflect/protoregistry"
 
+	"cosmossdk.io/client/v2/autocli"
+	"cosmossdk.io/client/v2/autocli/flag"
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/snapshots"
@@ -24,6 +28,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -122,6 +127,27 @@ func NewRootCmd() *cobra.Command {
 	// if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
 	// 	panic(err)
 	// }
+
+	builder := &autocli.Builder{
+		Builder: flag.Builder{
+			TypeResolver:          protoregistry.GlobalTypes,
+			FileResolver:          autoCliOpts.ClientCtx.InterfaceRegistry,
+			AddressCodec:          autoCliOpts.AddressCodec,
+			ValidatorAddressCodec: autoCliOpts.ValidatorAddressCodec,
+			ConsensusAddressCodec: autoCliOpts.ConsensusAddressCodec,
+			Keyring:               autoCliOpts.Keyring,
+		},
+		ClientCtx:    autoCliOpts.ClientCtx,
+		TxConfigOpts: autoCliOpts.TxConfigOpts,
+		GetClientConn: func(cmd *cobra.Command) (grpc.ClientConnInterface, error) {
+			return client.GetClientQueryContext(cmd)
+		},
+		// AddQueryConnFlags: sdkflags.AddQueryFlagsToCmd,
+		AddTxConnFlags: sdkflags.AddTxFlagsToCmd,
+	}
+	if err := autoCliOpts.EnhanceRootCommandWithBuilder(rootCmd, builder); err != nil {
+		panic(err)
+	}
 
 	return rootCmd
 }

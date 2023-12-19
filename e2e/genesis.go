@@ -126,7 +126,6 @@ func modifyGenesis(path, moniker, amountStr string, addrAll []sdk.AccAddress, gl
 
 	// modify CometBFT consensus genesis
 	consensusParams := cmttypes.DefaultConsensusParams()
-	consensusParams.Validator.PubKeyTypes = []string{"secp256k1"}
 
 	// collect modified data and overwrite genesis file
 	appGenesis := &genutiltypes.AppGenesis{

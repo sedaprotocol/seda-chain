@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	tmcfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/crypto/secp256k1"
+	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/p2p"
 	"github.com/cometbft/cometbft/privval"
@@ -29,6 +29,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
+	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
+	customstakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
 type validator struct {
@@ -40,6 +42,7 @@ type validator struct {
 	privateKey       cryptotypes.PrivKey
 	consensusKey     privval.FilePVKey
 	consensusPrivKey cryptotypes.PrivKey
+	vrfKey           *utils.VRFKey
 	nodeKey          p2p.NodeKey
 }
 
@@ -123,10 +126,17 @@ func (v *validator) createConsensusKey() error {
 		return err
 	}
 
-	filePV := privval.NewFilePV(secp256k1.GenPrivKey(), config.PrivValidatorKeyFile(), config.PrivValidatorStateFile())
+	filePV := privval.NewFilePV(ed25519.GenPrivKey(), config.PrivValidatorKeyFile(), config.PrivValidatorStateFile())
 	filePV.Save()
 
 	v.consensusKey = filePV.Key
+
+	vrfKeyFile := utils.PrivValidatorKeyFileToVRFKeyFile(config.PrivValidatorKeyFile())
+	vrfKey, err := utils.LoadOrGenVRFKey(vrfKeyFile)
+	if err != nil {
+		return err
+	}
+	v.vrfKey = vrfKey
 
 	return nil
 }
@@ -226,7 +236,7 @@ func (v *validator) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
 		MaxChangeRate: math.LegacyMustNewDecFromStr("0.01"),
 	}
 
-	valPubKey, err := cryptocodec.FromTmPubKeyInterface(v.consensusKey.PubKey)
+	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(v.consensusKey.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -236,9 +246,10 @@ func (v *validator) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
 		return nil, err
 	}
 
-	return stakingtypes.NewMsgCreateValidator(
+	return customstakingtypes.NewMsgCreateValidatorWithVRF(
 		sdk.ValAddress(valAddr).String(),
 		valPubKey,
+		v.vrfKey.PubKey,
 		amount,
 		description,
 		commissionRates,
