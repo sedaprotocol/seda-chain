@@ -38,8 +38,6 @@ var (
 
 // AppModuleBasic defines the basic application module used by the staking module.
 type AppModuleBasic struct {
-	// staking.AppModuleBasic
-
 	cdc codec.Codec
 	ak  types.AccountKeeper
 }
@@ -99,14 +97,11 @@ func (amb AppModuleBasic) GetTxCmd() *cobra.Command {
 // AppModule implements an application module for the staking module.
 type AppModule struct {
 	AppModuleBasic
-	// staking.AppModule
 
 	keeper           *sdkkeeper.Keeper
 	accountKeeper    types.AccountKeeper
 	bankKeeper       sdktypes.BankKeeper
 	randomnessKeeper types.RandomnessKeeper
-	// legacySubspace is used solely for migration of x/params managed parameters
-	// legacySubspace exported.Subspace
 }
 
 // NewAppModule creates a new AppModule object
@@ -116,12 +111,9 @@ func NewAppModule(
 	ak types.AccountKeeper,
 	bk sdktypes.BankKeeper,
 	rk types.RandomnessKeeper,
-	// ls exported.Subspace,
 ) AppModule {
-	// am := staking.NewAppModule(cdc, keeper, ak, bk, ls)
 	return AppModule{
-		AppModuleBasic: AppModuleBasic{cdc: cdc, ak: ak},
-		// AppModule:     am,
+		AppModuleBasic:   AppModuleBasic{cdc: cdc, ak: ak},
 		keeper:           keeper,
 		accountKeeper:    ak,
 		bankKeeper:       bk,
@@ -132,33 +124,11 @@ func NewAppModule(
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), types.NewMsgServerImpl(am.keeper, am.accountKeeper, am.randomnessKeeper))
-
 	sdktypes.RegisterMsgServer(cfg.MsgServer(), NewMsgServerImpl(am.keeper, am.accountKeeper))
 
 	querier := sdkkeeper.Querier{Keeper: am.keeper}
 	sdktypes.RegisterQueryServer(cfg.QueryServer(), querier)
 }
-
-// // RegisterServices registers module services.
-// func (am AppModule) RegisterServices(cfg module.Configurator) {
-// 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
-// 	querier := keeper.Querier{Keeper: am.keeper}
-// 	types.RegisterQueryServer(cfg.QueryServer(), querier)
-
-// 	m := keeper.NewMigrator(am.keeper, am.legacySubspace)
-// 	if err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2); err != nil {
-// 		panic(fmt.Sprintf("failed to migrate x/%s from version 1 to 2: %v", types.ModuleName, err))
-// 	}
-// 	if err := cfg.RegisterMigration(types.ModuleName, 2, m.Migrate2to3); err != nil {
-// 		panic(fmt.Sprintf("failed to migrate x/%s from version 2 to 3: %v", types.ModuleName, err))
-// 	}
-// 	if err := cfg.RegisterMigration(types.ModuleName, 3, m.Migrate3to4); err != nil {
-// 		panic(fmt.Sprintf("failed to migrate x/%s from version 3 to 4: %v", types.ModuleName, err))
-// 	}
-// 	if err := cfg.RegisterMigration(types.ModuleName, 4, m.Migrate4to5); err != nil {
-// 		panic(fmt.Sprintf("failed to migrate x/%s from version 4 to 5: %v", types.ModuleName, err))
-// 	}
-// }
 
 // IsOnePerModuleType implements the depinject.OnePerModuleType interface.
 func (am AppModule) IsOnePerModuleType() {}
