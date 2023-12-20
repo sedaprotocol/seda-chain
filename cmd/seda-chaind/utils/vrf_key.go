@@ -39,7 +39,7 @@ var _ VRFSigner = &VRFKey{}
 type VRFKey struct {
 	Address types.Address    `json:"address"`
 	PubKey  sdkcrypto.PubKey `json:"pub_key"`
-	PrivKey crypto.PrivKey   `json:"priv_key"` // TO-DO can we not export it?
+	PrivKey crypto.PrivKey   `json:"priv_key"`
 
 	filePath string
 	vrf      *vrf.VRFStruct
@@ -52,10 +52,17 @@ func (key VRFKey) Save() error {
 		return fmt.Errorf("key's file path is empty")
 	}
 
+	cmtPubKey, err := cryptocodec.ToCmtPubKeyInterface(key.PubKey)
+	if err != nil {
+		return fmt.Errorf("failed to convert key type from SDK to Comet: %v", err)
+	}
+
 	vrfKeyFile := struct {
-		PrivKey crypto.PrivKey `json:"priv_key"` // TO-DO can we not export it?
+		PrivKey crypto.PrivKey `json:"priv_key"`
+		PubKey  crypto.PubKey  `json:"pub_key"`
 	}{
 		PrivKey: key.PrivKey,
+		PubKey:  cmtPubKey,
 	}
 
 	jsonBytes, err := cmtjson.MarshalIndent(vrfKeyFile, "", "  ")
@@ -189,7 +196,7 @@ func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
 	}
 
 	vrfKeyFile := struct {
-		PrivKey crypto.PrivKey `json:"priv_key"` // TO-DO can we not export it?
+		PrivKey crypto.PrivKey `json:"priv_key"`
 	}{}
 	err = cmtjson.Unmarshal(keyJSONBytes, &vrfKeyFile)
 	if err != nil {

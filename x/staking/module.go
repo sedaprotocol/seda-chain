@@ -15,11 +15,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	sdkcli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
-	"github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/sedaprotocol/seda-chain/x/staking/client/cli"
+	"github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
@@ -87,7 +87,7 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *g
 
 // GetTxCmd returns the root tx command for the staking module.
 func (amb AppModuleBasic) GetTxCmd() *cobra.Command {
-	return sdkcli.NewTxCmd(amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(), amb.cdc.InterfaceRegistry().SigningContext().AddressCodec())
+	return cli.NewTxCmd(amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(), amb.cdc.InterfaceRegistry().SigningContext().AddressCodec())
 }
 
 // ----------------------------------------------------------------------------
@@ -107,7 +107,7 @@ type AppModule struct {
 // NewAppModule creates a new AppModule object
 func NewAppModule(
 	cdc codec.Codec,
-	keeper *keeper.Keeper,
+	keeper *sdkkeeper.Keeper,
 	ak types.AccountKeeper,
 	bk sdktypes.BankKeeper,
 	rk types.RandomnessKeeper,
@@ -123,7 +123,7 @@ func NewAppModule(
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), types.NewMsgServerImpl(am.keeper, am.accountKeeper, am.randomnessKeeper))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper, am.accountKeeper, am.randomnessKeeper))
 	sdktypes.RegisterMsgServer(cfg.MsgServer(), NewMsgServerImpl(am.keeper, am.accountKeeper))
 
 	querier := sdkkeeper.Querier{Keeper: am.keeper}
@@ -138,15 +138,13 @@ func (am AppModule) IsAppModule() {}
 
 // RegisterInvariants registers the staking module invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
-	keeper.RegisterInvariants(ir, am.keeper)
+	sdkkeeper.RegisterInvariants(ir, am.keeper)
 }
 
 // InitGenesis performs genesis initialization for the staking module.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState sdktypes.GenesisState
-
 	cdc.MustUnmarshalJSON(data, &genesisState)
-
 	return am.keeper.InitGenesis(ctx, &genesisState)
 }
 
