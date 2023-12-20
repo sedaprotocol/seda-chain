@@ -1,25 +1,29 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
+	"strings"
+
+	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 
 	"cosmossdk.io/core/address"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/version"
 	stakingcli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	customtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
-/*
 // default values
 var (
 	DefaultTokens                  = sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
@@ -41,16 +45,21 @@ func NewTxCmd(valAddrCodec, ac address.Codec) *cobra.Command {
 	}
 
 	stakingTxCmd.AddCommand(
-		NewCreateValidatorCmd(valAddrCodec),
+		NewCreateValidatorWithVRFCmd(valAddrCodec),
+		// NewCreateValidatorCmd(valAddrCodec),
+		stakingcli.NewEditValidatorCmd(valAddrCodec),
+		stakingcli.NewDelegateCmd(valAddrCodec, ac),
+		stakingcli.NewRedelegateCmd(valAddrCodec, ac),
+		stakingcli.NewUnbondCmd(valAddrCodec, ac),
+		stakingcli.NewCancelUnbondingDelegation(valAddrCodec, ac),
 	)
 
 	return stakingTxCmd
 }
 
-// NewCreateValidatorCmd returns a CLI command handler for creating a MsgCreateValidator transaction.
-func NewCreateValidatorCmd(ac address.Codec) *cobra.Command {
+func NewCreateValidatorWithVRFCmd(ac address.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-validator [path/to/validator.json]",
+		Use:   "create-validator-vrf [path/to/validator.json]",
 		Short: "create new validator initialized with a self-delegation to it",
 		Args:  cobra.ExactArgs(1),
 		Long:  `Create a new validator initialized with a self-delegation by submitting a JSON file with the new validator details.`,
@@ -61,7 +70,14 @@ $ %s tx staking create-validator path/to/validator.json --from keyname
 Where validator.json contains:
 
 {
-	"pubkey": {"@type":"/cosmos.crypto.ed25519.PubKey","key":"oWg2ISpLF405Jcm2vXV+2v4fnjodh6aafuIdeoW+rUw="},
+	"pubkey": {
+		"@type":"/cosmos.crypto.ed25519.PubKey",
+		"key":"oWg2ISpLF405Jcm2vXV+2v4fnjodh6aafuIdeoW+rUw="
+	},
+	"vrf_pubkey": {
+		"type": "tendermint/PubKeySecp256k1",
+		"value": "At4W/CxKrv8C6HqLFC9ybTPSJgtAkWvF2+Uj4hQLiJcM"
+	},
 	"amount": "1000000stake",
 	"moniker": "myvalidator",
 	"identity": "optional identity signature (ex. UPort or Keybase)",
@@ -92,7 +108,7 @@ where we can get the pubkey using "%s tendermint show-validator"
 				return err
 			}
 
-			txf, msg, err := newBuildCreateValidatorMsg(clientCtx, txf, cmd.Flags(), validator, ac)
+			txf, msg, err := newBuildCreateValidatorWithVRFMsg(clientCtx, txf, cmd.Flags(), validator, ac)
 			if err != nil {
 				return err
 			}
@@ -110,7 +126,7 @@ where we can get the pubkey using "%s tendermint show-validator"
 	return cmd
 }
 
-func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *flag.FlagSet, val validator, valAc address.Codec) (tx.Factory, *types.MsgCreateValidator, error) {
+func newBuildCreateValidatorWithVRFMsg(clientCtx client.Context, txf tx.Factory, fs *flag.FlagSet, val validator, valAc address.Codec) (tx.Factory, *customtypes.MsgCreateValidatorWithVRF, error) {
 	valAddr := clientCtx.GetFromAddress()
 
 	description := types.NewDescription(
@@ -125,8 +141,8 @@ func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *fl
 	if err != nil {
 		return txf, nil, err
 	}
-	msg, err := types.NewMsgCreateValidator(
-		valStr, val.PubKey, val.Amount, description, val.CommissionRates, val.MinSelfDelegation,
+	msg, err := customtypes.NewMsgCreateValidatorWithVRF(
+		valStr, val.PubKey, val.VRFPubKey, val.Amount, description, val.CommissionRates, val.MinSelfDelegation,
 	)
 	if err != nil {
 		return txf, nil, err
@@ -137,9 +153,9 @@ func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *fl
 
 	genOnly, _ := fs.GetBool(flags.FlagGenerateOnly)
 	if genOnly {
-		ip, _ := fs.GetString(FlagIP)
-		p2pPort, _ := fs.GetUint(FlagP2PPort)
-		nodeID, _ := fs.GetString(FlagNodeID)
+		ip, _ := fs.GetString(stakingcli.FlagIP)
+		p2pPort, _ := fs.GetUint(stakingcli.FlagP2PPort)
+		nodeID, _ := fs.GetString(stakingcli.FlagNodeID)
 
 		if nodeID != "" && ip != "" && p2pPort > 0 {
 			txf = txf.WithMemo(fmt.Sprintf("%s@%s:%d", nodeID, ip, p2pPort))
@@ -148,37 +164,6 @@ func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *fl
 
 	return txf, msg, nil
 }
-
-// Return the flagset, particular flags, and a description of defaults
-// this is anticipated to be used with the gen-tx
-func CreateValidatorMsgFlagSet(ipDefault string) (fs *flag.FlagSet, defaultsDesc string) {
-	fsCreateValidator := flag.NewFlagSet("", flag.ContinueOnError)
-	fsCreateValidator.String(FlagIP, ipDefault, "The node's public P2P IP")
-	fsCreateValidator.Uint(FlagP2PPort, 26656, "The node's public P2P port")
-	fsCreateValidator.String(FlagNodeID, "", "The node's NodeID")
-	fsCreateValidator.String(FlagMoniker, "", "The validator's (optional) moniker")
-	fsCreateValidator.String(FlagWebsite, "", "The validator's (optional) website")
-	fsCreateValidator.String(FlagSecurityContact, "", "The validator's (optional) security contact email")
-	fsCreateValidator.String(FlagDetails, "", "The validator's (optional) details")
-	fsCreateValidator.String(FlagIdentity, "", "The (optional) identity signature (ex. UPort or Keybase)")
-	fsCreateValidator.AddFlagSet(FlagSetCommissionCreate())
-	fsCreateValidator.AddFlagSet(FlagSetMinSelfDelegation())
-	fsCreateValidator.AddFlagSet(FlagSetAmount())
-	fsCreateValidator.AddFlagSet(FlagSetPublicKey())
-
-	defaultsDesc = fmt.Sprintf(`
-	delegation amount:           %s
-	commission rate:             %s
-	commission max rate:         %s
-	commission max change rate:  %s
-	minimum self delegation:     %s
-`, defaultAmount, defaultCommissionRate,
-		defaultCommissionMaxRate, defaultCommissionMaxChangeRate,
-		defaultMinSelfDelegation)
-
-	return fsCreateValidator, defaultsDesc
-}
-*/
 
 type TxCreateValidatorConfig struct {
 	stakingcli.TxCreateValidatorConfig
@@ -247,29 +232,4 @@ func BuildCreateValidatorWithVRFMsg(clientCtx client.Context, config TxCreateVal
 	}
 
 	return txBldr, msg, nil
-}
-
-func buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr string) (commission types.CommissionRates, err error) {
-	if rateStr == "" || maxRateStr == "" || maxChangeRateStr == "" {
-		return commission, errors.New("must specify all validator commission parameters")
-	}
-
-	rate, err := math.LegacyNewDecFromStr(rateStr)
-	if err != nil {
-		return commission, err
-	}
-
-	maxRate, err := math.LegacyNewDecFromStr(maxRateStr)
-	if err != nil {
-		return commission, err
-	}
-
-	maxChangeRate, err := math.LegacyNewDecFromStr(maxChangeRateStr)
-	if err != nil {
-		return commission, err
-	}
-
-	commission = types.NewCommissionRates(rate, maxRate, maxChangeRate)
-
-	return commission, nil
 }

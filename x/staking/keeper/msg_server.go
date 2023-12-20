@@ -1,37 +1,42 @@
-package types
+package keeper
 
 import (
 	"context"
 
+	addresscodec "cosmossdk.io/core/address"
 	errorsmod "cosmossdk.io/errors"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
-var _ MsgServer = msgServer{}
+var _ types.MsgServer = msgServer{}
 
 type msgServer struct {
 	stakingtypes.MsgServer
-	stakingKeeper    *stakingkeeper.Keeper
-	accountKeeper    AccountKeeper
-	randomnessKeeper RandomnessKeeper
+	stakingKeeper         *stakingkeeper.Keeper
+	accountKeeper         types.AccountKeeper
+	randomnessKeeper      types.RandomnessKeeper
+	validatorAddressCodec addresscodec.Codec
 }
 
-func NewMsgServerImpl(keeper *stakingkeeper.Keeper, accKeeper AccountKeeper, randKeeper RandomnessKeeper) MsgServer {
+func NewMsgServerImpl(keeper *stakingkeeper.Keeper, accKeeper types.AccountKeeper, randKeeper types.RandomnessKeeper) types.MsgServer {
 	ms := &msgServer{
-		MsgServer:        stakingkeeper.NewMsgServerImpl(keeper),
-		stakingKeeper:    keeper,
-		accountKeeper:    accKeeper,
-		randomnessKeeper: randKeeper,
+		MsgServer:             stakingkeeper.NewMsgServerImpl(keeper),
+		stakingKeeper:         keeper,
+		accountKeeper:         accKeeper,
+		randomnessKeeper:      randKeeper,
+		validatorAddressCodec: keeper.ValidatorAddressCodec(),
 	}
 	return ms
 }
 
-func (k msgServer) CreateValidatorWithVRF(ctx context.Context, msg *MsgCreateValidatorWithVRF) (*MsgCreateValidatorWithVRFResponse, error) {
-	if err := msg.Validate(); err != nil {
+func (k msgServer) CreateValidatorWithVRF(ctx context.Context, msg *types.MsgCreateValidatorWithVRF) (*types.MsgCreateValidatorWithVRFResponse, error) {
+	if err := msg.Validate(k.validatorAddressCodec); err != nil {
 		return nil, err
 	}
 
@@ -62,5 +67,5 @@ func (k msgServer) CreateValidatorWithVRF(ctx context.Context, msg *MsgCreateVal
 
 	k.MsgServer.CreateValidator(ctx, sdkMsg)
 
-	return &MsgCreateValidatorWithVRFResponse{}, nil
+	return &types.MsgCreateValidatorWithVRFResponse{}, nil
 }

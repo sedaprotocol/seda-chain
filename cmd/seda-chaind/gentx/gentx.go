@@ -183,14 +183,14 @@ $ %s gentx my-key-name 1000000seda --home=/path/to/home/dir --keyring-backend=os
 			createValCfg.Amount = amount
 
 			// create a 'create-validator' message
-			txBldr, msg, err := customcli.BuildCreateValidatorWithVRFMsg(clientCtx, createValCfg, txFactory, true, valAdddressCodec)
+			txf, msg, err := customcli.BuildCreateValidatorWithVRFMsg(clientCtx, createValCfg, txFactory, true, valAdddressCodec)
 			if err != nil {
-				return errors.Wrap(err, "failed to build create-validator message")
+				return errors.Wrap(err, "failed to build create-validator-with-vrf message")
 			}
 
 			if key.GetType() == keyring.TypeOffline || key.GetType() == keyring.TypeMulti {
 				cmd.PrintErrln("Offline key passed in. Use `tx sign` command to sign.")
-				return txBldr.PrintUnsignedTx(clientCtx, msg)
+				return txf.PrintUnsignedTx(clientCtx, msg)
 			}
 
 			// write the unsigned transaction to the buffer
@@ -203,7 +203,7 @@ $ %s gentx my-key-name 1000000seda --home=/path/to/home/dir --keyring-backend=os
 				}
 			}
 
-			if err = txBldr.PrintUnsignedTx(clientCtx, msg); err != nil {
+			if err = txf.PrintUnsignedTx(clientCtx, msg); err != nil {
 				return errors.Wrap(err, "failed to print unsigned std tx")
 			}
 

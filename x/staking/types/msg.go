@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 
+	"cosmossdk.io/core/address"
 	"cosmossdk.io/math"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -45,11 +46,20 @@ func NewMsgCreateValidatorWithVRF(
 }
 
 // Validate validates the MsgCreateValidatorWithVRF sdk msg.
-func (msg MsgCreateValidatorWithVRF) Validate() error {
+func (msg MsgCreateValidatorWithVRF) Validate(ac address.Codec) error {
 	if msg.Pubkey == nil || msg.VrfPubkey == nil {
 		return fmt.Errorf("empty validator public key or VRF public key")
 	}
-	return nil
+
+	msgCreateVal := &types.MsgCreateValidator{
+		Description:       msg.Description,
+		Commission:        msg.Commission,
+		MinSelfDelegation: msg.MinSelfDelegation,
+		ValidatorAddress:  msg.ValidatorAddress,
+		Pubkey:            msg.Pubkey,
+		Value:             msg.Value,
+	}
+	return msgCreateVal.Validate(ac)
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
