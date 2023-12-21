@@ -12,6 +12,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
+var (
+	_ sdk.Msg                            = &MsgCreateValidatorWithVRF{}
+	_ codectypes.UnpackInterfacesMessage = (*MsgCreateValidatorWithVRF)(nil)
+)
+
 // NewMsgCreateValidator creates a new MsgCreateValidator instance.
 // Delegator address and validator address are the same.
 func NewMsgCreateValidatorWithVRF(

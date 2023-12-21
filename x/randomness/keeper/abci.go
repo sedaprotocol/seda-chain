@@ -7,6 +7,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -15,7 +16,19 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/randomness/types"
 )
 
-func PrepareProposalHandler(
+type ProposalHandler struct {
+	txVerifier baseapp.ProposalTxVerifier
+	txSelector baseapp.TxSelector
+}
+
+func NewDefaultProposalHandler(txVerifier baseapp.ProposalTxVerifier) *ProposalHandler {
+	return &ProposalHandler{
+		txVerifier: txVerifier,
+		txSelector: baseapp.NewDefaultTxSelector(),
+	}
+}
+
+func (h *ProposalHandler) PrepareProposalHandler(
 	txConfig client.TxConfig,
 	vrfSigner utils.VRFSigner,
 	keeper Keeper,
@@ -23,16 +36,41 @@ func PrepareProposalHandler(
 	stakingKeeper types.StakingKeeper,
 ) sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (*abci.ResponsePrepareProposal, error) {
-		if vrfSigner == nil {
-			return &abci.ResponsePrepareProposal{Txs: [][]byte{}}, nil
+		if vrfSigner.IsNil() {
+			return nil, fmt.Errorf("vrf signer is nil")
 		}
 
-		// TO-DO run DefaultProposalHandler.PrepareProposalHandler first?
+		// Default prepare proposal - check max block gas and req.MaxTxBytes
+		var maxBlockGas uint64
+		if b := ctx.ConsensusParams().Block; b != nil {
+			maxBlockGas = uint64(b.MaxGas)
+		}
 
+		defer h.txSelector.Clear()
+
+		for _, txBz := range req.Txs {
+			tx, err := h.txVerifier.TxDecode(txBz)
+			if err != nil {
+				return nil, err
+			}
+
+			// do not include any NewSeed txs
+			_, ok := decodeNewSeedTx(tx)
+			if ok {
+				continue
+			}
+
+			stop := h.txSelector.SelectTxForProposal(ctx, uint64(req.MaxTxBytes), maxBlockGas, tx, txBz)
+			if stop {
+				break
+			}
+		}
+
+		// Seed transaction
 		// alpha = (seed_{i-1} || timestamp)
 		prevSeed := keeper.GetSeed(ctx)
 		if prevSeed == "" {
-			panic("seed should never be empty")
+			return nil, fmt.Errorf("previous seed is empty - this should never happen")
 		}
 		timestamp, err := req.Time.MarshalBinary()
 		if err != nil {
@@ -46,7 +84,7 @@ func PrepareProposalHandler(
 			return nil, err
 		}
 
-		// create a NewSeed tx
+		// generate and sign NewSeed tx
 		pubKey, err := keeper.GetValidatorVRFPubKey(ctx, sdk.ConsAddress(req.ProposerAddress).String())
 		if err != nil {
 			return nil, err
@@ -67,20 +105,40 @@ func PrepareProposalHandler(
 
 		// prepend to list of txs and return
 		res := new(abci.ResponsePrepareProposal)
-		res.Txs = append([][]byte{newSeedTx}, req.Txs...)
+		res.Txs = append([][]byte{newSeedTx}, h.txSelector.SelectedTxs(ctx)...)
 		return res, nil
 	}
 }
 
-func ProcessProposalHandler(
-	txConfig client.TxConfig,
+func (h *ProposalHandler) ProcessProposalHandler(
 	vrfSigner utils.VRFSigner,
 	keeper Keeper,
 	stakingKeeper types.StakingKeeper,
 ) sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
-		msg, err := decodeNewSeedTx(txConfig, req.Txs[0])
+		defer h.txSelector.Clear()
+
+		for _, txBz := range req.Txs[1:] {
+			tx, err := h.txVerifier.TxDecode(txBz)
+			if err != nil {
+				return nil, err
+			}
+
+			// reject proposal that includes NewSeed tx in any position other
+			// than top of tx list
+			_, ok := decodeNewSeedTx(tx)
+			if ok {
+				return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+			}
+		}
+
+		tx, err := h.txVerifier.TxDecode(req.Txs[0])
 		if err != nil {
+			return nil, err
+		}
+
+		msg, ok := decodeNewSeedTx(tx)
+		if !ok {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
@@ -88,9 +146,6 @@ func ProcessProposalHandler(
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT},
 				fmt.Errorf("the NewSeed transaction must be from the block proposer")
 		}
-
-		// TO-DO run DefaultProposalHandler.ProcessProposalHandler first?
-		// TO-DO Validate()?
 
 		// get block proposer's validator public key
 		pubKey, err := keeper.GetValidatorVRFPubKey(ctx, sdk.ConsAddress(req.ProposerAddress).String())
@@ -165,18 +220,14 @@ func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSign
 	return txBytes, nil
 }
 
-func decodeNewSeedTx(txConfig client.TxConfig, txBytes []byte) (*types.MsgNewSeed, error) {
-	tx, err := txConfig.TxDecoder()(txBytes)
-	if err != nil {
-		return nil, err
-	}
+func decodeNewSeedTx(tx sdk.Tx) (*types.MsgNewSeed, bool) {
 	msgs := tx.GetMsgs()
 	if len(msgs) != 1 {
-		return nil, err
+		return nil, false
 	}
 	msgNewSeed, ok := msgs[0].(*types.MsgNewSeed)
 	if !ok {
-		return nil, err
+		return nil, false
 	}
-	return msgNewSeed, nil
+	return msgNewSeed, true
 }
