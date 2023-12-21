@@ -130,8 +130,8 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/gentx"
-	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 	"github.com/sedaprotocol/seda-chain/docs"
 	randomness "github.com/sedaprotocol/seda-chain/x/randomness"
 	randomnesskeeper "github.com/sedaprotocol/seda-chain/x/randomness/keeper"

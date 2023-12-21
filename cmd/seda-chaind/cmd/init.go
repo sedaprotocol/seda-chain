@@ -20,7 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 )
 
 func readInMnemonic(cmd *cobra.Command) (string, error) {

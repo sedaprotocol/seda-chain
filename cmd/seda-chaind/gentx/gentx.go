@@ -27,7 +27,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 
-	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	customcli "github.com/sedaprotocol/seda-chain/x/staking/client/cli"
 	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 )
