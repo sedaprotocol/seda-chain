@@ -40,30 +40,11 @@ func (h *ProposalHandler) PrepareProposalHandler(
 			return nil, fmt.Errorf("vrf signer is nil")
 		}
 
-		// default prepare proposal - check max block gas and req.MaxTxBytes
+		defer h.txSelector.Clear()
+
 		var maxBlockGas uint64
 		if b := ctx.ConsensusParams().Block; b != nil {
 			maxBlockGas = uint64(b.MaxGas)
-		}
-
-		defer h.txSelector.Clear()
-
-		for _, txBz := range req.Txs {
-			tx, err := h.txVerifier.TxDecode(txBz)
-			if err != nil {
-				return nil, err
-			}
-
-			// do not include any NewSeed txs
-			_, ok := decodeNewSeedTx(tx)
-			if ok {
-				continue
-			}
-
-			stop := h.txSelector.SelectTxForProposal(ctx, uint64(req.MaxTxBytes), maxBlockGas, tx, txBz)
-			if stop {
-				break
-			}
 		}
 
 		// Seed transaction
@@ -94,7 +75,7 @@ func (h *ProposalHandler) PrepareProposalHandler(
 		if err != nil {
 			return nil, err
 		}
-		newSeedTx, err := generateAndSignNewSeedTx(ctx, txConfig, vrfSigner, account, &types.MsgNewSeed{
+		newSeedTx, newSeedTxBz, err := generateAndSignNewSeedTx(ctx, txConfig, vrfSigner, account, &types.MsgNewSeed{
 			Proposer: sdk.AccAddress(req.ProposerAddress).String(),
 			Pi:       hex.EncodeToString(pi),
 			Beta:     hex.EncodeToString(beta),
@@ -103,9 +84,32 @@ func (h *ProposalHandler) PrepareProposalHandler(
 			return nil, err
 		}
 
-		// prepend to list of txs and return
+		stop := h.txSelector.SelectTxForProposal(ctx, uint64(req.MaxTxBytes), maxBlockGas, newSeedTx, newSeedTxBz)
+		if stop {
+			return nil, fmt.Errorf("max block gas exceeded by just new seed tx")
+		}
+
+		// perform mandatory checks on the other txs
+		for _, txBz := range req.Txs {
+			tx, err := h.txVerifier.TxDecode(txBz)
+			if err != nil {
+				return nil, err
+			}
+
+			// do not include any NewSeed txs
+			_, ok := decodeNewSeedTx(tx)
+			if ok {
+				continue
+			}
+
+			stop := h.txSelector.SelectTxForProposal(ctx, uint64(req.MaxTxBytes), maxBlockGas, tx, txBz)
+			if stop {
+				break
+			}
+		}
+
 		res := new(abci.ResponsePrepareProposal)
-		res.Txs = append([][]byte{newSeedTx}, h.txSelector.SelectedTxs(ctx)...)
+		res.Txs = h.txSelector.SelectedTxs(ctx)
 		return res, nil
 	}
 }
@@ -117,41 +121,26 @@ func (h *ProposalHandler) ProcessProposalHandler(
 ) sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
 		var totalTxGas uint64
-
 		var maxBlockGas int64
 		if b := ctx.ConsensusParams().Block; b != nil {
 			maxBlockGas = b.MaxGas
-		}
-
-		for _, txBytes := range req.Txs[1:] {
-			tx, err := h.txVerifier.ProcessProposalVerifyTx(txBytes)
-			if err != nil {
-				return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
-			}
-
-			// reject proposal that includes NewSeed tx in any position other
-			// than top of tx list
-			_, ok := decodeNewSeedTx(tx)
-			if ok {
-				return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
-			}
-
-			if maxBlockGas > 0 {
-				gasTx, ok := tx.(baseapp.GasTx)
-				if ok {
-					totalTxGas += gasTx.GetGas()
-				}
-
-				if totalTxGas > uint64(maxBlockGas) {
-					return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
-				}
-			}
 		}
 
 		// process the NewSeed tx
 		tx, err := h.txVerifier.TxDecode(req.Txs[0])
 		if err != nil {
 			return nil, err
+		}
+
+		if maxBlockGas > 0 {
+			gasTx, ok := tx.(baseapp.GasTx)
+			if ok {
+				totalTxGas += gasTx.GetGas()
+			}
+
+			if totalTxGas > uint64(maxBlockGas) {
+				return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+			}
 		}
 
 		msg, ok := decodeNewSeedTx(tx)
@@ -200,18 +189,44 @@ func (h *ProposalHandler) ProcessProposalHandler(
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
+		// loop through the other txs to perform mandatory checks
+		for _, txBytes := range req.Txs[1:] {
+			tx, err := h.txVerifier.ProcessProposalVerifyTx(txBytes)
+			if err != nil {
+				return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+			}
+
+			// reject proposal that includes NewSeed tx in any position other
+			// than top of tx list
+			_, ok := decodeNewSeedTx(tx)
+			if ok {
+				return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+			}
+
+			if maxBlockGas > 0 {
+				gasTx, ok := tx.(baseapp.GasTx)
+				if ok {
+					totalTxGas += gasTx.GetGas()
+				}
+
+				if totalTxGas > uint64(maxBlockGas) {
+					return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+				}
+			}
+		}
+
 		return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
 	}
 }
 
 // generateAndSignNewSeedTx generates and signs a transaction containing
 // a given NewSeed message. It returns a transaction encoded into bytes.
-func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSigner utils.VRFSigner, account sdk.AccountI, msg *types.MsgNewSeed) ([]byte, error) {
+func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSigner utils.VRFSigner, account sdk.AccountI, msg *types.MsgNewSeed) (sdk.Tx, []byte, error) {
 	// build a transaction containing the given message
 	txBuilder := txConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msg)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	txBuilder.SetGasLimit(200000) // TO-DO what number to put here?
 	txBuilder.SetFeeAmount(sdk.NewCoins())
@@ -226,15 +241,15 @@ func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSign
 		account,
 	)
 	if err := txBuilder.SetSignatures(sig); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	tx := txBuilder.GetTx()
 	txBytes, err := txConfig.TxEncoder()(tx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return txBytes, nil
+	return tx, txBytes, nil
 }
 
 func decodeNewSeedTx(tx sdk.Tx) (*types.MsgNewSeed, bool) {
