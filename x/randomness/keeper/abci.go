@@ -40,7 +40,7 @@ func (h *ProposalHandler) PrepareProposalHandler(
 			return nil, fmt.Errorf("vrf signer is nil")
 		}
 
-		// Default prepare proposal - check max block gas and req.MaxTxBytes
+		// default prepare proposal - check max block gas and req.MaxTxBytes
 		var maxBlockGas uint64
 		if b := ctx.ConsensusParams().Block; b != nil {
 			maxBlockGas = uint64(b.MaxGas)
@@ -132,6 +132,7 @@ func (h *ProposalHandler) ProcessProposalHandler(
 			}
 		}
 
+		// process the NewSeed tx
 		tx, err := h.txVerifier.TxDecode(req.Txs[0])
 		if err != nil {
 			return nil, err
