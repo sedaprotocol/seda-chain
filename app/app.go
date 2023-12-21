@@ -51,7 +51,6 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -320,10 +319,6 @@ func NewApp(
 	/* =================================================== */
 	/*                   BASEAPP CONFIG                    */
 	/* =================================================== */
-	nonceMempool := mempool.NewSenderNonceMempool()
-	mempoolOpt := baseapp.SetMempool(nonceMempool)
-	baseAppOptions = append(baseAppOptions, mempoolOpt)
-
 	bApp := baseapp.NewBaseApp(Name, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
@@ -923,11 +918,15 @@ func NewApp(
 	if vrfKey == nil || err != nil {
 		// TO-DO if validator, panic
 		app.Logger().Info("failed to load vrf key")
-		vrfKey = nil
+		if err != nil {
+			app.Logger().Error(err.Error())
+		}
 	}
 
+	proposalHandler := randomnesskeeper.NewDefaultProposalHandler(bApp)
+
 	app.SetPrepareProposal(
-		randomnesskeeper.PrepareProposalHandler(
+		proposalHandler.PrepareProposalHandler(
 			txConfig,
 			vrfKey,
 			app.RandomnessKeeper,
@@ -937,8 +936,7 @@ func NewApp(
 	)
 
 	app.SetProcessProposal(
-		randomnesskeeper.ProcessProposalHandler(
-			txConfig,
+		proposalHandler.ProcessProposalHandler(
 			vrfKey,
 			app.RandomnessKeeper,
 			app.StakingKeeper,

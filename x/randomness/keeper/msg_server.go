@@ -21,22 +21,10 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 func (k msgServer) NewSeed(goCtx context.Context, msg *types.MsgNewSeed) (*types.MsgNewSeedResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// TO-DO spam prevention?
-
-	k.Keeper.SetSeed(ctx, msg.Beta)
+	sdkCtx := sdk.UnwrapSDKContext(goCtx)
+	k.Keeper.SetSeed(sdkCtx, msg.Beta)
 
 	// TO-DO event?
-	// err = ctx.EventManager().EmitTypedEvent(
-	// 	&types.EventNewSeed{
-	// 		Hash:     hashString,
-	// 		WasmType: msg.WasmType,
-	// 		Bytecode: msg.Wasm,
-	// 	})
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	return &types.MsgNewSeedResponse{}, nil
 }

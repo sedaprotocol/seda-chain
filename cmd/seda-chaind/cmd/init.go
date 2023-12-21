@@ -7,16 +7,18 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cosmos/go-bip39"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	cfg "github.com/cometbft/cometbft/config"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/privval"
-	"github.com/cometbft/cometbft/types"
+
+	// "github.com/cometbft/cometbft/types"
 
 	"github.com/cosmos/cosmos-sdk/client/input"
-	"github.com/cosmos/go-bip39"
+	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 
 	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 )
@@ -76,16 +78,11 @@ func downloadAndApplyNetworkConfig(network, moniker string, config *cfg.Config) 
 	}
 
 	// check genesis file
-	genFile := config.GenesisFile()
-	jsonBlob, err := os.ReadFile(genFile)
+	appGenesis, err := types.AppGenesisFromFile(config.GenesisFile())
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrapf(err, "failed to read genesis doc file %s", config.GenesisFile())
 	}
-	genDoc, err := types.GenesisDocFromJSON(jsonBlob)
-	if err != nil {
-		return "", "", errors.Wrapf(err, "error reading GenesisDoc at %s", genFile)
-	}
-	chainID = genDoc.ChainID
+	chainID = appGenesis.ChainID
 
 	// obtain seeds from seeds file, if exists, and write to config file
 	seedsBytes, err := os.ReadFile(seedsFile)

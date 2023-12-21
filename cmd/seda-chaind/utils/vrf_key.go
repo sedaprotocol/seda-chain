@@ -32,6 +32,7 @@ type VRFSigner interface {
 	VRFVerify(publicKey, alpha, pi []byte) (beta []byte, err error)
 	SignTransaction(ctx sdk.Context, txBuilder client.TxBuilder, txConfig client.TxConfig,
 		signMode signing.SignMode, account sdk.AccountI) (signing.SignatureV2, error)
+	IsNil() bool
 }
 
 var _ VRFSigner = &VRFKey{}
@@ -148,6 +149,10 @@ func (v *VRFKey) SignTransaction(
 		Sequence: account.GetSequence(),
 	}
 	return sigV2, nil
+}
+
+func (v *VRFKey) IsNil() bool {
+	return v == nil
 }
 
 // NewVRFKey generates a new VRFKey from the given key and key file path.

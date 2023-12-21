@@ -171,12 +171,13 @@ $ %s init join moniker --network devnet
 
 			network, _ := cmd.Flags().GetString(FlagNetwork)
 			var seeds, chainID string
-			if network == "mainnet" || network == "devnet" || network == "testnet" || network == "localnet" {
+			switch network {
+			case "mainnet", "devnet", "testnet", "localnet":
 				chainID, seeds, err = downloadAndApplyNetworkConfig(network, args[0], config)
 				if err != nil {
 					return err
 				}
-			} else {
+			default:
 				return fmt.Errorf("unsupported network type: %s", network)
 			}
 
@@ -205,6 +206,5 @@ $ %s init join moniker --network devnet
 	if err != nil {
 		panic(err)
 	}
-
 	return cmd
 }
