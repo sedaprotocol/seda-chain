@@ -124,6 +124,27 @@ func (v *VRFKey) SignTransaction(
 		Address:       account.GetAddress().String(),
 	}
 
+	// For SIGN_MODE_DIRECT, calling SetSignatures calls setSignerInfos on
+	// TxBuilder under the hood, and SignerInfos is needed to generate the sign
+	// bytes. This is the reason for setting SetSignatures here, with a nil
+	// signature.
+	//
+	// Note: This line is not needed for SIGN_MODE_LEGACY_AMINO, but putting it
+	// also doesn't affect its generated sign bytes, so for code's simplicity
+	// sake, we put it here.
+	nilSig := txsigning.SignatureV2{
+		PubKey: v.PubKey,
+		Data: &txsigning.SingleSignatureData{
+			SignMode:  signMode,
+			Signature: nil,
+		},
+		Sequence: account.GetSequence(),
+	}
+
+	if err := txBuilder.SetSignatures(nilSig); err != nil {
+		return sigV2, err
+	}
+
 	bytesToSign, err := authsigning.GetSignBytesAdapter(
 		context.Background(),
 		txConfig.SignModeHandler(),

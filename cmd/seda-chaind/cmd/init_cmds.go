@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 
-	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 )
 
 const (

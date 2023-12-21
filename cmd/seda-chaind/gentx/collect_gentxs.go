@@ -24,7 +24,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 

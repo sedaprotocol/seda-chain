@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 
-	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/randomness/types"
 )
 
@@ -116,12 +116,17 @@ func (h *ProposalHandler) ProcessProposalHandler(
 	stakingKeeper types.StakingKeeper,
 ) sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
-		defer h.txSelector.Clear()
+		var totalTxGas uint64
 
-		for _, txBz := range req.Txs[1:] {
-			tx, err := h.txVerifier.TxDecode(txBz)
+		var maxBlockGas int64
+		if b := ctx.ConsensusParams().Block; b != nil {
+			maxBlockGas = b.MaxGas
+		}
+
+		for _, txBytes := range req.Txs[1:] {
+			tx, err := h.txVerifier.ProcessProposalVerifyTx(txBytes)
 			if err != nil {
-				return nil, err
+				return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 			}
 
 			// reject proposal that includes NewSeed tx in any position other
@@ -129,6 +134,17 @@ func (h *ProposalHandler) ProcessProposalHandler(
 			_, ok := decodeNewSeedTx(tx)
 			if ok {
 				return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+			}
+
+			if maxBlockGas > 0 {
+				gasTx, ok := tx.(baseapp.GasTx)
+				if ok {
+					totalTxGas += gasTx.GetGas()
+				}
+
+				if totalTxGas > uint64(maxBlockGas) {
+					return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+				}
 			}
 		}
 
