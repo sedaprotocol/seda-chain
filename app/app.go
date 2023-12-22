@@ -104,13 +104,8 @@ import (
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	ica "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
-	icahost "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host"
-	icahostkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+
+	// ibc
 	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
@@ -121,11 +116,20 @@ import (
 	ibcporttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+
+	// ica
+	ica "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/docs"
 	randomness "github.com/sedaprotocol/seda-chain/x/randomness"
-	"github.com/sedaprotocol/seda-chain/x/randomness/keeper"
 	randomnesskeeper "github.com/sedaprotocol/seda-chain/x/randomness/keeper"
 	randomnesstypes "github.com/sedaprotocol/seda-chain/x/randomness/types"
 	customstaking "github.com/sedaprotocol/seda-chain/x/staking"
@@ -165,6 +169,7 @@ var (
 		capability.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ibc.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 		params.AppModuleBasic{},
 		transfer.AppModuleBasic{},
@@ -172,7 +177,6 @@ var (
 		wasmstorage.AppModuleBasic{},
 		randomness.AppModuleBasic{},
 		crisis.AppModuleBasic{},
-		// ibctm.AppModuleBasic{},
 		// solomachine.AppModuleBasic{},
 	)
 
@@ -568,9 +572,9 @@ func NewApp(
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
-	randomnessQueryPlugin := keeper.NewQuerierImpl(app.RandomnessKeeper)
+	randomnessQueryPlugin := randomnesskeeper.NewQuerierImpl(app.RandomnessKeeper)
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
-		Custom: keeper.SeedQueryPlugin(randomnessQueryPlugin),
+		Custom: randomnesskeeper.SeedQueryPlugin(randomnessQueryPlugin),
 	})
 	wasmOpts := []wasmkeeper.Option{queryPluginOpt}
 
