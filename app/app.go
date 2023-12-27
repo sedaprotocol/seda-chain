@@ -139,7 +139,8 @@ import (
 )
 
 const (
-	Name = "seda-chain"
+	Name          = "seda-chain"
+	DefaultMaxGas = 100000000
 )
 
 var (
@@ -962,6 +963,13 @@ func (app *App) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.
 	var genesisState GenesisState
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
+	}
+	// override block max gas
+	if req.ConsensusParams.Block.MaxGas != DefaultMaxGas {
+		req.ConsensusParams.Block.MaxGas = DefaultMaxGas
+	}
+	if err := app.StoreConsensusParams(ctx, *req.ConsensusParams); err != nil {
+		return nil, fmt.Errorf("failed to store consensus params: %w", err)
 	}
 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
