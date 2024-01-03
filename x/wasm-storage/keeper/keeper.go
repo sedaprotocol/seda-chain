@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 
 	"cosmossdk.io/log"
@@ -28,6 +27,11 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey, authority st
 		authority:  authority,
 		wasmKeeper: wk,
 	}
+}
+
+// GetAuthority returns the module's authority.
+func (k Keeper) GetAuthority() string {
+	return k.authority
 }
 
 // SetDataRequestWasm stores Data Request Wasm using its hash as the key.
@@ -157,21 +161,13 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 }
 
 // SetParams sets the parameters in the store.
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&params)
-	store.Set([]byte(types.KeyParams), bz)
-}
-
-// SetMaxWasmSize updates the MaxWasmSize parameter.
-func (k Keeper) SetMaxWasmSize(ctx sdk.Context, maxWasmSize uint64) error {
-	if maxWasmSize == 0 {
-		return errors.New("MaxWasmSize cannot be zero")
+	bz, err := k.cdc.Marshal(&params)
+	if err != nil {
+		return err
 	}
-
-	params := k.GetParams(ctx)
-	params.MaxWasmSize = maxWasmSize
-	k.SetParams(ctx, params)
+	store.Set([]byte(types.KeyParams), bz)
 
 	return nil
 }

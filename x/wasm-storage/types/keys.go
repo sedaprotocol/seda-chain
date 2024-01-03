@@ -18,9 +18,6 @@ const (
 
 	// KeyParams is the store key for the parameters.
 	KeyParams = "params"
-
-	// KeyMaxWasmSize defines the key for the MaxWasmSize parameter
-	KeyMaxWasmSize = "max-wasm-size"
 )
 
 var (

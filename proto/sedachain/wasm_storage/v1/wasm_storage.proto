@@ -28,6 +28,8 @@ enum WasmType {
       [ (gogoproto.enumvalue_customname) = "WasmTypeRelayer" ];
 }
 
-message Params { 
-    uint64 max_wasm_size = 1; 
+message Params {
+  option (gogoproto.equal) = true;
+
+  uint64 max_wasm_size = 1;
 }

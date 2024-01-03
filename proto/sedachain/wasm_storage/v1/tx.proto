@@ -17,7 +17,7 @@ service Msg {
   rpc InstantiateAndRegisterProxyContract(
       MsgInstantiateAndRegisterProxyContract)
       returns (MsgInstantiateAndRegisterProxyContractResponse);
-  rpc SetMaxWasmSize(MsgSetMaxWasmSize) returns (MsgSetMaxWasmSizeResponse);
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
 message MsgStoreDataRequestWasm {
@@ -63,9 +63,15 @@ message MsgInstantiateAndRegisterProxyContractResponse {
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 
-message MsgSetMaxWasmSize {
-  uint64 max_wasm_size = 1;
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  Params params = 2 [ (gogoproto.nullable) = false ];
 }
 
 // no data needs to be returned
-message MsgSetMaxWasmSizeResponse {}
+message MsgUpdateParamsResponse {}

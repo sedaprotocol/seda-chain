@@ -174,14 +174,15 @@ func unzipWasm(wasm []byte) ([]byte, error) {
 	return unzipped, nil
 }
 
-// SetMaxWasmSize sets the MaxWasmSize parameter in the store.
-func (k msgServer) SetMaxWasmSize(goCtx context.Context, msg *types.MsgSetMaxWasmSize) (*types.MsgSetMaxWasmSizeResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
+func (k msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	if k.GetAuthority() != req.Authority {
+		return nil, fmt.Errorf("invalid authority; expected %s, got %s", k.GetAuthority(), req.Authority)
+	}
 
-	err := k.Keeper.SetMaxWasmSize(ctx, msg.MaxWasmSize)
-	if err != nil {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := k.SetParams(ctx, req.Params); err != nil {
 		return nil, err
 	}
 
-	return &types.MsgSetMaxWasmSizeResponse{}, nil
+	return &types.MsgUpdateParamsResponse{}, nil
 }

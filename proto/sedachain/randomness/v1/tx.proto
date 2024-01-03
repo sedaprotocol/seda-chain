@@ -5,16 +5,13 @@ import "cosmos/msg/v1/msg.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/randomness/types";
 
-service Msg {
-  rpc NewSeed(MsgNewSeed)
-      returns (MsgNewSeedResponse);
-}
+service Msg { rpc NewSeed(MsgNewSeed) returns (MsgNewSeedResponse); }
 
 message MsgNewSeed {
-  option (cosmos.msg.v1.signer) = "prover";
-    
-  string prover = 1; // address of VRF key used to produce proof
-  string pi = 2; // VRF proof
+  option (cosmos.msg.v1.signer) = "proposer";
+
+  string proposer = 1;
+  string pi = 2;   // VRF proof
   string beta = 3; // VRF hash
 }
 

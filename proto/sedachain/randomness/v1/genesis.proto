@@ -5,6 +5,4 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/randomness/types";
 
-message GenesisState {
-  string seed = 1;
-}
+message GenesisState { string seed = 1; }
