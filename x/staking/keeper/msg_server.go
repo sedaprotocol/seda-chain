@@ -51,11 +51,11 @@ func (k msgServer) CreateValidatorWithVRF(ctx context.Context, msg *types.MsgCre
 	k.accountKeeper.SetAccount(ctx, acc)
 
 	// register VRF public key to validator consensus address
-	pubKey, ok := msg.Pubkey.GetCachedValue().(cryptotypes.PubKey)
+	consPubKey, ok := msg.Pubkey.GetCachedValue().(cryptotypes.PubKey)
 	if !ok {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", pubKey)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", consPubKey)
 	}
-	k.randomnessKeeper.SetValidatorVRFPubKey(ctx, sdk.GetConsAddress(pubKey).String(), vrfPubKey)
+	k.randomnessKeeper.SetValidatorVRFPubKey(ctx, sdk.GetConsAddress(consPubKey).String(), vrfPubKey)
 
 	sdkMsg := new(stakingtypes.MsgCreateValidator)
 	sdkMsg.Description = msg.Description

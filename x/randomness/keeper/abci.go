@@ -66,19 +66,19 @@ func (h *ProposalHandler) PrepareProposalHandler(
 		}
 
 		// generate and sign NewSeed tx
-		pubKey, err := keeper.GetValidatorVRFPubKey(ctx, sdk.ConsAddress(req.ProposerAddress).String())
+		vrfPubKey, err := keeper.GetValidatorVRFPubKey(ctx, sdk.ConsAddress(req.ProposerAddress).String())
 		if err != nil {
 			return nil, err
 		}
-		account := authKeeper.GetAccount(ctx, sdk.AccAddress(pubKey.Address().Bytes()))
-		err = account.SetPubKey(pubKey) // checked later when signing tx with VRF key
+		account := authKeeper.GetAccount(ctx, sdk.AccAddress(vrfPubKey.Address().Bytes()))
+		err = account.SetPubKey(vrfPubKey) // checked later when signing tx with VRF key
 		if err != nil {
 			return nil, err
 		}
 		newSeedTx, newSeedTxBz, err := generateAndSignNewSeedTx(ctx, txConfig, vrfSigner, account, &types.MsgNewSeed{
-			Proposer: sdk.AccAddress(req.ProposerAddress).String(),
-			Pi:       hex.EncodeToString(pi),
-			Beta:     hex.EncodeToString(beta),
+			Prover: account.GetAddress().String(),
+			Pi:     hex.EncodeToString(pi),
+			Beta:   hex.EncodeToString(beta),
 		})
 		if err != nil {
 			return nil, err
@@ -146,11 +146,6 @@ func (h *ProposalHandler) ProcessProposalHandler(
 		msg, ok := decodeNewSeedTx(tx)
 		if !ok {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
-		}
-
-		if msg.Proposer != string(sdk.AccAddress(req.ProposerAddress).String()) {
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT},
-				fmt.Errorf("the NewSeed transaction must be from the block proposer")
 		}
 
 		// get block proposer's validator public key

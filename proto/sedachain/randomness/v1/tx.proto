@@ -11,9 +11,9 @@ service Msg {
 }
 
 message MsgNewSeed {
-  option (cosmos.msg.v1.signer) = "proposer";
+  option (cosmos.msg.v1.signer) = "prover";
     
-  string proposer = 1;
+  string prover = 1; // address of VRF key used to produce proof
   string pi = 2; // VRF proof
   string beta = 3; // VRF hash
 }
