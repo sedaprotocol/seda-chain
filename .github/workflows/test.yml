@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOPRIVATE: github.com/sedaprotocol/vrf-go
-      PAT: ${{ secrets.PAT }}
+      GITHUB_TOKEN: ${{ secrets.PAT }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
