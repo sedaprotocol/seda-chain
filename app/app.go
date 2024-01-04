@@ -915,7 +915,7 @@ func NewApp(
 	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
 	vrfKeyFile := utils.PrivValidatorKeyFileToVRFKeyFile(pvKeyFile)
 	vrfKey, err := utils.LoadVRFKey(vrfKeyFile)
-	if vrfKey == nil || err != nil {
+	if err != nil {
 		// TO-DO if validator, panic
 		app.Logger().Info("failed to load vrf key")
 		if err != nil {

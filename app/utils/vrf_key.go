@@ -2,7 +2,6 @@ package utils
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -146,7 +145,7 @@ func (v *VRFKey) SignTransaction(
 	}
 
 	bytesToSign, err := authsigning.GetSignBytesAdapter(
-		context.Background(),
+		ctx,
 		txConfig.SignModeHandler(),
 		signMode,
 		signerData,
@@ -239,7 +238,7 @@ func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
 
 func InitializeVRFKey(config *cfg.Config) (vrfPubKey sdkcrypto.PubKey, err error) {
 	pvKeyFile := config.PrivValidatorKeyFile()
-	if err := os.MkdirAll(filepath.Dir(pvKeyFile), 0o777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(pvKeyFile), 0o755); err != nil {
 		return nil, fmt.Errorf("could not create directory %q: %w", filepath.Dir(pvKeyFile), err)
 	}
 

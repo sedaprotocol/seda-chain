@@ -171,8 +171,7 @@ type TxCreateValidatorConfig struct {
 }
 
 func BuildCreateValidatorWithVRFMsg(clientCtx client.Context, config TxCreateValidatorConfig, txBldr tx.Factory, generateOnly bool, valCodec address.Codec) (tx.Factory, sdk.Msg, error) {
-	amounstStr := config.Amount
-	amount, err := sdk.ParseCoinNormalized(amounstStr)
+	amount, err := sdk.ParseCoinNormalized(config.Amount)
 	if err != nil {
 		return txBldr, nil, err
 	}
