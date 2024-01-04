@@ -86,10 +86,10 @@ func (h *ProposalHandler) PrepareProposalHandler(
 
 		stop := h.txSelector.SelectTxForProposal(ctx, uint64(req.MaxTxBytes), maxBlockGas, newSeedTx, newSeedTxBz)
 		if stop {
-			return nil, fmt.Errorf("max block gas exceeded by just new seed tx")
+			return nil, fmt.Errorf("max block gas or tx bytes exceeded by just new seed tx")
 		}
 
-		// perform mandatory checks on the other txs
+		// include txs in the proposal until max tx bytes or block gas limits are reached
 		for _, txBz := range req.Txs {
 			tx, err := h.txVerifier.TxDecode(txBz)
 			if err != nil {
@@ -235,7 +235,11 @@ func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSign
 		txsigning.SignMode_SIGN_MODE_DIRECT,
 		account,
 	)
-	if err := txBuilder.SetSignatures(sig); err != nil {
+	if err != nil {
+		return nil, nil, err
+	}
+	err = txBuilder.SetSignatures(sig)
+	if err != nil {
 		return nil, nil, err
 	}
 

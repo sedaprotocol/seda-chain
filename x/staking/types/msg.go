@@ -17,8 +17,7 @@ var (
 	_ codectypes.UnpackInterfacesMessage = (*MsgCreateValidatorWithVRF)(nil)
 )
 
-// NewMsgCreateValidator creates a new MsgCreateValidator instance.
-// Delegator address and validator address are the same.
+// NewMsgCreateValidatorWithVRF creates a MsgCreateValidatorWithVRF instance.
 func NewMsgCreateValidatorWithVRF(
 	valAddr string, pubKey cryptotypes.PubKey, vrfPubKey cryptotypes.PubKey,
 	selfDelegation sdk.Coin, description types.Description, commission types.CommissionRates, minSelfDelegation math.Int,
