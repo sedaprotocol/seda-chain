@@ -26,16 +26,6 @@ import (
 
 const VRFKeyFileName = "vrf_key.json"
 
-type VRFSigner interface {
-	VRFProve(alpha []byte) (pi, beta []byte, err error)
-	VRFVerify(publicKey, alpha, pi []byte) (beta []byte, err error)
-	SignTransaction(ctx sdk.Context, txBuilder client.TxBuilder, txConfig client.TxConfig,
-		signMode signing.SignMode, account sdk.AccountI) (signing.SignatureV2, error)
-	IsNil() bool
-}
-
-var _ VRFSigner = &VRFKey{}
-
 type VRFKey struct {
 	Address types.Address    `json:"address"`
 	PubKey  sdkcrypto.PubKey `json:"pub_key"`

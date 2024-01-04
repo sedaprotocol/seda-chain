@@ -10,9 +10,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/randomness/types"
 )
 
@@ -28,9 +28,17 @@ func NewDefaultProposalHandler(txVerifier baseapp.ProposalTxVerifier) *ProposalH
 	}
 }
 
+type vrfSigner interface {
+	VRFProve(alpha []byte) (pi, beta []byte, err error)
+	VRFVerify(publicKey, alpha, pi []byte) (beta []byte, err error)
+	SignTransaction(ctx sdk.Context, txBuilder client.TxBuilder, txConfig client.TxConfig,
+		signMode signing.SignMode, account sdk.AccountI) (signing.SignatureV2, error)
+	IsNil() bool
+}
+
 func (h *ProposalHandler) PrepareProposalHandler(
 	txConfig client.TxConfig,
-	vrfSigner utils.VRFSigner,
+	vrfSigner vrfSigner,
 	keeper Keeper,
 	authKeeper types.AccountKeeper,
 	stakingKeeper types.StakingKeeper,
@@ -115,7 +123,7 @@ func (h *ProposalHandler) PrepareProposalHandler(
 }
 
 func (h *ProposalHandler) ProcessProposalHandler(
-	vrfSigner utils.VRFSigner,
+	vrfSigner vrfSigner,
 	keeper Keeper,
 	stakingKeeper types.StakingKeeper,
 ) sdk.ProcessProposalHandler {
@@ -216,7 +224,7 @@ func (h *ProposalHandler) ProcessProposalHandler(
 
 // generateAndSignNewSeedTx generates and signs a transaction containing
 // a given NewSeed message. It returns a transaction encoded into bytes.
-func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSigner utils.VRFSigner, account sdk.AccountI, msg *types.MsgNewSeed) (sdk.Tx, []byte, error) {
+func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSigner vrfSigner, account sdk.AccountI, msg *types.MsgNewSeed) (sdk.Tx, []byte, error) {
 	// build a transaction containing the given message
 	txBuilder := txConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msg)
