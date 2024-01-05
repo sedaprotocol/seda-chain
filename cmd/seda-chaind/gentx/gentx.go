@@ -56,12 +56,13 @@ func GenTxCmd(mbm module.BasicManager, txEncCfg client.TxEncodingConfig, genBalI
 
 	cmd := &cobra.Command{
 		Use:   "gentx [key_name] [amount]",
-		Short: "Generate a genesis tx carrying a self delegation",
+		Short: "Generate a genesis tx carrying a self delegation and VRF public key",
 		Args:  cobra.ExactArgs(2),
-		Long: fmt.Sprintf(`Generate a genesis transaction that creates a validator with a self-delegation,
-that is signed by the key in the Keyring referenced by a given name. A node ID and consensus
-pubkey may optionally be provided. If they are omitted, they will be retrieved from the priv_validator.json
-file. The following default parameters are included:
+		Long: fmt.Sprintf(`Generate a genesis transaction that creates a validator with a self-delegation and
+VRF public key. The transaction is signed by the key in the Keyring referenced by a given name. A VRF key pair 
+is generated and stored in the configuration directory during the process. A node ID and consensus pubkey may 
+optionally be provided. If they are omitted, they will be retrieved from the priv_validator.json file. 
+The following default parameters are included:
     %s
 
 Example:

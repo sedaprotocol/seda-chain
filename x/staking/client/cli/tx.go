@@ -8,6 +8,7 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"cosmossdk.io/core/address"
+	"cosmossdk.io/errors"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 
@@ -15,12 +16,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 	stakingcli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	customtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
@@ -74,10 +77,6 @@ Where validator.json contains:
 		"@type":"/cosmos.crypto.ed25519.PubKey",
 		"key":"oWg2ISpLF405Jcm2vXV+2v4fnjodh6aafuIdeoW+rUw="
 	},
-	"vrf_pubkey": {
-		"type": "tendermint/PubKeySecp256k1",
-		"value": "At4W/CxKrv8C6HqLFC9ybTPSJgtAkWvF2+Uj4hQLiJcM"
-	},
 	"amount": "1000000stake",
 	"moniker": "myvalidator",
 	"identity": "optional identity signature (ex. UPort or Keybase)",
@@ -93,6 +92,7 @@ Where validator.json contains:
 where we can get the pubkey using "%s tendermint show-validator"
 `, version.AppName, version.AppName)),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			serverCtx := server.GetServerContextFromCmd(cmd)
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -106,6 +106,11 @@ where we can get the pubkey using "%s tendermint show-validator"
 			validator, err := parseAndValidateValidatorJSON(clientCtx.Codec, args[0])
 			if err != nil {
 				return err
+			}
+
+			validator.VRFPubKey, err = utils.InitializeVRFKey(serverCtx.Config)
+			if err != nil {
+				return errors.Wrap(err, "failed to initialize VRF key")
 			}
 
 			txf, msg, err := newBuildCreateValidatorWithVRFMsg(clientCtx, txf, cmd.Flags(), validator, ac)

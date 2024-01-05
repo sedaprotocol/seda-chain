@@ -9,10 +9,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 
-	"github.com/cometbft/cometbft/crypto"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cosmos/cosmos-sdk/codec"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -76,20 +73,6 @@ func parseAndValidateValidatorJSON(cdc codec.Codec, path string) (validator, err
 		return validator{}, err
 	}
 
-	if v.VRFPubKey == nil {
-		return validator{}, fmt.Errorf("must specify the JSON encoded VRF pubkey")
-	}
-
-	var cmtVRFPubKey crypto.PubKey
-	err = cmtjson.Unmarshal(v.VRFPubKey, &cmtVRFPubKey)
-	if err != nil {
-		return validator{}, fmt.Errorf("error unmarshalling VRF key %w", err)
-	}
-	vrfPk, err := cryptocodec.FromCmtPubKeyInterface(cmtVRFPubKey)
-	if err != nil {
-		return validator{}, fmt.Errorf("failed to convert VRF key type from Comet to SDK %w", err)
-	}
-
 	if v.Moniker == "" {
 		return validator{}, fmt.Errorf("must specify the moniker name")
 	}
@@ -110,7 +93,6 @@ func parseAndValidateValidatorJSON(cdc codec.Codec, path string) (validator, err
 	return validator{
 		Amount:            amount,
 		PubKey:            pk,
-		VRFPubKey:         vrfPk,
 		Moniker:           v.Moniker,
 		Identity:          v.Identity,
 		Website:           v.Website,
