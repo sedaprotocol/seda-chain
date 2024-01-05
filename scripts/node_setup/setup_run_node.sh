@@ -115,7 +115,7 @@ echo "Initializing Node ..."
 # exist initialize the node with the given MNEMONIC, MONIKER and NETWORK
 if ! [ -f /seda-chain/.seda-chain/config/genesis.json ]; then
     echo "Setting Up seda configuration"
-    echo $MNEMONIC | $BIN init join ${MONIKER} --network ${NETWORK} --recover
+    echo $MNEMONIC | $BIN join ${MONIKER} --network ${NETWORK} --recover
   else
     echo "seda configuration already exists"
 fi

@@ -133,7 +133,7 @@ BIN=./build/seda-chaind
 
 $BIN tendermint unsafe-reset-all
 rm -rf ~/.seda-chain
-$BIN init node0
+$BIN init node0 --default-denom aseda
 
 $BIN keys add satoshi --keyring-backend test
 $BIN add-genesis-account $($BIN keys show satoshi --keyring-backend test -a) 10000000000000000seda
