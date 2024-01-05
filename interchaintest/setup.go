@@ -12,9 +12,9 @@ var (
 
 	// TO-DO
 	dockerImage = ibc.DockerImage{
-		Repository: "", // FOR LOCAL IMAGE USE: Docker Image Name
-		Version:    "", // FOR LOCAL IMAGE USE: Docker Image Tag
-		UidGid:     "",
+		Repository: "sedaprotocol/seda-chaind-e2e", // FOR LOCAL IMAGE USE: Docker Image Name
+		Version:    "latest",                       // FOR LOCAL IMAGE USE: Docker Image Tag
+		UidGid:     "1025:1025",
 	}
 
 	SedaCfg = ibc.ChainConfig{
