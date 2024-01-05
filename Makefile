@@ -142,6 +142,11 @@ lint:
 	@echo "--> Running linter"
 	@./scripts/go-lint-all.bash --timeout=15m
 
+lint-fix:
+	@echo "--> Running linter"
+	$(MAKE) lint-install
+	@./scripts/go-lint-all.bash --fix
+
 .PHONY: lint lint-install
 
 ###############################################################################

@@ -10,7 +10,6 @@ import (
 // InitGenesis puts data from genesis state into store.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 	k.SetSeed(ctx, data.Seed)
-
 }
 
 // ExportGenesis extracts data from store to genesis state.

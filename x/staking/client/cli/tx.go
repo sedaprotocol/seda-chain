@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
-
 	"cosmossdk.io/core/address"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -46,7 +45,7 @@ func NewTxCmd(valAddrCodec, ac address.Codec) *cobra.Command {
 
 	stakingTxCmd.AddCommand(
 		NewCreateValidatorWithVRFCmd(valAddrCodec),
-		// NewCreateValidatorCmd(valAddrCodec),
+		// stakingcli.NewCreateValidatorCmd(valAddrCodec),
 		stakingcli.NewEditValidatorCmd(valAddrCodec),
 		stakingcli.NewDelegateCmd(valAddrCodec, ac),
 		stakingcli.NewRedelegateCmd(valAddrCodec, ac),

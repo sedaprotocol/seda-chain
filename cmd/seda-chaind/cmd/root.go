@@ -6,12 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cast"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/reflect/protoregistry"
-
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/client/v2/autocli/flag"
 	"cosmossdk.io/log"
@@ -20,8 +14,14 @@ import (
 	snapshottypes "cosmossdk.io/store/snapshots/types"
 	storetypes "cosmossdk.io/store/types"
 	confixcmd "cosmossdk.io/tools/confix/cmd"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/spf13/cast"
+	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/reflect/protoregistry"
+
 	tmcli "github.com/cometbft/cometbft/libs/cli"
+
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -238,25 +238,6 @@ func txCommand(basicManager module.BasicManager) *cobra.Command {
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
-}
-
-func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
-	set := func(s *pflag.FlagSet, key, val string) {
-		if f := s.Lookup(key); f != nil {
-			f.DefValue = val
-			err := f.Value.Set(val)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	for key, val := range defaults {
-		set(c.Flags(), key, val)
-		set(c.PersistentFlags(), key, val)
-	}
-	for _, c := range c.Commands() {
-		overwriteFlagDefaults(c, defaults)
-	}
 }
 
 // newApp creates a new Cosmos SDK app

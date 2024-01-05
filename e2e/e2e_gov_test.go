@@ -11,11 +11,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hyperledger/burrow/crypto"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/hyperledger/burrow/crypto"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -190,7 +191,7 @@ func (s *IntegrationTestSuite) execGetSeedQuery(
 }
 
 func (s *IntegrationTestSuite) validateGetSeedResponse(expectEmpty bool) func([]byte, []byte) bool {
-	return func(stdOut []byte, stdErr []byte) bool {
+	return func(stdOut, stdErr []byte) bool {
 		var getSeedResponse struct {
 			Data struct {
 				BlockHeight int    `json:"block_height"`

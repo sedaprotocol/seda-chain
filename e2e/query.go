@@ -50,7 +50,7 @@ func queryGovProposal(endpoint string, proposalID int) (govtypes.QueryProposalRe
 	return govProposalResp, nil
 }
 
-func queryDataRequestWasm(endpoint string, drHash string) (wasmstoragetypes.QueryDataRequestWasmResponse, error) {
+func queryDataRequestWasm(endpoint, drHash string) (wasmstoragetypes.QueryDataRequestWasmResponse, error) {
 	var res wasmstoragetypes.QueryDataRequestWasmResponse
 
 	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/data_request_wasm/%s", endpoint, drHash))
@@ -64,7 +64,7 @@ func queryDataRequestWasm(endpoint string, drHash string) (wasmstoragetypes.Quer
 	return res, nil
 }
 
-func queryOverlayWasm(endpoint string, hash string) (wasmstoragetypes.QueryOverlayWasmResponse, error) {
+func queryOverlayWasm(endpoint, hash string) (wasmstoragetypes.QueryOverlayWasmResponse, error) {
 	var res wasmstoragetypes.QueryOverlayWasmResponse
 
 	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/overlay_wasm/%s", endpoint, hash))

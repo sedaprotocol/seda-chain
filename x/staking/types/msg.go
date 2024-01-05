@@ -19,7 +19,7 @@ var (
 
 // NewMsgCreateValidatorWithVRF creates a MsgCreateValidatorWithVRF instance.
 func NewMsgCreateValidatorWithVRF(
-	valAddr string, pubKey cryptotypes.PubKey, vrfPubKey cryptotypes.PubKey,
+	valAddr string, pubKey, vrfPubKey cryptotypes.PubKey,
 	selfDelegation sdk.Coin, description types.Description, commission types.CommissionRates, minSelfDelegation math.Int,
 ) (*MsgCreateValidatorWithVRF, error) {
 	var pkAny *codectypes.Any

@@ -2,8 +2,8 @@ package params
 
 import (
 	errorsmod "cosmossdk.io/errors"
-
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
