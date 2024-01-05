@@ -132,7 +132,8 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig, basi
 
 	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 	rootCmd.AddCommand(
-		InitCmd(basicManager, app.DefaultNodeHome),
+		genutilcli.InitCmd(basicManager, app.DefaultNodeHome),
+		JoinNetworkCommand(basicManager, app.DefaultNodeHome),
 		genutilcli.CollectGenTxsCmd(
 			banktypes.GenesisBalancesIterator{},
 			app.DefaultNodeHome,
