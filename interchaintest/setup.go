@@ -12,8 +12,8 @@ var (
 
 	// TO-DO
 	dockerImage = ibc.DockerImage{
-		Repository: "",
-		Version:    "",
+		Repository: "", // FOR LOCAL IMAGE USE: Docker Image Name
+		Version:    "", // FOR LOCAL IMAGE USE: Docker Image Tag
 		UidGid:     "",
 	}
 

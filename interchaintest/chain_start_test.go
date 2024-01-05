@@ -26,7 +26,9 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 
 	t.Parallel()
 
-	// Create chain factory with Seda and Gaia
+	/* =================================================== */
+	/*                   CHAIN FACTORY                     */
+	/* =================================================== */
 	numVals := 1
 	numFullNodes := 1
 
@@ -34,9 +36,11 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 		{
 			Name:          "seda",
 			ChainConfig:   SedaCfg,
-			NumValidators: &numVals,
-			NumFullNodes:  &numFullNodes,
+			NumValidators: &numVals,      // defaults to 2 when unspecified
+			NumFullNodes:  &numFullNodes, // defaults to 1 when unspecified
 		},
+		// pre configured chain pulled from
+		// https://github.com/strangelove-ventures/heighliner
 		{
 			Name:          "gaia",
 			Version:       "v14.1.0",
@@ -45,19 +49,16 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 		},
 	})
 
-	const (
-		path = "ibc-path"
-	)
-
 	// Get chains from the chain factory
 	chains, err := cf.Chains(t.Name())
 	require.NoError(t, err)
-
-	client, network := interchaintest.DockerSetup(t)
-
 	seda, gaia := chains[0].(*cosmos.CosmosChain), chains[1].(*cosmos.CosmosChain)
 
+	/* =================================================== */
+	/*                  RELAYER FACTORY                    */
+	/* =================================================== */
 	relayerType, relayerName := ibc.CosmosRly, "relay"
+	client, network := interchaintest.DockerSetup(t)
 
 	// Get a relayer instance
 	rf := interchaintest.NewBuiltinRelayerFactory(
@@ -66,8 +67,14 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 		interchaintestrelayer.CustomDockerImage(RelayerImage, RelayerVersion, "100:1000"),
 		interchaintestrelayer.StartupFlags("--processor", "events", "--block-history", "100"),
 	)
-
 	r := rf.Build(t, client, network)
+
+	/* =================================================== */
+	/*                  INTERCHAIN SPAWN                   */
+	/* =================================================== */
+	const (
+		ibcPath = "ibc-path"
+	)
 
 	ic := interchaintest.NewInterchain().
 		AddChain(seda).
@@ -77,7 +84,7 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 			Chain1:  seda,
 			Chain2:  gaia,
 			Relayer: r,
-			Path:    path,
+			Path:    ibcPath,
 		})
 
 	ctx := context.Background()
@@ -85,6 +92,13 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 	rep := testreporter.NewNopReporter()
 	eRep := rep.RelayerExecReporter(t)
 
+	/*
+	 *	Stake Distribution on Genesis
+	 *	  - 2,000,000,000,000 for each validator
+	 *	  - 1,000,000,000,000 for each full node
+	 *	  - 10,000,000,000 for each faucet on each chain
+	 *	  - 1,000,000,000 for relayer
+	 */
 	require.NoError(t, ic.Build(ctx, eRep, interchaintest.InterchainBuildOptions{
 		TestName:          t.Name(),
 		Client:            client,
@@ -96,18 +110,19 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 		_ = ic.Close()
 	})
 
+	/* =================================================== */
+	/*                  WALLETS & USERS                    */
+	/* =================================================== */
+
 	// Create some user accounts on both chains
 	users := interchaintest.GetAndFundTestUsers(t, ctx, t.Name(), GenesisWalletAmount, seda, gaia)
+	sedaUser, gaiaUser := users[0], users[1]
+	sedaUserAddr := sedaUser.FormattedAddress()
+	gaiaUserAddr := gaiaUser.FormattedAddress()
 
 	// Wait a few blocks for relayer to start and for user accounts to be created
 	err = testutil.WaitForBlocks(ctx, 5, seda, gaia)
 	require.NoError(t, err)
-
-	// Get our Bech32 encoded user addresses
-	sedaUser, gaiaUser := users[0], users[1]
-
-	sedaUserAddr := sedaUser.FormattedAddress()
-	gaiaUserAddr := gaiaUser.FormattedAddress()
 
 	// Get original account balances
 	sedaOrigBal, err := seda.GetBalance(ctx, sedaUserAddr, seda.Config().Denom)
@@ -118,8 +133,12 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, GenesisWalletAmount, gaiaOrigBal.Int64())
 
-	// Compose an IBC transfer and send from Seda -> Gaia
+	/* =================================================== */
+	/*                  INTERCHAIN TEST                    */
+	/* =================================================== */
 	var transferAmount = math.NewInt(1_000)
+
+	// Compose an IBC transfer and send from Seda -> Gaia
 	transfer := ibc.WalletAmount{
 		Address: gaiaUserAddr,
 		Denom:   seda.Config().Denom,
@@ -135,7 +154,11 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 	transferTx, err := seda.SendIBCTransfer(ctx, channel.ChannelID, sedaUserAddr, transfer, ibc.TransferOptions{})
 	require.NoError(t, err)
 
-	err = r.StartRelayer(ctx, eRep, path)
+	/*
+	 * Starts the relayer on a loop to avoid having to
+	 * manually flush packets and ack's
+	 */
+	err = r.StartRelayer(ctx, eRep, ibcPath)
 	require.NoError(t, err)
 
 	t.Cleanup(
@@ -154,7 +177,7 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 	err = testutil.WaitForBlocks(ctx, 10, seda)
 	require.NoError(t, err)
 
-	// Get the IBC denom for useda on Gaia
+	// Get the IBC denom for aseda on Gaia
 	sedaTokenDenom := transfertypes.GetPrefixedDenom(channel.Counterparty.PortID, channel.Counterparty.ChannelID, seda.Config().Denom)
 	sedaIBCDenom := transfertypes.ParseDenomTrace(sedaTokenDenom).IBCDenom()
 
