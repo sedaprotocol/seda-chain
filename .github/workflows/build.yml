@@ -39,14 +39,7 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: Cache binaries
-        id: cache-binaries
-        uses: actions/cache@v3
-        with:
-          path: ./cmd/sedad/sedad
-          key: ${{ matrix.targetos }}-${{ matrix.arch }}
       - name: Setup go
-        if: steps.cache-binaries.outputs.cache-hit != 'true'
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -55,11 +48,9 @@ jobs:
           GOOS: ${{ matrix.targetos }}
           GOARCH: ${{ matrix.arch }}
       - name: Configure private token
-        if: steps.cache-binaries.outputs.cache-hit != 'true'
         run: |
           git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
       - name: Compile
-        if: steps.cache-binaries.outputs.cache-hit != 'true'
         run: |
           go mod download
           make build
