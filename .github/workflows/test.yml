@@ -1,12 +1,16 @@
-name: Tests / Code Coverage
+name: Tests
+
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened, labeled]
-  merge_group:
-    types: [checks_requested]
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+
+env:
+  GO_VERSION: "1.21.0"
+  GOPRIVATE: github.com/sedaprotocol/vrf-go
+  GITHUB_TOKEN: ${{ secrets.PAT }}
 
 permissions:
   contents: read
@@ -18,58 +22,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  unit-tests:
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/sedaprotocol/vrf-go
-      GITHUB_TOKEN: ${{ secrets.PAT }}
-    strategy:
-      matrix:
-        arch: [amd64, arm64]
-        targetos: [darwin, linux]
-    name: sedad ${{ matrix.targetos }}-${{ matrix.arch }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Cache binaries
-        id: cache-binaries
-        uses: actions/cache@v3
-        with:
-          path: ./cmd/sedad/sedad
-          key: sedad-${{ matrix.targetos }}-${{ matrix.arch }}
-      - uses: technote-space/get-diff-action@v6.1.2
-        with:
-          PATTERNS: |
-            **/**.go
-            go.mod
-            go.sum
-      - name: Setup go
-        if: steps.cache-binaries.outputs.cache-hit != 'true' && env.GIT_DIFF
-        uses: actions/setup-go@v4
-        with:
-          go-version: "1.21"
-          cache: true
-        env:
-          GOOS: ${{ matrix.targetos }}
-          GOARCH: ${{ matrix.arch }}
-      - name: Configure private token
-        run: |
-          git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
-      - name: Compile
-        if: steps.cache-binaries.outputs.cache-hit != 'true' && env.GIT_DIFF
-        run: |
-          go mod download
-          make build
-
-  tests:
-    runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/sedaprotocol/vrf-go
-      GITHUB_TOKEN: ${{ secrets.PAT }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
-          go-version: "1.21"
+          go-version: ${{ env.GO_VERSION }}
           check-latest: true
           cache: true
           cache-dependency-path: go.sum
@@ -94,19 +53,16 @@ jobs:
           name: "${{ github.sha }}-${{ matrix.part }}-coverage"
           path: ./${{ matrix.part }}profile.out
 
-  test-e2e:
+  e2e-tests:
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/sedaprotocol/vrf-go
-      GITHUB_TOKEN: ${{ secrets.PAT }}
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
-          go-version: "1.21"
-      - uses: actions/checkout@v4
+          go-version: ${{ env.GO_VERSION }}
       - run: git config --global url.https://${GITHUB_TOKEN}@github.com/.insteadOf https://github.com/
-      - uses: technote-space/get-diff-action@v6.0.1
+      - uses: technote-space/get-diff-action@v6.1.2
         with:
           PATTERNS: |
             **/**.go

@@ -1,10 +1,24 @@
-name: lint
+name: Lint
+
 on:
   pull_request:
   push:
+    tags:
+      - v*
+    branches:
+      - main
+
+permissions:
+  contents: read
+  repository-projects: read
+  packages: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   golangci:
-    name: golangci-lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -13,4 +27,3 @@ jobs:
         with:
           version: latest
           args: --timeout 10m --tests=false
-          github-token: ${{ secrets.PAT }}

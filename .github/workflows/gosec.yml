@@ -1,7 +1,22 @@
-name: Run Gosec
+name: Gosec
+
 on:
-  pull_request:
   push:
+    branches:
+      - release/*
+  pull_request:
+    branches:
+      - release/*
+
+permissions:
+  contents: read
+  repository-projects: read
+  packages: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     runs-on: ubuntu-latest
