@@ -2,10 +2,7 @@ name: Tests
 
 on:
   push:
-    paths:
-      - "**.go"
-      - "go.mod"
-      - "go.sum"
+  pull_request:
 
 env:
   GO_VERSION: "1.21.0"
