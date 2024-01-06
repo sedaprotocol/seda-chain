@@ -45,14 +45,8 @@ jobs:
         with:
           path: ./cmd/sedad/sedad
           key: ${{ matrix.targetos }}-${{ matrix.arch }}
-      - uses: technote-space/get-diff-action@v6.1.2
-        with:
-          PATTERNS: |
-            **/**.go
-            go.mod
-            go.sum
       - name: Setup go
-        # if: steps.cache-binaries.outputs.cache-hit != 'true' && env.GIT_DIFF
+        if: steps.cache-binaries.outputs.cache-hit != 'true'
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -61,11 +55,11 @@ jobs:
           GOOS: ${{ matrix.targetos }}
           GOARCH: ${{ matrix.arch }}
       - name: Configure private token
-        # if: steps.cache-binaries.outputs.cache-hit != 'true' && env.GIT_DIFF
+        if: steps.cache-binaries.outputs.cache-hit != 'true'
         run: |
           git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
       - name: Compile
-        # if: steps.cache-binaries.outputs.cache-hit != 'true' && env.GIT_DIFF
+        if: steps.cache-binaries.outputs.cache-hit != 'true'
         run: |
           go mod download
           make build

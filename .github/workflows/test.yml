@@ -32,22 +32,9 @@ jobs:
           cache: true
           cache-dependency-path: go.sum
       - run: git config --global url.https://${GITHUB_TOKEN}@github.com/.insteadOf https://github.com/
-      - uses: technote-space/get-diff-action@v6.1.2
-        id: git_diff
-        with:
-          PATTERNS: |
-            **/*.go
-            go.mod
-            go.sum
-            **/go.mod
-            **/go.sum
-            **/Makefile
-            Makefile
       - name: Test & coverage report creation
-        if: env.GIT_DIFF
         run: make test-unit-cover
       - uses: actions/upload-artifact@v3
-        if: env.GIT_DIFF
         with:
           name: "${{ github.sha }}-${{ matrix.part }}-coverage"
           path: ./${{ matrix.part }}profile.out
@@ -61,12 +48,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - run: git config --global url.https://${GITHUB_TOKEN}@github.com/.insteadOf https://github.com/
-      - uses: technote-space/get-diff-action@v6.1.2
-        with:
-          PATTERNS: |
-            **/**.go
-            go.mod
-            go.sum
       - name: Test e2e
         run: |
           make test-e2e
