@@ -52,3 +52,24 @@ jobs:
       - name: Test e2e
         run: |
           make test-e2e
+
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: github.com/sedaprotocol/vrf-go
+      GITHUB_TOKEN: ${{ secrets.PAT }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Buf
+        uses: bufbuild/buf-setup-action@v1.26.1
+      - name: Lint Proto
+        run: make proto-lint
+      - name: clang-format Check
+        uses: jidicula/clang-format-action@v4.11.0
+        with:
+          clang-format-version: 17
+          check: true
+          diff: true
+          extensions: .proto
+          path: proto
+          style: file
