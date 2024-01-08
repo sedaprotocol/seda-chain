@@ -97,6 +97,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -130,15 +131,10 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
-	"github.com/sedaprotocol/seda-chain/app/utils"
-	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/gentx"
 	"github.com/sedaprotocol/seda-chain/docs"
 	randomness "github.com/sedaprotocol/seda-chain/x/randomness"
-	randomnesskeeper "github.com/sedaprotocol/seda-chain/x/randomness/keeper"
 	randomnesstypes "github.com/sedaprotocol/seda-chain/x/randomness/types"
-	customstaking "github.com/sedaprotocol/seda-chain/x/staking"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
-	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -154,7 +150,7 @@ var (
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
-		genutil.NewAppModuleBasic(gentx.GenTxValidator),
+		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 		auth.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
@@ -267,10 +263,6 @@ type App struct {
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
-
-	// seda modules
-	WasmStorageKeeper wasmstoragekeeper.Keeper
-	RandomnessKeeper  randomnesskeeper.Keeper
 
 	mm  *module.Manager
 	bmm module.BasicManager
@@ -563,23 +555,13 @@ func NewApp(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
-	app.RandomnessKeeper = *randomnesskeeper.NewKeeper(
-		appCodec,
-		keys[randomnesstypes.StoreKey],
-	)
-	randomnessModule := randomness.NewAppModule(appCodec, app.RandomnessKeeper)
-
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
-	randomnessQueryPlugin := randomnesskeeper.NewQuerierImpl(app.RandomnessKeeper)
-	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
-		Custom: randomnesskeeper.SeedQueryPlugin(randomnessQueryPlugin),
-	})
-	wasmOpts := []wasmkeeper.Option{queryPluginOpt}
+	var wasmOpts []wasmkeeper.Option
 
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
@@ -628,16 +610,6 @@ func NewApp(
 		// register the governance hooks
 		),
 	)
-
-	contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
-
-	app.WasmStorageKeeper = *wasmstoragekeeper.NewKeeper(
-		appCodec,
-		keys[wasmstoragetypes.StoreKey],
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		contractKeeper,
-	)
-	wasmStorageModule := wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper, app.AccountKeeper, app.BankKeeper)
 
 	/* =================================================== */
 	/*                  TRANSFER STACK                     */
@@ -719,7 +691,7 @@ func NewApp(
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
-		customstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.RandomnessKeeper),
+		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil), // customstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.RandomnessKeeper),
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
@@ -731,8 +703,6 @@ func NewApp(
 		params.NewAppModule(app.ParamsKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
 		ica.NewAppModule(&icaControllerKeeper, &app.ICAHostKeeper),
-		wasmStorageModule,
-		randomnessModule,
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -743,7 +713,7 @@ func NewApp(
 	app.bmm = module.NewBasicManagerFromManager(
 		app.mm,
 		map[string]module.AppModuleBasic{
-			genutiltypes.ModuleName: genutil.NewAppModuleBasic(gentx.GenTxValidator),
+			genutiltypes.ModuleName: genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 			govtypes.ModuleName: gov.NewAppModuleBasic(
 				[]govclient.ProposalHandler{
 					// paramsclient.ProposalHandler,
@@ -910,38 +880,6 @@ func NewApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-
-	// Pseudorandomness beacon
-	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
-	vrfKeyFile := utils.PrivValidatorKeyFileToVRFKeyFile(pvKeyFile)
-	vrfKey, err := utils.LoadVRFKey(vrfKeyFile)
-	if err != nil {
-		// TO-DO if validator, panic
-		app.Logger().Info("failed to load vrf key")
-		if err != nil {
-			app.Logger().Error(err.Error())
-		}
-	}
-
-	proposalHandler := randomnesskeeper.NewDefaultProposalHandler(bApp)
-
-	app.SetPrepareProposal(
-		proposalHandler.PrepareProposalHandler(
-			txConfig,
-			vrfKey,
-			app.RandomnessKeeper,
-			app.AccountKeeper,
-			app.StakingKeeper,
-		),
-	)
-
-	app.SetProcessProposal(
-		proposalHandler.ProcessProposalHandler(
-			vrfKey,
-			app.RandomnessKeeper,
-			app.StakingKeeper,
-		),
-	)
 
 	if manager := app.SnapshotManager(); manager != nil {
 		err = manager.RegisterExtensions(
