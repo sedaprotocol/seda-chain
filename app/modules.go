@@ -13,7 +13,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
-	// customstaking "github.com/sedaprotocol/seda-chain/x/staking"
 )
 
 // stakingModule wraps the x/staking module to overwrite some genesis
