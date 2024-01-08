@@ -30,7 +30,6 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/utils"
-	customstakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
 type validator struct {
@@ -246,10 +245,9 @@ func (v *validator) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
 		return nil, err
 	}
 
-	return customstakingtypes.NewMsgCreateValidatorWithVRF(
+	return stakingtypes.NewMsgCreateValidator(
 		sdk.ValAddress(valAddr).String(),
 		valPubKey,
-		v.vrfKey.PubKey,
 		amount,
 		description,
 		commissionRates,
