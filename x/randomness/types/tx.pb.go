@@ -30,6 +30,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// The message for submitting a new seed to the chain.
 type MsgNewSeed struct {
 	Prover string `protobuf:"bytes,1,opt,name=prover,proto3" json:"prover,omitempty"`
 	Pi     string `protobuf:"bytes,2,opt,name=pi,proto3" json:"pi,omitempty"`
@@ -90,6 +91,7 @@ func (m *MsgNewSeed) GetBeta() string {
 	return ""
 }
 
+// The response message for submitting a new seed to the chain.
 type MsgNewSeedResponse struct {
 }
 
@@ -166,6 +168,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
+	// NewSeed defines a method for submitting a new seed to the chain.
 	NewSeed(ctx context.Context, in *MsgNewSeed, opts ...grpc.CallOption) (*MsgNewSeedResponse, error)
 }
 
@@ -188,6 +191,7 @@ func (c *msgClient) NewSeed(ctx context.Context, in *MsgNewSeed, opts ...grpc.Ca
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
+	// NewSeed defines a method for submitting a new seed to the chain.
 	NewSeed(context.Context, *MsgNewSeed) (*MsgNewSeedResponse, error)
 }
 

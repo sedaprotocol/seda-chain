@@ -24,6 +24,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// GenesisState defines the wasm module's genesis state(i.e wasms stored at
+// genesis.)
 type GenesisState struct {
 	Wasms                 []Wasm `protobuf:"bytes,1,rep,name=wasms,proto3" json:"wasms"`
 	ProxyContractRegistry string `protobuf:"bytes,2,opt,name=proxy_contract_registry,json=proxyContractRegistry,proto3" json:"proxy_contract_registry,omitempty"`
