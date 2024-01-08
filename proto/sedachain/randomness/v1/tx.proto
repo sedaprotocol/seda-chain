@@ -5,8 +5,13 @@ import "cosmos/msg/v1/msg.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/randomness/types";
 
-service Msg { rpc NewSeed(MsgNewSeed) returns (MsgNewSeedResponse); }
+// Msg service defines the gRPC tx methods.
+service Msg {
+  // NewSeed defines a method for submitting a new seed to the chain.
+  rpc NewSeed(MsgNewSeed) returns (MsgNewSeedResponse);
+}
 
+// The message for submitting a new seed to the chain.
 message MsgNewSeed {
   option (cosmos.msg.v1.signer) = "prover";
 
@@ -15,4 +20,9 @@ message MsgNewSeed {
   string beta = 3;   // VRF hash
 }
 
+<<<<<<< HEAD
 message MsgNewSeedResponse {}
+=======
+// The response message for submitting a new seed to the chain.
+message MsgNewSeedResponse {}
+>>>>>>> 5db8210 (fix(proto): fix lint issues with proto)

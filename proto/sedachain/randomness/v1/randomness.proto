@@ -2,11 +2,11 @@ syntax = "proto3";
 package sedachain.randomness.v1;
 
 import "google/protobuf/any.proto";
-import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/randomness/types";
 
+// ValidatorVRF is the randomness validator's VRF key information
 message ValidatorVRF {
   // operator_address defines the address of the validator's operator; bech
   // encoded in JSON.

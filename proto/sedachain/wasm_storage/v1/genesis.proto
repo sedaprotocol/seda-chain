@@ -6,6 +6,8 @@ import "sedachain/wasm_storage/v1/wasm_storage.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
+// GenesisState defines the wasm module's genesis state(i.e wasms stored at
+// genesis.)
 message GenesisState {
   repeated Wasm wasms = 1 [ (gogoproto.nullable) = false ];
   string proxy_contract_registry = 2;

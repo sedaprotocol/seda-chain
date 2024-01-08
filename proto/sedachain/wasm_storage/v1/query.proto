@@ -1,7 +1,6 @@
 syntax = "proto3";
 package sedachain.wasm_storage.v1;
 
-import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "sedachain/wasm_storage/v1/wasm_storage.proto";
 
@@ -16,6 +15,7 @@ service Query {
         "/seda-chain/wasm-storage/data_request_wasm/{hash}";
   }
 
+  // DataRequestWasms returns all Data Request Wasms.
   rpc DataRequestWasms(QueryDataRequestWasmsRequest)
       returns (QueryDataRequestWasmsResponse) {
     option (google.api.http).get =
@@ -28,11 +28,13 @@ service Query {
         "/seda-chain/wasm-storage/overlay_wasm/{hash}";
   }
 
+  // OverlayWasms returns all Overlay Wasms.
   rpc OverlayWasms(QueryOverlayWasmsRequest)
       returns (QueryOverlayWasmsResponse) {
     option (google.api.http).get = "/seda-chain/wasm-storage/overlay_wasms";
   }
 
+  // ProxyContractRegistry returns the Proxy Contract Registry address.
   rpc ProxyContractRegistry(QueryProxyContractRegistryRequest)
       returns (QueryProxyContractRegistryResponse) {
     option (google.api.http).get =
@@ -40,22 +42,32 @@ service Query {
   }
 }
 
+// The request message for QueryDataRequestWasm RPC.
 message QueryDataRequestWasmRequest { string hash = 1; }
 
+// The response message for QueryDataRequestWasm RPC.
 message QueryDataRequestWasmResponse { Wasm wasm = 1; }
 
+// The request message for QueryDataRequestWasms RPC.
 message QueryDataRequestWasmsRequest {}
 
+// The response message for QueryDataRequestWasms RPC.
 message QueryDataRequestWasmsResponse { repeated string hash_type_pairs = 1; }
 
+// The request message for QueryOverlayWasm RPC.
 message QueryOverlayWasmRequest { string hash = 1; }
 
+// The response message for QueryOverlayWasm RPC.
 message QueryOverlayWasmResponse { Wasm wasm = 1; }
 
+// The request message for QueryOverlayWasms RPC.
 message QueryOverlayWasmsRequest {}
 
+// The response message for QueryOverlayWasms RPC.
 message QueryOverlayWasmsResponse { repeated string hash_type_pairs = 1; }
 
+// The request message for QueryProxyContractRegistry RPC.
 message QueryProxyContractRegistryRequest {}
 
+// The response message for QueryProxyContractRegistry RPC.
 message QueryProxyContractRegistryResponse { string address = 1; }

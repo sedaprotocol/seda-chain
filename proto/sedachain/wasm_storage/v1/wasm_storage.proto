@@ -6,29 +6,37 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
+// A Wasm msg.
 message Wasm {
   bytes hash = 1;
   bytes bytecode = 2;
-  WasmType wasmType = 3;
+  WasmType wasm_type = 3;
   google.protobuf.Timestamp added_at = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 
+// WasmType is an enum for the type of wasm.
 enum WasmType {
   option (gogoproto.goproto_enum_prefix) = false;
 
+  // An unspecified kind of wasm.
   WASM_TYPE_UNSPECIFIED = 0
       [ (gogoproto.enumvalue_customname) = "WasmTypeNil" ];
+  // A wasm that is a data request.
   WASM_TYPE_DATA_REQUEST = 1
       [ (gogoproto.enumvalue_customname) = "WasmTypeDataRequest" ];
+  // A wasm that is a DR tally.
   WASM_TYPE_TALLY = 2 [ (gogoproto.enumvalue_customname) = "WasmTypeTally" ];
+  // A wasm that is an overlay executor.
   WASM_TYPE_DATA_REQUEST_EXECUTOR = 3
       [ (gogoproto.enumvalue_customname) = "WasmTypeDataRequestExecutor" ];
+  // A wasm that is an overlay relayer.
   WASM_TYPE_RELAYER = 4
       [ (gogoproto.enumvalue_customname) = "WasmTypeRelayer" ];
 }
 
-message Params {
+// Params to define the max wasm size allowed.
+message Params { 
   option (gogoproto.equal) = true;
 
   uint64 max_wasm_size = 1;
