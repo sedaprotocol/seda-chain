@@ -125,10 +125,6 @@ import (
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/docs"
-	randomness "github.com/sedaprotocol/seda-chain/x/randomness"
-	randomnesstypes "github.com/sedaprotocol/seda-chain/x/randomness/types"
-	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
-	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 const (
@@ -166,8 +162,6 @@ var (
 		ibcfee.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		ica.AppModuleBasic{},
-		wasmstorage.AppModuleBasic{},
-		randomness.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		// solomachine.AppModuleBasic{},
 	)
@@ -318,7 +312,6 @@ func NewApp(
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
-		wasmstoragetypes.StoreKey, randomnesstypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -727,9 +720,6 @@ func NewApp(
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
-		// custom
-		wasmstoragetypes.ModuleName,
-		randomnesstypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -756,9 +746,6 @@ func NewApp(
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
-		// custom
-		wasmstoragetypes.ModuleName,
-		randomnesstypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -791,9 +778,6 @@ func NewApp(
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName, // wasm after ibc transfer
-		// custom modules
-		wasmstoragetypes.ModuleName,
-		randomnesstypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)
