@@ -12,12 +12,16 @@ import (
 	pruningtypes "cosmossdk.io/store/pruning/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
@@ -54,10 +58,18 @@ func New(t *testing.T, configs ...Config) *Network {
 // DefaultConfig will initialize config for the network with custom application,
 // genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig
 func DefaultConfig() network.Config {
-	var (
-		encoding = app.GetEncodingConfig()
-		chainID  = "chain-" + tmrand.NewRand().Str(6)
-	)
+	chainID := "chain-" + tmrand.NewRand().Str(6)
+
+	var encoding app.EncodingConfig
+	encoding.Amino = codec.NewLegacyAmino()
+	encoding.InterfaceRegistry = types.NewInterfaceRegistry()
+	encoding.Marshaler = codec.NewProtoCodec(encoding.InterfaceRegistry)
+	encoding.TxConfig = tx.NewTxConfig(encoding.Marshaler, tx.DefaultSignModes)
+
+	std.RegisterLegacyAminoCodec(encoding.Amino)
+	std.RegisterInterfaces(encoding.InterfaceRegistry)
+	app.ModuleBasics.RegisterInterfaces(encoding.InterfaceRegistry)
+
 	return network.Config{
 		Codec:             encoding.Marshaler,
 		TxConfig:          encoding.TxConfig,

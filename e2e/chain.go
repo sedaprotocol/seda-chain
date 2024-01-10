@@ -8,6 +8,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/std"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
 	"github.com/sedaprotocol/seda-chain/app"
 )
@@ -24,7 +27,15 @@ var (
 )
 
 func init() {
-	encodingConfig = app.GetEncodingConfig()
+	encodingConfig.Amino = codec.NewLegacyAmino()
+	encodingConfig.InterfaceRegistry = types.NewInterfaceRegistry()
+	encodingConfig.Marshaler = codec.NewProtoCodec(encodingConfig.InterfaceRegistry)
+	encodingConfig.TxConfig = tx.NewTxConfig(encodingConfig.Marshaler, tx.DefaultSignModes)
+
+	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
+	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	app.ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+
 	cdc = encodingConfig.Marshaler
 	txConfig = encodingConfig.TxConfig
 }
