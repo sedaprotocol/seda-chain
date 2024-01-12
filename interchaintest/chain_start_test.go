@@ -16,7 +16,7 @@ func TestChainStart(t *testing.T) {
 
 	t.Parallel()
 
-	numOfValidators := 1
+	numOfValidators := 2
 	numOfFullNodes := 0
 
 	chains := CreateChains(t, numOfValidators, numOfFullNodes)
