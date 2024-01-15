@@ -27,12 +27,25 @@
 
 This repo contains our blockchain layer, written with the help of the [CosmosSDK](https://github.com/cosmos/cosmos-sdk).
 
-To learn how to build a local version, please read [developing](DEVELOPING.md).
+[SEDA](https://seda.xyz) is an open-source data transmission and computation network that enables a permissionless environment for developers to deploy data feeds. It is built on top of [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) and [CosmWasm](https://github.com/CosmWasm/wasmd).
+
+To learn about SEDA protocol, please visit [docs.seda.xyz](https://docs.seda.xyz).<br>
+To learn how to build a local version, please read [developing](DEVELOPING.md).<br>
 To learn how to contribute, please read [contributing](CONTRIBUTING.md).
 
 ## Installation
 
-There's a few different ways you could install and run the node.
+### System Requirements
+
+The current minimal system requirements are as follows and may be subject to change based on future improvements:
+
+ - Quad Core or larger AMD or Intel (amd64) CPU
+   - ARM CPUs (e.g., Apple M1) are discouraged at this time
+ - 32GB RAM (with ample swap space)
+ - 1TB SSD Storage
+ - 100MBPS bidirectional internet connection
+
+Running SEDA on lower-spec hardware is feasible, but you may encounter potential performance issues or an increased risk of crashes.
 
 ### Download From Releases
 
@@ -46,12 +59,12 @@ Please check out [developing](DEVELOPING.md).
 
 This is a guide for operating and running the node.
 
-- Individuals aiming to connect to an [external node](#linking-to-an-external-node) with Seda.
+- Individuals aiming to connect to an [external node](#linking-to-an-external-node) with SEDA.
 - Those who wish to establish their own node and/or set up the node as a validator.
 
-`seda-chaind` is the command-line tool for interfacing, or CLI for short, with the Seda blockchain. You can check out the installation instructions [here](#installation).
+`seda-chaind` is the command-line tool for interfacing, or CLI for short, with the SEDA blockchain. You can check out the installation instructions [here](#installation).
 
-Now, you're all set to engage with the Seda blockchain via an external node. For a rundown of commands, type `seda-chaind --help`. For in-depth info on a particular command, add the `--help` flag, for example:
+Now, you're all set to engage with the SEDA blockchain via an external node. For a rundown of commands, type `seda-chaind --help`. For in-depth info on a particular command, add the `--help` flag, for example:
 
 ```bash
 seda-chaind --help 
@@ -66,8 +79,8 @@ This section is for those linking to an external node, so if you want to run com
 1. Add the `--node` flag to your CLI commands, followed by the RPC endpoint in the `https://<hostname>:<port>` format.
 2. Alternatively, set a default node: `seda-chaind config node https://[hostname]:[port]`
 
-**NOTE**:
-When connecting externally, choose a trustworthy node operator. Unscrupulous operators might tamper with query outcomes or block transactions. The Seda team currently supports these RPC endpoints:
+**NOTE**:<br>
+When connecting externally, choose a trustworthy node operator. Unscrupulous operators might tamper with query outcomes or block transactions. The SEDA team currently supports these RPC endpoints:
 
 - Testnet-seda-node-1: `http://3.10.185.200:26657`
 - Testnet-seda-node-2: `http://35.179.10.147:26657`
