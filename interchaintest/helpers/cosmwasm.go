@@ -24,16 +24,11 @@ func SmartQueryString(t *testing.T, ctx context.Context, chain *cosmos.CosmosCha
 	return err
 }
 
-func StoreContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, keyname string, fileLoc string) (codeId string) {
+func SetupAndInstantiateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, keyname string, fileLoc string, message string, extraFlags ...string) (codeId, contract string) {
 	codeId, err := chain.StoreContract(ctx, keyname, fileLoc)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return codeId
-}
-
-func SetupAndInstantiateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, keyname string, fileLoc string, message string, extraFlags ...string) (codeId, contract string) {
-	codeId = StoreContract(t, ctx, chain, keyname, fileLoc)
 	needsNoAdminFlag := true
 
 	for _, flag := range extraFlags {

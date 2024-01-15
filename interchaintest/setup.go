@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
+	ibclocalhost "github.com/cosmos/ibc-go/v8/modules/light-clients/09-localhost"
 	"github.com/docker/docker/client"
 	"github.com/strangelove-ventures/interchaintest/v8"
+	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"github.com/strangelove-ventures/interchaintest/v8/testreporter"
 	"github.com/stretchr/testify/require"
@@ -39,6 +43,7 @@ var (
 		NoHostMount:         false,
 		SkipGenTx:           false,
 		PreGenesis:          nil,
+		EncodingConfig:      sedaEncoding(),
 		ModifyGenesis:       nil,
 		ConfigFileOverrides: nil,
 	}
@@ -48,6 +53,18 @@ var (
 
 	GenesisWalletAmount = int64(10_000_000)
 )
+
+// sedaEncoding registers the Juno specific module codecs so that the associated types and msgs
+// will be supported when writing to the blocksdb sqlite database.
+func sedaEncoding() *testutil.TestEncodingConfig {
+	cfg := cosmos.DefaultEncoding()
+
+	// register custom types
+	ibclocalhost.RegisterInterfaces(cfg.InterfaceRegistry)
+	wasmtypes.RegisterInterfaces(cfg.InterfaceRegistry)
+
+	return &cfg
+}
 
 // CreateChains generates this branch's chain (ex: from the commit)
 func CreateChains(t *testing.T, numVals, numFullNodes int) []ibc.Chain {
