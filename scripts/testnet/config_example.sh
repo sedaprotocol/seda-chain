@@ -11,6 +11,7 @@ LINUX_BIN=$(git rev-parse --show-toplevel)/build/seda-chaind-linux # linux versi
 CHAIN_ID=seda-testnet
 # GENESIS_TIME=
 
+WASMVM_VERSION=v1.5.1
 
 #######################################
 ########### VALIDATOR NODES ###########
@@ -48,9 +49,12 @@ GENESIS_ADDRESSES=(
 SATOSHI=seda... # if set, creates a genesis account with 100x seda tokens compared to standard genesis account
 FAUCET=seda... # if set, creates a genesis account with 10x seda tokens compared to standard genesis account
 
+#######################################
+######### COSMWASM CONTRACTS ##########
+#######################################
+CONTRACTS_VERSION=v0.0.1-rc # latest or seda-chain-contracts release version
 
 #######################################
 ############### GITHUB ################
 #######################################
 GITHUB_TOKEN=ghp_... # github token for accessing seda-chain-contracts repo
-CONTRACTS_VERSION=v0.0.1-rc # latest or seda-chain-contracts release version

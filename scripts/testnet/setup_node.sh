@@ -5,12 +5,15 @@ set -e
 # This script is run on a node to configure cosmovisor, shared library,
 # and systemctl service.
 #
-# NOTE: Assumes ami-0a1ab4a3fcf997a9d
+# NOTE: Assumes x86 Amazon Linux machine
 
-COSMOVISOR_URL=https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-arm64.tar.gz
-COSMOVISOR_TAR_GZ=cosmovisor-v1.3.0-linux-arm64.tar.gz
-LIBWASMVM_URL=https://github.com/CosmWasm/wasmvm/releases/download/v1.3.0/libwasmvm.aarch64.so
-LIBWASMVM=libwasmvm.aarch64.so
+WASMVM_VERSION=$1
+
+COSMOVISOR_URL=https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-amd64.tar.gz
+COSMOVISOR_TAR_GZ=cosmovisor-v1.5.0-linux-amd64.tar.gz
+
+LIBWASMVM_URL=https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm.x86_64.so
+LIBWASMVM=libwasmvm.x86_64.so
 
 COSMOS_LDS=$HOME/COSMOS_LDS
 SYSFILE=/etc/systemd/system/seda-node.service
