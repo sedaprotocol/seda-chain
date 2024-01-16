@@ -17,7 +17,6 @@ import (
  *   - Packets are being properly timed out
  */
 func TestConformance(t *testing.T) {
-
 	/* =================================================== */
 	/*                   CHAIN FACTORY                     */
 	/* =================================================== */

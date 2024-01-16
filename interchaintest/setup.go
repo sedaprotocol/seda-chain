@@ -23,7 +23,7 @@ var (
 	/*                   CHAIN CONFIG                    */
 	/* =================================================== */
 	coinType      = "118"
-	denom         = "aseda"
+	SedaDenom     = "aseda"
 	SedaChainName = "seda"
 
 	dockerImage = ibc.DockerImage{
@@ -32,6 +32,8 @@ var (
 		UidGid:     "1025:1025",
 	}
 
+	SedaRepo = "ghcr.io/sedaprotocol/seda-chain"
+
 	SedaCfg = ibc.ChainConfig{
 		Type:                "cosmos",
 		Name:                "seda-local",
@@ -39,9 +41,9 @@ var (
 		Images:              []ibc.DockerImage{dockerImage},
 		Bin:                 "seda-chaind",
 		Bech32Prefix:        "seda",
-		Denom:               denom,
+		Denom:               SedaDenom,
 		CoinType:            coinType,
-		GasPrices:           fmt.Sprintf("0%s", denom),
+		GasPrices:           fmt.Sprintf("0%s", SedaDenom),
 		GasAdjustment:       2.0,
 		TrustingPeriod:      "112h",
 		NoHostMount:         false,
@@ -61,6 +63,12 @@ var (
 		Image:   "ghcr.io/cosmos/relayer",
 		Version: "main",
 	}
+
+	/* =================================================== */
+	/*                     GOV CONFIG                      */
+	/* =================================================== */
+	VotingPeriod     = "15s"
+	MaxDepositPeriod = "10s"
 
 	/* =================================================== */
 	/*                    WALLET CONFIG                    */
@@ -84,10 +92,16 @@ func sedaEncoding() *testutil.TestEncodingConfig {
 func CreateChains(t *testing.T, numVals, numFullNodes int) []ibc.Chain {
 	cfg := SedaCfg
 	cfg.Images = []ibc.DockerImage{dockerImage}
+	return CreateChainsWithCustomConfig(t, numVals, numFullNodes, cfg)
+}
+
+func CreateChainsWithCustomConfig(t *testing.T, numVals, numFullNodes int, config ibc.ChainConfig) []ibc.Chain {
 	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
 		{
 			Name:          SedaChainName,
-			ChainConfig:   SedaCfg,
+			ChainName:     SedaChainName,
+			Version:       config.Images[0].Version,
+			ChainConfig:   config,
 			NumValidators: &numVals,      // defaults to 2 when unspecified
 			NumFullNodes:  &numFullNodes, // defaults to 1 when unspecified
 		},

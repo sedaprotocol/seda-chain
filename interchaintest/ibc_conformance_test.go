@@ -18,6 +18,8 @@ func TestSedaGaiaConformance(t *testing.T) {
 		t.Skip("skipping in short mode")
 	}
 
+	t.Parallel()
+
 	numVals := 2
 	numFullNodes := 1
 
