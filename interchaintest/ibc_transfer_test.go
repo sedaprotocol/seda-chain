@@ -21,53 +21,58 @@ import (
 // and sends an ICS20 token transfer from Seda->Gaia and then back from Gaia->Seda.
 func TestSedaGaiaIBCTransfer(t *testing.T) {
 	if testing.Short() {
-		t.Skip()
+		t.Skip("skipping in short mode")
 	}
 
-	t.Parallel()
-
-	/* =================================================== */
-	/*                   CHAIN FACTORY                     */
-	/* =================================================== */
 	numVals := 1
 	numFullNodes := 1
 
-	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
-		{
-			Name:          "seda",
-			ChainConfig:   SedaCfg,
-			NumValidators: &numVals,      // defaults to 2 when unspecified
-			NumFullNodes:  &numFullNodes, // defaults to 1 when unspecified
-		},
-		// pre configured chain pulled from
-		// https://github.com/strangelove-ventures/heighliner
-		{
-			Name:          "gaia",
-			Version:       "v14.1.0",
-			NumValidators: &numVals,
-			NumFullNodes:  &numFullNodes,
-		},
-	})
+	// pre configured chain pulled from
+	// https://github.com/strangelove-ventures/heighliner
+	gaiaChainSpec := &interchaintest.ChainSpec{
+		Name:          "gaia",
+		Version:       "v14.1.0",
+		NumValidators: &numVals,      // defaults to 2 when unspecified
+		NumFullNodes:  &numFullNodes, // defaults to 1 when unspecified
+	}
+
+	runIBCTransferTest(t, gaiaChainSpec, numVals, numFullNodes)
+}
+
+func runIBCTransferTest(t *testing.T, counterpartyChainSpec *interchaintest.ChainSpec, numVals, numFullNodes int) {
+	/* =================================================== */
+	/*                   CHAIN FACTORY                     */
+	/* =================================================== */
+	cf := interchaintest.NewBuiltinChainFactory(
+		zaptest.NewLogger(t),
+		[]*interchaintest.ChainSpec{
+			{
+				Name:          SedaChainName,
+				ChainConfig:   SedaCfg,
+				NumValidators: &numVals,
+				NumFullNodes:  &numFullNodes,
+			},
+			counterpartyChainSpec,
+		})
 
 	// Get chains from the chain factory
 	chains, err := cf.Chains(t.Name())
 	require.NoError(t, err)
-	seda, gaia := chains[0].(*cosmos.CosmosChain), chains[1].(*cosmos.CosmosChain)
+	sedaChain, counterpartyChain := chains[0].(*cosmos.CosmosChain), chains[1].(*cosmos.CosmosChain)
 
 	/* =================================================== */
 	/*                  RELAYER FACTORY                    */
 	/* =================================================== */
-	relayerType, relayerName := ibc.CosmosRly, "relay"
 	client, network := interchaintest.DockerSetup(t)
 
 	// Get a relayer instance
 	rf := interchaintest.NewBuiltinRelayerFactory(
-		relayerType,
+		RlyConfig.Type,
 		zaptest.NewLogger(t),
-		interchaintestrelayer.CustomDockerImage(RelayerImage, RelayerVersion, "100:1000"),
+		interchaintestrelayer.CustomDockerImage(RlyConfig.Image, RlyConfig.Version, "100:1000"),
 		interchaintestrelayer.StartupFlags("--processor", "events", "--block-history", "100"),
 	)
-	r := rf.Build(t, client, network)
+	rly := rf.Build(t, client, network)
 
 	/* =================================================== */
 	/*                  INTERCHAIN SPAWN                   */
@@ -77,18 +82,17 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 	)
 
 	ic := interchaintest.NewInterchain().
-		AddChain(seda).
-		AddChain(gaia).
-		AddRelayer(r, relayerName).
+		AddChain(sedaChain).
+		AddChain(counterpartyChain).
+		AddRelayer(rly, RlyConfig.Name).
 		AddLink(interchaintest.InterchainLink{
-			Chain1:  seda,
-			Chain2:  gaia,
-			Relayer: r,
+			Chain1:  sedaChain,
+			Chain2:  counterpartyChain,
+			Relayer: rly,
 			Path:    ibcPath,
 		})
 
 	ctx := context.Background()
-
 	rep := testreporter.NewNopReporter()
 	eRep := rep.RelayerExecReporter(t)
 
@@ -115,21 +119,21 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 	/* =================================================== */
 
 	// Create some user accounts on both chains
-	users := interchaintest.GetAndFundTestUsers(t, ctx, t.Name(), GenesisWalletAmount, seda, gaia)
+	users := interchaintest.GetAndFundTestUsers(t, ctx, t.Name(), GenesisWalletAmount, sedaChain, counterpartyChain)
 	sedaUser, gaiaUser := users[0], users[1]
 	sedaUserAddr := sedaUser.FormattedAddress()
 	gaiaUserAddr := gaiaUser.FormattedAddress()
 
 	// Wait a few blocks for relayer to start and for user accounts to be created
-	err = testutil.WaitForBlocks(ctx, 5, seda, gaia)
+	err = testutil.WaitForBlocks(ctx, 5, sedaChain, counterpartyChain)
 	require.NoError(t, err)
 
 	// Get original account balances
-	sedaOrigBal, err := seda.GetBalance(ctx, sedaUserAddr, seda.Config().Denom)
+	sedaOrigBal, err := sedaChain.GetBalance(ctx, sedaUserAddr, sedaChain.Config().Denom)
 	require.NoError(t, err)
 	require.Equal(t, GenesisWalletAmount, sedaOrigBal.Int64())
 
-	gaiaOrigBal, err := gaia.GetBalance(ctx, gaiaUserAddr, gaia.Config().Denom)
+	gaiaOrigBal, err := counterpartyChain.GetBalance(ctx, gaiaUserAddr, counterpartyChain.Config().Denom)
 	require.NoError(t, err)
 	require.Equal(t, GenesisWalletAmount, gaiaOrigBal.Int64())
 
@@ -141,29 +145,29 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 	// Compose an IBC transfer and send from Seda -> Gaia
 	transfer := ibc.WalletAmount{
 		Address: gaiaUserAddr,
-		Denom:   seda.Config().Denom,
+		Denom:   sedaChain.Config().Denom,
 		Amount:  transferAmount,
 	}
 
-	channel, err := ibc.GetTransferChannel(ctx, r, eRep, seda.Config().ChainID, gaia.Config().ChainID)
+	channel, err := ibc.GetTransferChannel(ctx, rly, eRep, sedaChain.Config().ChainID, counterpartyChain.Config().ChainID)
 	require.NoError(t, err)
 
-	sedaHeight, err := seda.Height(ctx)
+	sedaHeight, err := sedaChain.Height(ctx)
 	require.NoError(t, err)
 
-	transferTx, err := seda.SendIBCTransfer(ctx, channel.ChannelID, sedaUserAddr, transfer, ibc.TransferOptions{})
+	transferTx, err := sedaChain.SendIBCTransfer(ctx, channel.ChannelID, sedaUserAddr, transfer, ibc.TransferOptions{})
 	require.NoError(t, err)
 
 	/*
 	 * Starts the relayer on a loop to avoid having to
 	 * manually flush packets and ack's
 	 */
-	err = r.StartRelayer(ctx, eRep, ibcPath)
+	err = rly.StartRelayer(ctx, eRep, ibcPath)
 	require.NoError(t, err)
 
 	t.Cleanup(
 		func() {
-			err := r.StopRelayer(ctx, eRep)
+			err := rly.StopRelayer(ctx, eRep)
 			if err != nil {
 				t.Logf("an error occurred while stopping the relayer: %s", err)
 			}
@@ -171,22 +175,22 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 	)
 
 	// Poll for the ack to know the transfer was successful
-	_, err = testutil.PollForAck(ctx, seda, sedaHeight, sedaHeight+50, transferTx.Packet)
+	_, err = testutil.PollForAck(ctx, sedaChain, sedaHeight, sedaHeight+50, transferTx.Packet)
 	require.NoError(t, err)
 
-	err = testutil.WaitForBlocks(ctx, 10, seda)
+	err = testutil.WaitForBlocks(ctx, 10, sedaChain)
 	require.NoError(t, err)
 
 	// Get the IBC denom for aseda on Gaia
-	sedaTokenDenom := transfertypes.GetPrefixedDenom(channel.Counterparty.PortID, channel.Counterparty.ChannelID, seda.Config().Denom)
+	sedaTokenDenom := transfertypes.GetPrefixedDenom(channel.Counterparty.PortID, channel.Counterparty.ChannelID, sedaChain.Config().Denom)
 	sedaIBCDenom := transfertypes.ParseDenomTrace(sedaTokenDenom).IBCDenom()
 
 	// Assert that the funds are no longer present in user acc on Seda and are in the user acc on Gaia
-	sedaUpdateBal, err := seda.GetBalance(ctx, sedaUserAddr, seda.Config().Denom)
+	sedaUpdateBal, err := sedaChain.GetBalance(ctx, sedaUserAddr, sedaChain.Config().Denom)
 	require.NoError(t, err)
 	require.Equal(t, sedaOrigBal.Sub(transferAmount), sedaUpdateBal)
 
-	gaiaUpdateBal, err := gaia.GetBalance(ctx, gaiaUserAddr, sedaIBCDenom)
+	gaiaUpdateBal, err := counterpartyChain.GetBalance(ctx, gaiaUserAddr, sedaIBCDenom)
 	require.NoError(t, err)
 	require.Equal(t, transferAmount, gaiaUpdateBal)
 
@@ -197,22 +201,22 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 		Amount:  transferAmount,
 	}
 
-	gaiaHeight, err := gaia.Height(ctx)
+	gaiaHeight, err := counterpartyChain.Height(ctx)
 	require.NoError(t, err)
 
-	transferTx, err = gaia.SendIBCTransfer(ctx, channel.Counterparty.ChannelID, gaiaUserAddr, transfer, ibc.TransferOptions{})
+	transferTx, err = counterpartyChain.SendIBCTransfer(ctx, channel.Counterparty.ChannelID, gaiaUserAddr, transfer, ibc.TransferOptions{})
 	require.NoError(t, err)
 
 	// Poll for the ack to know the transfer was successful
-	_, err = testutil.PollForAck(ctx, gaia, gaiaHeight, gaiaHeight+25, transferTx.Packet)
+	_, err = testutil.PollForAck(ctx, counterpartyChain, gaiaHeight, gaiaHeight+25, transferTx.Packet)
 	require.NoError(t, err)
 
 	// Assert that the funds are now back on Seda and not on Gaia
-	sedaUpdateBal, err = seda.GetBalance(ctx, sedaUserAddr, seda.Config().Denom)
+	sedaUpdateBal, err = sedaChain.GetBalance(ctx, sedaUserAddr, sedaChain.Config().Denom)
 	require.NoError(t, err)
 	require.Equal(t, sedaOrigBal, sedaUpdateBal)
 
-	gaiaUpdateBal, err = gaia.GetBalance(ctx, gaiaUserAddr, sedaIBCDenom)
+	gaiaUpdateBal, err = counterpartyChain.GetBalance(ctx, gaiaUserAddr, sedaIBCDenom)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), gaiaUpdateBal.Int64())
 }

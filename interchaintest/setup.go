@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	ibclocalhost "github.com/cosmos/ibc-go/v8/modules/light-clients/09-localhost"
 	"github.com/docker/docker/client"
+	"github.com/sedaprotocol/seda-chain/interchaintest/types"
 	"github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
@@ -18,10 +19,13 @@ import (
 )
 
 var (
-	coinType = "118"
-	denom    = "aseda"
+	/* =================================================== */
+	/*                   CHAIN CONFIG                    */
+	/* =================================================== */
+	coinType      = "118"
+	denom         = "aseda"
+	SedaChainName = "seda"
 
-	// TO-DO
 	dockerImage = ibc.DockerImage{
 		Repository: "sedaprotocol/seda-chaind-e2e", // FOR LOCAL IMAGE USE: Docker Image Name
 		Version:    "latest",                       // FOR LOCAL IMAGE USE: Docker Image Tag
@@ -48,9 +52,19 @@ var (
 		ConfigFileOverrides: nil,
 	}
 
-	RelayerImage   = "ghcr.io/cosmos/relayer"
-	RelayerVersion = "main"
+	/* =================================================== */
+	/*                   RELAYER CONFIG                    */
+	/* =================================================== */
+	RlyConfig = types.RelayerConfig{
+		Type:    ibc.CosmosRly,
+		Name:    "relay",
+		Image:   "ghcr.io/cosmos/relayer",
+		Version: "main",
+	}
 
+	/* =================================================== */
+	/*                    WALLET CONFIG                    */
+	/* =================================================== */
 	GenesisWalletAmount = int64(10_000_000)
 )
 
@@ -72,7 +86,7 @@ func CreateChains(t *testing.T, numVals, numFullNodes int) []ibc.Chain {
 	cfg.Images = []ibc.DockerImage{dockerImage}
 	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
 		{
-			Name:          "seda",
+			Name:          SedaChainName,
 			ChainConfig:   SedaCfg,
 			NumValidators: &numVals,      // defaults to 2 when unspecified
 			NumFullNodes:  &numFullNodes, // defaults to 1 when unspecified
