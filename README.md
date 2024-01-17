@@ -25,8 +25,6 @@
 [twitter-badge]: https://img.shields.io/twitter/url/https/twitter.com/SedaProtocol.svg?style=social&label=Follow%20%40SedaProtocol
 [twitter-url]: https://twitter.com/SedaProtocol
 
-This repo contains our blockchain layer, written with the help of the [CosmosSDK](https://github.com/cosmos/cosmos-sdk).
-
 [SEDA](https://seda.xyz) is an open-source data transmission and computation network that enables a permissionless environment for developers to deploy data feeds. It is built on top of [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) and [CosmWasm](https://github.com/CosmWasm/wasmd).
 
 To learn about SEDA protocol, please visit [docs.seda.xyz](https://docs.seda.xyz).<br>
@@ -79,7 +77,6 @@ This section is for those linking to an external node, so if you want to run com
 1. Add the `--node` flag to your CLI commands, followed by the RPC endpoint in the `https://<hostname>:<port>` format.
 2. Alternatively, set a default node: `seda-chaind config set client node https://[hostname]:[port]`
 
-**NOTE**:<br>
 When connecting externally, choose a trustworthy node operator. Unscrupulous operators might tamper with query outcomes or block transactions. The SEDA team currently supports these RPC endpoints:
 
 - Testnet-seda-node-1: `http://3.10.185.200:26657`
