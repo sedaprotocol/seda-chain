@@ -77,7 +77,7 @@ seda-chaind query bank --help
 This section is for those linking to an external node, so if you want to run commands from your local machine, or don't feel like running a node yourself you can use the `seda-chaind` binary to connect to an external node. This can be done two ways:
 
 1. Add the `--node` flag to your CLI commands, followed by the RPC endpoint in the `https://<hostname>:<port>` format.
-2. Alternatively, set a default node: `seda-chaind config node https://[hostname]:[port]`
+2. Alternatively, set a default node: `seda-chaind config set client node https://[hostname]:[port]`
 
 **NOTE**:<br>
 When connecting externally, choose a trustworthy node operator. Unscrupulous operators might tamper with query outcomes or block transactions. The SEDA team currently supports these RPC endpoints:
