@@ -55,11 +55,11 @@ jobs:
 
       - name: 🔨 Build Binaries
         run: |
-          export VERSION=$(echo $(git describe --tags --always --match "v*") | sed 's/^v//')
-          export COMMIT=$(git log -1 --format='%H')
+          export GIT_VERSION=$(echo $(git describe --tags --always --match "v*") | sed 's/^v//')
+          export GIT_COMMIT=$(git log -1 --format='%H')
           docker build -t seda-static -f ./dockerfiles/Dockerfile.build-static \
-            --build-arg VERSION="$VERSION" \
-            --build-arg COMMIT="$COMMIT" .
+            --build-arg GIT_VERSION="$GIT_VERSION" \
+            --build-arg GIT_COMMIT="$GIT_COMMIT" .
           mkdir build
           docker run --rm -v $(pwd)/build:/output seda-static cp -r /build/. /output/
 
