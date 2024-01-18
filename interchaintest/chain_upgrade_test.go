@@ -2,6 +2,7 @@ package interchaintest
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -12,6 +13,9 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/require"
+
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+	cosmosproto "github.com/cosmos/gogoproto/proto"
 )
 
 const (
@@ -181,17 +185,29 @@ func SubmitUpgradeProposal(t *testing.T, ctx context.Context, chain *cosmos.Cosm
 
 	haltHeight := currentHeight + haltHeightDelta
 
-	proposal := cosmos.SoftwareUpgradeProposal{
-		Deposit:     "10000000000" + chain.Config().Denom,
-		Title:       "Chain Upgrade 1",
-		Name:        upgradeName,
-		Description: "First chain software upgrade",
-		Height:      haltHeight,
+	upgradeMsg := []cosmosproto.Message{
+		&upgradetypes.MsgSoftwareUpgrade{
+			Authority: "seda10d07y265gmmuvt4z0w9aw880jnsr700jvvla4j", // gov module account; seda-chaind q auth module-account gov
+			Plan: upgradetypes.Plan{
+				Name:   upgradeName,
+				Height: int64(haltHeight),
+			},
+		},
 	}
 
-	// Submitting the software upgrade proposal
-	upgradeTx, err := chain.UpgradeProposal(ctx, user.KeyName(), proposal)
-	require.NoError(t, err, "error submitting software upgrade proposal tx")
+	proposal, err := chain.BuildProposal(upgradeMsg,
+		"Chain Upgrade 1", // title
+		"Summary desc",    // summary
+		"ipfs://CID",      // metadata
+		fmt.Sprintf(`500000000%s`, chain.Config().Denom), // deposit string
+		string(user.Address()),                           // proposer address
+		false,                                            // expedited
+	)
+	require.NoError(t, err, "error building proposal")
 
-	return haltHeight, upgradeTx.ProposalID
+	txProp, err := chain.SubmitProposal(ctx, user.KeyName(), proposal)
+	t.Log("txProp", txProp)
+	require.NoError(t, err, "error submitting proposal")
+
+	return haltHeight, txProp.ProposalID
 }
