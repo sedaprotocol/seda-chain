@@ -20,7 +20,7 @@ func TestChainStart(t *testing.T) {
 	numOfFullNodes := 0
 
 	chains := CreateChains(t, numOfValidators, numOfFullNodes)
-	ic, ctx, _, _ := BuildAll(t, chains)
+	ic, ctx, _, _ := BuildAllChains(t, chains)
 
 	chain := chains[0].(*cosmos.CosmosChain)
 

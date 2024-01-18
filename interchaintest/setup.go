@@ -36,7 +36,7 @@ var (
 
 	SedaCfg = ibc.ChainConfig{
 		Type:                "cosmos",
-		Name:                "seda-local",
+		Name:                SedaChainName,
 		ChainID:             "seda-local-1",
 		Images:              []ibc.DockerImage{dockerImage},
 		Bin:                 "seda-chaind",
@@ -98,7 +98,7 @@ func CreateChains(t *testing.T, numVals, numFullNodes int) []ibc.Chain {
 func CreateChainsWithCustomConfig(t *testing.T, numVals, numFullNodes int, config ibc.ChainConfig) []ibc.Chain {
 	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
 		{
-			Name:          SedaChainName,
+			Name:          SedaCfg.Name,
 			ChainName:     SedaChainName,
 			Version:       config.Images[0].Version,
 			ChainConfig:   config,
@@ -115,7 +115,7 @@ func CreateChainsWithCustomConfig(t *testing.T, numVals, numFullNodes int, confi
 	return chains
 }
 
-func BuildAll(t *testing.T, chains []ibc.Chain) (*interchaintest.Interchain, context.Context, *client.Client, string) {
+func BuildAllChains(t *testing.T, chains []ibc.Chain) (*interchaintest.Interchain, context.Context, *client.Client, string) {
 	ic := interchaintest.NewInterchain()
 
 	for _, chain := range chains {
