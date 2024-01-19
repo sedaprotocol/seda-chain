@@ -15,8 +15,12 @@ var Upgrades = []upgrades.Upgrade{
 	v1.Upgrade,
 }
 
-// RegisterUpgradeHandlers returns upgrade handlers
-func (app *App) RegisterUpgradeHandlers() {
+func (app *App) setupUpgrades() {
+	app.setUpgradeHandlers()
+	app.setUpgradeStoreLoaders()
+}
+
+func (app *App) setUpgradeHandlers() {
 	keepers := app.AppKeepers
 
 	// register all upgrade handlers
@@ -30,7 +34,9 @@ func (app *App) RegisterUpgradeHandlers() {
 			),
 		)
 	}
+}
 
+func (app *App) setUpgradeStoreLoaders() {
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))

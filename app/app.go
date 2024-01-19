@@ -777,6 +777,7 @@ func NewApp(
 	app.mm.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
+	app.setupUpgrades()
 
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.mm.Modules))
 	reflectionSvc, err := runtimeservices.NewReflectionService()
@@ -822,8 +823,6 @@ func NewApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(anteHandler)
-	// must be called after ModuleManager and configurator are set
-	app.RegisterUpgradeHandlers()
 
 	if manager := app.SnapshotManager(); manager != nil {
 		err = manager.RegisterExtensions(
