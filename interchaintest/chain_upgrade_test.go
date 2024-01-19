@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	upgradeName        = "test_upgrade"
+	upgradeName        = "v1"
 	initialVersion     = "old"
 	upgradeVersion     = "new"
 	upgradeRepo        = "sedaprotocol/seda-chain"
