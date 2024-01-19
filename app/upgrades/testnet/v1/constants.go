@@ -6,6 +6,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/sedaprotocol/seda-chain/app/keepers"
 	"github.com/sedaprotocol/seda-chain/app/upgrades"
 )
 
@@ -26,7 +27,7 @@ var Upgrade = upgrades.Upgrade{
 func Createv1UpgradeHandler(
 	mm upgrades.ModuleManager,
 	configurator module.Configurator,
-	ak *upgrades.AppKeepers,
+	ak *keepers.AppKeepers,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		// Add additional upgrade logic when needed

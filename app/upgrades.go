@@ -17,30 +17,7 @@ var Upgrades = []upgrades.Upgrade{
 
 // RegisterUpgradeHandlers returns upgrade handlers
 func (app *App) RegisterUpgradeHandlers() {
-	keepers := upgrades.AppKeepers{
-		AccountKeeper:         app.AccountKeeper,
-		ConsensusParamsKeeper: app.ConsensusParamsKeeper,
-		CapabilityKeeper:      app.CapabilityKeeper,
-		IBCKeeper:             app.IBCKeeper,
-		AuthzKeeper:           app.AuthzKeeper,
-		BankKeeper:            app.BankKeeper,
-		StakingKeeper:         app.StakingKeeper,
-		SlashingKeeper:        app.SlashingKeeper,
-		MintKeeper:            app.MintKeeper,
-		DistrKeeper:           app.DistrKeeper,
-		GovKeeper:             app.GovKeeper,
-		CrisisKeeper:          app.CrisisKeeper,
-		UpgradeKeeper:         app.UpgradeKeeper,
-		EvidenceKeeper:        app.EvidenceKeeper,
-		FeeGrantKeeper:        app.FeeGrantKeeper,
-		GroupKeeper:           app.GroupKeeper,
-		CircuitKeeper:         app.CircuitKeeper,
-		ICAHostKeeper:         app.ICAHostKeeper,
-		TransferKeeper:        app.TransferKeeper,
-		WasmKeeper:            app.WasmKeeper,
-		IBCFeeKeeper:          app.IBCFeeKeeper,
-		ICAControllerKeeper:   app.ICAControllerKeeper,
-	}
+	keepers := app.AppKeepers
 
 	// register all upgrade handlers
 	for _, upgrade := range Upgrades {
