@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hyperledger/burrow/crypto"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 const (

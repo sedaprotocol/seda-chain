@@ -684,9 +684,11 @@ func NewApp(
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
-	app.mm.SetOrderBeginBlockers(
-		// upgrades should be run first
+	app.mm.SetOrderPreBlockers(
 		upgradetypes.ModuleName,
+	)
+
+	app.mm.SetOrderBeginBlockers(
 		capabilitytypes.ModuleName, // capability module's beginblocker must come before any modules using capabilities (e.g. IBC)
 		minttypes.ModuleName,
 		distrtypes.ModuleName,

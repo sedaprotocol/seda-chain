@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/hyperledger/burrow/crypto"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
