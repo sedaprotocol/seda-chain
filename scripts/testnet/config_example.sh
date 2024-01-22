@@ -1,16 +1,46 @@
 
-NODE_DIR=./nodes # where node directories will be created
-WASM_DIR=./artifacts # where Wasm files are located
+CHAIN_ID=seda-testnet
+GENESIS_TIME="2024-01-18T22:00:00.000000Z"
+
+NODE_DIR=./$CHAIN_ID-nodes # where node directories will be created
+WASM_DIR=./artifacts # where Wasm files will be downloaded
 
 HOME_DIR=$HOME/.seda-chain # chain directory
 HOME_CONFIG_DIR=$HOME_DIR/config # chain config directory
 
-BIN=$(git rev-parse --show-toplevel)/build/seda-chaind # chain binary executable on your machine
+LOCAL_BIN=$(git rev-parse --show-toplevel)/build/seda-chaind # chain binary executable on your machine
 LINUX_BIN=$(git rev-parse --show-toplevel)/build/seda-chaind-linux # linux version of chain binary
 
-CHAIN_ID=seda-testnet
-# GENESIS_TIME=
+DENOM_METADATA='[
+    {
+        "description": "The token asset for SEDA Chain",
+        "denom_units": [
+            {
+                "denom": "aseda",
+                "exponent": 0,
+                "aliases": [
+                "attoseda"
+                ]
+            },
+            {
+                "denom": "seda",
+                "exponent": 18,
+                "aliases": []
+            }
+        ],
+        "base": "aseda",
+        "display": "seda",
+        "name": "seda",
+        "symbol": "SEDA"
+    }
+]'
 
+IBC_ALLOWED_CLIENTS='[
+    "06-solomachine",
+    "07-tendermint"
+]'
+
+WASMVM_VERSION=v1.5.2
 
 #######################################
 ########### VALIDATOR NODES ###########
@@ -33,7 +63,6 @@ SELF_DELEGATION_AMOUNTS=(
 
 SSH_KEY=~/.ssh/id_rsa # key used for ssh
 
-
 #######################################
 ########## GENESIS ACCOUNTS ###########
 #######################################
@@ -48,9 +77,12 @@ GENESIS_ADDRESSES=(
 SATOSHI=seda... # if set, creates a genesis account with 100x seda tokens compared to standard genesis account
 FAUCET=seda... # if set, creates a genesis account with 10x seda tokens compared to standard genesis account
 
+#######################################
+######### COSMWASM CONTRACTS ##########
+#######################################
+CONTRACTS_VERSION=v0.0.1-rc # latest or seda-chain-contracts release version
 
 #######################################
 ############### GITHUB ################
 #######################################
 GITHUB_TOKEN=ghp_... # github token for accessing seda-chain-contracts repo
-CONTRACTS_VERSION=v0.0.1-rc # latest or seda-chain-contracts release version

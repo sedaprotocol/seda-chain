@@ -50,20 +50,20 @@ function download_contract_release() {
 #   $1: Contract file name
 #   $2: Initial state
 function store_and_instantiate() {
-    local TX_OUTPUT=$($BIN tx wasm store $WASM_DIR/$1 --from $ADDR --keyring-backend test --gas auto --gas-adjustment 1.2 --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y --output json)
+    local TX_OUTPUT=$($LOCAL_BIN tx wasm store $WASM_DIR/$1 --from $ADDR --keyring-backend test --gas auto --gas-adjustment 1.2 --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y --output json)
     [[ -z "$TX_OUTPUT" ]] && { echo "failed to get tx output" ; exit 1; }
     local TX_HASH=$(echo $TX_OUTPUT | jq -r .txhash)
     sleep 10;
 
-    local STORE_TX_OUTPUT=$($BIN query tx $TX_HASH  --home $TMP_HOME --output json)
+    local STORE_TX_OUTPUT=$($LOCAL_BIN query tx $TX_HASH  --home $TMP_HOME --output json)
     local CODE_ID=$(echo $STORE_TX_OUTPUT | jq -r '.events[] | select(.type | contains("store_code")).attributes[] | select(.key | contains("code_id")).value')
     [[ -z "$CODE_ID" ]] && { echo "failed to get code ID" ; exit 1; }
 
-    local INSTANTIATE_OUTPUT=$($BIN tx wasm instantiate $CODE_ID "$2" --no-admin --from $ADDR --keyring-backend test --label $CODE_ID --gas auto --gas-adjustment 1.2 --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y --output json)
+    local INSTANTIATE_OUTPUT=$($LOCAL_BIN tx wasm instantiate $CODE_ID "$2" --no-admin --from $ADDR --keyring-backend test --label $CODE_ID --gas auto --gas-adjustment 1.2 --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y --output json)
     TX_HASH=$(echo "$INSTANTIATE_OUTPUT" | jq -r '.txhash')
     sleep 10;
 
-    local INSTANTIATE_TX_OUTPUT=$($BIN query tx $TX_HASH  --home $TMP_HOME --output json)
+    local INSTANTIATE_TX_OUTPUT=$($LOCAL_BIN query tx $TX_HASH  --home $TMP_HOME --output json)
     local CONTRACT_ADDRESS=$(echo $INSTANTIATE_TX_OUTPUT | jq -r '.events[] | select(.type == "instantiate") | .attributes[] | select(.key == "_contract_address") | .value')
     [[ -z "$CONTRACT_ADDRESS" ]] && { echo "failed to get contract address for ${1}" ; exit 1; }
     
@@ -95,16 +95,16 @@ TEMP_CHAIN_ID=temp-seda-chain
 #
 #   SCRIPT BEGINS - START CHAIN
 #
-$BIN init node0 --home $TMP_HOME --chain-id $TEMP_CHAIN_ID --default-denom aseda
+$LOCAL_BIN init node0 --home $TMP_HOME --chain-id $TEMP_CHAIN_ID --default-denom aseda
 
-$BIN keys add deployer --home $TMP_HOME --keyring-backend test
-ADDR=$($BIN keys show deployer --home $TMP_HOME --keyring-backend test -a)
-$BIN add-genesis-account $ADDR 100000000000000000seda --home $TMP_HOME --keyring-backend test
-$BIN gentx deployer 10000000000000000seda --home $TMP_HOME --keyring-backend test --chain-id $TEMP_CHAIN_ID
-$BIN collect-gentxs --home $TMP_HOME
+$LOCAL_BIN keys add deployer --home $TMP_HOME --keyring-backend test
+ADDR=$($LOCAL_BIN keys show deployer --home $TMP_HOME --keyring-backend test -a)
+$LOCAL_BIN add-genesis-account $ADDR 100000000000000000seda --home $TMP_HOME --keyring-backend test
+$LOCAL_BIN gentx deployer 10000000000000000seda --home $TMP_HOME --keyring-backend test --chain-id $TEMP_CHAIN_ID
+$LOCAL_BIN collect-gentxs --home $TMP_HOME
 
 
-$BIN start --home $TMP_HOME > chain_output.log 2>&1 & disown
+$LOCAL_BIN start --home $TMP_HOME > chain_output.log 2>&1 & disown
 
 sleep 20
 
@@ -122,9 +122,9 @@ DR_ADDR=$(store_and_instantiate data_requests.wasm "$ARG")
 
 
 # Call SetStaking and SetDataRequests on Proxy contract to set circular dependency
-$BIN tx wasm execute $PROXY_ADDR '{"set_staking":{"contract":"'$STAKING_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test  --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
+$LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_staking":{"contract":"'$STAKING_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test  --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
 sleep 10
-$BIN tx wasm execute $PROXY_ADDR '{"set_data_requests":{"contract":"'$DR_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test  --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
+$LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_data_requests":{"contract":"'$DR_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test  --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
 sleep 10
 
 
@@ -134,7 +134,7 @@ sleep 10
 pkill seda-chaind
 sleep 5
 
-$BIN export --home $TMP_HOME > $TMP_HOME/exported
+$LOCAL_BIN export --home $TMP_HOME > $TMP_HOME/exported
 python3 -m json.tool $TMP_HOME/exported > $TMP_HOME/genesis.json
 rm $TMP_HOME/exported
 

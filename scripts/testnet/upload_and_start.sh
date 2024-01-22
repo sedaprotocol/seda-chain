@@ -21,14 +21,16 @@ if [ ! -f "$SSH_KEY" ]; then
   echo "ssh key file not found."
   exit 1
 fi
-if [ ! -f "$BIN" ]; then
-  echo "binary file not found."
+if [ ! -f "$LOCAL_BIN" ]; then
+  echo "local chain binary not found."
   exit 1
 fi
-if [ ! -f "$LINUX_BIN" ]; then
-  echo "linux binary file not found."
-  exit 1
-fi
+
+# download chain binaries
+curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/seda-chaind-amd64
+mv seda-chaind-amd64 $NODE_DIR
+curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/seda-chaind-arm64
+mv seda-chaind-arm64 $NODE_DIR
 
 
 ################################################
@@ -49,7 +51,7 @@ done
 
 SEEDS=()
 for i in ${!IPS[@]}; do
-	SEED=$($BIN tendermint show-node-id --home $NODE_DIR/node$i)
+	SEED=$($LOCAL_BIN tendermint show-node-id --home $NODE_DIR/node$i)
 	SEEDS+=("$SEED@${IPS[$i]}:26656")
 done
 
@@ -75,9 +77,16 @@ for i in ${!IPS[@]}; do
 
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -rf /home/ec2-user/.seda-chain'
 
-	# upload
+	# upload node files
 	scp -i $SSH_KEY -r $NODE_DIR/node$i ec2-user@${IPS[$i]}:/home/ec2-user/.seda-chain
 
+	# upload chain binary built for the corresponding architecture
+	LINUX_BIN=$NODE_DIR/seda-chaind-amd64
+	ARCH=$(ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'uname -m') # aarch64 or x86_64
+	if [ $ARCH == "aarch64" ]; then
+		LINUX_BIN=$NODE_DIR/seda-chaind-arm64
+	fi
+	
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'mkdir -p /home/ec2-user/.seda-chain/cosmovisor/genesis/bin'
 	scp -i $SSH_KEY $LINUX_BIN ec2-user@${IPS[$i]}:/home/ec2-user/.seda-chain/cosmovisor/genesis/bin/seda-chaind
 
