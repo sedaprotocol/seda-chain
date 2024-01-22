@@ -164,10 +164,7 @@ func checkHeight(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, h
 	}
 }
 
-// see https://github.com/golangci/golangci-lint/issues/741
-// Ignore SA4009 throughout the file due to specific use case.
-//
-//nolint:staticcheck // SA4009 disable staticcheck since there is a bug where you can't ignore a single lint check:
+//nolint:staticcheck // SA4009 disable static check here
 func ValidatorVoting(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, proposalID string, currentHeight, haltHeight uint64) {
 	t.Helper()
 
