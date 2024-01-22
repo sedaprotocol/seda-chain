@@ -17,6 +17,11 @@ source config.sh
 ################################################
 
 # prelimiary checks on parameters
+if [ $($LOCAL_BIN version) != $CHAIN_VERSION ]; then
+    echo "Local chain version is" $($LOCAL_BIN version) "instead of" $CHAIN_VERSION
+    exit 1
+fi
+
 if [ ! -f "$SSH_KEY" ]; then
   echo "ssh key file not found."
   exit 1

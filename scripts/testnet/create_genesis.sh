@@ -14,6 +14,11 @@ source config.sh
 #
 #   PRELIMINARY PROCESS
 #
+if [ $($LOCAL_BIN version) != $CHAIN_VERSION ]; then
+    echo "Local chain version is" $($LOCAL_BIN version) "instead of" $CHAIN_VERSION
+    exit 1
+fi
+
 rm -rf $HOME_DIR
 rm -rf $NODE_DIR
 

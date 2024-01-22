@@ -1,15 +1,17 @@
 
-CHAIN_ID=seda-testnet
+CHAIN_ID=seda-1-testnet
 GENESIS_TIME="2024-01-18T22:00:00.000000Z"
 
-NODE_DIR=./$CHAIN_ID-nodes # where node directories will be created
-WASM_DIR=./artifacts # where Wasm files will be downloaded
+CHAIN_VERSION=v0.0.4
+WASMVM_VERSION=v1.5.2
+
+LOCAL_BIN=$(git rev-parse --show-toplevel)/build/seda-chaind # chain binary executable on your machine
 
 HOME_DIR=$HOME/.seda-chain # chain directory
 HOME_CONFIG_DIR=$HOME_DIR/config # chain config directory
 
-LOCAL_BIN=$(git rev-parse --show-toplevel)/build/seda-chaind # chain binary executable on your machine
-LINUX_BIN=$(git rev-parse --show-toplevel)/build/seda-chaind-linux # linux version of chain binary
+NODE_DIR=./$CHAIN_ID-nodes # where node directories will be created
+WASM_DIR=./artifacts # where Wasm files will be downloaded
 
 DENOM_METADATA='[
     {
@@ -39,8 +41,6 @@ IBC_ALLOWED_CLIENTS='[
     "06-solomachine",
     "07-tendermint"
 ]'
-
-WASMVM_VERSION=v1.5.2
 
 #######################################
 ########### VALIDATOR NODES ###########
