@@ -3,7 +3,7 @@
 ##                                   Set Env Vars                            ##
 ###############################################################################
 export CGO_ENABLED=1
-export VERSION := $(shell echo $(shell git describe --tags --always --match "v*") | sed 's/^v//')
+export VERSION := $(shell echo $(shell git describe --tags --always --match "v*"))
 export COMMIT := $(shell git log -1 --format='%H')
 
 ###############################################################################
