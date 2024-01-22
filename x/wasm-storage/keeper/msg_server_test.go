@@ -156,7 +156,7 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			},
 			preRun:    func() {},
 			expErr:    true,
-			expErrMsg: "Overlay Wasm type must be data-request-executor or relayer",
+			expErrMsg: "overlay Wasm type must be data-request-executor or relayer",
 		},
 		{
 			name: "invalid authority",
