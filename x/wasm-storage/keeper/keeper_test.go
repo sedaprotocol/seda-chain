@@ -16,6 +16,7 @@ func (s *KeeperTestSuite) TestSetDataRequestWasm() {
 	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
+	s.Require().NoError(err)
 	mockWasm := &wasmstoragetypes.Wasm{
 		Hash:     crypto.Keccak256(compWasm),
 		Bytecode: compWasm,

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/distribution"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"

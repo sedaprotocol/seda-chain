@@ -9,7 +9,8 @@ import (
 
 // InitGenesis puts all data from genesis state into store.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
-	for _, wasm := range data.Wasms {
+	for i := range data.Wasms {
+		wasm := data.Wasms[i]
 		if wasm.WasmType == types.WasmTypeDataRequest ||
 			wasm.WasmType == types.WasmTypeTally {
 			k.SetDataRequestWasm(ctx, &wasm)

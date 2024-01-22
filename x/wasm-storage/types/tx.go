@@ -20,7 +20,7 @@ func (msg MsgStoreDataRequestWasm) ValidateBasic() error {
 		return err
 	}
 	if msg.WasmType != WasmTypeDataRequest && msg.WasmType != WasmTypeTally {
-		return fmt.Errorf("Data Request Wasm type must be data-request or tally")
+		return fmt.Errorf("data Request Wasm type must be data-request or tally")
 	}
 	if err := validateWasmCode(msg.Wasm); err != nil {
 		return fmt.Errorf("invalid request: code bytes %s", err.Error())
@@ -41,7 +41,7 @@ func (msg MsgStoreOverlayWasm) ValidateBasic() error {
 		return err
 	}
 	if msg.WasmType != WasmTypeDataRequestExecutor && msg.WasmType != WasmTypeRelayer {
-		return fmt.Errorf("Overlay Wasm type must be data-request-executor or relayer")
+		return fmt.Errorf("overlay Wasm type must be data-request-executor or relayer")
 	}
 	if err := validateWasmCode(msg.Wasm); err != nil {
 		return fmt.Errorf("invalid request: code bytes %s", err.Error())

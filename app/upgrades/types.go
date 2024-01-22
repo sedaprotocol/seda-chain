@@ -7,6 +7,7 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
+
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 )
 

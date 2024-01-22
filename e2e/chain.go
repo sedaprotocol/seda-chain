@@ -23,7 +23,7 @@ const (
 var (
 	encodingConfig app.EncodingConfig
 	cdc            codec.Codec
-	txConfig       client.TxConfig
+	txConfig       client.TxConfig //nolint:unused // unused
 )
 
 func init() {

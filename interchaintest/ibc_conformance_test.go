@@ -33,6 +33,7 @@ func TestSedaGaiaConformance(t *testing.T) {
 }
 
 func runConformanceTest(t *testing.T, counterpartyChainSpec *interchaintest.ChainSpec, numVals, numFullNodes int) {
+	t.Helper()
 	/* =================================================== */
 	/*                   CHAIN FACTORY                     */
 	/* =================================================== */

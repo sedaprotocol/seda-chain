@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"cosmossdk.io/log"
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	storetypes "cosmossdk.io/store/types"
 	evidencetypes "cosmossdk.io/x/evidence/types"
+	"github.com/stretchr/testify/require"
+
+	abci "github.com/cometbft/cometbft/abci/types"
+
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -329,8 +329,10 @@ func TestAppImportExport(t *testing.T) {
 
 	ctxA := bApp.NewContext(true)
 	ctxB := newApp.NewContext(true)
-	newApp.ModuleManager().InitGenesis(ctxB, bApp.AppCodec(), genesisState)
-	newApp.StoreConsensusParams(ctxB, exported.ConsensusParams)
+	_, err = newApp.ModuleManager().InitGenesis(ctxB, bApp.AppCodec(), genesisState)
+	require.NoError(t, err)
+	err = newApp.StoreConsensusParams(ctxB, exported.ConsensusParams)
+	require.NoError(t, err)
 
 	fmt.Printf("comparing stores...\n")
 
@@ -471,10 +473,11 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	)
 	require.Equal(t, app.Name, bApp.Name())
 
-	newApp.InitChain(&abci.RequestInitChain{
+	_, err = newApp.InitChain(&abci.RequestInitChain{
 		ChainId:       config.ChainID,
 		AppStateBytes: exported.AppState,
 	})
+	require.NoError(t, err)
 
 	_, _, err = simulation.SimulateFromSeed(
 		t,

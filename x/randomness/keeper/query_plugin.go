@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/sedaprotocol/seda-chain/x/randomness/types"
 )
 

@@ -4,19 +4,22 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sedaprotocol/seda-chain/interchaintest/helpers"
-	"github.com/sedaprotocol/seda-chain/interchaintest/types"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sedaprotocol/seda-chain/interchaintest/helpers"
+	"github.com/sedaprotocol/seda-chain/interchaintest/types"
 )
 
 // ConformanceCosmWasm validates that store, instantiate, execute, and query work on a CosmWasm contract.
 func ConformanceCosmWasm(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet) {
+	t.Helper()
 	basic(t, ctx, chain, user)
 }
 
 func basic(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet) {
+	t.Helper()
 	_, contractAddr := helpers.SetupAndInstantiateContract(t, ctx, chain, user.KeyName(), "contracts/cw_template.wasm", `{"count":0}`)
 	helpers.ExecuteMsgWithFee(t, ctx, chain, user, contractAddr, "", "10000"+chain.Config().Denom, `{"increment":{}}`)
 

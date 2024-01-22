@@ -61,7 +61,10 @@ func GetCmdStoreDataRequestWasm() *cobra.Command {
 	}
 
 	cmd.Flags().String(FlagWasmType, "", "Data Request Wasm type: data-request or tally")
-	cmd.MarkFlagRequired(FlagWasmType)
+	err := cmd.MarkFlagRequired(FlagWasmType)
+	if err != nil {
+		panic(err)
+	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

@@ -5,6 +5,7 @@ import (
 
 	addresscodec "cosmossdk.io/core/address"
 	errorsmod "cosmossdk.io/errors"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -55,7 +56,10 @@ func (k msgServer) CreateValidatorWithVRF(ctx context.Context, msg *types.MsgCre
 	if !ok {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", consPubKey)
 	}
-	k.randomnessKeeper.SetValidatorVRFPubKey(ctx, sdk.GetConsAddress(consPubKey).String(), vrfPubKey)
+	err := k.randomnessKeeper.SetValidatorVRFPubKey(ctx, sdk.GetConsAddress(consPubKey).String(), vrfPubKey)
+	if err != nil {
+		return nil, err
+	}
 
 	sdkMsg := new(stakingtypes.MsgCreateValidator)
 	sdkMsg.Description = msg.Description
@@ -65,7 +69,10 @@ func (k msgServer) CreateValidatorWithVRF(ctx context.Context, msg *types.MsgCre
 	sdkMsg.Pubkey = msg.Pubkey
 	sdkMsg.Value = msg.Value
 
-	k.MsgServer.CreateValidator(ctx, sdkMsg)
+	_, err = k.MsgServer.CreateValidator(ctx, sdkMsg)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MsgCreateValidatorWithVRFResponse{}, nil
 }

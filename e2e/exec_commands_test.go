@@ -1,4 +1,3 @@
-//nolint:unused
 package e2e
 
 import (
@@ -150,7 +149,7 @@ func (s *IntegrationTestSuite) executeTx(ctx context.Context, c *chain, command 
 }
 
 func (s *IntegrationTestSuite) expectErrExecValidation(chain *chain, valIdx int, expectErr bool) func([]byte, []byte) bool {
-	return func(stdOut []byte, stdErr []byte) bool {
+	return func(stdOut, stdErr []byte) bool {
 		var txResp sdk.TxResponse
 		gotErr := cdc.UnmarshalJSON(stdOut, &txResp) != nil
 		if gotErr {
@@ -177,7 +176,7 @@ func (s *IntegrationTestSuite) expectErrExecValidation(chain *chain, valIdx int,
 }
 
 func (s *IntegrationTestSuite) defaultExecValidation(chain *chain, valIdx int) func([]byte, []byte) bool {
-	return func(stdOut []byte, stdErr []byte) bool {
+	return func(stdOut, stdErr []byte) bool {
 		var txResp sdk.TxResponse
 		if err := cdc.UnmarshalJSON(stdOut, &txResp); err != nil {
 			return false

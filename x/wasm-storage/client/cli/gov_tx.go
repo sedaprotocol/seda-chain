@@ -83,7 +83,10 @@ func ProposalStoreOverlayCmd() *cobra.Command {
 	}
 
 	cmd.Flags().String(FlagWasmType, "", "Overlay Wasm type: data-request-executor or relayer")
-	cmd.MarkFlagRequired(FlagWasmType)
+	err := cmd.MarkFlagRequired(FlagWasmType)
+	if err != nil {
+		panic(err)
+	}
 	addCommonProposalFlags(cmd)
 	return cmd
 }

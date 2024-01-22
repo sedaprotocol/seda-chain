@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
-
 	"cosmossdk.io/core/address"
-	"cosmossdk.io/errors"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -30,11 +28,11 @@ import (
 // default values
 var (
 	DefaultTokens                  = sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
-	defaultAmount                  = DefaultTokens.String() + sdk.DefaultBondDenom
-	defaultCommissionRate          = "0.1"
-	defaultCommissionMaxRate       = "0.2"
-	defaultCommissionMaxChangeRate = "0.01"
-	defaultMinSelfDelegation       = "1"
+	defaultAmount                  = DefaultTokens.String() + sdk.DefaultBondDenom //nolint:unused // unused
+	defaultCommissionRate          = "0.1"                                         //nolint:unused // unused
+	defaultCommissionMaxRate       = "0.2"                                         //nolint:unused // unused
+	defaultCommissionMaxChangeRate = "0.01"                                        //nolint:unused // unused
+	defaultMinSelfDelegation       = "1"                                           //nolint:unused // unused
 )
 
 // NewTxCmd returns a root CLI command handler for all x/staking transaction commands.
@@ -110,7 +108,7 @@ where we can get the pubkey using "%s tendermint show-validator"
 
 			validator.VRFPubKey, err = utils.InitializeVRFKey(serverCtx.Config)
 			if err != nil {
-				return errors.Wrap(err, "failed to initialize VRF key")
+				return errorsmod.Wrap(err, "failed to initialize VRF key")
 			}
 
 			txf, msg, err := newBuildCreateValidatorWithVRFMsg(clientCtx, txf, cmd.Flags(), validator, ac)

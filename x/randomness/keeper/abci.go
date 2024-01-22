@@ -11,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 
 	"github.com/sedaprotocol/seda-chain/x/randomness/types"
 )
@@ -240,7 +239,7 @@ func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSign
 		ctx,
 		txBuilder,
 		txConfig,
-		txsigning.SignMode_SIGN_MODE_DIRECT,
+		signing.SignMode_SIGN_MODE_DIRECT,
 		account,
 	)
 	if err != nil {

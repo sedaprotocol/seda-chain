@@ -15,6 +15,7 @@ func (s *KeeperTestSuite) TestDataRequestWasm() {
 	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
+	s.Require().NoError(err)
 	input := types.MsgStoreDataRequestWasm{
 		Sender:   s.authority,
 		Wasm:     compWasm,
@@ -35,6 +36,7 @@ func (s *KeeperTestSuite) TestOverlayWasm() {
 	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
+	s.Require().NoError(err)
 	input := types.MsgStoreOverlayWasm{
 		Sender:   s.authority,
 		Wasm:     compWasm,
@@ -55,6 +57,7 @@ func (s *KeeperTestSuite) TestDataRequestWasms() {
 	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
+	s.Require().NoError(err)
 
 	input := types.MsgStoreDataRequestWasm{
 		Sender:   s.authority,
@@ -67,6 +70,7 @@ func (s *KeeperTestSuite) TestDataRequestWasms() {
 	wasm2, err := os.ReadFile("test_utils/cowsay.wasm")
 	s.Require().NoError(err)
 	compWasm2, err := ioutils.GzipIt(wasm2)
+	s.Require().NoError(err)
 	input2 := types.MsgStoreDataRequestWasm{
 		Sender:   s.authority,
 		Wasm:     compWasm2,
@@ -88,6 +92,7 @@ func (s *KeeperTestSuite) TestOverlayWasms() {
 	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
+	s.Require().NoError(err)
 
 	input := types.MsgStoreOverlayWasm{
 		Sender:   s.authority,
@@ -100,6 +105,7 @@ func (s *KeeperTestSuite) TestOverlayWasms() {
 	wasm2, err := os.ReadFile("test_utils/cowsay.wasm")
 	s.Require().NoError(err)
 	compWasm2, err := ioutils.GzipIt(wasm2)
+	s.Require().NoError(err)
 	input2 := types.MsgStoreOverlayWasm{
 		Sender:   s.authority,
 		Wasm:     compWasm2,

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/codec/unknownproto"
@@ -27,7 +28,7 @@ func createMnemonic() (string, error) {
 }
 
 // copyFile copy file from src to dst
-func copyFile(src, dst string) (int64, error) { //nolint:unparam
+func copyFile(src, dst string) (int64, error) {
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
 		return 0, err
@@ -101,6 +102,13 @@ func decodeTx(txBytes []byte) (*sdktx.Tx, error) {
 }
 
 func httpGet(endpoint string) ([]byte, error) {
+	// Parse and validate the URL
+	_, err := url.ParseRequestURI(endpoint)
+	if err != nil {
+		return nil, err // or handle the error appropriately
+	}
+
+	//nolint:gosec // G107: HTTP request made with variable url
 	resp, err := http.Get(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)

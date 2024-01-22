@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
+	evidencetypes "cosmossdk.io/x/evidence/types"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/spf13/viper"
@@ -20,8 +22,6 @@ import (
 	tmconfig "github.com/cometbft/cometbft/config"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 
-	"cosmossdk.io/math"
-	evidencetypes "cosmossdk.io/x/evidence/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -74,7 +74,7 @@ type IntegrationTestSuite struct {
 	dkrNet       *dockertest.Network
 	valResources map[string][]*dockertest.Resource
 	endpoint     string
-	grpcEndpoint string
+	grpcEndpoint string //nolint:unused // unused
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
@@ -227,7 +227,8 @@ func (s *IntegrationTestSuite) initGenesis(c *chain) {
 	appGenesis.AppState, err = json.MarshalIndent(appGenState, "", "  ")
 	s.Require().NoError(err)
 
-	genutil.ExportGenesisFile(appGenesis, genFilePath)
+	err = genutil.ExportGenesisFile(appGenesis, genFilePath)
+	s.Require().NoError(err)
 
 	err = appGenesis.ValidateAndComplete()
 	s.Require().NoError(err)

@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
+	pruningtypes "cosmossdk.io/store/pruning/types"
 	"github.com/stretchr/testify/require"
 
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 
-	pruningtypes "cosmossdk.io/store/pruning/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"

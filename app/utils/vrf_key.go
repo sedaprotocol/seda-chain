@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	vrf "github.com/sedaprotocol/vrf-go"
+
 	cfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
@@ -17,11 +19,8 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-
-	vrf "github.com/sedaprotocol/vrf-go"
 )
 
 const VRFKeyFileName = "vrf_key.json"
@@ -97,9 +96,9 @@ func (v *VRFKey) VRFVerify(publicKey, alpha, pi []byte) (beta []byte, err error)
 // to the VRF key.
 func (v *VRFKey) SignTransaction(
 	ctx sdk.Context, txBuilder client.TxBuilder, txConfig client.TxConfig,
-	signMode signing.SignMode, account sdk.AccountI,
-) (signing.SignatureV2, error) {
-	var sigV2 signing.SignatureV2
+	signMode txsigning.SignMode, account sdk.AccountI,
+) (txsigning.SignatureV2, error) {
+	var sigV2 txsigning.SignatureV2
 
 	if !bytes.Equal(account.GetPubKey().Bytes(), v.PubKey.Bytes()) {
 		return sigV2, fmt.Errorf("the account does not belong to the vrf key")
@@ -150,7 +149,7 @@ func (v *VRFKey) SignTransaction(
 		return sigV2, err
 	}
 
-	sigV2 = signing.SignatureV2{
+	sigV2 = txsigning.SignatureV2{
 		PubKey: v.PubKey,
 		Data: &txsigning.SingleSignatureData{
 			SignMode:  signMode,

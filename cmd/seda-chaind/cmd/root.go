@@ -6,12 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cast"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/reflect/protoregistry"
-
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/client/v2/autocli/flag"
 	"cosmossdk.io/log"
@@ -20,14 +14,20 @@ import (
 	snapshottypes "cosmossdk.io/store/snapshots/types"
 	storetypes "cosmossdk.io/store/types"
 	confixcmd "cosmossdk.io/tools/confix/cmd"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/spf13/cast"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/reflect/protoregistry"
+
 	tmcli "github.com/cometbft/cometbft/libs/cli"
+
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -250,7 +250,7 @@ func txCommand(basicManager module.BasicManager) *cobra.Command {
 		authcmd.GetSignBatchCommand(),
 		authcmd.GetMultiSignCommand(),
 		authcmd.GetValidateSignaturesCommand(),
-		flags.LineBreak,
+		sdkflags.LineBreak,
 		authcmd.GetBroadcastCommand(),
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
@@ -263,7 +263,7 @@ func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
 }
 
-func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
+func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) { //nolint:unused // unused
 	set := func(s *pflag.FlagSet, key, val string) {
 		if f := s.Lookup(key); f != nil {
 			f.DefValue = val
@@ -305,8 +305,8 @@ func newApp(
 		panic(err)
 	}
 
-	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
-	chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
+	homeDir := cast.ToString(appOpts.Get(sdkflags.FlagHome))
+	chainID := cast.ToString(appOpts.Get(sdkflags.FlagChainID))
 	if chainID == "" {
 		// fallback to genesis chain-id
 		appGenesis, err := genutiltypes.AppGenesisFromFile(filepath.Join(homeDir, "config", "genesis.json"))
@@ -317,7 +317,7 @@ func newApp(
 		chainID = appGenesis.ChainID
 	}
 
-	snapshotDir := filepath.Join(cast.ToString(appOpts.Get(flags.FlagHome)), "data", "snapshots")
+	snapshotDir := filepath.Join(cast.ToString(appOpts.Get(sdkflags.FlagHome)), "data", "snapshots")
 	snapshotDB, err := dbm.NewDB("metadata", dbm.GoLevelDBBackend, snapshotDir)
 	if err != nil {
 		panic(err)
@@ -338,7 +338,7 @@ func newApp(
 		traceStore,
 		true,
 		skipUpgradeHeights,
-		cast.ToString(appOpts.Get(flags.FlagHome)),
+		cast.ToString(appOpts.Get(sdkflags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		appOpts,
 		baseapp.SetPruning(pruningOpts),
@@ -367,7 +367,7 @@ func appExport(
 	appOpts servertypes.AppOptions,
 	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
-	homePath, ok := appOpts.Get(flags.FlagHome).(string)
+	homePath, ok := appOpts.Get(sdkflags.FlagHome).(string)
 	if !ok || homePath == "" {
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}

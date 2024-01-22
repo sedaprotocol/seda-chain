@@ -10,12 +10,12 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func SmartQueryString(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, contractAddr, queryMsg string, res interface{}) error {
+	t.Helper()
 	var jsonMap map[string]interface{}
 	if err := json.Unmarshal([]byte(queryMsg), &jsonMap); err != nil {
 		t.Fatal(err)
@@ -24,7 +24,8 @@ func SmartQueryString(t *testing.T, ctx context.Context, chain *cosmos.CosmosCha
 	return err
 }
 
-func SetupAndInstantiateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, keyname string, fileLoc string, message string, extraFlags ...string) (codeId, contract string) {
+func SetupAndInstantiateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, keyname, fileLoc, message string, extraFlags ...string) (codeId, contract string) {
+	t.Helper()
 	codeId, err := chain.StoreContract(ctx, keyname, fileLoc)
 	if err != nil {
 		t.Fatal(err)
@@ -45,7 +46,8 @@ func SetupAndInstantiateContract(t *testing.T, ctx context.Context, chain *cosmo
 	return codeId, contractAddr
 }
 
-func MigrateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, keyname string, contractAddr string, fileLoc string, message string) (codeId, contract string) {
+func MigrateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, keyname, contractAddr, fileLoc, message string) (codeId, contract string) {
+	t.Helper()
 	codeId, err := chain.StoreContract(ctx, keyname, fileLoc)
 	if err != nil {
 		t.Fatal(err)
@@ -77,6 +79,7 @@ func MigrateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChai
 }
 
 func ExecuteMsgWithAmount(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet, contractAddr, amount, message string) {
+	t.Helper()
 	cmd := buildCmd(chain, user, contractAddr, amount, "", message)
 	stdout, _, err := chain.Exec(ctx, cmd, nil)
 	require.NoError(t, err)
@@ -89,6 +92,7 @@ func ExecuteMsgWithAmount(t *testing.T, ctx context.Context, chain *cosmos.Cosmo
 }
 
 func ExecuteMsgWithFee(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet, contractAddr, amount, feeCoin, message string) {
+	t.Helper()
 	cmd := buildCmd(chain, user, contractAddr, amount, feeCoin, message)
 	stdout, _, err := chain.Exec(ctx, cmd, nil)
 	require.NoError(t, err)
@@ -101,6 +105,7 @@ func ExecuteMsgWithFee(t *testing.T, ctx context.Context, chain *cosmos.CosmosCh
 }
 
 func ExecuteMsgWithFeeReturn(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet, contractAddr, amount, feeCoin, message string) (*sdk.TxResponse, error) {
+	t.Helper()
 	// amount is #utoken
 
 	cmd := buildCmd(chain, user, contractAddr, amount, feeCoin, message)

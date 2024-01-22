@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cosmos/go-bip39"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -15,10 +14,9 @@ import (
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/privval"
 
-	// "github.com/cometbft/cometbft/types"
-
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/cosmos/go-bip39"
 
 	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/utils"
 )

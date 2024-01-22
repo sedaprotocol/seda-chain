@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
+	storetypes "cosmossdk.io/store/types"
 	"github.com/stretchr/testify/suite"
 
-	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -21,14 +21,14 @@ import (
 
 var (
 	mockedByteArray  = []byte("82a9dda829eb7f8ffe9fbe49e45d47d2dad9664fbb7adf72492e3c81ebd3e29134d9bc12212bf83c6840f10e8246b9db54a4859b7ccd0123d86e5872c1e5082")
-	mockedByteArray2 = []byte("a9dda829eb7f8ffe9fbesfa49e45d47d2dad9664fbb7adf72492e3c81ebd3e29134d9bc12212bf83c6840f10e8246b9db54a4859b7ccd0123d86e5872c1e50829a")
+	mockedByteArray2 = []byte("a9dda829eb7f8ffe9fbesfa49e45d47d2dad9664fbb7adf72492e3c81ebd3e29134d9bc12212bf83c6840f10e8246b9db54a4859b7ccd0123d86e5872c1e50829a") //nolint:unused // unused
 )
 
 type KeeperTestSuite struct {
 	suite.Suite
 	ctx               sdk.Context
 	wasmStorageKeeper *keeper.Keeper
-	blockTime         time.Time
+	blockTime         time.Time //nolint:unused // unused
 	cdc               codec.Codec
 	msgSrvr           wasmstoragetypes.MsgServer
 	queryClient       wasmstoragetypes.QueryClient

@@ -8,13 +8,14 @@ import (
 	"path"
 	"path/filepath"
 
+	"cosmossdk.io/math"
+
 	tmcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/p2p"
 	"github.com/cometbft/cometbft/privval"
 
-	"cosmossdk.io/math"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -40,13 +41,13 @@ type validator struct {
 	keyInfo          keyring.Record
 	privateKey       cryptotypes.PrivKey
 	consensusKey     privval.FilePVKey
-	consensusPrivKey cryptotypes.PrivKey
+	consensusPrivKey cryptotypes.PrivKey //nolint:unused // unused
 	vrfKey           *utils.VRFKey
 	nodeKey          p2p.NodeKey
 }
 
 type account struct {
-	moniker    string //nolint:unused
+	moniker    string //nolint:unused // unused
 	mnemonic   string
 	keyInfo    keyring.Record
 	privateKey cryptotypes.PrivKey
