@@ -38,7 +38,7 @@ fi
 # upload setup script and run it
 for i in ${!IPS[@]}; do
 	scp -i $SSH_KEY -o StrictHostKeyChecking=no -r ./setup_node.sh ec2-user@${IPS[$i]}:/home/ec2-user
-	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} '/home/ec2-user/setup_node.sh'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} "/home/ec2-user/setup_node.sh $WASMVM_VERSION"
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'rm /home/ec2-user/setup_node.sh'
 done
 
@@ -49,7 +49,7 @@ done
 
 SEEDS=()
 for i in ${!IPS[@]}; do
-	SEED=$($BIN tendermint show-node-id --home ./$NODE_DIR/node$i)
+	SEED=$($BIN tendermint show-node-id --home $NODE_DIR/node$i)
 	SEEDS+=("$SEED@${IPS[$i]}:26656")
 done
 
@@ -61,10 +61,10 @@ for i in ${!IPS[@]}; do
 	cp $NODE_DIR/genesis.json $NODE_DIR/node$i/config/genesis.json
 
 	if [[ "$OSTYPE" == "darwin"* ]]; then
-		sed -i '' "s/seeds = \"\"/seeds = \"${SEEDS_LIST}\"/g" ./$NODE_DIR/node$i/config/config.toml
+		sed -i '' "s/seeds = \"\"/seeds = \"${SEEDS_LIST}\"/g" $NODE_DIR/node$i/config/config.toml
 	else
-		sed "s/seeds = \"\"/seeds = \"${SEEDS_LIST}\"/g" ./$NODE_DIR/node$i/config/config.toml > tmp
-		cat tmp > ./$NODE_DIR/node$i/config/config.toml
+		sed "s/seeds = \"\"/seeds = \"${SEEDS_LIST}\"/g" $NODE_DIR/node$i/config/config.toml > tmp
+		cat tmp > $NODE_DIR/node$i/config/config.toml
 		rm tmp
 	fi
 
@@ -76,7 +76,7 @@ for i in ${!IPS[@]}; do
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -rf /home/ec2-user/.seda-chain'
 
 	# upload
-	scp -i $SSH_KEY -r ./$NODE_DIR/node$i ec2-user@${IPS[$i]}:/home/ec2-user/.seda-chain
+	scp -i $SSH_KEY -r $NODE_DIR/node$i ec2-user@${IPS[$i]}:/home/ec2-user/.seda-chain
 
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'mkdir -p /home/ec2-user/.seda-chain/cosmovisor/genesis/bin'
 	scp -i $SSH_KEY $LINUX_BIN ec2-user@${IPS[$i]}:/home/ec2-user/.seda-chain/cosmovisor/genesis/bin/seda-chaind

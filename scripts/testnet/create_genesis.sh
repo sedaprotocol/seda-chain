@@ -57,11 +57,11 @@ cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["slashing"]["params"]
 cat $HOME/.seda-chain/config/genesis.json | jq '.consensus["params"]["block"]["max_gas"]="100000000"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
 
 # TO-DO
-# gov: voting_params.voting_period, params.voting_period, params.expedited_voting_period, min_deposit[0].amount, max_deposit_period
-# cat $HOME/.seda-chain/config/genesis.json | jq '.consensus["params"]["version"]={}' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
-# cat $HOME/.seda-chain/config/genesis.json | jq --arg IBC_ALLOWED_CLIENTS $IBC_ALLOWED_CLIENTS '.app_state["ibc"]["client_genesis"]["params"]["allowed_clients"]=$IBC_ALLOWED_CLIENTS' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
-cat $HOME/.seda-chain/config/genesis.json | jq --arg DENOM_METADATA $DENOM_METADATA '.app_state["bank"]["denom_metadata"]=$DENOM_METADATA' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
-
+# - gov (intentionally adjusted for testing): voting_params.voting_period, params.voting_period, params.expedited_voting_period, min_deposit[0].amount, max_deposit_period
+# - cat $HOME/.seda-chain/config/genesis.json | jq '.consensus["params"]["version"]={}' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
+# - cat $HOME/.seda-chain/config/genesis.json | jq --arg IBC_ALLOWED_CLIENTS $IBC_ALLOWED_CLIENTS '.app_state["ibc"]["client_genesis"]["params"]["allowed_clients"]=$IBC_ALLOWED_CLIENTS' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
+# - cat $HOME/.seda-chain/config/genesis.json | jq --arg DENOM_METADATA $DENOM_METADATA '.app_state["bank"]["denom_metadata"]=$DENOM_METADATA' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
+# - wasm params
 
 #
 #   ADD GENESIS ACCOUNTS
