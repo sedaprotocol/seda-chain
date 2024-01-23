@@ -5,7 +5,7 @@ import "google/api/annotations.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/randomness/types";
 
-// Query Serivce is the definition for the random modules gRPC query methods.
+// Query Service is the definition for the random modules gRPC query methods.
 service Query {
   // For getting the random modules seed.
   rpc Seed(QuerySeedRequest) returns (QuerySeedResponse) {
