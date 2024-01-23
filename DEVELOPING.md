@@ -86,7 +86,7 @@ We also need some dependencies to make protobuf work for cosmos.
 The `buf` tool.
 
 - Linux:
-  - `curl -sSL https://github.com/bufbuild/buf/releases/download/v1.0.0-rc1/buf-Linux-x86_64 -o buf && chmod +x buf && sudo mv buf /usr/local/bin`
+  - `curl -sSL https://github.com/bufbuild/buf/releases/download/v1.28.1/buf-Linux-x86_64 -o buf && chmod +x buf && sudo mv buf /usr/local/bin`
 - Macos:
   - Using [brew](https://brew.sh/): `brew install bufbuild/buf/buf`
   - Using [macports](https://www.macports.org/): `sudo port install buf`

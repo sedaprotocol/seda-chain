@@ -148,7 +148,7 @@ lint:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-proto-all: proto-gen proto-format proto-lint
+proto-all: proto-gen proto-fmt proto-lint
 
 proto-dep-install:
 	@go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway@latest
@@ -171,7 +171,7 @@ proto-update-deps:
 	@echo "Updating Protobuf dependencies"
 	@buf mod update ./proto
 
-.PHONY: proto-gen proto-lint proto-update-deps
+.PHONY: proto-gen proto-fmt proto-lint proto-update-deps
 
 ###############################################################################
 ##                                   Tests                                   ##
