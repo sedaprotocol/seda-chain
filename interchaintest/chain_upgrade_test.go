@@ -14,8 +14,8 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	cosmosproto "github.com/cosmos/gogoproto/proto"
 )
 
 const (
@@ -92,7 +92,7 @@ func UpgradeNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, 
 }
 
 func fundChainUser(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) ibc.Wallet {
-	const userFunds = int64(10_000_000_000)
+	userFunds := math.NewInt(10_000_000_000)
 	users := interchaintest.GetAndFundTestUsers(t, ctx, t.Name(), userFunds, chain)
 	return users[0]
 }
@@ -190,17 +190,15 @@ func SubmitUpgradeProposal(t *testing.T, ctx context.Context, chain *cosmos.Cosm
 
 	haltHeight := currentHeight + haltHeightDelta
 
-	upgradeMsg := []cosmosproto.Message{
-		&upgradetypes.MsgSoftwareUpgrade{
-			Authority: "seda10d07y265gmmuvt4z0w9aw880jnsr700jvvla4j", // gov module account; seda-chaind q auth module-account gov
-			Plan: upgradetypes.Plan{
-				Name:   upgradeName,
-				Height: int64(haltHeight),
-			},
+	upgradeMsg := &upgradetypes.MsgSoftwareUpgrade{
+		Authority: "seda10d07y265gmmuvt4z0w9aw880jnsr700jvvla4j", // gov module account; seda-chaind q auth module-account gov
+		Plan: upgradetypes.Plan{
+			Name:   upgradeName,
+			Height: int64(haltHeight),
 		},
 	}
 
-	proposal, err := chain.BuildProposal(upgradeMsg,
+	proposal, err := chain.BuildProposal([]cosmos.ProtoMessage{upgradeMsg},
 		"Chain Upgrade 1", // title
 		"Summary desc",    // summary
 		"ipfs://CID",      // metadata

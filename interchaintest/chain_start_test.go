@@ -3,6 +3,7 @@ package interchaintest
 import (
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/sedaprotocol/seda-chain/interchaintest/conformance"
 	"github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
@@ -24,7 +25,7 @@ func TestChainStart(t *testing.T) {
 
 	chain := chains[0].(*cosmos.CosmosChain)
 
-	const userFunds = int64(10_000_000_000)
+	userFunds := math.NewInt(10_000_000_000)
 	users := interchaintest.GetAndFundTestUsers(t, ctx, t.Name(), userFunds, chain)
 	chainUser := users[0]
 
