@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	ibclocalhost "github.com/cosmos/ibc-go/v8/modules/light-clients/09-localhost"
@@ -73,7 +74,7 @@ var (
 	/* =================================================== */
 	/*                    WALLET CONFIG                    */
 	/* =================================================== */
-	GenesisWalletAmount = int64(10_000_000)
+	GenesisWalletAmount = math.NewInt(10_000_000_000)
 )
 
 // sedaEncoding registers the Juno specific module codecs so that the associated types and msgs
