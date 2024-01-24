@@ -42,7 +42,7 @@ Docker is used to help make release and static builds locally.
 We use Golang as the language to develop `seda-chaind` as it has the [CosmosSDK](https://v1.cosmos.network/sdk).
 
 - [Golang](https://go.dev/dl/): you can download it from the linked page or:
-  - Linux: Use your distribution's packagae manager.
+  - Linux: Use your distribution's package manager.
   - Mac: Use `macports` or `brew`.
 - Ensure that `$GOPATH` and `$PATH` have been set properly. On a Mac that uses the Z shell, you may have to run the following:
 
