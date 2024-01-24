@@ -6,11 +6,18 @@ set -e
 # and systemctl service.
 #
 # NOTE: Assumes ami-0a1ab4a3fcf997a9d
+WASMVM_VERSION=$1
 
-COSMOVISOR_URL=https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-arm64.tar.gz
-COSMOVISOR_TAR_GZ=cosmovisor-v1.3.0-linux-arm64.tar.gz
-LIBWASMVM_URL=https://github.com/CosmWasm/wasmvm/releases/download/v1.3.0/libwasmvm.aarch64.so
-LIBWASMVM=libwasmvm.aarch64.so
+ARCH=$(uname -m)
+if [ $ARCH != "aarch64" ]; then
+	ARCH="x86_64"
+fi
+
+COSMOVISOR_URL=https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-amd64.tar.gz
+if [ $ARCH = "aarch64" ]; then
+	COSMOVISOR_URL=https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-arm64.tar.gz
+fi
+LIBWASMVM_URL=https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm.$ARCH.so
 
 COSMOS_LDS=$HOME/COSMOS_LDS
 SYSFILE=/etc/systemd/system/seda-node.service
@@ -21,11 +28,9 @@ if ! which cosmovisor >/dev/null; then
 
 	curl -LO $COSMOVISOR_URL
 	mkdir -p tmp
-	tar -xzvf $COSMOVISOR_TAR_GZ -C ./tmp
-	mv ./tmp/cosmovisor .
-	rm -rf ./tmp ./$COSMOVISOR_TAR_GZ
-
-	sudo mv $HOME/cosmovisor /usr/local/bin
+	tar -xzvf $(basename $COSMOVISOR_URL) -C ./tmp
+	sudo mv ./tmp/cosmovisor /usr/local/bin
+	rm -rf ./tmp
 
 	echo 'export DAEMON_NAME=seda-chaind' >> $HOME/.bashrc
 	echo 'export DAEMON_HOME=$HOME/.seda-chain' >> $HOME/.bashrc
@@ -39,18 +44,15 @@ if ! which cosmovisor >/dev/null; then
 	echo 'export DAEMON_PREUPGRADE_MAX_RETRIES=0' >> $HOME/.bashrc
 	echo 'export PATH=$PATH:$HOME/.seda-chain/cosmovisor/current/bin' >> $HOME/.bashrc
 
-	# set up shared libraries if necessary
-	if [ ! -d $COSMOS_LDS ]; then
-		printf "\n\n\nSETTING UP SHARED LIBRARY\n\n\n\n"
-
-		mkdir -p $COSMOS_LDS
-		curl -LO $LIBWASMVM_URL
-		mv $LIBWASMVM $COSMOS_LDS
-		echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/COSMOS_LDS' >> $HOME/.bashrc
-	fi
-
 	source $HOME/.bashrc
 fi
+
+# set up shared libraries (overwrite if already exists to ensure desired version)
+printf "\n\n\nSETTING UP SHARED LIBRARY\n\n\n\n"
+mkdir -p $COSMOS_LDS
+curl -LO $LIBWASMVM_URL
+mv $(basename $LIBWASMVM_URL) $COSMOS_LDS
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/COSMOS_LDS' >> $HOME/.bashrc
 
 # create systemctl service file if necessary
 if [ ! -f $SYSFILE ]; then

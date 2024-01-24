@@ -79,8 +79,8 @@ This section is for those linking to an external node, so if you want to run com
 
 When connecting externally, choose a trustworthy node operator. Unscrupulous operators might tamper with query outcomes or block transactions. The SEDA team currently supports these RPC endpoints:
 
-- Testnet-seda-node-1: `http://3.10.185.200:26657`
-- Testnet-seda-node-2: `http://35.179.10.147:26657`
+- Testnet-seda-node-1: `http://18.171.36.35:26657`
+- Testnet-seda-node-2: `http://13.41.125.154:26657`
 
 ### Running the Node Yourself
 
@@ -148,6 +148,43 @@ That’s it now you can find your validator operator address using the following
 
 ```
 ./seda-chaind-${ARCH} keys show <wallet-name> --bech val -a
+```
+
+### Running the Node with Cosmovisor
+
+Run the node as a subprocess of Cosmovisor if you want automatic upgrading, which only requires you to place a new binary in the right location before an upgrade height.
+
+Install Cosmovisor.
+
+```
+go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@latest
+
+```
+
+Then, add these lines to your profile (maybe `.profile`, `.zprofile`, or something else) to set up environment variables:
+
+```
+echo "# Cosmovisor Setup" >> ~/.profile
+echo "export DAEMON_NAME=seda-chaind" >> ~/.profile
+echo "export DAEMON_HOME=$HOME/.seda-chain" >> ~/.profile
+echo "export DAEMON_ALLOW_DOWNLOAD_BINARIES=false" >> ~/.profile
+echo "export DAEMON_LOG_BUFFER_SIZE=512" >> ~/.profile
+echo "export DAEMON_RESTART_AFTER_UPGRADE=true" >> ~/.profile
+echo "export UNSAFE_SKIP_BACKUP=true" >> ~/.profile
+source ~/.profile
+```
+
+Initialize Cosmovisor with the chain binary and start the node.
+
+```
+cosmovisor init seda-chaind-${ARCH}
+cosmovisor run start
+```
+
+Note that for an upgrade, simply run the following command to prepare Cosmovisor with the upgrade binary before the chain reaches the upgrade height.
+
+```
+cosmovisor add-upgrade <upgrade-name> <upgrade-binary-file>
 ```
 
 ## License

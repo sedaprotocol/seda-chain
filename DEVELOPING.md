@@ -42,7 +42,7 @@ Docker is used to help make release and static builds locally.
 We use Golang as the language to develop `seda-chaind` as it has the [CosmosSDK](https://v1.cosmos.network/sdk).
 
 - [Golang](https://go.dev/dl/): you can download it from the linked page or:
-  - Linux: Use your distribution's packagae manager.
+  - Linux: Use your distribution's package manager.
   - Mac: Use `macports` or `brew`.
 - Ensure that `$GOPATH` and `$PATH` have been set properly. On a Mac that uses the Z shell, you may have to run the following:
 
@@ -133,11 +133,12 @@ BIN=./build/seda-chaind
 
 $BIN tendermint unsafe-reset-all
 rm -rf ~/.seda-chain
-$BIN init node0 --default-denom aseda
+
+$BIN init node0 --default-denom aseda --chain-id seda-1-local
 
 $BIN keys add satoshi --keyring-backend test
 $BIN add-genesis-account $($BIN keys show satoshi --keyring-backend test -a) 10000000000000000seda
-$BIN gentx satoshi 10000000000000000seda --keyring-backend test
+$BIN gentx satoshi 10000000000000000seda --keyring-backend test --chain-id seda-1-local
 $BIN collect-gentxs
 $BIN start
 ```
