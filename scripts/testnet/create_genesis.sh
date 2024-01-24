@@ -47,9 +47,6 @@ cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["params"]["exp
 cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["params"]["max_deposit_period"]="180s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
 cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["params"]["min_initial_deposit_ratio"]="0.010000000000000000"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
 
-# ibc params
-cat $HOME/.seda-chain/config/genesis.json | jq --argjson ibc_allowed_clients "$IBC_ALLOWED_CLIENTS" '.app_state["ibc"]["client_genesis"]["params"]["allowed_clients"]=$ibc_allowed_clients' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
-
 # mint params
 cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["mint"]["params"]["blocks_per_year"]="4204800"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
 
