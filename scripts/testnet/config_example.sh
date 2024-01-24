@@ -37,11 +37,6 @@ DENOM_METADATA='[
     }
 ]'
 
-IBC_ALLOWED_CLIENTS='[
-    "06-solomachine",
-    "07-tendermint"
-]'
-
 #######################################
 ########### VALIDATOR NODES ###########
 #######################################
