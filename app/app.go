@@ -567,6 +567,10 @@ func NewApp(
 		),
 	)
 
+	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
+		panic(err)
+	}
+
 	/* =================================================== */
 	/*                  TRANSFER STACK                     */
 	/* =================================================== */
