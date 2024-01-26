@@ -1,0 +1,14 @@
+{
+    "members": [
+        {
+            "address": "seda1g4tlruupkv9kp2n8fx5w70lscjkauy34vzutxs",
+            "weight": "1",
+            "metadata": "testnet_faucet"
+        },
+        {
+            "address": "seda1xd04svzj6zj93g4eknhp6aq2yyptagcc2zeetj",
+            "weight": "1",
+            "metadata": "testnet_gluax"
+        }
+    ]
+}
