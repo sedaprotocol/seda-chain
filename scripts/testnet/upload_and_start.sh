@@ -88,6 +88,7 @@ for i in ${!IPS[@]}; do
 	# upload chain binary built for the corresponding architecture
 	LINUX_BIN=$NODE_DIR/seda-chaind-amd64
 	ARCH=$(ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'uname -m') # aarch64 or x86_64
+	ARCH=$(echo "$ARCH" | tr -d '\r')
 	if [ $ARCH == "aarch64" ]; then
 		LINUX_BIN=$NODE_DIR/seda-chaind-arm64
 	fi
