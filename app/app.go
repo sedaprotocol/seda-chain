@@ -104,6 +104,8 @@ import (
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 
 	// ibc
+	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
@@ -126,6 +128,7 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
+	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/docs"
@@ -167,7 +170,7 @@ var (
 		transfer.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		crisis.AppModuleBasic{},
-		// solomachine.AppModuleBasic{},
+		packetforward.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -279,12 +282,12 @@ func NewApp(
 	/* =================================================== */
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
-		crisistypes.StoreKey, minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
+		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, consensusparamtypes.StoreKey, upgradetypes.StoreKey,
 		feegrant.StoreKey, evidencetypes.StoreKey, circuittypes.StoreKey, authzkeeper.StoreKey, group.StoreKey,
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
-		wasmtypes.StoreKey, icahosttypes.StoreKey,
-		icacontrollertypes.StoreKey,
+		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
+		crisistypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -471,6 +474,18 @@ func NewApp(
 		app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
 	)
 
+	// must be initialized before the Transfer Keeper
+	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
+		appCodec,
+		keys[packetforwardtypes.StoreKey],
+		nil, // will be zero-value here, reference is set later on with SetTransferKeeper.
+		app.IBCKeeper.ChannelKeeper,
+		app.DistrKeeper,
+		app.BankKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
@@ -483,6 +498,8 @@ func NewApp(
 		scopedTransferKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
+	app.PacketForwardKeeper.SetTransferKeeper(app.TransferKeeper)
 
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec,
@@ -574,8 +591,28 @@ func NewApp(
 	/* =================================================== */
 	/*                  TRANSFER STACK                     */
 	/* =================================================== */
+
+	/*
+	 * SendPacket, since it is originating from the application to core IBC:
+	 * transferKeeper.SendPacket -> packetforward.SendPacket -> channel.SendPacket
+	 *
+	 * RecvPacket, message that originates from core IBC and goes down to app, the flow is the other way
+	 * channel.RecvPacket -> packetforward.OnRecvPacket -> transfer.OnRecvPacket
+	 *
+	 * transfer stack contains (from top to bottom):
+	 * - Packet Forward Middleware
+	 * - Transfer
+	 */
+
 	var transferStack ibcporttypes.IBCModule
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
+	transferStack = packetforward.NewIBCMiddleware(
+		transferStack,
+		app.PacketForwardKeeper,
+		0, // retries on timeout
+		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp, // forward timeout
+		packetforwardkeeper.DefaultRefundTransferPacketTimeoutTimestamp,  // refund timeout
+	)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
 	// TO-DO consider adding ibc hooks
 
@@ -663,6 +700,7 @@ func NewApp(
 		transfer.NewAppModule(app.TransferKeeper),
 		ica.NewAppModule(&icaControllerKeeper, &app.ICAHostKeeper),
 		ibctm.AppModule{},
+		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -715,6 +753,7 @@ func NewApp(
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		packetforwardtypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -741,6 +780,7 @@ func NewApp(
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		packetforwardtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -773,6 +813,7 @@ func NewApp(
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName, // wasm after ibc transfer
+		packetforwardtypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)
