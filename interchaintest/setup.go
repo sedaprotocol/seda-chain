@@ -7,19 +7,15 @@ import (
 
 	"cosmossdk.io/math"
 
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/docker/docker/client"
+	"github.com/sedaprotocol/seda-chain/interchaintest/types"
 	"github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"github.com/strangelove-ventures/interchaintest/v8/testreporter"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
-
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/types/module/testutil"
-	ibclocalhost "github.com/cosmos/ibc-go/v8/modules/light-clients/09-localhost"
-
-	"github.com/sedaprotocol/seda-chain/interchaintest/types"
 )
 
 var (
@@ -94,14 +90,12 @@ func sedaEncoding() *testutil.TestEncodingConfig {
 
 // CreateChains generates this branch's chain (ex: from the commit)
 func CreateChains(t *testing.T, numVals, numFullNodes int) []ibc.Chain {
-	t.Helper()
 	cfg := SedaCfg
 	cfg.Images = []ibc.DockerImage{dockerImage}
 	return CreateChainsWithCustomConfig(t, numVals, numFullNodes, cfg)
 }
 
 func CreateChainsWithCustomConfig(t *testing.T, numVals, numFullNodes int, config ibc.ChainConfig) []ibc.Chain {
-	t.Helper()
 	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
 		{
 			Name:          SedaCfg.Name,
@@ -122,7 +116,6 @@ func CreateChainsWithCustomConfig(t *testing.T, numVals, numFullNodes int, confi
 }
 
 func BuildAllChains(t *testing.T, chains []ibc.Chain) (*interchaintest.Interchain, context.Context, *client.Client, string) {
-	t.Helper()
 	ic := interchaintest.NewInterchain()
 
 	for _, chain := range chains {

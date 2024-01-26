@@ -7,15 +7,13 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/docker/docker/client"
+	"github.com/sedaprotocol/seda-chain/interchaintest/conformance"
 	"github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/require"
-
-	"github.com/sedaprotocol/seda-chain/interchaintest/conformance"
 )
 
 const (
@@ -43,7 +41,6 @@ func TestChainUpgrade(t *testing.T) {
 }
 
 func BasicUpgradeTest(t *testing.T, upgradeVersion, upgradeRepo, upgradeName string) {
-	t.Helper()
 	if testing.Short() {
 		t.Skip("skipping in short mode")
 	}
@@ -85,7 +82,6 @@ func BasicUpgradeTest(t *testing.T, upgradeVersion, upgradeRepo, upgradeName str
 }
 
 func UpgradeNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, client *client.Client, haltHeight uint64, upgradeRepo, upgradeVersion string) {
-	t.Helper()
 	stopNodes(t, ctx, chain)
 	upgradeNodes(t, ctx, chain, client, upgradeRepo, upgradeVersion)
 	startNodes(t, ctx, chain)
@@ -118,7 +114,6 @@ func getTestGenesis() []cosmos.GenesisKV {
 }
 
 func stopNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) {
-	t.Helper()
 	t.Log("stopping node(s)")
 	err := chain.StopAllNodes(ctx)
 	if err != nil {
@@ -127,13 +122,11 @@ func stopNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) {
 }
 
 func upgradeNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, client *client.Client, upgradeRepo, upgradeVersion string) {
-	t.Helper()
 	t.Log("upgrading node(s)")
 	chain.UpgradeVersion(ctx, client, upgradeRepo, upgradeVersion)
 }
 
 func startNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) {
-	t.Helper()
 	t.Log("starting node(s)")
 	err := chain.StartAllNodes(ctx)
 	if err != nil {
@@ -142,7 +135,6 @@ func startNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) {
 }
 
 func waitForBlocks(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) {
-	t.Helper()
 	timeoutCtx, timeoutCtxCancel := context.WithTimeout(ctx, time.Second*60)
 	defer timeoutCtxCancel()
 
@@ -153,7 +145,6 @@ func waitForBlocks(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain)
 }
 
 func checkHeight(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, haltHeight uint64) {
-	t.Helper()
 	height, err := chain.Height(ctx)
 	if err != nil {
 		t.Fatalf("error fetching height after upgrade: %v", err)
@@ -164,10 +155,7 @@ func checkHeight(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, h
 	}
 }
 
-//nolint:staticcheck // SA4009 disable static check here
-func ValidatorVoting(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, proposalID string, currentHeight, haltHeight uint64) {
-	t.Helper()
-
+func ValidatorVoting(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, proposalID string, currentHeight uint64, haltHeight uint64) {
 	err := chain.VoteOnProposalAllValidators(ctx, proposalID, cosmos.ProposalVoteYes)
 	require.NoError(t, err, "failed to submit votes")
 
@@ -196,7 +184,6 @@ func ValidatorVoting(t *testing.T, ctx context.Context, chain *cosmos.CosmosChai
 }
 
 func SubmitUpgradeProposal(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet, upgradeName string) (uint64, string) {
-	t.Helper()
 	currentHeight, err := chain.Height(ctx)
 	require.NoError(t, err, "error fetching height before submit upgrade proposal")
 

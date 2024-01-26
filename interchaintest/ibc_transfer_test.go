@@ -42,7 +42,6 @@ func TestSedaGaiaIBCTransfer(t *testing.T) {
 }
 
 func runIBCTransferTest(t *testing.T, counterpartyChainSpec *interchaintest.ChainSpec, numVals, numFullNodes int) {
-	t.Helper()
 	/* =================================================== */
 	/*                   CHAIN FACTORY                     */
 	/* =================================================== */
@@ -143,7 +142,7 @@ func runIBCTransferTest(t *testing.T, counterpartyChainSpec *interchaintest.Chai
 	/* =================================================== */
 	/*                  INTERCHAIN TEST                    */
 	/* =================================================== */
-	transferAmount := math.NewInt(1_000)
+	var transferAmount = math.NewInt(1_000)
 
 	// Compose an IBC transfer and send from Seda -> Gaia
 	transfer := ibc.WalletAmount{
