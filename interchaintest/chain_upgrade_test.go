@@ -14,6 +14,8 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/require"
+
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 )
 
 const (

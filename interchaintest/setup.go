@@ -16,6 +16,9 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v8/testreporter"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
+
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	ibclocalhost "github.com/cosmos/ibc-go/v8/modules/light-clients/09-localhost"
 )
 
 var (
