@@ -120,11 +120,11 @@ In the output of the above command make sure catching_up is false
 “catching_up”: false
 ```
 
-Create a validator.json file and fill in the create-validator tx parameters:
+Create a `validator.json` file and fill in the create-validator tx parameters:
 
 ```
 {
- "pubkey": {"@type":"/cosmos.crypto.ed25519.PubKey","key":"$(./seda-chaind-${ARCH} tendermint show-validator)"},
+ "pubkey": $(./seda-chaind-${ARCH} tendermint show-validator),
  "amount": "1000000000000000000000000000000000aseda", 
  "moniker": "the moniker for your validator",
  "identity": "optional identity signature (ex. UPort or Keybase) This key will be used by block explorers to identify the validator.",
