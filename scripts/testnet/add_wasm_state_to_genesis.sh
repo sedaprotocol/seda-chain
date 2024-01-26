@@ -73,6 +73,23 @@ function store_and_instantiate() {
 
 source config.sh
 
+# flags: add-wasm-contracts and add-groups
+ADD_WASM_CONTRACTS=false
+ADD_GROUPS=false
+
+while [ ! $# -eq 0 ]
+do
+	case "$1" in
+		--add-wasm-contracts)
+			ADD_WASM_CONTRACTS=true
+			;;
+		--add-groups)
+			ADD_GROUPS=true
+			;;
+	esac
+	shift
+done
+
 #
 #   PRELIMINARY CHECKS AND DOWNLOADS
 #
@@ -82,13 +99,16 @@ if [ ! -f "$ORIGINAL_GENESIS" ]; then
   exit 1
 fi
 
-TMP_HOME=./tmp
+TMP_HOME=~/.seda-chain/
+# TMP_HOME=./tmp
 rm -rf $TMP_HOME
 
-rm -rf $WASM_DIR
-download_contract_release proxy_contract.wasm
-download_contract_release staking.wasm
-download_contract_release data_requests.wasm
+if [ $ADD_WASM_CONTRACTS = true ]; then
+  rm -rf $WASM_DIR
+  download_contract_release proxy_contract.wasm
+  download_contract_release staking.wasm
+  download_contract_release data_requests.wasm
+fi
 
 TEMP_CHAIN_ID=temp-seda-chain
 
@@ -113,19 +133,35 @@ sleep 20
 #   SEND TRANSACTIONS WHILE CHAIN IS RUNNING
 #
 
-# Store and instantiate three contracts
-PROXY_ADDR=$(store_and_instantiate proxy_contract.wasm '{"token":"aseda"}')
+# Create group and group policy
 
-ARG='{"token":"aseda", "proxy": "'$PROXY_ADDR'" }'
-STAKING_ADDR=$(store_and_instantiate staking.wasm "$ARG")
-DR_ADDR=$(store_and_instantiate data_requests.wasm "$ARG")
+if [ $ADD_GROUPS = true ]; then
+  echo $ADMIN_SEED | $LOCAL_BIN keys add admin --home $TMP_HOME --keyring-backend test --recover
+  ADMIN_ADDR=$($LOCAL_BIN keys show admin --home $TMP_HOME --keyring-backend test -a)
+  
+  # $LOCAL_BIN tx group create-group $ADMIN_ADDR "ipfs://not_real_metadata" $MEMBERS_JSON_FILE --keyring-backend test --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
+  # sleep 10
+  # $LOCAL_BIN tx group create-group-policy $ADMIN_ADDR 1 "{\"name\":\"quick turnaround\",\"description\":\"\"}" $POLICY_JSON_FILE --keyring-backend test --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
+  # sleep 10
+
+  $LOCAL_BIN tx group create-group-with-policy $ADMIN_ADDR "ipfs://not_real_metadata" "{\"name\":\"quick turnaround\",\"description\":\"\"}" $MEMBERS_JSON_FILE $POLICY_JSON_FILE --home $TMP_HOME --from $ADMIN_ADDR --keyring-backend test --chain-id $TEMP_CHAIN_ID -y
+  sleep 10
+fi
 
 
-# Call SetStaking and SetDataRequests on Proxy contract to set circular dependency
-$LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_staking":{"contract":"'$STAKING_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test  --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
-sleep 10
-$LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_data_requests":{"contract":"'$DR_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test  --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
-sleep 10
+# # Store and instantiate three contracts
+# PROXY_ADDR=$(store_and_instantiate proxy_contract.wasm '{"token":"aseda"}')
+
+# ARG='{"token":"aseda", "proxy": "'$PROXY_ADDR'" }'
+# STAKING_ADDR=$(store_and_instantiate staking.wasm "$ARG")
+# DR_ADDR=$(store_and_instantiate data_requests.wasm "$ARG")
+
+
+# # Call SetStaking and SetDataRequests on Proxy contract to set circular dependency
+# $LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_staking":{"contract":"'$STAKING_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test  --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
+# sleep 10
+# $LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_data_requests":{"contract":"'$DR_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test  --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
+# sleep 10
 
 
 #
@@ -139,28 +175,28 @@ python3 -m json.tool $TMP_HOME/exported > $TMP_HOME/genesis.json
 rm $TMP_HOME/exported
 
 
-#
-# Modify
-# - wasm.codes
-# - wasm.contracts
-# - wasm.sequences
-# - wasm-storage.proxy_contract_registry
-#
-EXPORTED_GENESIS=$TMP_HOME/genesis.json
-TMP_GENESIS=$TMP_HOME/tmp_genesis.json
-TMP_TMP_GENESIS=$TMP_HOME/tmp_tmp_genesis.json
+# #
+# # Modify
+# # - wasm.codes
+# # - wasm.contracts
+# # - wasm.sequences
+# # - wasm-storage.proxy_contract_registry
+# #
+# EXPORTED_GENESIS=$TMP_HOME/genesis.json
+# TMP_GENESIS=$TMP_HOME/tmp_genesis.json
+# TMP_TMP_GENESIS=$TMP_HOME/tmp_tmp_genesis.json
 
-jq '.app_state["wasm"]["codes"]' $EXPORTED_GENESIS > $TMP_HOME/codes.tmp
-jq '.app_state["wasm"]["contracts"]' $EXPORTED_GENESIS > $TMP_HOME/contracts.tmp
-jq '.app_state["wasm"]["sequences"]' $EXPORTED_GENESIS > $TMP_HOME/sequences.tmp
+# jq '.app_state["wasm"]["codes"]' $EXPORTED_GENESIS > $TMP_HOME/codes.tmp
+# jq '.app_state["wasm"]["contracts"]' $EXPORTED_GENESIS > $TMP_HOME/contracts.tmp
+# jq '.app_state["wasm"]["sequences"]' $EXPORTED_GENESIS > $TMP_HOME/sequences.tmp
 
-jq '.app_state["wasm-storage"]["proxy_contract_registry"]="'$PROXY_ADDR'"' $ORIGINAL_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-jq --slurpfile codes $TMP_HOME/codes.tmp '.app_state["wasm"]["codes"] = $codes[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-jq --slurpfile contracts $TMP_HOME/contracts.tmp '.app_state["wasm"]["contracts"] = $contracts[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-jq --slurpfile sequences $TMP_HOME/sequences.tmp '.app_state["wasm"]["sequences"] = $sequences[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+# jq '.app_state["wasm-storage"]["proxy_contract_registry"]="'$PROXY_ADDR'"' $ORIGINAL_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+# jq --slurpfile codes $TMP_HOME/codes.tmp '.app_state["wasm"]["codes"] = $codes[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+# jq --slurpfile contracts $TMP_HOME/contracts.tmp '.app_state["wasm"]["contracts"] = $contracts[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+# jq --slurpfile sequences $TMP_HOME/sequences.tmp '.app_state["wasm"]["sequences"] = $sequences[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 
-mv $TMP_GENESIS $ORIGINAL_GENESIS
+# mv $TMP_GENESIS $ORIGINAL_GENESIS
 
-# clean up
-rm -rf $TMP_HOME
-rm chain_output.log
+# # clean up
+# rm -rf $TMP_HOME
+# rm chain_output.log
