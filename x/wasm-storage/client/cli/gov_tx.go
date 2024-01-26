@@ -142,7 +142,7 @@ func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
 	return cmd
 }
 
-func parseStoreOverlayArgs(file, sender string, flags *flag.FlagSet) (*types.MsgStoreOverlayWasm, error) {
+func parseStoreOverlayArgs(file, sender string, _ *flag.FlagSet) (*types.MsgStoreOverlayWasm, error) {
 	zipped, err := gzipWasmFile(file)
 	if err != nil {
 		return nil, err

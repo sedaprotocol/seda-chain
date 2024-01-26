@@ -54,7 +54,7 @@ func (s *IntegrationTestSuite) execInstantiateAndRegisterProxyContract(
 	valIdx int,
 	title,
 	summary,
-	wasmType,
+	_,
 	from,
 	fees string,
 	expectErr bool,

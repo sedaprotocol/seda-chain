@@ -66,7 +66,7 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 }
 
 // ValidateGenesis used to validate the GenesisState, given in its json.RawMessage form
-func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
 	var data types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
 		return fmt.Errorf("failed to unmarshal %s genesis state: %v", types.ModuleName, err)
@@ -139,6 +139,6 @@ func (AppModule) ConsensusVersion() uint64 { return 1 }
 func (am AppModule) BeginBlock(_ sdk.Context) {}
 
 // EndBlock contains the logic that is automatically triggered at the end of each block
-func (am AppModule) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
+func (am AppModule) EndBlock(_ sdk.Context) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
 }

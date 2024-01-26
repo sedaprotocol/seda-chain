@@ -21,7 +21,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-func modifyGenesis(path, moniker, amountStr string, addrAll []sdk.AccAddress, globfees, denom string) error {
+func modifyGenesis(path, moniker, amountStr string, addrAll []sdk.AccAddress, _, denom string) error {
 	serverCtx := server.NewDefaultContext()
 	config := serverCtx.Config
 	config.SetRoot(path)
@@ -32,8 +32,8 @@ func modifyGenesis(path, moniker, amountStr string, addrAll []sdk.AccAddress, gl
 		return fmt.Errorf("failed to parse coins: %w", err)
 	}
 
-	var balances []banktypes.Balance
-	var genAccounts []*authtypes.BaseAccount
+	balances := make([]banktypes.Balance, 0, len(addrAll))
+	genAccounts := make([]*authtypes.BaseAccount, 0, len(addrAll))
 	for _, addr := range addrAll {
 		balance := banktypes.Balance{Address: addr.String(), Coins: coins.Sort()}
 		balances = append(balances, balance)

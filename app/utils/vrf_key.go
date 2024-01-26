@@ -35,13 +35,13 @@ type VRFKey struct {
 }
 
 // Save persists the VRFKey to its filePath.
-func (key VRFKey) Save() error {
-	outFile := key.filePath
+func (v VRFKey) Save() error {
+	outFile := v.filePath
 	if outFile == "" {
 		return fmt.Errorf("key's file path is empty")
 	}
 
-	cmtPubKey, err := cryptocodec.ToCmtPubKeyInterface(key.PubKey)
+	cmtPubKey, err := cryptocodec.ToCmtPubKeyInterface(v.PubKey)
 	if err != nil {
 		return fmt.Errorf("failed to convert key type from SDK to Comet: %v", err)
 	}
@@ -50,7 +50,7 @@ func (key VRFKey) Save() error {
 		PrivKey crypto.PrivKey `json:"priv_key"`
 		PubKey  crypto.PubKey  `json:"pub_key"`
 	}{
-		PrivKey: key.PrivKey,
+		PrivKey: v.PrivKey,
 		PubKey:  cmtPubKey,
 	}
 

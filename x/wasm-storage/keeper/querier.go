@@ -50,14 +50,14 @@ func (q Querier) OverlayWasm(c context.Context, req *types.QueryOverlayWasmReque
 	}, nil
 }
 
-func (q Querier) OverlayWasms(c context.Context, req *types.QueryOverlayWasmsRequest) (*types.QueryOverlayWasmsResponse, error) {
+func (q Querier) OverlayWasms(c context.Context, _ *types.QueryOverlayWasmsRequest) (*types.QueryOverlayWasmsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryOverlayWasmsResponse{
 		HashTypePairs: q.ListOverlayWasms(ctx),
 	}, nil
 }
 
-func (q Querier) ProxyContractRegistry(c context.Context, req *types.QueryProxyContractRegistryRequest) (*types.QueryProxyContractRegistryResponse, error) {
+func (q Querier) ProxyContractRegistry(c context.Context, _ *types.QueryProxyContractRegistryRequest) (*types.QueryProxyContractRegistryResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryProxyContractRegistryResponse{
 		Address: q.GetProxyContractRegistry(ctx).String(),

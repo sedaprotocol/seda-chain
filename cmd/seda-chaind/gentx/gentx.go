@@ -31,6 +31,7 @@ import (
 	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
+//nolint:revive
 func GenTxValidator(msgs []sdk.Msg) error {
 	if len(msgs) != 1 {
 		return fmt.Errorf("unexpected number of GenTx messages; got: %d, expected: 1", len(msgs))
@@ -49,6 +50,8 @@ func GenTxValidator(msgs []sdk.Msg) error {
 }
 
 // GenTxCmd builds the application's gentx command.
+//
+//nolint:revive
 func GenTxCmd(mbm module.BasicManager, txEncCfg client.TxEncodingConfig, genBalIterator types.GenesisBalancesIterator, defaultNodeHome string, valAdddressCodec address.Codec) *cobra.Command {
 	ipDefault, _ := server.ExternalIP()
 	fsCreateValidator, defaultsDesc := cli.CreateValidatorMsgFlagSet(ipDefault)

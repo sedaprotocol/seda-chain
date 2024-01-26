@@ -139,7 +139,7 @@ func (s *IntegrationTestSuite) initNodes(c *chain) {
 
 	// Initialize a genesis file for the first validator
 	val0ConfigDir := c.validators[0].configDir()
-	var addrAll []sdk.AccAddress
+	addrAll := make([]sdk.AccAddress, 0, len(c.validators)+len(c.genesisAccounts))
 	for _, val := range c.validators {
 		address, err := val.keyInfo.GetAddress()
 		s.Require().NoError(err)

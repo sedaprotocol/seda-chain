@@ -163,7 +163,7 @@ func (s *IntegrationTestSuite) execGetSeedQuery(
 	c *chain,
 	valIdx int,
 	proxyContractAddr string,
-	expectErr bool,
+	_ bool,
 	opt ...flagOption,
 ) {
 	opts := applyQueryOptions(c.id, opt)

@@ -18,7 +18,7 @@ func NewQuerierImpl(keeper Keeper) *Querier {
 	}
 }
 
-func (q Querier) Seed(c context.Context, req *types.QuerySeedRequest) (*types.QuerySeedResponse, error) {
+func (q Querier) Seed(c context.Context, _ *types.QuerySeedRequest) (*types.QuerySeedResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QuerySeedResponse{
 		Seed:        q.GetSeed(ctx),

@@ -40,7 +40,7 @@ func (h *ProposalHandler) PrepareProposalHandler(
 	vrfSigner vrfSigner,
 	keeper Keeper,
 	authKeeper types.AccountKeeper,
-	stakingKeeper types.StakingKeeper,
+	_ types.StakingKeeper,
 ) sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (*abci.ResponsePrepareProposal, error) {
 		if vrfSigner.IsNil() {
@@ -124,7 +124,7 @@ func (h *ProposalHandler) PrepareProposalHandler(
 func (h *ProposalHandler) ProcessProposalHandler(
 	vrfSigner vrfSigner,
 	keeper Keeper,
-	stakingKeeper types.StakingKeeper,
+	_ types.StakingKeeper,
 ) sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
 		var totalTxGas uint64

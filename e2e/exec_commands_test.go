@@ -64,7 +64,7 @@ func applyTxOptions(chainID string, options []flagOption) map[string]interface{}
 	return opts
 }
 
-func applyQueryOptions(chainID string, options []flagOption) map[string]interface{} {
+func applyQueryOptions(_ string, options []flagOption) map[string]interface{} {
 	opts := map[string]interface{}{
 		flagOutput: "json",
 	}

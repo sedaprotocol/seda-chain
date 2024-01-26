@@ -358,6 +358,7 @@ func NewApp(
 	)
 
 	// optional: enable sign mode textual by overwriting the default tx config (after setting the bank keeper)
+	//nolint:gocritic
 	enabledSignModes := append(authtx.DefaultSignModes, sigtypes.SignMode_SIGN_MODE_TEXTUAL)
 	txConfigOpts := authtx.ConfigOptions{
 		EnabledSignModes:           enabledSignModes,
@@ -823,7 +824,10 @@ func NewApp(
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	app.mm.RegisterServices(app.configurator)
+	err = app.mm.RegisterServices(app.configurator)
+	if err != nil {
+		panic(err)
+	}
 	app.setupUpgrades()
 
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.mm.Modules))
@@ -1025,7 +1029,7 @@ func (app *App) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 
 // RegisterAPIRoutes registers all application module routes with the provided
 // API server.
-func (app *App) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
+func (app *App) RegisterAPIRoutes(apiSvr *api.Server, _ config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)

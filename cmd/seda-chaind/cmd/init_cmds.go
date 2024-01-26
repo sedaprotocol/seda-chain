@@ -24,7 +24,7 @@ const (
 	FlagNetwork = "network"
 )
 
-func JoinNetworkCommand(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
+func JoinNetworkCommand(_ module.BasicManager, _ string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "join [moniker]",
 		Short: "Grabs an existing network configuration and initializes node based on it",
@@ -46,7 +46,7 @@ $ %s join moniker --network devnet
 
 			var mnemonic string
 			var err error
-			if recover, _ := cmd.Flags().GetBool(FlagRecover); recover {
+			if recoverFlag, _ := cmd.Flags().GetBool(FlagRecover); recoverFlag {
 				mnemonic, err = readInMnemonic(cmd)
 				if err != nil {
 					return err

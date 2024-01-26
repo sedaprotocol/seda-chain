@@ -52,7 +52,8 @@ func (app *App) setUpgradeStoreLoaders() {
 	for _, upgrade := range Upgrades {
 		if upgradeInfo.Name == upgrade.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 			// configure store loader that checks if version == upgradeHeight and applies store upgrades
-			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgrade.StoreUpgrades))
+			storeUpgrades := upgrade.StoreUpgrades
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
 			break
 		}
 	}

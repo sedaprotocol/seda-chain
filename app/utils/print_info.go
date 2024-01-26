@@ -8,15 +8,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type printInfo struct {
+type PrintInfo struct {
 	Moniker string `json:"moniker" yaml:"moniker"`
 	ChainID string `json:"chain_id" yaml:"chain_id"`
 	NodeID  string `json:"node_id" yaml:"node_id"`
 	Seeds   string `json:"seeds" yaml:"seeds"`
 }
 
-func NewPrintInfo(moniker, chainID, nodeID, seeds string) printInfo {
-	return printInfo{
+func NewPrintInfo(moniker, chainID, nodeID, seeds string) PrintInfo {
+	return PrintInfo{
 		Moniker: moniker,
 		ChainID: chainID,
 		NodeID:  nodeID,
@@ -24,7 +24,7 @@ func NewPrintInfo(moniker, chainID, nodeID, seeds string) printInfo {
 	}
 }
 
-func DisplayInfo(info printInfo) error {
+func DisplayInfo(info PrintInfo) error {
 	out, err := json.MarshalIndent(info, "", " ")
 	if err != nil {
 		return err

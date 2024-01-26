@@ -19,7 +19,7 @@ const (
 type GitFile struct {
 	Name string `json:"name"`
 	Path string `json:"path"`
-	Url  string `json:"download_url"`
+	URL  string `json:"download_url"`
 	Type string `json:"type"`
 }
 
@@ -62,7 +62,7 @@ func DownloadGitFiles(path, downloadPath string) error {
 }
 
 func downloadGitFile(file GitFile, downloadPath string) error {
-	resp, err := http.Get(file.Url)
+	resp, err := http.Get(file.URL)
 	if err != nil {
 		return err
 	}

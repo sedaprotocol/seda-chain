@@ -99,11 +99,13 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 			expErrMsg: "",
 		},
 	}
-	for _, tc := range cases {
+	for i := range cases {
+		tc := cases[i]
 		s.Run(tc.name, func() {
 			s.SetupTest()
 			tc.preRun()
-			res, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &tc.input)
+			input := tc.input
+			res, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &input)
 			if tc.expErr {
 				s.Require().ErrorContains(err, tc.expErrMsg)
 			} else {
@@ -211,11 +213,13 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			expErrMsg: "",
 		},
 	}
-	for _, tc := range cases {
+	for i := range cases {
+		tc := cases[i]
 		s.Run(tc.name, func() {
 			s.SetupTest()
 			tc.preRun()
-			res, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &tc.input)
+			input := tc.input
+			res, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
 			if tc.expErr {
 				s.Require().ErrorContains(err, tc.expErrMsg)
 			} else {

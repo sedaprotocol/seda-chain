@@ -1,4 +1,4 @@
-package wasm_storage
+package wasmstorage
 
 import (
 	"context"
@@ -65,7 +65,7 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 }
 
 // ValidateGenesis used to validate the GenesisState, given in its json.RawMessage form
-func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
+func (AppModuleBasic) ValidateGenesis(_ codec.JSONCodec, _ client.TxEncodingConfig, _ json.RawMessage) error {
 	return nil
 }
 

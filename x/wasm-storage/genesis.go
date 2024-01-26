@@ -1,4 +1,4 @@
-package wasm_storage
+package wasmstorage
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"

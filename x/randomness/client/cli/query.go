@@ -12,7 +12,7 @@ import (
 )
 
 // GetQueryCmd returns the CLI query commands for this module.
-func GetQueryCmd(queryRoute string) *cobra.Command {
+func GetQueryCmd(_ string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),

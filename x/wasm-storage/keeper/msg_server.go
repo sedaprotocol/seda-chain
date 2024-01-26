@@ -56,7 +56,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgStoreDataRequestWasm) (*types.MsgStoreDataRequestWasmResponse, error) {
+func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgStoreDataRequestWasm) (*types.MsgStoreDataRequestWasmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	unzipped, err := unzipWasm(msg.Wasm)
@@ -64,10 +64,10 @@ func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 		return nil, err
 	}
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
-	if k.Keeper.HasDataRequestWasm(ctx, wasm) {
+	if m.Keeper.HasDataRequestWasm(ctx, wasm) {
 		return nil, fmt.Errorf("data Request Wasm with given hash already exists")
 	}
-	k.Keeper.SetDataRequestWasm(ctx, wasm)
+	m.Keeper.SetDataRequestWasm(ctx, wasm)
 
 	hashString := hex.EncodeToString(wasm.Hash)
 
@@ -88,14 +88,14 @@ func (k msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	}, nil
 }
 
-func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOverlayWasm) (*types.MsgStoreOverlayWasmResponse, error) {
+func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOverlayWasm) (*types.MsgStoreOverlayWasmResponse, error) {
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if msg.Sender != k.authority {
+	if msg.Sender != m.authority {
 		return nil, fmt.Errorf("invalid authority %s", msg.Sender)
 	}
 
@@ -104,10 +104,10 @@ func (k msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 		return nil, err
 	}
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
-	if k.Keeper.HasOverlayWasm(ctx, wasm) {
+	if m.Keeper.HasOverlayWasm(ctx, wasm) {
 		return nil, fmt.Errorf("overlay Wasm with given hash already exists")
 	}
-	k.Keeper.SetOverlayWasm(ctx, wasm)
+	m.Keeper.SetOverlayWasm(ctx, wasm)
 
 	hashString := hex.EncodeToString(wasm.Hash)
 	err = ctx.EventManager().EmitTypedEvent(

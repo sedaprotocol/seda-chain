@@ -112,7 +112,9 @@ func NewRootCmd() *cobra.Command {
 			// sets the RPC client needed for SIGN_MODE_TEXTUAL. This sign mode
 			// is only available if the client is online.
 			if !initClientCtx.Offline {
+				//nolint:gocritic
 				enabledSignModes := append(tx.DefaultSignModes, signing.SignMode_SIGN_MODE_TEXTUAL)
+
 				txConfigOpts := tx.ConfigOptions{
 					EnabledSignModes:           enabledSignModes,
 					TextualCoinMetadataQueryFn: txmodule.NewGRPCCoinMetadataQueryFn(initClientCtx),
@@ -213,7 +215,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig, basi
 }
 
 // queryCommand returns the sub-command to send queries to the app
-func queryCommand(basicManager module.BasicManager) *cobra.Command {
+func queryCommand(_ module.BasicManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "query",
 		Aliases:                    []string{"q"},
@@ -236,7 +238,7 @@ func queryCommand(basicManager module.BasicManager) *cobra.Command {
 }
 
 // txCommand returns the sub-command to send transactions to the app
-func txCommand(basicManager module.BasicManager) *cobra.Command {
+func txCommand(_ module.BasicManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "tx",
 		Short:                      "Transactions subcommands",

@@ -29,7 +29,7 @@ var Upgrade = upgrades.Upgrade{
 func Createv1UpgradeHandler(
 	mm upgrades.ModuleManager,
 	configurator module.Configurator,
-	ak *keepers.AppKeepers,
+	_ *keepers.AppKeepers,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		// Add additional upgrade logic when needed
