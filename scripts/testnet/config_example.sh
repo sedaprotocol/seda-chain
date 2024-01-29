@@ -78,6 +78,13 @@ FAUCET=seda... # if set, creates a genesis account with 10x seda tokens compared
 CONTRACTS_VERSION=v0.0.1-rc # latest or seda-chain-contracts release version
 
 #######################################
+############ GROUP CONFIG #############
+#######################################
+MEMBERS_JSON_FILE=./members.json
+POLICY_JSON_FILE=./policy.json
+ADMIN_SEED="mushroom energy ..."
+
+#######################################
 ############### GITHUB ################
 #######################################
 GITHUB_TOKEN=ghp_... # github token for accessing seda-chain-contracts repo
