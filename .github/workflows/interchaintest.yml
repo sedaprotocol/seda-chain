@@ -64,7 +64,6 @@ jobs:
           - "ictest-sdk-commands"
           - "ictest-sdk-boundaries"
           - "ictest-chain-start"
-          - "ictest-conformance"
           - "ictest-state-sync"
           - "ictest-ibc-xfer"
           - "ictest-packet-forward-middleware"

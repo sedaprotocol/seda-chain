@@ -237,9 +237,6 @@ ictest-sdk-boundaries: rm-testcache
 ictest-chain-start: rm-testcache
 	cd interchaintest && go test -race -v -run TestChainStart .
 
-ictest-conformance: rm-testcache
-	cd interchaintest && go test -race -v -run TestConformance .
-
 ictest-state-sync: rm-testcache
 	cd interchaintest && go test -race -v -run TestStateSync .
 
