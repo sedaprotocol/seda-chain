@@ -38,7 +38,7 @@ var (
 func getSedaExponent() int64 {
 	sedaExponent := os.Getenv("SEDA_EXPONENT")
 	if sedaExponent == "" {
-		return 18 // default value
+		return 18 // default
 	}
 
 	value, err := strconv.Atoi(sedaExponent)

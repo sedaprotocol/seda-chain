@@ -13,7 +13,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.PAT }}
   TAR_PATH: /tmp/seda-docker-image.tar
   IMAGE_NAME: seda-chaind-e2e
-  SEDA_EXPONENT: 6
+  SEDA_EXPONENT: ${{ secrets.SEDA_EXPONENT_ICT || 18 }}
 
 permissions:
   contents: read

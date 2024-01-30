@@ -2,6 +2,7 @@
 
 ARG GO_VERSION="1.21"
 ARG RUNNER_IMAGE="alpine:3.17"
+ARG SEDA_EXPONENT="18"
 
 # --------------------------------------------------------
 # Builder
@@ -64,11 +65,12 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 FROM ${RUNNER_IMAGE}
 
-ARG SEDA_EXPONENT
-
 COPY --from=builder /seda-chain/build/seda-chaind /bin/seda-chaind
 
+ARG SEDA_EXPONENT # use default if not set
+ENV SEDA_EXPONENT=${SEDA_EXPONENT}
 ENV HOME /seda-chain
+
 WORKDIR $HOME
 
 EXPOSE 26656 26657 1317 9090
