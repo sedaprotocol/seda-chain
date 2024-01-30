@@ -133,11 +133,11 @@ func runIBCTransferTest(t *testing.T, counterpartyChainSpec *interchaintest.Chai
 	// Get original account balances
 	sedaOrigBal, err := sedaChain.GetBalance(ctx, sedaUserAddr, sedaChain.Config().Denom)
 	require.NoError(t, err)
-	require.Equal(t, GenesisWalletAmount, sedaOrigBal.Int64())
+	require.Equal(t, GenesisWalletAmount, sedaOrigBal)
 
 	gaiaOrigBal, err := counterpartyChain.GetBalance(ctx, gaiaUserAddr, counterpartyChain.Config().Denom)
 	require.NoError(t, err)
-	require.Equal(t, GenesisWalletAmount, gaiaOrigBal.Int64())
+	require.Equal(t, GenesisWalletAmount, gaiaOrigBal)
 
 	/* =================================================== */
 	/*                  INTERCHAIN TEST                    */
