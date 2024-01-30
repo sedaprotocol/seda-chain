@@ -45,7 +45,7 @@ jobs:
         with:
           context: .
           file: ./dockerfiles/Dockerfile.e2e
-          tags: seda:local
+          tags: seda-chaind-e2e
           outputs: type=docker,dest=${{ env.TAR_PATH }}
 
       - name: Upload artifact
