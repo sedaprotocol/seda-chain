@@ -43,8 +43,8 @@ jobs:
       - name: Build and export
         uses: docker/build-push-action@v5
         with:
-          context: ./dockerfiles
-          file: dockerfiles/Dockerfile.e2e
+          context: .
+          file: ./dockerfiles/Dockerfile.e2e
           tags: seda:local
           outputs: type=docker,dest=${{ env.TAR_PATH }}
 
