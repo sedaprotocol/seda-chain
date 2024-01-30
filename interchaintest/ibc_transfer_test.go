@@ -17,9 +17,9 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 )
 
-// TestSedaGaiaIBCTransfer spins up a Seda and Gaia network, initializes an IBC connection between them,
+// TestIBCTransfer spins up a Seda and Gaia network, initializes an IBC connection between them,
 // and sends an ICS20 token transfer from Seda->Gaia and then back from Gaia->Seda.
-func TestSedaGaiaIBCTransfer(t *testing.T) {
+func TestIBCTransfer(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping in short mode")
 	}

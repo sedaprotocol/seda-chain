@@ -224,6 +224,33 @@ endif
 
 .PHONY: cover-html run-tests $(TEST_TARGETS) test test-race docker-build-e2e
 
+###############################################################################
+###                                interchaintest                           ###
+###############################################################################
+
+ictest-sdk-commands: rm-testcache
+	cd interchaintest && go test -race -v -run TestCoreSDKCommands .
+
+ictest-sdk-boundaries: rm-testcache
+	cd interchaintest && go test -race -v -run TestSDKBoundaries .
+
+ictest-chain-start: rm-testcache
+	cd interchaintest && go test -race -v -run TestChainStart .
+
+ictest-conformance: rm-testcache
+	cd interchaintest && go test -race -v -run TestConformance .
+
+ictest-state-sync: rm-testcache
+	cd interchaintest && go test -race -v -run TestStateSync .
+
+ictest-ibc-xfer: rm-testcache
+	cd interchaintest && go test -race -v -run TestIBCTransfer .
+
+ictest-packet-forward-middleware: rm-testcache
+	cd interchaintest && go test -race -v -run TestPacketForwardMiddleware .
+
+rm-testcache:
+	go clean -testcache
 
 ###############################################################################
 ###                                Release                                  ###
