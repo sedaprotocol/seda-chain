@@ -22,7 +22,7 @@ const (
 	upgradeName        = "v1"
 	initialVersion     = "old"
 	upgradeVersion     = "new"
-	upgradeRepo        = "sedaprotocol/seda-chaind-e2e"
+	upgradeRepo        = "seda-chaind-e2e"
 	haltHeightDelta    = uint64(10) // # of blocks after which to submit upgrade proposal
 	blocksAfterUpgrade = uint64(10) // # of blocks to wait after upgrade is applied
 )
@@ -32,7 +32,7 @@ var (
 
 	// current chain version we are upgrading from
 	baseChain = ibc.DockerImage{
-		Repository: "sedaprotocol/seda-chaind-e2e", // to be replaced by sedaRepo once we have Docker images setup
+		Repository: "seda-chaind-e2e", // to be replaced by sedaRepo once we have Docker images setup
 		Version:    initialVersion,
 		UidGid:     "1025:1025",
 	}
