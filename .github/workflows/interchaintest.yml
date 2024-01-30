@@ -40,6 +40,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: List dockerfiles directory
+        run: pwd && ls -la ./dockerfiles
+
       - name: Build and export
         uses: docker/build-push-action@v5
         with:
