@@ -12,9 +12,6 @@ FROM golang:${GO_VERSION}-alpine as builder
 ARG GIT_VERSION
 ARG GIT_COMMIT
 ARG GITHUB_TOKEN
-ARG SEDA_EXPONENT
-
-ENV SEDA_EXPONENT=$SEDA_EXPONENT
 
 RUN apk add --no-cache \
     ca-certificates \
@@ -66,6 +63,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # --------------------------------------------------------
 
 FROM ${RUNNER_IMAGE}
+
+ARG SEDA_EXPONENT
 
 COPY --from=builder /seda-chain/build/seda-chaind /bin/seda-chaind
 
