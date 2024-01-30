@@ -46,6 +46,7 @@ jobs:
           context: .
           file: ./dockerfiles/Dockerfile.e2e
           tags: seda-chaind-e2e
+          build-args: SEDA_EXPONENT=${{ env.SEDA_EXPONENT }}
           outputs: type=docker,dest=${{ env.TAR_PATH }}
 
       - name: Upload artifact
