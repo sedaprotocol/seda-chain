@@ -8,8 +8,11 @@ import "cosmos_proto/cosmos.proto";
 option go_package = "github.com/sedaprotocol/seda-chain/x/randomness/types";
 
 message ValidatorVRF {
-    // operator_address defines the address of the validator's operator; bech encoded in JSON.
-    string operator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-    // vrf_pubkey is the public key of the validator's VRF key pair
-    google.protobuf.Any vrf_pubkey = 2 [(cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey"];
+  // operator_address defines the address of the validator's operator; bech
+  // encoded in JSON.
+  string operator_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // vrf_pubkey is the public key of the validator's VRF key pair
+  google.protobuf.Any vrf_pubkey = 2
+      [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
 }
