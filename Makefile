@@ -147,9 +147,6 @@ lint:
 ###############################################################################
 ###                                Protobuf                                 ###
 ###############################################################################
-protoVer=0.14.0
-protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
 
 proto-all: proto-gen proto-format proto-lint
 
@@ -160,8 +157,7 @@ proto-dep-install:
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	@$(protoImage) sh ./scripts/proto_gen.sh
-	@go mod tidy
+	@./scripts/proto_gen.sh
 
 proto-fmt:
 	@echo "Formatting Protobuf files"
