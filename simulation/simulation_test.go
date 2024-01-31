@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"cosmossdk.io/log"
-	storetypes "cosmossdk.io/store/types"
 	evidencetypes "cosmossdk.io/x/evidence/types"
 	"github.com/stretchr/testify/require"
 
@@ -29,7 +28,6 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -39,21 +37,9 @@ import (
 	"github.com/sedaprotocol/seda-chain/app"
 )
 
-type storeKeysPrefixes struct {
-	A        storetypes.StoreKey
-	B        storetypes.StoreKey
-	Prefixes [][]byte
-}
-
 // Get flags every time the simulator is run
 func init() {
 	simcli.GetSimulatorFlags()
-}
-
-// fauxMerkleModeOpt returns a BaseApp option to use a dbStoreAdapter instead of
-// an IAVLStore for faster simulation speed.
-func fauxMerkleModeOpt(bapp *baseapp.BaseApp) {
-	bapp.SetFauxMerkleMode()
 }
 
 // BenchmarkSimulation run the chain simulation
@@ -105,13 +91,13 @@ func BenchmarkSimulation(b *testing.B) {
 		b,
 		os.Stdout,
 		bApp.BaseApp,
-		simtestutil.AppStateFn(
+		appStateFn(
 			bApp.AppCodec(),
 			bApp.SimulationManager(),
 			app.NewDefaultGenesisState(bApp.AppCodec()),
 		),
 		simulationtypes.RandomAccounts,
-		simtestutil.SimulationOperations(bApp, bApp.AppCodec(), config),
+		simulationOperations(bApp, bApp.AppCodec(), config),
 		bApp.ModuleAccountAddrs(),
 		config,
 		bApp.AppCodec(),
@@ -184,13 +170,13 @@ func TestAppStateDeterminism(t *testing.T) {
 				t,
 				os.Stdout,
 				bApp.BaseApp,
-				simtestutil.AppStateFn(
+				appStateFn(
 					bApp.AppCodec(),
 					bApp.SimulationManager(),
 					app.NewDefaultGenesisState(bApp.AppCodec()),
 				),
 				simulationtypes.RandomAccounts,
-				simtestutil.SimulationOperations(bApp, bApp.AppCodec(), config),
+				simulationOperations(bApp, bApp.AppCodec(), config),
 				bApp.ModuleAccountAddrs(),
 				config,
 				bApp.AppCodec(),
@@ -257,13 +243,13 @@ func TestAppImportExport(t *testing.T) {
 		t,
 		os.Stdout,
 		bApp.BaseApp,
-		simtestutil.AppStateFn(
+		appStateFn(
 			bApp.AppCodec(),
 			bApp.SimulationManager(),
 			app.NewDefaultGenesisState(bApp.AppCodec()),
 		),
 		simulationtypes.RandomAccounts,
-		simtestutil.SimulationOperations(bApp, bApp.AppCodec(), config),
+		simulationOperations(bApp, bApp.AppCodec(), config),
 		bApp.BlockedModuleAccountAddrs(),
 		config,
 		bApp.AppCodec(),
@@ -349,7 +335,6 @@ func TestAppImportExport(t *testing.T) {
 		{bApp.GetKey(minttypes.StoreKey), newApp.GetKey(minttypes.StoreKey), [][]byte{}},
 		{bApp.GetKey(distrtypes.StoreKey), newApp.GetKey(distrtypes.StoreKey), [][]byte{}},
 		{bApp.GetKey(banktypes.StoreKey), newApp.GetKey(banktypes.StoreKey), [][]byte{banktypes.BalancesPrefix}},
-		{bApp.GetKey(paramstypes.StoreKey), newApp.GetKey(paramstypes.StoreKey), [][]byte{}},
 		{bApp.GetKey(govtypes.StoreKey), newApp.GetKey(govtypes.StoreKey), [][]byte{}},
 		{bApp.GetKey(evidencetypes.StoreKey), newApp.GetKey(evidencetypes.StoreKey), [][]byte{}},
 		{bApp.GetKey(capabilitytypes.StoreKey), newApp.GetKey(capabilitytypes.StoreKey), [][]byte{}},
@@ -412,13 +397,13 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		t,
 		os.Stdout,
 		bApp.BaseApp,
-		simtestutil.AppStateFn(
+		appStateFn(
 			bApp.AppCodec(),
 			bApp.SimulationManager(),
 			app.NewDefaultGenesisState(bApp.AppCodec()),
 		),
 		simulationtypes.RandomAccounts,
-		simtestutil.SimulationOperations(bApp, bApp.AppCodec(), config),
+		simulationOperations(bApp, bApp.AppCodec(), config),
 		bApp.BlockedModuleAccountAddrs(),
 		config,
 		bApp.AppCodec(),
@@ -483,13 +468,13 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		t,
 		os.Stdout,
 		newApp.BaseApp,
-		simtestutil.AppStateFn(
+		appStateFn(
 			bApp.AppCodec(),
 			bApp.SimulationManager(),
 			app.NewDefaultGenesisState(bApp.AppCodec()),
 		),
 		simulationtypes.RandomAccounts,
-		simtestutil.SimulationOperations(newApp, newApp.AppCodec(), config),
+		simulationOperations(newApp, newApp.AppCodec(), config),
 		newApp.BlockedModuleAccountAddrs(),
 		config,
 		bApp.AppCodec(),

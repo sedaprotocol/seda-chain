@@ -16,6 +16,7 @@ import (
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
+
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/circuit"
@@ -105,6 +106,7 @@ import (
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 
 	// ibc
+	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
 	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
@@ -129,7 +131,6 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
-	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/docs"
@@ -566,6 +567,18 @@ func NewApp(
 		wasmOpts...,
 	)
 
+	// //
+	// //
+	// // Register the proposal types
+	// // Deprecated: Avoid adding new handlers, instead use the new proposal flow
+	// // by granting the governance module the right to execute the message.
+	// // See: https://docs.cosmos.network/main/modules/gov#proposal-messages
+	// govRouter := govv1beta1.NewRouter()
+	// govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
+	// 	AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
+	// //
+	// //
+
 	govConfig := govtypes.DefaultConfig()
 	govKeeper := govkeeper.NewKeeper(
 		appCodec,
@@ -574,11 +587,17 @@ func NewApp(
 		app.BankKeeper,
 		app.StakingKeeper,
 		app.DistrKeeper,
-
 		app.MsgServiceRouter(),
 		govConfig,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
+	// //
+	// //
+	// // Set legacy router for backwards compatibility with gov v1beta1
+	// govKeeper.SetLegacyRouter(govRouter)
+	// //
+	// //
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
@@ -846,7 +865,7 @@ func NewApp(
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	overrideModules := map[string]module.AppModuleSimulation{
-		authtypes.ModuleName: auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, nil),
+		authtypes.ModuleName: auth.NewAppModule(app.appCodec, app.AccountKeeper, randomGenesisAccounts, nil),
 	}
 	app.sm = module.NewSimulationManagerFromAppModules(app.mm.Modules, overrideModules)
 	app.sm.RegisterStoreDecoders()
