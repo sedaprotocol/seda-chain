@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/spf13/cast"
 
@@ -587,6 +588,12 @@ func NewApp(
 
 	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
 		panic(err)
+	}
+
+	if maxSize := os.Getenv("MAX_WASM_SIZE"); maxSize != "" {
+		// https://github.com/CosmWasm/wasmd#compile-time-parameters
+		val, _ := strconv.ParseInt(maxSize, 10, 32)
+		wasmtypes.MaxWasmSize = int(val) // default 819200 (800 * 1024)
 	}
 
 	/* =================================================== */
