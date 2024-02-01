@@ -20,9 +20,5 @@ message MsgNewSeed {
   string beta = 3;   // VRF hash
 }
 
-<<<<<<< HEAD
-message MsgNewSeedResponse {}
-=======
 // The response message for submitting a new seed to the chain.
 message MsgNewSeedResponse {}
->>>>>>> 5db8210 (fix(proto): fix lint issues with proto)

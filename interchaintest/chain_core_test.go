@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-
 	"testing"
 	"time"
 
@@ -91,6 +90,7 @@ func TestCoreSDKCommands(t *testing.T) {
 }
 
 func testAuth(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain) {
+	t.Helper()
 	govAddr, err := chain.AuthQueryModuleAddress(ctx, "gov")
 	require.NoError(t, err)
 	require.NotEmpty(t, govAddr)
@@ -125,6 +125,7 @@ func testAuth(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain) {
 }
 
 func testUpgrade(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain) {
+	t.Helper()
 	v, err := chain.UpgradeQueryAllModuleVersions(ctx)
 	require.NoError(t, err)
 	require.NotEmpty(t, v)
@@ -142,6 +143,7 @@ func testUpgrade(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain) {
 }
 
 func testAuthz(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain, users []ibc.Wallet) {
+	t.Helper()
 	granter := users[0].FormattedAddress()
 	grantee := users[1].FormattedAddress()
 
@@ -200,6 +202,7 @@ func testAuthz(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain, use
 }
 
 func testBank(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain, users []ibc.Wallet) {
+	t.Helper()
 	user0 := users[0].FormattedAddress()
 	user1 := users[1].FormattedAddress()
 	user2 := users[2].FormattedAddress()
@@ -250,6 +253,7 @@ func testBank(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain, user
 }
 
 func testDistribution(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain, users []ibc.Wallet) {
+	t.Helper()
 	var err error
 	node := chain.GetNode()
 	acc := authtypes.NewModuleAddress("distribution")
@@ -359,6 +363,7 @@ func testDistribution(ctx context.Context, t *testing.T, chain *cosmos.CosmosCha
 }
 
 func testFeeGrant(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain, users []ibc.Wallet) {
+	t.Helper()
 	var err error
 	node := chain.GetNode()
 
@@ -418,6 +423,7 @@ func testFeeGrant(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain, 
 }
 
 func testSlashing(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain) {
+	t.Helper()
 	p, err := chain.SlashingQueryParams(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, p)
@@ -432,6 +438,7 @@ func testSlashing(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain) 
 }
 
 func testStaking(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain, users []ibc.Wallet) {
+	t.Helper()
 	vals, err := chain.StakingQueryValidators(ctx, stakingtypes.Bonded.String())
 	require.NoError(t, err)
 	require.NotEmpty(t, vals)
@@ -467,7 +474,6 @@ func testStaking(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain, u
 		require.NoError(t, err)
 		require.NotEmpty(t, delVals)
 		require.True(t, delVals[0].OperatorAddress == val)
-
 	})
 
 	t.Run("misc", func(t *testing.T) {

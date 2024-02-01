@@ -12,12 +12,15 @@ import (
 	"github.com/sedaprotocol/seda-chain/interchaintest/types"
 )
 
-// ConformanceCosmWasm validates that store, instantiate, execute, and query work on a CosmWasm contract.
-func ConformanceCosmWasm(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet) {
+// CosmWasm validates that store, instantiate, execute, and query work on a CosmWasm contract.
+//
+//revive:disable-next-line:context-as-argument
+func CosmWasm(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet) {
 	t.Helper()
 	basic(t, ctx, chain, user)
 }
 
+//revive:disable-next-line:context-as-argument
 func basic(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet) {
 	t.Helper()
 	_, contractAddr := helpers.SetupAndInstantiateContract(t, ctx, chain, user.KeyName(), "contracts/cw_template.wasm", `{"count":0}`)

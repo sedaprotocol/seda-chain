@@ -16,10 +16,8 @@ func DefaultParams() Params {
 // ValidateBasic performs basic validation on wasm-storage
 // module parameters.
 func (p Params) ValidateBasic() error {
-	if err := validateMaxWasmSize(p.MaxWasmSize); err != nil {
-		return err
-	}
-	return nil
+	err := validateMaxWasmSize(p.MaxWasmSize)
+	return err
 }
 
 func validateMaxWasmSize(i interface{}) error {

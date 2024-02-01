@@ -24,6 +24,7 @@ service Msg {
   rpc InstantiateAndRegisterProxyContract(
       MsgInstantiateAndRegisterProxyContract)
       returns (MsgInstantiateAndRegisterProxyContractResponse);
+  // The UpdateParams method updates the module's parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
@@ -76,6 +77,7 @@ message MsgInstantiateAndRegisterProxyContractResponse {
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 
+// The request message for the UpdateParams method.
 message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
 

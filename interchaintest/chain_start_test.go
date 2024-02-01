@@ -29,7 +29,7 @@ func TestChainStart(t *testing.T) {
 	users := interchaintest.GetAndFundTestUsers(t, ctx, t.Name(), userFunds, chain)
 	chainUser := users[0]
 
-	conformance.ConformanceCosmWasm(t, ctx, chain, chainUser)
+	conformance.CosmWasm(t, ctx, chain, chainUser)
 
 	require.NotNil(t, ic)
 	require.NotNil(t, ctx)

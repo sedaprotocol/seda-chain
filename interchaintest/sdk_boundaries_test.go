@@ -28,14 +28,14 @@ func TestSDKBoundaries(t *testing.T) {
 
 	t.Parallel()
 
-	var tests = []boundarySpecs{
+	tests := []boundarySpecs{
 		{
 			name: "sdk 47 <-> 50",
 			chainSpecs: []*interchaintest.ChainSpec{
 				{
 					Name:      "ibc-go-simd",
 					ChainName: "simd-47",
-					Version:   "v7.2.0", //sdk 0.47.3
+					Version:   "v7.2.0", // sdk 0.47.3
 				},
 				{
 					Name:          SedaChainName,
@@ -106,8 +106,6 @@ func TestSDKBoundaries(t *testing.T) {
 
 			// test IBC conformance
 			conformance.TestChainPair(t, ctx, client, network, chain, counterpartyChain, rf, rep, r, path)
-
 		})
 	}
-
 }

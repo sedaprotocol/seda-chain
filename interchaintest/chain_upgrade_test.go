@@ -81,9 +81,10 @@ func BasicUpgradeTest(t *testing.T, upgradeVersion, upgradeRepo, upgradeName str
 	UpgradeNodes(t, ctx, chain, client, haltHeight, upgradeRepo, upgradeVersion)
 
 	// test conformance after upgrade
-	conformance.ConformanceCosmWasm(t, ctx, chain, chainUser)
+	conformance.CosmWasm(t, ctx, chain, chainUser)
 }
 
+//revive:disable-next-line:context-as-argument
 func UpgradeNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, client *client.Client, haltHeight uint64, upgradeRepo, upgradeVersion string) {
 	t.Helper()
 	stopNodes(t, ctx, chain)
@@ -93,6 +94,7 @@ func UpgradeNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, 
 	checkHeight(t, ctx, chain, haltHeight)
 }
 
+//revive:disable-next-line:context-as-argument
 func fundChainUser(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) ibc.Wallet {
 	t.Helper()
 	userFunds := math.NewInt(10_000_000_000)
@@ -117,6 +119,7 @@ func getTestGenesis() []cosmos.GenesisKV {
 	}
 }
 
+//revive:disable-next-line:context-as-argument
 func stopNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) {
 	t.Helper()
 	t.Log("stopping node(s)")
@@ -126,12 +129,14 @@ func stopNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) {
 	}
 }
 
+//revive:disable-next-line:context-as-argument
 func upgradeNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, client *client.Client, upgradeRepo, upgradeVersion string) {
 	t.Helper()
 	t.Log("upgrading node(s)")
 	chain.UpgradeVersion(ctx, client, upgradeRepo, upgradeVersion)
 }
 
+//revive:disable-next-line:context-as-argument
 func startNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) {
 	t.Helper()
 	t.Log("starting node(s)")
@@ -141,6 +146,7 @@ func startNodes(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) {
 	}
 }
 
+//revive:disable-next-line:context-as-argument
 func waitForBlocks(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) {
 	t.Helper()
 	timeoutCtx, timeoutCtxCancel := context.WithTimeout(ctx, time.Second*60)
@@ -152,6 +158,7 @@ func waitForBlocks(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain)
 	}
 }
 
+//revive:disable-next-line:context-as-argument
 func checkHeight(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, haltHeight uint64) {
 	t.Helper()
 	height, err := chain.Height(ctx)
@@ -168,6 +175,7 @@ func checkHeight(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, h
 // Ignore SA4009 throughout the file due to specific use case.
 //
 //nolint:staticcheck // SA4009 disable staticcheck since there is a bug where you can't ignore a single lint check:
+//revive:disable-next-line:context-as-argument
 func ValidatorVoting(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, proposalID string, currentHeight, haltHeight uint64) {
 	t.Helper()
 
@@ -198,6 +206,7 @@ func ValidatorVoting(t *testing.T, ctx context.Context, chain *cosmos.CosmosChai
 	require.Equal(t, haltHeight, currentHeight, "height is not equal to halt height")
 }
 
+//revive:disable-next-line:context-as-argument
 func SubmitUpgradeProposal(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet, upgradeName string) (uint64, string) {
 	t.Helper()
 	currentHeight, err := chain.Height(ctx)

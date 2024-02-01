@@ -36,7 +36,7 @@ enum WasmType {
 }
 
 // Params to define the max wasm size allowed.
-message Params { 
+message Params {
   option (gogoproto.equal) = true;
 
   uint64 max_wasm_size = 1;

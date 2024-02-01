@@ -43,27 +43,27 @@ func TestPacketForwardMiddleware(t *testing.T) {
 	}
 
 	var (
-		ctx                                        = context.Background()
-		client, network                            = interchaintest.DockerSetup(t)
-		rep                                        = testreporter.NewNopReporter()
-		eRep                                       = rep.RelayerExecReporter(t)
-		chainID_A, chainID_B, chainID_C, chainID_D = "chain-a", "chain-b", "chain-c", "chain-d"
-		chainA, chainB, chainC, chainD             *cosmos.CosmosChain
+		ctx                                    = context.Background()
+		client, network                        = interchaintest.DockerSetup(t)
+		rep                                    = testreporter.NewNopReporter()
+		eRep                                   = rep.RelayerExecReporter(t)
+		chainIDA, chainIDB, chainIDC, chainIDD = "chain-a", "chain-b", "chain-c", "chain-d"
+		chainA, chainB, chainC, chainD         *cosmos.CosmosChain
 	)
 
 	baseCfg := SedaCfg
 	baseCfg.ModifyGenesis = cosmos.ModifyGenesis(getTestGenesis())
 
-	baseCfg.ChainID = chainID_A
+	baseCfg.ChainID = chainIDA
 	configA := baseCfg
 
-	baseCfg.ChainID = chainID_B
+	baseCfg.ChainID = chainIDB
 	configB := baseCfg
 
-	baseCfg.ChainID = chainID_C
+	baseCfg.ChainID = chainIDC
 	configC := baseCfg
 
-	baseCfg.ChainID = chainID_D
+	baseCfg.ChainID = chainIDD
 	configD := baseCfg
 
 	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
@@ -150,17 +150,17 @@ func TestPacketForwardMiddleware(t *testing.T) {
 	userFunds := math.NewInt(10_000_000_000)
 	users := interchaintest.GetAndFundTestUsers(t, ctx, t.Name(), userFunds, chainA, chainB, chainC, chainD)
 
-	abChan, err := ibc.GetTransferChannel(ctx, r, eRep, chainID_A, chainID_B)
+	abChan, err := ibc.GetTransferChannel(ctx, r, eRep, chainIDA, chainIDB)
 	require.NoError(t, err)
 
 	baChan := abChan.Counterparty
 
-	cbChan, err := ibc.GetTransferChannel(ctx, r, eRep, chainID_C, chainID_B)
+	cbChan, err := ibc.GetTransferChannel(ctx, r, eRep, chainIDC, chainIDB)
 	require.NoError(t, err)
 
 	bcChan := cbChan.Counterparty
 
-	dcChan, err := ibc.GetTransferChannel(ctx, r, eRep, chainID_D, chainID_C)
+	dcChan, err := ibc.GetTransferChannel(ctx, r, eRep, chainIDD, chainIDC)
 	require.NoError(t, err)
 
 	cdChan := dcChan.Counterparty
@@ -181,7 +181,7 @@ func TestPacketForwardMiddleware(t *testing.T) {
 	// Get original account balances
 	userA, userB, userC, userD := users[0], users[1], users[2], users[3]
 
-	var transferAmount math.Int = math.NewInt(100_000)
+	transferAmount := math.NewInt(100_000)
 
 	// Compose the prefixed denoms and ibc denom for asserting balances
 	firstHopDenom := transfertypes.GetPrefixedDenom(baChan.PortID, baChan.ChannelID, chainA.Config().Denom)

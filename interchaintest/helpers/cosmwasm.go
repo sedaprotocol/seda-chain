@@ -14,6 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+//revive:disable-next-line:context-as-argument
 func SmartQueryString(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, contractAddr, queryMsg string, res interface{}) error {
 	t.Helper()
 	var jsonMap map[string]interface{}
@@ -24,9 +25,10 @@ func SmartQueryString(t *testing.T, ctx context.Context, chain *cosmos.CosmosCha
 	return err
 }
 
-func SetupAndInstantiateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, keyname, fileLoc, message string, extraFlags ...string) (codeId, contract string) {
+//revive:disable-next-line:context-as-argument
+func SetupAndInstantiateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, keyname, fileLoc, message string, extraFlags ...string) (codeID, contract string) {
 	t.Helper()
-	codeId, err := chain.StoreContract(ctx, keyname, fileLoc)
+	codeID, err := chain.StoreContract(ctx, keyname, fileLoc)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,24 +40,25 @@ func SetupAndInstantiateContract(t *testing.T, ctx context.Context, chain *cosmo
 		}
 	}
 
-	contractAddr, err := chain.InstantiateContract(ctx, keyname, codeId, message, needsNoAdminFlag, extraFlags...)
+	contractAddr, err := chain.InstantiateContract(ctx, keyname, codeID, message, needsNoAdminFlag, extraFlags...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return codeId, contractAddr
+	return codeID, contractAddr
 }
 
-func MigrateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, keyname, contractAddr, fileLoc, message string) (codeId, contract string) {
+//revive:disable-next-line:context-as-argument
+func MigrateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, keyname, contractAddr, fileLoc, message string) (codeID, contract string) {
 	t.Helper()
-	codeId, err := chain.StoreContract(ctx, keyname, fileLoc)
+	codeID, err := chain.StoreContract(ctx, keyname, fileLoc)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Execute migrate tx
 	cmd := []string{
-		"seda-chaind", "tx", "wasm", "migrate", contractAddr, codeId, message,
+		"seda-chaind", "tx", "wasm", "migrate", contractAddr, codeID, message,
 		"--node", chain.GetRPCAddress(),
 		"--home", chain.HomeDir(),
 		"--chain-id", chain.Config().ChainID,
@@ -75,9 +78,10 @@ func MigrateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChai
 		t.Fatal(err)
 	}
 
-	return codeId, contractAddr
+	return codeID, contractAddr
 }
 
+//revive:disable-next-line:context-as-argument
 func ExecuteMsgWithAmount(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet, contractAddr, amount, message string) {
 	t.Helper()
 	cmd := buildCmd(chain, user, contractAddr, amount, "", message)
@@ -91,6 +95,7 @@ func ExecuteMsgWithAmount(t *testing.T, ctx context.Context, chain *cosmos.Cosmo
 	}
 }
 
+//revive:disable-next-line:context-as-argument
 func ExecuteMsgWithFee(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet, contractAddr, amount, feeCoin, message string) {
 	t.Helper()
 	cmd := buildCmd(chain, user, contractAddr, amount, feeCoin, message)
@@ -104,6 +109,7 @@ func ExecuteMsgWithFee(t *testing.T, ctx context.Context, chain *cosmos.CosmosCh
 	}
 }
 
+//revive:disable-next-line:context-as-argument
 func ExecuteMsgWithFeeReturn(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user ibc.Wallet, contractAddr, amount, feeCoin, message string) (*sdk.TxResponse, error) {
 	t.Helper()
 	// amount is #utoken
