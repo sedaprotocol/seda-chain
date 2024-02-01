@@ -43,10 +43,8 @@ func init() {
 }
 
 // BenchmarkSimulation run the chain simulation
-// Running using starport command:
-// `starport chain simulate -v --numBlocks 200 --blockSize 50`
 // Running as go benchmark test:
-// `go test -benchmem -run=^$ -bench ^BenchmarkSimulation ./app -NumBlocks=200 -BlockSize 50 -Commit=true -Verbose=true -Enabled=true`
+// go test -benchmem -run=^$ -bench ^BenchmarkSimulation ./simulation -NumBlocks=200 -BlockSize 50 -Commit=true -Verbose=true -Enabled=true
 func BenchmarkSimulation(b *testing.B) {
 	simcli.FlagSeedValue = time.Now().Unix()
 	simcli.FlagVerboseValue = true
@@ -162,7 +160,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			)
 
 			fmt.Printf(
-				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
+				"running determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
 				config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
 			)
 
@@ -193,16 +191,16 @@ func TestAppStateDeterminism(t *testing.T) {
 			if j != 0 {
 				require.Equal(
 					t, string(appHashList[0]), string(appHashList[j]),
-					"non-determinism in seed %d: %d/%d, attempt: %d/%d\n", config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
+					"determinism in seed %d: %d/%d, attempt: %d/%d\n", config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
 				)
 			}
 		}
 	}
 }
 
-func TestAppImportExport(t *testing.T) {
+func TestAppExportImport(t *testing.T) {
 	config := simcli.NewConfigFromFlags()
-	config.ChainID = "seda-simapp-import"
+	config.ChainID = "seda-simapp-export-import"
 
 	db, dir, logger, skip, err := simtestutil.SetupSimulation(
 		config,

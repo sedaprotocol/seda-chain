@@ -567,18 +567,6 @@ func NewApp(
 		wasmOpts...,
 	)
 
-	// //
-	// //
-	// // Register the proposal types
-	// // Deprecated: Avoid adding new handlers, instead use the new proposal flow
-	// // by granting the governance module the right to execute the message.
-	// // See: https://docs.cosmos.network/main/modules/gov#proposal-messages
-	// govRouter := govv1beta1.NewRouter()
-	// govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
-	// 	AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
-	// //
-	// //
-
 	govConfig := govtypes.DefaultConfig()
 	govKeeper := govkeeper.NewKeeper(
 		appCodec,
@@ -591,13 +579,6 @@ func NewApp(
 		govConfig,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-
-	// //
-	// //
-	// // Set legacy router for backwards compatibility with gov v1beta1
-	// govKeeper.SetLegacyRouter(govRouter)
-	// //
-	// //
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(

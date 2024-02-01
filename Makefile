@@ -225,6 +225,40 @@ endif
 .PHONY: cover-html run-tests $(TEST_TARGETS) test test-race docker-build-e2e
 
 ###############################################################################
+###                             Simulation Tests                            ###
+###############################################################################
+
+CURRENT_DIR = $(shell pwd)
+
+test-sim-determinism:
+	@echo "Running determinism test..."
+	@cd ${CURRENT_DIR}/simulation && go test -mod=readonly -run TestAppStateDeterminism -Enabled=true \
+		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
+
+test-sim-export-import:
+	@echo "Running export-import test..."
+	@cd ${CURRENT_DIR}/simulation && go test -mod=readonly -run TestAppExportImport -Enabled=true \
+		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
+
+test-sim-after-import:
+	@echo "Running simulation-after-import test..."
+	@cd ${CURRENT_DIR}/simulation && go test -mod=readonly -run TestAppSimulationAfterImport -Enabled=true \
+		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
+
+.PHONY: test-sim-determinism test-sim-export-import test-sim-after-import
+
+SIM_NUM_BLOCKS ?= 500
+SIM_BLOCK_SIZE ?= 200
+SIM_COMMIT ?= true
+
+test-sim-benchmark:
+	@echo "Running application benchmark for numBlocks=$(SIM_NUM_BLOCKS), blockSize=$(SIM_BLOCK_SIZE). This may take awhile!"
+	@cd ${CURRENT_DIR}/simulation && go test -mod=readonly -run=^$$ $(.) -bench ^BenchmarkSimulation$$  \
+		-Enabled=true -NumBlocks=$(SIM_NUM_BLOCKS) -BlockSize=$(SIM_BLOCK_SIZE) -Commit=$(SIM_COMMIT) -timeout 24h
+
+.PHONY: test-sim-benchmark
+
+###############################################################################
 ###                                interchaintest                           ###
 ###############################################################################
 
