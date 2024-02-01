@@ -266,31 +266,58 @@ func (s *KeeperTestSuite) TestMarshalJSON() {
 	}
 }
 
-func (s *KeeperTestSuite) TestSetParams() {
+func (s *KeeperTestSuite) TestUpdateParams() {
+	authority := s.wasmStorageKeeper.GetAuthority()
 	cases := []struct {
 		name      string
 		preRun    func()
-		input     types.Params
+		input     types.MsgUpdateParams
 		expErr    bool
 		expErrMsg string
 	}{
 		{
 			name: "happy path",
-			input: types.Params{
-				MaxWasmSize: 1000000, // 1 MB
+			input: types.MsgUpdateParams{
+				Authority: s.authority,
+				Params: types.Params{
+					MaxWasmSize: 1000000, // 1 MB
+				},
 			},
 			preRun:    func() {},
 			expErr:    false,
 			expErrMsg: "",
 		},
-		// negative cases would be caught in ValidateBasic before reaching keeper
+		{
+			name: "invalid authority",
+			input: types.MsgUpdateParams{
+				Authority: "cosmos16wfryel63g7axeamw68630wglalcnk3l0zuadc",
+				Params: types.Params{
+					MaxWasmSize: 1, // 1 MB
+				},
+			},
+			preRun:    func() {},
+			expErr:    true,
+			expErrMsg: "invalid authority; expected " + authority + ", got cosmos16wfryel63g7axeamw68630wglalcnk3l0zuadc",
+		},
+		{
+			name: "invalid max wasm size",
+			input: types.MsgUpdateParams{
+				Authority: authority,
+				Params: types.Params{
+					MaxWasmSize: 0, // 0 MB
+				},
+			},
+			preRun:    func() {},
+			expErr:    true,
+			expErrMsg: "invalid max Wasm size: 0",
+		},
 	}
 
 	for _, tc := range cases {
 		s.Run(tc.name, func() {
 			s.SetupTest()
 			tc.preRun()
-			err := s.wasmStorageKeeper.SetParams(s.ctx, tc.input)
+			_, err := s.msgSrvr.UpdateParams(s.ctx, &tc.input)
 			if tc.expErr {
 				s.Require().Error(err)
 				s.Require().Equal(tc.expErrMsg, err.Error())
@@ -299,7 +326,7 @@ func (s *KeeperTestSuite) TestSetParams() {
 
 				// Check that the Params were correctly set
 				params := s.wasmStorageKeeper.GetParams(s.ctx)
-				s.Require().Equal(tc.input, params)
+				s.Require().Equal(tc.input.Params, params)
 			}
 		})
 	}

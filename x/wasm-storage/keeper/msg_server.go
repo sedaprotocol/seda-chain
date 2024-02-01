@@ -175,8 +175,18 @@ func unzipWasm(wasm []byte) ([]byte, error) {
 }
 
 func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	// validate authority
+	if _, err := sdk.AccAddressFromBech32(req.Authority); err != nil {
+		return nil, fmt.Errorf("invalid authority address: %s", err)
+	}
+
 	if m.GetAuthority() != req.Authority {
 		return nil, fmt.Errorf("invalid authority; expected %s, got %s", m.GetAuthority(), req.Authority)
+	}
+
+	// validate params
+	if err := req.Params.ValidateBasic(); err != nil {
+		return nil, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)

@@ -87,15 +87,3 @@ func (msg MsgInstantiateAndRegisterProxyContract) ValidateBasic() error {
 	}
 	return nil
 }
-
-func (m *MsgUpdateParams) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
-		return fmt.Errorf("invalid authority address: %s", err)
-	}
-
-	if err := m.Params.ValidateBasic(); err != nil {
-		return err
-	}
-
-	return nil
-}
