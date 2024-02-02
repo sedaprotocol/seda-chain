@@ -56,7 +56,10 @@ func (h *ProposalHandler) PrepareProposalHandler(
 
 		// Seed transaction
 		// alpha = (seed_{i-1} || timestamp)
-		prevSeed := keeper.GetSeed(ctx)
+		prevSeed, err := keeper.GetSeed(ctx)
+		if err != nil {
+			return nil, err
+		}
 		if prevSeed == "" {
 			return nil, fmt.Errorf("previous seed is empty - this should never happen")
 		}
@@ -161,7 +164,10 @@ func (h *ProposalHandler) ProcessProposalHandler(
 			return nil, err
 		}
 
-		prevSeed := keeper.GetSeed(ctx)
+		prevSeed, err := keeper.GetSeed(ctx)
+		if err != nil {
+			return nil, err
+		}
 		if prevSeed == "" {
 			panic("seed should never be empty")
 		}
