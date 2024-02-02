@@ -64,10 +64,14 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 		return nil, err
 	}
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
-	if m.Keeper.HasDataRequestWasm(ctx, wasm) {
+	exists, _ := m.Keeper.HasDataRequestWasm(ctx, wasm)
+	if exists {
 		return nil, fmt.Errorf("data Request Wasm with given hash already exists")
 	}
-	m.Keeper.SetDataRequestWasm(ctx, wasm)
+	err = m.Keeper.SetDataRequestWasm(ctx, wasm)
+	if err != nil {
+		return nil, err
+	}
 
 	hashString := hex.EncodeToString(wasm.Hash)
 
@@ -104,10 +108,14 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 		return nil, err
 	}
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
-	if m.Keeper.HasOverlayWasm(ctx, wasm) {
+	exists, _ := m.Keeper.HasOverlayWasm(ctx, wasm)
+	if exists {
 		return nil, fmt.Errorf("overlay Wasm with given hash already exists")
 	}
-	m.Keeper.SetOverlayWasm(ctx, wasm)
+	err = m.Keeper.SetOverlayWasm(ctx, wasm)
+	if err != nil {
+		return nil, err
+	}
 
 	hashString := hex.EncodeToString(wasm.Hash)
 	err = ctx.EventManager().EmitTypedEvent(
@@ -150,7 +158,10 @@ func (m msgServer) InstantiateAndRegisterProxyContract(goCtx context.Context, ms
 	}
 
 	// update Proxy Contract registry
-	m.SetProxyContractRegistry(ctx, contractAddr)
+	err = m.SetProxyContractRegistry(ctx, contractAddr)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MsgInstantiateAndRegisterProxyContractResponse{
 		ContractAddress: contractAddr.String(),
