@@ -13,11 +13,17 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		wasm := data.Wasms[i]
 		if wasm.WasmType == types.WasmTypeDataRequest ||
 			wasm.WasmType == types.WasmTypeTally {
-			k.SetDataRequestWasm(ctx, &wasm)
+			err := k.SetDataRequestWasm(ctx, &wasm)
+			if err != nil {
+				panic(err)
+			}
 		}
 		if wasm.WasmType == types.WasmTypeDataRequestExecutor ||
 			wasm.WasmType == types.WasmTypeRelayer {
-			k.SetOverlayWasm(ctx, &wasm)
+			err := k.SetOverlayWasm(ctx, &wasm)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 	if data.ProxyContractRegistry != "" {
@@ -25,13 +31,19 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		if err != nil {
 			panic(err)
 		}
-		k.SetProxyContractRegistry(ctx, proxyAddr)
+		err = k.SetProxyContractRegistry(ctx, proxyAddr)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
 // ExportGenesis extracts all data from store to genesis state.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	wasms := k.GetAllWasms(ctx)
-	proxy := k.GetProxyContractRegistry(ctx)
+	proxy, err := k.GetProxyContractRegistry(ctx)
+	if err != nil {
+		return types.NewGenesisState(wasms, "")
+	}
 	return types.NewGenesisState(wasms, proxy.String())
 }

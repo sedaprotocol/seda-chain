@@ -16,11 +16,13 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/randomness/types"
 )
 
-var SeedPrefix = collections.NewPrefix(0)
-var ValidatorVRFPrefix = collections.NewPrefix(1)
+var (
+	SeedPrefix         = collections.NewPrefix(0)
+	ValidatorVRFPrefix = collections.NewPrefix(1)
+)
 
-// GetValidatorVRFKeyFull gets the key for the validator VRF object.
-func GetValidatorVRFKeyFull(consensusAddr sdk.ConsAddress) []byte {
+// GetValidatorVRFKeyPrefixFull gets the key for the validator VRF object.
+func GetValidatorVRFKeyPrefixFull(consensusAddr sdk.ConsAddress) []byte {
 	return append(ValidatorVRFPrefix, address.MustLengthPrefix(consensusAddr)...)
 }
 
@@ -61,7 +63,7 @@ func (k Keeper) GetValidatorVRFPubKey(ctx sdk.Context, consensusAddr string) (cr
 	if err != nil {
 		return nil, err
 	}
-	validatorVRFKeyPrefixFull := GetValidatorVRFKeyFull(addr)
+	validatorVRFKeyPrefixFull := GetValidatorVRFKeyPrefixFull(addr)
 	vrfPubKey, err := k.ValidatorVRFPubKeys.Get(ctx, string(validatorVRFKeyPrefixFull))
 	if err != nil {
 		return nil, err
@@ -75,7 +77,7 @@ func (k Keeper) SetValidatorVRFPubKey(goCtx context.Context, consensusAddr strin
 	if err != nil {
 		return err
 	}
-	validatorVRFKeyPrefixFull := GetValidatorVRFKeyFull(addr)
+	validatorVRFKeyPrefixFull := GetValidatorVRFKeyPrefixFull(addr)
 	return k.ValidatorVRFPubKeys.Set(goCtx, string(validatorVRFKeyPrefixFull), vrfPubKey)
 }
 

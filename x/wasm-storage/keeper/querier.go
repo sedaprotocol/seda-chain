@@ -27,8 +27,13 @@ func (q Querier) DataRequestWasm(c context.Context, req *types.QueryDataRequestW
 	if err != nil {
 		return nil, err
 	}
+	wasm, err := q.GetDataRequestWasm(ctx, hash)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.QueryDataRequestWasmResponse{
-		Wasm: q.GetDataRequestWasm(ctx, hash),
+		Wasm: wasm,
 	}, nil
 }
 
@@ -45,8 +50,12 @@ func (q Querier) OverlayWasm(c context.Context, req *types.QueryOverlayWasmReque
 	if err != nil {
 		return nil, err
 	}
+	wasm, err := q.GetOverlayWasm(ctx, hash)
+	if err != nil {
+		return nil, err
+	}
 	return &types.QueryOverlayWasmResponse{
-		Wasm: q.GetOverlayWasm(ctx, hash),
+		Wasm: wasm,
 	}, nil
 }
 
@@ -59,7 +68,11 @@ func (q Querier) OverlayWasms(c context.Context, _ *types.QueryOverlayWasmsReque
 
 func (q Querier) ProxyContractRegistry(c context.Context, _ *types.QueryProxyContractRegistryRequest) (*types.QueryProxyContractRegistryResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	proxyAddress, err := q.GetProxyContractRegistry(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return &types.QueryProxyContractRegistryResponse{
-		Address: q.GetProxyContractRegistry(ctx).String(),
+		Address: proxyAddress.String(),
 	}, nil
 }
