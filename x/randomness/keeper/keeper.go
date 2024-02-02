@@ -11,9 +11,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 
 	"github.com/sedaprotocol/seda-chain/x/randomness/types"
 )
+
+var SeedPrefix = collections.NewPrefix(0)
+var ValidatorVRFPrefix = collections.NewPrefix(1)
+
+// GetValidatorVRFKeyFull gets the key for the validator VRF object.
+func GetValidatorVRFKeyFull(consensusAddr sdk.ConsAddress) []byte {
+	return append(ValidatorVRFPrefix, address.MustLengthPrefix(consensusAddr)...)
+}
 
 type Keeper struct {
 	Schema              collections.Schema
@@ -25,8 +34,8 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService) *K
 	sb := collections.NewSchemaBuilder(storeService)
 
 	return &Keeper{
-		Seeds:               collections.NewItem(sb, types.SeedPrefix, "seeds", collections.StringValue),
-		ValidatorVRFPubKeys: collections.NewMap(sb, types.ValidatorVRFPrefix, "validator-vrf-pubkeys", collections.StringKey, codec.CollInterfaceValue[cryptotypes.PubKey](cdc)),
+		Seeds:               collections.NewItem(sb, SeedPrefix, "seeds", collections.StringValue),
+		ValidatorVRFPubKeys: collections.NewMap(sb, ValidatorVRFPrefix, "validator-vrf-pubkeys", collections.StringKey, codec.CollInterfaceValue[cryptotypes.PubKey](cdc)),
 	}
 }
 
@@ -48,7 +57,12 @@ func (k Keeper) SetSeed(ctx sdk.Context, seed string) error {
 // GetValidatorVRFPubKey retrieves from the store the VRF public key
 // corresponding to the given validator consensus address.
 func (k Keeper) GetValidatorVRFPubKey(ctx sdk.Context, consensusAddr string) (cryptotypes.PubKey, error) {
-	vrfPubKey, err := k.ValidatorVRFPubKeys.Get(ctx, consensusAddr)
+	addr, err := sdk.ConsAddressFromBech32(consensusAddr)
+	if err != nil {
+		return nil, err
+	}
+	validatorVRFKeyPrefixFull := GetValidatorVRFKeyFull(addr)
+	vrfPubKey, err := k.ValidatorVRFPubKeys.Get(ctx, string(validatorVRFKeyPrefixFull))
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +71,12 @@ func (k Keeper) GetValidatorVRFPubKey(ctx sdk.Context, consensusAddr string) (cr
 }
 
 func (k Keeper) SetValidatorVRFPubKey(goCtx context.Context, consensusAddr string, vrfPubKey cryptotypes.PubKey) error {
-	return k.ValidatorVRFPubKeys.Set(goCtx, consensusAddr, vrfPubKey)
+	addr, err := sdk.ConsAddressFromBech32(consensusAddr)
+	if err != nil {
+		return err
+	}
+	validatorVRFKeyPrefixFull := GetValidatorVRFKeyFull(addr)
+	return k.ValidatorVRFPubKeys.Set(goCtx, string(validatorVRFKeyPrefixFull), vrfPubKey)
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
