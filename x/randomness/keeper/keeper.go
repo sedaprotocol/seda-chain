@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/collections"
+	storetypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
-	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -15,65 +16,48 @@ import (
 )
 
 type Keeper struct {
-	cdc      codec.BinaryCodec
-	storeKey storetypes.StoreKey
+	Schema              collections.Schema
+	Seeds               collections.Item[string]
+	ValidatorVRFPubKeys collections.Map[string, cryptotypes.PubKey]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey) *Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService) *Keeper {
+	sb := collections.NewSchemaBuilder(storeService)
+
 	return &Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
+		Seeds:               collections.NewItem(sb, types.SeedPrefix, "seeds", collections.StringValue),
+		ValidatorVRFPubKeys: collections.NewMap(sb, types.ValidatorVRFPrefix, "validator-vrf-pubkeys", collections.StringKey, codec.CollInterfaceValue[cryptotypes.PubKey](cdc)),
 	}
 }
 
 // GetSeed returns the seed.
-func (k Keeper) GetSeed(ctx sdk.Context) string {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.KeyPrefixSeed)
-	return string(bz)
+func (k Keeper) GetSeed(ctx sdk.Context) (string, error) {
+	seed, err := k.Seeds.Get(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return seed, nil
 }
 
 // SetSeed stores the seed.
-func (k Keeper) SetSeed(ctx sdk.Context, seed string) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.KeyPrefixSeed, []byte(seed))
+func (k Keeper) SetSeed(ctx sdk.Context, seed string) error {
+	return k.Seeds.Set(ctx, seed)
 }
 
 // GetValidatorVRFPubKey retrieves from the store the VRF public key
 // corresponding to the given validator consensus address.
 func (k Keeper) GetValidatorVRFPubKey(ctx sdk.Context, consensusAddr string) (cryptotypes.PubKey, error) {
-	addr, err := sdk.ConsAddressFromBech32(consensusAddr)
+	vrfPubKey, err := k.ValidatorVRFPubKeys.Get(ctx, consensusAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetValidatorVRFKey(addr))
-	if bz == nil {
-		return nil, fmt.Errorf("vrf pubkey not found for %s", consensusAddr)
-	}
-
-	var vrfPubKey cryptotypes.PubKey
-	err = k.cdc.UnmarshalInterface(bz, &vrfPubKey)
-	if err != nil {
-		return nil, err
-	}
 	return vrfPubKey, nil
 }
 
 func (k Keeper) SetValidatorVRFPubKey(goCtx context.Context, consensusAddr string, vrfPubKey cryptotypes.PubKey) error {
-	addr, err := sdk.ConsAddressFromBech32(consensusAddr)
-	if err != nil {
-		return err
-	}
-
-	store := sdk.UnwrapSDKContext(goCtx).KVStore(k.storeKey)
-	bz, err := k.cdc.MarshalInterface(vrfPubKey)
-	if err != nil {
-		return err
-	}
-	store.Set(types.GetValidatorVRFKey(addr), bz)
-	return nil
+	return k.ValidatorVRFPubKeys.Set(goCtx, consensusAddr, vrfPubKey)
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

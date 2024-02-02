@@ -14,7 +14,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 
 // ExportGenesis extracts data from store to genesis state.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
+	seed, err := k.GetSeed(ctx)
+	if err != nil {
+		return types.GenesisState{}
+	}
+
 	return types.GenesisState{
-		Seed: k.GetSeed(ctx),
+		Seed: seed,
 	}
 }

@@ -20,8 +20,13 @@ func NewQuerierImpl(keeper Keeper) *Querier {
 
 func (q Querier) Seed(c context.Context, _ *types.QuerySeedRequest) (*types.QuerySeedResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	seed, err := q.GetSeed(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.QuerySeedResponse{
-		Seed:        q.GetSeed(ctx),
+		Seed:        seed,
 		BlockHeight: ctx.BlockHeight(),
 	}, nil
 }
