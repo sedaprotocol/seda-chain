@@ -12,7 +12,7 @@ env:
   GOPRIVATE: github.com/sedaprotocol/vrf-go
   GITHUB_TOKEN: ${{ secrets.PAT }}
   TAR_PATH: /tmp/seda-docker-image.tar
-  IMAGE_NAME: seda-chaind-e2e
+  IMAGE_NAME: sedad-e2e
   SEDA_EXPONENT: ${{ secrets.SEDA_EXPONENT_ICT || 18 }}
 
 permissions:
@@ -45,7 +45,7 @@ jobs:
         with:
           context: .
           file: ./dockerfiles/Dockerfile.e2e
-          tags: seda-chaind-e2e
+          tags: sedad-e2e
           build-args: SEDA_EXPONENT=${{ env.SEDA_EXPONENT }}
           outputs: type=docker,dest=${{ env.TAR_PATH }}
 

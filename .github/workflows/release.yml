@@ -90,8 +90,8 @@ jobs:
         uses: jmgilman/actions-generate-checksum@v1
         with:
           patterns: |
-            build/seda-chaind-amd64
-            build/seda-chaind-arm64
+            build/sedad-amd64
+            build/sedad-arm64
 
       - name: 📦 Create GitHub Release
         uses: ncipollo/release-action@v1
@@ -99,4 +99,4 @@ jobs:
           allowUpdates: true
           generateReleaseNotes: true
           body: ${{ steps.changelog.outputs.clean_changelog }}
-          artifacts: "checksum.txt,build/seda-chaind-amd64,build/seda-chaind-arm64"
+          artifacts: "checksum.txt,build/sedad-amd64,build/sedad-arm64"

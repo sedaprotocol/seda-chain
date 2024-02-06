@@ -171,7 +171,7 @@ func (s *IntegrationTestSuite) execGetSeedQuery(
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	// seda-chaind query wasm contract-state smart $PROXY_CONTRACT_ADDRESS '{"query_seed_request":{}}' --node $RPC_URL --output json
+	// sedad query wasm contract-state smart $PROXY_CONTRACT_ADDRESS '{"query_seed_request":{}}' --node $RPC_URL --output json
 	command := []string{
 		binary,
 		queryCommand,

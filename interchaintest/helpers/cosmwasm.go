@@ -58,7 +58,7 @@ func MigrateContract(t *testing.T, ctx context.Context, chain *cosmos.CosmosChai
 
 	// Execute migrate tx
 	cmd := []string{
-		"seda-chaind", "tx", "wasm", "migrate", contractAddr, codeID, message,
+		"sedad", "tx", "wasm", "migrate", contractAddr, codeID, message,
 		"--node", chain.GetRPCAddress(),
 		"--home", chain.HomeDir(),
 		"--chain-id", chain.Config().ChainID,
@@ -127,7 +127,7 @@ func ExecuteMsgWithFeeReturn(t *testing.T, ctx context.Context, chain *cosmos.Co
 
 func buildCmd(chain *cosmos.CosmosChain, user ibc.Wallet, contractAddr, amount, feeCoin, message string) []string {
 	cmd := []string{
-		"seda-chaind", "tx", "wasm", "execute", contractAddr, message,
+		"sedad", "tx", "wasm", "execute", contractAddr, message,
 		"--node", chain.GetRPCAddress(),
 		"--home", chain.HomeDir(),
 		"--chain-id", chain.Config().ChainID,

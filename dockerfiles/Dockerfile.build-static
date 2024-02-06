@@ -30,7 +30,7 @@ RUN ARCH=x86_64 && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | sed 
     wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
     sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep libwasmvm_muslc.$ARCH | cut -d ' ' -f 1)
 
-# Build seda-chaind binary for amd64
+# Build sedad binary for amd64
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/root/go/pkg/mod \
     GOWORK=off go build \
@@ -38,14 +38,14 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
         -tags "netgo,ledger,muslc" \
         -ldflags \
             "-X github.com/cosmos/cosmos-sdk/version.Name="seda-chain" \
-            -X github.com/cosmos/cosmos-sdk/version.AppName="seda-chaind" \
+            -X github.com/cosmos/cosmos-sdk/version.AppName="sedad" \
             -X github.com/cosmos/cosmos-sdk/version.Version=${GIT_VERSION} \
             -X github.com/cosmos/cosmos-sdk/version.Commit=${GIT_COMMIT} \
             -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc \
             -w -s -linkmode=external -extldflags '-Wl,-z,muldefs -static'" \
         -trimpath \
-        -o /seda-chain/build/seda-chaind-amd64 \
-        /seda-chain/cmd/seda-chaind/main.go
+        -o /seda-chain/build/sedad-amd64 \
+        /seda-chain/cmd/sedad/main.go
 
 # Cosmwasm - Download correct libwasmvm_muslc version for aarch64
 RUN ARCH=aarch64 && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | sed 's/.* //') && \
@@ -63,7 +63,7 @@ ENV GOARCH=arm64
 ENV CC=/aarch64-tools/bin/aarch64-linux-musl-gcc
 ENV CXX=/aarch64-tools/bin/aarch64-linux-musl-g++
 
-# Build seda-chaind binary for arm64
+# Build sedad binary for arm64
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/root/go/pkg/mod \
     GOWORK=off CGO_LDFLAGS="-L/lib" go build \
@@ -71,18 +71,18 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
         -tags "netgo,ledger,muslc" \
         -ldflags \
             "-X github.com/cosmos/cosmos-sdk/version.Name="seda-chain" \
-            -X github.com/cosmos/cosmos-sdk/version.AppName="seda-chaind" \
+            -X github.com/cosmos/cosmos-sdk/version.AppName="sedad" \
             -X github.com/cosmos/cosmos-sdk/version.Version=${GIT_VERSION} \
             -X github.com/cosmos/cosmos-sdk/version.Commit=${GIT_COMMIT} \
             -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc \
             -w -s -linkmode=external -extldflags '-Wl,-z,muldefs -static'" \
         -trimpath \
-        -o /seda-chain/build/seda-chaind-arm64 \
-        /seda-chain/cmd/seda-chaind/main.go
+        -o /seda-chain/build/sedad-arm64 \
+        /seda-chain/cmd/sedad/main.go
 # --------------------------------------------------------
 # Output
 # --------------------------------------------------------
 
 FROM alpine
-COPY --from=builder /seda-chain/build/seda-chaind-amd64 /build/seda-chaind-amd64
-COPY --from=builder /seda-chain/build/seda-chaind-arm64 /build/seda-chaind-arm64
+COPY --from=builder /seda-chain/build/sedad-amd64 /build/sedad-amd64
+COPY --from=builder /seda-chain/build/sedad-arm64 /build/sedad-arm64

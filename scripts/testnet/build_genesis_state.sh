@@ -168,7 +168,7 @@ fi
 #
 #   TERMINATE CHAIN PROCESS, EXPORT, AND MODIFY GIVEN GENESIS
 #
-pkill seda-chaind
+pkill sedad
 sleep 5
 
 $LOCAL_BIN export --home $TMP_HOME > $TMP_HOME/exported

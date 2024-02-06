@@ -8,7 +8,7 @@ import (
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
 	"github.com/sedaprotocol/seda-chain/app"
-	"github.com/sedaprotocol/seda-chain/cmd/seda-chaind/cmd"
+	"github.com/sedaprotocol/seda-chain/cmd/sedad/cmd"
 )
 
 func main() {

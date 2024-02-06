@@ -39,7 +39,7 @@ Docker is used to help make release and static builds locally.
 
 ### [Golang](https://go.dev/)
 
-We use Golang as the language to develop `seda-chaind` as it has the [CosmosSDK](https://v1.cosmos.network/sdk).
+We use Golang as the language to develop `sedad` as it has the [CosmosSDK](https://v1.cosmos.network/sdk).
 
 - [Golang](https://go.dev/dl/): you can download it from the linked page or:
   - Linux: Use your distribution's package manager.
@@ -129,10 +129,10 @@ To run a single-node testnet locally:
 
 ```bash
 make build
-BIN=./build/seda-chaind
+BIN=./build/sedad
 
 $BIN tendermint unsafe-reset-all
-rm -rf ~/.seda-chain
+rm -rf ~/.seda
 
 $BIN init node0 --default-denom aseda --chain-id seda-1-local
 
@@ -167,7 +167,7 @@ make lint
 
 ## Running
 
-After running the `make install` command you should be able to use `seda-chaind --help`.
+After running the `make install` command you should be able to use `sedad --help`.
 
 ## Testing
 

@@ -7,7 +7,7 @@ set -e
 # This script is used to setup a node for the seda-chain network.
 
 
-BIN=seda-chaind
+BIN=sedad
 KEY_NAME="${KEY_NAME:-default_key}"
 
 # Check if a env variable exists
@@ -52,7 +52,7 @@ function create_or_import_key {
   set key_name \"$key_name\"
   set recover_flag \"$recover_flag\"
   set mnemonic \"$mnemonic\"
-  spawn seda-chaind keys add \$key_name \$recover_flag
+  spawn sedad keys add \$key_name \$recover_flag
   expect {
     \"> Enter your bip39 mnemonic\" {
       send \"$mnemonic\r\"
@@ -109,11 +109,11 @@ fi
 echo "Initializing Node ..."
 
 # # Give docker image permission to write to the seda-chain config directory
-# chmod -R a+w /seda-chain/.seda-chain
+# chmod -R a+w /seda-chain/.seda
 
 # Check if configuration directory seda-chain config directory exist if it does not
 # exist initialize the node with the given MNEMONIC, MONIKER and NETWORK
-if ! [ -f /seda-chain/.seda-chain/config/genesis.json ]; then
+if ! [ -f /seda-chain/.seda/config/genesis.json ]; then
     echo "Setting Up seda configuration"
     echo $MNEMONIC | $BIN join ${MONIKER} --network ${NETWORK} --recover
   else

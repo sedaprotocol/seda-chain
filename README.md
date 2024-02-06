@@ -60,22 +60,22 @@ This is a guide for operating and running the node.
 - Individuals aiming to connect to an [external node](#linking-to-an-external-node) with SEDA.
 - Those who wish to establish their own node and/or set up the node as a validator.
 
-`seda-chaind` is the command-line tool for interfacing, or CLI for short, with the SEDA blockchain. You can check out the installation instructions [here](#installation).
+`sedad` is the command-line tool for interfacing, or CLI for short, with the SEDA blockchain. You can check out the installation instructions [here](#installation).
 
-Now, you're all set to engage with the SEDA blockchain via an external node. For a rundown of commands, type `seda-chaind --help`. For in-depth info on a particular command, add the `--help` flag, for example:
+Now, you're all set to engage with the SEDA blockchain via an external node. For a rundown of commands, type `sedad --help`. For in-depth info on a particular command, add the `--help` flag, for example:
 
 ```bash
-seda-chaind --help 
-seda-chaind query --help 
-seda-chaind query bank --help 
+sedad --help 
+sedad query --help 
+sedad query bank --help 
 ```
 
 ### Linking to An External Node
 
-This section is for those linking to an external node, so if you want to run commands from your local machine, or don't feel like running a node yourself you can use the `seda-chaind` binary to connect to an external node. This can be done two ways:
+This section is for those linking to an external node, so if you want to run commands from your local machine, or don't feel like running a node yourself you can use the `sedad` binary to connect to an external node. This can be done two ways:
 
 1. Add the `--node` flag to your CLI commands, followed by the RPC endpoint in the `https://<hostname>:<port>` format.
-2. Alternatively, set a default node: `seda-chaind config set client node https://[hostname]:[port]`
+2. Alternatively, set a default node: `sedad config set client node https://[hostname]:[port]`
 
 When connecting externally, choose a trustworthy node operator. Unscrupulous operators might tamper with query outcomes or block transactions. The SEDA team currently supports these RPC endpoints:
 
@@ -86,22 +86,22 @@ When connecting externally, choose a trustworthy node operator. Unscrupulous ope
 
 ```
 <!-- make the downloaded binary executable -->
-chmod +x seda-chaind-${ARCH}
-<!-- chmod +x seda-chaind-amd64 -->
-<!-- chmod +x seda-chaind-arm64 -->
+chmod +x sedad-${ARCH}
+<!-- chmod +x sedad-amd64 -->
+<!-- chmod +x sedad-arm64 -->
 
 <!-- reset the chain -->
-./seda-chaind-${ARCH} tendermint unsafe-reset-all
-rm -rf ~/.seda-chain || true
+./sedad-${ARCH} tendermint unsafe-reset-all
+rm -rf ~/.seda || true
 
 <!-- create your operator key -->
-./seda-chaind-${ARCH} keys add <key-name>
+./sedad-${ARCH} keys add <key-name>
 
 <!-- initialize your node and join the network (optionally with an existing key using the recover flag) -->
-./seda-chaind-${ARCH} join <moniker> --network <devnet|testnet> [--recover]
+./sedad-${ARCH} join <moniker> --network <devnet|testnet> [--recover]
 
 <!-- start your node -->
-./seda-chaind-${ARCH} start
+./sedad-${ARCH} start
 ```
 
 ### Creating a validator
@@ -124,7 +124,7 @@ Create a `validator.json` file and fill in the create-validator tx parameters:
 
 ```
 {
- "pubkey": $(./seda-chaind-${ARCH} tendermint show-validator),
+ "pubkey": $(./sedad-${ARCH} tendermint show-validator),
  "amount": "1000000000000000000000000000000000aseda", 
  "moniker": "the moniker for your validator",
  "identity": "optional identity signature (ex. UPort or Keybase) This key will be used by block explorers to identify the validator.",
@@ -141,13 +141,13 @@ Create a `validator.json` file and fill in the create-validator tx parameters:
 Use the following command to create a validator:
 
 ```
-./seda-chaind-${ARCH} tx staking create-validator validator.json --from <wallet-name> --chain-id <target-chain> --node <node-url>
+./sedad-${ARCH} tx staking create-validator validator.json --from <wallet-name> --chain-id <target-chain> --node <node-url>
 ```
 
 That’s it now you can find your validator operator address using the following command, which you can advertise to receive delegations:
 
 ```
-./seda-chaind-${ARCH} keys show <wallet-name> --bech val -a
+./sedad-${ARCH} keys show <wallet-name> --bech val -a
 ```
 
 ### Running the Node with Cosmovisor
@@ -165,8 +165,8 @@ Then, add these lines to your profile (maybe `.profile`, `.zprofile`, or somethi
 
 ```
 echo "# Cosmovisor Setup" >> ~/.profile
-echo "export DAEMON_NAME=seda-chaind" >> ~/.profile
-echo "export DAEMON_HOME=$HOME/.seda-chain" >> ~/.profile
+echo "export DAEMON_NAME=sedad" >> ~/.profile
+echo "export DAEMON_HOME=$HOME/.seda" >> ~/.profile
 echo "export DAEMON_ALLOW_DOWNLOAD_BINARIES=false" >> ~/.profile
 echo "export DAEMON_LOG_BUFFER_SIZE=512" >> ~/.profile
 echo "export DAEMON_RESTART_AFTER_UPGRADE=true" >> ~/.profile
@@ -177,7 +177,7 @@ source ~/.profile
 Initialize Cosmovisor with the chain binary and start the node.
 
 ```
-cosmovisor init seda-chaind-${ARCH}
+cosmovisor init sedad-${ARCH}
 cosmovisor run start
 ```
 

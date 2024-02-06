@@ -48,7 +48,7 @@ comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=seda-chain \
-		  -X github.com/cosmos/cosmos-sdk/version.AppName=seda-chaind \
+		  -X github.com/cosmos/cosmos-sdk/version.AppName=sedad \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
@@ -215,7 +215,7 @@ ifdef GITHUB_TOKEN
 docker-build-e2e:
 	@docker build \
 		--build-arg GITHUB_TOKEN=$(GITHUB_TOKEN) \
-		-t sedaprotocol/seda-chaind-e2e \
+		-t sedaprotocol/sedad-e2e \
 		-f dockerfiles/Dockerfile.e2e .
 else
 docker-build-e2e:
@@ -297,8 +297,8 @@ release:
 		-e GITHUB_TOKEN=$(GITHUB_TOKEN) \
 		-e COSMWASM_VERSION=$(COSMWASM_VERSION) \
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v `pwd`:/go/src/seda-chaind \
-		-w /go/src/seda-chaind \
+		-v `pwd`:/go/src/sedad \
+		-w /go/src/sedad \
 		$(GORELEASER_IMAGE) \
 		release \
 		--clean
@@ -313,8 +313,8 @@ release-dry-run:
 		--rm \
 		-e COSMWASM_VERSION=$(COSMWASM_VERSION) \
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v `pwd`:/go/src/seda-chaind \
-		-w /go/src/seda-chaind \
+		-v `pwd`:/go/src/sedad \
+		-w /go/src/sedad \
 		$(GORELEASER_IMAGE) \
 		release \
 		--clean \
@@ -325,8 +325,8 @@ release-snapshot:
 		--rm \
 		-e COSMWASM_VERSION=$(COSMWASM_VERSION) \
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v `pwd`:/go/src/seda-chaind \
-		-w /go/src/seda-chaind \
+		-v `pwd`:/go/src/sedad \
+		-w /go/src/sedad \
 		$(GORELEASER_IMAGE) \
 		release \
 		--clean \
@@ -344,7 +344,7 @@ RUNNER_BASE_IMAGE_ALPINE := alpine:3.17
 
 docker-static-build:
 	@DOCKER_BUILDKIT=1 docker build \
-		-t seda-chain/seda-chaind-static-distroless \
+		-t seda-chain/sedad-static-distroless \
 		--build-arg GO_VERSION=$(GO_VERSION) \
 		--build-arg RUNNER_IMAGE=$(RUNNER_BASE_IMAGE_DISTROLESS) \
 		--build-arg GIT_VERSION=$(VERSION) \
@@ -353,7 +353,7 @@ docker-static-build:
 
 docker-static-build-alpine:
 	@DOCKER_BUILDKIT=1 docker build \
-		-t seda-chain/seda-chaind-static-alpine \
+		-t seda-chain/sedad-static-alpine \
 		--build-arg GO_VERSION=$(GO_VERSION) \
 		--build-arg RUNNER_IMAGE=$(RUNNER_BASE_IMAGE_ALPINE) \
 		--build-arg GIT_VERSION=$(VERSION) \

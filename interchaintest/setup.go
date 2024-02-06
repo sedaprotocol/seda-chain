@@ -30,8 +30,8 @@ var (
 	SedaChainName = "seda"
 
 	dockerImage = ibc.DockerImage{
-		Repository: "seda-chaind-e2e", // FOR LOCAL IMAGE USE: Docker Image Name
-		Version:    "latest",          // FOR LOCAL IMAGE USE: Docker Image Tag
+		Repository: "sedad-e2e", // FOR LOCAL IMAGE USE: Docker Image Name
+		Version:    "latest",    // FOR LOCAL IMAGE USE: Docker Image Tag
 		UidGid:     "1025:1025",
 	}
 
@@ -42,7 +42,7 @@ var (
 		Name:                SedaChainName,
 		ChainID:             "seda-local-1",
 		Images:              []ibc.DockerImage{dockerImage},
-		Bin:                 "seda-chaind",
+		Bin:                 "sedad",
 		Bech32Prefix:        "seda",
 		Denom:               SedaDenom,
 		CoinType:            coinType,

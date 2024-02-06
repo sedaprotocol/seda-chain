@@ -32,11 +32,11 @@ import (
 )
 
 const (
-	binary                 = "seda-chaind"
+	binary                 = "sedad"
 	txCommand              = "tx"
 	queryCommand           = "query"
 	keysCommand            = "keys"
-	containerChainHomePath = "/seda-chain/.seda-chain"
+	containerChainHomePath = "/seda-chain/.seda"
 	containerHomePath      = "/seda-chain/"
 	containerWasmDirPath   = "/seda-chain/testwasms"
 	localWasmDirPath       = "../testutil/testwasms" // relative path is ok
@@ -304,7 +304,7 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 			Mounts: []string{
 				fmt.Sprintf("%s/:%s", val.configDir(), containerChainHomePath),
 			},
-			Repository: "sedaprotocol/seda-chaind-e2e",
+			Repository: "sedaprotocol/sedad-e2e",
 		}
 
 		s.Require().NoError(exec.Command("chmod", "-R", "0777", val.configDir()).Run()) //nolint:gosec // this is a test

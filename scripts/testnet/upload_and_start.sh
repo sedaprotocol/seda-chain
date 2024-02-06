@@ -32,10 +32,10 @@ if [ ! -f "$LOCAL_BIN" ]; then
 fi
 
 # download chain binaries
-curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/seda-chaind-amd64
-mv seda-chaind-amd64 $NODE_DIR
-curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/seda-chaind-arm64
-mv seda-chaind-arm64 $NODE_DIR
+curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/sedad-amd64
+mv sedad-amd64 $NODE_DIR
+curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/sedad-arm64
+mv sedad-arm64 $NODE_DIR
 
 
 ################################################
@@ -80,24 +80,24 @@ for i in ${!IPS[@]}; do
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -f /var/log/seda-chain-error.log'
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -f /var/log/seda-chain-output.log'
 
-	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -rf /home/ec2-user/.seda-chain'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -rf /home/ec2-user/.seda'
 
 	# upload node files
-	scp -i $SSH_KEY -r $NODE_DIR/node$i ec2-user@${IPS[$i]}:/home/ec2-user/.seda-chain
+	scp -i $SSH_KEY -r $NODE_DIR/node$i ec2-user@${IPS[$i]}:/home/ec2-user/.seda
 
 	# upload chain binary built for the corresponding architecture
-	LINUX_BIN=$NODE_DIR/seda-chaind-amd64
+	LINUX_BIN=$NODE_DIR/sedad-amd64
 	ARCH=$(ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'uname -m') # aarch64 or x86_64
 	ARCH=$(echo "$ARCH" | tr -d '\r')
 	if [ $ARCH == "aarch64" ]; then
-		LINUX_BIN=$NODE_DIR/seda-chaind-arm64
+		LINUX_BIN=$NODE_DIR/sedad-arm64
 	fi
 	
-	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'mkdir -p /home/ec2-user/.seda-chain/cosmovisor/genesis/bin'
-	scp -i $SSH_KEY $LINUX_BIN ec2-user@${IPS[$i]}:/home/ec2-user/.seda-chain/cosmovisor/genesis/bin/seda-chaind
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'mkdir -p /home/ec2-user/.seda/cosmovisor/genesis/bin'
+	scp -i $SSH_KEY $LINUX_BIN ec2-user@${IPS[$i]}:/home/ec2-user/.seda/cosmovisor/genesis/bin/sedad
 
 	# start
-	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'chmod 755 /home/ec2-user/.seda-chain/cosmovisor/genesis/bin/seda-chaind'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'chmod 755 /home/ec2-user/.seda/cosmovisor/genesis/bin/sedad'
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo systemctl daemon-reload'
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo systemctl start seda-node.service'
 done

@@ -22,7 +22,7 @@ const (
 	upgradeName        = "v1"
 	initialVersion     = "old"
 	upgradeVersion     = "new"
-	upgradeRepo        = "seda-chaind-e2e"
+	upgradeRepo        = "sedad-e2e"
 	haltHeightDelta    = uint64(10) // # of blocks after which to submit upgrade proposal
 	blocksAfterUpgrade = uint64(10) // # of blocks to wait after upgrade is applied
 )
@@ -32,7 +32,7 @@ var (
 
 	// current chain version we are upgrading from
 	baseChain = ibc.DockerImage{
-		Repository: "seda-chaind-e2e", // to be replaced by sedaRepo once we have Docker images setup
+		Repository: "sedad-e2e", // to be replaced by sedaRepo once we have Docker images setup
 		Version:    initialVersion,
 		UidGid:     "1025:1025",
 	}
@@ -215,7 +215,7 @@ func SubmitUpgradeProposal(t *testing.T, ctx context.Context, chain *cosmos.Cosm
 	haltHeight := currentHeight + haltHeightDelta
 
 	upgradeMsg := &upgradetypes.MsgSoftwareUpgrade{
-		Authority: "seda10d07y265gmmuvt4z0w9aw880jnsr700jvvla4j", // gov module account; seda-chaind q auth module-account gov
+		Authority: "seda10d07y265gmmuvt4z0w9aw880jnsr700jvvla4j", // gov module account; sedad q auth module-account gov
 		Plan: upgradetypes.Plan{
 			Name:   upgradeName,
 			Height: int64(haltHeight),

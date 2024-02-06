@@ -2,8 +2,8 @@
 set -e
 set -x
 
-BIN=./build/seda-chaind
-CONFIG_PATH=$HOME/.seda-chain/config
+BIN=./build/sedad
+CONFIG_PATH=$HOME/.seda/config
 
 function add_key_and_account() {
     local name=$1
@@ -23,18 +23,18 @@ make build
 
 # reset the chain
 $BIN tendermint unsafe-reset-all
-rm -rf ~/.seda-chain || true
+rm -rf ~/.seda || true
 
-# configure seda-chaind
+# configure sedad
 $BIN config set client chain-id sedachain
 
 # initialize the chain
 $BIN init node0 --default-denom aseda
 
-cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="30s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
-cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="30s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
-cat $HOME/.seda-chain/config/genesis.json | jq '.app_state["gov"]["params"]["expedited_voting_period"]="15s"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
-cat $HOME/.seda-chain/config/genesis.json | jq '.consensus_params["block"]["max_gas"]="100000000"' > $HOME/.seda-chain/config/tmp_genesis.json && mv $HOME/.seda-chain/config/tmp_genesis.json $HOME/.seda-chain/config/genesis.json
+cat $HOME/.seda/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="30s"' > $HOME/.seda/config/tmp_genesis.json && mv $HOME/.seda/config/tmp_genesis.json $HOME/.seda/config/genesis.json
+cat $HOME/.seda/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="30s"' > $HOME/.seda/config/tmp_genesis.json && mv $HOME/.seda/config/tmp_genesis.json $HOME/.seda/config/genesis.json
+cat $HOME/.seda/config/genesis.json | jq '.app_state["gov"]["params"]["expedited_voting_period"]="15s"' > $HOME/.seda/config/tmp_genesis.json && mv $HOME/.seda/config/tmp_genesis.json $HOME/.seda/config/genesis.json
+cat $HOME/.seda/config/genesis.json | jq '.consensus_params["block"]["max_gas"]="100000000"' > $HOME/.seda/config/tmp_genesis.json && mv $HOME/.seda/config/tmp_genesis.json $HOME/.seda/config/genesis.json
 
 # update genesis
 add_key_and_account "satoshi" "100000000000000000seda"
