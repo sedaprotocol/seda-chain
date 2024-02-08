@@ -32,6 +32,7 @@ jobs:
         with:
           version: latest
           args: --timeout 10m --tests=false --skip-dirs="e2e"
+          skip-pkg-cache: true
 
   protobuf:
     runs-on: ubuntu-latest
