@@ -9,7 +9,6 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/x/staking/types"
@@ -19,16 +18,16 @@ var _ types.MsgServer = msgServer{}
 
 type msgServer struct {
 	stakingtypes.MsgServer
-	stakingKeeper         *stakingkeeper.Keeper
+	keeper                *Keeper
 	accountKeeper         types.AccountKeeper
 	randomnessKeeper      types.RandomnessKeeper
 	validatorAddressCodec addresscodec.Codec
 }
 
-func NewMsgServerImpl(keeper *stakingkeeper.Keeper, accKeeper types.AccountKeeper, randKeeper types.RandomnessKeeper) types.MsgServer {
+func NewMsgServerImpl(sdkMsgServer stakingtypes.MsgServer, keeper *Keeper, accKeeper types.AccountKeeper, randKeeper types.RandomnessKeeper) types.MsgServer {
 	ms := &msgServer{
-		MsgServer:             stakingkeeper.NewMsgServerImpl(keeper),
-		stakingKeeper:         keeper,
+		MsgServer:             sdkMsgServer,
+		keeper:                keeper,
 		accountKeeper:         accKeeper,
 		randomnessKeeper:      randKeeper,
 		validatorAddressCodec: keeper.ValidatorAddressCodec(),

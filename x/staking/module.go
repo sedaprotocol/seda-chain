@@ -99,7 +99,7 @@ func (amb AppModuleBasic) GetTxCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper           *sdkkeeper.Keeper
+	keeper           *keeper.Keeper
 	accountKeeper    types.AccountKeeper
 	bankKeeper       sdktypes.BankKeeper
 	randomnessKeeper types.RandomnessKeeper
@@ -108,7 +108,7 @@ type AppModule struct {
 // NewAppModule creates a new AppModule object
 func NewAppModule(
 	cdc codec.Codec,
-	keeper *sdkkeeper.Keeper,
+	keeper *keeper.Keeper,
 	ak types.AccountKeeper,
 	bk sdktypes.BankKeeper,
 	rk types.RandomnessKeeper,
@@ -124,10 +124,11 @@ func NewAppModule(
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper, am.accountKeeper, am.randomnessKeeper))
-	sdktypes.RegisterMsgServer(cfg.MsgServer(), NewMsgServerImpl(am.keeper, am.accountKeeper))
+	sdkMsgServer := NewMsgServerImpl(am.keeper.Keeper, am.accountKeeper)
+	sdktypes.RegisterMsgServer(cfg.MsgServer(), sdkMsgServer)
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(sdkMsgServer, am.keeper, am.accountKeeper, am.randomnessKeeper))
 
-	querier := sdkkeeper.Querier{Keeper: am.keeper}
+	querier := sdkkeeper.Querier{Keeper: am.keeper.Keeper}
 	sdktypes.RegisterQueryServer(cfg.QueryServer(), querier)
 }
 
@@ -139,7 +140,7 @@ func (am AppModule) IsAppModule() {}
 
 // RegisterInvariants registers the staking module invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
-	sdkkeeper.RegisterInvariants(ir, am.keeper)
+	sdkkeeper.RegisterInvariants(ir, am.keeper.Keeper)
 }
 
 // InitGenesis performs genesis initialization for the staking module.
