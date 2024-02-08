@@ -16,7 +16,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.50.2
 	github.com/cosmos/ibc-go/v8 v8.0.0
 	github.com/docker/docker v24.0.7+incompatible
-	github.com/strangelove-ventures/interchaintest/v8 v8.0.1-0.20240111040034-0a8a8a2e4216
+	github.com/strangelove-ventures/interchaintest/v8 v8.1.0
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0
 )
