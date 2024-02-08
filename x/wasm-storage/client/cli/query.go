@@ -94,7 +94,7 @@ func GetCmdQueryDataRequestWasms() *cobra.Command {
 		Use:   "list-data-request-wasms",
 		Short: "List hashes and types of all Data Request Wasms",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
@@ -120,7 +120,7 @@ func GetCmdQueryOverlayWasms() *cobra.Command {
 		Use:   "list-overlay-wasms",
 		Short: "List hashes and types of all Overlay Wasms",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
@@ -146,7 +146,7 @@ func GetCmdQueryProxyContractRegistry() *cobra.Command {
 		Use:   "proxy-contract-registry",
 		Short: "Get the address of Proxy Contract",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
