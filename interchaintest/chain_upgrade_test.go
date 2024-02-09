@@ -9,6 +9,7 @@ import (
 	"cosmossdk.io/math"
 	"github.com/docker/docker/client"
 	"github.com/sedaprotocol/seda-chain/interchaintest/conformance"
+	"github.com/sedaprotocol/seda-chain/interchaintest/helpers"
 	"github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
@@ -68,6 +69,9 @@ func BasicUpgradeTest(t *testing.T, upgradeVersion, upgradeRepo, upgradeName str
 	// fund cghain user
 	chainUser := fundChainUser(t, ctx, chain)
 
+	// upload and execute a contract before the upgrade
+	beforeContract := conformance.Basic(t, ctx, chain, chainUser)
+
 	// submit upgrade proposal
 	haltHeight, proposalID := SubmitUpgradeProposal(t, ctx, chain, chainUser, upgradeName)
 
@@ -79,6 +83,9 @@ func BasicUpgradeTest(t *testing.T, upgradeVersion, upgradeRepo, upgradeName str
 
 	// upgrade
 	UpgradeNodes(t, ctx, chain, client, haltHeight, upgradeRepo, upgradeVersion)
+
+	// load beforeContract from disk and confirm we can still execute against it post upgrade
+	helpers.ExecuteMsgWithFee(t, ctx, chain, chainUser, beforeContract, "", "1000000000000000000"+chain.Config().Denom, `{"increment":{}}`)
 
 	// test conformance after upgrade
 	conformance.CosmWasm(t, ctx, chain, chainUser)
