@@ -65,7 +65,7 @@ func (m msgServer) CreateVestingAccount(goCtx context.Context, msg *types.MsgCre
 	}
 
 	baseAccount := authtypes.NewBaseAccountWithAddress(to)
-	baseAccount = m.ak.NewAccount(ctx, baseAccount).(*authtypes.BaseAccount)
+	baseAccount = m.ak.NewAccount(ctx, baseAccount).(*authtypes.BaseAccount) // TO-DO what is this
 	baseVestingAccount, err := sdkvestingtypes.NewBaseVestingAccount(baseAccount, msg.Amount.Sort(), msg.EndTime)
 	if err != nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
@@ -96,11 +96,14 @@ func (m msgServer) CreateVestingAccount(goCtx context.Context, msg *types.MsgCre
 	return &types.MsgCreateVestingAccountResponse{}, nil
 }
 
-// Clawback removes the unvested amount from a ClawbackVestingAccount.
-//
-// Checks performed on the ValidateBasic include:
-//   - funder and vesting addresses are correct bech32 format
-//   - if destination address is not empty it is also correct bech32 format
+// Clawback returns the vesting amount from a ClawbackVestingAccount to the funder.
+// The funds are transferred from the following sources
+// 1. vesting funds that have not been used towards delegation
+// 2. delegations
+// 3. unbonding delegations
+// in this order, as much as possible, until the vesting amount is met. Note that
+// due to slashing the funds from all three of these sources may still fail to meet
+// the vesting amount according to the vesting schedule.
 func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*types.MsgClawbackResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -108,19 +111,18 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 	vestingAccAddr := sdk.MustAccAddressFromBech32(msg.AccountAddress)
 	funderAddr := sdk.MustAccAddressFromBech32(msg.FunderAddress)
 
-	// // NOTE: we check the destination address only for the case where it's not sent from the
-	// // authority account, because in that case the destination address is hardcored to the
-	// // community pool address anyway (see further below).
-	// if bk.BlockedAddr(dest) {
-	// 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized,
-	// 		"%s is a blocked address and not allowed to receive funds", msg.DestAddress,
-	// 	)
-	// }
+	// NOTE: we check the destination address only for the case where it's not sent from the
+	// authority account, because in that case the destination address is hardcored to the
+	// community pool address anyway (see further below).
+	if m.bk.BlockedAddr(funderAddr) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized,
+			"%s is a blocked address and not allowed to receive funds", msg.FunderAddress,
+		)
+	}
 
 	// retrieve the vesting account and perform preliminary checks
 	acc := m.ak.GetAccount(ctx, vestingAccAddr)
 	if acc == nil {
-		// TO-DO what to return?
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownAddress, "account at address '%s' does not exist", vestingAccAddr.String())
 	}
 	vestingAccount, isClawback := acc.(*types.ClawbackContinuousVestingAccount)
@@ -134,38 +136,12 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "clawback can only be requested by original funder: %s", vestingAccount.FunderAddress)
 	}
 
-	//
-	//
-	// clawback from agoric x/auth/vesting
-	//
-	//
-	//
-
-	//
-	// MODIFYING THIS PART
-	//
-	// Compute the clawback based on the account state only, and update account
-	// toClawBack := vestingAccount.computeClawback(ctx.BlockTime().Unix())
-	// if toClawBack.IsZero() {
-	// 	return nil
-	// }
-
 	totalVesting := vestingAccount.GetVestingCoins(ctx.BlockTime())
-
-	// update the vesting account
 	totalVested := vestingAccount.GetVestedCoins(ctx.BlockTime())
-	vestingAccount.OriginalVesting = totalVested
-	vestingAccount.EndTime = ctx.BlockTime().Unix() // so that all of original vesting is vested now
+	fmt.Println(totalVested)
 
-	//
-	//
-	//
-
-	// addr := vestingAccount.GetAddress()
-	bondDenom, err := m.sk.BondDenom(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get bond denomination")
-	}
+	// update the vesting account so that all of original vesting is vested now
+	vestingAccount.EndTime = ctx.BlockTime().Unix()
 
 	// Compute the clawback based on bank balance and delegation, and update account
 	// encumbered := vestingAccount.GetVestingCoins(ctx.BlockTime())
@@ -177,6 +153,11 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 	unbondingAmt, err := m.sk.GetDelegatorUnbonding(ctx, vestingAccAddr)
 	if err != nil {
 		return nil, fmt.Errorf("error while getting unbonding amount: %w", err)
+	}
+
+	bondDenom, err := m.sk.BondDenom(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bond denomination")
 	}
 	bonded := sdk.NewCoins(sdk.NewCoin(bondDenom, bondedAmt))
 	unbonding := sdk.NewCoins(sdk.NewCoin(bondDenom, unbondingAmt))
@@ -200,10 +181,6 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 	// no danger in writing incomplete results.
 	m.ak.SetAccount(ctx, vestingAccount)
 
-	//
-	//
-	//
-
 	// Now that future vesting events (and associated lockup) are removed,
 	// the balance of the account is unlocked and can be freely transferred.
 	spendable := m.bk.SpendableCoins(ctx, vestingAccAddr)
@@ -212,176 +189,83 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 	if err != nil {
 		return nil, err // shouldn't happen, given spendable check
 	}
+
+	clawedBack := toXfer
 	toClawBack = toClawBack.Sub(toXfer...)
+	if !toClawBack.IsZero() { // TO-DO only allow bondDenom
+		// claw back from staking (unbonding delegations then bonded delegations)
+		toClawBackStaking := toClawBack.AmountOf(bondDenom)
 
-	// We need to traverse the staking data structures to update the
-	// vesting account bookkeeping, and to recover more funds if necessary.
-	// Staking is the only way unvested tokens should be missing from the bank balance.
-
-	// If we need more, transfer UnbondingDelegations.
-	want := toClawBack.AmountOf(bondDenom)
-	unbondings, err := m.sk.GetUnbondingDelegations(ctx, vestingAccAddr, math.MaxUint16)
-	if err != nil {
-		return nil, fmt.Errorf("error while getting unbonding delegations: %w", err)
-	}
-	for _, unbonding := range unbondings {
-		valAddr, err := sdk.ValAddressFromBech32(unbonding.ValidatorAddress)
+		// first from unbonding delegations
+		unbondings, err := m.sk.GetUnbondingDelegations(ctx, vestingAccAddr, math.MaxUint16)
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("error while getting unbonding delegations: %w", err)
 		}
-		transferred := m.sk.TransferUnbonding(ctx, vestingAccAddr, funderAddr, valAddr, want)
-		want = want.Sub(transferred)
-		if !want.IsPositive() {
-			break
-		}
-	}
+		for _, unbonding := range unbondings {
+			valAddr, err := sdk.ValAddressFromBech32(unbonding.ValidatorAddress)
+			if err != nil {
+				panic(err)
+			}
 
-	// If we need more, transfer Delegations.
-	if want.IsPositive() {
-		delegations, err := m.sk.GetDelegatorDelegations(ctx, vestingAccAddr, math.MaxUint16)
-		if err != nil {
-			return nil, fmt.Errorf("error while getting delegations: %w", err)
-		}
+			transferred := m.sk.TransferUnbonding(ctx, vestingAccAddr, funderAddr, valAddr, toClawBackStaking)
 
-		for _, delegation := range delegations {
-			validatorAddr, err := sdk.ValAddressFromBech32(delegation.ValidatorAddress)
-			if err != nil {
-				panic(err) // shouldn't happen
-			}
-			validator, err := m.sk.GetValidator(ctx, validatorAddr)
-			if err != nil {
-				// validator has been removed
-				// TO-DO more specific check?
-				continue
-			}
-			wantShares, err := validator.SharesFromTokensTruncated(want)
-			if err != nil {
-				// validator has no tokens
-				continue
-			}
-			transferredShares, err := m.sk.TransferDelegation(ctx, vestingAccAddr, funderAddr, validatorAddr, wantShares)
-			if err != nil {
-				panic(err) // shouldn't happen TO-DO
-
-			}
-			// to be conservative in what we're clawing back, round transferred shares up
-			transferred := validator.TokensFromSharesRoundUp(transferredShares).RoundInt()
-			want = want.Sub(transferred)
-			if !want.IsPositive() {
-				// Could be slightly negative, due to rounding?
-				// Don't think so, due to the precautions above.
+			clawedBack = clawedBack.Add(sdk.NewCoin(bondDenom, transferred))
+			toClawBackStaking = toClawBackStaking.Sub(transferred)
+			if !toClawBackStaking.IsPositive() {
 				break
 			}
 		}
-	}
 
-	// If we've transferred everything and still haven't transferred the desired clawback amount,
-	// then the account must have most some unvested tokens from slashing.
+		// then from bonded delegations
+		if toClawBackStaking.IsPositive() {
+			delegations, err := m.sk.GetDelegatorDelegations(ctx, vestingAccAddr, math.MaxUint16)
+			if err != nil {
+				return nil, fmt.Errorf("error while getting delegations: %w", err)
+			}
 
-	//
-	//
-	//
-	//
-	//
-	//
+			for _, delegation := range delegations {
+				validatorAddr, err := sdk.ValAddressFromBech32(delegation.ValidatorAddress)
+				if err != nil {
+					panic(err) // shouldn't happen
+				}
+				validator, err := m.sk.GetValidator(ctx, validatorAddr)
+				if err != nil {
+					// validator has been removed
+					// TO-DO more specific check?
+					continue
+				}
+				wantShares, err := validator.SharesFromTokensTruncated(toClawBackStaking)
+				if err != nil {
+					// validator has no tokens
+					continue
+				}
 
-	// // Compute clawback amount, unlock unvested tokens and remove future vesting events
-	// // updatedAcc, toClawBack := vestingAccount.ComputeClawback(ctx.BlockTime().Unix())
+				transferredShares, err := m.sk.TransferDelegation(ctx, vestingAccAddr, funderAddr, validatorAddr, wantShares)
+				if err != nil {
+					panic(err) // shouldn't happen TO-DO
 
-	// // totalVested := vestingAccount.GetVestedOnly(time.Unix(clawbackTime, 0))
-	// // totalUnvested := vestingAccount.GetUnvestedOnly(time.Unix(clawbackTime, 0))
+				}
 
-	// totalVested := vestingAccount.GetVestedCoins(ctx.BlockTime())    // consider transferred??
-	// totalUnvested := vestingAccount.GetVestingCoins(ctx.BlockTime()) // clawback amount
+				// to be conservative in what we're clawing back, round transferred shares up
+				transferred := validator.TokensFromSharesRoundUp(transferredShares).RoundInt()
+				clawedBack = clawedBack.Add(sdk.NewCoin(bondDenom, transferred))
+				toClawBackStaking = toClawBackStaking.Sub(transferred)
+				if !toClawBackStaking.IsPositive() {
+					// Could be slightly negative, due to rounding?
+					// Don't think so, due to the precautions above.
+					break
+				}
+			}
+		}
 
-	// // create new vesting account to overwrite
-	// // TO-DO: or just create a non-vesting account
-	// newVestingAcc := new(types.ClawbackContinuousVestingAccount)
-	// var err error
-	// newVestingAcc.ContinuousVestingAccount, err = sdkvestingtypes.NewContinuousVestingAccount(vestingAccount.BaseAccount, totalVested, vestingAccount.StartTime, vestingAccount.EndTime)
-	// if err != nil {
-	// 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "failed to create continuous vesting account: %s")
-	// }
-	// newVestingAcc.OriginalVesting = totalVested
-	// newVestingAcc.EndTime = ctx.BlockTime().Unix() // so that all of original vesting is vested now
-	// newVestingAcc.BaseAccount = vestingAccount.BaseAccount
-
-	// m.AccountKeeper.SetAccount(ctx, newVestingAcc)
-
-	// // // Remove all unvested periods from the schedule
-	// // passedPeriodID := vestingAccount.GetPassedPeriodCount(time.Unix(clawbackTime, 0))
-	// // newVestingPeriods := vestingAccount.VestingPeriods[:passedPeriodID]
-	// // newVestingEnd := vestingAccount.GetStartTime() + newVestingPeriods.TotalLength()
-
-	// // Cap the unlocking schedule to the new total vested.
-	// //  - If lockup has already passed, all vested coins are unlocked.
-	// //  - If lockup has not passed, the vested coins, are still locked.
-	// // capPeriods := sdkvesting.Periods{
-	// // 	{
-	// // 		Length: 0,
-	// // 		Amount: totalVested,
-	// // 	},
-	// // }
-
-	// // minimum of the 2 periods
-	// // _, newLockingEnd, newLockupPeriods := ConjunctPeriods(vestingAccount.GetStartTime(), vestingAccount.GetStartTime(), vestingAccount.LockupPeriods, capPeriods)
-
-	// // Now construct the new account state
-	// // vestingAccount.EndTime = Max64(newVestingEnd, newLockingEnd)
-	// // vestingAccount.LockupPeriods = newLockupPeriods
-	// // vestingAccount.VestingPeriods = newVestingPeriods
-
-	// // return vestingAccount, totalUnvested
-
-	// /*
-	// 	// convert the account back to a normal EthAccount
-	// 	//
-	// 	// NOTE: this is necessary to allow the bank keeper to send the locked coins away to the
-	// 	// destination address. If the account is not converted, the coins will still be seen as locked,
-	// 	// and can therefore not be transferred.
-	// 	ethAccount := evmostypes.ProtoAccount().(*evmostypes.EthAccount)
-	// 	ethAccount.BaseAccount = updatedAcc.BaseAccount
-
-	// 	// set the account with the updated values of the vesting schedule
-	// 	k.accountKeeper.SetAccount(ctx, ethAccount)
-
-	// 	address := updatedAcc.GetAddress()
-
-	// 	// NOTE: don't use `SpendableCoins` to get the minimum value to clawback since
-	// 	// the amount is retrieved from `ComputeClawback`, which ensures correctness.
-	// 	// `SpendableCoins` can result in gas exhaustion if the user has too many
-	// 	// different denoms (because of store iteration).
-
-	// 	// Transfer clawback to the destination (funder)
-	// 	// return toClawBack, k.bankKeeper.SendCoins(ctx, address, destinationAddr, toClawBack)
-
-	// 	// clawedBack, err
-	// */
-
-	// err = m.BankKeeper.SendCoins(ctx, newVestingAcc.GetAddress(), funderAddress, totalUnvested)
-	// if err != nil {
-	// 	return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "failed to claw back '%s' from '%s' to '%s'", totalUnvested.String(), accountAddress.String(), funderAddress.String())
-	// }
-
-	// /*
-	// 	ctx.EventManager().EmitEvents(
-	// 		sdk.Events{
-	// 			sdk.NewEvent(
-	// 				types.EventTypeClawback,
-	// 				sdk.NewAttribute(types.AttributeKeyFunder, msg.FunderAddress),
-	// 				sdk.NewAttribute(types.AttributeKeyAccount, msg.AccountAddress),
-	// 				sdk.NewAttribute(types.AttributeKeyDestination, dest.String()),
-	// 			),
-	// 		},
-	// 	)
-	// */
-
-	if !want.IsZero() {
-		panic("want not zero")
+		// TO-DO may not be zero due to slashing
+		if !toClawBackStaking.IsZero() {
+			panic("toClawBackStaking not zero")
+		}
 	}
 
 	return &types.MsgClawbackResponse{
-		Coins: toClawBack,
+		Coins: clawedBack,
 	}, nil
 }
 
