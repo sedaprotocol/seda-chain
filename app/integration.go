@@ -98,16 +98,7 @@ func NewIntegrationApp(
 			panic(fmt.Errorf("failed to load application version from store: %w", err))
 		}
 
-		// app.NewDefaultGenesisState(bApp.AppCodec())
-		// req := &abci.RequestInitChain{
-		// 	AppStateBytes:   appState,
-		// 	ChainId:         appName,
-		// 	ConsensusParams: consensusParams,
-		// 	Time:            genesisTimestamp,
-		// }
-
 		if _, err := bApp.InitChain(&cmtabcitypes.RequestInitChain{ChainId: appName}); err != nil {
-			// if _, err := bApp.InitChain(req); err != nil {
 			panic(fmt.Errorf("failed to initialize application: %w", err))
 		}
 	}

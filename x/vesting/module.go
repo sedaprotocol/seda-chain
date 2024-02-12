@@ -16,12 +16,11 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-
-	// "github.com/cosmos/cosmos-sdk/x/auth/vesting/client/cli"
-	// "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
 	"github.com/sedaprotocol/seda-chain/x/vesting/client/cli"
 	"github.com/sedaprotocol/seda-chain/x/vesting/keeper"
+	"github.com/sedaprotocol/seda-chain/x/vesting/simulation"
 	"github.com/sedaprotocol/seda-chain/x/vesting/types"
 )
 
@@ -117,6 +116,33 @@ func (am AppModule) ExportGenesis(_ sdk.Context, cdc codec.JSONCodec) json.RawMe
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 1 }
+
+// AppModuleSimulation functions
+
+// GenerateGenesisState creates a randomized GenState of the slashing module.
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	// simulation.RandomizedGenState(simState)
+}
+
+// ProposalMsgs returns msgs used for governance proposals for simulations.
+func (AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.WeightedProposalMsg {
+	// return simulation.ProposalMsgs()
+	return []simtypes.WeightedProposalMsg{}
+}
+
+// RegisterStoreDecoder registers a decoder for slashing module's types
+func (am AppModule) RegisterStoreDecoder(sdr simtypes.StoreDecoderRegistry) {
+	// sdr[types.StoreKey] = simulation.NewDecodeStore(am.cdc)
+}
+
+// WeightedOperations returns the all the slashing module operations with their respective weights.
+func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
+	return simulation.WeightedOperations(
+		// am.registry,
+		simState.AppParams, simState.Cdc, simState.TxConfig,
+		am.accountKeeper, am.bankKeeper, am.stakingKeeper,
+	)
+}
 
 /* TO-DO
 //

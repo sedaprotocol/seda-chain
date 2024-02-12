@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log"
-	evidencetypes "cosmossdk.io/x/evidence/types"
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	"cosmossdk.io/log"
+	evidencetypes "cosmossdk.io/x/evidence/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"

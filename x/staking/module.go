@@ -126,7 +126,9 @@ func NewAppModule(
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	sdkMsgServer := NewMsgServerImpl(am.keeper.Keeper, am.accountKeeper)
 	sdktypes.RegisterMsgServer(cfg.MsgServer(), sdkMsgServer)
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(sdkMsgServer, am.keeper, am.accountKeeper, am.randomnessKeeper))
+
+	// To be activated later
+	// types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(sdkMsgServer, am.keeper, am.accountKeeper, am.randomnessKeeper))
 
 	querier := sdkkeeper.Querier{Keeper: am.keeper.Keeper}
 	sdktypes.RegisterQueryServer(cfg.QueryServer(), querier)

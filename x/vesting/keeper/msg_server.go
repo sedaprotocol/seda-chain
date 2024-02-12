@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/go-metrics"
 
 	errorsmod "cosmossdk.io/errors"
-
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -190,7 +189,9 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 		return nil, err // shouldn't happen, given spendable check
 	}
 
-	clawedBack := toXfer
+	clawedBackUnbonded := toXfer
+	clawedBackUnbonding := sdk.NewCoins()
+	clawedBackBonded := sdk.NewCoins()
 	toClawBack = toClawBack.Sub(toXfer...)
 	if !toClawBack.IsZero() { // TO-DO only allow bondDenom
 		// claw back from staking (unbonding delegations then bonded delegations)
@@ -209,7 +210,7 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 
 			transferred := m.sk.TransferUnbonding(ctx, vestingAccAddr, funderAddr, valAddr, toClawBackStaking)
 
-			clawedBack = clawedBack.Add(sdk.NewCoin(bondDenom, transferred))
+			clawedBackUnbonding = clawedBackUnbonding.Add(sdk.NewCoin(bondDenom, transferred))
 			toClawBackStaking = toClawBackStaking.Sub(transferred)
 			if !toClawBackStaking.IsPositive() {
 				break
@@ -248,7 +249,7 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 
 				// to be conservative in what we're clawing back, round transferred shares up
 				transferred := validator.TokensFromSharesRoundUp(transferredShares).RoundInt()
-				clawedBack = clawedBack.Add(sdk.NewCoin(bondDenom, transferred))
+				clawedBackBonded = clawedBackBonded.Add(sdk.NewCoin(bondDenom, transferred))
 				toClawBackStaking = toClawBackStaking.Sub(transferred)
 				if !toClawBackStaking.IsPositive() {
 					// Could be slightly negative, due to rounding?
@@ -265,7 +266,9 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 	}
 
 	return &types.MsgClawbackResponse{
-		Coins: clawedBack,
+		ClawedUnbonded:  clawedBackUnbonded,
+		ClawedUnbonding: clawedBackUnbonding,
+		ClawedBonded:    clawedBackBonded,
 	}, nil
 }
 

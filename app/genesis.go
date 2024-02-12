@@ -4,13 +4,16 @@ import (
 	"crypto/rand"
 	"encoding/json"
 
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	sdkvestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+
+	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
 )
 
 // The genesis state of the blockchain is represented here as a map of raw json
@@ -33,17 +36,28 @@ func NewDefaultGenesisState(cdc codec.JSONCodec) GenesisState {
 // https://github.com/cosmos/cosmos-sdk/blob/7e6948f50cd4838a0161838a099f74e0b5b0213c/x/auth/simulation/genesis.go#L26
 func RandomGenesisAccounts(simState *module.SimulationState) types.GenesisAccounts {
 	genesisAccs := make(types.GenesisAccounts, len(simState.Accounts))
+	var funderAddress string
+	if int(simState.NumBonded) < len(simState.Accounts) {
+		funderAddress = simState.Accounts[simState.NumBonded].Address.String() // acc at index NumBonded is designated funder
+	}
 	for i, acc := range simState.Accounts {
 		bacc := types.NewBaseAccountWithAddress(acc.Address)
 
 		// Only consider making a vesting account once the initial bonded validator
 		// set is exhausted due to needing to track DelegatedVesting.
-		if !(int64(i) > simState.NumBonded && simState.Rand.Intn(100) < 50) {
+		if int64(i) < simState.NumBonded {
+			genesisAccs[i] = bacc
+			continue
+		} else if int64(i) == simState.NumBonded {
+			genesisAccs[i] = bacc
+			continue
+		} else if simState.Rand.Intn(100) < 50 {
 			genesisAccs[i] = bacc
 			continue
 		}
 
-		initialVestingAmount, err := rand.Int(rand.Reader, simState.InitialStake.BigInt())
+		maxInitialVesting := simState.InitialStake.Quo(math.NewInt(int64(len(simState.Accounts))))
+		initialVestingAmount, err := rand.Int(rand.Reader, maxInitialVesting.BigInt())
 		if err != nil {
 			panic(err)
 		}
@@ -58,16 +72,12 @@ func RandomGenesisAccounts(simState *module.SimulationState) types.GenesisAccoun
 			endTime = int64(simulation.RandIntBetween(simState.Rand, int(startTime)+1, int(startTime+(60*60*12))))
 		}
 
-		bva, err := vestingtypes.NewBaseVestingAccount(bacc, initialVesting, endTime)
+		bva, err := sdkvestingtypes.NewBaseVestingAccount(bacc, initialVesting, endTime)
 		if err != nil {
 			panic(err)
 		}
 
-		if simState.Rand.Intn(100) < 50 {
-			genesisAccs[i] = vestingtypes.NewContinuousVestingAccountRaw(bva, startTime)
-		} else {
-			genesisAccs[i] = vestingtypes.NewDelayedVestingAccountRaw(bva)
-		}
+		genesisAccs[i] = vestingtypes.NewClawbackContinuousVestingAccountRaw(bva, startTime, funderAddress)
 	}
 
 	return genesisAccs
