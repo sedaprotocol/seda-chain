@@ -143,8 +143,6 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 	vestingAccount.EndTime = ctx.BlockTime().Unix()
 
 	// Compute the clawback based on bank balance and delegation, and update account
-	// encumbered := vestingAccount.GetVestingCoins(ctx.BlockTime())
-	encumbered := totalVesting // TO-DO ?????
 	bondedAmt, err := m.sk.GetDelegatorBonded(ctx, vestingAccAddr)
 	if err != nil {
 		return nil, fmt.Errorf("error while getting bonded amount: %w", err)
@@ -153,27 +151,16 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 	if err != nil {
 		return nil, fmt.Errorf("error while getting unbonding amount: %w", err)
 	}
-
 	bondDenom, err := m.sk.BondDenom(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bond denomination")
 	}
+
 	bonded := sdk.NewCoins(sdk.NewCoin(bondDenom, bondedAmt))
 	unbonding := sdk.NewCoins(sdk.NewCoin(bondDenom, unbondingAmt))
 	unbonded := m.bk.GetAllBalances(ctx, vestingAccAddr)
-
-	//
-	// MODIFYING THIS PART
-	//
-	// toClawBack = vestingAccount.updateDelegation(encumbered, toClawBack, bonded, unbonding, unbonded)
-	delegated := bonded.Add(unbonding...)
-	oldDelegated := vestingAccount.DelegatedVesting.Add(vestingAccount.DelegatedFree...)
-	slashed := oldDelegated.Sub(coinsMin(delegated, oldDelegated)...)
-	total := delegated.Add(unbonded...)
+	total := bonded.Add(unbonding...).Add(unbonded...)
 	toClawBack := coinsMin(totalVesting, total) // might have been slashed
-	newDelegated := coinsMin(delegated, total.Sub(totalVesting...)).Add(slashed...)
-	vestingAccount.DelegatedVesting = coinsMin(encumbered, newDelegated)
-	vestingAccount.DelegatedFree = newDelegated.Sub(vestingAccount.DelegatedVesting...)
 
 	// Write now now so that the bank module sees unvested tokens are unlocked.
 	// Note that all store writes are aborted if there is a panic, so there is
@@ -259,9 +246,8 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 			}
 		}
 
-		// TO-DO may not be zero due to slashing
 		if !toClawBackStaking.IsZero() {
-			panic("toClawBackStaking not zero")
+			panic("failed to claw back full amount")
 		}
 	}
 

@@ -177,6 +177,11 @@ func (app *IntegationApp) AddTime(seconds int64) {
 	app.ctx = app.ctx.WithBlockTime(newTime)
 }
 
+// AddBlock increments the block number of the application context.
+func (app *IntegationApp) AddBlock() {
+	app.ctx = app.ctx.WithBlockHeight(app.ctx.BlockHeader().Height + 1)
+}
+
 // QueryHelper returns the application query helper.
 // It can be used when registering query services.
 func (app *IntegationApp) QueryHelper() *baseapp.QueryServiceTestHelper {
