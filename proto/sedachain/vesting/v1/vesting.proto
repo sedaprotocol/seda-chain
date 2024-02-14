@@ -6,13 +6,14 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/vesting/types";
 
-// ClawbackContinuousVestingAccount implements the VestingAccount interface. 
-// It wraps a ContinuousVestingAccount provided by Cosmos SDK to provide 
+// ClawbackContinuousVestingAccount implements the VestingAccount interface.
+// It wraps a ContinuousVestingAccount provided by Cosmos SDK to provide
 // additional support for clawback.
 message ClawbackContinuousVestingAccount {
-    option (gogoproto.goproto_getters) = false;
-    option (gogoproto.goproto_stringer) = false;
-  
-    cosmos.vesting.v1beta1.ContinuousVestingAccount vesting_account = 1 [(gogoproto.embed) = true];
-    string funder_address = 2;
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.goproto_stringer) = false;
+
+  cosmos.vesting.v1beta1.ContinuousVestingAccount vesting_account = 1
+      [ (gogoproto.embed) = true ];
+  string funder_address = 2;
 }
