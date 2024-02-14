@@ -159,6 +159,11 @@ func appStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager, genes
 			panic(err)
 		}
 
+		bankState.SendEnabled = append(bankState.SendEnabled, banktypes.SendEnabled{
+			Denom:   sdk.DefaultBondDenom,
+			Enabled: true,
+		})
+
 		stakingAddr := authtypes.NewModuleAddress(stakingtypes.NotBondedPoolName).String()
 		var found bool
 		for _, balance := range bankState.Balances {

@@ -120,25 +120,19 @@ func (AppModule) ConsensusVersion() uint64 { return 1 }
 // AppModuleSimulation functions
 
 // GenerateGenesisState creates a randomized GenState of the slashing module.
-func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
-	// simulation.RandomizedGenState(simState)
-}
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {}
 
 // ProposalMsgs returns msgs used for governance proposals for simulations.
 func (AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.WeightedProposalMsg {
-	// return simulation.ProposalMsgs()
 	return []simtypes.WeightedProposalMsg{}
 }
 
 // RegisterStoreDecoder registers a decoder for slashing module's types
-func (am AppModule) RegisterStoreDecoder(sdr simtypes.StoreDecoderRegistry) {
-	// sdr[types.StoreKey] = simulation.NewDecodeStore(am.cdc)
-}
+func (am AppModule) RegisterStoreDecoder(sdr simtypes.StoreDecoderRegistry) {}
 
 // WeightedOperations returns the all the slashing module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return simulation.WeightedOperations(
-		// am.registry,
 		simState.AppParams, simState.Cdc, simState.TxConfig,
 		am.accountKeeper, am.bankKeeper, am.stakingKeeper,
 	)

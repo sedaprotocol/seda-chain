@@ -16,6 +16,7 @@ type AccountKeeper interface {
 	SetAccount(ctx context.Context, acc sdk.AccountI)
 }
 type BankKeeper interface {
+	GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetAllBalances(ctx context.Context, addr sdk.AccAddress) sdk.Coins
 	IsSendEnabledCoins(ctx context.Context, coins ...sdk.Coin) error
 	SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error
@@ -26,6 +27,7 @@ type BankKeeper interface {
 type StakingKeeper interface {
 	BondDenom(ctx context.Context) (string, error)
 	GetValidator(ctx context.Context, addr sdk.ValAddress) (validator types.Validator, err error)
+	GetAllValidators(ctx context.Context) ([]types.Validator, error)
 	GetDelegatorBonded(ctx context.Context, delegator sdk.AccAddress) (math.Int, error)
 	GetDelegatorUnbonding(ctx context.Context, delegator sdk.AccAddress) (math.Int, error)
 	GetUnbondingDelegations(ctx context.Context, delegator sdk.AccAddress, maxRetrieve uint16) (unbondingDelegations []types.UnbondingDelegation, err error)
