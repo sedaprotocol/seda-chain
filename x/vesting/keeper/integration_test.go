@@ -57,6 +57,8 @@ var (
 		sdk.AccAddress([]byte("to5_________________")),
 		sdk.AccAddress([]byte("to6_________________")),
 		sdk.AccAddress([]byte("to7_________________")),
+		sdk.AccAddress([]byte("to8_________________")),
+		sdk.AccAddress([]byte("to9_________________")),
 	}
 )
 

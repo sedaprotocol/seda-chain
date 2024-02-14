@@ -60,7 +60,19 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 			// TO-DO
 			panic(err)
 		}
-		fromRedelegation, err := k.GetRedelegation(ctx, fromAddr, sdk.ValAddress(toRedelegation.ValidatorSrcAddress), sdk.ValAddress(toRedelegation.ValidatorDstAddress))
+
+		valSrcAddr, err := sdk.ValAddressFromBech32(toRedelegation.ValidatorSrcAddress)
+		if err != nil {
+			// TO-DO
+			panic(err)
+		}
+		valDstAddr, err := sdk.ValAddressFromBech32(toRedelegation.ValidatorDstAddress)
+		if err != nil {
+			// TO-DO
+			panic(err)
+		}
+
+		fromRedelegation, err := k.GetRedelegation(ctx, fromAddr, valSrcAddr, valDstAddr)
 		if err == nil && len(toRedelegation.Entries)+len(fromRedelegation.Entries) >= int(maxEntries) {
 			mightExceedLimit = true
 			return true
@@ -133,6 +145,16 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 		if redelegation.ValidatorDstAddress != valAddr.String() {
 			continue
 		}
+
+		valSrcAddr, err := sdk.ValAddressFromBech32(redelegation.ValidatorSrcAddress)
+		if err != nil {
+			return transferred, err
+		}
+		valDstAddr, err := sdk.ValAddressFromBech32(redelegation.ValidatorDstAddress)
+		if err != nil {
+			return transferred, err
+		}
+
 		redelegationModified := false
 		entriesRemaining := false
 		for i := 0; i < len(redelegation.Entries); i++ {
@@ -155,8 +177,7 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 			if sharesToKeep.IsZero() {
 				// Transfer the whole entry, delete locally
 				toRed, err := k.SetRedelegationEntry(
-					ctx, toAddr, sdk.ValAddress(redelegation.ValidatorSrcAddress),
-					sdk.ValAddress(redelegation.ValidatorDstAddress),
+					ctx, toAddr, valSrcAddr, valDstAddr,
 					entry.CreationHeight, entry.CompletionTime, entry.InitialBalance, math.LegacyZeroDec(), sharesToSend,
 				)
 				if err != nil {
@@ -173,8 +194,7 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 				balanceToSend := fracSending.MulInt(entry.InitialBalance).TruncateInt()
 				balanceToKeep := entry.InitialBalance.Sub(balanceToSend)
 				toRed, err := k.SetRedelegationEntry(
-					ctx, toAddr, sdk.ValAddress(redelegation.ValidatorSrcAddress),
-					sdk.ValAddress(redelegation.ValidatorDstAddress),
+					ctx, toAddr, valSrcAddr, valDstAddr,
 					entry.CreationHeight, entry.CompletionTime, balanceToSend, math.LegacyZeroDec(), sharesToSend,
 				)
 				if err != nil {

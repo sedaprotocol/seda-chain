@@ -135,13 +135,6 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "clawback can only be requested by original funder: %s", vestingAccount.FunderAddress)
 	}
 
-	totalVesting := vestingAccount.GetVestingCoins(ctx.BlockTime())
-	totalVested := vestingAccount.GetVestedCoins(ctx.BlockTime())
-	fmt.Println(totalVested)
-
-	// update the vesting account so that all of original vesting is vested now
-	vestingAccount.EndTime = ctx.BlockTime().Unix()
-
 	// Compute the clawback based on bank balance and delegation, and update account
 	bondedAmt, err := m.sk.GetDelegatorBonded(ctx, vestingAccAddr)
 	if err != nil {
@@ -160,20 +153,24 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 	unbonding := sdk.NewCoins(sdk.NewCoin(bondDenom, unbondingAmt))
 	unbonded := m.bk.GetAllBalances(ctx, vestingAccAddr)
 	total := bonded.Add(unbonding...).Add(unbonded...)
-	toClawBack := coinsMin(totalVesting, total) // might have been slashed
+
+	toClawBack := coinsMin(vestingAccount.GetVestingCoins(ctx.BlockTime()), total) // might have been slashed
 
 	// Write now now so that the bank module sees unvested tokens are unlocked.
 	// Note that all store writes are aborted if there is a panic, so there is
 	// no danger in writing incomplete results.
+	vestingAccount.EndTime = ctx.BlockTime().Unix() // so that all of original vesting is vested now
 	m.ak.SetAccount(ctx, vestingAccount)
 
 	// Now that future vesting events (and associated lockup) are removed,
 	// the balance of the account is unlocked and can be freely transferred.
 	spendable := m.bk.SpendableCoins(ctx, vestingAccAddr)
 	toXfer := coinsMin(toClawBack, spendable)
-	err = m.bk.SendCoins(ctx, vestingAccAddr, funderAddr, toXfer)
-	if err != nil {
-		return nil, err // shouldn't happen, given spendable check
+	if toXfer.IsAllPositive() {
+		err = m.bk.SendCoins(ctx, vestingAccAddr, funderAddr, toXfer)
+		if err != nil {
+			return nil, err // shouldn't happen, given spendable check
+		}
 	}
 
 	clawedBackUnbonded := toXfer
@@ -231,7 +228,6 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 				transferredShares, err := m.sk.TransferDelegation(ctx, vestingAccAddr, funderAddr, validatorAddr, wantShares)
 				if err != nil {
 					panic(err) // shouldn't happen TO-DO
-
 				}
 
 				// to be conservative in what we're clawing back, round transferred shares up

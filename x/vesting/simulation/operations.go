@@ -141,7 +141,7 @@ func SimulateMsgCreateVestingAccount(
 		// then funder claws back
 		op2 := simulateMsgClawbackFutureOp(txGen, ak, bk, sk, recipient, funder)
 		futureOps = append(futureOps, simtypes.FutureOperation{
-			BlockHeight: int(ctx.BlockHeight()) + 10,
+			BlockHeight: int(ctx.BlockHeight()) + 1,
 			Op:          op2,
 		})
 
@@ -320,19 +320,6 @@ func simulateMsgClawbackFutureOp(
 		accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		msgType := sdk.MsgTypeURL(&types.MsgClawback{})
-
-		sanity := ak.GetAccount(ctx, recipient.Address)
-		if sanity != nil {
-			panic("this is it")
-		}
-		// recipientAcc := ak.GetAccount(ctx, recipient.Address)
-		// vestingAcc, isClawback := recipientAcc.(*types.ClawbackContinuousVestingAccount)
-		// if !isClawback {
-		// 	return simtypes.NoOpMsg(types.ModuleName, msgType, "not a vesting account"), nil, nil
-		// }
-		// if vestingAcc.GetVestingCoins(ctx.BlockTime()).IsZero() {
-		// 	return simtypes.NoOpMsg(types.ModuleName, msgType, "vesting account not vesting anymore"), nil, nil
-		// }
 
 		funder, found := simtypes.FindAccount(accs, funder.Address)
 		if !found {
