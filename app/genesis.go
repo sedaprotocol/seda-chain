@@ -30,7 +30,6 @@ func NewDefaultGenesisState(cdc codec.JSONCodec) GenesisState {
 }
 
 // RandomGenesisAccounts defines the default RandomGenesisAccountsFn used on the SDK.
-// It creates a slice of BaseAccount, ContinuousVestingAccount and DelayedVestingAccount.
 // NOTE: This function is a modified version of
 // https://github.com/cosmos/cosmos-sdk/blob/7e6948f50cd4838a0161838a099f74e0b5b0213c/x/auth/simulation/genesis.go#L26
 func RandomGenesisAccounts(simState *module.SimulationState) types.GenesisAccounts {

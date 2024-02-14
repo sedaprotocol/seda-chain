@@ -137,34 +137,3 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 		am.accountKeeper, am.bankKeeper, am.stakingKeeper,
 	)
 }
-
-/* TO-DO
-//
-// App Wiring Setup
-//
-
-func init() {
-	appmodule.Register(&modulev1.Module{},
-		appmodule.Provide(ProvideModule),
-	)
-}
-
-type ModuleInputs struct {
-	depinject.In
-
-	AccountKeeper authkeeper.AccountKeeper
-	BankKeeper    types.BankKeeper
-}
-
-type ModuleOutputs struct {
-	depinject.Out
-
-	Module appmodule.AppModule
-}
-
-func ProvideModule(in ModuleInputs) ModuleOutputs {
-	m := NewAppModule(in.AccountKeeper, in.BankKeeper)
-
-	return ModuleOutputs{Module: m}
-}
-*/

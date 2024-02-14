@@ -4,13 +4,12 @@ package sedachain.vesting.v1;
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
-import "cosmos/vesting/v1beta1/vesting.proto";
 import "cosmos/msg/v1/msg.proto";
 import "amino/amino.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/vesting/types";
 
-// Msg defines the bank Msg service.
+// Msg defines the vesting Msg service.
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
