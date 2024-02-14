@@ -20,8 +20,8 @@ import (
 
 // Simulation operation weights constants
 const (
-	OpWeightMsgCreateVestingAccount = "op_weight_msg_create_vesting_account"
-	OpWeightMsgClawback             = "op_weight_msg_clawback"
+	OpWeightMsgCreateVestingAccount = "op_weight_msg_create_vesting_account" //nolint:gosec
+	OpWeightMsgClawback             = "op_weight_msg_clawback"               //nolint:gosec
 
 	DefaultWeightMsgCreateVestingAccount = 100
 	DefaultWeightMsgClawback             = 100
@@ -30,16 +30,15 @@ const (
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
 	appParams simtypes.AppParams,
-	cdc codec.JSONCodec,
+	_ codec.JSONCodec,
 	txGen client.TxConfig,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	sk types.StakingKeeper,
 ) simulation.WeightedOperations {
-	var (
-		weightMsgCreateVestingAccount int
-		// weightMsgClawback             int
-	)
+	var weightMsgCreateVestingAccount int
+	// var weightMsgClawback int
+
 	appParams.GetOrGenerate(OpWeightMsgCreateVestingAccount, &weightMsgCreateVestingAccount, nil, func(_ *rand.Rand) {
 		weightMsgCreateVestingAccount = DefaultWeightMsgCreateVestingAccount
 	})
@@ -124,19 +123,14 @@ func SimulateMsgCreateVestingAccount(
 			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to deliver tx"), nil, err
 		}
 
-		// sanity := ak.GetAccount(ctx, sdk.AccAddress(msg.ToAddress))
-		// if sanity == nil {
-		// 	panic("why me")
-		// }
-
 		// future operations
 		var futureOps []simtypes.FutureOperation
-		// // recipient stakes
-		// op := simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoins)
-		// futureOps = append(futureOps, simtypes.FutureOperation{
-		// 	BlockHeight: int(ctx.BlockHeight()) + 1,
-		// 	Op:          op,
-		// })
+		// recipient stakes
+		op := simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoins)
+		futureOps = append(futureOps, simtypes.FutureOperation{
+			BlockHeight: int(ctx.BlockHeight()) + 1,
+			Op:          op,
+		})
 
 		// then funder claws back
 		op2 := simulateMsgClawbackFutureOp(txGen, ak, bk, sk, recipient, funder)
@@ -154,7 +148,7 @@ func SimulateMsgClawback(
 	txGen client.TxConfig,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	sk types.StakingKeeper,
+	_ types.StakingKeeper,
 ) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
@@ -216,9 +210,9 @@ func SimulateMsgClawback(
 }
 
 func simulateMsgDelegate(
-	txGen client.TxConfig,
-	ak types.AccountKeeper,
-	bk types.BankKeeper,
+	_ client.TxConfig,
+	_ types.AccountKeeper,
+	_ types.BankKeeper,
 	sk types.StakingKeeper,
 	acc simtypes.Account,
 	originalVesting sdk.Coins,
@@ -311,7 +305,7 @@ func simulateMsgClawbackFutureOp(
 	txGen client.TxConfig,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	sk types.StakingKeeper,
+	_ types.StakingKeeper,
 	recipient simtypes.Account,
 	funder simtypes.Account,
 ) simtypes.Operation {
@@ -345,7 +339,7 @@ func simulateMsgClawbackFutureOp(
 			r,
 			txGen,
 			[]sdk.Msg{msg},
-			sdk.NewCoins(), //fees,
+			sdk.NewCoins(), // fees,
 			simtestutil.DefaultGenTxGas,
 			chainID,
 			[]uint64{funderAcc.GetAccountNumber()},

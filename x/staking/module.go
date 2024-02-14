@@ -15,11 +15,13 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	sdkcli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	sdkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	"github.com/cosmos/cosmos-sdk/x/staking/simulation"
 	sdktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/sedaprotocol/seda-chain/x/staking/client/cli"
 	"github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/staking/types"
 )
@@ -55,11 +57,13 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 
 // RegisterInterfaces registers the module's interface types
 func (AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-	types.RegisterInterfaces(registry)
-	err := registry.EnsureRegistered(&types.MsgCreateValidatorWithVRF{})
-	if err != nil {
-		fmt.Println("error")
-	}
+	// TO-DO to be activated later
+	// types.RegisterInterfaces(registry)
+	// err := registry.EnsureRegistered(&types.MsgCreateValidatorWithVRF{})
+	// if err != nil {
+	// 	fmt.Println("error")
+	// }
+
 	sdktypes.RegisterInterfaces(registry)
 }
 
@@ -88,7 +92,10 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *g
 
 // GetTxCmd returns the root tx command for the staking module.
 func (amb AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.NewTxCmd(amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(), amb.cdc.InterfaceRegistry().SigningContext().AddressCodec())
+	// TO-DO to be activated later
+	// return cli.NewTxCmd(amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(), amb.cdc.InterfaceRegistry().SigningContext().AddressCodec())
+
+	return sdkcli.NewTxCmd(amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(), amb.cdc.InterfaceRegistry().SigningContext().AddressCodec())
 }
 
 // ----------------------------------------------------------------------------
@@ -127,7 +134,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	sdkMsgServer := NewMsgServerImpl(am.keeper.Keeper, am.accountKeeper)
 	sdktypes.RegisterMsgServer(cfg.MsgServer(), sdkMsgServer)
 
-	// To be activated later
+	// TO-DO to be activated later
 	// types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(sdkMsgServer, am.keeper, am.accountKeeper, am.randomnessKeeper))
 
 	querier := sdkkeeper.Querier{Keeper: am.keeper.Keeper}
@@ -170,4 +177,29 @@ func (am AppModule) BeginBlock(ctx context.Context) error {
 // updates.
 func (am AppModule) EndBlock(ctx context.Context) ([]abci.ValidatorUpdate, error) {
 	return am.keeper.EndBlocker(ctx)
+}
+
+// AppModuleSimulation functions
+
+// GenerateGenesisState creates a randomized GenState of the staking module.
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	simulation.RandomizedGenState(simState)
+}
+
+// ProposalMsgs returns msgs used for governance proposals for simulations.
+func (AppModule) ProposalMsgs(_ module.SimulationState) []simtypes.WeightedProposalMsg {
+	return simulation.ProposalMsgs()
+}
+
+// RegisterStoreDecoder registers a decoder for staking module's types
+func (am AppModule) RegisterStoreDecoder(sdr simtypes.StoreDecoderRegistry) {
+	sdr[sdktypes.StoreKey] = simulation.NewDecodeStore(am.cdc)
+}
+
+// WeightedOperations returns the all the staking module operations with their respective weights.
+func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
+	return simulation.WeightedOperations(
+		simState.AppParams, simState.Cdc, simState.TxConfig,
+		am.accountKeeper, am.bankKeeper, am.keeper.Keeper,
+	)
 }

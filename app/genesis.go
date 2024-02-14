@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"cosmossdk.io/math"
-	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -45,13 +44,7 @@ func RandomGenesisAccounts(simState *module.SimulationState) types.GenesisAccoun
 
 		// Only consider making a vesting account once the initial bonded validator
 		// set is exhausted due to needing to track DelegatedVesting.
-		if int64(i) < simState.NumBonded {
-			genesisAccs[i] = bacc
-			continue
-		} else if int64(i) == simState.NumBonded {
-			genesisAccs[i] = bacc
-			continue
-		} else if simState.Rand.Intn(100) < 50 {
+		if int64(i) <= simState.NumBonded || simState.Rand.Intn(100) < 50 {
 			genesisAccs[i] = bacc
 			continue
 		}
@@ -61,7 +54,7 @@ func RandomGenesisAccounts(simState *module.SimulationState) types.GenesisAccoun
 		if err != nil {
 			panic(err)
 		}
-		initialVesting := sdk.NewCoins(sdk.NewCoin(simState.BondDenom, sdkmath.NewIntFromBigInt(initialVestingAmount)))
+		initialVesting := sdk.NewCoins(sdk.NewCoin(simState.BondDenom, math.NewIntFromBigInt(initialVestingAmount)))
 
 		var endTime int64
 		startTime := simState.GenTimestamp.Unix()

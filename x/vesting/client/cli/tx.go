@@ -29,7 +29,7 @@ func GetTxCmd(ac address.Codec) *cobra.Command {
 
 	txCmd.AddCommand(
 		NewMsgCreateVestingAccountCmd(ac),
-		NewMsgClawbackCmd(ac),
+		NewMsgClawbackCmd(),
 	)
 	return txCmd
 }
@@ -81,7 +81,7 @@ The end_time must be provided as a UNIX epoch timestamp.`,
 }
 
 // NewMsgClawbackCmd returns a CLI command handler for clawing back unvested funds.
-func NewMsgClawbackCmd(ac address.Codec) *cobra.Command {
+func NewMsgClawbackCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "clawback [address]",
 		Short: "Transfer vesting (un-vested) amount out of a vesting account.",

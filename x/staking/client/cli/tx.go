@@ -47,7 +47,6 @@ func NewTxCmd(valAddrCodec, ac address.Codec) *cobra.Command {
 
 	stakingTxCmd.AddCommand(
 		NewCreateValidatorWithVRFCmd(valAddrCodec),
-		// NewCreateValidatorCmd(valAddrCodec),
 		stakingcli.NewEditValidatorCmd(valAddrCodec),
 		stakingcli.NewDelegateCmd(valAddrCodec, ac),
 		stakingcli.NewRedelegateCmd(valAddrCodec, ac),

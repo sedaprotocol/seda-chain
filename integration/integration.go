@@ -103,7 +103,10 @@ func NewIntegrationApp(
 		}
 	}
 
-	bApp.Commit()
+	_, err := bApp.Commit()
+	if err != nil {
+		panic(err)
+	}
 
 	ctx := sdkCtx.WithBlockHeader(cmtproto.Header{ChainID: appName, Time: time.Now()}).WithIsCheckTx(true)
 
@@ -130,7 +133,11 @@ func (app *IntegationApp) RunMsg(msg sdk.Msg, option ...integration.Option) (*co
 	}
 
 	if cfg.AutomaticCommit {
-		defer app.Commit()
+		defer func() {
+			if _, err := app.Commit(); err != nil {
+				fmt.Println("error while committing:", err)
+			}
+		}()
 	}
 
 	if cfg.AutomaticFinalizeBlock {

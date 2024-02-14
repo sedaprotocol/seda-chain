@@ -13,6 +13,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	sdkvestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/x/vesting/types"
 )
@@ -177,7 +178,7 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 	clawedBackUnbonding := sdk.NewCoins()
 	clawedBackBonded := sdk.NewCoins()
 	toClawBack = toClawBack.Sub(toXfer...)
-	if !toClawBack.IsZero() { // TO-DO only allow bondDenom
+	if !toClawBack.IsZero() {
 		// claw back from staking (unbonding delegations then bonded delegations)
 		toClawBackStaking := toClawBack.AmountOf(bondDenom)
 
@@ -189,10 +190,13 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 		for _, unbonding := range unbondings {
 			valAddr, err := sdk.ValAddressFromBech32(unbonding.ValidatorAddress)
 			if err != nil {
-				panic(err)
+				return nil, err
 			}
 
-			transferred := m.sk.TransferUnbonding(ctx, vestingAccAddr, funderAddr, valAddr, toClawBackStaking)
+			transferred, err := m.sk.TransferUnbonding(ctx, vestingAccAddr, funderAddr, valAddr, toClawBackStaking)
+			if err != nil {
+				return nil, err
+			}
 
 			clawedBackUnbonding = clawedBackUnbonding.Add(sdk.NewCoin(bondDenom, transferred))
 			toClawBackStaking = toClawBackStaking.Sub(transferred)
@@ -211,12 +215,14 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 			for _, delegation := range delegations {
 				validatorAddr, err := sdk.ValAddressFromBech32(delegation.ValidatorAddress)
 				if err != nil {
-					panic(err) // shouldn't happen
+					return nil, err
 				}
 				validator, err := m.sk.GetValidator(ctx, validatorAddr)
 				if err != nil {
+					if err != stakingtypes.ErrNoValidatorFound {
+						return nil, err
+					}
 					// validator has been removed
-					// TO-DO more specific check?
 					continue
 				}
 				wantShares, err := validator.SharesFromTokensTruncated(toClawBackStaking)
@@ -227,7 +233,7 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 
 				transferredShares, err := m.sk.TransferDelegation(ctx, vestingAccAddr, funderAddr, validatorAddr, wantShares)
 				if err != nil {
-					panic(err) // shouldn't happen TO-DO
+					return nil, err
 				}
 
 				// to be conservative in what we're clawing back, round transferred shares up

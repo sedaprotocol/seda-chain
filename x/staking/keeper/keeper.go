@@ -24,31 +24,35 @@ func (k *Keeper) SetHooks(sh types.StakingHooks) {
 	k.Keeper.SetHooks(sh)
 }
 
+// NOTE: This code was taken from
+// https://github.com/agoric-labs/cosmos-sdk/blob/f42d86980ddfc07869846c391a03622cbd7e9188/x/staking/keeper/delegation.go#L701
+// with slight modifications.
+//
 // TransferDelegation changes the ownership of at most the desired number of shares.
 // Returns the actual number of shares transferred. Will also transfer redelegation
 // entries to ensure that all redelegations are matched by sufficient shares.
 // Note that no tokens are transferred to or from any pool or account, since no
 // delegation is actually changing state.
 func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.AccAddress, valAddr sdk.ValAddress, wantShares math.LegacyDec) (math.LegacyDec, error) {
-	transferred := math.LegacyZeroDec() // TO-DO
+	transferred := math.LegacyZeroDec()
 
 	// sanity checks
 	if !wantShares.IsPositive() {
 		return transferred, nil
 	}
 	validator, err := k.GetValidator(ctx, valAddr)
-	if err != nil { // TO-DO more specific check?
+	if err != nil {
 		return transferred, nil
 	}
 	delFrom, err := k.GetDelegation(ctx, fromAddr, valAddr)
-	if err != nil { // TO-DO more specific check?
+	if err != nil {
 		return transferred, nil
 	}
 
 	// Check redelegation entry limits while we can still return early.
 	// Assume the worst case that we need to transfer all redelegation entries
 	mightExceedLimit := false
-	k.IterateDelegatorRedelegations(ctx, fromAddr, func(toRedelegation types.Redelegation) (stop bool) {
+	err = k.IterateDelegatorRedelegations(ctx, fromAddr, func(toRedelegation types.Redelegation) (stop bool) {
 		// There's no redelegation index by delegator and dstVal or vice-versa.
 		// The minimum cardinality is to look up by delegator, so scan and skip.
 		if toRedelegation.ValidatorDstAddress != valAddr.String() {
@@ -57,18 +61,15 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 
 		maxEntries, err := k.MaxEntries(ctx)
 		if err != nil {
-			// TO-DO
 			panic(err)
 		}
 
 		valSrcAddr, err := sdk.ValAddressFromBech32(toRedelegation.ValidatorSrcAddress)
 		if err != nil {
-			// TO-DO
 			panic(err)
 		}
 		valDstAddr, err := sdk.ValAddressFromBech32(toRedelegation.ValidatorDstAddress)
 		if err != nil {
-			// TO-DO
 			panic(err)
 		}
 
@@ -79,6 +80,9 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 		}
 		return false
 	})
+	if err != nil {
+		return transferred, nil
+	}
 	if mightExceedLimit {
 		// avoid types.ErrMaxRedelegationEntries
 		return transferred, nil
@@ -96,34 +100,51 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 	if err != nil {
 		if err == types.ErrNoDelegation { // TO-DO
 			delTo = types.NewDelegation(toAddr.String(), validator.GetOperator(), math.LegacyZeroDec())
-			k.Hooks().BeforeDelegationCreated(ctx, toAddr, valAddr)
+			err = k.Hooks().BeforeDelegationCreated(ctx, toAddr, valAddr)
 		} else {
 			return transferred, err
 		}
 	} else {
-		k.Hooks().BeforeDelegationSharesModified(ctx, toAddr, valAddr)
+		err = k.Hooks().BeforeDelegationSharesModified(ctx, toAddr, valAddr)
 	}
-	// if !found {
-	// 	delTo = types.NewDelegation(toAddr, validator.GetOperator(), sdk.ZeroDec())
-	// }
-	// if found {
-	// 	k.BeforeDelegationSharesModified(ctx, toAddr, validator.GetOperator())
-	// } else {
-	// 	k.BeforeDelegationCreated(ctx, toAddr, validator.GetOperator())
-	// }
+	if err != nil {
+		return transferred, nil
+	}
+
 	delTo.Shares = delTo.Shares.Add(transferred)
-	k.SetDelegation(ctx, delTo)
-	k.Hooks().AfterDelegationModified(ctx, toAddr, valAddr)
+	err = k.SetDelegation(ctx, delTo)
+	if err != nil {
+		return transferred, nil
+	}
+	err = k.Hooks().AfterDelegationModified(ctx, toAddr, valAddr)
+	if err != nil {
+		return transferred, nil
+	}
 
 	// Update source delegation
 	if remaining.IsZero() {
-		k.Hooks().BeforeDelegationRemoved(ctx, fromAddr, valAddr)
-		k.RemoveDelegation(ctx, delFrom)
+		err = k.Hooks().BeforeDelegationRemoved(ctx, fromAddr, valAddr)
+		if err != nil {
+			return transferred, nil
+		}
+		err = k.RemoveDelegation(ctx, delFrom)
+		if err != nil {
+			return transferred, nil
+		}
 	} else {
-		k.Hooks().BeforeDelegationSharesModified(ctx, fromAddr, valAddr)
+		err = k.Hooks().BeforeDelegationSharesModified(ctx, fromAddr, valAddr)
+		if err != nil {
+			return transferred, nil
+		}
 		delFrom.Shares = remaining
-		k.SetDelegation(ctx, delFrom)
-		k.Hooks().AfterDelegationModified(ctx, fromAddr, valAddr)
+		err = k.SetDelegation(ctx, delFrom)
+		if err != nil {
+			return transferred, nil
+		}
+		err = k.Hooks().AfterDelegationModified(ctx, fromAddr, valAddr)
+		if err != nil {
+			return transferred, nil
+		}
 	}
 
 	// If there are not enough remaining shares to be responsible for
@@ -181,9 +202,12 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 					entry.CreationHeight, entry.CompletionTime, entry.InitialBalance, math.LegacyZeroDec(), sharesToSend,
 				)
 				if err != nil {
-					panic(err) // TO-DO
+					return transferred, err
 				}
-				k.InsertRedelegationQueue(ctx, toRed, entry.CompletionTime)
+				err = k.InsertRedelegationQueue(ctx, toRed, entry.CompletionTime)
+				if err != nil {
+					return transferred, err
+				}
 				redelegation.RemoveEntry(int64(i))
 				i--
 				// okay to leave an obsolete entry in the queue for the removed entry
@@ -198,9 +222,12 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 					entry.CreationHeight, entry.CompletionTime, balanceToSend, math.LegacyZeroDec(), sharesToSend,
 				)
 				if err != nil {
-					panic(err) // TO-DO
+					return transferred, err
 				}
-				k.InsertRedelegationQueue(ctx, toRed, entry.CompletionTime)
+				err = k.InsertRedelegationQueue(ctx, toRed, entry.CompletionTime)
+				if err != nil {
+					return transferred, err
+				}
 				entry.InitialBalance = balanceToKeep
 				entry.SharesDst = sharesToKeep
 				redelegation.Entries[i] = entry
@@ -211,28 +238,32 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 		}
 		if redelegationModified {
 			if entriesRemaining {
-				k.SetRedelegation(ctx, redelegation)
+				err = k.SetRedelegation(ctx, redelegation)
 			} else {
-				k.RemoveRedelegation(ctx, redelegation)
+				err = k.RemoveRedelegation(ctx, redelegation)
+			}
+			if err != nil {
+				return transferred, err
 			}
 		}
 	}
 	return transferred, nil
 }
 
+// NOTE: This code was taken from
+// https://github.com/agoric-labs/cosmos-sdk/blob/f42d86980ddfc07869846c391a03622cbd7e9188/x/staking/keeper/delegation.go#L979
+// with slight modifications.
+//
 // TransferUnbonding changes the ownership of UnbondingDelegation entries
 // until the desired number of tokens have changed hands. Returns the actual
 // number of tokens transferred.
-func (k Keeper) TransferUnbonding(ctx context.Context, fromAddr, toAddr sdk.AccAddress, valAddr sdk.ValAddress, wantAmt math.Int) math.Int {
+func (k Keeper) TransferUnbonding(ctx context.Context, fromAddr, toAddr sdk.AccAddress, valAddr sdk.ValAddress, wantAmt math.Int) (math.Int, error) {
 	transferred := math.ZeroInt()
 	ubdFrom, err := k.GetUnbondingDelegation(ctx, fromAddr, valAddr)
-	// if !found {
-	// 	return transferred
-	// }
 	if err != nil {
-		// TO-DO
-		return transferred
+		return transferred, err
 	}
+
 	ubdFromModified := false
 
 	for i := 0; i < len(ubdFrom.Entries) && wantAmt.IsPositive(); i++ {
@@ -245,16 +276,23 @@ func (k Keeper) TransferUnbonding(ctx context.Context, fromAddr, toAddr sdk.AccA
 			continue
 		}
 
-		if k.HasMaxUnbondingDelegationEntries(ctx, toAddr, valAddr) {
+		maxed, err := k.HasMaxUnbondingDelegationEntries(ctx, toAddr, valAddr)
+		if err != nil {
+			return transferred, err
+		}
+		if maxed {
 			// TODO pre-compute the maximum entries we can add rather than checking each time
 			break
 		}
 		ubdTo, err := k.SetUnbondingDelegationEntry(ctx, toAddr, valAddr, entry.CreationHeight, entry.CompletionTime, toXfer)
 		if err != nil {
-			// TO-DO
-			panic(err)
+			return transferred, err
 		}
-		k.InsertUBDQueue(ctx, ubdTo, entry.CompletionTime)
+		err = k.InsertUBDQueue(ctx, ubdTo, entry.CompletionTime)
+		if err != nil {
+			return transferred, err
+		}
+
 		transferred = transferred.Add(toXfer)
 		wantAmt = wantAmt.Sub(toXfer)
 
@@ -271,28 +309,13 @@ func (k Keeper) TransferUnbonding(ctx context.Context, fromAddr, toAddr sdk.AccA
 
 	if ubdFromModified {
 		if len(ubdFrom.Entries) == 0 {
-			k.RemoveUnbondingDelegation(ctx, ubdFrom)
+			err = k.RemoveUnbondingDelegation(ctx, ubdFrom)
 		} else {
-			k.SetUnbondingDelegation(ctx, ubdFrom)
+			err = k.SetUnbondingDelegation(ctx, ubdFrom)
+		}
+		if err != nil {
+			return transferred, err
 		}
 	}
-	return transferred
-}
-
-// HasMaxUnbondingDelegationEntries - check if unbonding delegation has maximum number of entries.
-func (k Keeper) HasMaxUnbondingDelegationEntries(ctx context.Context, delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress) bool {
-	ubd, err := k.GetUnbondingDelegation(ctx, delegatorAddr, validatorAddr)
-	// if !found {
-	// 	return false
-	// }
-	if err != nil {
-		// TO-DO
-		return false
-	}
-	maxEntries, err := k.MaxEntries(ctx)
-	if err != nil {
-		// TO-DO
-		panic(err)
-	}
-	return len(ubd.Entries) >= int(maxEntries)
+	return transferred, nil
 }
