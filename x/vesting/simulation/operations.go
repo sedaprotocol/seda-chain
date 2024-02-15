@@ -221,7 +221,7 @@ func simulateMsgDelegate(
 	originalVesting sdk.Coins,
 ) simtypes.Operation {
 	return func(
-		r *rand.Rand, _ *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+		r *rand.Rand, _ *baseapp.BaseApp, ctx sdk.Context, _ []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		msgType := sdk.MsgTypeURL(&stakingtypes.MsgDelegate{})
 		denom, err := sk.BondDenom(ctx)
