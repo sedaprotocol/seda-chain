@@ -63,7 +63,7 @@ func SimulateMsgCreateVestingAccount(
 	txGen client.TxConfig,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	sk types.StakingKeeper,
+	_ types.StakingKeeper,
 ) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
@@ -211,6 +211,7 @@ func SimulateMsgClawback(
 	}
 }
 
+// nolint:unused
 func simulateMsgDelegate(
 	_ client.TxConfig,
 	_ types.AccountKeeper,
@@ -303,6 +304,7 @@ func simulateMsgDelegate(
 	}
 }
 
+// nolint:unused
 func simulateMsgClawbackFutureOp(
 	txGen client.TxConfig,
 	ak types.AccountKeeper,
