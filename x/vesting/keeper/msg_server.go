@@ -65,13 +65,16 @@ func (m msgServer) CreateVestingAccount(goCtx context.Context, msg *types.MsgCre
 	}
 
 	baseAccount := authtypes.NewBaseAccountWithAddress(to)
-	baseAccount = m.ak.NewAccount(ctx, baseAccount).(*authtypes.BaseAccount) // TO-DO what is this
+	baseAccount = m.ak.NewAccount(ctx, baseAccount).(*authtypes.BaseAccount)
 	baseVestingAccount, err := sdkvestingtypes.NewBaseVestingAccount(baseAccount, msg.Amount.Sort(), msg.EndTime)
 	if err != nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
 	vestingAccount := types.NewClawbackContinuousVestingAccountRaw(baseVestingAccount, ctx.BlockTime().Unix(), msg.FromAddress)
+	if msg.DisableClawback {
+		vestingAccount.FunderAddress = ""
+	}
 
 	m.ak.SetAccount(ctx, vestingAccount)
 
@@ -131,6 +134,9 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 	}
 	if vestingAccount.GetVestingCoins(ctx.BlockTime()).IsZero() {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "account %s does not have currently vesting coins", msg.AccountAddress)
+	}
+	if vestingAccount.FunderAddress == "" {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "vesting account has no funder registered (clawback disabled): %s", msg.AccountAddress)
 	}
 	if vestingAccount.FunderAddress != msg.FunderAddress {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "clawback can only be requested by original funder: %s", vestingAccount.FunderAddress)

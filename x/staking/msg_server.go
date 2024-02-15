@@ -25,7 +25,6 @@ func NewMsgServerImpl(keeper *stakingkeeper.Keeper, accKeeper types.AccountKeepe
 }
 
 func (k msgServer) CreateValidator(ctx context.Context, msg *stakingtypes.MsgCreateValidator) (*stakingtypes.MsgCreateValidatorResponse, error) {
-	// TO-DO disable?
 	return k.MsgServer.CreateValidator(ctx, msg)
 }
 

@@ -39,6 +39,9 @@ message MsgCreateVestingAccount {
 
   // end of vesting as unix time (in seconds).
   int64 end_time = 4;
+
+  // if true, leave funder field empty and disable clawback
+  bool disable_clawback = 5;
 }
 
 // MsgCreateVestingAccountResponse defines the CreateVestingAccount response

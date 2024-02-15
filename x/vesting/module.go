@@ -3,14 +3,14 @@ package vesting
 import (
 	"encoding/json"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+
 	"cosmossdk.io/core/address"
 	"cosmossdk.io/core/appmodule"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

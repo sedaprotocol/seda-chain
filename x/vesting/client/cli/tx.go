@@ -17,6 +17,8 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/vesting/types"
 )
 
+const FlagDisableClawback = "disable-clawback"
+
 // GetTxCmd returns vesting module's transaction commands.
 func GetTxCmd(ac address.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
@@ -70,11 +72,14 @@ The end_time must be provided as a UNIX epoch timestamp.`,
 				return err
 			}
 
-			msg := types.NewMsgCreateVestingAccount(clientCtx.GetFromAddress(), toAddr, amount, endTime)
+			disableClawback, _ := cmd.Flags().GetBool(FlagDisableClawback)
+
+			msg := types.NewMsgCreateVestingAccount(clientCtx.GetFromAddress(), toAddr, amount, endTime, disableClawback)
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
+	cmd.Flags().Bool(FlagDisableClawback, false, "Disable clawback")
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
@@ -86,9 +91,7 @@ func NewMsgClawbackCmd() *cobra.Command {
 		Use:   "clawback [address]",
 		Short: "Transfer vesting (un-vested) amount out of a vesting account.",
 		Long: `Must be requested by the funder address associated with the vesting account (--from).
-		
-		
-		Delegated or undelegating staking tokens will be transferred in the delegated (undelegating) state.
+		Bonded and unbonding tokens will be transferred in bonded and unbonding states, respectively.
 		The recipient is vulnerable to slashing, and must act to unbond the tokens if desired.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

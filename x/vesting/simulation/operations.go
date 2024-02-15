@@ -24,7 +24,7 @@ const (
 	OpWeightMsgClawback             = "op_weight_msg_clawback"               //nolint:gosec
 
 	DefaultWeightMsgCreateVestingAccount = 100
-	DefaultWeightMsgClawback             = 100
+	DefaultWeightMsgClawback             = 75
 )
 
 // WeightedOperations returns all the operations from the module with their respective weights
@@ -101,6 +101,7 @@ func SimulateMsgCreateVestingAccount(
 			recipient.Address,
 			sendCoins,
 			ctx.BlockTime().Unix()+1000,
+			false,
 		)
 
 		tx, err := simtestutil.GenSignedMockTx(
