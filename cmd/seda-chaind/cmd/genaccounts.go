@@ -18,12 +18,15 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+
+	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
 )
 
 const (
 	flagVestingStart = "vesting-start-time"
 	flagVestingEnd   = "vesting-end-time"
 	flagVestingAmt   = "vesting-amount"
+	flagFunder       = "funder"
 )
 
 // addGenesisAccountCmd returns add-genesis-account cobra Command.
@@ -111,14 +114,17 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 					return errors.New("vesting amount cannot be greater than total amount")
 				}
 
-				switch {
-				case vestingStart != 0 && vestingEnd != 0:
-					genAccount = authvesting.NewContinuousVestingAccountRaw(baseVestingAccount, vestingStart)
-
-				case vestingEnd != 0:
-					genAccount = authvesting.NewDelayedVestingAccountRaw(baseVestingAccount)
-
-				default:
+				if vestingEnd != 0 && vestingStart != 0 {
+					funder, err := cmd.Flags().GetString(flagFunder)
+					if err != nil {
+						return err
+					}
+					funderAddr, err := sdk.AccAddressFromBech32(funder)
+					if err != nil {
+						return errors.New("funder of vesting account must be provided using from flag")
+					}
+					genAccount = vestingtypes.NewClawbackContinuousVestingAccountRaw(baseVestingAccount, vestingStart, funderAddr.String())
+				} else {
 					return errors.New("invalid vesting parameters; must supply start and end time or end time")
 				}
 			} else {
@@ -190,6 +196,7 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 	cmd.Flags().String(flagVestingAmt, "", "amount of coins for vesting accounts")
 	cmd.Flags().Int64(flagVestingStart, 0, "schedule start time (unix epoch) for vesting accounts")
 	cmd.Flags().Int64(flagVestingEnd, 0, "schedule end time (unix epoch) for vesting accounts")
+	cmd.Flags().String(flagFunder, "", "funder address for creating clawback vesting account")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
