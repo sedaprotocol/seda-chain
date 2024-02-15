@@ -1,7 +1,7 @@
 FROM alpine:latest
 ARG TARGETARCH
 
-RUN mkdir -p /seda-chain/.seda
+RUN mkdir -p /seda-chain/.sedad
 COPY ./build/sedad-${TARGETARCH} /bin/sedad
 
 RUN apk add --no-cache bash expect jq

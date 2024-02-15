@@ -7,7 +7,7 @@ WASMVM_VERSION=v1.5.2
 
 LOCAL_BIN=$(git rev-parse --show-toplevel)/build/sedad # chain binary executable on your machine
 
-HOME_DIR=$HOME/.seda # chain directory
+HOME_DIR=$HOME/.sedad # chain directory
 HOME_CONFIG_DIR=$HOME_DIR/config # chain config directory
 
 NODE_DIR=./$CHAIN_ID-nodes # where node directories will be created

@@ -109,11 +109,11 @@ fi
 echo "Initializing Node ..."
 
 # # Give docker image permission to write to the seda-chain config directory
-# chmod -R a+w /seda-chain/.seda
+# chmod -R a+w /seda-chain/.sedad
 
 # Check if configuration directory seda-chain config directory exist if it does not
 # exist initialize the node with the given MNEMONIC, MONIKER and NETWORK
-if ! [ -f /seda-chain/.seda/config/genesis.json ]; then
+if ! [ -f /seda-chain/.sedad/config/genesis.json ]; then
     echo "Setting Up seda configuration"
     echo $MNEMONIC | $BIN join ${MONIKER} --network ${NETWORK} --recover
   else

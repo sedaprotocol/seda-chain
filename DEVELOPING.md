@@ -132,7 +132,7 @@ make build
 BIN=./build/sedad
 
 $BIN tendermint unsafe-reset-all
-rm -rf ~/.seda
+rm -rf ~/.sedad
 
 $BIN init node0 --default-denom aseda --chain-id seda-1-local
 

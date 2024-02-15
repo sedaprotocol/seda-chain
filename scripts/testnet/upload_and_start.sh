@@ -80,10 +80,10 @@ for i in ${!IPS[@]}; do
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -f /var/log/seda-chain-error.log'
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -f /var/log/seda-chain-output.log'
 
-	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -rf /home/ec2-user/.seda'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -rf /home/ec2-user/.sedad'
 
 	# upload node files
-	scp -i $SSH_KEY -r $NODE_DIR/node$i ec2-user@${IPS[$i]}:/home/ec2-user/.seda
+	scp -i $SSH_KEY -r $NODE_DIR/node$i ec2-user@${IPS[$i]}:/home/ec2-user/.sedad
 
 	# upload chain binary built for the corresponding architecture
 	LINUX_BIN=$NODE_DIR/sedad-amd64
@@ -93,11 +93,11 @@ for i in ${!IPS[@]}; do
 		LINUX_BIN=$NODE_DIR/sedad-arm64
 	fi
 	
-	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'mkdir -p /home/ec2-user/.seda/cosmovisor/genesis/bin'
-	scp -i $SSH_KEY $LINUX_BIN ec2-user@${IPS[$i]}:/home/ec2-user/.seda/cosmovisor/genesis/bin/sedad
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'mkdir -p /home/ec2-user/.sedad/cosmovisor/genesis/bin'
+	scp -i $SSH_KEY $LINUX_BIN ec2-user@${IPS[$i]}:/home/ec2-user/.sedad/cosmovisor/genesis/bin/sedad
 
 	# start
-	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'chmod 755 /home/ec2-user/.seda/cosmovisor/genesis/bin/sedad'
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'chmod 755 /home/ec2-user/.sedad/cosmovisor/genesis/bin/sedad'
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo systemctl daemon-reload'
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo systemctl start seda-node.service'
 done

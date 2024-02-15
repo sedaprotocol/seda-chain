@@ -205,7 +205,7 @@ func init() {
 
 	sdk.DefaultPowerReduction = sdkmath.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(appparams.SedaExponent), nil))
 
-	DefaultNodeHome = filepath.Join(userHomeDir, ".seda")
+	DefaultNodeHome = filepath.Join(userHomeDir, ".sedad")
 }
 
 // App extends an ABCI application, but with most of its parameters exported.

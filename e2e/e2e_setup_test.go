@@ -36,7 +36,7 @@ const (
 	txCommand              = "tx"
 	queryCommand           = "query"
 	keysCommand            = "keys"
-	containerChainHomePath = "/seda-chain/.seda"
+	containerChainHomePath = "/seda-chain/.sedad"
 	containerHomePath      = "/seda-chain/"
 	containerWasmDirPath   = "/seda-chain/testwasms"
 	localWasmDirPath       = "../testutil/testwasms" // relative path is ok

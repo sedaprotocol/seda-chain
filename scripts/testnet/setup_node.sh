@@ -33,8 +33,8 @@ if ! which cosmovisor >/dev/null; then
 	rm -rf ./tmp
 
 	echo 'export DAEMON_NAME=sedad' >> $HOME/.bashrc
-	echo 'export DAEMON_HOME=$HOME/.seda' >> $HOME/.bashrc
-	echo 'export DAEMON_DATA_BACKUP_DIR=$HOME/.seda' >> $HOME/.bashrc
+	echo 'export DAEMON_HOME=$HOME/.sedad' >> $HOME/.bashrc
+	echo 'export DAEMON_DATA_BACKUP_DIR=$HOME/.sedad' >> $HOME/.bashrc
 	echo 'export DAEMON_ALLOW_DOWNLOAD_BINARIES=false' >> $HOME/.bashrc
 	echo 'export DAEMON_RESTART_AFTER_UPGRADE=true' >> $HOME/.bashrc
 	echo 'export UNSAFE_SKIP_BACKUP=false' >> $HOME/.bashrc
@@ -42,7 +42,7 @@ if ! which cosmovisor >/dev/null; then
 	echo 'export DAEMON_RESTART_DELAY=30s' >> $HOME/.bashrc
 	echo 'export DAEMON_LOG_BUFFER_SIZE=512' >> $HOME/.bashrc
 	echo 'export DAEMON_PREUPGRADE_MAX_RETRIES=0' >> $HOME/.bashrc
-	echo 'export PATH=$PATH:$HOME/.seda/cosmovisor/current/bin' >> $HOME/.bashrc
+	echo 'export PATH=$PATH:$HOME/.sedad/cosmovisor/current/bin' >> $HOME/.bashrc
 
 	source $HOME/.bashrc
 fi
@@ -65,8 +65,8 @@ After=network-online.target
 
 [Service]
 Environment="DAEMON_NAME=sedad"
-Environment="DAEMON_HOME=$HOME/.seda"
-Environment="DAEMON_DATA_BACKUP_DIR=$HOME/.seda"
+Environment="DAEMON_HOME=$HOME/.sedad"
+Environment="DAEMON_DATA_BACKUP_DIR=$HOME/.sedad"
 
 Environment="DAEMON_ALLOW_DOWNLOAD_BINARIES=false"
 Environment="DAEMON_RESTART_AFTER_UPGRADE=true"

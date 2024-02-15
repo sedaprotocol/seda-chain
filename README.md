@@ -92,7 +92,7 @@ chmod +x sedad-${ARCH}
 
 <!-- reset the chain -->
 ./sedad-${ARCH} tendermint unsafe-reset-all
-rm -rf ~/.seda || true
+rm -rf ~/.sedad || true
 
 <!-- create your operator key -->
 ./sedad-${ARCH} keys add <key-name>
@@ -166,7 +166,7 @@ Then, add these lines to your profile (maybe `.profile`, `.zprofile`, or somethi
 ```
 echo "# Cosmovisor Setup" >> ~/.profile
 echo "export DAEMON_NAME=sedad" >> ~/.profile
-echo "export DAEMON_HOME=$HOME/.seda" >> ~/.profile
+echo "export DAEMON_HOME=$HOME/.sedad" >> ~/.profile
 echo "export DAEMON_ALLOW_DOWNLOAD_BINARIES=false" >> ~/.profile
 echo "export DAEMON_LOG_BUFFER_SIZE=512" >> ~/.profile
 echo "export DAEMON_RESTART_AFTER_UPGRADE=true" >> ~/.profile
