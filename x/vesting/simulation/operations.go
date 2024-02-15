@@ -211,7 +211,7 @@ func SimulateMsgClawback(
 	}
 }
 
-// nolint:unused
+//nolint:unused
 func simulateMsgDelegate(
 	_ client.TxConfig,
 	_ types.AccountKeeper,
@@ -221,7 +221,7 @@ func simulateMsgDelegate(
 	originalVesting sdk.Coins,
 ) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+		r *rand.Rand, _ *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		msgType := sdk.MsgTypeURL(&stakingtypes.MsgDelegate{})
 		denom, err := sk.BondDenom(ctx)
@@ -304,7 +304,7 @@ func simulateMsgDelegate(
 	}
 }
 
-// nolint:unused
+//nolint:unused
 func simulateMsgClawbackFutureOp(
 	txGen client.TxConfig,
 	ak types.AccountKeeper,
