@@ -37,24 +37,24 @@ func WeightedOperations(
 	sk types.StakingKeeper,
 ) simulation.WeightedOperations {
 	var weightMsgCreateVestingAccount int
-	// var weightMsgClawback int
+	var weightMsgClawback int
 
 	appParams.GetOrGenerate(OpWeightMsgCreateVestingAccount, &weightMsgCreateVestingAccount, nil, func(_ *rand.Rand) {
 		weightMsgCreateVestingAccount = DefaultWeightMsgCreateVestingAccount
 	})
-	// appParams.GetOrGenerate(OpWeightMsgClawback, &weightMsgClawback, nil, func(_ *rand.Rand) {
-	// 	weightMsgClawback = DefaultWeightMsgClawback
-	// })
+	appParams.GetOrGenerate(OpWeightMsgClawback, &weightMsgClawback, nil, func(_ *rand.Rand) {
+		weightMsgClawback = DefaultWeightMsgClawback
+	})
 
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			weightMsgCreateVestingAccount,
 			SimulateMsgCreateVestingAccount(txGen, ak, bk, sk),
 		),
-		// simulation.NewWeightedOperation(
-		// 	weightMsgClawback,
-		// 	SimulateMsgClawback(txGen, ak, bk, sk),
-		// ),
+		simulation.NewWeightedOperation(
+			weightMsgClawback,
+			SimulateMsgClawback(txGen, ak, bk, sk),
+		),
 	}
 }
 
@@ -123,21 +123,22 @@ func SimulateMsgCreateVestingAccount(
 			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to deliver tx"), nil, err
 		}
 
-		// future operations
+		// TO-DO activate future operations
+		// // future operations
 		var futureOps []simtypes.FutureOperation
-		// recipient stakes
-		op := simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoins)
-		futureOps = append(futureOps, simtypes.FutureOperation{
-			BlockHeight: int(ctx.BlockHeight()) + 1,
-			Op:          op,
-		})
+		// // recipient stakes
+		// op := simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoins)
+		// futureOps = append(futureOps, simtypes.FutureOperation{
+		// 	BlockHeight: int(ctx.BlockHeight()) + 1,
+		// 	Op:          op,
+		// })
 
-		// then funder claws back
-		op2 := simulateMsgClawbackFutureOp(txGen, ak, bk, sk, recipient, funder)
-		futureOps = append(futureOps, simtypes.FutureOperation{
-			BlockHeight: int(ctx.BlockHeight()) + 1,
-			Op:          op2,
-		})
+		// // then funder claws back
+		// op2 := simulateMsgClawbackFutureOp(txGen, ak, bk, sk, recipient, funder)
+		// futureOps = append(futureOps, simtypes.FutureOperation{
+		// 	BlockHeight: int(ctx.BlockHeight()) + 1,
+		// 	Op:          op2,
+		// })
 
 		return simtypes.NewOperationMsg(msg, true, ""), futureOps, nil
 	}
