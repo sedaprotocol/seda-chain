@@ -1,9 +1,24 @@
 {
     "members": [
         {
-            "address": "seda1g4tlruupkv9kp2n8fx5w70lscjkauy34vzutxs",
+            "address": "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
             "weight": "1",
-            "metadata": "testnet_faucet"
+            "metadata": "testnet_hy"
+        },
+        {
+            "address": "seda1me08j60dfmxwcftpp6jq9cgeapws3e6268a8ng",
+            "weight": "1",
+            "metadata": "testnet_jasper"
+        },
+        {
+            "address": "seda1cz4xdt254kpl09sf3y7qh2djaf6c9zqgyfnfp9",
+            "weight": "1",
+            "metadata": "testnet_mario"
+        },
+        {
+            "address": "seda1jd2q0mz0vzs75tp7lyuzf9064zccddgs8utjr5",
+            "weight": "1",
+            "metadata": "testnet_franklin"
         },
         {
             "address": "seda1xd04svzj6zj93g4eknhp6aq2yyptagcc2zeetj",

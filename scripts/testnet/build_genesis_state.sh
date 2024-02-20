@@ -146,7 +146,12 @@ sleep 20
 
 # Create group and group policy
 if [ $ADD_GROUPS = true ]; then
-  $LOCAL_BIN tx group create-group-with-policy $ADMIN_ADDR "ipfs://not_real_metadata" "{\"name\":\"quick turnaround\",\"description\":\"\"}" $MEMBERS_JSON_FILE $POLICY_JSON_FILE --home $TMP_HOME --from $ADMIN_ADDR --keyring-backend test --chain-id $TEMP_CHAIN_ID -y
+  # add security group
+  $LOCAL_BIN tx group create-group-with-policy $ADMIN_ADDR "Security Group" "{\"name\":\"Security Group Policy\",\"description\":\"\"}" $MEMBERS_JSON_FILE $POLICY_JSON_FILE --home $TMP_HOME --from $ADMIN_ADDR --keyring-backend test --chain-id $TEMP_CHAIN_ID -y
+  sleep 10
+
+  # add treasury group
+  $LOCAL_BIN tx group create-group-with-policy $ADMIN_ADDR "Treasury Group" "{\"name\":\"Treasury Group Policy\",\"description\":\"\"}" $MEMBERS_JSON_FILE $POLICY_JSON_FILE --home $TMP_HOME --from $ADMIN_ADDR --keyring-backend test --chain-id $TEMP_CHAIN_ID -y
   sleep 10
 fi
 
@@ -185,12 +190,12 @@ cp $ORIGINAL_GENESIS $TMP_GENESIS # make adjustments on TMP_GENESIS until replac
 # Modify group state and wasm code upload params
 if [ $ADD_GROUPS = true ]; then
   jq '.app_state["group"]' $EXPORTED_GENESIS > $TMP_HOME/group.tmp
-  GROUP_POLICY_ADDR=$(jq '.app_state["group"]["group_policies"][0]["address"]' $EXPORTED_GENESIS)
+  SECURITY_GROUP_POLICY_ADDR=$(jq '.app_state["group"]["group_policies"][1]["address"]' $EXPORTED_GENESIS)
 
   jq --slurpfile group $TMP_HOME/group.tmp '.app_state["group"] = $group[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
   jq '.app_state["wasm"]["params"]["code_upload_access"]["permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
   jq '.app_state["wasm"]["params"]["instantiate_default_permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  jq '.app_state["wasm"]["params"]["code_upload_access"]["addresses"]=['$GROUP_POLICY_ADDR']' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '.app_state["wasm"]["params"]["code_upload_access"]["addresses"]=['$SECURITY_GROUP_POLICY_ADDR']' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 fi
 
 # Modify wasm codes, contracts, and sequences. 
@@ -209,5 +214,6 @@ fi
 mv $TMP_GENESIS $ORIGINAL_GENESIS
 
 # clean up
-rm -rf $TMP_HOME
+# rm -rf $TMP_HOME
+# echo $TMP_HOME
 rm chain_output.log

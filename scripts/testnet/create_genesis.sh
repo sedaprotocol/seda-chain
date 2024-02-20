@@ -41,10 +41,10 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["distribution"]["params"][
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["distribution"]["params"]["bonus_proposer_reward"]="0.040000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 # gov params
-cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="180s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
-cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="180s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
-cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["expedited_voting_period"]="150s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
-cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["max_deposit_period"]="180s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="432000s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="432000s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+# cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["expedited_voting_period"]="432000s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["max_deposit_period"]="432000s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["min_initial_deposit_ratio"]="0.010000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 # mint params
@@ -60,22 +60,21 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["slashing"]["params"]["sla
 # consensus params
 cat $HOME/.sedad/config/genesis.json | jq '.consensus["params"]["block"]["max_gas"]="100000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
-# TO-DO gov (intentionally adjusted for testing): voting_params.voting_period, params.voting_period, params.expedited_voting_period, min_deposit[0].amount, max_deposit_period
 # TO-DO wasm params
 
 #
 #   ADD GENESIS ACCOUNTS
 #
 for i in ${!GENESIS_ADDRESSES[@]}; do
-    $LOCAL_BIN add-genesis-account ${GENESIS_ADDRESSES[$i]} 100000000000000000seda
+    $LOCAL_BIN add-genesis-account ${GENESIS_ADDRESSES[$i]} 2000000seda --vesting-amount 1000000seda --vesting-start-time 1708610400 --vesting-end-time 1716386400 --funder $FUNDER_ADDRESS # 2M (1M nonvesting - 1M vesting)
 done
 
 set +u
 if [ ! -z "$SATOSHI" ]; then
-    $LOCAL_BIN add-genesis-account $SATOSHI 10000000000000000000seda
+    $LOCAL_BIN add-genesis-account $SATOSHI 270000000seda # 270M
 fi
 if [ ! -z "$FAUCET" ]; then
-    $LOCAL_BIN add-genesis-account $FAUCET 1000000000000000000seda
+    $LOCAL_BIN add-genesis-account $FAUCET 700000000seda # 700M
 fi
 set -u
 
@@ -94,10 +93,18 @@ for i in ${!MONIKERS[@]}; do
 
     VALIDATOR_ADDRESS=$($LOCAL_BIN keys show ${MONIKERS[$i]} --keyring-backend test --home $INDIVIDUAL_VAL_HOME_DIR -a)
 
-    # to create their gentx
-    $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS 500000000000000000seda --home $INDIVIDUAL_VAL_HOME_DIR
-    # to output geneis file
-    $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS 500000000000000000seda
+    if [ -z ${VESTING_AMOUNTS[$i]} ]; then
+        # to create their gentx
+        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR
+        # to output geneis file
+        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]}
+    else
+        # to create their gentx
+        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR --vesting-amount ${VESTING_AMOUNTS[$i]} --vesting-start-time 1708610400 --vesting-end-time 1716386400 --funder $FUNDER_ADDRESS
+        # to output geneis file
+        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --vesting-amount ${VESTING_AMOUNTS[$i]} --vesting-start-time 1708610400 --vesting-end-time 1716386400 --funder $FUNDER_ADDRESS
+    fi
+
 
     $LOCAL_BIN gentx ${MONIKERS[$i]} ${SELF_DELEGATION_AMOUNTS[$i]} --moniker=${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR --ip=${IPS[$i]} --chain-id $CHAIN_ID
 
