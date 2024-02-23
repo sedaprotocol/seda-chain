@@ -110,7 +110,6 @@ func (m msgServer) CreateVestingAccount(goCtx context.Context, msg *types.MsgCre
 func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*types.MsgClawbackResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// NOTE: errors checked during msg validation
 	vestingAccAddr := sdk.MustAccAddressFromBech32(msg.AccountAddress)
 	funderAddr := sdk.MustAccAddressFromBech32(msg.FunderAddress)
 
