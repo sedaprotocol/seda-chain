@@ -85,26 +85,32 @@ When connecting externally, choose a trustworthy node operator. Unscrupulous ope
 ### Running the Node Yourself
 
 ```
+<!-- rename the downloaded binary to a simpler name -->
+mv sedad-${ARCH} sedad
+<!-- mv sedad-amd64 sedad -->
+<!-- mv sedad-arm64 sedad -->
+
 <!-- make the downloaded binary executable -->
-chmod +x sedad-${ARCH}
-<!-- chmod +x sedad-amd64 -->
-<!-- chmod +x sedad-arm64 -->
+chmod +x sedad
+
 
 <!-- reset the chain -->
-./sedad-${ARCH} tendermint unsafe-reset-all
+./sedad tendermint unsafe-reset-all
 rm -rf ~/.sedad || true
 
 <!-- create your operator key -->
-./sedad-${ARCH} keys add <key-name>
+./sedad keys add <key-name>
 
 <!-- initialize your node and join the network (optionally with an existing key using the recover flag) -->
-./sedad-${ARCH} join <moniker> --network <devnet|testnet> [--recover]
+./sedad join <moniker> --network <devnet|testnet> [--recover]
 
 <!-- start your node -->
-./sedad-${ARCH} start
+./sedad start
 ```
 
 ### Creating a validator
+
+We advise you against using Horcrux signing service as several validators have reported unstable signing. We suspect Horcrux is not yet stable under Cosmos SDK version 0.50.
 
 In order to create your validator, make sure you are fully synced to the latest block height of the network.
 
@@ -124,7 +130,7 @@ Create a `validator.json` file and fill in the create-validator tx parameters:
 
 ```
 {
- "pubkey": $(./sedad-${ARCH} tendermint show-validator),
+ "pubkey": $(./sedad tendermint show-validator),
  "amount": "1000000000000000000000000000000000aseda", 
  "moniker": "the moniker for your validator",
  "identity": "optional identity signature (ex. UPort or Keybase) This key will be used by block explorers to identify the validator.",
@@ -141,13 +147,13 @@ Create a `validator.json` file and fill in the create-validator tx parameters:
 Use the following command to create a validator:
 
 ```
-./sedad-${ARCH} tx staking create-validator validator.json --from <wallet-name> --chain-id <target-chain> --node <node-url>
+./sedad tx staking create-validator validator.json --from <wallet-name> --chain-id <target-chain> --node <node-url>
 ```
 
 That’s it now you can find your validator operator address using the following command, which you can advertise to receive delegations:
 
 ```
-./sedad-${ARCH} keys show <wallet-name> --bech val -a
+./sedad keys show <wallet-name> --bech val -a
 ```
 
 ### Running the Node with Cosmovisor
@@ -177,7 +183,7 @@ source ~/.profile
 Initialize Cosmovisor with the chain binary and start the node.
 
 ```
-cosmovisor init sedad-${ARCH}
+cosmovisor init sedad
 cosmovisor run start
 ```
 
