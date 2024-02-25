@@ -139,7 +139,7 @@ import (
 )
 
 const (
-	Name = "seda-chain"
+	Name = "seda"
 )
 
 var (
