@@ -93,7 +93,7 @@ func NewRootCmd() *cobra.Command {
 		WithViper("")
 
 	rootCmd := &cobra.Command{
-		Use:   app.Name + "d",
+		Use:   "sedad",
 		Short: "Start sedachain node",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs
