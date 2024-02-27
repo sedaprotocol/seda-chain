@@ -190,9 +190,17 @@ cp $ORIGINAL_GENESIS $TMP_GENESIS # make adjustments on TMP_GENESIS until replac
 # Modify group state and wasm code upload params
 if [ $ADD_GROUPS = true ]; then
   jq '.app_state["group"]' $EXPORTED_GENESIS > $TMP_HOME/group.tmp
+  TREASURY_GROUP_POLICY_ADDR=$(jq '.app_state["group"]["group_policies"][0]["address"]' $EXPORTED_GENESIS)
   SECURITY_GROUP_POLICY_ADDR=$(jq '.app_state["group"]["group_policies"][1]["address"]' $EXPORTED_GENESIS)
 
   jq --slurpfile group $TMP_HOME/group.tmp '.app_state["group"] = $group[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+
+  jq '.app_state["group"]["groups"][0]["admin"]="'$SECURITY_GROUP_POLICY_ADDR'"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '.app_state["group"]["group_policies"][1]["admin"]="'$SECURITY_GROUP_POLICY_ADDR'"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+
+  jq '.app_state["group"]["groups"][0]["admin"]="'$TREASURY_GROUP_POLICY_ADDR'"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '.app_state["group"]["group_policies"][1]["admin"]="'$TREASURY_GROUP_POLICY_ADDR'"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+
   jq '.app_state["wasm"]["params"]["code_upload_access"]["permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
   jq '.app_state["wasm"]["params"]["instantiate_default_permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
   jq '.app_state["wasm"]["params"]["code_upload_access"]["addresses"]=['$SECURITY_GROUP_POLICY_ADDR']' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
