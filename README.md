@@ -117,9 +117,6 @@ To pull the `docker` image check [here](#pulling-the-container).
 This section will go over:
 - [docker commands](#docker-commands)
 - Setting up [env variables](#env-variables-configuration) for `docker`
-<!-- - How to create a [key](#key-creation) -->
-
-<!-- We recommend looking at the commands section first so if you need to run `seda-chaind` commands to create a key you can do so from within docker. -->
 
 #### Docker Commands
 
@@ -136,7 +133,7 @@ docker run -d --name seda_node \
 -p 9090:9090 \
 --env MONIKER=moniker_here
 --env NETWORK=testnet
-ghcr.io/gluax/seda-chain:latest sedad start
+ghcr.io/sedaprotocol/seda-chain:latest sedad start
 ```
 
 Exposing the ports is optional.
