@@ -60,7 +60,7 @@ This is a guide for operating and running the node.
 - Individuals aiming to connect to an [external node](#linking-to-an-external-node) with SEDA.
 - Those who wish to establish their own node and/or set up the node as a validator.
 
-`sedad` is the command-line tool for interfacing, or CLI for short, with the SEDA blockchain. You can check out the installation instructions [here](#installation).
+`sedad` is the command-line tool for interfacing, or CLI for short, with the SEDA blockchain. You can check out the installation instructions [here](#installation) or see the Docker instructions [here](#running-the-node-yourself-dockerized).
 
 Now, you're all set to engage with the SEDA blockchain via an external node. For a rundown of commands, type `sedad --help`. For in-depth info on a particular command, add the `--help` flag, for example:
 
@@ -107,6 +107,60 @@ rm -rf ~/.sedad || true
 <!-- start your node -->
 ./sedad start
 ```
+
+### Running the Node Yourself Dockerized
+
+For instructions how to run the node yourself as a normal node or a validator in [docker](https://www.docker.com/). 
+
+To pull the `docker` image check [here](#pulling-the-container).
+
+This section will go over:
+- [docker commands](#docker-commands)
+- Setting up [env variables](#env-variables-configuration) for `docker`
+<!-- - How to create a [key](#key-creation) -->
+
+<!-- We recommend looking at the commands section first so if you need to run `seda-chaind` commands to create a key you can do so from within docker. -->
+
+#### Docker Commands
+
+Here's `docker` commands to show running the node, and executing commands so you can generate a key, and become a validator.
+
+##### Running 
+
+To start a SEDA chain node with `docker`(we recommend knowing the tool if you go this route):
+
+```bash
+docker run -d --name seda_node \
+-p 26656:26656 \
+-p 26657:26657 \
+-p 9090:9090 \
+--env MONIKER=moniker_here
+--env NETWORK=testnet
+ghcr.io/gluax/seda-chain:latest sedad start
+```
+
+Exposing the ports is optional.
+As is providing a network as it defaults to `testnet`.
+
+To check the status of the node you can check the normal `docker` way:
+```bash
+docker logs seda_node -n 100
+```
+
+or by interacting with the CLI from within the container:
+```bash
+docker exec seda_node sedad status
+```
+
+##### Stop and Start
+
+The docker container should be stoppable and resumed as:
+
+```bash
+docker stop seda_node
+
+# This runs it as a background process handled by docker.
+docker start seda_node
 
 ### Creating a validator
 
