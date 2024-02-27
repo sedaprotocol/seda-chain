@@ -1,19 +1,40 @@
+FROM golang:alpine AS builder
+
+# Install cosmosvisor
+RUN go install github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor@latest && \
+    export PATH=$PATH:$(go env GOPATH)/bin
+
 FROM alpine:latest
+
 ARG TARGETARCH
+ARG USER=seda
 
-RUN mkdir -p /seda-chain/.sedad
-COPY ./build/sedad-${TARGETARCH} /bin/sedad
+ENV CGO_ENABLED=0
+ENV DAEMON_HOME=/home/$USER/.sedad
+ENV DAEMON_NAME=sedad
+ENV DAEMON_ALLOW_DOWNLOAD_BINARIES=false
 
-RUN apk add --no-cache bash expect jq
+# Copy the sedad binary
+COPY ./build/sedad-${TARGETARCH} /usr/local/bin/sedad
+# Copy the docker-entrypoint.sh
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Copy the cosmovisor from the builder
+COPY --from=builder /go/bin/cosmovisor /usr/local/bin/cosmovisor
 
-ENV HOME /seda-chain
+# Add user
+RUN adduser -D $USER
+
+# Change user and working directory
+USER $USER
 WORKDIR $HOME
+
+VOLUME $HOME/.sedad
 
 EXPOSE 26656
 EXPOSE 26657
 EXPOSE 1317
 EXPOSE 9090
 
-COPY scripts/node_setup/* .
-RUN find . -type f -name "*.sh" -exec chmod +x {} \;
-ENTRYPOINT ["bash", "setup_run_node.sh"]
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["cosmovisor", "run", "start"]
