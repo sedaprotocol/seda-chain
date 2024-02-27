@@ -48,6 +48,10 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["max_depo
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["min_initial_deposit_ratio"]="0.010000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 # mint params
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["mint"]["minter"]["inflation"]="0.000000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["mint"]["params"]["inflation_rate_change"]="0.000000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["mint"]["params"]["inflation_max"]="0.000000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["mint"]["params"]["inflation_min"]="0.000000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["mint"]["params"]["blocks_per_year"]="4204800"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 # slashing params

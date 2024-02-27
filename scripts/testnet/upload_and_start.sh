@@ -56,7 +56,7 @@ done
 
 SEEDS=()
 for i in ${!IPS[@]}; do
-	SEED=$($LOCAL_BIN tendermint show-node-id --home $NODE_DIR/node$i)
+	SEED=$($LOCAL_BIN tendermint show-node-id --home $NODE_DIR/${MONIKERS[$i]})
 	SEEDS+=("$SEED@${IPS[$i]}:26656")
 done
 
@@ -65,13 +65,13 @@ SEEDS_LIST="${list%,}"
 echo $SEEDS_LIST
 
 for i in ${!IPS[@]}; do
-	cp $NODE_DIR/genesis.json $NODE_DIR/node$i/config/genesis.json
+	cp $NODE_DIR/genesis.json $NODE_DIR/${MONIKERS[$i]}/config/genesis.json
 
 	if [[ "$OSTYPE" == "darwin"* ]]; then
-		sed -i '' "s/seeds = \"\"/seeds = \"${SEEDS_LIST}\"/g" $NODE_DIR/node$i/config/config.toml
+		sed -i '' "s/seeds = \"\"/seeds = \"${SEEDS_LIST}\"/g" $NODE_DIR/${MONIKERS[$i]}/config/config.toml
 	else
-		sed "s/seeds = \"\"/seeds = \"${SEEDS_LIST}\"/g" $NODE_DIR/node$i/config/config.toml > tmp
-		cat tmp > $NODE_DIR/node$i/config/config.toml
+		sed "s/seeds = \"\"/seeds = \"${SEEDS_LIST}\"/g" $NODE_DIR/${MONIKERS[$i]}/config/config.toml > tmp
+		cat tmp > $NODE_DIR/${MONIKERS[$i]}/config/config.toml
 		rm tmp
 	fi
 
@@ -83,7 +83,7 @@ for i in ${!IPS[@]}; do
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'sudo rm -rf /home/ec2-user/.sedad'
 
 	# upload node files
-	scp -i $SSH_KEY -r $NODE_DIR/node$i ec2-user@${IPS[$i]}:/home/ec2-user/.sedad
+	scp -i $SSH_KEY -r $NODE_DIR/${MONIKERS[$i]} ec2-user@${IPS[$i]}:/home/ec2-user/.sedad
 
 	# upload chain binary built for the corresponding architecture
 	LINUX_BIN=$NODE_DIR/sedad-amd64

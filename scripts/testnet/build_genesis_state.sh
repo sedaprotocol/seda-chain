@@ -195,11 +195,11 @@ if [ $ADD_GROUPS = true ]; then
 
   jq --slurpfile group $TMP_HOME/group.tmp '.app_state["group"] = $group[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 
-  jq '.app_state["group"]["groups"][0]["admin"]="'$SECURITY_GROUP_POLICY_ADDR'"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  jq '.app_state["group"]["group_policies"][1]["admin"]="'$SECURITY_GROUP_POLICY_ADDR'"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-
-  jq '.app_state["group"]["groups"][0]["admin"]="'$TREASURY_GROUP_POLICY_ADDR'"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  jq '.app_state["group"]["group_policies"][1]["admin"]="'$TREASURY_GROUP_POLICY_ADDR'"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  # replace group policy address as group & group policy admin
+  jq '.app_state["group"]["groups"][0]["admin"]='$SECURITY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '.app_state["group"]["group_policies"][1]["admin"]='$SECURITY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '.app_state["group"]["groups"][1]["admin"]='$TREASURY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '.app_state["group"]["group_policies"][0]["admin"]='$TREASURY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 
   jq '.app_state["wasm"]["params"]["code_upload_access"]["permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
   jq '.app_state["wasm"]["params"]["instantiate_default_permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS

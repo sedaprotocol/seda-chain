@@ -82,7 +82,7 @@ CONTRACTS_VERSION=v0.0.1-rc # latest or seda-chain-contracts release version
 #######################################
 MEMBERS_JSON_FILE=./members.json
 POLICY_JSON_FILE=./policy.json
-ADMIN_SEED="mushroom energy ..."
+ADMIN_SEED="mushroom energy ..." # used for creating groups - overwritten by group policy addresses anyways
 
 #######################################
 ############### GITHUB ################
