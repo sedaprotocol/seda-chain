@@ -9,12 +9,20 @@ import (
 
 // InitGenesis puts data from genesis state into store.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
-	k.SetSeed(ctx, data.Seed)
+	err := k.SetSeed(ctx, data.Seed)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis extracts data from store to genesis state.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
+	seed, err := k.GetSeed(ctx)
+	if err != nil {
+		return types.GenesisState{}
+	}
+
 	return types.GenesisState{
-		Seed: k.GetSeed(ctx),
+		Seed: seed,
 	}
 }
