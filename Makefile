@@ -280,6 +280,9 @@ ictest-ibc-xfer: rm-testcache
 ictest-packet-forward-middleware: rm-testcache
 	cd interchaintest && go test -race -v -run TestPacketForwardMiddleware .
 
+ictest-ibc-ica: rm-testcache
+	cd interchaintest && go test -race -v -run TestInterchainAccounts .
+
 rm-testcache:
 	go clean -testcache
 

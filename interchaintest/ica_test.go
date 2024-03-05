@@ -36,14 +36,14 @@ func TestInterchainAccounts(t *testing.T) {
 	// Get both chains
 	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
 		{
+			Name: "icad",
+			ChainConfig: ibc.ChainConfig{
+				Images: []ibc.DockerImage{{Repository: "ghcr.io/cosmos/ibc-go-icad", Version: "v0.1.7", UidGid: "1025:1025"}},
+			},
+		},
+		{
 			Name:        "seda",
 			ChainConfig: SedaCfg,
-		},
-		// pre configured chain pulled from
-		// https://github.com/strangelove-ventures/heighliner
-		{
-			Name:    "gaia",
-			Version: "v14.1.0",
 		},
 	})
 

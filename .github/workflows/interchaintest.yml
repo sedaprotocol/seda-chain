@@ -67,6 +67,7 @@ jobs:
           - "ictest-state-sync"
           - "ictest-ibc-xfer"
           - "ictest-packet-forward-middleware"
+          - "ictest-ibc-ica"
       fail-fast: false
 
     steps:
