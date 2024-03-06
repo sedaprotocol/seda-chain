@@ -112,7 +112,7 @@ rm -rf ~/.sedad || true
 
 For instructions how to run the node yourself as a normal node or a validator in [docker](https://www.docker.com/). 
 
-To pull the `docker` image check [here](#pulling-the-container).
+To pull the `docker` image check [here](#running).
 
 This section will go over:
 - [docker commands](#docker-commands)
