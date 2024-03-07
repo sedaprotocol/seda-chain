@@ -6,21 +6,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/sedaprotocol/seda-chain/x/proposer-sanity-check/types"
 
-	storetypes "cosmossdk.io/store/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-const (
-	// MaxUint64 is the maximum value of a uint64.
-	MaxUint64 = uint64(1) << 63
-)
-
-type Keeper struct {
-	cdc      codec.BinaryCodec
-	storeKey storetypes.StoreKey
-}
 
 func PrepareProposalHandler(
 	baseHandler sdk.PrepareProposalHandler,
@@ -40,10 +28,6 @@ func PrepareProposalHandler(
 			}
 		}()
 
-		panic("******************* || Test || ***********************")
-
-		// Get the max gas limit and max block size for the proposal.
-		_, _ = GetBlockLimits(ctx)
 		builder := txConfig.NewTxBuilder()
 		if err := builder.SetMsgs(&types.MsgTxCount{Count: int32(len(req.Txs) + 1)}); err != nil {
 			return nil, err
@@ -60,19 +44,44 @@ func PrepareProposalHandler(
 	}
 }
 
-// GetBlockLimits retrieves the maximum number of bytes and gas limit allowed in a block.
-func GetBlockLimits(ctx sdk.Context) (int64, uint64) {
-	blockParams := ctx.ConsensusParams().Block
+func ProcessProposalHandler(
+	baseHandler sdk.ProcessProposalHandler,
+	txConfig client.TxConfig,
+) sdk.ProcessProposalHandler {
+	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (resp *abci.ResponseProcessProposal, err error) {
+		if req.Height <= 1 {
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, nil
+		}
+		if len(req.Txs) < 1 {
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT},
+				fmt.Errorf("at least one tx [len sanity] should be available")
+		}
+		tx, err := txConfig.TxDecoder()(req.Txs[0])
+		if err != nil {
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+		}
+		msg, ok := decodeCounterTx(tx)
+		if !ok {
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, fmt.Errorf(
+				"could not decode tx")
+		}
 
-	// If the max gas is set to 0, then the max gas limit for the block can be infinite.
-	// Otherwise we use the max gas limit casted as a uint64 which is how gas limits are
-	// extracted from sdk.Tx's.
-	var maxGasLimit uint64
-	if maxGas := blockParams.MaxGas; maxGas > 0 {
-		maxGasLimit = uint64(maxGas)
-	} else {
-		maxGasLimit = MaxUint64
+		if int(msg.GetCount()) != len(req.Txs) {
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, fmt.Errorf(
+				"sanity check failed. msg.Count [%d] != len(req.Txs) [%d]", int(msg.GetCount()), len(req.Txs))
+		}
+		return baseHandler(ctx, req)
 	}
+}
 
-	return blockParams.MaxBytes, maxGasLimit
+func decodeCounterTx(tx sdk.Tx) (*types.MsgTxCount, bool) {
+	msgs := tx.GetMsgs()
+	if len(msgs) != 1 {
+		return nil, false
+	}
+	msgNewSeed, ok := msgs[0].(*types.MsgTxCount)
+	if !ok {
+		return nil, false
+	}
+	return msgNewSeed, true
 }

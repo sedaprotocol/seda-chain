@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"strconv"
 
+	propSanityChk "github.com/sedaprotocol/seda-chain/x/proposer-sanity-check"
+	propSanityChkType "github.com/sedaprotocol/seda-chain/x/proposer-sanity-check/types"
+
 	"github.com/spf13/cast"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
@@ -176,6 +179,8 @@ var (
 		ica.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		packetforward.AppModuleBasic{},
+		// ============================
+		propSanityChk.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -714,6 +719,7 @@ func NewApp(
 		ibctm.AppModule{},
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
+		propSanityChk.NewAppModule(appCodec),
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -819,6 +825,7 @@ func NewApp(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		circuittypes.ModuleName,
+		propSanityChkType.ModuleName,
 		// ibc
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,
@@ -907,7 +914,7 @@ func NewApp(
 	app.SetPrepareProposal(sanitykeeper.PrepareProposalHandler(prepareHandler, app.txConfig))
 
 	processHandler := defaultProposalHandler.ProcessProposalHandler()
-	app.SetProcessProposal(processHandler)
+	app.SetProcessProposal(sanitykeeper.ProcessProposalHandler(processHandler, app.txConfig))
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
