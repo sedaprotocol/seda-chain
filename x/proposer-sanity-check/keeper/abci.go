@@ -50,7 +50,7 @@ func ProcessProposalHandler(
 ) sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (resp *abci.ResponseProcessProposal, err error) {
 		if req.Height <= 1 {
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, nil
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
 		}
 		if len(req.Txs) < 1 {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT},
