@@ -196,3 +196,25 @@ cosmovisor add-upgrade <upgrade-name> <upgrade-binary-file>
 ## License
 
 Contents of this repository are open source under [GNU General Public License v3.0](LICENSE).
+
+Hey Tamjid,
+
+I realized that for a block proposer to create a tx, it would require a signing process, which can be quite complicated.
+Here is what I propose instead for the assignment:
+
+- Fork our code (https://github.com/sedaprotocol/seda-chain)
+- Add a module called `proposer-sanity-check`. This module will utilize ABCI++ methods to add the following logic to the
+  block proposal process:
+    - When preparing a proposal, the block proposer will include in the proposal a transaction that contains the number
+      of transactions in the prepared block.
+    - When processing this proposal, the validators will take the aforementioned transaction included by the block
+      proposer and check if it actually matches the number of transactions in the proposal.
+- Basic unit testing, only if time allows
+
+So this will not require persisting data in the store nor any transaction signing process. Hope this is clear enough,
+but please feel free to shoot me any questions.
+
+Thank you Tamjid!!
+
+Regards,
+HY

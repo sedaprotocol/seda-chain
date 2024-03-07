@@ -132,6 +132,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/docs"
+	sanitykeeper "github.com/sedaprotocol/seda-chain/x/proposer-sanity-check/keeper"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
@@ -899,6 +900,14 @@ func NewApp(
 	app.ScopedWasmKeeper = scopedWasmKeeper
 	app.ScopedICAHostKeeper = scopedICAHostKeeper
 	app.ScopedICAControllerKeeper = scopedICAControllerKeeper
+
+	// Override the proposal handler.
+	defaultProposalHandler := baseapp.NewDefaultProposalHandler(nil, app.BaseApp)
+	prepareHandler := defaultProposalHandler.PrepareProposalHandler()
+	app.SetPrepareProposal(sanitykeeper.PrepareProposalHandler(prepareHandler, app.txConfig))
+
+	processHandler := defaultProposalHandler.ProcessProposalHandler()
+	app.SetProcessProposal(processHandler)
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {

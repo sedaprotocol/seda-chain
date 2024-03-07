@@ -1,0 +1,11 @@
+syntax = "proto3";
+package sedachain.proposersanitycheck.v1;
+
+import "cosmos/msg/v1/msg.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/proposer-sanity-check/types";
+
+
+message MsgTxCount {
+  int32 count = 1;
+}
