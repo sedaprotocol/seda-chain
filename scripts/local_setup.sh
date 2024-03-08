@@ -8,7 +8,11 @@ CONFIG_PATH=$HOME/.sedad/config
 function add_key_and_account() {
     local name=$1
     local amount=$2
-    $BIN keys add $name --keyring-backend test
+    if [ -n "$3" ]; then
+        echo $3 | $BIN keys add $name --keyring-backend test --recover
+    else
+        $BIN keys add $name --keyring-backend test
+    fi
     $BIN add-genesis-account $name $amount --keyring-backend test
 }
 
@@ -37,6 +41,8 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["expedite
 cat $HOME/.sedad/config/genesis.json | jq '.consensus_params["block"]["max_gas"]="100000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 # update genesis
+add_key_and_account "fixedacc" "100000000000000000seda" "tortoise chunk claim human keen potato venue follow physical weasel famous series source upgrade give rare gossip practice artist truly shell buddy garment design"
+add_key_and_account "fixedacc2" "100000000000000000seda" "hole bag crumble table stage eternal gather two cabbage define write update run biology side deal great casual absorb panther month better heart trigger"
 add_key_and_account "satoshi" "100000000000000000seda"
 add_key_and_account "acc1" "100000000000000000seda"
 
@@ -47,4 +53,4 @@ $BIN gentx satoshi 10000000000000000seda --keyring-backend test
 $BIN collect-gentxs
 
 # start the chain
-$BIN start --log_level debug || echo "Failed to start the chain"
+$BIN start || echo "Failed to start the chain"

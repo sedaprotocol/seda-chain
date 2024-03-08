@@ -158,6 +158,7 @@ docker stop seda_node
 
 # This runs it as a background process handled by docker.
 docker start seda_node
+```
 
 ### Creating a validator
 
