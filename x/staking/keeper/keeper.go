@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	stdmath "math"
 
 	"cosmossdk.io/math"
@@ -52,27 +53,28 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 	// Check redelegation entry limits while we can still return early.
 	// Assume the worst case that we need to transfer all redelegation entries
 	mightExceedLimit := false
+	var cbErr error
 	err = k.IterateDelegatorRedelegations(ctx, fromAddr, func(toRedelegation types.Redelegation) (stop bool) {
 		// There's no redelegation index by delegator and dstVal or vice-versa.
 		// The minimum cardinality is to look up by delegator, so scan and skip.
 		if toRedelegation.ValidatorDstAddress != valAddr.String() {
 			return false
 		}
-
 		maxEntries, err := k.MaxEntries(ctx)
 		if err != nil {
-			panic(err)
+			cbErr = fmt.Errorf("error getting max entries: %w", err)
+			return true
 		}
-
 		valSrcAddr, err := sdk.ValAddressFromBech32(toRedelegation.ValidatorSrcAddress)
 		if err != nil {
-			panic(err)
+			cbErr = fmt.Errorf("error getting validator source address: %w", err)
+			return true
 		}
 		valDstAddr, err := sdk.ValAddressFromBech32(toRedelegation.ValidatorDstAddress)
 		if err != nil {
-			panic(err)
+			cbErr = fmt.Errorf("error getting validator destination address: %w", err)
+			return true
 		}
-
 		fromRedelegation, err := k.GetRedelegation(ctx, fromAddr, valSrcAddr, valDstAddr)
 		if err == nil && len(toRedelegation.Entries)+len(fromRedelegation.Entries) >= int(maxEntries) {
 			mightExceedLimit = true
@@ -80,8 +82,11 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 		}
 		return false
 	})
+	if cbErr != nil {
+		return transferred, cbErr
+	}
 	if err != nil {
-		return transferred, nil
+		return transferred, err
 	}
 	if mightExceedLimit {
 		// avoid types.ErrMaxRedelegationEntries

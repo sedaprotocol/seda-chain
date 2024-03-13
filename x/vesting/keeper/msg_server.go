@@ -254,7 +254,7 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 		}
 
 		if !toClawBackStaking.IsZero() {
-			panic("failed to claw back full amount")
+			return nil, fmt.Errorf("failed to claw back full amount")
 		}
 	}
 

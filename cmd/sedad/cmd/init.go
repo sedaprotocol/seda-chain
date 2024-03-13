@@ -38,11 +38,11 @@ func readInMnemonic(cmd *cobra.Command) (string, error) {
 
 func configureValidatorFiles(config *cfg.Config) error {
 	keyFilePath := config.PrivValidatorKeyFile()
-	if err := os.MkdirAll(filepath.Dir(keyFilePath), 0o777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(keyFilePath), 0o700); err != nil {
 		return fmt.Errorf("could not create directory %q: %w", filepath.Dir(keyFilePath), err)
 	}
 	stateFilePath := config.PrivValidatorStateFile()
-	if err := os.MkdirAll(filepath.Dir(stateFilePath), 0o777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(stateFilePath), 0o700); err != nil {
 		return fmt.Errorf("could not create directory %q: %w", filepath.Dir(stateFilePath), err)
 	}
 

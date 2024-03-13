@@ -227,7 +227,7 @@ func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
 
 func InitializeVRFKey(config *cfg.Config) (vrfPubKey sdkcrypto.PubKey, err error) {
 	pvKeyFile := config.PrivValidatorKeyFile()
-	if err := os.MkdirAll(filepath.Dir(pvKeyFile), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(pvKeyFile), 0o700); err != nil {
 		return nil, fmt.Errorf("could not create directory %q: %w", filepath.Dir(pvKeyFile), err)
 	}
 
