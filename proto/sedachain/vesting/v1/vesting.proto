@@ -13,7 +13,7 @@ message ClawbackContinuousVestingAccount {
   option (gogoproto.goproto_getters) = false;
   option (gogoproto.goproto_stringer) = false;
 
-  cosmos.vesting.v1beta1.ContinuousVestingAccount vesting_account = 1
+  cosmos.vesting.v1beta1.ContinuousVestingAccount base_vesting_account = 1
       [ (gogoproto.embed) = true ];
   string funder_address = 2;
 }
