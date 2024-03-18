@@ -109,11 +109,17 @@ $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 $(BUILDDIR)/:
 	@mkdir -p $(BUILDDIR)/
 
+build-plugin:
+	@go build -o $(BUILDDIR)/plugin ./plugins/indexing/plugin.go
+
+build-plugin-dev:
+	@go build --tags dev -o $(BUILDDIR)/plugin ./plugins/indexing/plugin.go
+
 clean:
 	@echo "--> Cleaning..."
 	@rm -rf $(BUILDDIR)/** 
 
-.PHONY: build clean
+.PHONY: build build-plugin build-plugin-dev clean
 
 ###############################################################################
 ###                          Tools & Dependencies                           ###
