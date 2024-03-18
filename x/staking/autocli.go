@@ -21,9 +21,9 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Short:     "Query historical info at given height",
 					Example:   fmt.Sprintf("$ %s query staking historical-info 5", version.AppName),
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-							{ProtoField: "height"},
+						{ProtoField: "height"},
 					},
-			},
+				},
 			},
 			EnhanceCustomCommand: false, // use custom commands only until v0.51
 		},
