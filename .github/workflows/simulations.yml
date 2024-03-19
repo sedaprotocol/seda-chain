@@ -3,9 +3,9 @@ name: Simulation
 #  This workflow is run on pushes to master & every Pull Requests where a .go, .mod, .sum have been changed
 on:
   pull_request:
-  push:
-    branches:
-      - main
+    push:
+      branches:
+        - main
 
 env:
   GO_VERSION: "1.21.0"

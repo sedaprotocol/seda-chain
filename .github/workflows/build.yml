@@ -2,11 +2,10 @@
 name: Build
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    push:
+      branches:
+        - main
 
 env:
   GO_VERSION: "1.21.0"
