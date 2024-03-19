@@ -62,6 +62,6 @@ func ExtractUpdate(_ codec.Codec, change *storetypes.StoreKVPair) (*types.Messag
 		return types.NewMessage("account-balance", data), nil
 	}
 
-	// TODO Log warning ("unable to process change %v", change)
+	// TODO(#217) Log warning ("unable to process change %v", change)
 	return nil, nil
 }

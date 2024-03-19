@@ -23,8 +23,5 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) NewSeed(goCtx context.Context, msg *types.MsgNewSeed) (*types.MsgNewSeedResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(goCtx)
 	k.Keeper.SetSeed(sdkCtx, msg.Beta)
-
-	// TO-DO event?
-
 	return &types.MsgNewSeedResponse{}, nil
 }

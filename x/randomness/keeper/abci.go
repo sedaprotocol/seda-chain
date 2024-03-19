@@ -230,7 +230,7 @@ func generateAndSignNewSeedTx(ctx sdk.Context, txConfig client.TxConfig, vrfSign
 	if err != nil {
 		return nil, nil, err
 	}
-	txBuilder.SetGasLimit(200000) // TO-DO what number to put here?
+	txBuilder.SetGasLimit(200000)
 	txBuilder.SetFeeAmount(sdk.NewCoins())
 	txBuilder.SetFeePayer(account.GetAddress())
 

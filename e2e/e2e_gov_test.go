@@ -204,7 +204,7 @@ func (s *IntegrationTestSuite) validateGetSeedResponse(expectEmpty bool) func([]
 		if expectEmpty {
 			s.Require().Empty(getSeedResponse.Data.Seed)
 		} else {
-			s.Require().NotEmpty(getSeedResponse.Data.Seed) // TO-DO better seed check
+			s.Require().NotEmpty(getSeedResponse.Data.Seed)
 		}
 		return true
 	}

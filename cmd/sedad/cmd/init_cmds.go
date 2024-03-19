@@ -65,20 +65,18 @@ $ %s join moniker --network devnet
 				return fmt.Errorf("unsupported network type: %s", network)
 			}
 
-			// TO-DO remove (See: https://github.com/sedaprotocol/seda-chain/pull/76#issuecomment-1762303200)
 			// If validator key file exists, create and save an empty validator state file.
 			err = configureValidatorFiles(config)
 			if err != nil {
 				return err
 			}
 
-			// initialize the node
+			// Initialize the node.
 			nodeID, _, err := genutil.InitializeNodeValidatorFilesFromMnemonic(config, mnemonic)
 			if err != nil {
 				return err
 			}
 
-			// genesis and config files already written - display info
 			toPrint := utils.NewPrintInfo(config.Moniker, chainID, nodeID, seeds)
 			return utils.DisplayInfo(toPrint)
 		},

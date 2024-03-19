@@ -25,8 +25,6 @@ We use clang format to format our protobuf generated code.
   - Using [brew](https://brew.sh/): `brew install clang-format`
   - Using [macports](https://www.macports.org/): `sudo port install clang-format`
 
-# TODO don't rely on docker for this
-
 ### [docker](https://www.docker.com/)
 
 Docker is used to help make release and static builds locally.

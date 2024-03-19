@@ -124,7 +124,7 @@ func SimulateMsgCreateVestingAccount(
 			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to deliver tx"), nil, err
 		}
 
-		// TO-DO activate future operations
+		// TODO(#219) activate future operations
 		// // future operations
 		var futureOps []simtypes.FutureOperation
 		// // recipient stakes
@@ -240,7 +240,7 @@ func simulateMsgDelegate(
 
 		// simAccount, _ := simtypes.RandomAcc(r, accs)
 
-		// TO-DO: spare first two validators so we don't crash the network
+		// Spare first two validators so we don't crash the network.
 		val, ok := testutil.RandSliceElem(r, vals[2:])
 		if !ok {
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to pick a validator"), nil, nil

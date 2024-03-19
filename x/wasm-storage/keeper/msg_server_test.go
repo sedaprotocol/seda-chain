@@ -64,18 +64,6 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 			expErr:    true,
 			expErrMsg: "data Request Wasm with given hash already exists",
 		},
-		// TO-DO: Add after migrating ValidateBasic logic
-		// {
-		// 	name: "inconsistent Wasm type",
-		// 	input: types.MsgStoreDataRequestWasm{
-		// 		Sender:   s.authority,
-		// 		Wasm:     regWasmZipped,
-		// 		WasmType: types.WasmTypeRelayer,
-		// 	},
-		// 	preRun:    func() {},
-		// 	expErr:    true,
-		// 	expErrMsg: "not a Data Request Wasm",
-		// },
 		{
 			name: "unzipped Wasm",
 			input: types.MsgStoreDataRequestWasm{

@@ -103,7 +103,7 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 	// Update or create the delTo object, calling appropriate hooks
 	delTo, err := k.GetDelegation(ctx, toAddr, valAddr)
 	if err != nil {
-		if err == types.ErrNoDelegation { // TO-DO
+		if err == types.ErrNoDelegation {
 			delTo = types.NewDelegation(toAddr.String(), validator.GetOperator(), math.LegacyZeroDec())
 			err = k.Hooks().BeforeDelegationCreated(ctx, toAddr, valAddr)
 		} else {
@@ -286,7 +286,6 @@ func (k Keeper) TransferUnbonding(ctx context.Context, fromAddr, toAddr sdk.AccA
 			return transferred, err
 		}
 		if maxed {
-			// TODO pre-compute the maximum entries we can add rather than checking each time
 			break
 		}
 		ubdTo, err := k.SetUnbondingDelegationEntry(ctx, toAddr, valAddr, entry.CreationHeight, entry.CompletionTime, toXfer)

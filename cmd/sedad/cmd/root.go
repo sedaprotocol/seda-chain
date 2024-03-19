@@ -61,9 +61,9 @@ func NewRootCmd() *cobra.Command {
 	cfg.SetAddressVerifier(wasmtypes.VerifyAddressLen())
 	cfg.Seal()
 
-	// TO-DO depinject
-	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
-	// note, this is not necessary when using app wiring, as depinject can be directly used (see root_v2.go)
+	// "Pre-instantiate" the application for getting the injected/configured
+	// encoding configuration note, this is not necessary when using app wiring,
+	// as depinject can be directly used (see root_v2.go)
 	tempApp := app.NewApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
@@ -144,7 +144,6 @@ func NewRootCmd() *cobra.Command {
 
 	initRootCmd(rootCmd, encodingConfig, tempApp.BasicModuleManager())
 
-	// TO-DO unnecessary once depinject is implemented
 	autoCliOpts := tempApp.AutoCliOpts()
 	initClientCtx, _ = config.ReadFromClientConfig(initClientCtx)
 	autoCliOpts.Keyring, _ = keyring.NewAutoCLIKeyring(initClientCtx.Keyring)

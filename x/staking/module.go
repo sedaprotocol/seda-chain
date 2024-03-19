@@ -57,7 +57,7 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 
 // RegisterInterfaces registers the module's interface types
 func (AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-	// TO-DO to be activated later
+	// TODO(#208) to be activated later
 	// types.RegisterInterfaces(registry)
 	// err := registry.EnsureRegistered(&types.MsgCreateValidatorWithVRF{})
 	// if err != nil {
@@ -92,7 +92,7 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *g
 
 // GetTxCmd returns the root tx command for the staking module.
 func (amb AppModuleBasic) GetTxCmd() *cobra.Command {
-	// TO-DO to be activated later
+	// TODO(#208) to be activated later
 	// return cli.NewTxCmd(amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(), amb.cdc.InterfaceRegistry().SigningContext().AddressCodec())
 
 	return sdkcli.NewTxCmd(amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(), amb.cdc.InterfaceRegistry().SigningContext().AddressCodec())
@@ -134,7 +134,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	sdkMsgServer := NewMsgServerImpl(am.keeper.Keeper, am.accountKeeper)
 	sdktypes.RegisterMsgServer(cfg.MsgServer(), sdkMsgServer)
 
-	// TO-DO to be activated later
+	// TODO(#208) to be activated later
 	// types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(sdkMsgServer, am.keeper, am.accountKeeper, am.randomnessKeeper))
 
 	querier := sdkkeeper.Querier{Keeper: am.keeper.Keeper}
