@@ -6,6 +6,8 @@ import (
 	tmcfg "github.com/cometbft/cometbft/config"
 
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
+
+	"github.com/sedaprotocol/seda-chain/app/params"
 )
 
 // initTendermintConfig helps to override default Tendermint Config values.
@@ -52,7 +54,7 @@ func initAppConfig() (string, interface{}) {
 	//   own app.toml to override, or use this default value.
 	//
 	// In simapp, we set the min gas prices to 0.
-	srvCfg.MinGasPrices = "100000000000aseda" // 10^11 aseda
+	srvCfg.MinGasPrices = params.MinimumGasPrice.String()
 
 	// GRPC settings
 	srvCfg.GRPC.Enable = true
