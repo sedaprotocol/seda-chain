@@ -13,12 +13,12 @@ import (
 )
 
 const (
-	UpgradeName = "v1"
+	UpgradeName = "v0.0.7"
 )
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
-	CreateUpgradeHandler: Createv1UpgradeHandler,
+	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: storetypes.StoreUpgrades{
 		// double check these
 		Added:   []string{},
@@ -26,7 +26,7 @@ var Upgrade = upgrades.Upgrade{
 	},
 }
 
-func Createv1UpgradeHandler(
+func CreateUpgradeHandler(
 	mm upgrades.ModuleManager,
 	configurator module.Configurator,
 	_ *keepers.AppKeepers,
