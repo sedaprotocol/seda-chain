@@ -118,9 +118,14 @@ func main() {
 	std.RegisterInterfaces(interfaceRegistry)
 	app.ModuleBasics.RegisterInterfaces(interfaceRegistry)
 
+	sqsClient, err := pluginsqs.NewSqsClient()
+	if err != nil {
+		logger.Fatal("failed to create sqs client", err)
+	}
+
 	filePlugin := &IndexerPlugin{
 		cdc:       codec.NewProtoCodec(interfaceRegistry),
-		sqsClient: pluginsqs.NewSqsClient(),
+		sqsClient: sqsClient,
 		logger:    logger,
 	}
 
