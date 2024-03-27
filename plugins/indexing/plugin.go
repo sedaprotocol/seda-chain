@@ -48,10 +48,11 @@ func (p *IndexerPlugin) publishToQueue(messages []*types.Message) error {
 	return nil
 }
 
-func (p *IndexerPlugin) ListenFinalizeBlock(_ context.Context, req abci.RequestFinalizeBlock, _ abci.ResponseFinalizeBlock) error {
+func (p *IndexerPlugin) ListenFinalizeBlock(_ context.Context, req abci.RequestFinalizeBlock, res abci.ResponseFinalizeBlock) error {
 	p.logger.Debug(fmt.Sprintf("[%d] Start processing finalize block.", req.Height))
 	p.blockHeight = req.Height
-	var messages []*types.Message
+	// TODO(#229) Change to +2 to account for the votes message
+	messages := make([]*types.Message, 0, len(req.Txs)+1)
 
 	blockMessage, err := base.ExtractBlockUpdate(req)
 	if err != nil {
@@ -60,7 +61,12 @@ func (p *IndexerPlugin) ListenFinalizeBlock(_ context.Context, req abci.RequestF
 	}
 	messages = append(messages, blockMessage)
 
-	// TODO(#223) Extract all transaction data.
+	txMessages, err := base.ExtractTransactionUpdates(p.cdc, req, res)
+	if err != nil {
+		p.logger.Error("Failed to extract Tx updates", "error", err)
+		return err
+	}
+	messages = append(messages, txMessages...)
 	// TODO(#229) Extract all vote data.
 
 	if err := p.publishToQueue(messages); err != nil {
