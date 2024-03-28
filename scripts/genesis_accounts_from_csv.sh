@@ -35,11 +35,12 @@ tail -n +2 "$CSV_FILE" | while IFS=, read -r address amount vesting_amount vesti
   cmd="${SEDA_BINARY} add-genesis-account \"$address\" \"${amount}\""
 
   # Add conditional parameters
-	# If the vesting amount is not empty, neither should the vesting start time and end time
-	if [ -n "$vesting_amount" ] && ([ -z "$vesting_start_time" ] || [ -z "$vesting_end_time" ]); then
+	# If the vesting amount is not empty:
+	# neither should the vesting start time, end time, and funder address
+	if [ -z "$vesting_amount" ] && ([ -n "$vesting_start_time" ] || [ -n "$vesting_end_time" ] || [ -n "$funder_addr" ]); then
 		echo "Failed to process address: $address"
 		echo "$address,$amount,$vesting_amount,$vesting_start_time,$vesting_end_time,$funder_addr" >> "$ERROR_LOG"
-		echo "Vesting amount requires both vesting start time and vesting end time" >> "$ERROR_LOG"
+		echo "Vesting amount requires both vesting start time, vesting end time and funder_addr" >> "$ERROR_LOG"
 		echo "--------------------------------" >> "$ERROR_LOG"
 		continue
 	fi
