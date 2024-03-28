@@ -10,12 +10,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	log "github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 	types "github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
 const StoreKey = banktypes.StoreKey
 
-func ExtractUpdate(_ codec.Codec, change *storetypes.StoreKVPair) (*types.Message, error) {
+func ExtractUpdate(_ codec.Codec, logger *log.Logger, change *storetypes.StoreKVPair) (*types.Message, error) {
 	if keyBytes, found := bytes.CutPrefix(change.Key, banktypes.SupplyKey); found {
 		_, key, err := collections.StringKey.Decode(keyBytes)
 		if err != nil {
@@ -62,6 +63,6 @@ func ExtractUpdate(_ codec.Codec, change *storetypes.StoreKVPair) (*types.Messag
 		return types.NewMessage("account-balance", data), nil
 	}
 
-	// TODO(#217) Log warning ("unable to process change %v", change)
+	logger.Trace("skipping change", "change", change)
 	return nil, nil
 }

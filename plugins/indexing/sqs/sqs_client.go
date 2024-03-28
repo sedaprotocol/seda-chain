@@ -82,15 +82,15 @@ func (sc *SqsClient) PublishToQueue(height int64, data []*types.Message) error {
 	return nil
 }
 
-func NewSqsClient() *SqsClient {
+func NewSqsClient() (*SqsClient, error) {
 	queueURL, found := os.LookupEnv(queueURLEnvName)
 	if !found {
-		panic(fmt.Errorf("missing environment variable '%s'", queueURLEnvName))
+		return nil, fmt.Errorf("missing environment variable '%s'", queueURLEnvName)
 	}
 
 	sess, err := NewSession()
 	if err != nil {
-		panic(fmt.Errorf("failed to initialise session: %w", err))
+		return nil, fmt.Errorf("failed to initialise session: %w", err)
 	}
 
 	awsSqsClient := sqs.New(sess)
@@ -98,5 +98,5 @@ func NewSqsClient() *SqsClient {
 	return &SqsClient{
 		sqsClient: awsSqsClient,
 		queueURL:  queueURL,
-	}
+	}, nil
 }
