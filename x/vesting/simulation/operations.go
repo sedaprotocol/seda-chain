@@ -63,7 +63,7 @@ func SimulateMsgCreateVestingAccount(
 	txGen client.TxConfig,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	_ types.StakingKeeper,
+	sk types.StakingKeeper,
 ) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
@@ -96,14 +96,18 @@ func SimulateMsgCreateVestingAccount(
 
 		recipient := simtypes.RandomAccounts(r, 1)[0]
 
+		// Randomly choose vesting durations.
+		durationBlocks := r.Intn(20)
+		durationTime := 100000*durationBlocks + r.Intn(75000*10)
+
+		// Create and deliver tx.
 		msg := types.NewMsgCreateVestingAccount(
 			funderAcc.GetAddress(),
 			recipient.Address,
 			sendCoins,
-			ctx.BlockTime().Unix()+1000,
+			ctx.BlockTime().Unix()+int64(durationTime),
 			false,
 		)
-
 		tx, err := simtestutil.GenSignedMockTx(
 			r,
 			txGen,
@@ -118,14 +122,12 @@ func SimulateMsgCreateVestingAccount(
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to generate mock tx"), nil, err
 		}
-
 		_, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to deliver tx"), nil, err
 		}
 
-		// TODO(#219) activate future operations
-		// // future operations
+		// Add future operations.
 		var futureOps []simtypes.FutureOperation
 		// // recipient stakes
 		// op := simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoins)
@@ -133,13 +135,12 @@ func SimulateMsgCreateVestingAccount(
 		// 	BlockHeight: int(ctx.BlockHeight()) + 1,
 		// 	Op:          op,
 		// })
-
-		// // then funder claws back
-		// op2 := simulateMsgClawbackFutureOp(txGen, ak, bk, sk, recipient, funder)
-		// futureOps = append(futureOps, simtypes.FutureOperation{
-		// 	BlockHeight: int(ctx.BlockHeight()) + 1,
-		// 	Op:          op2,
-		// })
+		// then funder claws back
+		op2 := simulateMsgClawbackFutureOp(txGen, ak, bk, sk, recipient, funder)
+		futureOps = append(futureOps, simtypes.FutureOperation{
+			BlockHeight: int(ctx.BlockHeight()) + durationBlocks,
+			Op:          op2,
+		})
 
 		return simtypes.NewOperationMsg(msg, true, ""), futureOps, nil
 	}
@@ -304,7 +305,6 @@ func simulateMsgDelegate(
 	}
 }
 
-//nolint:unused
 func simulateMsgClawbackFutureOp(
 	txGen client.TxConfig,
 	ak types.AccountKeeper,
@@ -329,10 +329,10 @@ func simulateMsgClawbackFutureOp(
 			return simtypes.NoOpMsg(types.ModuleName, msgType, err.Error()), nil, nil
 		}
 
-		// fees, err := simtypes.RandomFees(r, ctx, spendableCoins)
-		// if err != nil {
-		// 	return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to generate fees"), nil, err
-		// }
+		fees, err := simtypes.RandomFees(r, ctx, spendableCoins)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to generate fees"), nil, err
+		}
 
 		msg := types.NewMsgClawback(
 			funderAcc.GetAddress(),
@@ -343,7 +343,7 @@ func simulateMsgClawbackFutureOp(
 			r,
 			txGen,
 			[]sdk.Msg{msg},
-			sdk.NewCoins(), // fees,
+			fees,
 			simtestutil.DefaultGenTxGas,
 			chainID,
 			[]uint64{funderAcc.GetAccountNumber()},
