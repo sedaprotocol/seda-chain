@@ -136,6 +136,10 @@ import (
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
+
+	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
+	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
+	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 const (
@@ -172,6 +176,7 @@ var (
 		ibctm.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 		transfer.AppModuleBasic{},
+		wasmstorage.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		packetforward.AppModuleBasic{},
@@ -227,6 +232,9 @@ type App struct {
 
 	// keepers
 	keepers.AppKeepers
+
+	// seda modules
+	WasmStorageKeeper wasmstoragekeeper.Keeper
 
 	mm  *module.Manager
 	bmm module.BasicManager
@@ -291,6 +299,7 @@ func NewApp(
 		feegrant.StoreKey, evidencetypes.StoreKey, circuittypes.StoreKey, authzkeeper.StoreKey, group.StoreKey,
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
+		wasmstoragetypes.StoreKey,
 		crisistypes.StoreKey,
 	)
 
@@ -599,6 +608,16 @@ func NewApp(
 		wasmtypes.MaxWasmSize = int(val) // default 819200 (800 * 1024)
 	}
 
+	contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
+
+	app.WasmStorageKeeper = *wasmstoragekeeper.NewKeeper(
+		appCodec,
+		keys[wasmstoragetypes.StoreKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		contractKeeper,
+	)
+	wasmStorageModule := wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper, app.AccountKeeper, app.BankKeeper)
+
 	/* =================================================== */
 	/*                  TRANSFER STACK                     */
 	/* =================================================== */
@@ -710,6 +729,7 @@ func NewApp(
 		ica.NewAppModule(&icaControllerKeeper, &app.ICAHostKeeper),
 		ibctm.AppModule{},
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
+		wasmStorageModule,
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -763,6 +783,8 @@ func NewApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		// custom
+		wasmstoragetypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -790,6 +812,8 @@ func NewApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		// custom
+		wasmstoragetypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after sdkstaking so that pools are
@@ -823,6 +847,8 @@ func NewApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName, // wasm after ibc transfer
 		packetforwardtypes.ModuleName,
+		// custom modules
+		wasmstoragetypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)
