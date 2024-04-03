@@ -136,7 +136,6 @@ import (
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
-
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -299,8 +298,7 @@ func NewApp(
 		feegrant.StoreKey, evidencetypes.StoreKey, circuittypes.StoreKey, authzkeeper.StoreKey, group.StoreKey,
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
-		wasmstoragetypes.StoreKey,
-		crisistypes.StoreKey,
+		crisistypes.StoreKey, wasmstoragetypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -783,8 +781,6 @@ func NewApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		packetforwardtypes.ModuleName,
-		// custom
-		wasmstoragetypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -812,8 +808,6 @@ func NewApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		packetforwardtypes.ModuleName,
-		// custom
-		wasmstoragetypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after sdkstaking so that pools are

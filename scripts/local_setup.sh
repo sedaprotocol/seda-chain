@@ -30,7 +30,7 @@ $BIN tendermint unsafe-reset-all
 rm -rf ~/.sedad || true
 
 # configure sedad
-$BIN config set client chain-id sedachain
+$BIN config set client chain-id seda-1-local
 
 # initialize the chain
 $BIN init node0 --default-denom aseda

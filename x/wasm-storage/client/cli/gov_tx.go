@@ -94,8 +94,8 @@ func ProposalStoreOverlayCmd() *cobra.Command {
 func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
 	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{
-		Use: "instantiate-and-register-proxy-contract [code_id_int64] [json_encoded_init_args] [salt] --label [text] --admin [address,optional] --amount [coins,optional] " +
-			"--fix-msg [bool,optional]",
+		Use: "instantiate-and-register-proxy-contract [code_id_int64] [json_encoded_init_args] [salt] --label [text] --admin [address,optional] " +
+			"--fix-msg [bool,optional] --title [string] --summary [string] --deposit 10000000aseda",
 		Short: "Submit a proposal to instantiate a proxy contract and register its address",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
