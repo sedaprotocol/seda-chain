@@ -126,7 +126,7 @@ lz4 -dc < seda_450477.tar.lz4 | tar xvf - -C $HOME/.sedad
 sedad start
 ```
 
-Lavender.Five Nodes also provides detailed instructions [here](https://snapshots.lavenderfive.com/testnet-snapshots/seda/seda_450477.tar.lz4).
+Lavender.Five Nodes also provides detailed instructions [here](https://services.lavenderfive.com/testnet/seda/snapshot).
 
 ### Running the Node Yourself Dockerized
 
