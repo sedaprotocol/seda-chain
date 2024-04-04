@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/testutil"
 
-	// codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -129,12 +128,12 @@ func SimulateMsgCreateVestingAccount(
 
 		// Add future operations.
 		var futureOps []simtypes.FutureOperation
-		// // recipient stakes
-		// op := simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoins)
-		// futureOps = append(futureOps, simtypes.FutureOperation{
-		// 	BlockHeight: int(ctx.BlockHeight()) + 1,
-		// 	Op:          op,
-		// })
+		// recipient stakes before clawback
+		op := simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoins)
+		futureOps = append(futureOps, simtypes.FutureOperation{
+			BlockHeight: int(ctx.BlockHeight()) + 1,
+			Op:          op,
+		})
 		// then funder claws back
 		op2 := simulateMsgClawbackFutureOp(txGen, ak, bk, sk, recipient, funder)
 		futureOps = append(futureOps, simtypes.FutureOperation{
@@ -212,17 +211,17 @@ func SimulateMsgClawback(
 	}
 }
 
-//nolint:unused
 func simulateMsgDelegate(
-	_ client.TxConfig,
-	_ types.AccountKeeper,
-	_ types.BankKeeper,
+	txGen client.TxConfig,
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
 	sk types.StakingKeeper,
 	acc simtypes.Account,
 	originalVesting sdk.Coins,
 ) simtypes.Operation {
 	return func(
-		r *rand.Rand, _ *baseapp.BaseApp, ctx sdk.Context, _ []simtypes.Account, _ string,
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
+		accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		msgType := sdk.MsgTypeURL(&stakingtypes.MsgDelegate{})
 		denom, err := sk.BondDenom(ctx)
@@ -251,30 +250,30 @@ func simulateMsgDelegate(
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "validator's invalid echange rate"), nil, nil
 		}
 
-		// amount := bk.GetBalance(ctx, acc.Address, denom).Amount
-		// if !amount.IsPositive() {
-		// 	return simtypes.NoOpMsg(types.ModuleName, msgType, "balance is negative"), nil, nil
-		// }
+		amount := bk.GetBalance(ctx, acc.Address, denom).Amount
+		if !amount.IsPositive() {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "balance is negative"), nil, nil
+		}
 
-		// amount, err = simtypes.RandPositiveInt(r, amount)
-		// if err != nil {
-		// 	return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to generate positive amount"), nil, err
-		// }
+		amount, err = simtypes.RandPositiveInt(r, amount)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to generate positive amount"), nil, err
+		}
 
-		// bondAmt := sdk.NewCoin(denom, amount)
+		bondAmt := sdk.NewCoin(denom, amount)
 
-		// account := ak.GetAccount(ctx, acc.Address)
-		// spendable := bk.SpendableCoins(ctx, account.GetAddress())
+		account := ak.GetAccount(ctx, acc.Address)
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
-		// fees := sdk.NewCoins()
+		fees := sdk.NewCoins()
 
-		// coins, hasNeg := spendable.SafeSub(bondAmt)
-		// if !hasNeg {
-		// 	fees, err = simtypes.RandomFees(r, ctx, coins)
-		// 	if err != nil {
-		// 		return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to generate fees"), nil, err
-		// 	}
-		// }
+		coins, hasNeg := spendable.SafeSub(bondAmt)
+		if !hasNeg {
+			fees, err = simtypes.RandomFees(r, ctx, coins)
+			if err != nil {
+				return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to generate fees"), nil, err
+			}
+		}
 		found, bondAmt := originalVesting.Find(denom)
 		if !found {
 			panic("no bond denom in original vesting coins")
@@ -282,25 +281,25 @@ func simulateMsgDelegate(
 		msg := stakingtypes.NewMsgDelegate(acc.Address.String(), val.GetOperator(), bondAmt)
 
 		// Removing sim check since we cannot know the account number in advance
-		// tx, err := simtestutil.GenSignedMockTx(
-		// 	r,
-		// 	txGen,
-		// 	[]sdk.Msg{msg},
-		// 	fees,
-		// 	simtestutil.DefaultGenTxGas,
-		// 	chainID,
-		// 	[]uint64{uint64(numAccs)}, //[]uint64{account.GetAccountNumber()},
-		// 	[]uint64{0},               //[]uint64{account.GetSequence()},
-		// 	acc.PrivKey,
-		// )
-		// if err != nil {
-		// 	return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to generate mock tx"), nil, err
-		// }
+		tx, err := simtestutil.GenSignedMockTx(
+			r,
+			txGen,
+			[]sdk.Msg{msg},
+			fees,
+			simtestutil.DefaultGenTxGas,
+			chainID,
+			[]uint64{account.GetAccountNumber()},
+			[]uint64{account.GetSequence()},
+			acc.PrivKey,
+		)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to generate mock tx"), nil, err
+		}
 
-		// _, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
-		// if err != nil {
-		// 	return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to deliver tx"), nil, err
-		// }
+		_, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to deliver tx"), nil, err
+		}
 		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
