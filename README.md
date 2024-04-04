@@ -115,7 +115,7 @@ We recommend joining the testnet using a snapshot that has been taken after the 
 The SEDA team is planning to provide links for downloading snapshots soon, but for now you may use the snapshot provided by Lavender.Five Nodes.
 
 ```bash
-$BIN join <moniker> --network testnet
+sedad join <moniker> --network testnet
 
 # Backup private validator state file if you'd like.
 cp $HOME/.sedad/data/priv_validator_state.json $HOME/.sedad/priv_validator_state.json.backup
