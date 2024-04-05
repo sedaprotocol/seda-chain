@@ -26,7 +26,11 @@ const (
 	DefaultWeightMsgCreateVestingAccount = 100
 	DefaultWeightMsgClawback             = 75
 
-	maxNumDelegate = 10 // max number of delegations
+	// Parameters for future operations of vesting account creation:
+	blocksUntilDelegate    = 3  // number of blocks to wait for delegate
+	blocksUntilUndelegate  = 3  // number of blocks to wait for undelegate after delegate
+	maxNumDelegate         = 10 // max number of delegations
+	minBlocksUntilClawback = 10 // minimum number of blocks to wait for clawback
 )
 
 // WeightedOperations returns all the operations from the module with their respective weights
@@ -96,8 +100,8 @@ func SimulateMsgCreateVestingAccount(
 
 		recipient := simtypes.RandomAccounts(r, 1)[0]
 
-		// Randomly choose vesting durations.
-		durationBlocks := r.Intn(20)
+		// Randomly choose vesting durations (minimum 10).
+		durationBlocks := r.Intn(10) + minBlocksUntilClawback
 		durationTime := 100000*durationBlocks + r.Intn(75000*10)
 
 		// Create and deliver tx.
@@ -129,21 +133,20 @@ func SimulateMsgCreateVestingAccount(
 
 		// Add future operations.
 		var futureOps []simtypes.FutureOperation
+
 		bondDenom, err := sk.BondDenom(ctx)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "bond denom not found"), nil, err
 		}
 		found, sendCoin := sendCoins.Find(bondDenom)
-		if found {
-			// if randNum := r.Intn(3); randNum > 0 {}
-			for i, n := 0, r.Intn(maxNumDelegate); i < n; i++ {
-				futureOps = append(futureOps, simtypes.FutureOperation{
-					BlockHeight: int(ctx.BlockHeight()) + 1,
-					Op:          simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoin),
-				})
-			}
-		} else {
-			panic("asdifhasoidfh")
+		if !found {
+			panic("bond denom not found in sent coins")
+		}
+		for i, n := 0, r.Intn(maxNumDelegate); i < n; i++ {
+			futureOps = append(futureOps, simtypes.FutureOperation{
+				BlockHeight: int(ctx.BlockHeight()) + blocksUntilDelegate,
+				Op:          simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoin),
+			})
 		}
 
 		futureOps = append(futureOps, simtypes.FutureOperation{
@@ -278,12 +281,12 @@ func simulateMsgDelegate(
 		// 1/2 undelegate, 1/4 redelegate, 1/4 no future operation.
 		if randNum := r.Intn(2); randNum > 0 {
 			futureOps = append(futureOps, simtypes.FutureOperation{
-				BlockHeight: int(ctx.BlockHeight()) + 1,
+				BlockHeight: int(ctx.BlockHeight()) + blocksUntilUndelegate,
 				Op:          simulateMsgUndelegate(txGen, ak, sk, acc, val, delAmt),
 			})
 		} else if randNum := r.Intn(2); randNum > 0 {
 			futureOps = append(futureOps, simtypes.FutureOperation{
-				BlockHeight: int(ctx.BlockHeight()) + 1,
+				BlockHeight: int(ctx.BlockHeight()) + blocksUntilUndelegate,
 				Op:          simulateMsgRedelegate(txGen, ak, sk, acc, val, delAmt),
 			})
 		}
