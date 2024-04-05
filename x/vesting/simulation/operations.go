@@ -412,8 +412,8 @@ func simulateMsgRedelegate(
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "error getting validator delegations"), nil, nil
 		}
 		totalBond := srcVal.TokensFromShares(delegation.GetShares()).TruncateInt()
-		if !totalBond.IsPositive() {
-			return simtypes.NoOpMsg(types.ModuleName, msgType, "total bond is negative"), nil, nil
+		if totalBond.LTE(math.OneInt()) {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "total bond is less than equal to one"), nil, nil
 		}
 
 		amount := totalBond
