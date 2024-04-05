@@ -3,6 +3,7 @@ package simulation
 import (
 	"math/rand"
 
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -24,6 +25,8 @@ const (
 
 	DefaultWeightMsgCreateVestingAccount = 100
 	DefaultWeightMsgClawback             = 75
+
+	maxNumDelegate = 10 // max number of delegations
 )
 
 // WeightedOperations returns all the operations from the module with their respective weights
@@ -72,17 +75,15 @@ func SimulateMsgCreateVestingAccount(
 
 		funder, _ := simtypes.RandomAcc(r, accs)
 		funderAcc := ak.GetAccount(ctx, funder.Address)
-		spendableCoins := bk.SpendableCoins(ctx, funderAcc.GetAddress())
 
+		spendableCoins := bk.SpendableCoins(ctx, funderAcc.GetAddress())
 		if err := bk.IsSendEnabledCoins(ctx, spendableCoins...); err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msgType, err.Error()), nil, nil
 		}
-
 		sendCoins := simtypes.RandSubsetCoins(r, spendableCoins)
 		if sendCoins.Empty() {
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "empty coins slice"), nil, nil
 		}
-
 		spendableCoins, hasNeg := spendableCoins.SafeSub(sendCoins...)
 		var fees sdk.Coins
 		var err error
@@ -128,12 +129,23 @@ func SimulateMsgCreateVestingAccount(
 
 		// Add future operations.
 		var futureOps []simtypes.FutureOperation
-		if randNum := r.Intn(3); randNum > 0 {
-			futureOps = append(futureOps, simtypes.FutureOperation{
-				BlockHeight: int(ctx.BlockHeight()) + 1,
-				Op:          simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoins),
-			})
+		bondDenom, err := sk.BondDenom(ctx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "bond denom not found"), nil, err
 		}
+		found, sendCoin := sendCoins.Find(bondDenom)
+		if found {
+			// if randNum := r.Intn(3); randNum > 0 {}
+			for i, n := 0, r.Intn(maxNumDelegate); i < n; i++ {
+				futureOps = append(futureOps, simtypes.FutureOperation{
+					BlockHeight: int(ctx.BlockHeight()) + 1,
+					Op:          simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoin),
+				})
+			}
+		} else {
+			panic("asdifhasoidfh")
+		}
+
 		futureOps = append(futureOps, simtypes.FutureOperation{
 			BlockHeight: int(ctx.BlockHeight()) + durationBlocks,
 			Op:          simulateMsgClawbackFutureOp(txGen, ak, bk, sk, recipient, funder),
@@ -183,7 +195,6 @@ func SimulateMsgClawback(
 			funderAcc.GetAddress(),
 			recipient.Address,
 		)
-
 		tx, err := simtestutil.GenSignedMockTx(
 			r,
 			txGen,
@@ -213,17 +224,13 @@ func simulateMsgDelegate(
 	bk types.BankKeeper,
 	sk types.StakingKeeper,
 	acc simtypes.Account,
-	originalVesting sdk.Coins,
+	originalVesting sdk.Coin,
 ) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		msgType := sdk.MsgTypeURL(&stakingtypes.MsgDelegate{})
-		bondDenom, err := sk.BondDenom(ctx)
-		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, msgType, "bond denom not found"), nil, err
-		}
 
 		vals, err := sk.GetAllValidators(ctx)
 		if err != nil {
@@ -240,11 +247,8 @@ func simulateMsgDelegate(
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "validator's invalid echange rate"), nil, nil
 		}
 
-		found, delAmt := originalVesting.Find(bondDenom)
-		if !found {
-			panic("no bond denom in original vesting coins")
-		}
 		account := ak.GetAccount(ctx, acc.Address)
+		delAmt := sdk.NewCoin(originalVesting.Denom, originalVesting.Amount.Quo(math.NewInt(maxNumDelegate)))
 		fees := sdk.NewCoins()
 
 		msg := stakingtypes.NewMsgDelegate(acc.Address.String(), val.GetOperator(), delAmt)
@@ -396,6 +400,10 @@ func simulateMsgRedelegate(
 		}
 		if dstVal.InvalidExRate() {
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "validator's invalid echange rate"), nil, nil
+		}
+		found, err := sk.HasReceivingRedelegation(ctx, delegator.Address, valAddr)
+		if err != nil || found {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "redelegation to destination validator in progress already exists"), nil, nil
 		}
 
 		// Determine total bonded amount.

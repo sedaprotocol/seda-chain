@@ -258,6 +258,11 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 		}
 	}
 
+	fmt.Printf("\nunbonded: %s\nunbonding: %s\nbonded: %s\n\n\n",
+		clawedBackUnbonded.String(),
+		clawedBackUnbonding.String(),
+		clawedBackBonded.String(),
+	)
 	return &types.MsgClawbackResponse{
 		ClawedUnbonded:  clawedBackUnbonded,
 		ClawedUnbonding: clawedBackUnbonding,
