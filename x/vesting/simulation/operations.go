@@ -52,7 +52,7 @@ func WeightedOperations(
 		),
 		simulation.NewWeightedOperation(
 			weightMsgClawback,
-			SimulateMsgClawback(txGen, ak, bk, sk),
+			SimulateMsgClawback(txGen, ak, bk),
 		),
 	}
 }
@@ -128,19 +128,16 @@ func SimulateMsgCreateVestingAccount(
 
 		// Add future operations.
 		var futureOps []simtypes.FutureOperation
-		// recipient stakes before clawback
-		op := simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoins)
-		futureOps = append(futureOps, simtypes.FutureOperation{
-			BlockHeight: int(ctx.BlockHeight()) + 1,
-			Op:          op,
-		})
-		// then funder claws back
-		op2 := simulateMsgClawbackFutureOp(txGen, ak, bk, sk, recipient, funder)
+		if randNum := r.Intn(3); randNum > 0 {
+			futureOps = append(futureOps, simtypes.FutureOperation{
+				BlockHeight: int(ctx.BlockHeight()) + 1,
+				Op:          simulateMsgDelegate(txGen, ak, bk, sk, recipient, sendCoins),
+			})
+		}
 		futureOps = append(futureOps, simtypes.FutureOperation{
 			BlockHeight: int(ctx.BlockHeight()) + durationBlocks,
-			Op:          op2,
+			Op:          simulateMsgClawbackFutureOp(txGen, ak, bk, sk, recipient, funder),
 		})
-
 		return simtypes.NewOperationMsg(msg, true, ""), futureOps, nil
 	}
 }
@@ -150,7 +147,6 @@ func SimulateMsgClawback(
 	txGen client.TxConfig,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	_ types.StakingKeeper,
 ) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
@@ -224,7 +220,7 @@ func simulateMsgDelegate(
 		accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		msgType := sdk.MsgTypeURL(&stakingtypes.MsgDelegate{})
-		denom, err := sk.BondDenom(ctx)
+		bondDenom, err := sk.BondDenom(ctx)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "bond denom not found"), nil, err
 		}
@@ -233,52 +229,25 @@ func simulateMsgDelegate(
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to get validators"), nil, err
 		}
-
 		if len(vals) < 3 {
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "number of validators equal zero"), nil, nil
 		}
-
-		// simAccount, _ := simtypes.RandomAcc(r, accs)
-
-		// Spare first two validators so we don't crash the network.
-		val, ok := testutil.RandSliceElem(r, vals[2:])
+		val, ok := testutil.RandSliceElem(r, vals[2:]) // Spare first two validators so we don't crash the network.
 		if !ok {
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to pick a validator"), nil, nil
 		}
-
 		if val.InvalidExRate() {
 			return simtypes.NoOpMsg(types.ModuleName, msgType, "validator's invalid echange rate"), nil, nil
 		}
 
-		amount := bk.GetBalance(ctx, acc.Address, denom).Amount
-		if !amount.IsPositive() {
-			return simtypes.NoOpMsg(types.ModuleName, msgType, "balance is negative"), nil, nil
-		}
-
-		amount, err = simtypes.RandPositiveInt(r, amount)
-		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to generate positive amount"), nil, err
-		}
-
-		bondAmt := sdk.NewCoin(denom, amount)
-
-		account := ak.GetAccount(ctx, acc.Address)
-		spendable := bk.SpendableCoins(ctx, account.GetAddress())
-
-		fees := sdk.NewCoins()
-
-		coins, hasNeg := spendable.SafeSub(bondAmt)
-		if !hasNeg {
-			fees, err = simtypes.RandomFees(r, ctx, coins)
-			if err != nil {
-				return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to generate fees"), nil, err
-			}
-		}
-		found, bondAmt := originalVesting.Find(denom)
+		found, delAmt := originalVesting.Find(bondDenom)
 		if !found {
 			panic("no bond denom in original vesting coins")
 		}
-		msg := stakingtypes.NewMsgDelegate(acc.Address.String(), val.GetOperator(), bondAmt)
+		account := ak.GetAccount(ctx, acc.Address)
+		fees := sdk.NewCoins()
+
+		msg := stakingtypes.NewMsgDelegate(acc.Address.String(), val.GetOperator(), delAmt)
 
 		// Removing sim check since we cannot know the account number in advance
 		tx, err := simtestutil.GenSignedMockTx(
@@ -300,6 +269,177 @@ func simulateMsgDelegate(
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to deliver tx"), nil, err
 		}
+
+		var futureOps []simtypes.FutureOperation
+		// 1/2 undelegate, 1/4 redelegate, 1/4 no future operation.
+		if randNum := r.Intn(2); randNum > 0 {
+			futureOps = append(futureOps, simtypes.FutureOperation{
+				BlockHeight: int(ctx.BlockHeight()) + 1,
+				Op:          simulateMsgUndelegate(txGen, ak, sk, acc, val, delAmt),
+			})
+		} else if randNum := r.Intn(2); randNum > 0 {
+			futureOps = append(futureOps, simtypes.FutureOperation{
+				BlockHeight: int(ctx.BlockHeight()) + 1,
+				Op:          simulateMsgRedelegate(txGen, ak, sk, acc, val, delAmt),
+			})
+		}
+		return simtypes.NewOperationMsg(msg, true, ""), futureOps, nil
+	}
+}
+
+func simulateMsgUndelegate(
+	txGen client.TxConfig,
+	ak types.AccountKeeper,
+	sk types.StakingKeeper,
+	delegator simtypes.Account,
+	validator stakingtypes.Validator,
+	delAmt sdk.Coin,
+) simtypes.Operation {
+	return func(
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
+		accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		msgType := sdk.MsgTypeURL(&stakingtypes.MsgUndelegate{})
+
+		valAddr, err := sdk.ValAddressFromBech32(validator.OperatorAddress)
+		if err != nil {
+			panic(err)
+		}
+
+		// Determine total bonded amount.
+		val, err := sk.GetValidator(ctx, valAddr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to get validators"), nil, err
+		}
+		delegation, err := sk.GetDelegation(ctx, delegator.Address, valAddr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "error getting validator delegations"), nil, nil
+		}
+		totalBond := val.TokensFromShares(delegation.GetShares()).TruncateInt()
+		if !totalBond.IsPositive() {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "total bond is negative"), nil, nil
+		}
+
+		amount := totalBond
+		// Undelegate total bonded amount 1/5 of the time.
+		if randNum := r.Intn(5); randNum >= 1 {
+			amount, err = simtypes.RandPositiveInt(r, totalBond)
+			if err != nil {
+				return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to generate positive undelegation amount"), nil, err
+			}
+		}
+		undelAmt := sdk.NewCoin(delAmt.Denom, amount)
+
+		account := ak.GetAccount(ctx, delegator.Address)
+		fees := sdk.NewCoins()
+		msg := stakingtypes.NewMsgUndelegate(delegator.Address.String(), validator.GetOperator(), undelAmt)
+		tx, err := simtestutil.GenSignedMockTx(
+			r,
+			txGen,
+			[]sdk.Msg{msg},
+			fees,
+			simtestutil.DefaultGenTxGas,
+			chainID,
+			[]uint64{account.GetAccountNumber()},
+			[]uint64{account.GetSequence()},
+			delegator.PrivKey,
+		)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to generate mock tx"), nil, err
+		}
+
+		_, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to deliver tx"), nil, err
+		}
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
+	}
+}
+
+func simulateMsgRedelegate(
+	txGen client.TxConfig,
+	ak types.AccountKeeper,
+	sk types.StakingKeeper,
+	delegator simtypes.Account,
+	validator stakingtypes.Validator,
+	delAmt sdk.Coin,
+) simtypes.Operation {
+	return func(
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
+		accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		msgType := sdk.MsgTypeURL(&stakingtypes.MsgBeginRedelegate{})
+
+		valAddr, err := sdk.ValAddressFromBech32(validator.OperatorAddress)
+		if err != nil {
+			panic(err)
+		}
+		srcVal, err := sk.GetValidator(ctx, valAddr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to get validators"), nil, err
+		}
+
+		// Determine redelegation destination validator.
+		vals, err := sk.GetAllValidators(ctx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to get validators"), nil, err
+		}
+		if len(vals) < 3 {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "number of validators equal zero"), nil, nil
+		}
+		dstVal, ok := testutil.RandSliceElem(r, vals[2:]) // Spare first two validators so we don't crash the network.
+		if !ok {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to pick a validator"), nil, nil
+		}
+		if dstVal.GetOperator() == srcVal.GetOperator() {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "validator's invalid echange rate"), nil, nil
+		}
+		if dstVal.InvalidExRate() {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "validator's invalid echange rate"), nil, nil
+		}
+
+		// Determine total bonded amount.
+		delegation, err := sk.GetDelegation(ctx, delegator.Address, valAddr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "error getting validator delegations"), nil, nil
+		}
+		totalBond := srcVal.TokensFromShares(delegation.GetShares()).TruncateInt()
+		if !totalBond.IsPositive() {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "total bond is negative"), nil, nil
+		}
+
+		amount := totalBond
+		// Undelegate total bonded amount 1/5 of the time.
+		if randNum := r.Intn(5); randNum >= 1 {
+			amount, err = simtypes.RandPositiveInt(r, totalBond)
+			if err != nil {
+				return simtypes.NoOpMsg(types.ModuleName, msgType, "unable to generate positive undelegation amount"), nil, err
+			}
+		}
+		redelAmt := sdk.NewCoin(delAmt.Denom, amount)
+
+		account := ak.GetAccount(ctx, delegator.Address)
+		fees := sdk.NewCoins()
+		msg := stakingtypes.NewMsgBeginRedelegate(delegator.Address.String(), srcVal.GetOperator(), dstVal.GetOperator(), redelAmt)
+		tx, err := simtestutil.GenSignedMockTx(
+			r,
+			txGen,
+			[]sdk.Msg{msg},
+			fees,
+			simtestutil.DefaultGenTxGas,
+			chainID,
+			[]uint64{account.GetAccountNumber()},
+			[]uint64{account.GetSequence()},
+			delegator.PrivKey,
+		)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to generate mock tx"), nil, err
+		}
+
+		_, _, err = app.SimDeliver(txGen.TxEncoder(), tx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, sdk.MsgTypeURL(msg), "unable to deliver tx"), nil, err
+		}
 		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
@@ -308,7 +448,7 @@ func simulateMsgClawbackFutureOp(
 	txGen client.TxConfig,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	_ types.StakingKeeper,
+	sk types.StakingKeeper,
 	recipient simtypes.Account,
 	funder simtypes.Account,
 ) simtypes.Operation {
