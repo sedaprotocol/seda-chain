@@ -252,6 +252,9 @@ func simulateMsgDelegate(
 
 		account := ak.GetAccount(ctx, acc.Address)
 		delAmt := sdk.NewCoin(originalVesting.Denom, originalVesting.Amount.Quo(math.NewInt(maxNumDelegate)))
+		if !delAmt.IsPositive() {
+			return simtypes.NoOpMsg(types.ModuleName, msgType, "invalid delegation amount"), nil, nil
+		}
 		fees := sdk.NewCoins()
 
 		msg := stakingtypes.NewMsgDelegate(acc.Address.String(), val.GetOperator(), delAmt)
