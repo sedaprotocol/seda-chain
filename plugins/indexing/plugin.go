@@ -20,6 +20,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
 
+	authmodule "github.com/sedaprotocol/seda-chain/plugins/indexing/auth"
 	bankmodule "github.com/sedaprotocol/seda-chain/plugins/indexing/bank"
 	base "github.com/sedaprotocol/seda-chain/plugins/indexing/base"
 	log "github.com/sedaprotocol/seda-chain/plugins/indexing/log"
@@ -81,6 +82,8 @@ func (p *IndexerPlugin) extractUpdate(change *storetypes.StoreKVPair) (*types.Me
 	switch change.StoreKey {
 	case bankmodule.StoreKey:
 		return bankmodule.ExtractUpdate(p.cdc, p.logger, change)
+	case authmodule.StoreKey:
+		return authmodule.ExtractUpdate(p.cdc, p.logger, change)
 	default:
 		return nil, nil
 	}
