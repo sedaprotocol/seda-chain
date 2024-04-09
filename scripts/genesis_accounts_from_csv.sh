@@ -30,6 +30,17 @@ if [ ! -f "$GENESIS_FILE" ]; then
 	exit 1
 fi
 
+# Get the genesis time from the genesis file
+genesis_time=$(jq -r '.genesis_time' "$GENESIS_FILE")
+# check if genesis time was found
+if [ -z "$genesis_time" ]; then
+	error "Genesis time not found in the genesis file"
+	exit 1
+fi
+# Set the vesting start time to the genesis time by converting it to a unix timestamp
+default_vesting_start_time=$(date -d "$genesis_time" +%s)
+echo "Genesis time: $default_vesting_start_time"
+
 echo "Processing genesis accounts from $CSV_FILE"
 # Skip the header line; read the rest of the lines
 tail -n +2 "$CSV_FILE" | while IFS=, read -r address amount vesting_amount vesting_start_time vesting_end_time funder_addr || [ -n "$address" ]; do
@@ -50,20 +61,8 @@ tail -n +2 "$CSV_FILE" | while IFS=, read -r address amount vesting_amount vesti
 	# if the vesting start is empty read the genesis file and set the vesting start time to the genesis time
 	# only if the vesting amount is not empty
 	if [ -n "$vesting_amount" ] && [ -z "$vesting_start_time" ]; then
-		echo "No vesting start time provided, reading genesis time from the genesis file"
-		# Get the genesis time from the genesis file
-		genesis_time=$(jq -r '.genesis_time' "$GENESIS_FILE")
-		# check if genesis time was found
-		if [ -z "$genesis_time" ]; then
-			echo "Failed to process address: $address"
-			echo "$address,$amount,$vesting_amount,$vesting_start_time,$vesting_end_time,$funder_addr" >> "$ERROR_LOG"
-			echo "Genesis time not found in the genesis file" >> "$ERROR_LOG"
-			echo "--------------------------------" >> "$ERROR_LOG"
-			continue
-		fi
-		# Set the vesting start time to the genesis time by converting it to a unix timestamp
-		vesting_start_time=$(date -d "$genesis_time" +%s)
-		echo "Genesis time: $vesting_start_time"
+		echo "No vesting start time provided, using genesis time from the genesis file"
+		vesting_start_time=$default_vesting_start_time
 	fi
 
   # Add conditional parameters
