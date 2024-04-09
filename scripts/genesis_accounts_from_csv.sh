@@ -6,16 +6,29 @@ SCRIPTS_DIR="$(dirname "$0")"
 source "${SCRIPTS_DIR}/seda-scripts/common.sh"
 
 # Does add-genesis-account for each entry in a CSV file.
-# Usage: genesis_accounts_from_csv <CSV_FILE> <ERROR_LOG>
-# Requires: sedad
+# Usage: genesis_accounts_from_csv <CSV_FILE> <GENESIS_FILE> <ERROR_LOG>
+# Requires: sedad, jq
 
-usage "$0" 2 "$#" "CSV_FILE" "ERROR_LOG"
+usage "$0" 3 "$#" "CSV_FILE" "GENESIS_FILE" "ERROR_LOG"
 
 CSV_FILE=$1
-ERROR_LOG=$2
+GENESIS_FILE=$2
+ERROR_LOG=$3
 
 # Clear the error log file at the beginning of the script run
 > "$ERROR_LOG"
+
+# Check if the CSV file exists
+if [ ! -f "$CSV_FILE" ]; then
+	echo "CSV file not found: $CSV_FILE"
+	exit 1
+fi
+
+# Check if the genesis file exists
+if [ ! -f "$GENESIS_FILE" ]; then
+	echo "Genesis file not found: $GENESIS_FILE"
+	exit 1
+fi
 
 echo "Processing genesis accounts from $CSV_FILE"
 # Skip the header line; read the rest of the lines
@@ -33,6 +46,25 @@ tail -n +2 "$CSV_FILE" | while IFS=, read -r address amount vesting_amount vesti
 
   # Initialize command with mandatory parameters
   cmd="${SEDA_BINARY} add-genesis-account \"$address\" \"${amount}\""
+
+	# if the vesting start is empty read the genesis file and set the vesting start time to the genesis time
+	# only if the vesting amount is not empty
+	if [ -n "$vesting_amount" ] && [ -z "$vesting_start_time" ]; then
+		echo "No vesting start time provided, reading genesis time from the genesis file"
+		# Get the genesis time from the genesis file
+		genesis_time=$(jq -r '.genesis_time' "$GENESIS_FILE")
+		# check if genesis time was found
+		if [ -z "$genesis_time" ]; then
+			echo "Failed to process address: $address"
+			echo "$address,$amount,$vesting_amount,$vesting_start_time,$vesting_end_time,$funder_addr" >> "$ERROR_LOG"
+			echo "Genesis time not found in the genesis file" >> "$ERROR_LOG"
+			echo "--------------------------------" >> "$ERROR_LOG"
+			continue
+		fi
+		# Set the vesting start time to the genesis time by converting it to a unix timestamp
+		vesting_start_time=$(date -d "$genesis_time" +%s)
+		echo "Genesis time: $vesting_start_time"
+	fi
 
   # Add conditional parameters
 	# If the vesting amount is not empty:
