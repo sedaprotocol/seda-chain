@@ -1,13 +1,15 @@
 package types
 
 type Message struct {
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
+	Block *BlockContext `json:"-"`
+	Type  string        `json:"type"`
+	Data  interface{}   `json:"data"`
 }
 
-func NewMessage(messageType string, data interface{}) *Message {
+func NewMessage(messageType string, data interface{}, block *BlockContext) *Message {
 	return &Message{
-		Type: messageType,
-		Data: data,
+		Block: block,
+		Type:  messageType,
+		Data:  data,
 	}
 }

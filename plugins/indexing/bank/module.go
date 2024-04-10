@@ -16,7 +16,7 @@ import (
 
 const StoreKey = banktypes.StoreKey
 
-func ExtractUpdate(_ codec.Codec, logger *log.Logger, change *storetypes.StoreKVPair) (*types.Message, error) {
+func ExtractUpdate(ctx *types.BlockContext, _ codec.Codec, logger *log.Logger, change *storetypes.StoreKVPair) (*types.Message, error) {
 	if keyBytes, found := bytes.CutPrefix(change.Key, banktypes.SupplyKey); found {
 		_, key, err := collections.StringKey.Decode(keyBytes)
 		if err != nil {
@@ -37,7 +37,7 @@ func ExtractUpdate(_ codec.Codec, logger *log.Logger, change *storetypes.StoreKV
 			Amount: amount.String(),
 		}
 
-		return types.NewMessage("supply", data), nil
+		return types.NewMessage("supply", data, ctx), nil
 	} else if keyBytes, found := bytes.CutPrefix(change.Key, banktypes.BalancesPrefix); found {
 		_, key, err := collections.PairKeyCodec(sdk.AccAddressKey, collections.StringKey).Decode(keyBytes)
 		if err != nil {
@@ -60,7 +60,7 @@ func ExtractUpdate(_ codec.Codec, logger *log.Logger, change *storetypes.StoreKV
 			Denom:   key.K2(),
 		}
 
-		return types.NewMessage("account-balance", data), nil
+		return types.NewMessage("account-balance", data, ctx), nil
 	}
 
 	logger.Trace("skipping change", "change", change)

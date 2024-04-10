@@ -11,7 +11,7 @@ import (
 	types "github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
-func ExtractBlockUpdate(req abci.RequestFinalizeBlock) (*types.Message, error) {
+func ExtractBlockUpdate(ctx *types.BlockContext, req abci.RequestFinalizeBlock) (*types.Message, error) {
 	hash := strings.ToUpper(hex.EncodeToString(req.Hash))
 	txCount := len(req.Txs)
 	proposerAddress, err := sdk.ConsAddressFromHex(hex.EncodeToString(req.ProposerAddress))
@@ -31,5 +31,5 @@ func ExtractBlockUpdate(req abci.RequestFinalizeBlock) (*types.Message, error) {
 		ProposerAddress: proposerAddress.String(),
 	}
 
-	return types.NewMessage("block", data), nil
+	return types.NewMessage("block", data, ctx), nil
 }

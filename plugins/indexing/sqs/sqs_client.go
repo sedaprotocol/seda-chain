@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -31,7 +32,7 @@ func (sc *SqsClient) sendMessageBatch(batch []*sqs.SendMessageBatchRequestEntry)
 	return result.Failed, nil
 }
 
-func (sc *SqsClient) PublishToQueue(height int64, data []*types.Message) error {
+func (sc *SqsClient) PublishToQueue(data []*types.Message) error {
 	// Remember max message size is 262,144 bytes
 	entries := make([]*sqs.SendMessageBatchRequestEntry, 0, 10)
 
@@ -48,7 +49,11 @@ func (sc *SqsClient) PublishToQueue(height int64, data []*types.Message) error {
 			MessageAttributes: map[string]*sqs.MessageAttributeValue{
 				"height": {
 					DataType:    aws.String("Number"),
-					StringValue: aws.String(strconv.FormatInt(height, 10)),
+					StringValue: aws.String(strconv.FormatInt(message.Block.Height, 10)),
+				},
+				"time": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String(message.Block.Time.Format(time.RFC3339)),
 				},
 			},
 			MessageBody: aws.String(string(serialisedMessage)),

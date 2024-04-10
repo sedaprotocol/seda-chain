@@ -23,14 +23,14 @@ func (s wrappedAccount) MarshalJSON() ([]byte, error) {
 	return s.cdc.MarshalInterfaceJSON(s.Account)
 }
 
-func ExtractUpdate(cdc codec.Codec, logger *log.Logger, change *storetypes.StoreKVPair) (*types.Message, error) {
+func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger, change *storetypes.StoreKVPair) (*types.Message, error) {
 	if _, found := bytes.CutPrefix(change.Key, authtypes.AddressStoreKeyPrefix); found {
 		acc, err := codec.CollInterfaceValue[sdk.AccountI](cdc).Decode(change.Value)
 		if err != nil {
 			return nil, err
 		}
 
-		return types.NewMessage("account", &wrappedAccount{cdc: cdc, Account: acc}), nil
+		return types.NewMessage("account", &wrappedAccount{cdc: cdc, Account: acc}, ctx), nil
 	}
 
 	logger.Trace("skipping change", "change", change)

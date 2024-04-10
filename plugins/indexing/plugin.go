@@ -33,14 +33,14 @@ var _ storetypes.ABCIListener = &IndexerPlugin{}
 // IndexerPlugin is the implementation of the baseapp.ABCIListener interface
 // For Go plugins this is all that is required to process data sent over gRPC.
 type IndexerPlugin struct {
-	blockHeight int64
-	cdc         codec.Codec
-	sqsClient   *pluginsqs.SqsClient
-	logger      *log.Logger
+	block     *types.BlockContext
+	cdc       codec.Codec
+	sqsClient *pluginsqs.SqsClient
+	logger    *log.Logger
 }
 
 func (p *IndexerPlugin) publishToQueue(messages []*types.Message) error {
-	publishError := p.sqsClient.PublishToQueue(p.blockHeight, messages)
+	publishError := p.sqsClient.PublishToQueue(messages)
 	if publishError != nil {
 		p.logger.Error("Failed to publish messages to queue.", "error", publishError)
 		return publishError
@@ -51,18 +51,19 @@ func (p *IndexerPlugin) publishToQueue(messages []*types.Message) error {
 
 func (p *IndexerPlugin) ListenFinalizeBlock(_ context.Context, req abci.RequestFinalizeBlock, res abci.ResponseFinalizeBlock) error {
 	p.logger.Debug(fmt.Sprintf("[%d] Start processing finalize block.", req.Height))
-	p.blockHeight = req.Height
+	p.block = types.NewBlockContext(req.Height, req.Time)
+
 	// TODO(#229) Change to +2 to account for the votes message
 	messages := make([]*types.Message, 0, len(req.Txs)+1)
 
-	blockMessage, err := base.ExtractBlockUpdate(req)
+	blockMessage, err := base.ExtractBlockUpdate(p.block, req)
 	if err != nil {
 		p.logger.Error("Failed to extract block update", "error", err)
 		return err
 	}
 	messages = append(messages, blockMessage)
 
-	txMessages, err := base.ExtractTransactionUpdates(p.cdc, req, res)
+	txMessages, err := base.ExtractTransactionUpdates(p.block, p.cdc, req, res)
 	if err != nil {
 		p.logger.Error("Failed to extract Tx updates", "error", err)
 		return err
@@ -81,16 +82,16 @@ func (p *IndexerPlugin) ListenFinalizeBlock(_ context.Context, req abci.RequestF
 func (p *IndexerPlugin) extractUpdate(change *storetypes.StoreKVPair) (*types.Message, error) {
 	switch change.StoreKey {
 	case bankmodule.StoreKey:
-		return bankmodule.ExtractUpdate(p.cdc, p.logger, change)
+		return bankmodule.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	case authmodule.StoreKey:
-		return authmodule.ExtractUpdate(p.cdc, p.logger, change)
+		return authmodule.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	default:
 		return nil, nil
 	}
 }
 
 func (p *IndexerPlugin) ListenCommit(_ context.Context, _ abci.ResponseCommit, changeSet []*storetypes.StoreKVPair) error {
-	p.logger.Debug(fmt.Sprintf("[%d] Start processing commit", p.blockHeight))
+	p.logger.Debug(fmt.Sprintf("[%d] Start processing commit", p.block.Height))
 	var messages []*types.Message
 
 	for _, change := range changeSet {
@@ -110,7 +111,7 @@ func (p *IndexerPlugin) ListenCommit(_ context.Context, _ abci.ResponseCommit, c
 		return err
 	}
 
-	p.logger.Debug(fmt.Sprintf("[%d] Processed commit", p.blockHeight))
+	p.logger.Debug(fmt.Sprintf("[%d] Processed commit", p.block.Height))
 	return nil
 }
 

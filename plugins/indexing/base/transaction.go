@@ -22,7 +22,7 @@ func (s wrappedTx) MarshalJSON() ([]byte, error) {
 	return s.cdc.MarshalJSON(s.Tx)
 }
 
-func ExtractTransactionUpdates(cdc codec.Codec, req abci.RequestFinalizeBlock, res abci.ResponseFinalizeBlock) ([]*types.Message, error) {
+func ExtractTransactionUpdates(ctx *types.BlockContext, cdc codec.Codec, req abci.RequestFinalizeBlock, res abci.ResponseFinalizeBlock) ([]*types.Message, error) {
 	messages := make([]*types.Message, 0, len(req.Txs))
 
 	timestamp := req.Time
@@ -49,7 +49,7 @@ func ExtractTransactionUpdates(cdc codec.Codec, req abci.RequestFinalizeBlock, r
 			Result: txResult,
 		}
 
-		messages = append(messages, types.NewMessage("tx", data))
+		messages = append(messages, types.NewMessage("tx", data, ctx))
 	}
 
 	return messages, nil
