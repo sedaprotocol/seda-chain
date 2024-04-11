@@ -8,6 +8,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	txtype "github.com/cosmos/cosmos-sdk/types/tx"
 
 	types "github.com/sedaprotocol/seda-chain/plugins/indexing/types"
@@ -37,16 +38,32 @@ func ExtractTransactionUpdates(ctx *types.BlockContext, cdc codec.Codec, req abc
 			return nil, err
 		}
 
+		signersBytes, _, err := tx.GetSigners(cdc)
+		if err != nil {
+			return nil, err
+		}
+
+		signers := make([]string, 0, len(signersBytes))
+		for _, signerBytes := range signersBytes {
+			var signer sdk.AccAddress
+			if err := signer.Unmarshal(signerBytes); err != nil {
+				return nil, err
+			}
+			signers = append(signers, signer.String())
+		}
+
 		data := struct {
-			Hash   string             `json:"hash"`
-			Time   time.Time          `json:"time"`
-			Tx     *wrappedTx         `json:"tx"`
-			Result *abci.ExecTxResult `json:"result"`
+			Hash    string             `json:"hash"`
+			Time    time.Time          `json:"time"`
+			Tx      *wrappedTx         `json:"tx"`
+			Signers []string           `json:"signers"`
+			Result  *abci.ExecTxResult `json:"result"`
 		}{
-			Hash:   txHash,
-			Time:   timestamp,
-			Tx:     &wrappedTx{cdc: cdc, Tx: &tx},
-			Result: txResult,
+			Hash:    txHash,
+			Time:    timestamp,
+			Tx:      &wrappedTx{cdc: cdc, Tx: &tx},
+			Signers: signers,
+			Result:  txResult,
 		}
 
 		messages = append(messages, types.NewMessage("tx", data, ctx))
