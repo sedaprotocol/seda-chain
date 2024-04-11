@@ -45,9 +45,13 @@ func ExtractUpdate(ctx *types.BlockContext, _ codec.Codec, logger *log.Logger, c
 		}
 
 		var balance math.Int
-		err = balance.Unmarshal(change.Value)
-		if err != nil {
-			return nil, err
+		if change.Delete {
+			balance = math.ZeroInt()
+		} else {
+			err = balance.Unmarshal(change.Value)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		data := struct {
