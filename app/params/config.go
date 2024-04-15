@@ -34,7 +34,7 @@ var (
 	// Bech32PrefixConsPub defines the Bech32 prefix of a consensus node public key.
 	Bech32PrefixConsPub = Bech32PrefixAccAddr + "valconspub"
 
-	MinimumGasPrice = sdk.NewDecCoinFromDec(BaseCoinUnit, math.LegacyMustNewDecFromStr("100000000000")) // 10^11 aseda
+	MinimumGasPrice = sdk.NewDecCoinFromDec(BaseCoinUnit, math.LegacyMustNewDecFromStr("10000000000")) // 10^10 aseda
 )
 
 func getSedaExponent() int64 {
