@@ -13,12 +13,13 @@ The process that starts the node should have the following environment variables
 ```sh
 export COSMOS_SDK_ABCI=PATH_TO_PLUGIN_EXECUTABLE
 export SQS_QUEUE_URL=""
+export S3_LARGE_MSG_BUCKET_NAME=""
 export PLUGIN_LOG_FILE=PATH_TO_DESIRED_LOG_FILE
 # Optionally you can also specify the log level, one of "trace", "debug", "info", "warn", "error"
 export PLUGIN_LOG_LEVEL="WARN"
 ```
 
-Lastly, as we're using SQS the node needs access to a valid set of AWS credentials with permission to publish messages to the specified queue.
+Lastly, as we're using SQS and S3 the node needs access to a valid set of AWS credentials with permission to publish messages to the specified queue and upload access to the specified bucket.
 
 ### Logging
 
@@ -108,18 +109,24 @@ Now the node can be restarted and it should resume from height N. It will call b
 
 ```sh
 go build -o PATH_TO_PLUGIN_EXECUTABLE ./plugins/indexing/plugin.go
+# Alternatively, outputs in the /build directory in the project root
+make build-plugin
 ```
 
 ## Local Development
 
-To simplify local development we use [a SQS emulator](https://github.com/Admiral-Piett/goaws/). To connect to this from the plugin you need to need to build the plugin with the `dev` flag. In addition you'll need specifiy an environment variable for `SQS_ENDPOINT` (which should be the base of the `SQS_QUEUE_URL`) in the process that launches the node.
+To simplify local development we use [a SQS emulator](https://github.com/Admiral-Piett/goaws/) and [a S3 emulator](https://github.com/adobe/S3Mock). To connect to this from the plugin you need to need to build the plugin with the `dev` flag. In addition you'll need specifiy an environment variable for `SQS_ENDPOINT` (which should be the base of the `SQS_QUEUE_URL`) in the process that launches the node, and an environment variable for `S3_ENDPOINT` (which should correspond to your local port of the service.).
 
 ```sh
 # Example urls
 export SQS_QUEUE_URL=http://localhost/4100/test-queue.fifo
 export SQS_ENDPOINT=http://localhost:4100
+export S3_LARGE_MSG_BUCKET_NAME="indexer-localnet-large-messages"
+export S3_ENDPOINT=http://localhost:9444
 ```
 
 ```sh
 go build --tags dev -o PATH_TO_PLUGIN_EXECUTABLE ./plugins/indexing/plugin.go
+# Alternatively, outputs in the /build directory in the project root
+make build-plugin-dev
 ```

@@ -21,10 +21,10 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/params"
 
 	authmodule "github.com/sedaprotocol/seda-chain/plugins/indexing/auth"
+	pluginaws "github.com/sedaprotocol/seda-chain/plugins/indexing/aws"
 	bankmodule "github.com/sedaprotocol/seda-chain/plugins/indexing/bank"
 	base "github.com/sedaprotocol/seda-chain/plugins/indexing/base"
 	log "github.com/sedaprotocol/seda-chain/plugins/indexing/log"
-	pluginsqs "github.com/sedaprotocol/seda-chain/plugins/indexing/sqs"
 	types "github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
@@ -35,7 +35,7 @@ var _ storetypes.ABCIListener = &IndexerPlugin{}
 type IndexerPlugin struct {
 	block     *types.BlockContext
 	cdc       codec.Codec
-	sqsClient *pluginsqs.SqsClient
+	sqsClient *pluginaws.SqsClient
 	logger    *log.Logger
 }
 
@@ -152,9 +152,9 @@ func main() {
 	std.RegisterInterfaces(interfaceRegistry)
 	app.ModuleBasics.RegisterInterfaces(interfaceRegistry)
 
-	sqsClient, err := pluginsqs.NewSqsClient()
+	sqsClient, err := pluginaws.NewSqsClient(logger)
 	if err != nil {
-		logger.Fatal("failed to create sqs client", err)
+		logger.Fatal("failed to create AWS clients", err)
 	}
 
 	filePlugin := &IndexerPlugin{
