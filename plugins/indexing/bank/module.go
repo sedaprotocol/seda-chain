@@ -10,8 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	log "github.com/sedaprotocol/seda-chain/plugins/indexing/log"
-	types "github.com/sedaprotocol/seda-chain/plugins/indexing/types"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
 const StoreKey = banktypes.StoreKey

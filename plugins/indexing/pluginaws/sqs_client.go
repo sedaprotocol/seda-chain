@@ -5,7 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/sqs"
 
-	types "github.com/sedaprotocol/seda-chain/plugins/indexing/types"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
 const (

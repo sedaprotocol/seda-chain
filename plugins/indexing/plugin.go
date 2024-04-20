@@ -20,12 +20,12 @@ import (
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
 
-	authmodule "github.com/sedaprotocol/seda-chain/plugins/indexing/auth"
-	pluginaws "github.com/sedaprotocol/seda-chain/plugins/indexing/aws"
-	bankmodule "github.com/sedaprotocol/seda-chain/plugins/indexing/bank"
-	base "github.com/sedaprotocol/seda-chain/plugins/indexing/base"
-	log "github.com/sedaprotocol/seda-chain/plugins/indexing/log"
-	types "github.com/sedaprotocol/seda-chain/plugins/indexing/types"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/auth"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/bank"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/base"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/pluginaws"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
 var _ storetypes.ABCIListener = &IndexerPlugin{}
@@ -81,10 +81,10 @@ func (p *IndexerPlugin) ListenFinalizeBlock(_ context.Context, req abci.RequestF
 
 func (p *IndexerPlugin) extractUpdate(change *storetypes.StoreKVPair) (*types.Message, error) {
 	switch change.StoreKey {
-	case bankmodule.StoreKey:
-		return bankmodule.ExtractUpdate(p.block, p.cdc, p.logger, change)
-	case authmodule.StoreKey:
-		return authmodule.ExtractUpdate(p.block, p.cdc, p.logger, change)
+	case bank.StoreKey:
+		return bank.ExtractUpdate(p.block, p.cdc, p.logger, change)
+	case auth.StoreKey:
+		return auth.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	default:
 		return nil, nil
 	}

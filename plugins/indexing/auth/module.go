@@ -1,4 +1,4 @@
-package bank
+package auth
 
 import (
 	"bytes"
@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	log "github.com/sedaprotocol/seda-chain/plugins/indexing/log"
-	types "github.com/sedaprotocol/seda-chain/plugins/indexing/types"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
 const StoreKey = authtypes.StoreKey

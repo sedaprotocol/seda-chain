@@ -9,14 +9,14 @@ import (
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	txtype "github.com/cosmos/cosmos-sdk/types/tx"
+	"github.com/cosmos/cosmos-sdk/types/tx"
 
-	types "github.com/sedaprotocol/seda-chain/plugins/indexing/types"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
 type wrappedTx struct {
 	cdc codec.Codec
-	Tx  *txtype.Tx
+	Tx  *tx.Tx
 }
 
 func (s wrappedTx) MarshalJSON() ([]byte, error) {
@@ -33,7 +33,7 @@ func ExtractTransactionUpdates(ctx *types.BlockContext, cdc codec.Codec, req abc
 		txResult := res.TxResults[index]
 		txHash := strings.ToUpper(hex.EncodeToString(tmhash.Sum(txBytes)))
 
-		var tx txtype.Tx
+		var tx tx.Tx
 		if err := cdc.Unmarshal(txBytes, &tx); err != nil {
 			return nil, err
 		}

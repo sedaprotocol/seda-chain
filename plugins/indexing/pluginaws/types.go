@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 
-	log "github.com/sedaprotocol/seda-chain/plugins/indexing/log"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 )
 
 var (
