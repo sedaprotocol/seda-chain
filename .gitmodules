@@ -1,3 +1,0 @@
-[submodule "scripts/seda-scripts"]
-	path = scripts/seda-scripts
-	url = git@github.com:sedaprotocol/seda-scripts.git

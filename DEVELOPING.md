@@ -7,19 +7,6 @@ format, and clean the code base. To learn how to contribute please read
 > [!NOTE]
 > Windows is not supported at this time.
 
-## Sub Modules
-
-We have a `git` submodule located at `scripts/seda-scripts`.
-
-> [!NOTE]
-> This submodule is a private repository but the scripts that
-> refernce this module are for spinning up a network and
-> non-seda devs don't need to interact with those portions.
-
-To keep this submodule up to date you cd into the submodule and `git pull` like normal.
-
-You can also make changes in that submodule and push them like normal.
-
 ## Dev-Container
 
 If you are using [VSCode](https://code.visualstudio.com/) and
