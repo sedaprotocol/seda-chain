@@ -50,7 +50,7 @@ function download_contract_release() {
 #   $1: Contract file name
 #   $2: Initial state
 function store_and_instantiate() {
-    local TX_OUTPUT=$($LOCAL_BIN tx wasm store $WASM_DIR/$1 --from $ADDR --keyring-backend test --gas auto --gas-adjustment 1.2 --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y --output json)
+    local TX_OUTPUT=$($LOCAL_BIN tx wasm store $WASM_DIR/$1 --from $ADDR --keyring-backend test --gas auto --gas-adjustment 1.2 --fees 1seda --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y --output json)
     [[ -z "$TX_OUTPUT" ]] && { echo "failed to get tx output" ; exit 1; }
     local TX_HASH=$(echo $TX_OUTPUT | jq -r .txhash)
     sleep 10;
@@ -59,7 +59,7 @@ function store_and_instantiate() {
     local CODE_ID=$(echo $STORE_TX_OUTPUT | jq -r '.events[] | select(.type | contains("store_code")).attributes[] | select(.key | contains("code_id")).value')
     [[ -z "$CODE_ID" ]] && { echo "failed to get code ID" ; exit 1; }
 
-    local INSTANTIATE_OUTPUT=$($LOCAL_BIN tx wasm instantiate $CODE_ID "$2" --no-admin --from $ADDR --keyring-backend test --label $CODE_ID --gas auto --gas-adjustment 1.2 --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y --output json)
+    local INSTANTIATE_OUTPUT=$($LOCAL_BIN tx wasm instantiate $CODE_ID "$2" --no-admin --from $ADDR --keyring-backend test --label $CODE_ID --gas auto --gas-adjustment 1.2 --fees 1seda --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y --output json)
     TX_HASH=$(echo "$INSTANTIATE_OUTPUT" | jq -r '.txhash')
     sleep 10;
 
@@ -146,12 +146,14 @@ sleep 20
 
 # Create group and group policy
 if [ $ADD_GROUPS = true ]; then
-  # add security group
-  $LOCAL_BIN tx group create-group-with-policy $ADMIN_ADDR "Security Group" "{\"name\":\"Security Group Policy\",\"description\":\"\"}" $MEMBERS_JSON_FILE $POLICY_JSON_FILE --home $TMP_HOME --from $ADMIN_ADDR --keyring-backend test --chain-id $TEMP_CHAIN_ID -y
+  # SEDA Security Policy
+  $LOCAL_BIN tx group create-group-with-policy $ADMIN_ADDR "Security Group" "{\"name\":\"Security Group Policy\",\"description\":\"\"}" $GROUP_SECURITY_MEMBERS $GROUP_SECURITY_POLICY --home $TMP_HOME --from $ADMIN_ADDR --keyring-backend test --fees 1seda --gas auto --gas-adjustment 1.5 --chain-id $TEMP_CHAIN_ID -y
   sleep 10
-
-  # add treasury group
-  $LOCAL_BIN tx group create-group-with-policy $ADMIN_ADDR "Treasury Group" "{\"name\":\"Treasury Group Policy\",\"description\":\"\"}" $MEMBERS_JSON_FILE $POLICY_JSON_FILE --home $TMP_HOME --from $ADMIN_ADDR --keyring-backend test --chain-id $TEMP_CHAIN_ID -y
+  # DAO Treasury Group
+  $LOCAL_BIN tx group create-group-with-policy $ADMIN_ADDR "Treasury Group" "{\"name\":\"Treasury Group Policy\",\"description\":\"\"}" $GROUP_TREASURY_MEMBERS $GROUP_TREASURY_POLICY --home $TMP_HOME --from $ADMIN_ADDR --keyring-backend test --fees 1seda --gas auto --gas-adjustment 1.5 --chain-id $TEMP_CHAIN_ID -y
+  sleep 10
+  # OOA Group
+  $LOCAL_BIN tx group create-group-with-policy $ADMIN_ADDR "OOA Group" "{\"name\":\"OOA Group Policy\",\"description\":\"\"}" $GROUP_OOA_MEMBERS $GROUP_OOA_POLICY --home $TMP_HOME --from $ADMIN_ADDR --keyring-backend test --fees 1seda --gas auto --gas-adjustment 1.5 --chain-id $TEMP_CHAIN_ID -y
   sleep 10
 fi
 
@@ -164,9 +166,9 @@ if [ $ADD_WASM_CONTRACTS = true ]; then
   DR_ADDR=$(store_and_instantiate data_requests.wasm "$ARG")
 
   # Call SetStaking and SetDataRequests on Proxy contract to set circular dependency
-  $LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_staking":{"contract":"'$STAKING_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test  --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
+  $LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_staking":{"contract":"'$STAKING_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test --fees 1seda --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
   sleep 10
-  $LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_data_requests":{"contract":"'$DR_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test  --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
+  $LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_data_requests":{"contract":"'$DR_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test --fees 1seda --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
   sleep 10
 fi
 
@@ -191,15 +193,20 @@ cp $ORIGINAL_GENESIS $TMP_GENESIS # make adjustments on TMP_GENESIS until replac
 if [ $ADD_GROUPS = true ]; then
   jq '.app_state["group"]' $EXPORTED_GENESIS > $TMP_HOME/group.tmp
   TREASURY_GROUP_POLICY_ADDR=$(jq '.app_state["group"]["group_policies"][0]["address"]' $EXPORTED_GENESIS)
-  SECURITY_GROUP_POLICY_ADDR=$(jq '.app_state["group"]["group_policies"][1]["address"]' $EXPORTED_GENESIS)
+  OOA_GROUP_POLICY_ADDR=$(jq '.app_state["group"]["group_policies"][1]["address"]' $EXPORTED_GENESIS)
+  SECURITY_GROUP_POLICY_ADDR=$(jq '.app_state["group"]["group_policies"][2]["address"]' $EXPORTED_GENESIS)
 
   jq --slurpfile group $TMP_HOME/group.tmp '.app_state["group"] = $group[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 
   # replace group policy address as group & group policy admin
   jq '.app_state["group"]["groups"][0]["admin"]='$SECURITY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  jq '.app_state["group"]["group_policies"][1]["admin"]='$SECURITY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  # jq '.app_state["group"]["group_policies"][1]["admin"]='$SECURITY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+
   jq '.app_state["group"]["groups"][1]["admin"]='$TREASURY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  jq '.app_state["group"]["group_policies"][0]["admin"]='$TREASURY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  # jq '.app_state["group"]["group_policies"][0]["admin"]='$TREASURY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  
+  jq '.app_state["group"]["groups"][2]["admin"]='$OOA_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  # jq '.app_state["group"]["group_policies"][2]["admin"]='$OOA_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 
   jq '.app_state["wasm"]["params"]["code_upload_access"]["permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
   jq '.app_state["wasm"]["params"]["instantiate_default_permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS

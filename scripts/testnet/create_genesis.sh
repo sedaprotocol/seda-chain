@@ -22,18 +22,42 @@ fi
 rm -rf $HOME_DIR
 rm -rf $NODE_DIR
 
-#
-#   CREATE GENESIS AND ADJUST GENESIS PARAMETERS
-#
+######################################################################
+############# CREATE GENESIS & ADJUST GENESIS PARAMETERS #############
+######################################################################
 $LOCAL_BIN init node0 --chain-id $CHAIN_ID --default-denom aseda
 
+# genesis time
 cat $HOME/.sedad/config/genesis.json | jq --arg GENESIS_TIME $GENESIS_TIME '.genesis_time=$GENESIS_TIME' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 # bank params
+DENOM_METADATA='[
+    {
+        "description": "The token asset for SEDA Chain",
+        "denom_units": [
+            {
+                "denom": "aseda",
+                "exponent": 0,
+                "aliases": [
+                "attoseda"
+                ]
+            },
+            {
+                "denom": "seda",
+                "exponent": 18,
+                "aliases": []
+            }
+        ],
+        "base": "aseda",
+        "display": "seda",
+        "name": "seda",
+        "symbol": "SEDA"
+    }
+]'
 cat $HOME/.sedad/config/genesis.json | jq --argjson denom_metadata "$DENOM_METADATA" '.app_state["bank"]["denom_metadata"]=$denom_metadata' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 # crisis params
-cat $HOME/.sedad/config/genesis.json | jq '.app_state["crisis"]["constant_fee"]["amount"]="1000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["crisis"]["constant_fee"]["amount"]="10000000000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 # distribution params
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["distribution"]["params"]["community_tax"]="0.000000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
@@ -43,9 +67,12 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["distribution"]["params"][
 # gov params
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="432000s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="432000s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
-# cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["expedited_voting_period"]="432000s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["min_deposit"][0]["denom"]="aseda"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["min_deposit"][0]["amount"]="20000000000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["expedited_min_deposit"][0]["denom"]="aseda"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["expedited_min_deposit"][0]["amount"]="50000000000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["max_deposit_period"]="432000s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
-cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["min_initial_deposit_ratio"]="0.010000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["min_initial_deposit_ratio"]="0.250000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 # mint params
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["mint"]["minter"]["inflation"]="0.000000000000000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
@@ -65,12 +92,20 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["slashing"]["params"]["sla
 cat $HOME/.sedad/config/genesis.json | jq '.consensus["params"]["block"]["max_gas"]="100000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 
-#
-#   ADD GENESIS ACCOUNTS
-#
+###################################################
+############# CREATE GENESIS ACCOUNTS #############
+###################################################
 for i in ${!GENESIS_ADDRESSES[@]}; do
-    $LOCAL_BIN add-genesis-account ${GENESIS_ADDRESSES[$i]} 2000000seda --vesting-amount 1000000seda --vesting-start-time 1708610400 --vesting-end-time 1716386400 --funder $FUNDER_ADDRESS # 2M (1M nonvesting - 1M vesting)
+    $LOCAL_BIN add-genesis-account ${GENESIS_ADDRESSES[$i]} 500seda
+    # $LOCAL_BIN add-genesis-account ${GENESIS_ADDRESSES[$i]} 2000000seda --vesting-amount 1000000seda --vesting-start-time 1708610400 --vesting-end-time 1716386400 --funder $FUNDER_ADDRESS # 2M (1M nonvesting - 1M vesting)
 done
+
+# SEDA Security Policy
+$LOCAL_BIN add-genesis-account seda1afk9zr2hn2jsac63h4hm60vl9z3e5u69gndzf7c99cqge3vzwjzs026662 25000seda
+# DAO Treasury Group
+$LOCAL_BIN add-genesis-account seda1dlszg2sst9r69my4f84l3mj66zxcf3umcgujys30t84srg95dgvsahaqzm 673386137.4456350seda
+# OOA Group
+$LOCAL_BIN add-genesis-account seda1c799jddmlz7segvg6jrw6w2k6svwafganjdznard3tc74n7td7rqt389vg 326523362.5543650seda
 
 set +u
 if [ ! -z "$SATOSHI" ]; then
@@ -79,41 +114,47 @@ fi
 if [ ! -z "$FAUCET" ]; then
     $LOCAL_BIN add-genesis-account $FAUCET 700000000seda # 700M
 fi
-set -u
 
 #
 # CREATE NODE KEY, VALIDATOR KEY, AND GENTX FOR EACH NODE
 #
-GENTX_DIR=$NODE_DIR/gentx
-mkdir -p $GENTX_DIR
+mkdir -p $NODE_DIR
 
-for i in ${!MONIKERS[@]}; do
-    INDIVIDUAL_VAL_HOME_DIR=$NODE_DIR/${MONIKERS[$i]}
-    INDIVIDUAL_VAL_CONFIG_DIR="$INDIVIDUAL_VAL_HOME_DIR/config"
+if [ ${#MONIKERS[@]} -ne 0 ]; then
+    set -u
 
-    $LOCAL_BIN init ${MONIKERS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR  --chain-id $CHAIN_ID --default-denom aseda
-    $LOCAL_BIN keys add ${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR
+    GENTX_DIR=$NODE_DIR/gentx
+    mkdir -p $GENTX_DIR
 
-    VALIDATOR_ADDRESS=$($LOCAL_BIN keys show ${MONIKERS[$i]} --keyring-backend test --home $INDIVIDUAL_VAL_HOME_DIR -a)
+    for i in ${!MONIKERS[@]}; do
+        INDIVIDUAL_VAL_HOME_DIR=$NODE_DIR/${MONIKERS[$i]}
+        INDIVIDUAL_VAL_CONFIG_DIR="$INDIVIDUAL_VAL_HOME_DIR/config"
 
-    if [ -z ${VESTING_AMOUNTS[$i]} ]; then
-        # to create their gentx
-        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR
-        # to output geneis file
-        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]}
-    else
-        # to create their gentx
-        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR --vesting-amount ${VESTING_AMOUNTS[$i]} --vesting-start-time 1708610400 --vesting-end-time 1716386400 --funder $FUNDER_ADDRESS
-        # to output geneis file
-        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --vesting-amount ${VESTING_AMOUNTS[$i]} --vesting-start-time 1708610400 --vesting-end-time 1716386400 --funder $FUNDER_ADDRESS
-    fi
+        $LOCAL_BIN init ${MONIKERS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR  --chain-id $CHAIN_ID --default-denom aseda
+        $LOCAL_BIN keys add ${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR
 
+        VALIDATOR_ADDRESS=$($LOCAL_BIN keys show ${MONIKERS[$i]} --keyring-backend test --home $INDIVIDUAL_VAL_HOME_DIR -a)
 
-    $LOCAL_BIN gentx ${MONIKERS[$i]} ${SELF_DELEGATION_AMOUNTS[$i]} --moniker=${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR --ip=${IPS[$i]} --chain-id $CHAIN_ID
+        if [ -z ${VESTING_AMOUNTS[$i]} ]; then
+            # to create their gentx
+            $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR
+            # to output geneis file
+            $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]}
+        else
+            # to create their gentx
+            $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR --vesting-amount ${VESTING_AMOUNTS[$i]} --vesting-start-time 1708610400 --vesting-end-time 1716386400 --funder $FUNDER_ADDRESS
+            # to output geneis file
+            $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --vesting-amount ${VESTING_AMOUNTS[$i]} --vesting-start-time 1708610400 --vesting-end-time 1716386400 --funder $FUNDER_ADDRESS
+        fi
 
-    cp -a $INDIVIDUAL_VAL_CONFIG_DIR/gentx/. $GENTX_DIR
-done
+        $LOCAL_BIN gentx ${MONIKERS[$i]} ${SELF_DELEGATION_AMOUNTS[$i]} --moniker=${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR --ip=${IPS[$i]} --chain-id $CHAIN_ID
 
-cp -r $GENTX_DIR $HOME_CONFIG_DIR
-$LOCAL_BIN collect-gentxs --home $HOME_DIR
-cp $HOME_CONFIG_DIR/genesis.json $NODE_DIR
+        cp -a $INDIVIDUAL_VAL_CONFIG_DIR/gentx/. $GENTX_DIR
+    done
+
+    cp -r $GENTX_DIR $HOME_CONFIG_DIR
+    $LOCAL_BIN collect-gentxs --home $HOME_DIR
+fi
+set -u
+
+cp $HOME_CONFIG_DIR/genesis.json $NODE_DIR/genesis.json
