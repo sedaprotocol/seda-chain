@@ -28,7 +28,7 @@ func GetValidatorVRFKeyPrefixFull(consensusAddr sdk.ConsAddress) []byte {
 
 type Keeper struct {
 	Schema              collections.Schema
-	Seeds               collections.Item[string]
+	Seed                collections.Item[string]
 	ValidatorVRFPubKeys collections.Map[string, cryptotypes.PubKey]
 }
 
@@ -36,24 +36,9 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService) *K
 	sb := collections.NewSchemaBuilder(storeService)
 
 	return &Keeper{
-		Seeds:               collections.NewItem(sb, SeedPrefix, "seeds", collections.StringValue),
+		Seed:                collections.NewItem(sb, SeedPrefix, "seed", collections.StringValue),
 		ValidatorVRFPubKeys: collections.NewMap(sb, ValidatorVRFPrefix, "validator-vrf-pubkeys", collections.StringKey, codec.CollInterfaceValue[cryptotypes.PubKey](cdc)),
 	}
-}
-
-// GetSeed returns the seed.
-func (k Keeper) GetSeed(ctx sdk.Context) (string, error) {
-	seed, err := k.Seeds.Get(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	return seed, nil
-}
-
-// SetSeed stores the seed.
-func (k Keeper) SetSeed(ctx sdk.Context, seed string) error {
-	return k.Seeds.Set(ctx, seed)
 }
 
 // GetValidatorVRFPubKey retrieves from the store the VRF public key

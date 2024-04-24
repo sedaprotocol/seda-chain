@@ -22,7 +22,7 @@ var _ types.MsgServer = msgServer{}
 
 func (k msgServer) NewSeed(goCtx context.Context, msg *types.MsgNewSeed) (*types.MsgNewSeedResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(goCtx)
-	err := k.Keeper.SetSeed(sdkCtx, msg.Beta)
+	err := k.Keeper.Seed.Set(sdkCtx, msg.Beta)
 	if err != nil {
 		return nil, err
 	}
