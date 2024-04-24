@@ -152,8 +152,8 @@ docker run -d --name seda_node \
 -p 26656:26656 \
 -p 26657:26657 \
 -p 9090:9090 \
---env MONIKER=moniker_here
---env NETWORK=testnet
+--env MONIKER=moniker_here \
+--env NETWORK=testnet \
 ghcr.io/sedaprotocol/seda-chain:latest sedad start
 ```
 
