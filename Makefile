@@ -115,6 +115,9 @@ build-plugin:
 build-plugin-dev:
 	@go build --tags dev -o $(BUILDDIR)/plugin ./plugins/indexing/plugin.go
 
+build-rosetta-plugin:
+	@go build $(BUILD_FLAGS) $(BUILD_ARGS) -buildmode=plugin -o $(BUILDDIR)/plugins/seda/main.so ./plugins/seda/main.go
+
 clean:
 	@echo "--> Cleaning..."
 	@rm -rf $(BUILDDIR)/** 
