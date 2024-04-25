@@ -104,7 +104,7 @@ BUILD_TARGETS := build install
 build: BUILD_ARGS=-o $(BUILDDIR)/
 
 $(BUILD_TARGETS): go.sum $(BUILDDIR)/
-	@go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
+	@go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) -trimpath ./...
 
 $(BUILDDIR)/:
 	@mkdir -p $(BUILDDIR)/
@@ -116,13 +116,13 @@ build-plugin-dev:
 	@go build --tags dev -o $(BUILDDIR)/plugin ./plugins/indexing/plugin.go
 
 build-rosetta-plugin:
-	@go build $(BUILD_FLAGS) $(BUILD_ARGS) -buildmode=plugin -o $(BUILDDIR)/plugins/seda/main.so ./plugins/seda/main.go
+	@go build $(BUILD_FLAGS) $(BUILD_ARGS) -buildmode=plugin -o ./plugins/seda/main.so ./plugins/seda/main.go
 
 clean:
 	@echo "--> Cleaning..."
 	@rm -rf $(BUILDDIR)/** 
 
-.PHONY: build build-plugin build-plugin-dev clean
+.PHONY: build build-plugin build-plugin-dev build-rosetta-plugin clean
 
 ###############################################################################
 ###                          Tools & Dependencies                           ###
