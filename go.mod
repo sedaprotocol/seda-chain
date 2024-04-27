@@ -243,4 +243,4 @@ require (
 
 replace github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 
-replace github.com/cosmos/rosetta => github.com/sedaprotocol/rosetta-seda v0.0.0-20240426231953-f3238f68c42d
+replace github.com/cosmos/rosetta => github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529
