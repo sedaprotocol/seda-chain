@@ -25,7 +25,8 @@ PROXY_CODE_ID=$(echo "$OUTPUT" | jq -r '.events[] | select(.type=="store_code") 
 echo "Instantiating proxy contract on code id $PROXY_CODE_ID"
 
 OUTPUT=$($BIN tx wasm-storage submit-proposal instantiate-and-register-proxy-contract $PROXY_CODE_ID \
-    '{"token":"aseda"}' 74657374696e67 --admin $DEV_ACCOUNT \
+    '{"token":"aseda"}' 74657374696e67 \
+    --admin $DEV_ACCOUNT \
     --label proxy$PROXY_CODE_ID \
     --title 'Proxy Contract' --summary 'Instantiates and registers proxy contract' --deposit 10000000aseda \
     --from $DEV_ACCOUNT --keyring-backend test \

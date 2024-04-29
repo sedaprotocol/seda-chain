@@ -136,18 +136,15 @@ func (m msgServer) InstantiateAndRegisterProxyContract(goCtx context.Context, ms
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, fmt.Errorf("invalid sender address: %s", err)
-	}
 	var adminAddr sdk.AccAddress
+	var err error
 	if msg.Admin != "" {
 		if adminAddr, err = sdk.AccAddressFromBech32(msg.Admin); err != nil {
 			return nil, fmt.Errorf("invalid admin address: %s", err)
 		}
 	}
 
-	contractAddr, _, err := m.wasmKeeper.Instantiate2(ctx, msg.CodeID, senderAddr, adminAddr, msg.Msg, msg.Label, msg.Funds, msg.Salt, msg.FixMsg)
+	contractAddr, _, err := m.wasmKeeper.Instantiate2(ctx, msg.CodeID, adminAddr, adminAddr, msg.Msg, msg.Label, msg.Funds, msg.Salt, msg.FixMsg)
 	if err != nil {
 		return nil, err
 	}
