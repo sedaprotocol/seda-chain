@@ -102,7 +102,7 @@ sudo ./scripts/install_wasmvm.sh
 
 ## Building using Make
 
-To build the protobuf(only necessary if you change the protobuf) you will need to run,:
+To build the protobuf (only necessary if you made changes in the proto files) you will need to run:
 
 ```bash
 make prot-dep-install
