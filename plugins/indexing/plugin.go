@@ -56,7 +56,7 @@ func (p *IndexerPlugin) ListenFinalizeBlock(_ context.Context, req abci.RequestF
 	// TODO(#229) Change to +2 to account for the votes message
 	messages := make([]*types.Message, 0, len(req.Txs)+1)
 
-	blockMessage, err := base.ExtractBlockUpdate(p.block, req)
+	blockMessage, err := base.ExtractBlockUpdate(p.block, req, res)
 	if err != nil {
 		p.logger.Error("Failed to extract block update", "error", err)
 		return err
