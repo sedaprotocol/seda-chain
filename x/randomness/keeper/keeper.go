@@ -41,6 +41,15 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService) *K
 	}
 }
 
+// GetSeed returns the seed.
+func (k Keeper) GetSeed(ctx sdk.Context) (string, error) {
+	seed, err := k.Seed.Get(ctx)
+	if err != nil {
+		return "", err
+	}
+	return seed, nil
+}
+
 // GetValidatorVRFPubKey retrieves from the store the VRF public key
 // corresponding to the given validator consensus address.
 func (k Keeper) GetValidatorVRFPubKey(ctx sdk.Context, consensusAddr string) (cryptotypes.PubKey, error) {

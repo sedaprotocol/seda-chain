@@ -28,7 +28,7 @@ jobs:
       - uses: golangci/golangci-lint-action@v3
         with:
           version: latest
-          args: --timeout 10m --tests=false --skip-dirs="e2e"
+          args: --timeout 10m --tests=false --exclude-dirs="e2e"
           skip-pkg-cache: true
 
   protobuf:
