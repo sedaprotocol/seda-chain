@@ -610,7 +610,7 @@ func NewApp(
 
 	app.WasmStorageKeeper = *wasmstoragekeeper.NewKeeper(
 		appCodec,
-		keys[wasmstoragetypes.StoreKey],
+		runtime.NewKVStoreService(keys[wasmstoragetypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		contractKeeper,
 	)
