@@ -63,15 +63,12 @@ func (k Keeper) GetAuthority() string {
 
 // SetDataRequestWasm stores Data Request Wasm using its hash as the key.
 func (k Keeper) SetDataRequestWasm(ctx sdk.Context, wasm *types.Wasm) error {
-	dataRequestWasmKeyPrefixFull := GetDataRequestWasmKeyPrefixFull(wasm.Hash)
-
-	return k.DataRequestWasm.Set(ctx, dataRequestWasmKeyPrefixFull, *wasm)
+	return k.DataRequestWasm.Set(ctx, GetDataRequestWasmKeyPrefixFull(wasm.Hash), *wasm)
 }
 
 // GetDataRequestWasm returns Data Request Wasm given its key.
 func (k Keeper) GetDataRequestWasm(ctx sdk.Context, hash []byte) (*types.Wasm, error) {
-	dataRequestWasmKeyPrefixFull := GetDataRequestWasmKeyPrefixFull(hash)
-	wasm, err := k.DataRequestWasm.Get(ctx, dataRequestWasmKeyPrefixFull)
+	wasm, err := k.DataRequestWasm.Get(ctx, GetDataRequestWasmKeyPrefixFull(hash))
 	if err != nil {
 		return nil, err
 	}
@@ -81,21 +78,17 @@ func (k Keeper) GetDataRequestWasm(ctx sdk.Context, hash []byte) (*types.Wasm, e
 
 // HasDataRequestWasm checks if a given Data Request Wasm exists.
 func (k Keeper) HasDataRequestWasm(ctx sdk.Context, wasm *types.Wasm) (bool, error) {
-	dataRequestWasmKeyPrefixFull := GetDataRequestWasmKeyPrefixFull(wasm.Hash)
-
-	return k.DataRequestWasm.Has(ctx, dataRequestWasmKeyPrefixFull)
+	return k.DataRequestWasm.Has(ctx, GetDataRequestWasmKeyPrefixFull(wasm.Hash))
 }
 
 // SetOverlayWasm stores Overlay Wasm using its hash as the key.
 func (k Keeper) SetOverlayWasm(ctx sdk.Context, wasm *types.Wasm) error {
-	overlayWasmKeyPrefixFull := GetOverlayWasmKeyPrefixFull(wasm.Hash)
-	return k.OverlayWasm.Set(ctx, overlayWasmKeyPrefixFull, *wasm)
+	return k.OverlayWasm.Set(ctx, GetOverlayWasmKeyPrefixFull(wasm.Hash), *wasm)
 }
 
 // GetOverlayWasm returns Overlay Wasm given its key.
 func (k Keeper) GetOverlayWasm(ctx sdk.Context, hash []byte) (*types.Wasm, error) {
-	overlayWasmKeyPrefixFull := GetOverlayWasmKeyPrefixFull(hash)
-	wasm, err := k.OverlayWasm.Get(ctx, overlayWasmKeyPrefixFull)
+	wasm, err := k.OverlayWasm.Get(ctx, GetOverlayWasmKeyPrefixFull(hash))
 	if err != nil {
 		return nil, err
 	}
@@ -105,9 +98,7 @@ func (k Keeper) GetOverlayWasm(ctx sdk.Context, hash []byte) (*types.Wasm, error
 
 // HasOverlayWasm checks if a given Overlay Wasm exists.
 func (k Keeper) HasOverlayWasm(ctx sdk.Context, wasm *types.Wasm) (bool, error) {
-	overlayWasmKeyPrefixFull := GetOverlayWasmKeyPrefixFull(wasm.Hash)
-
-	return k.OverlayWasm.Has(ctx, overlayWasmKeyPrefixFull)
+	return k.OverlayWasm.Has(ctx, GetOverlayWasmKeyPrefixFull(wasm.Hash))
 }
 
 // IterateAllDataRequestWasms iterates over the all the stored Data Request
