@@ -9,6 +9,11 @@ on:
       password:
         required: true
 
+# Don't allow multiple of the same job to run
+concurrency:
+  group: "manual_build"
+  cancel-in-progress: false
+
 jobs:
   check_pass:
     name: Check password
@@ -31,33 +36,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3	
 
-      - name: Install arm Arch
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔨 Build Binaries
         run: |
-          sudo apt-get update
-          sudo apt-get -y install --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+          export VERSION=$(echo $(git describe --tags --always --match "v*") | sed 's/^v//')
+          export COMMIT=$(git log -1 --format='%H')
+          docker build -t seda-static -f ./dockerfiles/Dockerfile.build-static \
+            --build-arg GIT_VERSION="$VERSION" \
+            --build-arg GIT_COMMIT="$COMMIT" .
+          mkdir build
+          docker run --rm -v $(pwd)/build:/output seda-static cp -r /build/. /output/
 
-      - name: Install Ignite
-        run: |
-          curl https://get.ignite.com/cli! | bash
-
-      - name: Create Arm Node Binary
-        env: 
-          GOFLAGS: '-buildvcs=false'
-          CGO_ENABLED: 1
-          CC: 'aarch64-linux-gnu-gcc'
-          CXX: 'aarch64-linux-gnu-g++'
-        run: |
-          ignite chain build --release -t linux:arm64 -y -v
-
-      - name: Upload to transfer.sh
-        id: upload
-        run: |
-          TRANSFER_URL=$(curl --upload-file release/seda-chain_linux_arm64.tar.gz https://transfer.sh/seda-chain_linux_arm64.tar.gz)
-          echo "transfer_url=$TRANSFER_URL" >> $GITHUB_OUTPUT
-
-      - name: Use transfer URL
-        run: echo "The binary can be downloaded from ${{ steps.upload.outputs.transfer_url }}"
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          path: build/
+          overwrite: true
