@@ -313,7 +313,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 				s.Require().NoError(err)
 
 				// Check that the Params were correctly set
-				params, _ := s.wasmStorageKeeper.GetParams(s.ctx)
+				params, _ := s.wasmStorageKeeper.Params.Get(s.ctx)
 				s.Require().Equal(tc.input.Params, params)
 			}
 		})

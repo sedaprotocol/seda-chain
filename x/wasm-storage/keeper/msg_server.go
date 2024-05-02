@@ -198,7 +198,8 @@ func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParam
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := m.SetParams(ctx, req.Params); err != nil {
+
+	if err := m.Params.Set(ctx, req.Params); err != nil {
 		return nil, err
 	}
 

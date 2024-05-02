@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/hex"
 	"fmt"
-	"time"
 
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/core/store"
@@ -22,15 +21,7 @@ var (
 	// OverlayPrefix defines prefix to store Overlay Wasm binaries.
 	OverlayPrefix = collections.NewPrefix(1)
 
-	// DataRequestQueuePrefix defines prefix to store the queue that contains
-	// the hashes of Data Request Wasm binaries.
-	DataRequestQueuePrefix = collections.NewPrefix(2)
-
-	// ProxyContractRegistryPrefix defines prefix to store address of
-	// Proxy Contract.
-	ProxyContractRegistryPrefix = collections.NewPrefix(3)
-
-	ParamsPrefix = collections.NewPrefix(4)
+	ParamsPrefix = collections.NewPrefix(2)
 )
 
 func GetDataRequestWasmKeyPrefixFull(hash []byte) []byte {
@@ -39,13 +30,6 @@ func GetDataRequestWasmKeyPrefixFull(hash []byte) []byte {
 
 func GetOverlayWasmKeyPrefixFull(hash []byte) []byte {
 	return append(OverlayPrefix, hash...)
-}
-
-// GetDataRequestTimeKeyPrefixFull gets the key for an item in Data Request Queue. This key
-// is the timestamp of when the Data Request Wasm was stored.
-func GetDataRequestTimeKeyPrefixFull(timestamp time.Time) []byte {
-	bz := sdk.FormatTimeBytes(timestamp)
-	return append(DataRequestQueuePrefix, bz...)
 }
 
 type Keeper struct {
@@ -218,14 +202,4 @@ func (k Keeper) GetAllWasms(ctx sdk.Context) []types.Wasm {
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
-}
-
-// GetParams returns all the parameters for the module.
-func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
-	return k.Params.Get(ctx)
-}
-
-// SetParams sets the parameters in the store.
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	return k.Params.Set(ctx, params)
 }
