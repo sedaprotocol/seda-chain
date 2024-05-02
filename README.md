@@ -51,7 +51,7 @@ Download from our Github releases [page](https://github.com/sedaprotocol/seda-ch
 
 ### Build From Source
 
-Note that the `main` branch is unstable. For a stable version, `git checkout` a tag that has been released.
+Note that the `main` branch is under development and might not always be stable. For a stable version, consider checking out a released tag using `git checkout`.
 For instructions on how to build, please refer to [developing](DEVELOPING.md).
 
 ## Running the Node
