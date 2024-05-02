@@ -68,11 +68,11 @@ func (q Querier) OverlayWasms(c context.Context, _ *types.QueryOverlayWasmsReque
 
 func (q Querier) ProxyContractRegistry(c context.Context, _ *types.QueryProxyContractRegistryRequest) (*types.QueryProxyContractRegistryResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	proxyAddress, err := q.GetProxyContractRegistry(ctx)
+	proxyAddress, err := q.Keeper.ProxyContractRegistry.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return &types.QueryProxyContractRegistryResponse{
-		Address: proxyAddress.String(),
+		Address: sdk.AccAddress(proxyAddress).String(),
 	}, nil
 }

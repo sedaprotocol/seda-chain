@@ -31,7 +31,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		if err != nil {
 			panic(err)
 		}
-		err = k.SetProxyContractRegistry(ctx, proxyAddr)
+		err = k.ProxyContractRegistry.Set(ctx, proxyAddr)
 		if err != nil {
 			panic(err)
 		}
@@ -41,9 +41,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 // ExportGenesis extracts all data from store to genesis state.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	wasms := k.GetAllWasms(ctx)
-	proxy, err := k.GetProxyContractRegistry(ctx)
+	proxy, err := k.ProxyContractRegistry.Get(ctx)
 	if err != nil {
 		return types.NewGenesisState(wasms, "")
 	}
-	return types.NewGenesisState(wasms, proxy.String())
+	accAddress := sdk.AccAddress(proxy).String()
+	return types.NewGenesisState(wasms, accAddress)
 }

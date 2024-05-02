@@ -216,16 +216,6 @@ func (k Keeper) GetAllWasms(ctx sdk.Context) []types.Wasm {
 	return wasms
 }
 
-// SetProxyContractRegistry stores Proxy Contract address.
-func (k Keeper) SetProxyContractRegistry(ctx sdk.Context, address sdk.AccAddress) error {
-	return k.ProxyContractRegistry.Set(ctx, address)
-}
-
-// GetProxyContractRegistry returns Proxy Contract address.
-func (k Keeper) GetProxyContractRegistry(ctx sdk.Context) (sdk.AccAddress, error) {
-	return k.ProxyContractRegistry.Get(ctx)
-}
-
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
