@@ -1,6 +1,9 @@
 package wasmstorage
 
 import (
+	"errors"
+
+	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
@@ -31,7 +34,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		if err != nil {
 			panic(err)
 		}
-		err = k.ProxyContractRegistry.Set(ctx, proxyAddr)
+		err = k.ProxyContractRegistry.Set(ctx, proxyAddr.String())
 		if err != nil {
 			panic(err)
 		}
@@ -43,8 +46,10 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	wasms := k.GetAllWasms(ctx)
 	proxy, err := k.ProxyContractRegistry.Get(ctx)
 	if err != nil {
-		return types.NewGenesisState(wasms, "")
+		if errors.Is(err, collections.ErrNotFound) {
+			return types.NewGenesisState(wasms, "")
+		}
+		panic(err)
 	}
-	accAddress := sdk.AccAddress(proxy).String()
-	return types.NewGenesisState(wasms, accAddress)
+	return types.NewGenesisState(wasms, proxy)
 }

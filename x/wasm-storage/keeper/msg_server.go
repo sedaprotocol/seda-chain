@@ -158,7 +158,7 @@ func (m msgServer) InstantiateAndRegisterProxyContract(goCtx context.Context, ms
 	}
 
 	// update Proxy Contract registry
-	err = m.ProxyContractRegistry.Set(ctx, contractAddr)
+	err = m.ProxyContractRegistry.Set(ctx, contractAddr.String())
 	if err != nil {
 		return nil, err
 	}

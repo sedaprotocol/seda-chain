@@ -135,17 +135,10 @@ if [ ${#MONIKERS[@]} -ne 0 ]; then
 
         VALIDATOR_ADDRESS=$($LOCAL_BIN keys show ${MONIKERS[$i]} --keyring-backend test --home $INDIVIDUAL_VAL_HOME_DIR -a)
 
-        if [ -z ${VESTING_AMOUNTS[$i]} ]; then
-            # to create their gentx
-            $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR
-            # to output geneis file
-            $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]}
-        else
-            # to create their gentx
-            $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR --vesting-amount ${VESTING_AMOUNTS[$i]} --vesting-start-time 1708610400 --vesting-end-time 1716386400 --funder $FUNDER_ADDRESS
-            # to output geneis file
-            $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --vesting-amount ${VESTING_AMOUNTS[$i]} --vesting-start-time 1708610400 --vesting-end-time 1716386400 --funder $FUNDER_ADDRESS
-        fi
+        # to create their gentx
+        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR
+        # to output geneis file
+        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]}
 
         $LOCAL_BIN gentx ${MONIKERS[$i]} ${SELF_DELEGATION_AMOUNTS[$i]} --moniker=${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR --ip=${IPS[$i]} --chain-id $CHAIN_ID
 

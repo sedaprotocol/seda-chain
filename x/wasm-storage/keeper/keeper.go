@@ -17,11 +17,13 @@ import (
 var (
 	// DataRequestPrefix defines prefix to store Data Request Wasm binaries.
 	DataRequestPrefix = collections.NewPrefix(0)
-
 	// OverlayPrefix defines prefix to store Overlay Wasm binaries.
 	OverlayPrefix = collections.NewPrefix(1)
-
-	ParamsPrefix = collections.NewPrefix(2)
+	// ProxyContractRegistryPrefix defines prefix to store address of
+	// Proxy Contract.
+	ProxyContractRegistryPrefix = collections.NewPrefix(2)
+	// ParamsPrefix defines prefix to store parameters of wasm-storage module.
+	ParamsPrefix = collections.NewPrefix(3)
 )
 
 func GetDataRequestWasmKeyPrefixFull(hash []byte) []byte {
@@ -40,7 +42,7 @@ type Keeper struct {
 	Schema                collections.Schema
 	DataRequestWasm       collections.Map[[]byte, types.Wasm]
 	OverlayWasm           collections.Map[[]byte, types.Wasm]
-	ProxyContractRegistry collections.Item[[]byte]
+	ProxyContractRegistry collections.Item[string]
 	Params                collections.Item[types.Params]
 }
 
@@ -48,11 +50,12 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, au
 	sb := collections.NewSchemaBuilder(storeService)
 
 	return &Keeper{
-		authority:       authority,
-		wasmKeeper:      wk,
-		DataRequestWasm: collections.NewMap(sb, DataRequestPrefix, "data-request-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
-		OverlayWasm:     collections.NewMap(sb, OverlayPrefix, "overlay-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
-		Params:          collections.NewItem(sb, ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
+		authority:             authority,
+		wasmKeeper:            wk,
+		DataRequestWasm:       collections.NewMap(sb, DataRequestPrefix, "data-request-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
+		OverlayWasm:           collections.NewMap(sb, OverlayPrefix, "overlay-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
+		ProxyContractRegistry: collections.NewItem(sb, ProxyContractRegistryPrefix, "proxy-contract-registry", collections.StringValue),
+		Params:                collections.NewItem(sb, ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
 	}
 }
 
