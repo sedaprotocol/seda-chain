@@ -56,7 +56,10 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgStoreDataRequestWasm) (*types.MsgStoreDataRequestWasmResponse, error) {
+func (m msgServer) StoreDataRequestWasm(
+	goCtx context.Context,
+	msg *types.MsgStoreDataRequestWasm,
+) (*types.MsgStoreDataRequestWasmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	unzipped, err := unzipWasm(msg.Wasm)
@@ -64,17 +67,15 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 		return nil, err
 	}
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
-	exists, _ := m.Keeper.HasDataRequestWasm(ctx, wasm)
-	if exists {
+	if exists, _ := m.DataRequestWasm.Has(ctx, GetPrefix(*wasm)); exists {
 		return nil, fmt.Errorf("data Request Wasm with given hash already exists")
 	}
-	err = m.Keeper.SetDataRequestWasm(ctx, wasm)
-	if err != nil {
+
+	if err := m.DataRequestWasm.Set(ctx, GetPrefix(*wasm), *wasm); err != nil {
 		return nil, err
 	}
 
 	hashString := hex.EncodeToString(wasm.Hash)
-
 	err = ctx.EventManager().EmitTypedEvent(
 		&EventStoreDataRequestWasmWrapper{
 			EventStoreDataRequestWasm: &types.EventStoreDataRequestWasm{
@@ -92,7 +93,10 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	}, nil
 }
 
-func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOverlayWasm) (*types.MsgStoreOverlayWasmResponse, error) {
+func (m msgServer) StoreOverlayWasm(
+	goCtx context.Context,
+	msg *types.MsgStoreOverlayWasm,
+) (*types.MsgStoreOverlayWasmResponse, error) {
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -108,11 +112,15 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 		return nil, err
 	}
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
-	exists, _ := m.Keeper.HasOverlayWasm(ctx, wasm)
+	exists, _ := m.Keeper.OverlayWasm.Has(ctx, GetPrefix(*wasm))
 	if exists {
 		return nil, fmt.Errorf("overlay Wasm with given hash already exists")
 	}
-	err = m.Keeper.SetOverlayWasm(ctx, wasm)
+	err = m.Keeper.OverlayWasm.Set(
+		ctx,
+		GetPrefix(*wasm),
+		*wasm,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +145,10 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 
 // InstantiateAndRegisterProxyContract instantiate a new contract with
 // a predictable address and updates the Proxy Contract registry.
-func (m msgServer) InstantiateAndRegisterProxyContract(goCtx context.Context, msg *types.MsgInstantiateAndRegisterProxyContract) (*types.MsgInstantiateAndRegisterProxyContractResponse, error) {
+func (m msgServer) InstantiateAndRegisterProxyContract(
+	goCtx context.Context,
+	msg *types.MsgInstantiateAndRegisterProxyContract,
+) (*types.MsgInstantiateAndRegisterProxyContractResponse, error) {
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -152,7 +163,9 @@ func (m msgServer) InstantiateAndRegisterProxyContract(goCtx context.Context, ms
 		}
 	}
 
-	contractAddr, _, err := m.wasmKeeper.Instantiate2(ctx, msg.CodeID, adminAddr, adminAddr, msg.Msg, msg.Label, msg.Funds, msg.Salt, msg.FixMsg)
+	contractAddr, _, err := m.wasmKeeper.Instantiate2(
+		ctx, msg.CodeID, adminAddr, adminAddr, msg.Msg, msg.Label, msg.Funds, msg.Salt, msg.FixMsg,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +195,10 @@ func unzipWasm(wasm []byte) ([]byte, error) {
 	return unzipped, nil
 }
 
-func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+func (m msgServer) UpdateParams(
+	goCtx context.Context,
+	req *types.MsgUpdateParams,
+) (*types.MsgUpdateParamsResponse, error) {
 	// validate authority
 	if _, err := sdk.AccAddressFromBech32(req.Authority); err != nil {
 		return nil, fmt.Errorf("invalid authority address: %s", err)

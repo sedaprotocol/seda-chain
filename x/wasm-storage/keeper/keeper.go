@@ -26,12 +26,15 @@ var (
 	ParamsPrefix = collections.NewPrefix(3)
 )
 
-func GetDataRequestWasmKeyPrefixFull(hash []byte) []byte {
-	return append(DataRequestPrefix, hash...)
-}
-
-func GetOverlayWasmKeyPrefixFull(hash []byte) []byte {
-	return append(OverlayPrefix, hash...)
+func GetPrefix(w types.Wasm) []byte {
+	switch w.WasmType {
+	case types.WasmTypeDataRequest, types.WasmTypeTally:
+		return append(DataRequestPrefix, w.Hash...)
+	case types.WasmTypeDataRequestExecutor, types.WasmTypeRelayer:
+		return append(OverlayPrefix, w.Hash...)
+	default:
+		panic(fmt.Errorf("invalid wasm type: %+v", w))
+	}
 }
 
 type Keeper struct {
@@ -46,62 +49,49 @@ type Keeper struct {
 	Params                collections.Item[types.Params]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, authority string, wk wasmtypes.ContractOpsKeeper) *Keeper {
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeService storetypes.KVStoreService,
+	authority string,
+	wk wasmtypes.ContractOpsKeeper,
+) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
 	return &Keeper{
-		authority:             authority,
-		wasmKeeper:            wk,
-		DataRequestWasm:       collections.NewMap(sb, DataRequestPrefix, "data-request-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
-		OverlayWasm:           collections.NewMap(sb, OverlayPrefix, "overlay-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
-		ProxyContractRegistry: collections.NewItem(sb, ProxyContractRegistryPrefix, "proxy-contract-registry", collections.StringValue),
-		Params:                collections.NewItem(sb, ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
+		authority:  authority,
+		wasmKeeper: wk,
+		DataRequestWasm: collections.NewMap(
+			sb,
+			DataRequestPrefix,
+			"data-request-wasm",
+			collections.BytesKey,
+			codec.CollValue[types.Wasm](cdc),
+		),
+		OverlayWasm: collections.NewMap(
+			sb,
+			OverlayPrefix,
+			"overlay-wasm",
+			collections.BytesKey,
+			codec.CollValue[types.Wasm](cdc),
+		),
+		ProxyContractRegistry: collections.NewItem(
+			sb,
+			ProxyContractRegistryPrefix,
+			"proxy-contract-registry",
+			collections.StringValue,
+		),
+		Params: collections.NewItem(
+			sb,
+			ParamsPrefix,
+			"params",
+			codec.CollValue[types.Params](cdc),
+		),
 	}
 }
 
 // GetAuthority returns the module's authority.
 func (k Keeper) GetAuthority() string {
 	return k.authority
-}
-
-// SetDataRequestWasm stores Data Request Wasm using its hash as the key.
-func (k Keeper) SetDataRequestWasm(ctx sdk.Context, wasm *types.Wasm) error {
-	return k.DataRequestWasm.Set(ctx, GetDataRequestWasmKeyPrefixFull(wasm.Hash), *wasm)
-}
-
-// GetDataRequestWasm returns Data Request Wasm given its key.
-func (k Keeper) GetDataRequestWasm(ctx sdk.Context, hash []byte) (*types.Wasm, error) {
-	wasm, err := k.DataRequestWasm.Get(ctx, GetDataRequestWasmKeyPrefixFull(hash))
-	if err != nil {
-		return nil, err
-	}
-
-	return &wasm, nil
-}
-
-// HasDataRequestWasm checks if a given Data Request Wasm exists.
-func (k Keeper) HasDataRequestWasm(ctx sdk.Context, wasm *types.Wasm) (bool, error) {
-	return k.DataRequestWasm.Has(ctx, GetDataRequestWasmKeyPrefixFull(wasm.Hash))
-}
-
-// SetOverlayWasm stores Overlay Wasm using its hash as the key.
-func (k Keeper) SetOverlayWasm(ctx sdk.Context, wasm *types.Wasm) error {
-	return k.OverlayWasm.Set(ctx, GetOverlayWasmKeyPrefixFull(wasm.Hash), *wasm)
-}
-
-// GetOverlayWasm returns Overlay Wasm given its key.
-func (k Keeper) GetOverlayWasm(ctx sdk.Context, hash []byte) (*types.Wasm, error) {
-	wasm, err := k.OverlayWasm.Get(ctx, GetOverlayWasmKeyPrefixFull(hash))
-	if err != nil {
-		return nil, err
-	}
-
-	return &wasm, nil
-}
-
-// HasOverlayWasm checks if a given Overlay Wasm exists.
-func (k Keeper) HasOverlayWasm(ctx sdk.Context, wasm *types.Wasm) (bool, error) {
-	return k.OverlayWasm.Has(ctx, GetOverlayWasmKeyPrefixFull(wasm.Hash))
 }
 
 // IterateAllDataRequestWasms iterates over the all the stored Data Request

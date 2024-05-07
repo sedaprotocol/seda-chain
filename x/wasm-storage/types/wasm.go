@@ -1,7 +1,7 @@
 package types
 
 import (
-	fmt "fmt"
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,14 +11,16 @@ import (
 const (
 	// MaxWasmSize is the maximum size of Wasm bytecode.
 	MaxWasmSize = 800 * 1024
+	// MinWasmSize is the realistic minimum size of Wasm bytecode.
+	MinWasmSize = 20
 )
 
 func validateWasmCode(s []byte) error {
-	if len(s) == 0 {
-		return fmt.Errorf("empty Wasm code")
+	if len(s) < MinWasmSize {
+		return fmt.Errorf("wasm code must be larger than %d bytes", MinWasmSize)
 	}
 	if len(s) > MaxWasmSize {
-		return fmt.Errorf("Wasm code cannot be longer than %d bytes", MaxWasmSize)
+		return fmt.Errorf("wasm code cannot be longer than %d bytes", MaxWasmSize)
 	}
 	return nil
 }

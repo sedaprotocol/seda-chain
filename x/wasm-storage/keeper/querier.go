@@ -21,52 +21,69 @@ func NewQuerierImpl(keeper Keeper) types.QueryServer {
 	}
 }
 
-func (q Querier) DataRequestWasm(c context.Context, req *types.QueryDataRequestWasmRequest) (*types.QueryDataRequestWasmResponse, error) {
+func (q Querier) DataRequestWasm(
+	c context.Context,
+	req *types.QueryDataRequestWasmRequest,
+) (*types.QueryDataRequestWasmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	hash, err := hex.DecodeString(req.Hash)
 	if err != nil {
 		return nil, err
 	}
-	wasm, err := q.GetDataRequestWasm(ctx, hash)
+	mockWasm := types.Wasm{Hash: hash, WasmType: types.WasmTypeDataRequest}
+	wasm, err := q.Keeper.DataRequestWasm.Get(ctx, GetPrefix(mockWasm))
 	if err != nil {
 		return nil, err
 	}
 
 	return &types.QueryDataRequestWasmResponse{
-		Wasm: wasm,
+		Wasm: &wasm,
 	}, nil
 }
 
-func (q Querier) DataRequestWasms(c context.Context, _ *types.QueryDataRequestWasmsRequest) (*types.QueryDataRequestWasmsResponse, error) {
+func (q Querier) DataRequestWasms(
+	c context.Context,
+	_ *types.QueryDataRequestWasmsRequest,
+) (*types.QueryDataRequestWasmsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryDataRequestWasmsResponse{
 		HashTypePairs: q.ListDataRequestWasms(ctx),
 	}, nil
 }
 
-func (q Querier) OverlayWasm(c context.Context, req *types.QueryOverlayWasmRequest) (*types.QueryOverlayWasmResponse, error) {
+func (q Querier) OverlayWasm(
+	c context.Context,
+	req *types.QueryOverlayWasmRequest,
+) (*types.QueryOverlayWasmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	hash, err := hex.DecodeString(req.Hash)
 	if err != nil {
 		return nil, err
 	}
-	wasm, err := q.GetOverlayWasm(ctx, hash)
+	mockWasm := types.Wasm{Hash: hash, WasmType: types.WasmTypeRelayer}
+	wasm, err := q.Keeper.OverlayWasm.Get(ctx, GetPrefix(mockWasm))
 	if err != nil {
 		return nil, err
 	}
 	return &types.QueryOverlayWasmResponse{
-		Wasm: wasm,
+		Wasm: &wasm,
 	}, nil
 }
 
-func (q Querier) OverlayWasms(c context.Context, _ *types.QueryOverlayWasmsRequest) (*types.QueryOverlayWasmsResponse, error) {
+func (q Querier) OverlayWasms(
+	c context.Context,
+	_ *types.QueryOverlayWasmsRequest,
+) (*types.QueryOverlayWasmsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryOverlayWasmsResponse{
 		HashTypePairs: q.ListOverlayWasms(ctx),
 	}, nil
 }
 
-func (q Querier) ProxyContractRegistry(c context.Context, _ *types.QueryProxyContractRegistryRequest) (*types.QueryProxyContractRegistryResponse, error) {
+func (q Querier) ProxyContractRegistry(
+	c context.Context,
+	_ *types.QueryProxyContractRegistryRequest,
+) (*types.QueryProxyContractRegistryResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	proxyAddress, err := q.Keeper.ProxyContractRegistry.Get(ctx)
 	if err != nil {

@@ -14,17 +14,21 @@ import (
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 	for i := range data.Wasms {
 		wasm := data.Wasms[i]
-		if wasm.WasmType == types.WasmTypeDataRequest ||
-			wasm.WasmType == types.WasmTypeTally {
-			err := k.SetDataRequestWasm(ctx, &wasm)
-			if err != nil {
+		switch wasm.WasmType {
+		case types.WasmTypeDataRequest, types.WasmTypeTally:
+			if err := k.DataRequestWasm.Set(
+				ctx,
+				keeper.GetPrefix(wasm),
+				wasm,
+			); err != nil {
 				panic(err)
 			}
-		}
-		if wasm.WasmType == types.WasmTypeDataRequestExecutor ||
-			wasm.WasmType == types.WasmTypeRelayer {
-			err := k.SetOverlayWasm(ctx, &wasm)
-			if err != nil {
+		case types.WasmTypeDataRequestExecutor, types.WasmTypeRelayer:
+			if err := k.OverlayWasm.Set(
+				ctx,
+				keeper.GetPrefix(wasm),
+				wasm,
+			); err != nil {
 				panic(err)
 			}
 		}
