@@ -6,6 +6,12 @@ WASMVM_VERSION=v1.5.2
 WASM_PERMISSION_EVERYONE=true # true for everyone and false for mainnet configuration
 SHORT_VOTING_PERIOD=true # true for 180s voting period or false for mainnet configuration
 
+# If DOWNLOAD_FROM_RELEASE is set to false, specify RUN_NO and ARTIFACT_NO so the script
+# can download the artifact.
+DOWNLOAD_FROM_RELEASE=false
+RUN_NO=0123
+ARTIFACT_NO=0123
+
 LOCAL_BIN=$(git rev-parse --show-toplevel)/build/sedad # chain binary executable on your machine
 HOME_DIR=$HOME/.sedad # chain directory
 HOME_CONFIG_DIR=$HOME_DIR/config # chain config directory
