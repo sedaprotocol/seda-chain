@@ -199,18 +199,20 @@ if [ $ADD_GROUPS = true ]; then
   jq --slurpfile group $TMP_HOME/group.tmp '.app_state["group"] = $group[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 
   # replace group policy address as group & group policy admin
-  jq '.app_state["group"]["groups"][0]["admin"]='$SECURITY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  # jq '.app_state["group"]["group_policies"][1]["admin"]='$SECURITY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '(.app_state.group.groups[] | select(.metadata == "Security Group") .admin) |= '$SECURITY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '(.app_state.group.group_policies[] | select(.address == '$SECURITY_GROUP_POLICY_ADDR') .admin) |= '$SECURITY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 
-  jq '.app_state["group"]["groups"][1]["admin"]='$TREASURY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  # jq '.app_state["group"]["group_policies"][0]["admin"]='$TREASURY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  
-  jq '.app_state["group"]["groups"][2]["admin"]='$OOA_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  # jq '.app_state["group"]["group_policies"][2]["admin"]='$OOA_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '(.app_state.group.groups[] | select(.metadata == "Treasury Group") .admin) |= '$TREASURY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '(.app_state.group.group_policies[] | select(.address == '$TREASURY_GROUP_POLICY_ADDR') .admin) |= '$TREASURY_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 
-  jq '.app_state["wasm"]["params"]["code_upload_access"]["permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  jq '.app_state["wasm"]["params"]["instantiate_default_permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  jq '.app_state["wasm"]["params"]["code_upload_access"]["addresses"]=['$SECURITY_GROUP_POLICY_ADDR']' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '(.app_state.group.groups[] | select(.metadata == "OOA Group") .admin) |= '$OOA_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  jq '(.app_state.group.group_policies[] | select(.address == '$OOA_GROUP_POLICY_ADDR') .admin) |= '$OOA_GROUP_POLICY_ADDR'' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+
+  if [ "$WASM_PERMISSION_EVERYONE" != "true" ]; then
+    jq '.app_state["wasm"]["params"]["code_upload_access"]["permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+    jq '.app_state["wasm"]["params"]["instantiate_default_permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+    jq '.app_state["wasm"]["params"]["code_upload_access"]["addresses"]=['$SECURITY_GROUP_POLICY_ADDR']' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
+  fi
 fi
 
 # Modify wasm codes, contracts, and sequences. 

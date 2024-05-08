@@ -31,10 +31,29 @@ if [ ! -f "$LOCAL_BIN" ]; then
   exit 1
 fi
 
-# download chain binaries
-curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/sedad-amd64
+# Download chain binaries
+
+# From release:
+# curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/sedad-amd64
+# curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/sedad-arm64
+
+# From artifact:
+RUN_NO=8941156340
+ARTIFACT_NO=1471046522
+
+set +x
+url=$(curl -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/sedaprotocol/seda-chain/actions/runs/$RUN_NO/artifacts | \
+          jq -r '.artifacts[] | select(.id=='"$ARTIFACT_NO"') | .archive_download_url')
+curl -L -o artifact.zip \
+     -H "Authorization: token $GITHUB_TOKEN" \
+     $url
+set -x
+
+unzip artifact.zip
+
 mv sedad-amd64 $NODE_DIR
-curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/sedad-arm64
 mv sedad-arm64 $NODE_DIR
 
 

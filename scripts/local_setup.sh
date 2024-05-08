@@ -46,6 +46,11 @@ add_key_and_account "fixedacc2" "100000000000000000seda" "hole bag crumble table
 add_key_and_account "satoshi" "100000000000000000seda"
 add_key_and_account "acc1" "100000000000000000seda"
 
+$BIN keys add vesttest --keyring-backend test
+VESTING_START=$(date +%s)
+VESTING_END=$((VESTING_START + 100000))
+$BIN add-genesis-account vesttest 10000seda --vesting-amount 10000seda --vesting-start-time $VESTING_START --vesting-end-time $VESTING_END --funder seda1jq60my60e87arglrazfpqn753hx0pzcatdek76 --keyring-backend test
+
 # create a default validator
 $BIN gentx satoshi 10000000000000000seda --keyring-backend test
 
