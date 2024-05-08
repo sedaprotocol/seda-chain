@@ -13,6 +13,9 @@ message Wasm {
   WasmType wasm_type = 3;
   google.protobuf.Timestamp added_at = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+  // prune_height represents the block height till which the Wasm will
+  // stay on the chain. At height > prune_height, the wasm should be pruned.
+  uint64 prune_height = 5 ;
 }
 
 // WasmType is an enum for the type of wasm.
@@ -40,4 +43,7 @@ message Params {
   option (gogoproto.equal) = true;
 
   uint64 max_wasm_size = 1;
+  // WasmTTL represents the number of block a wasm's life is extended when it's
+  // created or used.
+  uint64 wasm_ttl = 2[ (gogoproto.customname) = "WasmTTL" ];
 }

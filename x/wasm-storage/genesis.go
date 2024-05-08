@@ -12,23 +12,19 @@ import (
 
 // InitGenesis puts all data from genesis state into store.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
+	if err := k.Params.Set(ctx, data.Params); err != nil {
+		panic(err)
+	}
+
 	for i := range data.Wasms {
 		wasm := data.Wasms[i]
 		switch wasm.WasmType {
 		case types.WasmTypeDataRequest, types.WasmTypeTally:
-			if err := k.DataRequestWasm.Set(
-				ctx,
-				keeper.GetPrefix(wasm),
-				wasm,
-			); err != nil {
+			if err := k.DataRequestWasm.Set(ctx, keeper.GetPrefix(wasm), wasm); err != nil {
 				panic(err)
 			}
 		case types.WasmTypeDataRequestExecutor, types.WasmTypeRelayer:
-			if err := k.OverlayWasm.Set(
-				ctx,
-				keeper.GetPrefix(wasm),
-				wasm,
-			); err != nil {
+			if err := k.OverlayWasm.Set(ctx, keeper.GetPrefix(wasm), wasm); err != nil {
 				panic(err)
 			}
 		}
@@ -38,8 +34,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		if err != nil {
 			panic(err)
 		}
-		err = k.ProxyContractRegistry.Set(ctx, proxyAddr.String())
-		if err != nil {
+		if err = k.ProxyContractRegistry.Set(ctx, proxyAddr.String()); err != nil {
 			panic(err)
 		}
 	}
@@ -47,13 +42,18 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 
 // ExportGenesis extracts all data from store to genesis state.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	wasms := k.GetAllWasms(ctx)
 	proxy, err := k.ProxyContractRegistry.Get(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			return types.NewGenesisState(wasms, "")
+			return types.NewGenesisState(params, wasms, "")
 		}
 		panic(err)
 	}
-	return types.NewGenesisState(wasms, proxy)
+	return types.NewGenesisState(params, wasms, proxy)
 }

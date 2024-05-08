@@ -7,8 +7,9 @@ import (
 )
 
 // NewGenesisState constructs a GenesisState object.
-func NewGenesisState(wasms []Wasm, proxyAddr string) GenesisState {
+func NewGenesisState(params Params, wasms []Wasm, proxyAddr string) GenesisState {
 	return GenesisState{
+		Params:                params,
 		Wasms:                 wasms,
 		ProxyContractRegistry: proxyAddr,
 	}
@@ -16,7 +17,7 @@ func NewGenesisState(wasms []Wasm, proxyAddr string) GenesisState {
 
 // DefaultGenesisState creates a default GenesisState object.
 func DefaultGenesisState() *GenesisState {
-	state := NewGenesisState(nil, "")
+	state := NewGenesisState(DefaultParams(), nil, "")
 	return &state
 }
 
@@ -28,5 +29,5 @@ func ValidateGenesis(gs GenesisState) error {
 			return fmt.Errorf("invalid Proxy contract address %w", err)
 		}
 	}
-	return nil
+	return gs.Params.ValidateBasic()
 }

@@ -258,9 +258,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 	authority := s.wasmStorageKeeper.GetAuthority()
 	cases := []struct {
 		name      string
-		preRun    func()
 		input     types.MsgUpdateParams
-		expErr    bool
 		expErrMsg string
 	}{
 		{
@@ -269,10 +267,9 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 				Authority: s.authority,
 				Params: types.Params{
 					MaxWasmSize: 1000000, // 1 MB
+					WasmTTL:     100,
 				},
 			},
-			preRun:    func() {},
-			expErr:    false,
 			expErrMsg: "",
 		},
 		{
@@ -281,10 +278,9 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 				Authority: "cosmos16wfryel63g7axeamw68630wglalcnk3l0zuadc",
 				Params: types.Params{
 					MaxWasmSize: 1, // 1 MB
+					WasmTTL:     1000,
 				},
 			},
-			preRun:    func() {},
-			expErr:    true,
 			expErrMsg: "invalid authority; expected " + authority + ", got cosmos16wfryel63g7axeamw68630wglalcnk3l0zuadc",
 		},
 		{
@@ -293,29 +289,38 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 				Authority: authority,
 				Params: types.Params{
 					MaxWasmSize: 0, // 0 MB
+					WasmTTL:     100,
 				},
 			},
-			preRun:    func() {},
-			expErr:    true,
 			expErrMsg: "invalid max Wasm size: 0",
+		},
+		{
+			name: "invalid wasm time to live",
+			input: types.MsgUpdateParams{
+				Authority: authority,
+				Params: types.Params{
+					MaxWasmSize: 111110,
+					WasmTTL:     1,
+				},
+			},
+			expErrMsg: "WasmTTL 1 < 2: invalid param",
 		},
 	}
 
+	s.SetupTest()
 	for _, tc := range cases {
 		s.Run(tc.name, func() {
-			s.SetupTest()
-			tc.preRun()
 			_, err := s.msgSrvr.UpdateParams(s.ctx, &tc.input)
-			if tc.expErr {
+			if tc.expErrMsg != "" {
 				s.Require().Error(err)
 				s.Require().Equal(tc.expErrMsg, err.Error())
-			} else {
-				s.Require().NoError(err)
-
-				// Check that the Params were correctly set
-				params, _ := s.wasmStorageKeeper.Params.Get(s.ctx)
-				s.Require().Equal(tc.input.Params, params)
+				return
 			}
+			s.Require().NoError(err)
+
+			// Check that the Params were correctly set
+			params, _ := s.wasmStorageKeeper.Params.Get(s.ctx)
+			s.Require().Equal(tc.input.Params, params)
 		})
 	}
 }
