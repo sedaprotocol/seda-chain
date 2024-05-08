@@ -15,7 +15,7 @@ message Wasm {
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
   // prune_height represents the block height till which the Wasm will
   // stay on the chain. At height > prune_height, the wasm should be pruned.
-  uint64 prune_height = 5 ;
+  uint64 prune_height = 5;
 }
 
 // WasmType is an enum for the type of wasm.
