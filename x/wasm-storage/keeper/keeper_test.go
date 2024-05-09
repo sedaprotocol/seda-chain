@@ -24,13 +24,7 @@ func (s *KeeperTestSuite) TestSetDataRequestWasm() {
 		Bytecode: compWasm,
 		WasmType: wasmstoragetypes.WasmTypeDataRequest,
 	}
-	s.Require().NoError(
-		s.wasmStorageKeeper.DataRequestWasm.Set(
-			s.ctx,
-			keeper.GetPrefix(mockWasm),
-			mockWasm,
-		),
-	)
+	s.Require().NoError(s.wasmStorageKeeper.DataRequestWasm.Set(s.ctx, keeper.WasmKey(mockWasm), mockWasm))
 }
 
 func (s *KeeperTestSuite) TestGetDataRequestWasm() {
@@ -40,13 +34,9 @@ func (s *KeeperTestSuite) TestGetDataRequestWasm() {
 		Bytecode: mockedByteArray,
 		WasmType: wasmstoragetypes.WasmTypeDataRequest,
 	}
-	err := s.wasmStorageKeeper.DataRequestWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm),
-		mockWasm,
-	)
+	err := s.wasmStorageKeeper.DataRequestWasm.Set(s.ctx, keeper.WasmKey(mockWasm), mockWasm)
 	s.Require().NoError(err)
-	value, _ := s.wasmStorageKeeper.DataRequestWasm.Get(s.ctx, keeper.GetPrefix(mockWasm))
+	value, _ := s.wasmStorageKeeper.DataRequestWasm.Get(s.ctx, keeper.WasmKey(mockWasm))
 	s.Assert().NotNil(value)
 	s.Assert().Equal(mockWasm, value)
 }
@@ -58,15 +48,11 @@ func (s *KeeperTestSuite) TestHasDataRequestWasm() {
 		Bytecode: mockedByteArray,
 		WasmType: wasmstoragetypes.WasmTypeDataRequest,
 	}
-	has, _ := s.wasmStorageKeeper.DataRequestWasm.Has(s.ctx, keeper.GetPrefix(mockWasm))
+	has, _ := s.wasmStorageKeeper.DataRequestWasm.Has(s.ctx, keeper.WasmKey(mockWasm))
 	s.Assert().False(has)
-	err := s.wasmStorageKeeper.DataRequestWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm),
-		mockWasm,
-	)
+	err := s.wasmStorageKeeper.DataRequestWasm.Set(s.ctx, keeper.WasmKey(mockWasm), mockWasm)
 	s.Require().NoError(err)
-	has, _ = s.wasmStorageKeeper.DataRequestWasm.Has(s.ctx, keeper.GetPrefix(mockWasm))
+	has, _ = s.wasmStorageKeeper.DataRequestWasm.Has(s.ctx, keeper.WasmKey(mockWasm))
 	s.Assert().True(has)
 }
 
@@ -77,11 +63,7 @@ func (s *KeeperTestSuite) TestSetOverlayWasm() {
 		Bytecode: mockedByteArray,
 		WasmType: wasmstoragetypes.WasmTypeRelayer,
 	}
-	s.Require().NoError(s.wasmStorageKeeper.OverlayWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm),
-		mockWasm,
-	))
+	s.Require().NoError(s.wasmStorageKeeper.OverlayWasm.Set(s.ctx, keeper.WasmKey(mockWasm), mockWasm))
 }
 
 func (s *KeeperTestSuite) TestGetOverlayWasm() {
@@ -91,13 +73,9 @@ func (s *KeeperTestSuite) TestGetOverlayWasm() {
 		Bytecode: mockedByteArray,
 		WasmType: wasmstoragetypes.WasmTypeRelayer,
 	}
-	err := s.wasmStorageKeeper.OverlayWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm),
-		mockWasm,
-	)
+	err := s.wasmStorageKeeper.OverlayWasm.Set(s.ctx, keeper.WasmKey(mockWasm), mockWasm)
 	s.Require().NoError(err)
-	value, _ := s.wasmStorageKeeper.OverlayWasm.Get(s.ctx, keeper.GetPrefix(mockWasm))
+	value, _ := s.wasmStorageKeeper.OverlayWasm.Get(s.ctx, keeper.WasmKey(mockWasm))
 	s.Assert().NotNil(value)
 	s.Assert().Equal(mockWasm, value)
 }
@@ -109,15 +87,11 @@ func (s *KeeperTestSuite) TestHasOverlayWasm() {
 		Bytecode: mockedByteArray,
 		WasmType: wasmstoragetypes.WasmTypeRelayer,
 	}
-	has, _ := s.wasmStorageKeeper.OverlayWasm.Has(s.ctx, keeper.GetPrefix(mockWasm))
+	has, _ := s.wasmStorageKeeper.OverlayWasm.Has(s.ctx, keeper.WasmKey(mockWasm))
 	s.Assert().False(has)
-	err := s.wasmStorageKeeper.OverlayWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm),
-		mockWasm,
-	)
+	err := s.wasmStorageKeeper.OverlayWasm.Set(s.ctx, keeper.WasmKey(mockWasm), mockWasm)
 	s.Require().NoError(err)
-	has, _ = s.wasmStorageKeeper.OverlayWasm.Has(s.ctx, keeper.GetPrefix(mockWasm))
+	has, _ = s.wasmStorageKeeper.OverlayWasm.Has(s.ctx, keeper.WasmKey(mockWasm))
 	s.Assert().True(has)
 }
 
@@ -134,17 +108,9 @@ func (s *KeeperTestSuite) TestIterateAllDataRequestWasm() {
 		WasmType: wasmstoragetypes.WasmTypeDataRequest,
 	}
 
-	err := s.wasmStorageKeeper.DataRequestWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm1),
-		mockWasm1,
-	)
+	err := s.wasmStorageKeeper.DataRequestWasm.Set(s.ctx, keeper.WasmKey(mockWasm1), mockWasm1)
 	s.Require().NoError(err)
-	err = s.wasmStorageKeeper.DataRequestWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm2),
-		mockWasm2,
-	)
+	err = s.wasmStorageKeeper.DataRequestWasm.Set(s.ctx, keeper.WasmKey(mockWasm2), mockWasm2)
 	s.Require().NoError(err)
 	err = s.wasmStorageKeeper.IterateAllDataRequestWasms(s.ctx, func(wasm wasmstoragetypes.Wasm) (stop bool) {
 		s.Assert().Equal(wasmstoragetypes.WasmTypeDataRequest, wasm.GetWasmType())
@@ -166,17 +132,9 @@ func (s *KeeperTestSuite) TestListDateRequestWasm() {
 		WasmType: wasmstoragetypes.WasmTypeDataRequest,
 	}
 
-	err := s.wasmStorageKeeper.DataRequestWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm1),
-		mockWasm1,
-	)
+	err := s.wasmStorageKeeper.DataRequestWasm.Set(s.ctx, keeper.WasmKey(mockWasm1), mockWasm1)
 	s.Require().NoError(err)
-	err = s.wasmStorageKeeper.DataRequestWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm2),
-		mockWasm2,
-	)
+	err = s.wasmStorageKeeper.DataRequestWasm.Set(s.ctx, keeper.WasmKey(mockWasm2), mockWasm2)
 	s.Require().NoError(err)
 	result := s.wasmStorageKeeper.ListDataRequestWasms(s.ctx)
 	s.Assert().Equal(2, len(result))
@@ -197,17 +155,9 @@ func (s *KeeperTestSuite) TestListOverlayWasm() {
 		WasmType: wasmstoragetypes.WasmTypeRelayer,
 	}
 
-	err := s.wasmStorageKeeper.OverlayWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm1),
-		mockWasm1,
-	)
+	err := s.wasmStorageKeeper.OverlayWasm.Set(s.ctx, keeper.WasmKey(mockWasm1), mockWasm1)
 	s.Require().NoError(err)
-	err = s.wasmStorageKeeper.OverlayWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm2),
-		mockWasm2,
-	)
+	err = s.wasmStorageKeeper.OverlayWasm.Set(s.ctx, keeper.WasmKey(mockWasm2), mockWasm2)
 	s.Require().NoError(err)
 	result := s.wasmStorageKeeper.ListOverlayWasms(s.ctx)
 	s.Assert().Equal(2, len(result))
@@ -228,17 +178,9 @@ func (s *KeeperTestSuite) TestGetAllWasms() {
 		WasmType: wasmstoragetypes.WasmTypeDataRequest,
 	}
 
-	err := s.wasmStorageKeeper.DataRequestWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm1),
-		mockWasm1,
-	)
+	err := s.wasmStorageKeeper.DataRequestWasm.Set(s.ctx, keeper.WasmKey(mockWasm1), mockWasm1)
 	s.Require().NoError(err)
-	err = s.wasmStorageKeeper.DataRequestWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasm2),
-		mockWasm2,
-	)
+	err = s.wasmStorageKeeper.DataRequestWasm.Set(s.ctx, keeper.WasmKey(mockWasm2), mockWasm2)
 	s.Require().NoError(err)
 
 	mockWasmO1 := wasmstoragetypes.Wasm{
@@ -252,17 +194,9 @@ func (s *KeeperTestSuite) TestGetAllWasms() {
 		WasmType: wasmstoragetypes.WasmTypeRelayer,
 	}
 
-	err = s.wasmStorageKeeper.OverlayWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasmO1),
-		mockWasmO1,
-	)
+	err = s.wasmStorageKeeper.OverlayWasm.Set(s.ctx, keeper.WasmKey(mockWasmO1), mockWasmO1)
 	s.Require().NoError(err)
-	err = s.wasmStorageKeeper.OverlayWasm.Set(
-		s.ctx,
-		keeper.GetPrefix(mockWasmO2),
-		mockWasmO2,
-	)
+	err = s.wasmStorageKeeper.OverlayWasm.Set(s.ctx, keeper.WasmKey(mockWasmO2), mockWasmO2)
 	s.Require().NoError(err)
 
 	result := s.wasmStorageKeeper.GetAllWasms(s.ctx)

@@ -26,7 +26,8 @@ var (
 	ParamsPrefix = collections.NewPrefix(3)
 )
 
-func GetPrefix(w types.Wasm) []byte {
+// WasmKey takes a wasm as parameter and returns the key.
+func WasmKey(w types.Wasm) []byte {
 	switch w.WasmType {
 	case types.WasmTypeDataRequest, types.WasmTypeTally:
 		return append(DataRequestPrefix, w.Hash...)
@@ -49,43 +50,16 @@ type Keeper struct {
 	Params                collections.Item[types.Params]
 }
 
-func NewKeeper(
-	cdc codec.BinaryCodec,
-	storeService storetypes.KVStoreService,
-	authority string,
-	wk wasmtypes.ContractOpsKeeper,
-) *Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, authority string, wk wasmtypes.ContractOpsKeeper) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
 	return &Keeper{
-		authority:  authority,
-		wasmKeeper: wk,
-		DataRequestWasm: collections.NewMap(
-			sb,
-			DataRequestPrefix,
-			"data-request-wasm",
-			collections.BytesKey,
-			codec.CollValue[types.Wasm](cdc),
-		),
-		OverlayWasm: collections.NewMap(
-			sb,
-			OverlayPrefix,
-			"overlay-wasm",
-			collections.BytesKey,
-			codec.CollValue[types.Wasm](cdc),
-		),
-		ProxyContractRegistry: collections.NewItem(
-			sb,
-			ProxyContractRegistryPrefix,
-			"proxy-contract-registry",
-			collections.StringValue,
-		),
-		Params: collections.NewItem(
-			sb,
-			ParamsPrefix,
-			"params",
-			codec.CollValue[types.Params](cdc),
-		),
+		authority:             authority,
+		wasmKeeper:            wk,
+		DataRequestWasm:       collections.NewMap(sb, DataRequestPrefix, "data-request-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
+		OverlayWasm:           collections.NewMap(sb, OverlayPrefix, "overlay-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
+		ProxyContractRegistry: collections.NewItem(sb, ProxyContractRegistryPrefix, "proxy-contract-registry", collections.StringValue),
+		Params:                collections.NewItem(sb, ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
 	}
 }
 
