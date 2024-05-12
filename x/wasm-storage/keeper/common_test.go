@@ -21,25 +21,29 @@ import (
 )
 
 var (
-	mockedByteArray  = []byte("82a9dda829eb7f8ffe9fbe49e45d47d2dad9664fbb7adf72492e3c81ebd3e29134d9bc12212bf83c6840f10e8246b9db54a4859b7ccd0123d86e5872c1e5082")
-	mockedByteArray2 = []byte("a9dda829eb7f8ffe9fbesfa49e45d47d2dad9664fbb7adf72492e3c81ebd3e29134d9bc12212bf83c6840f10e8246b9db54a4859b7ccd0123d86e5872c1e50829a") //nolint:unused // unused
+	mockedByteArray = []byte("82a9dda829eb7f8ffe9fbe49e45d47d2dad9664fbb7adf72492e3c81ebd3e29134d9bc12212bf83c6840f10e8246b9db54a4859b7ccd0123d86e5872c1e5082")
+	//mockedByteArray2 = []byte("a9dda829eb7f8ffe9fbesfa49e45d47d2dad9664fbb7adf72492e3c81ebd3e29134d9bc12212bf83c6840f10e8246b9db54a4859b7ccd0123d86e5872c1e50829a") //nolint:unused // unused
 )
 
 type KeeperTestSuite struct {
 	suite.Suite
-	ctx               sdk.Context
-	wasmStorageKeeper *keeper.Keeper
-	blockTime         time.Time //nolint:unused // unused
-	cdc               codec.Codec
-	msgSrvr           wasmstoragetypes.MsgServer
-	queryClient       wasmstoragetypes.QueryClient
-	authority         string
+	ctx         sdk.Context
+	keeper      *keeper.Keeper
+	blockTime   time.Time //nolint:unused // unused
+	cdc         codec.Codec
+	msgSrvr     wasmstoragetypes.MsgServer
+	queryClient wasmstoragetypes.QueryClient
+	authority   string
+}
+
+func TestKeeperTestSuite(t *testing.T) {
+	suite.Run(t, new(KeeperTestSuite))
 }
 
 func (s *KeeperTestSuite) SetupTest() {
 	s.authority = authtypes.NewModuleAddress("gov").String()
 	wasmStorageKeeper, enCfg, ctx := setupKeeper(s.T(), s.authority)
-	s.wasmStorageKeeper = wasmStorageKeeper
+	s.keeper = wasmStorageKeeper
 	s.ctx = ctx
 	s.cdc = enCfg.Codec
 
@@ -47,13 +51,12 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.msgSrvr = msr
 
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, enCfg.InterfaceRegistry)
-	querier := keeper.NewQuerierImpl(*s.wasmStorageKeeper)
+	querier := keeper.NewQuerierImpl(*s.keeper)
 	wasmstoragetypes.RegisterQueryServer(queryHelper, querier)
 	s.queryClient = wasmstoragetypes.NewQueryClient(queryHelper)
-}
 
-func TestKeeperTestSuite(t *testing.T) {
-	suite.Run(t, new(KeeperTestSuite))
+	err := s.keeper.Params.Set(ctx, wasmstoragetypes.DefaultParams())
+	s.Require().NoError(err)
 }
 
 func setupKeeper(t *testing.T, authority string) (*keeper.Keeper, moduletestutil.TestEncodingConfig, sdk.Context) {

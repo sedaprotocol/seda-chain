@@ -7,59 +7,59 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (msg MsgStoreDataRequestWasm) Route() string {
+func (msg *MsgStoreDataRequestWasm) Route() string {
 	return RouterKey
 }
 
-func (msg MsgStoreDataRequestWasm) Type() string {
+func (msg *MsgStoreDataRequestWasm) Type() string {
 	return "store-data-request-wasm"
 }
 
-func (msg MsgStoreDataRequestWasm) ValidateBasic() error {
+func (msg *MsgStoreDataRequestWasm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}
 	if msg.WasmType != WasmTypeDataRequest && msg.WasmType != WasmTypeTally {
 		return fmt.Errorf("data Request Wasm type must be data-request or tally")
 	}
-	if err := validateWasmCode(msg.Wasm); err != nil {
-		return fmt.Errorf("invalid request: code bytes %s", err.Error())
+	if err := validateWasmLen(msg.Wasm); err != nil {
+		return fmt.Errorf("invalid request: %w", err)
 	}
 	return nil
 }
 
-func (msg MsgStoreOverlayWasm) Route() string {
+func (msg *MsgStoreOverlayWasm) Route() string {
 	return RouterKey
 }
 
-func (msg MsgStoreOverlayWasm) Type() string {
+func (msg *MsgStoreOverlayWasm) Type() string {
 	return "store-overlay-wasm"
 }
 
-func (msg MsgStoreOverlayWasm) ValidateBasic() error {
+func (msg *MsgStoreOverlayWasm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}
 	if msg.WasmType != WasmTypeDataRequestExecutor && msg.WasmType != WasmTypeRelayer {
 		return fmt.Errorf("overlay Wasm type must be data-request-executor or relayer")
 	}
-	if err := validateWasmCode(msg.Wasm); err != nil {
-		return fmt.Errorf("invalid request: code bytes %s", err.Error())
+	if err := validateWasmLen(msg.Wasm); err != nil {
+		return fmt.Errorf("invalid request: %w", err)
 	}
 	return nil
 }
 
-func (msg MsgInstantiateAndRegisterProxyContract) Route() string {
+func (msg *MsgInstantiateAndRegisterProxyContract) Route() string {
 	return RouterKey
 }
 
-func (msg MsgInstantiateAndRegisterProxyContract) Type() string {
+func (msg *MsgInstantiateAndRegisterProxyContract) Type() string {
 	return "instantiate-and-register-proxy-contract"
 }
 
-func (msg MsgInstantiateAndRegisterProxyContract) ValidateBasic() error {
+func (msg *MsgInstantiateAndRegisterProxyContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return fmt.Errorf("invalid sender: %s", err)
+		return fmt.Errorf("invalid sender: %w", err)
 	}
 
 	if msg.CodeID == 0 {
@@ -76,14 +76,14 @@ func (msg MsgInstantiateAndRegisterProxyContract) ValidateBasic() error {
 
 	if len(msg.Admin) != 0 {
 		if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
-			return fmt.Errorf("invalid admin: %s", err)
+			return fmt.Errorf("invalid admin: %w", err)
 		}
 	}
 	if err := msg.Msg.ValidateBasic(); err != nil {
-		return fmt.Errorf("invalid payload msg: %s", err)
+		return fmt.Errorf("invalid payload msg: %w", err)
 	}
 	if err := wasmtypes.ValidateSalt(msg.Salt); err != nil {
-		return fmt.Errorf("invalid salt: %s", err)
+		return fmt.Errorf("invalid salt: %w", err)
 	}
 	return nil
 }

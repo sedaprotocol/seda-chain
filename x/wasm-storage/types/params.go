@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	DefaultMaxWasmSize uint64 = 800 * 1024
-	DefaultWasmTTL            = 259200 // 21 days
+	DefaultMaxWasmSize int64 = 800 * 1024
+	DefaultWasmTTL           = 259200 // 21 days
 )
 
 // DefaultParams returns default wasm-storage module parameters.
@@ -28,7 +28,7 @@ func (p *Params) ValidateBasic() error {
 	return validateMaxWasmSize(p.MaxWasmSize)
 }
 
-func validateMaxWasmSize(i uint64) error {
+func validateMaxWasmSize(i int64) error {
 	if i == 0 {
 		return fmt.Errorf("invalid max Wasm size: %d", i)
 	}

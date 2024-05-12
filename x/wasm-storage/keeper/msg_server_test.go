@@ -87,8 +87,7 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 			expErrMsg: "",
 		},
 	}
-	for i := range cases {
-		tc := cases[i]
+	for _, tc := range cases {
 		s.Run(tc.name, func() {
 			s.SetupTest()
 			tc.preRun()
@@ -96,10 +95,10 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 			res, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &input)
 			if tc.expErr {
 				s.Require().ErrorContains(err, tc.expErrMsg)
-			} else {
-				s.Require().Nil(err)
-				s.Require().Equal(tc.expOutput, *res)
+				return
 			}
+			s.Require().NoError(err)
+			s.Require().Equal(tc.expOutput, *res)
 		})
 	}
 }
@@ -173,7 +172,7 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 					WasmType: types.WasmTypeRelayer,
 				}
 				_, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
-				s.Require().Nil(err)
+				s.Require().NoError(err)
 			},
 			expErr:    true,
 			expErrMsg: "overlay Wasm with given hash already exists",
@@ -201,8 +200,7 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			expErrMsg: "",
 		},
 	}
-	for i := range cases {
-		tc := cases[i]
+	for _, tc := range cases {
 		s.Run(tc.name, func() {
 			s.SetupTest()
 			tc.preRun()
@@ -210,10 +208,10 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			res, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
 			if tc.expErr {
 				s.Require().ErrorContains(err, tc.expErrMsg)
-			} else {
-				s.Require().Nil(err)
-				s.Require().Equal(tc.expOutput, *res)
+				return
 			}
+			s.Require().NoError(err)
+			s.Require().Equal(tc.expOutput, *res)
 		})
 	}
 }
@@ -255,7 +253,7 @@ func (s *KeeperTestSuite) TestMarshalJSON() {
 }
 
 func (s *KeeperTestSuite) TestUpdateParams() {
-	authority := s.wasmStorageKeeper.GetAuthority()
+	authority := s.keeper.GetAuthority()
 	cases := []struct {
 		name      string
 		input     types.MsgUpdateParams
@@ -319,7 +317,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			s.Require().NoError(err)
 
 			// Check that the Params were correctly set
-			params, _ := s.wasmStorageKeeper.Params.Get(s.ctx)
+			params, _ := s.keeper.Params.Get(s.ctx)
 			s.Require().Equal(tc.input.Params, params)
 		})
 	}

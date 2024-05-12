@@ -5,6 +5,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
+
+	"cosmossdk.io/collections"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -56,19 +59,38 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
+// StoreDataRequestWasm handles the processing of a store data request for a wasm-storage module.
+// It unzips the Wasm bytecode, and creates a new Wasm instance,
+// checks if a module with the same hash already exists, sets the Wasm instance in the data store,
+// tracks its expiration, emits an event, and returns the hash of the stored Wasm module.
 func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgStoreDataRequestWasm) (*types.MsgStoreDataRequestWasmResponse, error) {
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	unzipped, err := unzipWasm(msg.Wasm)
+	params, err := m.Params.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
-	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
+
+	unzipped, err := unzipWasm(msg.Wasm, params.MaxWasmSize)
+	if err != nil {
+		return nil, err
+	}
+
+	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
 	if exists, _ := m.DataRequestWasm.Has(ctx, WasmKey(*wasm)); exists {
 		return nil, fmt.Errorf("data Request Wasm with given hash already exists")
 	}
 
-	if err := m.DataRequestWasm.Set(ctx, WasmKey(*wasm), *wasm); err != nil {
+	wasmKey := WasmKey(*wasm)
+	if err := m.DataRequestWasm.Set(ctx, wasmKey, *wasm); err != nil {
+		return nil, err
+	}
+
+	// Track Exp.
+	expKey := collections.Join(wasm.PruneHeight, wasmKey)
+	if err := m.WasmExp.Set(ctx, expKey); err != nil {
 		return nil, err
 	}
 
@@ -96,16 +118,20 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	params, err := m.Keeper.Params.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	if msg.Sender != m.authority {
 		return nil, fmt.Errorf("invalid authority %s", msg.Sender)
 	}
 
-	unzipped, err := unzipWasm(msg.Wasm)
+	unzipped, err := unzipWasm(msg.Wasm, params.MaxWasmSize)
 	if err != nil {
 		return nil, err
 	}
-	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime())
+	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), math.MaxInt64) // Forever
 	exists, _ := m.Keeper.OverlayWasm.Has(ctx, WasmKey(*wasm))
 	if exists {
 		return nil, fmt.Errorf("overlay Wasm with given hash already exists")
@@ -166,13 +192,13 @@ func (m msgServer) InstantiateAndRegisterProxyContract(goCtx context.Context, ms
 }
 
 // unzipWasm unzips a gzipped Wasm into
-func unzipWasm(wasm []byte) ([]byte, error) {
+func unzipWasm(wasm []byte, maxSize int64) ([]byte, error) {
 	var unzipped []byte
 	var err error
 	if !ioutils.IsGzip(wasm) {
 		return nil, fmt.Errorf("wasm is not gzip compressed")
 	}
-	unzipped, err = ioutils.Uncompress(wasm, types.MaxWasmSize)
+	unzipped, err = ioutils.Uncompress(wasm, maxSize)
 	if err != nil {
 		return nil, err
 	}

@@ -15,29 +15,30 @@ const (
 	MinWasmSize = 20
 )
 
-func validateWasmCode(s []byte) error {
+func validateWasmLen(s []byte) error {
 	if len(s) < MinWasmSize {
 		return fmt.Errorf("wasm code must be larger than %d bytes", MinWasmSize)
 	}
 	if len(s) > MaxWasmSize {
-		return fmt.Errorf("wasm code cannot be longer than %d bytes", MaxWasmSize)
+		return fmt.Errorf("wasm code cannot be larger than %d bytes", MaxWasmSize)
 	}
 	return nil
 }
 
 // NewWasm constructs a new Wasm object given bytecode and Wasm type.
 // It panics if it fails to compute hash of bytecode.
-func NewWasm(bytecode []byte, wasmType WasmType, addedAt time.Time) *Wasm {
+func NewWasm(bytecode []byte, wasmType WasmType, addedAt time.Time, curBlock, ttl int64) *Wasm {
 	hash := crypto.Keccak256(bytecode)
 	if hash == nil {
 		panic("failed to compute hash")
 	}
 
 	return &Wasm{
-		Hash:     hash,
-		Bytecode: bytecode,
-		WasmType: wasmType,
-		AddedAt:  addedAt,
+		Hash:        hash,
+		Bytecode:    bytecode,
+		WasmType:    wasmType,
+		AddedAt:     addedAt,
+		PruneHeight: curBlock + ttl,
 	}
 }
 

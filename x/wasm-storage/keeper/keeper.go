@@ -19,11 +19,13 @@ var (
 	DataRequestPrefix = collections.NewPrefix(0)
 	// OverlayPrefix defines prefix to store Overlay Wasm binaries.
 	OverlayPrefix = collections.NewPrefix(1)
+	// WasmExpPrefix defines prefix to track wasm expiration.
+	WasmExpPrefix = collections.NewPrefix(2)
 	// ProxyContractRegistryPrefix defines prefix to store address of
 	// Proxy Contract.
-	ProxyContractRegistryPrefix = collections.NewPrefix(2)
+	ProxyContractRegistryPrefix = collections.NewPrefix(3)
 	// ParamsPrefix defines prefix to store parameters of wasm-storage module.
-	ParamsPrefix = collections.NewPrefix(3)
+	ParamsPrefix = collections.NewPrefix(4)
 )
 
 // WasmKey takes a wasm as parameter and returns the key.
@@ -46,6 +48,7 @@ type Keeper struct {
 	Schema                collections.Schema
 	DataRequestWasm       collections.Map[[]byte, types.Wasm]
 	OverlayWasm           collections.Map[[]byte, types.Wasm]
+	WasmExp               collections.KeySet[collections.Pair[int64, []byte]]
 	ProxyContractRegistry collections.Item[string]
 	Params                collections.Item[types.Params]
 }
@@ -58,6 +61,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, au
 		wasmKeeper:            wk,
 		DataRequestWasm:       collections.NewMap(sb, DataRequestPrefix, "data-request-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
 		OverlayWasm:           collections.NewMap(sb, OverlayPrefix, "overlay-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
+		WasmExp:               collections.NewKeySet(sb, WasmExpPrefix, "wasm-exp", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
 		ProxyContractRegistry: collections.NewItem(sb, ProxyContractRegistryPrefix, "proxy-contract-registry", collections.StringValue),
 		Params:                collections.NewItem(sb, ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
 	}
@@ -156,6 +160,43 @@ func (k Keeper) GetAllWasms(ctx sdk.Context) []types.Wasm {
 		return nil
 	}
 	return wasms
+}
+
+// WasmKeyByExpBlock retrieves the keys of the stored Wasms that will expire at the given block height.
+// The method iterates over the WasmExp KeySet using the provided context and expiration block height,
+// and returns the keys as [][]byte.
+//
+// The method takes a sdk.Context and a uint64 value representing the block height at which expiration occurs.
+// It returns a [][]byte representing the keys of the stored Wasms and an error.
+//
+// Example usage:
+//
+//	wasmKeys, err := keeper.WasmKeyByExpBlock(ctx, expHeight)
+//	if err != nil {
+//	    return err
+//	}
+//	for _, key := range wasmKeys {
+//	    fmt.Println(string(key))
+//	}
+//
+// Note: The returned keys do not maintain an order.
+func (k Keeper) WasmKeyByExpBlock(ctx sdk.Context, expBlock int64) ([][]byte, error) {
+	ret := make([][]byte, 0)
+	rng := collections.NewPrefixedPairRange[int64, []byte](expBlock)
+
+	itr, err := k.WasmExp.Iterate(ctx, rng)
+	if err != nil {
+		return nil, err
+	}
+
+	keys, err := itr.Keys()
+	if err != nil {
+		return nil, err
+	}
+	for _, k := range keys {
+		ret = append(ret, k.K2())
+	}
+	return ret, nil
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
