@@ -45,5 +45,5 @@ message Params {
   int64 max_wasm_size = 1;
   // WasmTTL represents the number of block a wasm's life is extended when it's
   // created or used.
-  int64 wasm_ttl = 2[ (gogoproto.customname) = "WasmTTL" ];
+  int64 wasm_ttl = 2 [ (gogoproto.customname) = "WasmTTL" ];
 }
