@@ -16,7 +16,8 @@ const (
 func (sc *SqsClient) PublishToQueue(data []*types.Message) error {
 	sc.logger.Trace("publishing to queue", "size", len(data))
 
-	sizedBatchEntries, err := sc.createSizedBatchEntries(data)
+	allowedMessages := sc.filterMessages(data)
+	sizedBatchEntries, err := sc.createSizedBatchEntries(allowedMessages)
 	if err != nil {
 		return err
 	}

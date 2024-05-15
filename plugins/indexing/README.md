@@ -17,6 +17,9 @@ export S3_LARGE_MSG_BUCKET_NAME=""
 export PLUGIN_LOG_FILE=PATH_TO_DESIRED_LOG_FILE
 # Optionally you can also specify the log level, one of "trace", "debug", "info", "warn", "error"
 export PLUGIN_LOG_LEVEL="WARN"
+# Optionally you can specifiy a comma separated list of event types which are allowed to be published on the queue.
+# When omitted it will default to publishing all message types.
+export ALLOWED_MESSAGE_TYPES="block,account"
 ```
 
 Lastly, as we're using SQS and S3 the node needs access to a valid set of AWS credentials with permission to publish messages to the specified queue and upload access to the specified bucket.

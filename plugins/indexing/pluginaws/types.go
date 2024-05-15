@@ -3,6 +3,7 @@ package pluginaws
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -11,16 +12,18 @@ import (
 )
 
 var (
-	queueURLEnvName  = "SQS_QUEUE_URL"
-	bucketURLEnvName = "S3_LARGE_MSG_BUCKET_NAME"
+	queueURLEnvName      = "SQS_QUEUE_URL"
+	bucketURLEnvName     = "S3_LARGE_MSG_BUCKET_NAME"
+	messageFilterEnvName = "ALLOWED_MESSAGE_TYPES"
 )
 
 type SqsClient struct {
-	bucketName string
-	queueURL   string
-	sqsClient  *sqs.SQS
-	s3Client   *s3.S3
-	logger     *log.Logger
+	bucketName      string
+	queueURL        string
+	allowedMessages []string
+	sqsClient       *sqs.SQS
+	s3Client        *s3.S3
+	logger          *log.Logger
 }
 
 func NewSqsClient(logger *log.Logger) (*SqsClient, error) {
@@ -32,6 +35,12 @@ func NewSqsClient(logger *log.Logger) (*SqsClient, error) {
 	bucketName, found := os.LookupEnv(bucketURLEnvName)
 	if !found {
 		return nil, fmt.Errorf("missing environment variable '%s'", bucketURLEnvName)
+	}
+
+	allowedMessages := make([]string, 0)
+	messageFilterString, found := os.LookupEnv(messageFilterEnvName)
+	if found {
+		allowedMessages = parseMessageFilterString((messageFilterString))
 	}
 
 	sess, err := NewSession()
@@ -47,10 +56,15 @@ func NewSqsClient(logger *log.Logger) (*SqsClient, error) {
 	awsS3Client := s3.New(sess, s3Config)
 
 	return &SqsClient{
-		queueURL:   queueURL,
-		bucketName: bucketName,
-		sqsClient:  awsSqsClient,
-		s3Client:   awsS3Client,
-		logger:     logger,
+		queueURL:        queueURL,
+		bucketName:      bucketName,
+		allowedMessages: allowedMessages,
+		sqsClient:       awsSqsClient,
+		s3Client:        awsS3Client,
+		logger:          logger,
 	}, nil
+}
+
+func parseMessageFilterString(data string) []string {
+	return strings.Split(data, ",")
 }
