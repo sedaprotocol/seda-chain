@@ -22,7 +22,7 @@ func (msg *MsgStoreDataRequestWasm) ValidateBasic() error {
 	if msg.WasmType != WasmTypeDataRequest && msg.WasmType != WasmTypeTally {
 		return fmt.Errorf("data Request Wasm type must be data-request or tally")
 	}
-	if err := validateWasmLen(msg.Wasm); err != nil {
+	if err := validateWasmSize(msg.Wasm); err != nil {
 		return fmt.Errorf("invalid request: %w", err)
 	}
 	return nil
@@ -43,7 +43,7 @@ func (msg *MsgStoreOverlayWasm) ValidateBasic() error {
 	if msg.WasmType != WasmTypeDataRequestExecutor && msg.WasmType != WasmTypeRelayer {
 		return fmt.Errorf("overlay Wasm type must be data-request-executor or relayer")
 	}
-	if err := validateWasmLen(msg.Wasm); err != nil {
+	if err := validateWasmSize(msg.Wasm); err != nil {
 		return fmt.Errorf("invalid request: %w", err)
 	}
 	return nil

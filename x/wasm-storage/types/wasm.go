@@ -15,7 +15,7 @@ const (
 	MinWasmSize = 20
 )
 
-func validateWasmLen(s []byte) error {
+func validateWasmSize(s []byte) error {
 	if len(s) < MinWasmSize {
 		return fmt.Errorf("wasm code must be larger than %d bytes", MinWasmSize)
 	}
