@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math"
 
+	"cosmossdk.io/errors"
+
 	"cosmossdk.io/collections"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
@@ -80,7 +82,7 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
 	if exists, _ := m.DataRequestWasm.Has(ctx, WasmKey(*wasm)); exists {
-		return nil, fmt.Errorf("data Request Wasm with given hash already exists")
+		return nil, errors.Wrapf(types.ErrAlreadyExists, "wasm type: [%s] hash: [%v]", wasm.WasmType, wasm.Hash)
 	}
 
 	wasmKey := WasmKey(*wasm)

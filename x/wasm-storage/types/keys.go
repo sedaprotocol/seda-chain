@@ -1,5 +1,7 @@
 package types
 
+import "cosmossdk.io/collections"
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "wasm-storage"
@@ -12,4 +14,18 @@ const (
 
 	// KeyParams is the store key for the parameters.
 	KeyParams = "params"
+)
+
+var (
+	// DataRequestPrefix defines prefix to store Data Request Wasm binaries.
+	DataRequestPrefix = collections.NewPrefix(0)
+	// OverlayPrefix defines prefix to store Overlay Wasm binaries.
+	OverlayPrefix = collections.NewPrefix(1)
+	// WasmExpPrefix defines prefix to track wasm expiration.
+	WasmExpPrefix = collections.NewPrefix(2)
+	// ProxyContractRegistryPrefix defines prefix to store address of
+	// Proxy Contract.
+	ProxyContractRegistryPrefix = collections.NewPrefix(3)
+	// ParamsPrefix defines prefix to store parameters of wasm-storage module.
+	ParamsPrefix = collections.NewPrefix(4)
 )

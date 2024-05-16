@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"os"
 
+	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
+
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
@@ -321,4 +323,84 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			s.Require().Equal(tc.input.Params, params)
 		})
 	}
+}
+
+func (s *KeeperTestSuite) TestDRWasmPruning() {
+	params, err := s.keeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	wasmTTl := params.WasmTTL
+
+	// Get the list of all Data Request Wasms
+	dataRequestWasms := s.keeper.ListDataRequestWasms(s.ctx)
+	s.Require().Empty(dataRequestWasms)
+
+	// Save 1 DR Wasm with default exp [params.WasmTTL]
+	drWasm1, err := os.ReadFile("test_utils/hello-world.wasm")
+	s.Require().NoError(err)
+	drWasmZipped1, err := ioutils.GzipIt(drWasm1)
+	s.Require().NoError(err)
+
+	resp1, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &types.MsgStoreDataRequestWasm{
+		Sender:   s.authority,
+		Wasm:     drWasmZipped1,
+		WasmType: types.WasmTypeDataRequest,
+	})
+	s.Require().NoError(err)
+
+	// Save 1 DR Wasm with default 2 * exp [params.WasmTTL]
+	// First double the wasm lifespan.
+	params.WasmTTL = 2 * wasmTTl
+	s.Require().NoError(s.keeper.Params.Set(s.ctx, params))
+
+	drWasm2, err := os.ReadFile("test_utils/cowsay.wasm")
+	s.Require().NoError(err)
+	drWasmZipped2, err := ioutils.GzipIt(drWasm2)
+	s.Require().NoError(err)
+
+	resp2, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &types.MsgStoreDataRequestWasm{
+		Sender:   s.authority,
+		Wasm:     drWasmZipped2,
+		WasmType: types.WasmTypeDataRequest,
+	})
+	s.Require().NoError(err)
+
+	firstWasmPruneHeight := s.ctx.BlockHeight() + wasmTTl
+	secondWasmPruneHeight := s.ctx.BlockHeight() + (2 * wasmTTl)
+
+	// Wasm pruning takes place during the EndBlocker. If the height of a pruning block is H,
+	// and the wasm to prune is W;
+	// W would be available at H. W would NOT be available from H+1.
+
+	// Artificially move to the pruning block for the first wasm.
+	s.ctx = s.ctx.WithBlockHeight(firstWasmPruneHeight)
+
+	// H = params.WasmTTL. || firstWasmPruneHeight => 0 + params.WasmTTL
+	// We still have 2 wasms.
+	drWasmHash := s.keeper.ListDataRequestWasms(s.ctx)
+	s.Require().ElementsMatch(drWasmHash, []string{resp1.Hash + ",WASM_TYPE_DATA_REQUEST", resp2.Hash + ",WASM_TYPE_DATA_REQUEST"})
+	// Simulate EndBlocker Call. This will remove one wasm.
+	s.Require().NoError(wasmstorage.EndBlocker(s.ctx, *s.keeper))
+
+	// Go to the next block
+	// H = params.WasmTTL + 1.
+	s.ctx = s.ctx.WithBlockHeight(firstWasmPruneHeight + 1)
+	// Simulate EndBlocker Call. This EndBlocker call will have no effect. As at this height no wasm to prune.
+	s.Require().NoError(wasmstorage.EndBlocker(s.ctx, *s.keeper))
+	// Check: 1 wasm was pruned, 1 remained.
+	drWasmHash = s.keeper.ListDataRequestWasms(s.ctx)
+	s.Require().ElementsMatch(drWasmHash, []string{resp2.Hash + ",WASM_TYPE_DATA_REQUEST"})
+
+	// H = 2 * params.WasmTTL.
+	s.ctx = s.ctx.WithBlockHeight(secondWasmPruneHeight)
+	drWasmHash = s.keeper.ListDataRequestWasms(s.ctx)
+	s.Require().ElementsMatch(drWasmHash, []string{resp2.Hash + ",WASM_TYPE_DATA_REQUEST"})
+	// Simulate EndBlocker Call
+	s.Require().NoError(wasmstorage.EndBlocker(s.ctx, *s.keeper))
+
+	// Go to the next block
+	s.ctx = s.ctx.WithBlockHeight(secondWasmPruneHeight + 1)
+
+	// Both wasm must be pruned.
+	drWasmHash = s.keeper.ListDataRequestWasms(s.ctx)
+	s.Require().Empty(drWasmHash)
 }

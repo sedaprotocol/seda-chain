@@ -14,27 +14,13 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-var (
-	// DataRequestPrefix defines prefix to store Data Request Wasm binaries.
-	DataRequestPrefix = collections.NewPrefix(0)
-	// OverlayPrefix defines prefix to store Overlay Wasm binaries.
-	OverlayPrefix = collections.NewPrefix(1)
-	// WasmExpPrefix defines prefix to track wasm expiration.
-	WasmExpPrefix = collections.NewPrefix(2)
-	// ProxyContractRegistryPrefix defines prefix to store address of
-	// Proxy Contract.
-	ProxyContractRegistryPrefix = collections.NewPrefix(3)
-	// ParamsPrefix defines prefix to store parameters of wasm-storage module.
-	ParamsPrefix = collections.NewPrefix(4)
-)
-
 // WasmKey takes a wasm as parameter and returns the key.
 func WasmKey(w types.Wasm) []byte {
 	switch w.WasmType {
 	case types.WasmTypeDataRequest, types.WasmTypeTally:
-		return append(DataRequestPrefix, w.Hash...)
+		return append(types.DataRequestPrefix, w.Hash...)
 	case types.WasmTypeDataRequestExecutor, types.WasmTypeRelayer:
-		return append(OverlayPrefix, w.Hash...)
+		return append(types.OverlayPrefix, w.Hash...)
 	default:
 		panic(fmt.Errorf("invalid wasm type: %+v", w))
 	}
@@ -59,11 +45,11 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, au
 	return &Keeper{
 		authority:             authority,
 		wasmKeeper:            wk,
-		DataRequestWasm:       collections.NewMap(sb, DataRequestPrefix, "data-request-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
-		OverlayWasm:           collections.NewMap(sb, OverlayPrefix, "overlay-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
-		WasmExp:               collections.NewKeySet(sb, WasmExpPrefix, "wasm-exp", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
-		ProxyContractRegistry: collections.NewItem(sb, ProxyContractRegistryPrefix, "proxy-contract-registry", collections.StringValue),
-		Params:                collections.NewItem(sb, ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
+		DataRequestWasm:       collections.NewMap(sb, types.DataRequestPrefix, "data-request-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
+		OverlayWasm:           collections.NewMap(sb, types.OverlayPrefix, "overlay-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
+		WasmExp:               collections.NewKeySet(sb, types.WasmExpPrefix, "wasm-exp", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
+		ProxyContractRegistry: collections.NewItem(sb, types.ProxyContractRegistryPrefix, "proxy-contract-registry", collections.StringValue),
+		Params:                collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
 	}
 }
 
