@@ -11,9 +11,6 @@ const (
 
 	// RouterKey defines the module's message routing key
 	RouterKey = ModuleName
-
-	// KeyParams is the store key for the parameters.
-	KeyParams = "params"
 )
 
 var (
