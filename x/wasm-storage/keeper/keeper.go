@@ -14,8 +14,8 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-// WasmKey takes a wasm as parameter and returns the key.
-func WasmKey(w types.Wasm) []byte {
+// GetWasmKey takes a wasm as parameter and returns the key.
+func GetWasmKey(w types.Wasm) []byte {
 	switch w.WasmType {
 	case types.WasmTypeDataRequest, types.WasmTypeTally:
 		return append(types.DataRequestPrefix, w.Hash...)
@@ -148,7 +148,7 @@ func (k Keeper) GetAllWasms(ctx sdk.Context) []types.Wasm {
 	return wasms
 }
 
-// WasmKeyByExpBlock retrieves the keys of the stored Wasms that will expire at the given block height.
+// GetExpiredWasmKeys retrieves the keys of the stored Wasms that will expire at the given block height.
 // The method iterates over the WasmExp KeySet using the provided context and expiration block height,
 // and returns the keys as [][]byte.
 //
@@ -166,7 +166,7 @@ func (k Keeper) GetAllWasms(ctx sdk.Context) []types.Wasm {
 //	}
 //
 // Note: The returned keys do not maintain an order.
-func (k Keeper) WasmKeyByExpBlock(ctx sdk.Context, expBlock int64) ([][]byte, error) {
+func (k Keeper) GetExpiredWasmKeys(ctx sdk.Context, expBlock int64) ([][]byte, error) {
 	ret := make([][]byte, 0)
 	rng := collections.NewPrefixedPairRange[int64, []byte](expBlock)
 

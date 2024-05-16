@@ -28,7 +28,7 @@ func (q Querier) DataRequestWasm(c context.Context, req *types.QueryDataRequestW
 		return nil, err
 	}
 	mockWasm := types.Wasm{Hash: hash, WasmType: types.WasmTypeDataRequest}
-	wasm, err := q.Keeper.DataRequestWasm.Get(ctx, WasmKey(mockWasm))
+	wasm, err := q.Keeper.DataRequestWasm.Get(ctx, GetWasmKey(mockWasm))
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (q Querier) OverlayWasm(c context.Context, req *types.QueryOverlayWasmReque
 		return nil, err
 	}
 	mockWasm := types.Wasm{Hash: hash, WasmType: types.WasmTypeRelayer}
-	wasm, err := q.Keeper.OverlayWasm.Get(ctx, WasmKey(mockWasm))
+	wasm, err := q.Keeper.OverlayWasm.Get(ctx, GetWasmKey(mockWasm))
 	if err != nil {
 		return nil, err
 	}

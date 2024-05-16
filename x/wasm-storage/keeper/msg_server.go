@@ -80,7 +80,7 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	}
 
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
-	wasmKey := WasmKey(wasm)
+	wasmKey := GetWasmKey(wasm)
 	if exists, _ := m.DataRequestWasm.Has(ctx, wasmKey); exists {
 		return nil, errors.Wrapf(types.ErrAlreadyExists, "wasm type: [%s] hash: [%v]", wasm.WasmType, wasm.Hash)
 	}
@@ -89,7 +89,7 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 		return nil, err
 	}
 
-	expKey := collections.Join(wasm.PruneHeight, wasmKey)
+	expKey := collections.Join(wasm.ExpirationHeight, wasmKey)
 	if err := m.WasmExp.Set(ctx, expKey); err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 		return nil, err
 	}
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), -1)
-	wasmKey := WasmKey(wasm)
+	wasmKey := GetWasmKey(wasm)
 	exists, _ := m.Keeper.OverlayWasm.Has(ctx, wasmKey)
 	if exists {
 		return nil, fmt.Errorf("overlay Wasm with given hash already exists")

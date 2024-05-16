@@ -39,11 +39,11 @@ func NewWasm(bytecode []byte, wasmType WasmType, addedAt time.Time, curBlock, tt
 		pruneHeight = math.MaxInt64
 	}
 	return Wasm{
-		Hash:        hash,
-		Bytecode:    bytecode,
-		WasmType:    wasmType,
-		AddedAt:     addedAt,
-		PruneHeight: pruneHeight,
+		Hash:             hash,
+		Bytecode:         bytecode,
+		WasmType:         wasmType,
+		AddedAt:          addedAt,
+		ExpirationHeight: pruneHeight,
 	}
 }
 

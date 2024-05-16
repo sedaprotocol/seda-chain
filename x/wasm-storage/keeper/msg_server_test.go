@@ -4,6 +4,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"os"
+	"testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 
@@ -378,6 +382,9 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	// We still have 2 wasms.
 	drWasmHash := s.keeper.ListDataRequestWasms(s.ctx)
 	s.Require().ElementsMatch(drWasmHash, []string{resp1.Hash + ",WASM_TYPE_DATA_REQUEST", resp2.Hash + ",WASM_TYPE_DATA_REQUEST"})
+	// Check WsmExp is in sync
+	s.Require().Len(getAllWasmExpEntry(s.T(), s.ctx, s.keeper), 2)
+
 	// Simulate EndBlocker Call. This will remove one wasm.
 	s.Require().NoError(wasmstorage.EndBlocker(s.ctx, *s.keeper))
 
@@ -389,6 +396,8 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	// Check: 1 wasm was pruned, 1 remained.
 	drWasmHash = s.keeper.ListDataRequestWasms(s.ctx)
 	s.Require().ElementsMatch(drWasmHash, []string{resp2.Hash + ",WASM_TYPE_DATA_REQUEST"})
+	// Check WsmExp is in sync
+	s.Require().Len(getAllWasmExpEntry(s.T(), s.ctx, s.keeper), 1)
 
 	// H = 2 * params.WasmTTL.
 	s.ctx = s.ctx.WithBlockHeight(secondWasmPruneHeight)
@@ -402,5 +411,19 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 
 	// Both wasm must be pruned.
 	drWasmHash = s.keeper.ListDataRequestWasms(s.ctx)
-	s.Require().Empty(drWasmHash)
+	s.Require().Empty(drWasmHash) // Check WsmExp is in sync
+	s.Require().Empty(getAllWasmExpEntry(s.T(), s.ctx, s.keeper))
+}
+
+func getAllWasmExpEntry(t *testing.T, c sdk.Context, k *keeper.Keeper) []string {
+	t.Helper()
+	it, err := k.WasmExp.Iterate(c, nil)
+	require.NoError(t, err)
+	keys, err := it.Keys()
+	require.NoError(t, err)
+	hashes := make([]string, 0)
+	for _, key := range keys {
+		hashes = append(hashes, hex.EncodeToString(key.K2()))
+	}
+	return hashes
 }
