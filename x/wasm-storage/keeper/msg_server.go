@@ -89,7 +89,6 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 		return nil, err
 	}
 
-	// Track Exp.
 	expKey := collections.Join(wasm.PruneHeight, wasmKey)
 	if err := m.WasmExp.Set(ctx, expKey); err != nil {
 		return nil, err

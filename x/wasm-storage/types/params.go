@@ -29,7 +29,7 @@ func (p *Params) ValidateBasic() error {
 }
 
 func validateMaxWasmSize(i int64) error {
-	if i == 0 {
+	if i <= 0 {
 		return fmt.Errorf("invalid max Wasm size: %d", i)
 	}
 	return nil
