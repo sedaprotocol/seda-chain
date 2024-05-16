@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -27,18 +28,22 @@ func validateWasmSize(s []byte) error {
 
 // NewWasm constructs a new Wasm object given bytecode and Wasm type.
 // It panics if it fails to compute hash of bytecode.
-func NewWasm(bytecode []byte, wasmType WasmType, addedAt time.Time, curBlock, ttl int64) *Wasm {
+func NewWasm(bytecode []byte, wasmType WasmType, addedAt time.Time, curBlock, ttl int64) Wasm {
 	hash := crypto.Keccak256(bytecode)
 	if hash == nil {
 		panic("failed to compute hash")
 	}
 
-	return &Wasm{
+	pruneHeight := curBlock + ttl
+	if ttl < 0 || wasmType == WasmTypeRelayer {
+		pruneHeight = math.MaxInt64
+	}
+	return Wasm{
 		Hash:        hash,
 		Bytecode:    bytecode,
 		WasmType:    wasmType,
 		AddedAt:     addedAt,
-		PruneHeight: curBlock + ttl,
+		PruneHeight: pruneHeight,
 	}
 }
 

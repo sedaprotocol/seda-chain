@@ -64,7 +64,7 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 				s.Require().Nil(err)
 			},
 			expErr:    true,
-			expErrMsg: "data Request Wasm with given hash already exists",
+			expErrMsg: "already exists",
 		},
 		{
 			name: "unzipped Wasm",
@@ -328,7 +328,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 func (s *KeeperTestSuite) TestDRWasmPruning() {
 	params, err := s.keeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	wasmTTl := params.WasmTTL
+	wasmTTL := params.WasmTTL
 
 	// Get the list of all Data Request Wasms
 	dataRequestWasms := s.keeper.ListDataRequestWasms(s.ctx)
@@ -349,7 +349,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 
 	// Save 1 DR Wasm with default 2 * exp [params.WasmTTL]
 	// First double the wasm lifespan.
-	params.WasmTTL = 2 * wasmTTl
+	params.WasmTTL = 2 * wasmTTL
 	s.Require().NoError(s.keeper.Params.Set(s.ctx, params))
 
 	drWasm2, err := os.ReadFile("test_utils/cowsay.wasm")
@@ -364,8 +364,8 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	})
 	s.Require().NoError(err)
 
-	firstWasmPruneHeight := s.ctx.BlockHeight() + wasmTTl
-	secondWasmPruneHeight := s.ctx.BlockHeight() + (2 * wasmTTl)
+	firstWasmPruneHeight := s.ctx.BlockHeight() + wasmTTL
+	secondWasmPruneHeight := s.ctx.BlockHeight() + (2 * wasmTTL)
 
 	// Wasm pruning takes place during the EndBlocker. If the height of a pruning block is H,
 	// and the wasm to prune is W;

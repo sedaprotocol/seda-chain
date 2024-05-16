@@ -221,8 +221,8 @@ func (s *KeeperTestSuite) TestKeeper_WasmKeyByExpBlock() {
 	for i := 0; i < N; i++ {
 		byteCode := append(mockedByteArray, byte(i)) //nolint: gocritic
 		mockWasm := wasmstoragetypes.NewWasm(byteCode, wasmstoragetypes.WasmTypeDataRequest, tm, bh, ttl)
-		wasmKey := keeper.WasmKey(*mockWasm)
-		err := s.keeper.DataRequestWasm.Set(s.ctx, wasmKey, *mockWasm)
+		wasmKey := keeper.WasmKey(mockWasm)
+		err := s.keeper.DataRequestWasm.Set(s.ctx, wasmKey, mockWasm)
 		s.Require().NoError(err)
 		expKey := collections.Join(expHeight, wasmKey)
 		err = s.keeper.WasmExp.Set(s.ctx, expKey)

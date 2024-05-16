@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math"
 
 	"cosmossdk.io/errors"
 
@@ -81,12 +80,12 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	}
 
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
-	if exists, _ := m.DataRequestWasm.Has(ctx, WasmKey(*wasm)); exists {
+	wasmKey := WasmKey(wasm)
+	if exists, _ := m.DataRequestWasm.Has(ctx, wasmKey); exists {
 		return nil, errors.Wrapf(types.ErrAlreadyExists, "wasm type: [%s] hash: [%v]", wasm.WasmType, wasm.Hash)
 	}
 
-	wasmKey := WasmKey(*wasm)
-	if err := m.DataRequestWasm.Set(ctx, wasmKey, *wasm); err != nil {
+	if err := m.DataRequestWasm.Set(ctx, wasmKey, wasm); err != nil {
 		return nil, err
 	}
 
@@ -133,12 +132,13 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 	if err != nil {
 		return nil, err
 	}
-	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), math.MaxInt64) // Forever
-	exists, _ := m.Keeper.OverlayWasm.Has(ctx, WasmKey(*wasm))
+	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), -1)
+	wasmKey := WasmKey(wasm)
+	exists, _ := m.Keeper.OverlayWasm.Has(ctx, wasmKey)
 	if exists {
 		return nil, fmt.Errorf("overlay Wasm with given hash already exists")
 	}
-	if err = m.Keeper.OverlayWasm.Set(ctx, WasmKey(*wasm), *wasm); err != nil {
+	if err = m.Keeper.OverlayWasm.Set(ctx, wasmKey, wasm); err != nil {
 		return nil, err
 	}
 
