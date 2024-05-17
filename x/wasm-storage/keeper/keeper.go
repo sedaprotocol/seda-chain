@@ -35,7 +35,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, au
 		wasmKeeper:            wk,
 		DataRequestWasm:       collections.NewMap(sb, types.DataRequestPrefix, "data-request-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
 		OverlayWasm:           collections.NewMap(sb, types.OverlayPrefix, "overlay-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
-		WasmExpiration:        collections.NewKeySet(sb, types.WasmExpPrefix, "wasm-exp", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
+		WasmExpiration:        collections.NewKeySet(sb, types.WasmExpPrefix, "wasm-expiration", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
 		ProxyContractRegistry: collections.NewItem(sb, types.ProxyContractRegistryPrefix, "proxy-contract-registry", collections.StringValue),
 		Params:                collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
 	}

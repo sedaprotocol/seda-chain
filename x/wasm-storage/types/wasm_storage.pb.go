@@ -73,8 +73,8 @@ type Wasm struct {
 	Bytecode []byte    `protobuf:"bytes,2,opt,name=bytecode,proto3" json:"bytecode,omitempty"`
 	WasmType WasmType  `protobuf:"varint,3,opt,name=wasm_type,json=wasmType,proto3,enum=sedachain.wasm_storage.v1.WasmType" json:"wasm_type,omitempty"`
 	AddedAt  time.Time `protobuf:"bytes,4,opt,name=added_at,json=addedAt,proto3,stdtime" json:"added_at"`
-	// expiration_height represents the block height till which the Wasm will
-	// stay on the chain. At height > prune_height, the wasm should be pruned.
+	// ExpirationHeight represents the block height at which the data request
+	// wasm will be pruned. The value of zero means no expiration.
 	ExpirationHeight int64 `protobuf:"varint,5,opt,name=expiration_height,json=expirationHeight,proto3" json:"expiration_height,omitempty"`
 }
 
@@ -149,7 +149,7 @@ func (m *Wasm) GetExpirationHeight() int64 {
 // Params to define the max wasm size allowed.
 type Params struct {
 	MaxWasmSize int64 `protobuf:"varint,1,opt,name=max_wasm_size,json=maxWasmSize,proto3" json:"max_wasm_size,omitempty"`
-	// WasmTTL represents the number of block a wasm's life is extended when it's
+	// WasmTTL represents the number of blocks a wasm's life is extended when it's
 	// created or used.
 	WasmTTL int64 `protobuf:"varint,2,opt,name=wasm_ttl,json=wasmTtl,proto3" json:"wasm_ttl,omitempty"`
 }

@@ -13,8 +13,8 @@ message Wasm {
   WasmType wasm_type = 3;
   google.protobuf.Timestamp added_at = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
-  // expiration_height represents the block height till which the Wasm will
-  // stay on the chain. At height > prune_height, the wasm should be pruned.
+  // ExpirationHeight represents the block height at which the data request
+  // wasm will be pruned. The value of zero means no expiration.  
   int64 expiration_height = 5;
 }
 
@@ -43,7 +43,7 @@ message Params {
   option (gogoproto.equal) = true;
 
   int64 max_wasm_size = 1;
-  // WasmTTL represents the number of block a wasm's life is extended when it's
+  // WasmTTL represents the number of blocks a wasm's life is extended when it's
   // created or used.
   int64 wasm_ttl = 2 [ (gogoproto.customname) = "WasmTTL" ];
 }

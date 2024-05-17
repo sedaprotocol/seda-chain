@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -34,10 +33,11 @@ func NewWasm(bytecode []byte, wasmType WasmType, addedAt time.Time, curBlock, tt
 		panic("failed to compute hash")
 	}
 
-	expHeight := curBlock + ttl
-	if ttl < 0 || wasmType == WasmTypeRelayer {
-		expHeight = math.MaxInt64
+	var expHeight int64
+	if ttl > 0 {
+		expHeight = curBlock + ttl
 	}
+
 	return Wasm{
 		Hash:             hash,
 		Bytecode:         bytecode,
