@@ -1,6 +1,8 @@
 module github.com/sedaprotocol/seda-chain
 
-go 1.21
+go 1.21.6
+
+toolchain go1.21.10
 
 require (
 	cosmossdk.io/api v0.7.4
@@ -39,6 +41,7 @@ require (
 	github.com/hashicorp/go-plugin v1.6.0
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
+	github.com/sedaprotocol/seda-wasm-vm/bind_go v0.0.0-20240516204717-b044adda94ee
 	github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c
 	github.com/spf13/cast v1.6.0
 	github.com/spf13/cobra v1.8.0
@@ -111,6 +114,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/dvsekhvalnov/jose2go v1.6.0 // indirect
+	github.com/ebitengine/purego v0.7.1 // indirect
 	github.com/emicklei/dot v1.6.1 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -223,7 +227,7 @@ require (
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/term v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect

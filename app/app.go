@@ -808,6 +808,8 @@ func NewApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		// custom modules
+		wasmstoragetypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after sdkstaking so that pools are
