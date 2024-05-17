@@ -14,18 +14,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-// GetWasmKey takes a wasm as parameter and returns the key.
-func GetWasmKey(w types.Wasm) []byte {
-	switch w.WasmType {
-	case types.WasmTypeDataRequest, types.WasmTypeTally:
-		return append(types.DataRequestPrefix, w.Hash...)
-	case types.WasmTypeDataRequestExecutor, types.WasmTypeRelayer:
-		return append(types.OverlayPrefix, w.Hash...)
-	default:
-		panic(fmt.Errorf("invalid wasm type: %+v", w))
-	}
-}
-
 type Keeper struct {
 	authority  string
 	wasmKeeper wasmtypes.ContractOpsKeeper
@@ -34,7 +22,7 @@ type Keeper struct {
 	Schema                collections.Schema
 	DataRequestWasm       collections.Map[[]byte, types.Wasm]
 	OverlayWasm           collections.Map[[]byte, types.Wasm]
-	WasmExp               collections.KeySet[collections.Pair[int64, []byte]]
+	WasmExpiration        collections.KeySet[collections.Pair[int64, []byte]]
 	ProxyContractRegistry collections.Item[string]
 	Params                collections.Item[types.Params]
 }
@@ -47,7 +35,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, au
 		wasmKeeper:            wk,
 		DataRequestWasm:       collections.NewMap(sb, types.DataRequestPrefix, "data-request-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
 		OverlayWasm:           collections.NewMap(sb, types.OverlayPrefix, "overlay-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
-		WasmExp:               collections.NewKeySet(sb, types.WasmExpPrefix, "wasm-exp", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
+		WasmExpiration:        collections.NewKeySet(sb, types.WasmExpPrefix, "wasm-exp", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
 		ProxyContractRegistry: collections.NewItem(sb, types.ProxyContractRegistryPrefix, "proxy-contract-registry", collections.StringValue),
 		Params:                collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
 	}
@@ -148,29 +136,13 @@ func (k Keeper) GetAllWasms(ctx sdk.Context) []types.Wasm {
 	return wasms
 }
 
-// GetExpiredWasmKeys retrieves the keys of the stored Wasms that will expire at the given block height.
-// The method iterates over the WasmExp KeySet using the provided context and expiration block height,
-// and returns the keys as [][]byte.
-//
-// The method takes a sdk.Context and a uint64 value representing the block height at which expiration occurs.
-// It returns a [][]byte representing the keys of the stored Wasms and an error.
-//
-// Example usage:
-//
-//	wasmKeys, err := keeper.WasmKeyByExpBlock(ctx, expHeight)
-//	if err != nil {
-//	    return err
-//	}
-//	for _, key := range wasmKeys {
-//	    fmt.Println(string(key))
-//	}
-//
-// Note: The returned keys do not maintain an order.
-func (k Keeper) GetExpiredWasmKeys(ctx sdk.Context, expBlock int64) ([][]byte, error) {
+// GetExpiredWasmKeys retrieves the keys of the data request wasms that
+// will expire at the given block height.
+func (k Keeper) GetExpiredWasmKeys(ctx sdk.Context, expirationHeight int64) ([][]byte, error) {
 	ret := make([][]byte, 0)
-	rng := collections.NewPrefixedPairRange[int64, []byte](expBlock)
+	rng := collections.NewPrefixedPairRange[int64, []byte](expirationHeight)
 
-	itr, err := k.WasmExp.Iterate(ctx, rng)
+	itr, err := k.WasmExpiration.Iterate(ctx, rng)
 	if err != nil {
 		return nil, err
 	}

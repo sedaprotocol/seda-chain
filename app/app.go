@@ -781,6 +781,8 @@ func NewApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		packetforwardtypes.ModuleName,
+		// custom modules
+		wasmstoragetypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(

@@ -6,14 +6,11 @@ import (
 	"os"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
-	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
-
-	"github.com/ethereum/go-ethereum/crypto"
-
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -386,13 +383,13 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	s.Require().Len(getAllWasmExpEntry(s.T(), s.ctx, s.keeper), 2)
 
 	// Simulate EndBlocker Call. This will remove one wasm.
-	s.Require().NoError(wasmstorage.EndBlocker(s.ctx, *s.keeper))
+	s.Require().NoError(s.keeper.EndBlock(s.ctx))
 
 	// Go to the next block
 	// H = params.WasmTTL + 1.
 	s.ctx = s.ctx.WithBlockHeight(firstWasmPruneHeight + 1)
 	// Simulate EndBlocker Call. This EndBlocker call will have no effect. As at this height no wasm to prune.
-	s.Require().NoError(wasmstorage.EndBlocker(s.ctx, *s.keeper))
+	s.Require().NoError(s.keeper.EndBlock(s.ctx))
 	// Check: 1 wasm was pruned, 1 remained.
 	drWasmHash = s.keeper.ListDataRequestWasms(s.ctx)
 	s.Require().ElementsMatch(drWasmHash, []string{resp2.Hash + ",WASM_TYPE_DATA_REQUEST"})
@@ -404,7 +401,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	drWasmHash = s.keeper.ListDataRequestWasms(s.ctx)
 	s.Require().ElementsMatch(drWasmHash, []string{resp2.Hash + ",WASM_TYPE_DATA_REQUEST"})
 	// Simulate EndBlocker Call
-	s.Require().NoError(wasmstorage.EndBlocker(s.ctx, *s.keeper))
+	s.Require().NoError(s.keeper.EndBlock(s.ctx))
 
 	// Go to the next block
 	s.ctx = s.ctx.WithBlockHeight(secondWasmPruneHeight + 1)
@@ -417,7 +414,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 
 func getAllWasmExpEntry(t *testing.T, c sdk.Context, k *keeper.Keeper) []string {
 	t.Helper()
-	it, err := k.WasmExp.Iterate(c, nil)
+	it, err := k.WasmExpiration.Iterate(c, nil)
 	require.NoError(t, err)
 	keys, err := it.Keys()
 	require.NoError(t, err)

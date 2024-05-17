@@ -34,16 +34,16 @@ func NewWasm(bytecode []byte, wasmType WasmType, addedAt time.Time, curBlock, tt
 		panic("failed to compute hash")
 	}
 
-	pruneHeight := curBlock + ttl
+	expHeight := curBlock + ttl
 	if ttl < 0 || wasmType == WasmTypeRelayer {
-		pruneHeight = math.MaxInt64
+		expHeight = math.MaxInt64
 	}
 	return Wasm{
 		Hash:             hash,
 		Bytecode:         bytecode,
 		WasmType:         wasmType,
 		AddedAt:          addedAt,
-		ExpirationHeight: pruneHeight,
+		ExpirationHeight: expHeight,
 	}
 }
 

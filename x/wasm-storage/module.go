@@ -147,9 +147,7 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 	return nil
 }
 
-// EndBlock returns the end blocker for the wasm-storage module. It returns no validator
-// updates.
+// EndBlock returns the end block logic for the wasm-storage module.
 func (am AppModule) EndBlock(ctx context.Context) error {
-	c := sdk.UnwrapSDKContext(ctx)
-	return EndBlocker(c, am.keeper)
+	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
 }

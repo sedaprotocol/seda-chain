@@ -65,32 +65,29 @@ var _ types.MsgServer = msgServer{}
 // checks if a module with the same hash already exists, sets the Wasm instance in the data store,
 // tracks its expiration, emits an event, and returns the hash of the stored Wasm module.
 func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgStoreDataRequestWasm) (*types.MsgStoreDataRequestWasmResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
 	params, err := m.Params.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	unzipped, err := unzipWasm(msg.Wasm, params.MaxWasmSize)
 	if err != nil {
 		return nil, err
 	}
 
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
-	wasmKey := GetWasmKey(wasm)
-	if exists, _ := m.DataRequestWasm.Has(ctx, wasmKey); exists {
+	if exists, _ := m.DataRequestWasm.Has(ctx, wasm.Hash); exists {
 		return nil, errors.Wrapf(types.ErrAlreadyExists, "wasm type: [%s] hash: [%v]", wasm.WasmType, wasm.Hash)
 	}
-
-	if err := m.DataRequestWasm.Set(ctx, wasmKey, wasm); err != nil {
+	if err := m.DataRequestWasm.Set(ctx, wasm.Hash, wasm); err != nil {
 		return nil, err
 	}
 
-	expKey := collections.Join(wasm.ExpirationHeight, wasmKey)
-	if err := m.WasmExp.Set(ctx, expKey); err != nil {
+	if err := m.WasmExpiration.Set(ctx, collections.Join(wasm.ExpirationHeight, wasm.Hash)); err != nil {
 		return nil, err
 	}
 
@@ -116,28 +113,26 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
+	if msg.Sender != m.authority {
+		return nil, fmt.Errorf("invalid authority %s", msg.Sender)
+	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	params, err := m.Keeper.Params.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	if msg.Sender != m.authority {
-		return nil, fmt.Errorf("invalid authority %s", msg.Sender)
-	}
-
 	unzipped, err := unzipWasm(msg.Wasm, params.MaxWasmSize)
 	if err != nil {
 		return nil, err
 	}
+
 	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), -1)
-	wasmKey := GetWasmKey(wasm)
-	exists, _ := m.Keeper.OverlayWasm.Has(ctx, wasmKey)
+	exists, _ := m.Keeper.OverlayWasm.Has(ctx, wasm.Hash)
 	if exists {
 		return nil, fmt.Errorf("overlay Wasm with given hash already exists")
 	}
-	if err = m.Keeper.OverlayWasm.Set(ctx, wasmKey, wasm); err != nil {
+	if err = m.Keeper.OverlayWasm.Set(ctx, wasm.Hash, wasm); err != nil {
 		return nil, err
 	}
 
@@ -162,11 +157,11 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 // InstantiateAndRegisterProxyContract instantiate a new contract with
 // a predictable address and updates the Proxy Contract registry.
 func (m msgServer) InstantiateAndRegisterProxyContract(goCtx context.Context, msg *types.MsgInstantiateAndRegisterProxyContract) (*types.MsgInstantiateAndRegisterProxyContractResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	var adminAddr sdk.AccAddress
 	var err error
@@ -181,7 +176,7 @@ func (m msgServer) InstantiateAndRegisterProxyContract(goCtx context.Context, ms
 		return nil, err
 	}
 
-	// update Proxy Contract registry
+	// update proxy contract registry
 	err = m.ProxyContractRegistry.Set(ctx, contractAddr.String())
 	if err != nil {
 		return nil, err
@@ -207,22 +202,20 @@ func unzipWasm(wasm []byte, maxSize int64) ([]byte, error) {
 }
 
 func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
 	// validate authority
 	if _, err := sdk.AccAddressFromBech32(req.Authority); err != nil {
 		return nil, fmt.Errorf("invalid authority address: %s", err)
 	}
-
 	if m.GetAuthority() != req.Authority {
 		return nil, fmt.Errorf("invalid authority; expected %s, got %s", m.GetAuthority(), req.Authority)
 	}
 
-	// validate params
+	// validate and update params
 	if err := req.Params.ValidateBasic(); err != nil {
 		return nil, err
 	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
 	if err := m.Params.Set(ctx, req.Params); err != nil {
 		return nil, err
 	}

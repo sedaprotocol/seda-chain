@@ -20,11 +20,11 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		wasm := data.Wasms[i]
 		switch wasm.WasmType {
 		case types.WasmTypeDataRequest, types.WasmTypeTally:
-			if err := k.DataRequestWasm.Set(ctx, keeper.GetWasmKey(wasm), wasm); err != nil {
+			if err := k.DataRequestWasm.Set(ctx, wasm.Hash, wasm); err != nil {
 				panic(err)
 			}
 		case types.WasmTypeDataRequestExecutor, types.WasmTypeRelayer:
-			if err := k.OverlayWasm.Set(ctx, keeper.GetWasmKey(wasm), wasm); err != nil {
+			if err := k.OverlayWasm.Set(ctx, wasm.Hash, wasm); err != nil {
 				panic(err)
 			}
 		}
