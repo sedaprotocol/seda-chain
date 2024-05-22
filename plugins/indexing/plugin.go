@@ -25,6 +25,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/base"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pluginaws"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/staking"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
@@ -85,6 +86,8 @@ func (p *IndexerPlugin) extractUpdate(change *storetypes.StoreKVPair) (*types.Me
 		return bank.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	case auth.StoreKey:
 		return auth.ExtractUpdate(p.block, p.cdc, p.logger, change)
+	case staking.StoreKey:
+		return staking.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	default:
 		return nil, nil
 	}
