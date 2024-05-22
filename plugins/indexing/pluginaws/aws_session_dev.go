@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
@@ -35,5 +37,13 @@ func NewS3Config() (*aws.Config, error) {
 		return nil, fmt.Errorf("missing environment variable '%s'", s3EndpointEnvName)
 	}
 	// The local emulator requires path style access
-	return aws.NewConfig().WithEndpoint(endpoint).WithS3ForcePathStyle(true), nil
+	cfg := aws.NewConfig().WithEndpoint(endpoint).WithS3ForcePathStyle(true)
+	request.WithRetryer(cfg, CustomRetryer{DefaultRetryer: client.DefaultRetryer{
+		NumMaxRetries:    client.DefaultRetryerMaxNumRetries,
+		MinRetryDelay:    client.DefaultRetryerMinRetryDelay,
+		MaxRetryDelay:    client.DefaultRetryerMaxRetryDelay,
+		MinThrottleDelay: client.DefaultRetryerMinThrottleDelay,
+		MaxThrottleDelay: client.DefaultRetryerMaxThrottleDelay,
+	}})
+	return cfg, nil
 }
