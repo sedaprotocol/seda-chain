@@ -43,6 +43,23 @@ func (k Keeper) ProcessExpiredWasms(ctx sdk.Context) error {
 }
 
 func (k Keeper) ExecuteTally(ctx sdk.Context) error {
+	// TODO: query contract to retrieve list of data requests
+	// ready to be tallied and obtain their associated tally
+	// wasm IDs.
+	//
+	proxyContractAddr, err := k.ProxyContractRegistry.Get(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Debug("proxy contract address not registered")
+			return nil
+		}
+		return err
+	}
+
+	msg := []byte("{\"data_requests\": {}}")
+	drContractAddr, err := k.wasmKeeper.Sudo(ctx, sdk.MustAccAddressFromBech32(proxyContractAddr), msg)
+	fmt.Println("dr contract addy: " + string(drContractAddr))
+
 	hash, err := hex.DecodeString("aad4d8a759c33a28bd6f6213c60e4e2f64d690ab559fc62d272a7d278170b802")
 	if err != nil {
 		return err

@@ -15,8 +15,9 @@ import (
 )
 
 type Keeper struct {
-	authority  string
-	wasmKeeper wasmtypes.ContractOpsKeeper
+	authority      string
+	wasmKeeper     wasmtypes.ContractOpsKeeper
+	wasmViewKeeper wasmtypes.ViewKeeper
 
 	// state management
 	Schema                collections.Schema
@@ -27,12 +28,13 @@ type Keeper struct {
 	Params                collections.Item[types.Params]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, authority string, wk wasmtypes.ContractOpsKeeper) *Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, authority string, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
 	return &Keeper{
 		authority:             authority,
 		wasmKeeper:            wk,
+		wasmViewKeeper:        wvk,
 		DataRequestWasm:       collections.NewMap(sb, types.DataRequestPrefix, "data-request-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
 		OverlayWasm:           collections.NewMap(sb, types.OverlayPrefix, "overlay-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
 		WasmExpiration:        collections.NewKeySet(sb, types.WasmExpPrefix, "wasm-expiration", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
