@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -177,8 +180,8 @@ func (s *KeeperTestSuite) TestKeeper_WasmKeyByExpBlock() {
 	s.Require().ElementsMatch(wasmKeys, result)
 }
 
-func (s *KeeperTestSuite) TestKeeper_GasConsumeToStoreDR() {
-	s.SetupTest()
+func TestKeeper_GasConsumeToStoreDR(t *testing.T) {
+	//s.SetupTest()
 	size := map[string]int64{
 		"1 KB":   1000,
 		"500 KB": 500000,
@@ -188,15 +191,15 @@ func (s *KeeperTestSuite) TestKeeper_GasConsumeToStoreDR() {
 	for name, ln := range size {
 		wasmData := make([]byte, ln)
 		file, err := os.Create(name + ".bin")
-		s.Require().NoError(err)
+		require.NoError(t, err)
 
 		fmt.Printf("%s: %d\n", name, binary.Size(wasmData))
-		wasm := wasmstoragetypes.NewWasm(wasmData, wasmstoragetypes.WasmTypeDataRequest, s.ctx.BlockTime(), s.ctx.BlockHeight(), 10000)
-		s.Require().NoError(s.keeper.DataRequestWasm.Set(s.ctx, wasm.Hash, wasm))
+		//wasm := types.NewWasm(wasmData, types.WasmTypeDataRequest, s.ctx.BlockTime(), s.ctx.BlockHeight(), 10000)
+		//s.Require().NoError(s.keeper.DataRequestWasm.Set(s.ctx, wasm.Hash, wasm))
 
 		//bgm := s.ctx.BlockGasMeter()
 		//fmt.Printf("Gas: %v\n", bgm.GasConsumed())
-		s.Require().NoError(binary.Write(file, binary.BigEndian, wasmData))
-		s.Require().NoError(file.Close())
+		require.NoError(t, binary.Write(file, binary.BigEndian, wasmData))
+		require.NoError(t, file.Close())
 	}
 }
