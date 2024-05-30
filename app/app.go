@@ -774,6 +774,7 @@ func NewApp(
 		group.ModuleName,
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		wasmstoragetypes.ModuleName,
 		// ibc
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,
@@ -803,6 +804,7 @@ func NewApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		wasmstoragetypes.ModuleName,
 		// ibc
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,

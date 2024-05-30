@@ -1,7 +1,9 @@
 package keeper_test
 
 import (
+	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"os"
 	"time"
@@ -173,4 +175,28 @@ func (s *KeeperTestSuite) TestKeeper_WasmKeyByExpBlock() {
 	result, err := s.keeper.GetExpiredWasmKeys(s.ctx, expHeight)
 	s.Require().NoError(err)
 	s.Require().ElementsMatch(wasmKeys, result)
+}
+
+func (s *KeeperTestSuite) TestKeeper_GasConsumeToStoreDR() {
+	s.SetupTest()
+	size := map[string]int64{
+		"1 KB":   1000,
+		"500 KB": 500000,
+		"1 MB":   1000000,
+		"1 GB":   1e+9,
+	}
+	for name, ln := range size {
+		wasmData := make([]byte, ln)
+		file, err := os.Create(name + ".bin")
+		s.Require().NoError(err)
+
+		fmt.Printf("%s: %d\n", name, binary.Size(wasmData))
+		wasm := wasmstoragetypes.NewWasm(wasmData, wasmstoragetypes.WasmTypeDataRequest, s.ctx.BlockTime(), s.ctx.BlockHeight(), 10000)
+		s.Require().NoError(s.keeper.DataRequestWasm.Set(s.ctx, wasm.Hash, wasm))
+
+		//bgm := s.ctx.BlockGasMeter()
+		//fmt.Printf("Gas: %v\n", bgm.GasConsumed())
+		s.Require().NoError(binary.Write(file, binary.BigEndian, wasmData))
+		s.Require().NoError(file.Close())
+	}
 }
