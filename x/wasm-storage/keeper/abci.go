@@ -43,6 +43,7 @@ func (k Keeper) ProcessExpiredWasms(ctx sdk.Context) error {
 }
 
 func (k Keeper) ExecuteTally(ctx sdk.Context) error {
+	// 1. Get contract address.
 	// TODO: query contract to retrieve list of data requests
 	// ready to be tallied and obtain their associated tally
 	// wasm IDs.
@@ -56,9 +57,38 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 		return err
 	}
 
-	msg := []byte("{\"data_requests\": {}}")
-	drContractAddr, err := k.wasmKeeper.Sudo(ctx, sdk.MustAccAddressFromBech32(proxyContractAddr), msg)
-	fmt.Println("dr contract addy: " + string(drContractAddr))
+	// msg := []byte("{\"data_requests\": {}}")
+	// drContractAddr, err := k.wasmKeeper.Sudo(ctx, sdk.MustAccAddressFromBech32(proxyContractAddr), msg)
+	// fmt.Println("dr contract addy: " + string(drContractAddr))
+
+	fmt.Println(proxyContractAddr)
+	// drContractAddr := proxyContractAddr
+
+	// 2. Fetch tally-ready DRs.
+	// bankQuery := wasmvmtypes.QueryRequest{
+	// 	Bank: &wasmvmtypes.BankQuery{
+	// 		AllBalances: &wasmvmtypes.AllBalancesQuery{
+	// 			Address: creator.String(),
+	// 		},
+	// 	},
+	// }
+	// simpleQueryBz, err := json.Marshal(testdata.ReflectQueryMsg{
+	// 	Chain: &testdata.ChainQuery{Request: &bankQuery},
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+	// list, err := k.wasmViewKeeper.QuerySmart(ctx, sdk.AccAddress(drContractAddr), simpleQueryBz)
+	// // list, err := k.wasmViewKeeper.QuerySmart(ctx, sdk.AccAddress(drContractAddr), []byte{`{"verifier":{}}`})
+	// if err != nil {
+	// 	return err
+	// }
+	// fmt.Println(list)
+
+	// 3. Loop through the list to execute tally.
+	// for _, item := range list {
+
+	// }
 
 	hash, err := hex.DecodeString("aad4d8a759c33a28bd6f6213c60e4e2f64d690ab559fc62d272a7d278170b802")
 	if err != nil {
@@ -77,5 +107,8 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 		"PATH": os.Getenv("SHELL"),
 	})
 	fmt.Println(result)
+
+	// 4. Post result.
+
 	return nil
 }
