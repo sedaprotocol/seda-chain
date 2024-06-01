@@ -73,6 +73,6 @@ func (q Querier) ProxyContractRegistry(c context.Context, _ *types.QueryProxyCon
 		return nil, err
 	}
 	return &types.QueryProxyContractRegistryResponse{
-		Address: sdk.AccAddress(proxyAddress).String(),
+		Address: proxyAddress,
 	}, nil
 }

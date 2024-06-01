@@ -15,6 +15,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 	if err := k.Params.Set(ctx, data.Params); err != nil {
 		panic(err)
 	}
+	if err := k.ProxyContractRegistry.Set(ctx, data.ProxyContractRegistry); err != nil {
+		panic(err)
+	}
 
 	for i := range data.Wasms {
 		wasm := data.Wasms[i]
@@ -27,15 +30,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 			if err := k.OverlayWasm.Set(ctx, wasm.Hash, wasm); err != nil {
 				panic(err)
 			}
-		}
-	}
-	if data.ProxyContractRegistry != "" {
-		proxyAddr, err := sdk.AccAddressFromBech32(data.ProxyContractRegistry)
-		if err != nil {
-			panic(err)
-		}
-		if err = k.ProxyContractRegistry.Set(ctx, proxyAddr.String()); err != nil {
-			panic(err)
 		}
 	}
 }

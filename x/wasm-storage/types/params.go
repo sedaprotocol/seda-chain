@@ -25,12 +25,8 @@ func (p *Params) ValidateBasic() error {
 	if p.WasmTTL < 2 {
 		return errors.Wrapf(ErrInvalidParam, "WasmTTL %d < 2", p.WasmTTL)
 	}
-	return validateMaxWasmSize(p.MaxWasmSize)
-}
-
-func validateMaxWasmSize(i int64) error {
-	if i <= 0 {
-		return fmt.Errorf("invalid max Wasm size: %d", i)
+	if p.MaxWasmSize <= 0 {
+		return fmt.Errorf("invalid max Wasm size: %d", p.MaxWasmSize)
 	}
 	return nil
 }

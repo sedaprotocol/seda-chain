@@ -5,10 +5,10 @@ import (
 )
 
 var (
-	//go:embed data_requests.wasm
-	dataRequestsContract []byte
+	//go:embed seda_contract.wasm
+	sedaContract []byte
 )
 
-func DataRequestsContractWasm() []byte {
-	return dataRequestsContract
+func SedaContractWasm() []byte {
+	return sedaContract
 }

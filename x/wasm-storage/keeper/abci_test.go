@@ -35,22 +35,6 @@ func TestInstantiateWithContractDataResponse(t *testing.T) {
 	require.NoError(t, err)
 	// assert.Equal(t, []byte("my-response-data"), data)
 }
-
-var ReflectCapabilities = []string{"staking", "mask", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4", "cosmwasm_2_0"}
-
-// reflectEncoders needs to be registered in test setup to handle custom message callbacks
-func reflectEncoders(cdc codec.Codec) *keeper.MessageEncoders {
-	return &keeper.MessageEncoders{
-		Custom: fromReflectRawMsg(cdc),
-	}
-}
-
-// reflectPlugins needs to be registered in test setup to handle custom query callbacks
-func reflectPlugins() *keeper.QueryPlugins {
-	return &keeper.QueryPlugins{
-		Custom: performCustomQuery,
-	}
-}
 */
 
 func TestFetchForTally(t *testing.T) {
@@ -60,18 +44,17 @@ func TestFetchForTally(t *testing.T) {
 	creator := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 	// Upload code.
-	codeID, _, err := f.contractKeeper.Create(ctx, creator, testdata.DataRequestsContractWasm(), nil)
+	codeID, _, err := f.contractKeeper.Create(ctx, creator, testdata.SedaContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
 	// Instantiate contract.
-	// '{"token":"aseda", "proxy": "'$PROXY_CONTRACT_ADDRESS'" }'
 	initMsg := struct {
 		Token string         `json:"token"`
-		Proxy sdk.AccAddress `json:"proxy"`
+		Owner sdk.AccAddress `json:"owner"`
 	}{
 		Token: "aseda",
-		Proxy: sdk.MustAccAddressFromBech32("seda1xd04svzj6zj93g4eknhp6aq2yyptagcc2zeetj"),
+		Owner: creator,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
@@ -80,7 +63,13 @@ func TestFetchForTally(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)
 
+	err = f.wasmStorageKeeper.ProxyContractRegistry.Set(ctx, contractAddr.String())
+	require.NoError(t, err)
+
 	// Post DR.
+	// Q: Is there a way to set up mock contract state for testing?
 
 	// Tally endblock.
+	err = f.wasmStorageKeeper.ExecuteTally(ctx)
+	require.NoError(t, err)
 }

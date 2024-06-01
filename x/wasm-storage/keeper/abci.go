@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"os"
 
 	"cosmossdk.io/collections"
@@ -44,71 +46,74 @@ func (k Keeper) ProcessExpiredWasms(ctx sdk.Context) error {
 
 func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 	// 1. Get contract address.
-	// TODO: query contract to retrieve list of data requests
-	// ready to be tallied and obtain their associated tally
-	// wasm IDs.
-	//
-	proxyContractAddr, err := k.ProxyContractRegistry.Get(ctx)
+	contractAddr, err := k.ProxyContractRegistry.Get(ctx)
+	if contractAddr == "" || errors.Is(err, collections.ErrNotFound) {
+		k.Logger(ctx).Debug("proxy contract address not registered")
+		return nil
+	}
 	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Debug("proxy contract address not registered")
-			return nil
-		}
 		return err
 	}
 
+	// 2. Fetch tally-ready DRs.
+	// TODO: json marshal golang struct?
+	queryRes, err := k.wasmViewKeeper.QuerySmart(ctx, sdk.MustAccAddressFromBech32(contractAddr), []byte(`{"get_data_requests_by_status":{"status": "tallying"}}`))
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(queryRes))
+
+	type DataRequest struct {
+		Id                string
+		Version           string
+		DrBinaryId        string
+		DrInputs          []byte
+		TallyBinaryId     string
+		TallyInputs       []byte
+		ReplicationFactor uint16
+		GasPrice          *big.Int
+		GasLimit          *big.Int
+		Memo              string
+		PaybackAddress    []byte
+		SedaPayload       []byte
+		Commits           map[string]string
+		// Reveals           map[string]RevealBody
+	}
+
+	var hmap map[string]DataRequest
+	err = json.Unmarshal(queryRes, &hmap)
+	if err != nil {
+		return err
+	}
+
+	// 3. Loop through the list to execute tally.
+	// #[returns(HashMap<String, DR>)]
+	// TODO: is it ok to use a map?
+
+	for key := range hmap {
+		hash, err := hex.DecodeString(hmap[key].TallyBinaryId)
+		if err != nil {
+			return err
+		}
+		tallyWasm, err := k.DataRequestWasm.Get(ctx, hash)
+		if err != nil {
+			// TODO: reactivate error handling
+			if errors.Is(err, collections.ErrNotFound) {
+				return nil
+			}
+			return err
+		}
+
+		result := vm.ExecuteTallyVm(tallyWasm.Bytecode, []string{"1", "2"}, map[string]string{
+			"PATH": os.Getenv("SHELL"),
+		})
+		fmt.Println(result)
+	}
+
+	// 4. Post result.
 	// msg := []byte("{\"data_requests\": {}}")
 	// drContractAddr, err := k.wasmKeeper.Sudo(ctx, sdk.MustAccAddressFromBech32(proxyContractAddr), msg)
 	// fmt.Println("dr contract addy: " + string(drContractAddr))
-
-	fmt.Println(proxyContractAddr)
-	// drContractAddr := proxyContractAddr
-
-	// 2. Fetch tally-ready DRs.
-	// bankQuery := wasmvmtypes.QueryRequest{
-	// 	Bank: &wasmvmtypes.BankQuery{
-	// 		AllBalances: &wasmvmtypes.AllBalancesQuery{
-	// 			Address: creator.String(),
-	// 		},
-	// 	},
-	// }
-	// simpleQueryBz, err := json.Marshal(testdata.ReflectQueryMsg{
-	// 	Chain: &testdata.ChainQuery{Request: &bankQuery},
-	// })
-	// if err != nil {
-	// 	return err
-	// }
-	// list, err := k.wasmViewKeeper.QuerySmart(ctx, sdk.AccAddress(drContractAddr), simpleQueryBz)
-	// // list, err := k.wasmViewKeeper.QuerySmart(ctx, sdk.AccAddress(drContractAddr), []byte{`{"verifier":{}}`})
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Println(list)
-
-	// 3. Loop through the list to execute tally.
-	// for _, item := range list {
-
-	// }
-
-	hash, err := hex.DecodeString("aad4d8a759c33a28bd6f6213c60e4e2f64d690ab559fc62d272a7d278170b802")
-	if err != nil {
-		return err
-	}
-	tallyWasm, err := k.DataRequestWasm.Get(ctx, hash)
-	if err != nil {
-		// TODO: reactivate error handling
-		if errors.Is(err, collections.ErrNotFound) {
-			return nil
-		}
-		return err
-	}
-
-	result := vm.ExecuteTallyVm(tallyWasm.Bytecode, []string{"1", "2"}, map[string]string{
-		"PATH": os.Getenv("SHELL"),
-	})
-	fmt.Println(result)
-
-	// 4. Post result.
 
 	return nil
 }
