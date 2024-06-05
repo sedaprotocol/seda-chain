@@ -13,20 +13,20 @@ import (
 )
 
 type Request struct {
-	Commits           map[string]interface{} `json:"commits"`
-	DrBinaryID        []byte                 `json:"dr_binary_id"`
-	DrInputs          []interface{}          `json:"dr_inputs"`
-	GasLimit          string                 `json:"gas_limit"`
-	GasPrice          string                 `json:"gas_price"`
-	ID                []byte                 `json:"id"`
-	Memo              []interface{}          `json:"memo"`
-	PaybackAddress    []interface{}          `json:"payback_address"`
+	// Commits           map[string]interface{} `json:"commits"`
+	DrBinaryID []byte `json:"dr_binary_id"`
+	// DrInputs          []interface{}          `json:"dr_inputs"`
+	GasLimit string `json:"gas_limit"`
+	GasPrice string `json:"gas_price"`
+	ID       []byte `json:"id"`
+	// Memo              []interface{}          `json:"memo"`
+	// PaybackAddress    []interface{}          `json:"payback_address"`
 	ReplicationFactor int                    `json:"replication_factor"`
 	Reveals           map[string]interface{} `json:"reveals"`
-	SedaPayload       []interface{}          `json:"seda_payload"`
-	TallyBinaryID     []byte                 `json:"tally_binary_id"`
-	TallyInputs       []int                  `json:"tally_inputs"`
-	Version           string                 `json:"version"`
+	// SedaPayload       []interface{}          `json:"seda_payload"`
+	TallyBinaryID []byte `json:"tally_binary_id"`
+	TallyInputs   []int  `json:"tally_inputs"`
+	Version       string `json:"version"`
 }
 
 type TallyingList map[string]struct {
