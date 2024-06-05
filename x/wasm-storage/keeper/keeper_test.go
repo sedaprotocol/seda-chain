@@ -16,7 +16,7 @@ import (
 
 func (s *KeeperTestSuite) TestSetDataRequestWasm() {
 	s.SetupTest()
-	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	wasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)

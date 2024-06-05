@@ -17,12 +17,12 @@ import (
 )
 
 func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
-	regWasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	regWasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	regWasmZipped, err := ioutils.GzipIt(regWasm)
 	s.Require().NoError(err)
 
-	oversizedWasm, err := os.ReadFile("test_utils/oversized.wasm")
+	oversizedWasm, err := os.ReadFile("testutil/oversized.wasm")
 	s.Require().NoError(err)
 	oversizedWasmZipped, err := ioutils.GzipIt(oversizedWasm)
 	s.Require().NoError(err)
@@ -107,12 +107,12 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 }
 
 func (s *KeeperTestSuite) TestStoreOverlayWasm() {
-	regWasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	regWasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	regWasmZipped, err := ioutils.GzipIt(regWasm)
 	s.Require().NoError(err)
 
-	oversizedWasm, err := os.ReadFile("test_utils/oversized.wasm")
+	oversizedWasm, err := os.ReadFile("testutil/oversized.wasm")
 	s.Require().NoError(err)
 	oversizedWasmZipped, err := ioutils.GzipIt(oversizedWasm)
 	s.Require().NoError(err)
@@ -336,7 +336,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	s.Require().Empty(dataRequestWasms)
 
 	// Save 1 DR Wasm with default exp [params.WasmTTL]
-	drWasm1, err := os.ReadFile("test_utils/hello-world.wasm")
+	drWasm1, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	drWasmZipped1, err := ioutils.GzipIt(drWasm1)
 	s.Require().NoError(err)
@@ -353,7 +353,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	params.WasmTTL = 2 * wasmTTL
 	s.Require().NoError(s.keeper.Params.Set(s.ctx, params))
 
-	drWasm2, err := os.ReadFile("test_utils/cowsay.wasm")
+	drWasm2, err := os.ReadFile("testutil/cowsay.wasm")
 	s.Require().NoError(err)
 	drWasmZipped2, err := ioutils.GzipIt(drWasm2)
 	s.Require().NoError(err)

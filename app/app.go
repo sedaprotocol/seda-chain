@@ -612,10 +612,12 @@ func NewApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[wasmstoragetypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		app.AccountKeeper,
+		app.BankKeeper,
 		contractKeeper,
 		app.WasmKeeper,
 	)
-	wasmStorageModule := wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper, app.AccountKeeper, app.BankKeeper)
+	wasmStorageModule := wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper)
 
 	/* =================================================== */
 	/*                  TRANSFER STACK                     */

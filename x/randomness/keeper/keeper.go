@@ -37,7 +37,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService) *K
 
 	return &Keeper{
 		Seed:                collections.NewItem(sb, SeedPrefix, "seed", collections.StringValue),
-		ValidatorVRFPubKeys: collections.NewMap(sb, ValidatorVRFPrefix, "validator-vrf-pubkeys", collections.StringKey, codec.CollInterfaceValue[cryptotypes.PubKey](cdc)),
+		ValidatorVRFPubKeys: collections.NewMap(sb, ValidatorVRFPrefix, "validator_vrf_pubkeys", collections.StringKey, codec.CollInterfaceValue[cryptotypes.PubKey](cdc)),
 	}
 }
 

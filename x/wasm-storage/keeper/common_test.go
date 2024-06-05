@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"testing"
-	"time"
 
 	storetypes "cosmossdk.io/store/types"
 	"github.com/stretchr/testify/suite"
@@ -26,7 +25,6 @@ type KeeperTestSuite struct {
 	suite.Suite
 	ctx         sdk.Context
 	keeper      *keeper.Keeper
-	blockTime   time.Time //nolint:unused // unused
 	cdc         codec.Codec
 	msgSrvr     wasmstoragetypes.MsgServer
 	queryClient wasmstoragetypes.QueryClient
@@ -64,7 +62,7 @@ func setupKeeper(t *testing.T, authority string) (*keeper.Keeper, moduletestutil
 	encCfg := moduletestutil.MakeTestEncodingConfig(wasmstorage.AppModuleBasic{})
 	wasmstoragetypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 
-	wasmStorageKeeper := keeper.NewKeeper(encCfg.Codec, runtime.NewKVStoreService(key), authority, nil, nil)
+	wasmStorageKeeper := keeper.NewKeeper(encCfg.Codec, runtime.NewKVStoreService(key), authority, nil, nil, nil, nil)
 
 	return wasmStorageKeeper, encCfg, ctx
 }

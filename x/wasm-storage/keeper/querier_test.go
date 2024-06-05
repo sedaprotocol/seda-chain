@@ -12,7 +12,7 @@ import (
 
 func (s *KeeperTestSuite) TestDataRequestWasm() {
 	s.SetupTest()
-	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	wasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)
@@ -33,7 +33,7 @@ func (s *KeeperTestSuite) TestDataRequestWasm() {
 
 func (s *KeeperTestSuite) TestOverlayWasm() {
 	s.SetupTest()
-	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	wasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)
@@ -54,7 +54,7 @@ func (s *KeeperTestSuite) TestOverlayWasm() {
 
 func (s *KeeperTestSuite) TestDataRequestWasms() {
 	s.SetupTest()
-	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	wasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)
@@ -67,7 +67,7 @@ func (s *KeeperTestSuite) TestDataRequestWasms() {
 	storedWasm, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &input)
 	s.Require().NoError(err)
 
-	wasm2, err := os.ReadFile("test_utils/cowsay.wasm")
+	wasm2, err := os.ReadFile("testutil/cowsay.wasm")
 	s.Require().NoError(err)
 	compWasm2, err := ioutils.GzipIt(wasm2)
 	s.Require().NoError(err)
@@ -89,7 +89,7 @@ func (s *KeeperTestSuite) TestDataRequestWasms() {
 
 func (s *KeeperTestSuite) TestOverlayWasms() {
 	s.SetupTest()
-	wasm, err := os.ReadFile("test_utils/hello-world.wasm")
+	wasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)
@@ -102,7 +102,7 @@ func (s *KeeperTestSuite) TestOverlayWasms() {
 	storedWasm, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
 	s.Require().NoError(err)
 
-	wasm2, err := os.ReadFile("test_utils/cowsay.wasm")
+	wasm2, err := os.ReadFile("testutil/cowsay.wasm")
 	s.Require().NoError(err)
 	compWasm2, err := ioutils.GzipIt(wasm2)
 	s.Require().NoError(err)

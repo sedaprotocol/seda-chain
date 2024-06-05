@@ -15,11 +15,16 @@ import (
 )
 
 type Keeper struct {
-	authority      string
+	accountKeeper  types.AccountKeeper
+	bankKeeper     types.BankKeeper
 	wasmKeeper     wasmtypes.ContractOpsKeeper
 	wasmViewKeeper wasmtypes.ViewKeeper
 
-	// state management
+	// authority is the address capable of executing MsgUpdateParams
+	// or MsgStoreOverlayWasm. Typically, this should be the gov module
+	// address.
+	authority string
+
 	Schema                collections.Schema
 	DataRequestWasm       collections.Map[[]byte, types.Wasm]
 	OverlayWasm           collections.Map[[]byte, types.Wasm]
@@ -28,19 +33,28 @@ type Keeper struct {
 	Params                collections.Item[types.Params]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, authority string, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper) *Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, authority string, ak types.AccountKeeper, bk types.BankKeeper, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
-	return &Keeper{
+	k := Keeper{
 		authority:             authority,
+		accountKeeper:         ak,
+		bankKeeper:            bk,
 		wasmKeeper:            wk,
 		wasmViewKeeper:        wvk,
-		DataRequestWasm:       collections.NewMap(sb, types.DataRequestPrefix, "data-request-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
-		OverlayWasm:           collections.NewMap(sb, types.OverlayPrefix, "overlay-wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
-		WasmExpiration:        collections.NewKeySet(sb, types.WasmExpPrefix, "wasm-expiration", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
-		ProxyContractRegistry: collections.NewItem(sb, types.ProxyContractRegistryPrefix, "proxy-contract-registry", collections.StringValue),
+		DataRequestWasm:       collections.NewMap(sb, types.DataRequestPrefix, "data_request_wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
+		OverlayWasm:           collections.NewMap(sb, types.OverlayPrefix, "overlay_wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
+		WasmExpiration:        collections.NewKeySet(sb, types.WasmExpPrefix, "wasm_expiration", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
+		ProxyContractRegistry: collections.NewItem(sb, types.ProxyContractRegistryPrefix, "proxy_contract_registry", collections.StringValue),
 		Params:                collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
 	}
+
+	schema, err := sb.Build()
+	if err != nil {
+		panic(err)
+	}
+	k.Schema = schema
+	return &k
 }
 
 // GetAuthority returns the module's authority.
