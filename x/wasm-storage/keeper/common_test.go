@@ -4,13 +4,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sedaprotocol/seda-chain/testutil/simapp"
+
+	sedaapp "github.com/sedaprotocol/seda-chain/app"
+
 	storetypes "cosmossdk.io/store/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
-	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -24,6 +27,7 @@ var mockedByteArray = []byte("82a9dda829eb7f8ffe9fbe49e45d47d2dad9664fbb7adf7249
 
 type KeeperTestSuite struct {
 	suite.Suite
+	app         *sedaapp.App
 	ctx         sdk.Context
 	keeper      *keeper.Keeper
 	blockTime   time.Time //nolint:unused // unused
@@ -38,8 +42,12 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *KeeperTestSuite) SetupTest() {
-	s.authority = authtypes.NewModuleAddress("gov").String()
-	wasmStorageKeeper, enCfg, ctx := setupKeeper(s.T(), s.authority)
+	s.authority = authtypes.NewModuleAddress("wasm-storage").String()
+	app := simapp.New(s.T())
+	ctx := app.BaseApp.NewContext(false)
+
+	wasmStorageKeeper, enCfg := setupKeeper(s.T(), s.authority)
+	s.app = app
 	s.keeper = wasmStorageKeeper
 	s.ctx = ctx
 	s.cdc = enCfg.Codec
@@ -56,15 +64,13 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.Require().NoError(err)
 }
 
-func setupKeeper(t *testing.T, authority string) (*keeper.Keeper, moduletestutil.TestEncodingConfig, sdk.Context) {
+func setupKeeper(t *testing.T, authority string) (*keeper.Keeper, moduletestutil.TestEncodingConfig) {
 	t.Helper()
 	key := storetypes.NewKVStoreKey(wasmstoragetypes.StoreKey)
-	testCtx := testutil.DefaultContextWithDB(t, key, storetypes.NewTransientStoreKey("transient_test"))
-	ctx := testCtx.Ctx
 	encCfg := moduletestutil.MakeTestEncodingConfig(wasmstorage.AppModuleBasic{})
 	wasmstoragetypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 
 	wasmStorageKeeper := keeper.NewKeeper(encCfg.Codec, runtime.NewKVStoreService(key), authority, nil)
 
-	return wasmStorageKeeper, encCfg, ctx
+	return wasmStorageKeeper, encCfg
 }
