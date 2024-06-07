@@ -9,7 +9,7 @@ import (
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	vm "github.com/sedaprotocol/seda-wasm-vm/bind_go"
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
 )
 
 type Request struct {
@@ -96,7 +96,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 			return fmt.Errorf("failed to get tally wasm for DR ID %s: %w", id, err)
 		}
 
-		result := vm.ExecuteTallyVm(tallyWasm.Bytecode, []string{"1", "2"}, map[string]string{
+		result := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, []string{"1", "2"}, map[string]string{
 			"PATH": os.Getenv("SHELL"),
 		})
 		fmt.Println(result)
