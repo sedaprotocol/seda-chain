@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/sedaprotocol/seda-chain/drfilters"
+
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
+	vm "github.com/sedaprotocol/seda-wasm-vm/bind_go"
 )
 
 type Request struct {
@@ -31,6 +34,11 @@ type Request struct {
 }
 
 type TallyingList map[string]Request
+
+type tallyArg struct {
+	Reveals  map[string]any
+	Outliers []bool
+}
 
 func (k Keeper) EndBlock(ctx sdk.Context) error {
 	err := k.ProcessExpiredWasms(ctx)
@@ -86,6 +94,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 
 	// 3. Loop through the list to apply filter and execute tally.
 	// TODO: is it ok to use a map?
+<<<<<<< HEAD
 	for id := range tallyingList {
 		// TODO: filtering
 
@@ -94,11 +103,24 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 			return fmt.Errorf("failed to decode tally ID to hex: %w", err)
 		}
 		tallyWasm, err := k.DataRequestWasm.Get(ctx, tallyID)
+=======
+	for id, req := range tallyingList {
+		outliers, err := drfilters.Outliers(req.TallyInputs, req.Reveals)
+		if err != nil {
+			return err
+		}
+		tallyWasm, err := k.DataRequestWasm.Get(ctx, req.TallyBinaryID)
+>>>>>>> 325b97e (feat: none filter for DR wasm)
 		if err != nil {
 			return fmt.Errorf("failed to get tally wasm for DR ID %s: %w", id, err)
 		}
 
-		result := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, []string{"1", "2"}, map[string]string{
+		args, err := tallyVMArg(req.Reveals, outliers)
+		if err != nil {
+			return err
+		}
+
+		result := vm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
 			"PATH": os.Getenv("SHELL"),
 		})
 		fmt.Println(result)
@@ -110,4 +132,19 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 	// fmt.Println("dr contract addy: " + string(drContractAddr))
 
 	return nil
+}
+
+func tallyVMArg(reveals map[string]any, outliers []bool) ([]string, error) {
+	argBytes, err := rlp.EncodeToBytes(tallyArg{
+		Reveals:  reveals,
+		Outliers: outliers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	arg := make([]string, 0, len(argBytes))
+	for _, b := range argBytes {
+		arg = append(arg, fmt.Sprintf("%c", b))
+	}
+	return arg, err
 }
