@@ -1,4 +1,4 @@
-package drfilters
+package keeper
 
 import (
 	"errors"
@@ -34,11 +34,6 @@ type (
 		JsonPath   string `rlp:"optional"`
 		MaxSigma   uint64 `rlp:"optional"`
 		NumberType uint8  `rlp:"optional"`
-	}
-
-	Reveller interface {
-		GetExitCode() uint8
-		GetReveal() []byte
 	}
 )
 
@@ -119,7 +114,7 @@ func calculate[T comparable](reveals []T) ([]bool, bool) {
 // outlier.
 //
 // Note: <param: tallyInput> is a rlp encoded and <param:reveals> is JSON serialized.
-func Outliers(filterInput []byte, reveals []Reveller) ([]bool, bool, error) {
+func Outliers(filterInput []byte, reveals []RevealBody) ([]bool, bool, error) {
 	var filter filterProp
 	if err := rlp.DecodeBytes(filterInput, &filter); err != nil {
 		return nil, false, err
@@ -140,8 +135,8 @@ func Outliers(filterInput []byte, reveals []Reveller) ([]bool, bool, error) {
 		exitCodes := make([]uint8, 0, len(reveals))
 		revealData := make([][]byte, 0, len(reveals))
 		for _, r := range reveals {
-			exitCodes = append(exitCodes, r.GetExitCode())
-			revealData = append(revealData, r.GetReveal())
+			exitCodes = append(exitCodes, r.ExitCode)
+			revealData = append(revealData, r.Reveal)
 		}
 		outliers, consensus = FilterMode(filter.JsonPath, filter.NumberType, exitCodes, revealData)
 		return outliers, consensus, nil

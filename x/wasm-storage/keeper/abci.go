@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/sedaprotocol/seda-chain/drfilters"
-
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	vm "github.com/sedaprotocol/seda-wasm-vm/bind_go"
@@ -36,14 +34,6 @@ type TallyingList map[string]Request
 type tallyArg struct {
 	Reveals  map[string]any
 	Outliers []bool
-}
-
-func (r RevealBody) GetExitCode() uint8 {
-	return r.ExitCode
-}
-
-func (r RevealBody) GetReveal() []byte {
-	return r.Reveal
 }
 
 func (k Keeper) EndBlock(ctx sdk.Context) error {
@@ -116,11 +106,13 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
-		reveals := make([]drfilters.Reveller, 0, len(req.Reveals))
+
+		// Sort reveals.
+		reveals := make([]RevealBody, 0, len(req.Reveals))
 		for _, k := range keys {
 			reveals = append(reveals, req.Reveals[k])
 		}
-		outliers, consensus, err := drfilters.Outliers(req.TallyInputs, reveals)
+		outliers, consensus, err := Outliers(req.TallyInputs, reveals)
 		if err != nil {
 			return err
 		}
