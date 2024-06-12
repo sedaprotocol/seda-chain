@@ -12,9 +12,6 @@ const (
 	Mode         = 1
 	StdDeviation = 2
 )
-const (
-	ConsensusNotReached = 1 // Fix me with correct value.
-)
 
 const (
 	INT uint8 = iota + 1
