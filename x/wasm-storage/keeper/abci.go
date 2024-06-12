@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
+	"sort"
 
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/sedaprotocol/seda-chain/drfilters"
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/rlp"
 
 	vm "github.com/sedaprotocol/seda-wasm-vm/bind_go"
 )
@@ -38,6 +38,14 @@ type TallyingList map[string]Request
 type tallyArg struct {
 	Reveals  map[string]any
 	Outliers []bool
+}
+
+func (r RevealBody) GetExitCode() uint8 {
+	return r.ExitCode
+}
+
+func (r RevealBody) GetReveal() []byte {
+	return r.Reveal
 }
 
 func (k Keeper) EndBlock(ctx sdk.Context) error {
@@ -105,7 +113,16 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 		tallyWasm, err := k.DataRequestWasm.Get(ctx, tallyID)
 =======
 	for id, req := range tallyingList {
-		outliers, err := drfilters.Outliers(req.TallyInputs, req.Reveals)
+		keys := make([]string, 0, len(req.Reveals))
+		for k := range req.Reveals {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		reveals := make([]drfilters.Reveller, 0, len(req.Reveals))
+		for _, k := range keys {
+			reveals = append(reveals, req.Reveals[k])
+		}
+		outliers, consensus, err := drfilters.Outliers(req.TallyInputs, reveals)
 		if err != nil {
 			return err
 		}
@@ -121,7 +138,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 		}
 
 		result := vm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
-			"PATH": os.Getenv("SHELL"),
+			"CONSENSUS": fmt.Sprintf("%v", consensus),
 		})
 		fmt.Println(result)
 	}
@@ -134,7 +151,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 	return nil
 }
 
-func tallyVMArg(reveals map[string]any, outliers []bool) ([]string, error) {
+func tallyVMArg(reveals map[string]RevealBody, outliers []bool) ([]string, error) {
 	argBytes, err := rlp.EncodeToBytes(tallyArg{
 		Reveals:  reveals,
 		Outliers: outliers,

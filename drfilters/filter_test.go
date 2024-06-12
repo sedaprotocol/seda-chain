@@ -1,7 +1,10 @@
-package drfilters
+package drfilters_test
 
 import (
+	"github.com/sedaprotocol/seda-chain/drfilters"
 	"testing"
+
+	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 
 	"github.com/stretchr/testify/require"
 )
@@ -11,26 +14,26 @@ func TestOutliers_None(t *testing.T) {
 		name       string
 		tallyInput []byte
 		want       []bool
-		reveals    map[string]any
+		reveals    []drfilters.Reveller
 		wantErr    error
 	}{
 		{
 			name:       "None filter",
-			tallyInput: []byte{193, 128}, // tallyProp{ Algo: 0}
-			want:       []bool{true, true, true, true, true},
-			reveals: map[string]any{
-				"this":   1,
-				"reveal": 2,
-				"has":    3,
-				"five":   4,
-				"values": 5,
+			tallyInput: []byte{193, 128}, // filterProp{ Algo: 0}
+			want:       []bool{false, false, false, false, false},
+			reveals: []drfilters.Reveller{
+				keeper.RevealBody{},
+				keeper.RevealBody{},
+				keeper.RevealBody{},
+				keeper.RevealBody{},
+				keeper.RevealBody{},
 			},
 			wantErr: nil,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Outliers(tt.tallyInput, tt.reveals)
+			got, _, err := drfilters.Outliers(tt.tallyInput, tt.reveals)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
