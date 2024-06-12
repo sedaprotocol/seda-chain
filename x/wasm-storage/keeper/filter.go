@@ -31,7 +31,7 @@ const (
 type (
 	filterProp struct {
 		Algo       uint
-		JsonPath   string `rlp:"optional"`
+		JSONPath   string `rlp:"optional"`
 		MaxSigma   uint64 `rlp:"optional"`
 		NumberType uint8  `rlp:"optional"`
 	}
@@ -42,8 +42,8 @@ func FilterMode(jsonPath string, numberType uint8, exitCodes []uint8, reveals []
 		outliers        []bool
 		consensus       bool
 		nonZeroExitCode int
-		results         []gjson.Result
 	)
+	results := make([]gjson.Result, 0, len(reveals))
 
 	for i, r := range reveals {
 		results = append(results, gjson.GetBytes(r, jsonPath))
@@ -128,7 +128,7 @@ func Outliers(filterInput []byte, reveals []RevealBody) ([]bool, bool, error) {
 			outliers = append(outliers, false)
 		}
 	case Mode:
-		if filter.JsonPath == "" {
+		if filter.JSONPath == "" {
 			return nil, false, errors.New("empty JSON path")
 		}
 
@@ -138,7 +138,7 @@ func Outliers(filterInput []byte, reveals []RevealBody) ([]bool, bool, error) {
 			exitCodes = append(exitCodes, r.ExitCode)
 			revealData = append(revealData, r.Reveal)
 		}
-		outliers, consensus = FilterMode(filter.JsonPath, filter.NumberType, exitCodes, revealData)
+		outliers, consensus = FilterMode(filter.JSONPath, filter.NumberType, exitCodes, revealData)
 		return outliers, consensus, nil
 	case StdDeviation:
 		return nil, false, errors.New("filter type Standard deviation not implemented")
