@@ -42,7 +42,7 @@ require (
 	github.com/hashicorp/go-plugin v1.6.0
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
-	github.com/sedaprotocol/seda-wasm-vm/tallyvm v0.0.0-20240607220650-a7c367a7ac0c
+	github.com/sedaprotocol/seda-wasm-vm/tallyvm v0.0.0-20240611223853-672f0b27ae4d
 	github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c
 	github.com/spf13/cast v1.6.0
 	github.com/spf13/cobra v1.8.0
