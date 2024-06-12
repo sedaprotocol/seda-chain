@@ -11,8 +11,6 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/rlp"
-
 	vm "github.com/sedaprotocol/seda-wasm-vm/bind_go"
 )
 
@@ -132,7 +130,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 			return fmt.Errorf("failed to get tally wasm for DR ID %s: %w", id, err)
 		}
 
-		args, err := tallyVMArg(req.Reveals, outliers)
+		args, err := tallyVMArg(req.TallyInputs, req.Reveals, outliers)
 		if err != nil {
 			return err
 		}
@@ -151,10 +149,11 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 	return nil
 }
 
-func tallyVMArg(reveals map[string]RevealBody, outliers []bool) ([]string, error) {
-	argBytes, err := rlp.EncodeToBytes(tallyArg{
-		Reveals:  reveals,
-		Outliers: outliers,
+func tallyVMArg(inputArgs []byte, reveals map[string]RevealBody, outliers []bool) ([]string, error) {
+	argBytes, err := json.Marshal(tallyArg{
+		TallyInputArgs: inputArgs,
+		Reveals:        reveals,
+		Outliers:       outliers,
 	})
 	if err != nil {
 		return nil, err
