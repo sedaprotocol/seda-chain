@@ -9,7 +9,7 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	vm "github.com/sedaprotocol/seda-wasm-vm/bind_go"
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
 )
 
 type Request struct {
@@ -127,7 +127,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 			return err
 		}
 
-		result := vm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
+		result := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
 			"CONSENSUS": fmt.Sprintf("%v", consensus),
 		})
 		fmt.Println(result)
