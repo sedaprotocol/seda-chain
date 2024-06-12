@@ -93,7 +93,7 @@ func FilterMode(jsonPath string, numberType uint8, exitCodes []uint8, reveals []
 func calculate[T comparable](reveals []T) ([]bool, bool) {
 	freq := make(map[T]int, len(reveals))
 	outliers := make([]bool, 0, len(reveals))
-	var maxFreq, cnt int
+	var maxFreq int
 
 	for _, r := range reveals {
 		freq[r]++
@@ -102,15 +102,15 @@ func calculate[T comparable](reveals []T) ([]bool, bool) {
 		}
 	}
 
-	for _, r := range reveals {
-		outliers = append(outliers, freq[r] != maxFreq)
-		if freq[r] != maxFreq {
-			cnt++
-		}
-	}
-	if cnt*3 < len(reveals)*2 {
+	if maxFreq*3 < len(reveals)*2 {
+		outliers = make([]bool, len(reveals))
 		return outliers, false
 	}
+
+	for _, r := range reveals {
+		outliers = append(outliers, freq[r] != maxFreq)
+	}
+
 	return outliers, true
 }
 
@@ -135,9 +135,6 @@ func Outliers(filterInput []byte, reveals []Reveller) ([]bool, bool, error) {
 	case Mode:
 		if filter.JsonPath == "" {
 			return nil, false, errors.New("empty JSON path")
-		}
-		if filter.NumberType == 0 {
-			return nil, false, errors.New("number type undefined")
 		}
 
 		exitCodes := make([]uint8, 0, len(reveals))
