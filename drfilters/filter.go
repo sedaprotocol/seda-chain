@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	None         = 0
+	None         = iota
 	Mode         = 1
 	StdDeviation = 2
 )
