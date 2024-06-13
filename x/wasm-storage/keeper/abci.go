@@ -142,17 +142,17 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 }
 
 func tallyVMArg(inputArgs []byte, reveals map[string]RevealBody, outliers []bool) ([]string, error) {
-	argBytes, err := json.Marshal(tallyArg{
-		TallyInputArgs: inputArgs,
-		Reveals:        reveals,
-		Outliers:       outliers,
-	})
+	arg := []string{string(inputArgs)}
+	r, err := json.Marshal(reveals)
 	if err != nil {
 		return nil, err
 	}
-	arg := make([]string, 0, len(argBytes))
-	for _, b := range argBytes {
-		arg = append(arg, fmt.Sprintf("%c", b))
+	arg = append(arg, string(r))
+	o, err := json.Marshal(outliers)
+	if err != nil {
+		return nil, err
 	}
+	arg = append(arg, string(o))
+
 	return arg, err
 }
