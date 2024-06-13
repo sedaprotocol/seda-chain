@@ -14,12 +14,17 @@ const (
 )
 
 type (
-	filterProp struct {
-		Algo       uint
-		JSONPath   string `rlp:"optional"`
-		MaxSigma   uint64 `rlp:"optional"`
-		NumberType uint8  `rlp:"optional"`
+	modeFilter struct {
+		Algo     uint
+		JSONPath string
 	}
+
+	//stdFilter struct {
+	//	Algo       uint
+	//	JSONPath   string
+	//	MaxSigma   uint64
+	//	NumberType uint8
+	//}
 )
 
 func FilterMode(jsonPath string, exitCodes []uint8, reveals [][]byte) ([]bool, bool) {
@@ -74,19 +79,29 @@ func calculate[T comparable](reveals []T) ([]bool, bool) {
 //
 // Note: <param: tallyInput> is a rlp encoded and <param:reveals> is JSON serialized.
 func Outliers(filterInput []byte, reveals []RevealBody) ([]bool, bool, error) {
-	var filter filterProp
-	if err := rlp.DecodeBytes(filterInput, &filter); err != nil {
+	var rlpAsList []any
+	if err := rlp.DecodeBytes(filterInput, &rlpAsList); err != nil {
 		return nil, false, err
+	}
+	filteringAlgo, ok := rlpAsList[0].([]uint)
+	if !ok || len(filteringAlgo) != 1 {
+		return nil, false, errors.New("can not RLP decode algo type from filter input")
 	}
 
 	outliers := make([]bool, 0, len(reveals))
 	var consensus bool
-	switch filter.Algo {
+
+	switch filteringAlgo[0] {
 	case None:
 		for range reveals {
 			outliers = append(outliers, false)
 		}
 	case Mode:
+		var filter modeFilter
+		if err := rlp.DecodeBytes(filterInput, &filter); err != nil {
+			return nil, false, err
+		}
+
 		if filter.JSONPath == "" {
 			return nil, false, errors.New("empty JSON path")
 		}
