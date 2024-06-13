@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	None         = iota
-	Mode         = 1
-	StdDeviation = 2
+	None = iota
+	Mode
+	StdDeviation
 )
 
 type (
