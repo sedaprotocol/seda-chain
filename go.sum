@@ -1015,6 +1015,8 @@ github.com/sedaprotocol/seda-wasm-vm/tallyvm v0.0.0-20240607220650-a7c367a7ac0c 
 github.com/sedaprotocol/seda-wasm-vm/tallyvm v0.0.0-20240607220650-a7c367a7ac0c/go.mod h1:AaX9uRy6qD2q+o1SapTRnGUe9HHZWTmBN2BVNAptq3U=
 github.com/sedaprotocol/seda-wasm-vm/tallyvm v0.0.0-20240611223853-672f0b27ae4d h1:8LEKQQgg1KIwQzdSr3PMFmSXol08hpjaGM4dQiwAiTk=
 github.com/sedaprotocol/seda-wasm-vm/tallyvm v0.0.0-20240611223853-672f0b27ae4d/go.mod h1:AaX9uRy6qD2q+o1SapTRnGUe9HHZWTmBN2BVNAptq3U=
+github.com/sedaprotocol/seda-wasm-vm/tallyvm v0.0.0-20240614180931-051f43f653b1 h1:20tvFVHI75qBAWINHgkqztnw9PV1wFsimimqwwNSwb8=
+github.com/sedaprotocol/seda-wasm-vm/tallyvm v0.0.0-20240614180931-051f43f653b1/go.mod h1:AaX9uRy6qD2q+o1SapTRnGUe9HHZWTmBN2BVNAptq3U=
 github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c h1:PbSn7HpWeox6lqBu6Ba6YZS3On3euwn1BPz/egsnEgA=
 github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c/go.mod h1:DEIXHk41VUzOMVbZnIApssPXtZ+2zrETDP7kJjGc1RM=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
