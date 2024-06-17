@@ -14,7 +14,7 @@ message Wasm {
   google.protobuf.Timestamp added_at = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
   // ExpirationHeight represents the block height at which the data request
-  // wasm will be pruned. The value of zero means no expiration.  
+  // wasm will be pruned. The value of zero means no expiration.
   int64 expiration_height = 5;
 }
 
