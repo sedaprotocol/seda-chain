@@ -14,16 +14,16 @@ const (
 // tally inputs. It returns an outlier list, which is a boolean list where
 // true at index i means that the reveal at index i is an outlier, consensus
 // boolean, and error.
-func ApplyFilter(tallyInputs []byte, reveals []RevealBody) ([]bool, bool, error) {
+func ApplyFilter(tallyInputs []byte, reveals []RevealBody) ([]int, bool, error) {
 	if len(tallyInputs) < 1 {
 		return nil, false, errors.New("tally inputs should be at least 1 byte")
 	}
 
 	switch tallyInputs[0] {
 	case filterNone:
-		outliers := make([]bool, len(reveals))
+		outliers := make([]int, len(reveals))
 		for i := range outliers {
-			outliers[i] = false
+			outliers[i] = 0
 		}
 		return outliers, true, nil
 

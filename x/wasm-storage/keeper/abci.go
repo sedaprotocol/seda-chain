@@ -37,6 +37,15 @@ type RevealBody struct {
 	Reveal   string `json:"reveal"` // base64-encoded string
 }
 
+// To debug return results from sample tally wasm execution
+type RevealResult struct {
+	Salt        []byte `json:"salt"`
+	ExitCode    byte   `json:"exit_code"`
+	GasUsed     string `json:"gas_used"`
+	Reveal      string `json:"reveal"` // u8[];
+	InConsensus byte   `json:"inConsensus"`
+}
+
 func (k Keeper) EndBlock(ctx sdk.Context) error {
 	err := k.ProcessExpiredWasms(ctx)
 	if err != nil {
@@ -123,7 +132,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 			return fmt.Errorf("failed to get tally wasm for DR ID %d: %w", id, err)
 		}
 
-		args, err := tallyVMArg(tallyInputs, req.Reveals, outliers)
+		args, err := tallyVMArg(tallyInputs, reveals, outliers)
 		if err != nil {
 			return err
 		}
@@ -132,7 +141,12 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 			"VM_MODE":   "tally",
 			"CONSENSUS": fmt.Sprintf("%v", consensus),
 		})
-		fmt.Println(result)
+		var vmResDbg []RevealResult
+		err = json.Unmarshal(result.Result, &vmResDbg)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(vmResDbg)
 	}
 
 	// 4. Post results.
@@ -143,7 +157,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 	return nil
 }
 
-func tallyVMArg(inputArgs []byte, reveals map[string]RevealBody, outliers []bool) ([]string, error) {
+func tallyVMArg(inputArgs []byte, reveals []RevealBody, outliers []int) ([]string, error) {
 	arg := []string{string(inputArgs)}
 	r, err := json.Marshal(reveals)
 	if err != nil {
