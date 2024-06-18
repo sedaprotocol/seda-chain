@@ -3,14 +3,13 @@ package keeper
 import (
 	"errors"
 
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/tidwall/gjson"
 )
 
 const (
-	None = iota
-	Mode
-	StdDeviation
+	filterNone   byte = 0x00
+	filterMode   byte = 0x01
+	filterStdDev byte = 0x02
 )
 
 type (
@@ -73,49 +72,49 @@ func calculate[T comparable](reveals []T) ([]bool, bool) {
 	return outliers, true
 }
 
-// Outliers calculates which reveals are in acceptance criteria.
-// It returns a list of True and False. Where True means data at index i is an
-// outlier.
-//
-// Note: <param: tallyInput> is a rlp encoded and <param:reveals> is JSON serialized.
-func Outliers(filterInput []byte, reveals []RevealBody) ([]bool, bool, error) {
-	var rlpAsList []any
-	if err := rlp.DecodeBytes(filterInput, &rlpAsList); err != nil {
-		return nil, false, err
-	}
-	filteringAlgo, ok := rlpAsList[0].([]uint)
-	if !ok || len(filteringAlgo) != 1 {
-		return nil, false, errors.New("can not RLP decode algo type from filter input")
+// ApplyFilter processes filter of the type specified in the first byte of
+// tally inputs. It returns an outlier list, which is a boolean list where
+// true at index i means that the reveal at index i is an outlier, consensus
+// boolean, and error.
+func ApplyFilter(tallyInputs []byte, reveals []RevealBody) ([]bool, bool, error) {
+	if len(tallyInputs) < 1 {
+		return nil, false, errors.New("tally inputs should be at least 1 byte")
 	}
 
-	outliers := make([]bool, 0, len(reveals))
-	var consensus bool
+	switch tallyInputs[0] {
+	case filterNone:
+		outliers := make([]bool, len(reveals))
+		for i := range outliers {
+			outliers[i] = false
+		}
+		return outliers, true, nil
 
-	switch filteringAlgo[0] {
-	case None:
-		for range reveals {
-			outliers = append(outliers, false)
-		}
-	case Mode:
-		var filter modeFilter
-		if err := rlp.DecodeBytes(filterInput, &filter); err != nil {
-			return nil, false, err
-		}
+	case filterMode:
+		// TODO: Reactivate mode filter
+		/*
+			var filter modeFilter
+			if err := rlp.DecodeBytes(tallyInputs, &filter); err != nil {
+				return nil, false, err
+			}
+			if filter.JSONPath == "" {
+				return nil, false, errors.New("empty JSON path")
+			}
 
-		if filter.JSONPath == "" {
-			return nil, false, errors.New("empty JSON path")
-		}
+			exitCodes := make([]uint8, len(reveals))
+			revealData := make([][]byte, len(reveals))
+			for i, r := range reveals {
+				exitCodes[i] = r.ExitCode
+				revealData[i] = r.Reveal
+			}
+			outliers, consensus := FilterMode(filter.JSONPath, exitCodes, revealData)
+			return outliers, consensus, nil
+		*/
+		return nil, false, errors.New("filter type mode is not implemented")
 
-		exitCodes := make([]uint8, 0, len(reveals))
-		revealData := make([][]byte, 0, len(reveals))
-		for _, r := range reveals {
-			exitCodes = append(exitCodes, r.ExitCode)
-			revealData = append(revealData, r.Reveal)
-		}
-		outliers, consensus = FilterMode(filter.JSONPath, exitCodes, revealData)
-		return outliers, consensus, nil
-	case StdDeviation:
-		return nil, false, errors.New("filter type Standard deviation not implemented")
+	case filterStdDev:
+		return nil, false, errors.New("filter type standard deviation is not implemented")
+
+	default:
+		return nil, false, errors.New("filter type is invalid")
 	}
-	return outliers, true, nil
 }

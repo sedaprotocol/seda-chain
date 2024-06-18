@@ -31,7 +31,7 @@ func TestOutliers_None(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _, err := keeper.Outliers(tt.tallyInput, tt.reveals)
+			got, _, err := keeper.ApplyFilter(tt.tallyInput, tt.reveals)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return

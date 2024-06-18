@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -13,27 +14,25 @@ import (
 )
 
 type Request struct {
-	DrBinaryID        string                 `json:"dr_binary_id"`
-	DrInputs          string                 `json:"dr_inputs"`
-	GasLimit          string                 `json:"gas_limit"`
-	GasPrice          string                 `json:"gas_price"`
-	Height            uint64                 `json:"height"`
-	ID                string                 `json:"id"`
-	Memo              string                 `json:"memo"`
-	PaybackAddress    string                 `json:"payback_address"`
-	ReplicationFactor int64                  `json:"replication_factor"`
-	Reveals           map[string]interface{} `json:"reveals"`
-	SedaPayload       string                 `json:"seda_payload"`
-	TallyBinaryID     string                 `json:"tally_binary_id"`
-	TallyInputs       string                 `json:"tally_inputs"`
-	Version           string                 `json:"version"`
+	DrBinaryID        string                `json:"dr_binary_id"`
+	DrInputs          string                `json:"dr_inputs"`
+	GasLimit          string                `json:"gas_limit"`
+	GasPrice          string                `json:"gas_price"`
+	Height            uint64                `json:"height"`
+	ID                string                `json:"id"`
+	Memo              string                `json:"memo"`
+	PaybackAddress    string                `json:"payback_address"`
+	ReplicationFactor int64                 `json:"replication_factor"`
+	Reveals           map[string]RevealBody `json:"reveals"`
+	SedaPayload       string                `json:"seda_payload"`
+	TallyBinaryID     string                `json:"tally_binary_id"`
+	TallyInputs       string                `json:"tally_inputs"`
+	Version           string                `json:"version"`
 }
 
-type TallyingList map[string]Request
-
-type tallyArg struct {
-	Reveals  map[string]any
-	Outliers []bool
+type RevealBody struct {
+	ExitCode uint8  `json:"exit_code"`
+	Reveal   string `json:"reveal"` // base64-encoded string
 }
 
 func (k Keeper) EndBlock(ctx sdk.Context) error {
@@ -82,47 +81,47 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 	if err != nil {
 		return err
 	}
-	var tallyingList TallyingList
-	err = json.Unmarshal(queryRes, &tallyingList)
+	var tallyList []Request
+	err = json.Unmarshal(queryRes, &tallyList)
 	if err != nil {
 		return err
 	}
 
 	// 3. Loop through the list to apply filter and execute tally.
-	// TODO: is it ok to use a map?
-<<<<<<< HEAD
-	for id := range tallyingList {
-		// TODO: filtering
+	for id, req := range tallyList {
+		tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
+		if err != nil {
+			return fmt.Errorf("failed to decode tally input: %w", err)
+		}
 
-		tallyID, err := hex.DecodeString(tallyingList[id].TallyBinaryID)
+		// Sort reveals.
+		keys := make([]string, len(req.Reveals))
+		i := 0
+		for k := range req.Reveals {
+			keys[i] = k
+			i++
+		}
+		sort.Strings(keys)
+		reveals := make([]RevealBody, len(req.Reveals))
+		for i, k := range keys {
+			reveals[i] = req.Reveals[k]
+		}
+
+		outliers, consensus, err := ApplyFilter(tallyInputs, reveals)
+		if err != nil {
+			return err
+		}
+
+		tallyID, err := hex.DecodeString(req.TallyBinaryID)
 		if err != nil {
 			return fmt.Errorf("failed to decode tally ID to hex: %w", err)
 		}
 		tallyWasm, err := k.DataRequestWasm.Get(ctx, tallyID)
-=======
-	for id, req := range tallyingList {
-		keys := make([]string, 0, len(req.Reveals))
-		for k := range req.Reveals {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-
-		// Sort reveals.
-		reveals := make([]RevealBody, 0, len(req.Reveals))
-		for _, k := range keys {
-			reveals = append(reveals, req.Reveals[k])
-		}
-		outliers, consensus, err := Outliers(req.TallyInputs, reveals)
 		if err != nil {
-			return err
-		}
-		tallyWasm, err := k.DataRequestWasm.Get(ctx, req.TallyBinaryID)
->>>>>>> 325b97e (feat: none filter for DR wasm)
-		if err != nil {
-			return fmt.Errorf("failed to get tally wasm for DR ID %s: %w", id, err)
+			return fmt.Errorf("failed to get tally wasm for DR ID %d: %w", id, err)
 		}
 
-		args, err := tallyVMArg(req.TallyInputs, req.Reveals, outliers)
+		args, err := tallyVMArg(tallyInputs, req.Reveals, outliers)
 		if err != nil {
 			return err
 		}
