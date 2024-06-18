@@ -276,13 +276,13 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 		{
 			name: "invalid authority",
 			input: types.MsgUpdateParams{
-				Authority: "cosmos16wfryel63g7axeamw68630wglalcnk3l0zuadc",
+				Authority: "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
 				Params: types.Params{
 					MaxWasmSize: 1, // 1 MB
 					WasmTTL:     1000,
 				},
 			},
-			expErrMsg: "invalid authority; expected " + authority + ", got cosmos16wfryel63g7axeamw68630wglalcnk3l0zuadc",
+			expErrMsg: "invalid authority; expected " + authority + ", got seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
 		},
 		{
 			name: "invalid max wasm size",
