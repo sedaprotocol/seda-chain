@@ -74,6 +74,7 @@ func TestExecuteTally(t *testing.T) {
 	require.NoError(t, err)
 	viewKeeper.EXPECT().QuerySmart(gomock.Any(), gomock.Any(), gomock.Any()).Return(mockFetchResponse2, nil)
 
+	// Add tally wasm with ID 2f12d9175337bf340095ee955f8dff5c7baf4cadb0958e63ac4676a6a56fa71e
 	tallyWasm := types.NewWasm(testdata.SampleTallyWasm(), types.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), 100)
 	err = k.DataRequestWasm.Set(ctx, tallyWasm.Hash, tallyWasm)
 	require.NoError(t, err)

@@ -31,7 +31,9 @@ type Request struct {
 }
 
 type RevealBody struct {
-	ExitCode uint8  `json:"exit_code"`
+	Salt     []byte `json:"salt"`
+	ExitCode byte   `json:"exit_code"`
+	GasUsed  string `json:"gas_used"`
 	Reveal   string `json:"reveal"` // base64-encoded string
 }
 
@@ -127,6 +129,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 		}
 
 		result := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
+			"VM_MODE":   "tally",
 			"CONSENSUS": fmt.Sprintf("%v", consensus),
 		})
 		fmt.Println(result)
@@ -146,6 +149,7 @@ func tallyVMArg(inputArgs []byte, reveals map[string]RevealBody, outliers []bool
 	if err != nil {
 		return nil, err
 	}
+
 	arg = append(arg, string(r))
 	o, err := json.Marshal(outliers)
 	if err != nil {
