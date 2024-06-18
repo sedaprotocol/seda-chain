@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,25 +14,23 @@ import (
 )
 
 type Request struct {
-	// Commits           map[string]interface{} `json:"commits"`
-	DrBinaryID []byte `json:"dr_binary_id"`
-	// DrInputs          []interface{}          `json:"dr_inputs"`
-	GasLimit string `json:"gas_limit"`
-	GasPrice string `json:"gas_price"`
-	ID       []byte `json:"id"`
-	// Memo              []interface{}          `json:"memo"`
-	// PaybackAddress    []interface{}          `json:"payback_address"`
-	ReplicationFactor int                    `json:"replication_factor"`
+	DrBinaryID        string                 `json:"dr_binary_id"`
+	DrInputs          string                 `json:"dr_inputs"`
+	GasLimit          string                 `json:"gas_limit"`
+	GasPrice          string                 `json:"gas_price"`
+	Height            uint64                 `json:"height"`
+	ID                string                 `json:"id"`
+	Memo              string                 `json:"memo"`
+	PaybackAddress    string                 `json:"payback_address"`
+	ReplicationFactor int64                  `json:"replication_factor"`
 	Reveals           map[string]interface{} `json:"reveals"`
-	// SedaPayload       []interface{}          `json:"seda_payload"`
-	TallyBinaryID []byte `json:"tally_binary_id"`
-	TallyInputs   []int  `json:"tally_inputs"`
-	Version       string `json:"version"`
+	SedaPayload       string                 `json:"seda_payload"`
+	TallyBinaryID     string                 `json:"tally_binary_id"`
+	TallyInputs       string                 `json:"tally_inputs"`
+	Version           string                 `json:"version"`
 }
 
-type TallyingList map[string]struct {
-	Request `json:"request"`
-}
+type TallyingList map[string]Request
 
 func (k Keeper) EndBlock(ctx sdk.Context) error {
 	err := k.ProcessExpiredWasms(ctx)
@@ -75,7 +74,6 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 	}
 
 	// 2. Fetch tally-ready DRs.
-	// TODO: json marshal request struct?
 	queryRes, err := k.wasmViewKeeper.QuerySmart(ctx, sdk.MustAccAddressFromBech32(contractAddr), []byte(`{"get_data_requests_by_status":{"status": "tallying"}}`))
 	if err != nil {
 		return err
@@ -86,12 +84,16 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 		return err
 	}
 
-	// 3. Loop through the list to execute tally.
+	// 3. Loop through the list to apply filter and execute tally.
 	// TODO: is it ok to use a map?
 	for id := range tallyingList {
 		// TODO: filtering
 
-		tallyWasm, err := k.DataRequestWasm.Get(ctx, tallyingList[id].TallyBinaryID)
+		tallyID, err := hex.DecodeString(tallyingList[id].TallyBinaryID)
+		if err != nil {
+			return fmt.Errorf("failed to decode tally ID to hex: %w", err)
+		}
+		tallyWasm, err := k.DataRequestWasm.Get(ctx, tallyID)
 		if err != nil {
 			return fmt.Errorf("failed to get tally wasm for DR ID %s: %w", id, err)
 		}
@@ -102,7 +104,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 		fmt.Println(result)
 	}
 
-	// 4. Post result.
+	// 4. Post results.
 	// msg := []byte("{\"data_requests\": {}}")
 	// drContractAddr, err := k.wasmKeeper.Sudo(ctx, sdk.MustAccAddressFromBech32(proxyContractAddr), msg)
 	// fmt.Println("dr contract addy: " + string(drContractAddr))
