@@ -17,7 +17,7 @@ func TestOutliers_None(t *testing.T) {
 	}{
 		{
 			name:       "None filter",
-			tallyInput: []byte{193, 128}, // filterProp{ Algo: 0}
+			tallyInput: []byte{0, 26, 129, 196}, // filterProp{ Algo: 0}
 			want:       []bool{false, false, false, false, false},
 			reveals: []keeper.RevealBody{
 				{},
@@ -36,7 +36,9 @@ func TestOutliers_None(t *testing.T) {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
-			require.Equal(t, got, tt.want)
+
+			require.NoError(t, err)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }

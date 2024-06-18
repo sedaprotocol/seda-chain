@@ -153,7 +153,7 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 		{
 			name: "invalid authority",
 			input: types.MsgStoreOverlayWasm{
-				Sender:   "cosmos16wfryel63g7axeamw68630wglalcnk3l0zuadc",
+				Sender:   "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
 				Wasm:     regWasmZipped,
 				WasmType: types.WasmTypeRelayer,
 			},
