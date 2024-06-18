@@ -72,7 +72,7 @@ func TestExecuteTally(t *testing.T) {
 	// Add random address to contract registry and mock contract query result.
 	err = k.ProxyContractRegistry.Set(ctx, "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l")
 	require.NoError(t, err)
-	viewKeeper.EXPECT().QuerySmart(gomock.Any(), gomock.Any(), gomock.Any()).Return(mockFetchResponse, nil)
+	viewKeeper.EXPECT().QuerySmart(gomock.Any(), gomock.Any(), gomock.Any()).Return(mockFetchResponse2, nil)
 
 	tallyWasm := types.NewWasm(testdata.SampleTallyWasm(), types.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), 100)
 	err = k.DataRequestWasm.Set(ctx, tallyWasm.Hash, tallyWasm)
