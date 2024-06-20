@@ -13,67 +13,6 @@ import (
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
 )
 
-type Request struct {
-	DrBinaryID        string                `json:"dr_binary_id"`
-	DrInputs          string                `json:"dr_inputs"`
-	GasLimit          string                `json:"gas_limit"`
-	GasPrice          string                `json:"gas_price"`
-	Height            uint64                `json:"height"`
-	ID                string                `json:"id"`
-	Memo              string                `json:"memo"`
-	PaybackAddress    string                `json:"payback_address"`
-	ReplicationFactor int64                 `json:"replication_factor"`
-	Reveals           map[string]RevealBody `json:"reveals"`
-	SedaPayload       string                `json:"seda_payload"`
-	TallyBinaryID     string                `json:"tally_binary_id"`
-	TallyInputs       string                `json:"tally_inputs"`
-	Version           string                `json:"version"`
-}
-
-type RevealBody struct {
-	Salt     []byte `json:"salt"`
-	ExitCode byte   `json:"exit_code"`
-	GasUsed  string `json:"gas_used"`
-	Reveal   string `json:"reveal"` // base64-encoded string
-}
-
-func (u *RevealBody) MarshalJSON() ([]byte, error) {
-	revealBytes, err := base64.StdEncoding.DecodeString(u.Reveal)
-	if err != nil {
-		return nil, err
-	}
-
-	intSlice := make([]int, len(revealBytes))
-	for i, b := range revealBytes {
-		intSlice[i] = int(b)
-	}
-
-	saltIntSlice := make([]int, len(u.Salt))
-	for i, b := range u.Salt {
-		saltIntSlice[i] = int(b)
-	}
-
-	type Alias RevealBody
-	return json.Marshal(&struct {
-		Reveal []int `json:"reveal"`
-		Salt   []int `json:"salt"`
-		*Alias
-	}{
-		Reveal: intSlice,
-		Salt:   saltIntSlice,
-		Alias:  (*Alias)(u),
-	})
-}
-
-// To debug return results from sample tally wasm execution
-type VMResult struct {
-	Salt        []byte `json:"salt"`
-	ExitCode    byte   `json:"exit_code"`
-	GasUsed     string `json:"gas_used"`
-	Reveal      []byte `json:"reveal"`
-	InConsensus byte   `json:"inConsensus"`
-}
-
 func (k Keeper) EndBlock(ctx sdk.Context) error {
 	err := k.ProcessExpiredWasms(ctx)
 	if err != nil {
@@ -106,17 +45,21 @@ func (k Keeper) ProcessExpiredWasms(ctx sdk.Context) error {
 
 func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 	// 1. Get contract address.
-	contractAddr, err := k.ProxyContractRegistry.Get(ctx)
-	if contractAddr == "" || errors.Is(err, collections.ErrNotFound) {
+	contractAddrBech32, err := k.ProxyContractRegistry.Get(ctx)
+	if contractAddrBech32 == "" || errors.Is(err, collections.ErrNotFound) {
 		k.Logger(ctx).Debug("proxy contract address not registered")
 		return nil
 	}
 	if err != nil {
 		return err
 	}
+	contractAddr, err := sdk.AccAddressFromBech32(contractAddrBech32)
+	if err != nil {
+		return err
+	}
 
 	// 2. Fetch tally-ready DRs.
-	queryRes, err := k.wasmViewKeeper.QuerySmart(ctx, sdk.MustAccAddressFromBech32(contractAddr), []byte(`{"get_data_requests_by_status":{"status": "tallying"}}`))
+	queryRes, err := k.wasmViewKeeper.QuerySmart(ctx, contractAddr, []byte(`{"get_data_requests_by_status":{"status": "tallying", "offset": 0, "limit": 100}}`))
 	if err != nil {
 		return err
 	}
@@ -127,6 +70,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 	}
 
 	// 3. Loop through the list to apply filter and execute tally.
+	var sudoMsgs []Sudo
 	for id, req := range tallyList {
 		tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
 		if err != nil {
@@ -165,23 +109,50 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 			return err
 		}
 
-		result := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
+		vmRes := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
 			"VM_MODE":   "tally",
 			"CONSENSUS": fmt.Sprintf("%v", consensus),
 		})
 
-		var vmResDbg []VMResult
-		err = json.Unmarshal(result.Result, &vmResDbg)
+		var vmResult []VMResult
+		err = json.Unmarshal(vmRes.Result, &vmResult)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("%+v\n", vmResDbg)
+
+		sudoMsg := Sudo{
+			ID: req.ID,
+			Result: DataResult{
+				Version:        req.Version,
+				ID:             req.ID,
+				BlockHeight:    uint64(ctx.BlockHeight()),
+				ExitCode:       byte(vmRes.ExitInfo.ExitCode),
+				GasUsed:        "0", // TODO
+				Result:         vmRes.Result,
+				PaybackAddress: req.PaybackAddress,
+				SedaPayload:    req.SedaPayload,
+				Consensus:      consensus,
+			},
+			ExitCode: vmResult[0].ExitCode,
+		}
+		sudoMsgs = append(sudoMsgs, sudoMsg)
 	}
 
 	// 4. Post results.
-	// msg := []byte("{\"data_requests\": {}}")
-	// drContractAddr, err := k.wasmKeeper.Sudo(ctx, sdk.MustAccAddressFromBech32(proxyContractAddr), msg)
-	// fmt.Println("dr contract addy: " + string(drContractAddr))
+	msg, err := json.Marshal(struct {
+		PostDataResult Sudo `json:"post_data_result"`
+	}{
+		PostDataResult: sudoMsgs[0], // TODO: multiple msgs
+	})
+	if err != nil {
+		return err
+	}
+
+	postRes, err := k.wasmKeeper.Sudo(ctx, contractAddr, msg)
+	if err != nil {
+		return err
+	}
+	fmt.Println(postRes)
 
 	return nil
 }

@@ -5,7 +5,8 @@ set -x
 CHAIN_ID=seda-1-local
 RPC_URL=http://127.0.0.1:26657
 BIN=$(git rev-parse --show-toplevel)/build/sedad
-CONTRACT_WASM=$(git rev-parse --show-toplevel)/testutil/testwasms/seda_contract.wasm
+# CONTRACT_WASM=$(git rev-parse --show-toplevel)/testutil/testwasms/seda_contract.wasm
+CONTRACT_WASM=/Users/hykim/dev/seda-chain-contracts/target/seda_contract.wasm
 VOTING_PERIOD=30 # seconds
 DEV_ACCOUNT=$($BIN keys show satoshi --keyring-backend test -a) # for sending wasm-storage txs
 VOTE_ACCOUNT=$($BIN keys show satoshi --keyring-backend test -a) # for sending vote txs
@@ -24,14 +25,14 @@ PROXY_CODE_ID=$(echo "$OUTPUT" | jq -r '.events[] | select(.type=="store_code") 
 echo "Instantiating proxy contract on code id $PROXY_CODE_ID"
 
 OUTPUT=$($BIN tx wasm-storage submit-proposal instantiate-and-register-proxy-contract $PROXY_CODE_ID \
-    '{"token":"aseda", "owner": "'$DEV_ACCOUNT'" }' \
+    '{"token":"aseda", "owner": "'$DEV_ACCOUNT'", "chain_id":"seda-1-local" }' \
     74657374696e67 \
     --admin $DEV_ACCOUNT \
     --label proxy$PROXY_CODE_ID \
     --title 'Proxy Contract' --summary 'Instantiates and registers proxy contract' --deposit 10000000aseda \
     --from $DEV_ACCOUNT --keyring-backend test \
     --node $RPC_URL \
-    --gas-prices 100000000000aseda --gas auto --gas-adjustment 1.3 \
+    --gas-prices 100000000000aseda --gas auto --gas-adjustment 1.5 \
     --output json --chain-id $CHAIN_ID -y)
 TXHASH=$(echo "$OUTPUT" | jq -r '.txhash')
 
@@ -47,3 +48,6 @@ sleep $VOTING_PERIOD
 
 PROXY_CONTRACT_ADDRESS=$($BIN query wasm-storage proxy-contract-registry --output json | jq -r '.address')
 echo "Deployed proxy contract to: $PROXY_CONTRACT_ADDRESS"
+
+echo "Storing sample tally wasm"
+$BIN tx wasm-storage store-data-request-wasm ./x/wasm-storage/keeper/testdata/sample_tally.wasm --wasm-type tally --from $DEV_ACCOUNT --keyring-backend test --gas auto --gas-adjustment 1.5 --gas-prices 10000000000aseda --chain-id $CHAIN_ID -y
