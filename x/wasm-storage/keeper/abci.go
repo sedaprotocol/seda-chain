@@ -37,12 +37,40 @@ type RevealBody struct {
 	Reveal   string `json:"reveal"` // base64-encoded string
 }
 
+func (u *RevealBody) MarshalJSON() ([]byte, error) {
+	revealBytes, err := base64.StdEncoding.DecodeString(u.Reveal)
+	if err != nil {
+		return nil, err
+	}
+
+	intSlice := make([]int, len(revealBytes))
+	for i, b := range revealBytes {
+		intSlice[i] = int(b)
+	}
+
+	saltIntSlice := make([]int, len(u.Salt))
+	for i, b := range u.Salt {
+		saltIntSlice[i] = int(b)
+	}
+
+	type Alias RevealBody
+	return json.Marshal(&struct {
+		Reveal []int `json:"reveal"`
+		Salt   []int `json:"salt"`
+		*Alias
+	}{
+		Reveal: intSlice,
+		Salt:   saltIntSlice,
+		Alias:  (*Alias)(u),
+	})
+}
+
 // To debug return results from sample tally wasm execution
-type RevealResult struct {
+type VMResult struct {
 	Salt        []byte `json:"salt"`
 	ExitCode    byte   `json:"exit_code"`
 	GasUsed     string `json:"gas_used"`
-	Reveal      string `json:"reveal"` // u8[];
+	Reveal      []byte `json:"reveal"`
 	InConsensus byte   `json:"inConsensus"`
 }
 
@@ -141,12 +169,13 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 			"VM_MODE":   "tally",
 			"CONSENSUS": fmt.Sprintf("%v", consensus),
 		})
-		var vmResDbg []RevealResult
+
+		var vmResDbg []VMResult
 		err = json.Unmarshal(result.Result, &vmResDbg)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(vmResDbg)
+		fmt.Printf("%+v\n", vmResDbg)
 	}
 
 	// 4. Post results.
@@ -159,12 +188,13 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 
 func tallyVMArg(inputArgs []byte, reveals []RevealBody, outliers []int) ([]string, error) {
 	arg := []string{string(inputArgs)}
+
 	r, err := json.Marshal(reveals)
 	if err != nil {
 		return nil, err
 	}
-
 	arg = append(arg, string(r))
+
 	o, err := json.Marshal(outliers)
 	if err != nil {
 		return nil, err
