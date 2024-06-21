@@ -21,11 +21,7 @@ func ApplyFilter(tallyInputs []byte, reveals []RevealBody) ([]int, bool, error) 
 
 	switch tallyInputs[0] {
 	case filterNone:
-		outliers := make([]int, len(reveals))
-		for i := range outliers {
-			outliers[i] = 0
-		}
-		return outliers, true, nil
+		return make([]int, len(reveals)), true, nil
 
 	case filterMode:
 		// TODO: Reactivate mode filter

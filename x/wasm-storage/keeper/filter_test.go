@@ -7,18 +7,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOutliers_None(t *testing.T) {
+func TestFilterNone(t *testing.T) {
 	tests := []struct {
 		name       string
 		tallyInput []byte
-		want       []bool
+		want       []int
 		reveals    []keeper.RevealBody
 		wantErr    error
 	}{
 		{
 			name:       "None filter",
 			tallyInput: []byte{0, 26, 129, 196}, // filterProp{ Algo: 0}
-			want:       []bool{false, false, false, false, false},
+			want:       []int{0, 0, 0, 0, 0},
 			reveals: []keeper.RevealBody{
 				{},
 				{},

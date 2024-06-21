@@ -165,7 +165,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 
 		k.Logger(ctx).Info(
 			"tally flow completed",
-			"request ID", req.ID,
+			"request_id", req.ID,
 			"post_result", postRes,
 		)
 	}
