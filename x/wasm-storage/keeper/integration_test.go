@@ -70,6 +70,7 @@ type fixture struct {
 	contractKeeper    wasmkeeper.PermissionedKeeper
 	wasmKeeper        wasmkeeper.Keeper
 	wasmStorageKeeper keeper.Keeper
+	mockViewKeeper    *testutil.MockViewKeeper
 }
 
 func initFixture(tb testing.TB) *fixture {
@@ -200,9 +201,6 @@ func initFixture(tb testing.TB) *fixture {
 	err = wasmStorageKeeper.DataRequestWasm.Set(ctx, tallyWasm.Hash, tallyWasm)
 	require.NoError(tb, err)
 
-	// Mock response for fetching tally-ready data requests.
-	viewKeeper.EXPECT().QuerySmart(gomock.Any(), gomock.Any(), gomock.Any()).Return(mockFetchResponse, nil)
-
 	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, map[string]appmodule.AppModule{
 		authtypes.ModuleName:       authModule,
 		banktypes.ModuleName:       bankModule,
@@ -219,5 +217,6 @@ func initFixture(tb testing.TB) *fixture {
 		contractKeeper:    *contractKeeper,
 		wasmKeeper:        wasmKeeper,
 		wasmStorageKeeper: *wasmStorageKeeper,
+		mockViewKeeper:    viewKeeper,
 	}
 }

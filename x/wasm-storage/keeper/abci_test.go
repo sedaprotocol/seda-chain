@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	gomock "go.uber.org/mock/gomock"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper/testdata"
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
@@ -67,6 +68,9 @@ func TestTallyVM(t *testing.T) {
 func TestExecuteTally(t *testing.T) {
 	f := initFixture(t)
 	ctx := f.Context()
+
+	// Mock response for fetching tally-ready data requests.
+	f.mockViewKeeper.EXPECT().QuerySmart(gomock.Any(), gomock.Any(), gomock.Any()).Return(mockFetchResponse, nil)
 
 	// Contract should return not found in response to post data result
 	// since the fetch data was mocked.

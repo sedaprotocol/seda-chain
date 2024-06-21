@@ -44,7 +44,7 @@ func (k Keeper) ProcessExpiredWasms(ctx sdk.Context) error {
 }
 
 func (k Keeper) ExecuteTally(ctx sdk.Context) error {
-	// 1. Get contract address.
+	// Get contract address.
 	contractAddrBech32, err := k.ProxyContractRegistry.Get(ctx)
 	if contractAddrBech32 == "" || errors.Is(err, collections.ErrNotFound) {
 		k.Logger(ctx).Debug("proxy contract address not registered")
@@ -58,19 +58,25 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 		return err
 	}
 
-	// 2. Fetch tally-ready DRs.
+	// Fetch tally-ready data requests.
+	// TODO: Deal with offset and limits.
 	queryRes, err := k.wasmViewKeeper.QuerySmart(ctx, contractAddr, []byte(`{"get_data_requests_by_status":{"status": "tallying", "offset": 0, "limit": 100}}`))
 	if err != nil {
 		return err
 	}
+	if string(queryRes) == "[]" {
+		return nil
+	}
+
+	k.Logger(ctx).Info("non-empty tally list - starting tally process")
+
+	// Loop through the list to apply filter, execute tally, and post
+	// execution result.
 	var tallyList []Request
 	err = json.Unmarshal(queryRes, &tallyList)
 	if err != nil {
 		return err
 	}
-
-	// 3. Loop through the list to apply filter and execute tally.
-	var sudoMsgs []Sudo
 	for id, req := range tallyList {
 		tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
 		if err != nil {
@@ -109,17 +115,19 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 			return err
 		}
 
+		k.Logger(ctx).Info(
+			"executing tally VM",
+			"request_id", req.ID,
+			"tally_wasm_hash", req.TallyBinaryID,
+			"consensus", consensus,
+			"arguments", args,
+		)
 		vmRes := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
 			"VM_MODE":   "tally",
 			"CONSENSUS": fmt.Sprintf("%v", consensus),
 		})
 
-		var vmResult []VMResult
-		err = json.Unmarshal(vmRes.Result, &vmResult)
-		if err != nil {
-			panic(err)
-		}
-
+		// Post results to the SEDA contract.
 		sudoMsg := Sudo{
 			ID: req.ID,
 			Result: DataResult{
@@ -133,26 +141,34 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 				SedaPayload:    req.SedaPayload,
 				Consensus:      consensus,
 			},
-			ExitCode: vmResult[0].ExitCode,
+			ExitCode: byte(vmRes.ExitInfo.ExitCode),
 		}
-		sudoMsgs = append(sudoMsgs, sudoMsg)
-	}
+		msg, err := json.Marshal(struct {
+			PostDataResult Sudo `json:"post_data_result"`
+		}{
+			PostDataResult: sudoMsg,
+		})
+		if err != nil {
+			return err
+		}
 
-	// 4. Post results.
-	msg, err := json.Marshal(struct {
-		PostDataResult Sudo `json:"post_data_result"`
-	}{
-		PostDataResult: sudoMsgs[0], // TODO: multiple msgs
-	})
-	if err != nil {
-		return err
-	}
+		k.Logger(ctx).Info(
+			"posting execution results to SEDA contract",
+			"request_id", req.ID,
+			"execution_result", vmRes,
+			"sudo_message", sudoMsg,
+		)
+		postRes, err := k.wasmKeeper.Sudo(ctx, contractAddr, msg)
+		if err != nil {
+			return err
+		}
 
-	postRes, err := k.wasmKeeper.Sudo(ctx, contractAddr, msg)
-	if err != nil {
-		return err
+		k.Logger(ctx).Info(
+			"tally flow completed",
+			"request ID", req.ID,
+			"post_result", postRes,
+		)
 	}
-	fmt.Println(postRes)
 
 	return nil
 }
