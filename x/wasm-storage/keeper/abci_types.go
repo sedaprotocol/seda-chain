@@ -15,6 +15,7 @@ type Request struct {
 	Memo              string                `json:"memo"`
 	PaybackAddress    string                `json:"payback_address"`
 	ReplicationFactor int64                 `json:"replication_factor"`
+	ConsensusFilter   string                `json:"consensus_filter"`
 	Reveals           map[string]RevealBody `json:"reveals"`
 	SedaPayload       string                `json:"seda_payload"`
 	TallyBinaryID     string                `json:"tally_binary_id"`
@@ -57,7 +58,6 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// To debug return results from sample tally wasm execution
 type VMResult struct {
 	Salt        []byte `json:"salt"`
 	ExitCode    byte   `json:"exit_code"`

@@ -78,9 +78,9 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 		return err
 	}
 	for id, req := range tallyList {
-		tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
+		filter, err := base64.StdEncoding.DecodeString(req.ConsensusFilter)
 		if err != nil {
-			return fmt.Errorf("failed to decode tally input: %w", err)
+			return fmt.Errorf("failed to decode consensus filter: %w", err)
 		}
 
 		// Sort reveals.
@@ -96,7 +96,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 			reveals[i] = req.Reveals[k]
 		}
 
-		outliers, consensus, err := ApplyFilter(tallyInputs, reveals)
+		outliers, consensus, err := ApplyFilter(filter, reveals)
 		if err != nil {
 			return err
 		}
@@ -108,6 +108,10 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 		tallyWasm, err := k.DataRequestWasm.Get(ctx, tallyID)
 		if err != nil {
 			return fmt.Errorf("failed to get tally wasm for DR ID %d: %w", id, err)
+		}
+		tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
+		if err != nil {
+			return fmt.Errorf("failed to decode tally inputs: %w", err)
 		}
 
 		args, err := tallyVMArg(tallyInputs, reveals, outliers)

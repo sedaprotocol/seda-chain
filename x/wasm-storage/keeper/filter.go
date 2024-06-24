@@ -1,9 +1,5 @@
 package keeper
 
-import (
-	"errors"
-)
-
 const (
 	filterNone   byte = 0x00
 	filterMode   byte = 0x01
@@ -11,26 +7,35 @@ const (
 )
 
 // ApplyFilter processes filter of the type specified in the first byte of
-// tally inputs. It returns an outlier list, which is a boolean list where
+// consensus filter. It returns an outlier list, which is a boolean list where
 // true at index i means that the reveal at index i is an outlier, consensus
 // boolean, and error.
-func ApplyFilter(tallyInputs []byte, reveals []RevealBody) ([]int, bool, error) {
-	if len(tallyInputs) < 1 {
-		return nil, false, errors.New("tally inputs should be at least 1 byte")
+func ApplyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
+	if len(filter) < 1 {
+		outliers := make([]int, len(reveals))
+		for i := range outliers {
+			outliers[i] = 1
+		}
+		return outliers, false, nil
 	}
 
-	switch tallyInputs[0] {
+	switch filter[0] {
 	case filterNone:
 		return make([]int, len(reveals)), true, nil
 
-	case filterMode:
-		// TODO: Reactivate mode filter
-		return nil, false, errors.New("filter type mode is not implemented")
+	// TODO: Reactivate mode filter
+	// case filterMode:
+	// 	return nil, false, errors.New("filter type mode is not implemented")
 
-	case filterStdDev:
-		return nil, false, errors.New("filter type standard deviation is not implemented")
+	// TODO: Reactivate standard deviation filter
+	// case filterStdDev:
+	// 	return nil, false, errors.New("filter type standard deviation is not implemented")
 
 	default:
-		return nil, false, errors.New("filter type is invalid")
+		outliers := make([]int, len(reveals))
+		for i := range outliers {
+			outliers[i] = 1
+		}
+		return outliers, false, nil
 	}
 }
