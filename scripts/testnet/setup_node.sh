@@ -2,11 +2,10 @@
 set -e
 
 #
-# This script is run on a node to configure cosmovisor, shared library,
-# and systemctl service.
+# This script is run on a node to configure cosmovisor and systemctl
+# service for SEDA chain.
 #
 # NOTE: Assumes ami-0a1ab4a3fcf997a9d
-WASMVM_VERSION=$1
 
 ARCH=$(uname -m)
 if [ $ARCH != "aarch64" ]; then
@@ -17,12 +16,11 @@ COSMOVISOR_URL=https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor
 if [ $ARCH = "aarch64" ]; then
 	COSMOVISOR_URL=https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-arm64.tar.gz
 fi
-LIBWASMVM_URL=https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm.$ARCH.so
 
 COSMOS_LDS=$HOME/COSMOS_LDS
 SYSFILE=/etc/systemd/system/seda-node.service
 
-# set up cosmovisor if necessary
+# Set up cosmovisor if it has not been installed yet.
 if ! which cosmovisor >/dev/null; then
 	printf "\n\n\nSETTING UP COSMOVISOR\n\n\n\n"
 
@@ -47,14 +45,8 @@ if ! which cosmovisor >/dev/null; then
 	source $HOME/.bashrc
 fi
 
-# set up shared libraries (overwrite if already exists to ensure desired version)
-printf "\n\n\nSETTING UP SHARED LIBRARY\n\n\n\n"
-mkdir -p $COSMOS_LDS
-curl -LO $LIBWASMVM_URL
-mv $(basename $LIBWASMVM_URL) $COSMOS_LDS
-echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/COSMOS_LDS' >> $HOME/.bashrc
 
-# create systemctl service file if necessary
+# Create systemctl service file if it does not exist.
 if [ ! -f $SYSFILE ]; then
 printf "\n\n\nSETTING UP SYSTEMCTL\n\n\n\n"
 
@@ -76,8 +68,6 @@ Environment="DAEMON_POLL_INTERVAL=300ms"
 Environment="DAEMON_RESTART_DELAY=30s"
 Environment="DAEMON_LOG_BUFFER_SIZE=512"
 Environment="DAEMON_PREUPGRADE_MAX_RETRIES=0"
-
-Environment=LD_LIBRARY_PATH=/home/ec2-user/COSMOS_LDS
 
 User=$USER
 ExecStart=$(which cosmovisor) run start

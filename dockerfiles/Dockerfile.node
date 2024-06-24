@@ -6,7 +6,6 @@ RUN go mod download
 
 COPY . .
 
-
 RUN make install
 
 
@@ -15,11 +14,8 @@ EXPOSE 26656 26657 1317 9090
 CMD ["sedad", "start"]
 STOPSIGNAL SIGTERM
 
-
 RUN apt-get update && apt-get install ca-certificates git jq  -y \
     && groupadd seda && useradd -g seda -m seda
-
-
 
 COPY --from=builder /go/bin/sedad /usr/local/bin/
 COPY --from=builder /go/pkg/mod/github.com/\!cosm\!wasm/wasmvm\@v*/internal/api/libwasmvm.*.so /usr/lib/

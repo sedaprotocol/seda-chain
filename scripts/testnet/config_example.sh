@@ -1,16 +1,15 @@
 CHAIN_ID=seda-1-devnet
 GENESIS_TIME="2024-04-24T16:00:00.000000Z"
 CHAIN_VERSION=v0.1.3
-WASMVM_VERSION=v1.5.2
 
 WASM_PERMISSION_EVERYONE=true # true for everyone and false for mainnet configuration
 SHORT_VOTING_PERIOD=true # true for 180s voting period or false for mainnet configuration
 
 # If DOWNLOAD_FROM_RELEASE is set to false, specify RUN_NO and ARTIFACT_NO so the script
 # can download the artifact.
-DOWNLOAD_FROM_RELEASE=false
-RUN_NO=0123
-ARTIFACT_NO=0123
+DOWNLOAD_FROM_RELEASE=true
+# RUN_NO=0123
+# ARTIFACT_NO=0123
 
 LOCAL_BIN=$(git rev-parse --show-toplevel)/build/sedad # chain binary executable on your machine
 HOME_DIR=$HOME/.sedad # chain directory
@@ -70,7 +69,7 @@ GROUP_OOA_POLICY=./group_ooa_policy.json
 GROUP_SECURITY_POLICY=./group_security_policy.json
 GROUP_TREASURY_POLICY=./group_treasury_policy.json
 
-ADMIN_SEED="mushroom energy ..." # used for creating groups - overwritten by group policy addresses anyways
+ADMIN_SEED="mushroom energy ..." # seed for one of the genesis accounts - used for creating groups
 
 #######################################
 ############### GITHUB ################

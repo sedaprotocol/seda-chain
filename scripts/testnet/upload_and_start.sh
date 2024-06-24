@@ -48,9 +48,10 @@ else
 	set -x
 
 	unzip artifact.zip
-	mv sedad-amd64 $NODE_DIR
-	mv sedad-arm64 $NODE_DIR
 fi
+
+mv sedad-amd64 $NODE_DIR
+mv sedad-arm64 $NODE_DIR
 
 
 ################################################
@@ -60,7 +61,7 @@ fi
 # upload setup script and run it
 for i in ${!IPS[@]}; do
 	scp -i $SSH_KEY -o StrictHostKeyChecking=no -r ./setup_node.sh ec2-user@${IPS[$i]}:/home/ec2-user
-	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} "/home/ec2-user/setup_node.sh $WASMVM_VERSION"
+	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} '/home/ec2-user/setup_node.sh'
 	ssh -i $SSH_KEY -t ec2-user@${IPS[$i]} 'rm /home/ec2-user/setup_node.sh'
 done
 

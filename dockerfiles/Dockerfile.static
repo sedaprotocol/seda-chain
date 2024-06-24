@@ -32,6 +32,11 @@ RUN ARCH=$(uname -m) && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm |
     wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
     sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep libwasmvm_muslc.$ARCH | cut -d ' ' -f 1)
 
+# Download SEDA Wasm VM static library for aarch64
+RUN ARCH=$(uname -m) && TALLYVM_VERSION=$(go list -m github.com/sedaprotocol/seda-wasm-vm/tallyvm | sed 's/.* //') && \
+    wget https://github.com/sedaprotocol/seda-wasm-vm/releases/download/$TALLYVM_VERSION/libseda_tally_vm_muslc.$ARCH.a \
+        -O /lib/libseda_tally_vm_muslc.a
+
 # Copy the remaining files
 COPY . .
 
@@ -55,7 +60,6 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # --------------------------------------------------------
 # Runner
 # --------------------------------------------------------
-
 FROM ${RUNNER_IMAGE}
 
 COPY --from=builder /seda-chain/build/sedad /bin/sedad
