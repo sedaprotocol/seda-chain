@@ -13,7 +13,8 @@ ENV CGO_ENABLED=1
 RUN apk add --no-cache \
     ca-certificates \
     build-base \
-    linux-headers
+    linux-headers \
+    binutils-gold
 
 # Download go dependencies
 WORKDIR /seda-chain
@@ -29,6 +30,11 @@ RUN ARCH=x86_64 && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | sed 
     # verify checksum
     wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
     sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep libwasmvm_muslc.$ARCH | cut -d ' ' -f 1)
+
+# Download SEDA Wasm VM static library for amd64
+RUN ARCH=x86_64 && \
+    wget https://github.com/sedaprotocol/seda-wasm-vm/releases/download/v1.0.0/libseda_tally_vm_muslc.$ARCH.a \
+        -O /lib/libseda_tally_vm_muslc.a
 
 # Build sedad binary for amd64
 RUN --mount=type=cache,target=/root/.cache/go-build \
@@ -54,6 +60,11 @@ RUN ARCH=aarch64 && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | sed
     # verify checksum
     wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
     sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep libwasmvm_muslc.$ARCH | cut -d ' ' -f 1)
+
+# Download SEDA Wasm VM static library for aarch64
+RUN ARCH=aarch64 && \
+    wget https://github.com/sedaprotocol/seda-wasm-vm/releases/download/v1.0.0/libseda_tally_vm_muslc.$ARCH.a \
+        -O /lib/libseda_tally_vm_muslc.a
 
 RUN wget https://musl.cc/aarch64-linux-musl-cross.tgz && \
     mkdir -p /aarch64-tools && \
