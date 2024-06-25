@@ -1,6 +1,9 @@
 package types
 
 import (
+	"bytes"
+	"encoding/binary"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,3 +24,32 @@ var (
 	Amino     = codec.NewLegacyAmino()
 	ModuleCdc = codec.NewProtoCodec(cdctypes.NewInterfaceRegistry())
 )
+
+const (
+	ByteLenFilter int = 1
+	ByteLenUint64 int = 8
+)
+
+func UnpackModeFilter(filterInput []byte) (string, error) {
+	// Len must be at least 9 = 1 + 8
+	if len(filterInput) < ByteLenFilter+ByteLenUint64 {
+		return "", ErrInvalidLen.Wrapf(
+			"len(filterInput): %v < %v", len(filterInput), ByteLenFilter+ByteLenUint64)
+	}
+
+	jsonPathLen := filterInput[ByteLenFilter:(ByteLenFilter + ByteLenUint64)]
+	var ln uint64
+	buf := bytes.NewReader(jsonPathLen)
+	if err := binary.Read(buf, binary.BigEndian, &ln); err != nil {
+		return "", err
+	}
+
+	data := filterInput[ByteLenFilter+ByteLenUint64:]
+	// Validate the remaining length is valid.
+	if len(data) != int(ln) {
+		return "", ErrInvalidLen.Wrapf("want: %v Got: %v", int(ln), len(data))
+	}
+	jsonPath := string(data)
+
+	return jsonPath, nil
+}
