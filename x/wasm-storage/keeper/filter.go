@@ -8,9 +8,8 @@ import (
 )
 
 const (
-	filterNone   byte = 0x00
-	filterMode   byte = 0x01
-	filterStdDev byte = 0x02
+	filterAlgoNone byte = 0x00
+	filterAlgoMode byte = 0x01
 )
 
 // ApplyFilter processes filter of the type specified in the first byte of
@@ -27,10 +26,10 @@ func ApplyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
 	}
 
 	switch filter[0] {
-	case filterNone:
+	case filterAlgoNone:
 		return make([]int, len(reveals)), true, nil
 
-	case filterMode:
+	case filterAlgoMode:
 		dataPath, err := types.UnpackModeFilter(filter)
 		if err != nil {
 			return nil, false, err
@@ -46,7 +45,7 @@ func ApplyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
 			exitCodes = append(exitCodes, r.ExitCode)
 			revealData = append(revealData, r.Reveal)
 		}
-		outliers, consensus := FilterMode(dataPath, exitCodes, revealData)
+		outliers, consensus := filterMode(dataPath, exitCodes, revealData)
 		return outliers, consensus, nil
 
 	// TODO: Reactivate standard deviation filter
@@ -62,7 +61,7 @@ func ApplyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
 	}
 }
 
-func FilterMode(dataPath string, exitCodes []uint8, reveals []string) ([]int, bool) {
+func filterMode(dataPath string, exitCodes []uint8, reveals []string) ([]int, bool) {
 	var nonZeroExitCode int
 	vals := make([]string, 0, len(reveals))
 

@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"unsafe"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -26,8 +27,10 @@ var (
 )
 
 const (
-	ByteLenFilter int = 1
-	ByteLenUint64 int = 8
+	b             byte   = 0
+	u             uint64 = 0
+	ByteLenFilter        = int(unsafe.Sizeof(b))
+	ByteLenUint64        = int(unsafe.Sizeof(u))
 )
 
 func UnpackModeFilter(filterInput []byte) (string, error) {
@@ -49,7 +52,5 @@ func UnpackModeFilter(filterInput []byte) (string, error) {
 	if len(data) != int(ln) {
 		return "", ErrInvalidLen.Wrapf("want: %v Got: %v", int(ln), len(data))
 	}
-	jsonPath := string(data)
-
-	return jsonPath, nil
+	return string(data), nil
 }
