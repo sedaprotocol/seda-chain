@@ -48,6 +48,18 @@ func TestFilterNone(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
+			name:            "Mode filter - At least 2/3 satisfies consensus",
+			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
+			outliers:        []int{0, 0, 1},
+			reveals: []keeper.RevealBody{
+				{Reveal: `{"result": {"text": "A", "number": 0}}`},
+				{Reveal: `{"result": {"text": "A", "number": 10}}`},
+				{Reveal: `{"result": {"text": "B", "number": 101}}`},
+			},
+			consensus: true,
+			wantErr:   nil,
+		},
+		{
 			name:            "Mode filter - Consensus due to non exit code",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{1, 1, 1, 1, 1, 1},

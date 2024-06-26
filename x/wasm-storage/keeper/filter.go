@@ -76,6 +76,7 @@ func filterMode(dataPath string, reveals []RevealBody) ([]int, bool) {
 		revealVals = append(revealVals, val)
 		if r.ExitCode != 0 {
 			nonZeroExitCode++
+			continue
 		}
 		freq[val]++
 		maxFreq = max(freq[val], maxFreq)
@@ -92,8 +93,8 @@ func filterMode(dataPath string, reveals []RevealBody) ([]int, bool) {
 		return outliers, true
 	}
 
-	// If not MORE THAN 2/3 matches the max frequency, there is no data-consensus.
-	if maxFreq*3 <= len(reveals)*2 {
+	// If less than 2/3 matches the max frequency, there is no data-consensus.
+	if maxFreq*3 < len(reveals)*2 {
 		return outliers, false
 	}
 
