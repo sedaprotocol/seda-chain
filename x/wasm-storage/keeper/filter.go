@@ -39,13 +39,7 @@ func ApplyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
 			return nil, false, errors.New("empty JSON path in filter input [Mode]")
 		}
 
-		exitCodes := make([]uint8, 0, len(reveals))
-		revealData := make([]string, 0, len(reveals))
-		for _, r := range reveals {
-			exitCodes = append(exitCodes, r.ExitCode)
-			revealData = append(revealData, r.Reveal)
-		}
-		outliers, consensus := filterMode(dataPath, exitCodes, revealData)
+		outliers, consensus := filterMode(dataPath, reveals)
 		return outliers, consensus, nil
 
 	// TODO: Reactivate standard deviation filter
@@ -61,41 +55,41 @@ func ApplyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
 	}
 }
 
-func filterMode(dataPath string, exitCodes []uint8, reveals []string) ([]int, bool) {
-	var nonZeroExitCode int
-	vals := make([]string, 0, len(reveals))
+// filterMode takes in a list of reveals, and a json path to get the
+// filtering data from the RevealBody->reveal.
+// The function returns a list of int where value of each element can be
+// either 0 or 1. At index i Value 1 means RevealBody[i] contains an
+// outlier. If a reveal have MORE THAN 2/3 frequency, than it's not an
+// outlier.
+//
+// The function also returns if a consensus is reached. Consensus can be
+// reached in two ways.
+// 1. More than 1/3 of the reveals are corrupted. i.e. has non-zero exit code.
+// 2. More than 2/3 of the data is the same.
+func filterMode(dataPath string, reveals []RevealBody) ([]int, bool) {
+	var maxFreq, nonZeroExitCode int
+	freq := make(map[string]int, len(reveals))
+	revealVals := make([]string, 0, len(reveals))
 
-	for i, r := range reveals {
-		vals = append(vals, gjson.Get(r, dataPath).String())
-		if exitCodes[i] != 0 {
+	for _, r := range reveals {
+		val := gjson.Get(r.Reveal, dataPath).String()
+		revealVals = append(revealVals, val)
+		if r.ExitCode != 0 {
 			nonZeroExitCode++
 		}
+		freq[val]++
+		maxFreq = max(freq[val], maxFreq)
 	}
-	outliers, consensus := calcOutliers(vals, exitCodes)
 
-	// If more than 1/3 reveals have non exit code, we reached a consensus that
-	// these are unusable reveals.
-	if consensus || nonZeroExitCode*3 > len(reveals) {
-		return outliers, true
-	}
-	return outliers, false
-}
-
-func calcOutliers[T comparable](reveals []T, exitCode []uint8) ([]int, bool) {
-	freq := make(map[T]int, len(reveals))
 	outliers := make([]int, len(reveals))
 	for i := 0; i < len(outliers); i++ {
 		outliers[i] = 1
 	}
 
-	var maxFreq int
-
-	for i, r := range reveals {
-		if exitCode[i] != 0 {
-			continue
-		}
-		freq[r]++
-		maxFreq = max(freq[r], maxFreq)
+	// If more than 1/3 reveals have non exit code, we reached a consensus that
+	// these are unusable reveals.
+	if nonZeroExitCode*3 > len(reveals) {
+		return outliers, true
 	}
 
 	// If not MORE THAN 2/3 matches the max frequency, there is no data-consensus.
@@ -103,12 +97,11 @@ func calcOutliers[T comparable](reveals []T, exitCode []uint8) ([]int, bool) {
 		return outliers, false
 	}
 
-	for i, r := range reveals {
-		if freq[r] != maxFreq || exitCode[i] != 0 {
+	for i, r := range revealVals {
+		if freq[r] != maxFreq || reveals[i].ExitCode != 0 {
 			continue
 		}
 		outliers[i] = 0
 	}
-
 	return outliers, true
 }

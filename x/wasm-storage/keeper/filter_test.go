@@ -113,14 +113,14 @@ func TestFilterNone(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			filter, err := hex.DecodeString(tt.tallyInputAsHex)
 			require.NoError(t, err)
-			oliers, cons, err := keeper.ApplyFilter(filter, tt.reveals)
+			outliers, cons, err := keeper.ApplyFilter(filter, tt.reveals)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, tt.outliers, oliers)
+			require.Equal(t, tt.outliers, outliers)
 			require.Equal(t, tt.consensus, cons)
 		})
 	}
