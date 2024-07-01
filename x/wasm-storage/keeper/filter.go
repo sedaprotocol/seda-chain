@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 	"github.com/tidwall/gjson"
@@ -39,8 +41,7 @@ func ApplyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
 			return nil, false, errors.New("empty JSON path in filter input [Mode]")
 		}
 
-		outliers, consensus := filterMode(dataPath, reveals)
-		return outliers, consensus, nil
+		return filterMode(dataPath, reveals)
 
 	// TODO: Reactivate standard deviation filter
 	// case filterStdDev:
@@ -66,13 +67,17 @@ func ApplyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
 // reached in two ways.
 // 1. More than 1/3 of the reveals are corrupted. i.e. has non-zero exit code.
 // 2. More than 2/3 of the data is the same.
-func filterMode(dataPath string, reveals []RevealBody) ([]int, bool) {
+func filterMode(dataPath string, reveals []RevealBody) ([]int, bool, error) {
 	var maxFreq, nonZeroExitCode int
 	freq := make(map[string]int, len(reveals))
 	revealVals := make([]string, 0, len(reveals))
 
 	for _, r := range reveals {
-		val := gjson.Get(r.Reveal, dataPath).String()
+		revealBytes, err := base64.StdEncoding.DecodeString(r.Reveal)
+		if err != nil {
+			return nil, false, fmt.Errorf("filterMode: could not base64 decode: <%s>. Err: %w", r.Reveal, err)
+		}
+		val := gjson.GetBytes(revealBytes, dataPath).String()
 		revealVals = append(revealVals, val)
 		if r.ExitCode != 0 {
 			nonZeroExitCode++
@@ -90,12 +95,12 @@ func filterMode(dataPath string, reveals []RevealBody) ([]int, bool) {
 	// If more than 1/3 reveals have non exit code, we reached a consensus that
 	// these are unusable reveals.
 	if nonZeroExitCode*3 > len(reveals) {
-		return outliers, true
+		return outliers, true, nil
 	}
 
 	// If less than 2/3 matches the max frequency, there is no data-consensus.
 	if maxFreq*3 < len(reveals)*2 {
-		return outliers, false
+		return outliers, false, nil
 	}
 
 	for i, r := range revealVals {
@@ -104,5 +109,5 @@ func filterMode(dataPath string, reveals []RevealBody) ([]int, bool) {
 		}
 		outliers[i] = 0
 	}
-	return outliers, true
+	return outliers, true, nil
 }

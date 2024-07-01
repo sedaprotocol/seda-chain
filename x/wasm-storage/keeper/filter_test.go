@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"testing"
 
@@ -125,6 +126,12 @@ func TestFilterNone(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			filter, err := hex.DecodeString(tt.tallyInputAsHex)
 			require.NoError(t, err)
+
+			// For illustration
+			for i := 0; i < len(tt.reveals); i++ {
+				tt.reveals[i].Reveal = base64.StdEncoding.EncodeToString([]byte(tt.reveals[i].Reveal))
+			}
+
 			outliers, cons, err := keeper.ApplyFilter(filter, tt.reveals)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)

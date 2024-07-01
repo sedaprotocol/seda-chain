@@ -78,3 +78,21 @@ func TestExecuteTally(t *testing.T) {
 	require.Contains(t, err.Error(), "seda_contract::msgs::data_requests::types::StatusValue; key:")
 	require.Contains(t, err.Error(), "not found")
 }
+
+var mockResponseMODEFilter = []byte(`[{"commits":{},"dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf","dr_inputs":"","gas_limit":"20","gas_price":"10","height":1661661742461173200,"id":"fba5314c57e52da7d1a2245d18c670fde1cb8c237062d2a1be83f449ace0932e","memo":"","payback_address":"","consensus_filter":"AQAAAAAAAAALcmVzdWx0LnRleHQ=","replication_factor":3,"reveals":{"1b85dfb9420e6757630a0db2280fa1787ec8c1e419a6aca76dbbfe8ef6e17521":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQSIsICJudW1iZXIiOiAxMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"1dae290cd880b79d21079d89aee3460cf8a7d445fb35cade70cf8aa96924441c":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQSIsICJudW1iZXIiOiAyMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"421e735518ef77fc1209a9d3585cdf096669b52ea68549e2ce048d4919b4c8c0":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQiIsICJudW1iZXIiOiAxMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"}},"seda_payload":"","tally_binary_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b","tally_inputs":"AAEBAQE=","version":"1.0.0"},{"commits":{},"dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf","dr_inputs":"","gas_limit":"20","gas_price":"10","height":9859593541233596000,"id":"d4e40f45fbf529134926acf529baeb6d4f37b5c380d7ab6b934833e7c00d725f","memo":"","payback_address":"","consensus_filter":"AQAAAAAAAAALcmVzdWx0LnRleHQ=","replication_factor":1,"reveals":{"c9a4c8f1e70a0059a88b4768a920e41c95c587b8387ea3286d8fa4ee3b68b038":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQiIsICJudW1iZXIiOiAxMH19","salt":"f837455a930a66464f1c50586dc745a6b14ea807727c6069acac24c9558b6dbf"}},"seda_payload":"","tally_binary_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b","tally_inputs":"AAEBAQE=","version":"1.0.0"}]`)
+
+func TestExecuteTally_MODEFilter(t *testing.T) {
+	f := initFixture(t)
+	ctx := f.Context()
+
+	// consensus_filter = "AQAAAAAAAAALcmVzdWx0LnRleHQ=" Represents
+	// Filter_Algo: Mode. Data_path: "result.text"
+	// Mock response for fetching tally-ready data requests.
+	f.mockViewKeeper.EXPECT().QuerySmart(gomock.Any(), gomock.Any(), gomock.Any()).Return(mockResponseMODEFilter, nil)
+
+	// Contract should return not found in response to post data result
+	// since the fetch data was mocked.
+	err := f.wasmStorageKeeper.ExecuteTally(ctx)
+	require.Contains(t, err.Error(), "seda_contract::msgs::data_requests::types::StatusValue; key:")
+	require.Contains(t, err.Error(), "not found")
+}
