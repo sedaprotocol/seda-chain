@@ -20,3 +20,4 @@ seda.env
 
 # coverage files
 coverage.txt
+/.run/debug existing.run.xml
