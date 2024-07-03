@@ -62,7 +62,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	// Get proxy contract address.
 	contractAddrBech32, err := k.ProxyContractRegistry.Get(ctx)
 	if contractAddrBech32 == "" || errors.Is(err, collections.ErrNotFound) {
-		return fmt.Errorf("proxy contract not reigstered")
+		return fmt.Errorf("proxy contract not registered")
 	}
 	if err != nil {
 		return err
@@ -184,7 +184,7 @@ func (k Keeper) filterAndTally(ctx sdk.Context, req Request) (vmRes tallyvm.VmRe
 	}
 	tallyWasm, err := k.DataRequestWasm.Get(ctx, tallyID)
 	if err != nil {
-		return vmRes, consensus, fmt.Errorf("failed to get tally wasm for DR ID %s: %w", req.ID, err)
+		return vmRes, consensus, fmt.Errorf("failed to get tally wasm: %w", err)
 	}
 	tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
 	if err != nil {
