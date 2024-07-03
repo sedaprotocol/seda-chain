@@ -96,10 +96,10 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 		// An error from filterAndTally is reported in the ModuleError
 		// field of DataResult instead of being returned to the calling
 		// function.
-		var moduleErr string
+		var moduleErr []byte
 		vmRes, consensus, err := k.filterAndTally(ctx, req)
 		if err != nil {
-			moduleErr = err.Error()
+			moduleErr = []byte(err.Error())
 		}
 
 		// Post results to the SEDA contract.
@@ -109,16 +109,21 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 				Version:        req.Version,
 				ID:             req.ID,
 				BlockHeight:    uint64(ctx.BlockHeight()),
-				ExitCode:       byte(vmRes.ExitInfo.ExitCode),
 				GasUsed:        "0", // TODO
-				Result:         vmRes.Result,
 				PaybackAddress: req.PaybackAddress,
 				SedaPayload:    req.SedaPayload,
 				Consensus:      consensus,
-				ModuleError:    moduleErr,
 			},
 			ExitCode: byte(vmRes.ExitInfo.ExitCode),
 		}
+		if err != nil {
+			sudoMsg.Result.ExitCode = 0xff
+			sudoMsg.Result.Result = moduleErr
+		} else {
+			sudoMsg.Result.ExitCode = byte(vmRes.ExitInfo.ExitCode)
+			sudoMsg.Result.Result = vmRes.Result
+		}
+
 		msg, err := json.Marshal(struct {
 			PostDataResult Sudo `json:"post_data_result"`
 		}{
