@@ -82,4 +82,5 @@ type DataResult struct {
 	PaybackAddress string `json:"payback_address"`
 	SedaPayload    string `json:"seda_payload"`
 	Consensus      bool   `json:"consensus"`
+	ModuleError    string `json:"module_error"` // error while processing filter or tally
 }

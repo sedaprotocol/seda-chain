@@ -13,15 +13,27 @@ import (
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
 )
 
-func (k Keeper) EndBlock(ctx sdk.Context) error {
-	err := k.ProcessExpiredWasms(ctx)
-	if err != nil {
-		return err
-	}
+func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
+	defer func() {
+		// Handle a panic.
+		if r := recover(); r != nil {
+			k.Logger(ctx).Error("recovered from panic in wasm-storage EndBlock", "err", err)
+			err = nil
+		}
+		// Handle an error.
+		if err != nil {
+			k.Logger(ctx).Error("error in wasm-storage EndBlock", "err", err)
+			err = nil
+		}
+	}()
 
-	err = k.ExecuteTally(ctx)
+	err = k.ProcessExpiredWasms(ctx)
 	if err != nil {
-		return err
+		return
+	}
+	err = k.ProcessTallies(ctx)
+	if err != nil {
+		return
 	}
 	return nil
 }
@@ -43,12 +55,13 @@ func (k Keeper) ProcessExpiredWasms(ctx sdk.Context) error {
 	return nil
 }
 
-func (k Keeper) ExecuteTally(ctx sdk.Context) error {
-	// Get contract address.
+// ProcessTallies fetches from the proxy contract the list of requests
+// to be tallied and then goes through it to filter and tally.
+func (k Keeper) ProcessTallies(ctx sdk.Context) error {
+	// Get proxy contract address.
 	contractAddrBech32, err := k.ProxyContractRegistry.Get(ctx)
 	if contractAddrBech32 == "" || errors.Is(err, collections.ErrNotFound) {
-		k.Logger(ctx).Debug("proxy contract address not registered")
-		return nil
+		return fmt.Errorf("proxy contract not reigstered")
 	}
 	if err != nil {
 		return err
@@ -70,66 +83,23 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 
 	k.Logger(ctx).Info("non-empty tally list - starting tally process")
 
-	// Loop through the list to apply filter, execute tally, and post
-	// execution result.
 	var tallyList []Request
 	err = json.Unmarshal(queryRes, &tallyList)
 	if err != nil {
 		return err
 	}
-	for id, req := range tallyList {
-		filter, err := base64.StdEncoding.DecodeString(req.ConsensusFilter)
-		if err != nil {
-			return fmt.Errorf("failed to decode consensus filter: %w", err)
-		}
 
-		// Sort reveals.
-		keys := make([]string, len(req.Reveals))
-		i := 0
-		for k := range req.Reveals {
-			keys[i] = k
-			i++
-		}
-		sort.Strings(keys)
-		reveals := make([]RevealBody, len(req.Reveals))
-		for i, k := range keys {
-			reveals[i] = req.Reveals[k]
-		}
-
-		outliers, consensus, err := ApplyFilter(filter, reveals)
+	// Loop through the list to apply filter, execute tally, and post
+	// execution result.
+	for _, req := range tallyList {
+		// An error from filterAndTally is reported in the ModuleError
+		// field of DataResult instead of being returned to the calling
+		// function.
+		var moduleErr string
+		vmRes, consensus, err := k.filterAndTally(ctx, req)
 		if err != nil {
-			return err
+			moduleErr = err.Error()
 		}
-
-		tallyID, err := hex.DecodeString(req.TallyBinaryID)
-		if err != nil {
-			return fmt.Errorf("failed to decode tally ID to hex: %w", err)
-		}
-		tallyWasm, err := k.DataRequestWasm.Get(ctx, tallyID)
-		if err != nil {
-			return fmt.Errorf("failed to get tally wasm for DR ID %d: %w", id, err)
-		}
-		tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
-		if err != nil {
-			return fmt.Errorf("failed to decode tally inputs: %w", err)
-		}
-
-		args, err := tallyVMArg(tallyInputs, reveals, outliers)
-		if err != nil {
-			return err
-		}
-
-		k.Logger(ctx).Info(
-			"executing tally VM",
-			"request_id", req.ID,
-			"tally_wasm_hash", req.TallyBinaryID,
-			"consensus", consensus,
-			"arguments", args,
-		)
-		vmRes := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
-			"VM_MODE":   "tally",
-			"CONSENSUS": fmt.Sprintf("%v", consensus),
-		})
 
 		// Post results to the SEDA contract.
 		sudoMsg := Sudo{
@@ -144,6 +114,7 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 				PaybackAddress: req.PaybackAddress,
 				SedaPayload:    req.SedaPayload,
 				Consensus:      consensus,
+				ModuleError:    moduleErr,
 			},
 			ExitCode: byte(vmRes.ExitInfo.ExitCode),
 		}
@@ -175,6 +146,62 @@ func (k Keeper) ExecuteTally(ctx sdk.Context) error {
 	}
 
 	return nil
+}
+
+func (k Keeper) filterAndTally(ctx sdk.Context, req Request) (vmRes tallyvm.VmResult, consensus bool, err error) {
+	filter, err := base64.StdEncoding.DecodeString(req.ConsensusFilter)
+	if err != nil {
+		return vmRes, consensus, fmt.Errorf("failed to decode consensus filter: %w", err)
+	}
+
+	// Sort reveals.
+	keys := make([]string, len(req.Reveals))
+	i := 0
+	for k := range req.Reveals {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+	reveals := make([]RevealBody, len(req.Reveals))
+	for i, k := range keys {
+		reveals[i] = req.Reveals[k]
+	}
+
+	outliers, consensus, err := applyFilter(filter, reveals)
+	if err != nil {
+		return vmRes, consensus, fmt.Errorf("error while applying filter: %w", err)
+	}
+
+	tallyID, err := hex.DecodeString(req.TallyBinaryID)
+	if err != nil {
+		return vmRes, consensus, fmt.Errorf("failed to decode tally ID to hex: %w", err)
+	}
+	tallyWasm, err := k.DataRequestWasm.Get(ctx, tallyID)
+	if err != nil {
+		return vmRes, consensus, fmt.Errorf("failed to get tally wasm for DR ID %s: %w", req.ID, err)
+	}
+	tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
+	if err != nil {
+		return vmRes, consensus, fmt.Errorf("failed to decode tally inputs: %w", err)
+	}
+
+	args, err := tallyVMArg(tallyInputs, reveals, outliers)
+	if err != nil {
+		return vmRes, consensus, err
+	}
+
+	k.Logger(ctx).Info(
+		"executing tally VM",
+		"request_id", req.ID,
+		"tally_wasm_hash", req.TallyBinaryID,
+		"consensus", consensus,
+		"arguments", args,
+	)
+	vmRes = tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
+		"VM_MODE":   "tally",
+		"CONSENSUS": fmt.Sprintf("%v", consensus),
+	})
+	return vmRes, consensus, nil
 }
 
 func tallyVMArg(inputArgs []byte, reveals []RevealBody, outliers []int) ([]string, error) {
