@@ -93,16 +93,8 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
 	for _, req := range tallyList {
-		// An error from filterAndTally is reported in the ModuleError
-		// field of DataResult instead of being returned to the calling
-		// function.
-		var moduleErr []byte
-		vmRes, consensus, err := k.filterAndTally(ctx, req)
-		if err != nil {
-			moduleErr = []byte(err.Error())
-		}
-
-		// Post results to the SEDA contract.
+		// Construct sudo message to be posted to the contract and
+		// populate the results fields after filterAndTally.
 		sudoMsg := Sudo{
 			ID: req.ID,
 			Result: DataResult{
@@ -112,18 +104,25 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 				GasUsed:        "0", // TODO
 				PaybackAddress: req.PaybackAddress,
 				SedaPayload:    req.SedaPayload,
-				Consensus:      consensus,
 			},
-			ExitCode: byte(vmRes.ExitInfo.ExitCode),
-		}
-		if err != nil {
-			sudoMsg.Result.ExitCode = 0xff
-			sudoMsg.Result.Result = moduleErr
-		} else {
-			sudoMsg.Result.ExitCode = byte(vmRes.ExitInfo.ExitCode)
-			sudoMsg.Result.Result = vmRes.Result
 		}
 
+		vmRes, consensus, err := k.filterAndTally(ctx, req)
+		if err != nil {
+			// Return module error message with exit code 255 to signify
+			// that the tally VM was not executed.
+			sudoMsg.ExitCode = 0xff
+			sudoMsg.Result.ExitCode = 0xff
+			sudoMsg.Result.Result = []byte(err.Error())
+			sudoMsg.Result.Consensus = consensus
+		} else {
+			sudoMsg.ExitCode = byte(vmRes.ExitInfo.ExitCode)
+			sudoMsg.Result.ExitCode = byte(vmRes.ExitInfo.ExitCode)
+			sudoMsg.Result.Result = vmRes.Result
+			sudoMsg.Result.Consensus = consensus
+		}
+
+		// Post results to the SEDA contract.
 		msg, err := json.Marshal(struct {
 			PostDataResult Sudo `json:"post_data_result"`
 		}{
