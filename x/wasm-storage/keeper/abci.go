@@ -167,7 +167,7 @@ func (k Keeper) filterAndTally(ctx sdk.Context, req Request) (vmRes tallyvm.VmRe
 		reveals[i] = req.Reveals[k]
 	}
 
-	outliers, consensus, err := applyFilter(filter, reveals)
+	outliers, consensus, err := ApplyFilter(filter, reveals)
 	if err != nil {
 		return vmRes, consensus, fmt.Errorf("error while applying filter: %w", err)
 	}

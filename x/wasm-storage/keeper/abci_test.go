@@ -91,7 +91,7 @@ func TestExecuteTally(t *testing.T) {
 
 			// Contract should return not found in response to post data result
 			// since the fetch data was mocked.
-			err := f.wasmStorageKeeper.ExecuteTally(ctx)
+			err := f.wasmStorageKeeper.ProcessTallies(ctx)
 			if len(tt.wantErrStr) != 0 {
 				for _, errS := range tt.wantErrStr {
 					require.Contains(t, err.Error(), errS)

@@ -14,11 +14,11 @@ const (
 	filterAlgoMode byte = 0x01
 )
 
-// applyFilter processes filter of the type specified in the first byte of
+// ApplyFilter processes filter of the type specified in the first byte of
 // consensus filter. It returns an outlier list, which is a boolean list where
 // true at index i means that the reveal at index i is an outlier, consensus
 // boolean, and error.
-func applyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
+func ApplyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
 	if len(filter) < 1 {
 		outliers := make([]int, len(reveals))
 		for i := range outliers {
