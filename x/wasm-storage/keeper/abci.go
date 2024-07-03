@@ -93,8 +93,8 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
 	for _, req := range tallyList {
-		// Construct sudo message to be posted to the contract and
-		// populate the results fields after filterAndTally.
+		// Construct barebone sudo message to be posted to the contract
+		// here and populate its results fields after filterAndTally.
 		sudoMsg := Sudo{
 			ID: req.ID,
 			Result: DataResult{
@@ -109,8 +109,9 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 
 		vmRes, consensus, err := k.filterAndTally(ctx, req)
 		if err != nil {
-			// Return module error message with exit code 255 to signify
-			// that the tally VM was not executed.
+			// Return with exit code 255 to signify that the tally VM
+			// was not executed due to the error specified in the result
+			// field.
 			sudoMsg.ExitCode = 0xff
 			sudoMsg.Result.ExitCode = 0xff
 			sudoMsg.Result.Result = []byte(err.Error())

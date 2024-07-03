@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	gomock "go.uber.org/mock/gomock"
 
@@ -71,6 +73,7 @@ type fixture struct {
 	wasmKeeper        wasmkeeper.Keeper
 	wasmStorageKeeper keeper.Keeper
 	mockViewKeeper    *testutil.MockViewKeeper
+	logBuf            *bytes.Buffer
 }
 
 func initFixture(tb testing.TB) *fixture {
@@ -83,7 +86,9 @@ func initFixture(tb testing.TB) *fixture {
 	)
 	cdc := moduletestutil.MakeTestEncodingConfig(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}).Codec
 
-	logger := log.NewTestLogger(tb)
+	buf := &bytes.Buffer{}
+	logger := log.NewLogger(buf, log.LevelOption(zerolog.DebugLevel))
+
 	cms := sdkintegration.CreateMultiStore(keys, logger)
 
 	ctx := sdk.NewContext(cms, cmtproto.Header{Time: time.Now().UTC()}, true, logger)
@@ -218,5 +223,6 @@ func initFixture(tb testing.TB) *fixture {
 		wasmKeeper:        wasmKeeper,
 		wasmStorageKeeper: *wasmStorageKeeper,
 		mockViewKeeper:    viewKeeper,
+		logBuf:            buf,
 	}
 }
