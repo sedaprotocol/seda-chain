@@ -34,7 +34,7 @@ RUN ARCH=$(uname -m) && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm |
 
 # Download SEDA Wasm VM static library for aarch64
 RUN ARCH=$(uname -m) && TALLYVM_VERSION=$(go list -m github.com/sedaprotocol/seda-wasm-vm/tallyvm | sed 's/.* //') && \
-    wget https://github.com/sedaprotocol/seda-wasm-vm/releases/download/$TALLYVM_VERSION/libseda_tally_vm_muslc.$ARCH.a \
+    wget https://github.com/sedaprotocol/seda-wasm-vm/releases/download/tallyvm%2F$TALLYVM_VERSION/libseda_tally_vm_muslc.$ARCH.a \
         -O /lib/libseda_tally_vm_muslc.a
 
 # Copy the remaining files

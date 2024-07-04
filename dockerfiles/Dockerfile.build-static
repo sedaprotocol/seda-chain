@@ -33,7 +33,7 @@ RUN ARCH=x86_64 && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | sed 
 
 # Download SEDA Wasm VM static library for amd64
 RUN ARCH=x86_64 && TALLYVM_VERSION=$(go list -m github.com/sedaprotocol/seda-wasm-vm/tallyvm | sed 's/.* //') && \
-    wget https://github.com/sedaprotocol/seda-wasm-vm/releases/download/$TALLYVM_VERSION/libseda_tally_vm_muslc.$ARCH.a \
+    wget https://github.com/sedaprotocol/seda-wasm-vm/releases/download/tallyvm%2F$TALLYVM_VERSION/libseda_tally_vm_muslc.$ARCH.a \
         -O /lib/libseda_tally_vm_muslc.a
 
 # Build sedad binary for amd64
@@ -63,7 +63,7 @@ RUN ARCH=aarch64 && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | sed
 
 # Download SEDA Wasm VM static library for aarch64
 RUN ARCH=aarch64 && TALLYVM_VERSION=$(go list -m github.com/sedaprotocol/seda-wasm-vm/tallyvm | sed 's/.* //') && \
-    wget https://github.com/sedaprotocol/seda-wasm-vm/releases/download/$TALLYVM_VERSION/libseda_tally_vm_muslc.$ARCH.a \
+    wget https://github.com/sedaprotocol/seda-wasm-vm/releases/download/tallyvm%2F$TALLYVM_VERSION/libseda_tally_vm_muslc.$ARCH.a \
         -O /lib/libseda_tally_vm_muslc.a
 
 RUN wget https://musl.cc/aarch64-linux-musl-cross.tgz && \
