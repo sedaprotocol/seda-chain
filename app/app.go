@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/sedaprotocol/seda-chain/x/pkr"
+
 	"github.com/spf13/cast"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
@@ -102,6 +104,8 @@ import (
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	pkrkeeper "github.com/sedaprotocol/seda-chain/x/pkr/keeper"
+	pkrtypes "github.com/sedaprotocol/seda-chain/x/pkr/types"
 
 	// ibc
 	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
@@ -239,6 +243,7 @@ type App struct {
 	// SEDA modules keepers
 	WasmStorageKeeper wasmstoragekeeper.Keeper
 	TallyKeeper       tallykeeper.Keeper
+	PkrKeeper         pkrkeeper.Keeper
 
 	mm  *module.Manager
 	bmm module.BasicManager
@@ -303,7 +308,7 @@ func NewApp(
 		feegrant.StoreKey, evidencetypes.StoreKey, circuittypes.StoreKey, authzkeeper.StoreKey, group.StoreKey,
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
-		crisistypes.StoreKey, wasmstoragetypes.StoreKey,
+		crisistypes.StoreKey, wasmstoragetypes.StoreKey, pkrtypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -625,6 +630,8 @@ func NewApp(
 
 	app.TallyKeeper = tallykeeper.NewKeeper(app.WasmStorageKeeper, contractKeeper, app.WasmKeeper)
 
+	app.PkrKeeper = *pkrkeeper.NewKeeper(runtime.NewKVStoreService(keys[pkrtypes.StoreKey]))
+
 	/* =================================================== */
 	/*                  TRANSFER STACK                     */
 	/* =================================================== */
@@ -738,6 +745,7 @@ func NewApp(
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
 		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
 		tally.NewAppModule(app.TallyKeeper),
+		pkr.NewAppModule(appCodec, app.PkrKeeper),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -794,6 +802,7 @@ func NewApp(
 		// custom modules
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
+		pkrtypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -824,6 +833,7 @@ func NewApp(
 		// custom modules
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
+		pkrtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after sdkstaking so that pools are
@@ -860,6 +870,7 @@ func NewApp(
 		// custom modules
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
+		pkrtypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)

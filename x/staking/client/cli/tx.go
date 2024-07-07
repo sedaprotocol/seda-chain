@@ -65,7 +65,7 @@ func NewCreateValidatorWithVRFCmd(ac address.Codec) *cobra.Command {
 		Long:  `Create a new validator initialized with a self-delegation by submitting a JSON file with the new validator details.`,
 		Example: strings.TrimSpace(
 			fmt.Sprintf(`
-$ %s tx staking create-validator path/to/validator.json --from keyname
+$ %s tx create-validator-vrf path/to/validator.json --from keyname
 
 Where validator.json contains:
 
