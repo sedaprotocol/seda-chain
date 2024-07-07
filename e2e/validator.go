@@ -131,13 +131,15 @@ func (v *validator) createConsensusKey() error {
 
 	v.consensusKey = filePV.Key
 
-	vrfKeyFile := utils.PrivValidatorKeyFileToVRFKeyFile(config.PrivValidatorKeyFile())
-	vrfKey, err := utils.LoadOrGenVRFKey(vrfKeyFile)
+	_, err := utils.InitializeVRFKey(config, "", "")
+	if err != nil {
+		return err
+	}
+	vrfKey, err := utils.LoadVRFKey(filepath.Join(filepath.Dir(config.PrivValidatorKeyFile()), utils.VRFKeyFileName))
 	if err != nil {
 		return err
 	}
 	v.vrfKey = vrfKey
-
 	return nil
 }
 
