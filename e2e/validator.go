@@ -131,7 +131,7 @@ func (v *validator) createConsensusKey() error {
 
 	v.consensusKey = filePV.Key
 
-	vrfKeyFile := utils.PrivValidatorKeyFileToVRFKeyFile(config.PrivValidatorKeyFile())
+	vrfKeyFile := utils.PrivValidatorKeyFileToVRFKeyFile(config.PrivValidatorKeyFile(), utils.VRFKeyFileName)
 	vrfKey, err := utils.LoadOrGenVRFKey(vrfKeyFile)
 	if err != nil {
 		return err

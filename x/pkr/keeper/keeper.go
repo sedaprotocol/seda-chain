@@ -3,19 +3,22 @@ package keeper
 import (
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/core/store"
+	"github.com/cosmos/cosmos-sdk/codec"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
 )
 
 type Keeper struct {
-	Schema  collections.Schema
-	KeyName collections.Item[string]
+	Modules []string
+
+	Schema     collections.Schema
+	PublicKeys collections.Map[collections.Pair[string, string], cryptotypes.PubKey]
 }
 
-func NewKeeper(storeService storetypes.KVStoreService) *Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
-
 	k := Keeper{
-		KeyName: collections.NewItem(sb, types.VRFKeyPrefix, "vrf_key_id", collections.StringValue),
+		PublicKeys: collections.NewMap(sb, types.VRFKeyPrefix, "vrf_key", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollInterfaceValue[cryptotypes.PubKey](cdc)),
 	}
 
 	schema, err := sb.Build()

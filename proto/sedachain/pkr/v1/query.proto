@@ -1,25 +1,26 @@
 syntax = "proto3";
 package sedachain.pkr.v1;
 
+import "google/protobuf/any.proto";
 import "google/api/annotations.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/pkr/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // VRFKeys returns application specific vrf publick keys.
-  rpc VRFKeys(VRFKeysRequest)
-      returns (VRFKeysResponse) {
-    option (google.api.http).get = "/seda-chain/wasm-storage/pkr/vrf_keys";
+  // KeysByApplication returns application specific vrf publick keys.
+  rpc KeysByApplication(KeysByApplicationRequest)
+      returns (KeysByApplicationResponse) {
+    option (google.api.http).get = "/seda-chain/wasm-storage/pkr/keys_by_application";
   }
 }
 
-// VRFKeysRequest ...
-message VRFKeysRequest {
+// KeysByApplicationRequest ...
+message KeysByApplicationRequest {
   string application = 1;
 }
 
-// VRFKeysResponse ...
-message VRFKeysResponse {
-  repeated string names = 1;
+// KeysByApplicationResponse ...
+message KeysByApplicationResponse {
+  repeated google.protobuf.Any keys = 1;
 }
