@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	vrf "github.com/sedaprotocol/vrf-go"
 
@@ -225,13 +226,20 @@ func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
 	return vrfKey, nil
 }
 
-func InitializeVRFKey(config *cfg.Config) (vrfPubKey sdkcrypto.PubKey, err error) {
+func InitializeVRFKey(config *cfg.Config, keyName string) (vrfPubKey sdkcrypto.PubKey, err error) {
 	pvKeyFile := config.PrivValidatorKeyFile()
 	if err := os.MkdirAll(filepath.Dir(pvKeyFile), 0o700); err != nil {
 		return nil, fmt.Errorf("could not create directory %q: %w", filepath.Dir(pvKeyFile), err)
 	}
 
-	vrfKeyFile := PrivValidatorKeyFileToVRFKeyFile(config.PrivValidatorKeyFile())
+	if keyName == "" {
+		keyName = VRFKeyFileName
+	}
+	if !strings.HasSuffix(keyName, ".json") {
+		keyName += ".json"
+	}
+
+	vrfKeyFile := PrivValidatorKeyFileToVRFKeyFile(config.PrivValidatorKeyFile(), keyName)
 	vrfKey, err := LoadOrGenVRFKey(vrfKeyFile)
 	if err != nil {
 		return nil, err
@@ -242,6 +250,6 @@ func InitializeVRFKey(config *cfg.Config) (vrfPubKey sdkcrypto.PubKey, err error
 // PrivValidatorKeyFileToVRFKeyFile returns the path to the VRF key file
 // given a path to the private validator key file. The two files should
 // be placed in the same directory.
-func PrivValidatorKeyFileToVRFKeyFile(pvFile string) string {
-	return filepath.Join(filepath.Dir(pvFile), VRFKeyFileName)
+func PrivValidatorKeyFileToVRFKeyFile(pvFile, keyName string) string {
+	return filepath.Join(filepath.Dir(pvFile), keyName)
 }

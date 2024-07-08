@@ -25,8 +25,9 @@ service Msg {
 message MsgAddVRFKey {
   option (cosmos.msg.v1.signer) = "validator_address";
 
-  string keyid = 1;
-  google.protobuf.Any pubkey = 2 [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
+  string name = 1;
+  string application = 2;
+  google.protobuf.Any pubkey = 3 [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
 }
 
 // MsgAddVrfKeyResponse defines the Msg/CreateValidator response type.

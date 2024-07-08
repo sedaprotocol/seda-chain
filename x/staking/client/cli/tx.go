@@ -105,7 +105,7 @@ where we can get the pubkey using "%s tendermint show-validator"
 				return err
 			}
 
-			validator.VRFPubKey, err = utils.InitializeVRFKey(serverCtx.Config)
+			validator.VRFPubKey, err = utils.InitializeVRFKey(serverCtx.Config, utils.VRFKeyFileName)
 			if err != nil {
 				return errorsmod.Wrap(err, "failed to initialize VRF key")
 			}
