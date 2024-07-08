@@ -23,11 +23,12 @@ service Msg {
 
 // MsgAddVRFKey defines a SDK message for creating a new vrf key.
 message MsgAddVRFKey {
-  option (cosmos.msg.v1.signer) = "validator_address";
+  option (cosmos.msg.v1.signer) = "sender";
 
-  string name = 1;
-  string application = 2;
-  google.protobuf.Any pubkey = 3 [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string name = 2;
+  string application = 3;
+  google.protobuf.Any pubkey = 4 [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
 }
 
 // MsgAddVrfKeyResponse defines the Msg/CreateValidator response type.
