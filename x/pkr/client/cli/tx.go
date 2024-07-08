@@ -11,6 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/sedaprotocol/seda-chain/app/utils"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
 	"github.com/spf13/cobra"
@@ -57,6 +59,7 @@ func AddVRFKey() *cobra.Command {
 				return err
 			}
 			msg := &types.MsgAddVRFKey{
+				Sender:      clientCtx.GetFromAddress().String(),
 				Name:        args[0],
 				Application: args[1],
 				Pubkey:      pkAny,
@@ -65,5 +68,6 @@ func AddVRFKey() *cobra.Command {
 		},
 	}
 
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

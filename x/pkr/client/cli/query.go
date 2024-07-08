@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
 	"github.com/spf13/cobra"
@@ -17,6 +19,36 @@ func GetQueryCmd(_ string) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand()
+	cmd.AddCommand(
+		GetCmdApplicationKeys(),
+	)
+	return cmd
+}
+
+// GetCmdApplicationKeys returns the command for querying Application specific VRF keys.
+func GetCmdApplicationKeys() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get <application>",
+		Short: "Get application/module specific VRF keys.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.KeysByApplicationRequest{
+				Application: args[0],
+			}
+			res, err := queryClient.KeysByApplication(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

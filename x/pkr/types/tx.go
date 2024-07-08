@@ -3,11 +3,15 @@ package types
 import (
 	"slices"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	errorsmod "cosmossdk.io/errors"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 )
 
-func (m *MsgAddVRFKey) ValidateBasic(modules []string) error {
+var _ sdk.Msg = &MsgAddVRFKey{}
+
+func (m *MsgAddVRFKey) Validate(modules []string) error {
 	if m.Pubkey == nil {
 		return ErrNilValue.Wrap("msg.Pubkey")
 	}

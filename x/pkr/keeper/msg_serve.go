@@ -22,7 +22,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 func (m msgServer) AddVrfKey(goCtx context.Context, msg *types.MsgAddVRFKey) (*types.MsgAddVrfKeyResponse, error) {
-	if err := msg.ValidateBasic(m.Modules); err != nil {
+	if err := msg.Validate(m.Modules); err != nil {
 		return nil, err
 	}
 
