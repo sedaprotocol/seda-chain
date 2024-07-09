@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/base64"
 	"errors"
-	"fmt"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 	"github.com/tidwall/gjson"
@@ -41,7 +40,7 @@ func ApplyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
 			return nil, false, errors.New("empty JSON path in filter input [Mode]")
 		}
 
-		return filterMode(dataPath, reveals)
+		return filterMode(reveals, dataPath)
 
 	// TODO: Reactivate standard deviation filter
 	// case filterStdDev:
@@ -56,35 +55,42 @@ func ApplyFilter(filter []byte, reveals []RevealBody) ([]int, bool, error) {
 	}
 }
 
-// filterMode takes in a list of reveals, and a json path to get the
-// filtering data from the RevealBody->reveal.
-// The function returns a list of int where value of each element can be
-// either 0 or 1. At index i Value 1 means RevealBody[i] contains an
-// outlier. If a reveal have MORE THAN 2/3 frequency, than it's not an
-// outlier.
-//
-// The function also returns if a consensus is reached. Consensus can be
-// reached in two ways.
-// 1. More than 1/3 of the reveals are corrupted. i.e. has non-zero exit code.
-// 2. More than 2/3 of the data is the same.
-func filterMode(dataPath string, reveals []RevealBody) ([]int, bool, error) {
-	var maxFreq, nonZeroExitCode int
+// filterMode takes in a list of reveals and a json path to extract
+// the reveal value. It returns an outlier list, a consensus boolean,
+// and an error if applicable.
+// Value of 1 at index i in the outlier list indicates that the i-th
+// reveal is an outlier. Value of 0 indicates a non-outlier reveal.
+// A reveal is an outlier if it has less than or equal to 2/3 frequency.
+// The consensus boolean is true if one of the following criteria is met:
+// 1. More than 1/3 of the reveals are corrupted (non-zero exit code,
+// invalid data path, etc.)
+// 2. More than 2/3 of the reveals are identical.
+func filterMode(reveals []RevealBody, dataPath string) ([]int, bool, error) {
+	var maxFreq, corruptCount int
 	freq := make(map[string]int, len(reveals))
-	revealVals := make([]string, 0, len(reveals))
-
-	for _, r := range reveals {
-		revealBytes, err := base64.StdEncoding.DecodeString(r.Reveal)
-		if err != nil {
-			return nil, false, fmt.Errorf("filterMode: could not base64 decode: <%s>. Err: %w", r.Reveal, err)
-		}
-		val := gjson.GetBytes(revealBytes, dataPath).String()
-		revealVals = append(revealVals, val)
+	revealVals := make([]string, len(reveals))
+	for i, r := range reveals {
 		if r.ExitCode != 0 {
-			nonZeroExitCode++
+			corruptCount++
 			continue
 		}
+
+		// Extract the reveal value to track frequency.
+		revealBytes, err := base64.StdEncoding.DecodeString(r.Reveal)
+		if err != nil {
+			corruptCount++
+			continue
+		}
+		res := gjson.GetBytes(revealBytes, dataPath)
+		if !res.Exists() {
+			corruptCount++
+			continue
+		}
+
+		val := res.String()
 		freq[val]++
 		maxFreq = max(freq[val], maxFreq)
+		revealVals[i] = val
 	}
 
 	outliers := make([]int, len(reveals))
@@ -92,22 +98,22 @@ func filterMode(dataPath string, reveals []RevealBody) ([]int, bool, error) {
 		outliers[i] = 1
 	}
 
-	// If more than 1/3 reveals have non exit code, we reached a consensus that
-	// these are unusable reveals.
-	if nonZeroExitCode*3 > len(reveals) {
+	// If more than 1/3 of the reveals are corrupted,
+	// we reach consensus that the reveals are unusuable.
+	if corruptCount*3 > len(reveals) {
 		return outliers, true, nil
 	}
 
-	// If less than 2/3 matches the max frequency, there is no data-consensus.
+	// If less than 2/3 of the reveals match the max frequency,
+	// there is no consensus.
 	if maxFreq*3 < len(reveals)*2 {
 		return outliers, false, nil
 	}
 
 	for i, r := range revealVals {
-		if freq[r] != maxFreq || reveals[i].ExitCode != 0 {
-			continue
+		if freq[r] == maxFreq {
+			outliers[i] = 0
 		}
-		outliers[i] = 0
 	}
 	return outliers, true, nil
 }

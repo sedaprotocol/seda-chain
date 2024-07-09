@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFilterNone(t *testing.T) {
+func TestFilter(t *testing.T) {
 	tests := []struct {
 		name            string
 		tallyInputAsHex string
@@ -49,13 +49,25 @@ func TestFilterNone(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name:            "Mode filter - At least 2/3 satisfies consensus",
+			name:            "Mode filter - One outlier but consensus",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{0, 0, 1},
 			reveals: []keeper.RevealBody{
 				{Reveal: `{"result": {"text": "A", "number": 0}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 				{Reveal: `{"result": {"text": "B", "number": 101}}`},
+			},
+			consensus: true,
+			wantErr:   nil,
+		},
+		{
+			name:            "Mode filter - One corrupt reveal but consensus",
+			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
+			outliers:        []int{0, 1, 0},
+			reveals: []keeper.RevealBody{
+				{Reveal: `{"result": {"text": "A", "number": 0}}`},
+				{Reveal: `{"resultt": {"text": "A", "number": 10}}`},
+				{Reveal: `{"result": {"text": "A", "number": 101}}`},
 			},
 			consensus: true,
 			wantErr:   nil,
@@ -112,6 +124,21 @@ func TestFilterNone(t *testing.T) {
 					ExitCode: 1,
 					Reveal:   `{"result": {"text": "A", "number": 0}}`,
 				},
+				{Reveal: `{"result": {"text": "A", "number": 10}}`},
+				{Reveal: `{"result": {"text": "A", "number": 101}}`},
+				{Reveal: `{"result": {"text": "B", "number": 10}}`},
+				{Reveal: `{"result": {"text": "C", "number": 10}}`},
+				{Reveal: `{"result": {"text": "A", "number": 10}}`},
+			},
+			consensus: false,
+			wantErr:   nil,
+		},
+		{
+			name:            "Mode filter - Consensus not reached due to corrupt reveal",
+			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
+			outliers:        []int{1, 1, 1, 1, 1, 1},
+			reveals: []keeper.RevealBody{
+				{Reveal: `{"resalt": {"text": "A", "number": 0}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 				{Reveal: `{"result": {"text": "A", "number": 101}}`},
 				{Reveal: `{"result": {"text": "B", "number": 10}}`},

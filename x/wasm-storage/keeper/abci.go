@@ -7,10 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
+
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
+
+	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
@@ -52,6 +56,13 @@ func (k Keeper) ProcessExpiredWasms(ctx sdk.Context) error {
 		if err := k.WasmExpiration.Remove(ctx, collections.Join(blockHeight, wasmHash)); err != nil {
 			return err
 		}
+
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeWasmExpiration,
+				sdk.NewAttribute(types.AttributeWasmHash, hex.EncodeToString(wasmHash)),
+			),
+		)
 	}
 	return nil
 }
@@ -94,7 +105,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	// execution result.
 	for _, req := range tallyList {
 		// Construct barebone sudo message to be posted to the contract
-		// here and populate its results fields after filterAndTally.
+		// here and populate its results fields after FilterAndTally.
 		sudoMsg := Sudo{
 			ID: req.ID,
 			Result: DataResult{
@@ -107,7 +118,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			},
 		}
 
-		vmRes, consensus, err := k.filterAndTally(ctx, req)
+		vmRes, consensus, err := k.FilterAndTally(ctx, req)
 		if err != nil {
 			// Return with exit code 255 to signify that the tally VM
 			// was not executed due to the error specified in the result
@@ -149,15 +160,24 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			"request_id", req.ID,
 			"post_result", postRes,
 		)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeTallyCompletion,
+				sdk.NewAttribute(types.AttributeRequestID, req.ID),
+				sdk.NewAttribute(types.AttributeTypeConsensus, strconv.FormatBool(consensus)),
+			),
+		)
 	}
 
 	return nil
 }
 
-func (k Keeper) filterAndTally(ctx sdk.Context, req Request) (vmRes tallyvm.VmResult, consensus bool, err error) {
+// FilterAndTally applies filter and executes tally. It returns the
+// tally VM result, consensus boolean, and error if applicable.
+func (k Keeper) FilterAndTally(ctx sdk.Context, req Request) (tallyvm.VmResult, bool, error) {
 	filter, err := base64.StdEncoding.DecodeString(req.ConsensusFilter)
 	if err != nil {
-		return vmRes, consensus, fmt.Errorf("failed to decode consensus filter: %w", err)
+		return tallyvm.VmResult{}, false, fmt.Errorf("failed to decode consensus filter: %w", err)
 	}
 
 	// Sort reveals.
@@ -175,25 +195,25 @@ func (k Keeper) filterAndTally(ctx sdk.Context, req Request) (vmRes tallyvm.VmRe
 
 	outliers, consensus, err := ApplyFilter(filter, reveals)
 	if err != nil {
-		return vmRes, consensus, fmt.Errorf("error while applying filter: %w", err)
+		return tallyvm.VmResult{}, false, fmt.Errorf("error while applying filter: %w", err)
 	}
 
 	tallyID, err := hex.DecodeString(req.TallyBinaryID)
 	if err != nil {
-		return vmRes, consensus, fmt.Errorf("failed to decode tally ID to hex: %w", err)
+		return tallyvm.VmResult{}, false, fmt.Errorf("failed to decode tally ID to hex: %w", err)
 	}
 	tallyWasm, err := k.DataRequestWasm.Get(ctx, tallyID)
 	if err != nil {
-		return vmRes, consensus, fmt.Errorf("failed to get tally wasm: %w", err)
+		return tallyvm.VmResult{}, false, fmt.Errorf("failed to get tally wasm: %w", err)
 	}
 	tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
 	if err != nil {
-		return vmRes, consensus, fmt.Errorf("failed to decode tally inputs: %w", err)
+		return tallyvm.VmResult{}, false, fmt.Errorf("failed to decode tally inputs: %w", err)
 	}
 
 	args, err := tallyVMArg(tallyInputs, reveals, outliers)
 	if err != nil {
-		return vmRes, consensus, err
+		return tallyvm.VmResult{}, false, fmt.Errorf("failed to construct tally VM arguments: %w", err)
 	}
 
 	k.Logger(ctx).Info(
@@ -203,7 +223,7 @@ func (k Keeper) filterAndTally(ctx sdk.Context, req Request) (vmRes tallyvm.VmRe
 		"consensus", consensus,
 		"arguments", args,
 	)
-	vmRes = tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
+	vmRes := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
 		"VM_MODE":   "tally",
 		"CONSENSUS": fmt.Sprintf("%v", consensus),
 	})

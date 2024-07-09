@@ -34,7 +34,7 @@ const (
 )
 
 func UnpackModeFilter(filterInput []byte) (string, error) {
-	// Len must be at least 9 = 1 + 8
+	// Len must be at least 9 = 8 + 1
 	if len(filterInput) < ByteLenFilter+ByteLenUint64 {
 		return "", ErrInvalidLen.Wrapf(
 			"len(filterInput): %v < %v", len(filterInput), ByteLenFilter+ByteLenUint64)
