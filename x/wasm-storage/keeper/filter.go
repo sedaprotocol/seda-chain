@@ -99,7 +99,7 @@ func filterMode(reveals []RevealBody, dataPath string) ([]int, bool, error) {
 	}
 
 	// If more than 1/3 of the reveals are corrupted,
-	// we reach consensus that the reveals are unusuable.
+	// we reach consensus that the reveals are unusable.
 	if corruptCount*3 > len(reveals) {
 		return outliers, true, nil
 	}
