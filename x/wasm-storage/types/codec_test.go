@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUnpackModeFilter(t *testing.T) {
+func TestDecodeFilterInput(t *testing.T) {
 	tests := []struct {
 		name    string
 		hexStr  string
@@ -36,26 +36,28 @@ func TestUnpackModeFilter(t *testing.T) {
 			name:    "invalid len - Actual len(data) bigger than encoded len",
 			hexStr:  "010000000000000009242e726573756c742e74657874",
 			want:    "",
-			wantErr: ErrInvalidLen,
+			wantErr: ErrInvalidPathLen,
 		},
 		{
 			name:    "invalid len - Actual len small",
 			hexStr:  "010000000000000019242e726573756c742e74657874",
 			want:    "",
-			wantErr: ErrInvalidLen,
+			wantErr: ErrInvalidPathLen,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b, err := hex.DecodeString(tt.hexStr)
 			require.NoError(t, err)
-			got, err := UnpackModeFilter(b)
+
+			filter := new(FilterMode)
+			err = filter.DecodeFilterInput(b)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tt.want, got)
+			require.Equal(t, tt.want, filter.dataPath)
 		})
 	}
 }

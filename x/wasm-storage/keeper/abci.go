@@ -95,7 +95,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 
 	k.Logger(ctx).Info("non-empty tally list - starting tally process")
 
-	var tallyList []Request
+	var tallyList []types.Request
 	err = json.Unmarshal(queryRes, &tallyList)
 	if err != nil {
 		return err
@@ -106,9 +106,9 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	for _, req := range tallyList {
 		// Construct barebone sudo message to be posted to the contract
 		// here and populate its results fields after FilterAndTally.
-		sudoMsg := Sudo{
+		sudoMsg := types.Sudo{
 			ID: req.ID,
-			Result: DataResult{
+			Result: types.DataResult{
 				Version:        req.Version,
 				ID:             req.ID,
 				BlockHeight:    uint64(ctx.BlockHeight()),
@@ -136,7 +136,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 
 		// Post results to the SEDA contract.
 		msg, err := json.Marshal(struct {
-			PostDataResult Sudo `json:"post_data_result"`
+			PostDataResult types.Sudo `json:"post_data_result"`
 		}{
 			PostDataResult: sudoMsg,
 		})
@@ -174,7 +174,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 
 // FilterAndTally applies filter and executes tally. It returns the
 // tally VM result, consensus boolean, and error if applicable.
-func (k Keeper) FilterAndTally(ctx sdk.Context, req Request) (tallyvm.VmResult, bool, error) {
+func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmResult, bool, error) {
 	filter, err := base64.StdEncoding.DecodeString(req.ConsensusFilter)
 	if err != nil {
 		return tallyvm.VmResult{}, false, fmt.Errorf("failed to decode consensus filter: %w", err)
@@ -188,7 +188,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req Request) (tallyvm.VmResult, 
 		i++
 	}
 	sort.Strings(keys)
-	reveals := make([]RevealBody, len(req.Reveals))
+	reveals := make([]types.RevealBody, len(req.Reveals))
 	for i, k := range keys {
 		reveals[i] = req.Reveals[k]
 	}
@@ -230,7 +230,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req Request) (tallyvm.VmResult, 
 	return vmRes, consensus, nil
 }
 
-func tallyVMArg(inputArgs []byte, reveals []RevealBody, outliers []int) ([]string, error) {
+func tallyVMArg(inputArgs []byte, reveals []types.RevealBody, outliers []int) ([]string, error) {
 	arg := []string{string(inputArgs)}
 
 	r, err := json.Marshal(reveals)

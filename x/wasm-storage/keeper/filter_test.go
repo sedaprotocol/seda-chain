@@ -5,8 +5,10 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
+	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 func TestFilter(t *testing.T) {
@@ -14,7 +16,7 @@ func TestFilter(t *testing.T) {
 		name            string
 		tallyInputAsHex string
 		outliers        []int
-		reveals         []keeper.RevealBody
+		reveals         []types.RevealBody
 		consensus       bool
 		wantErr         error
 	}{
@@ -22,7 +24,7 @@ func TestFilter(t *testing.T) {
 			name:            "None filter",
 			tallyInputAsHex: "00", // filterProp{ Algo: 0}
 			outliers:        []int{0, 0, 0, 0, 0},
-			reveals: []keeper.RevealBody{
+			reveals: []types.RevealBody{
 				{},
 				{},
 				{},
@@ -36,7 +38,7 @@ func TestFilter(t *testing.T) {
 			name:            "Mode filter - Happy Path",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{0, 0, 1, 0, 1, 0, 0},
-			reveals: []keeper.RevealBody{
+			reveals: []types.RevealBody{
 				{Reveal: `{"high_level_prop1":"ignore this", "result": {"text": "A", "number": 0}}`},
 				{Reveal: `{"makes_this_json":"ignore this", "result": {"text": "A", "number": 10}}`},
 				{Reveal: `{"unstructured":"ignore this", "result": {"text": "B", "number": 101}}`},
@@ -52,7 +54,7 @@ func TestFilter(t *testing.T) {
 			name:            "Mode filter - One outlier but consensus",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{0, 0, 1},
-			reveals: []keeper.RevealBody{
+			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": "A", "number": 0}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 				{Reveal: `{"result": {"text": "B", "number": 101}}`},
@@ -64,7 +66,7 @@ func TestFilter(t *testing.T) {
 			name:            "Mode filter - One corrupt reveal but consensus",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{0, 1, 0},
-			reveals: []keeper.RevealBody{
+			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": "A", "number": 0}}`},
 				{Reveal: `{"resultt": {"text": "A", "number": 10}}`},
 				{Reveal: `{"result": {"text": "A", "number": 101}}`},
@@ -76,7 +78,7 @@ func TestFilter(t *testing.T) {
 			name:            "Mode filter - Consensus due to non exit code",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{1, 1, 1, 1, 1, 1},
-			reveals: []keeper.RevealBody{
+			reveals: []types.RevealBody{
 				{
 					ExitCode: 1,
 					Reveal:   `{"high_level_prop1":"ignore this", "result": {"text": "A", "number": 0}}`,
@@ -100,7 +102,7 @@ func TestFilter(t *testing.T) {
 			name:            "Mode filter - Valid reveal marked outlier due to non exit code [still consensus]",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{1, 0, 0, 1, 0, 0, 0},
-			reveals: []keeper.RevealBody{
+			reveals: []types.RevealBody{
 				{
 					ExitCode: 1,
 					Reveal:   `{"xx":"ignore this", "result": {"text": "A", "number": 0}}`,
@@ -119,7 +121,7 @@ func TestFilter(t *testing.T) {
 			name:            "Mode filter - Consensus not reached due to exit code",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{1, 1, 1, 1, 1, 1},
-			reveals: []keeper.RevealBody{
+			reveals: []types.RevealBody{
 				{
 					ExitCode: 1,
 					Reveal:   `{"result": {"text": "A", "number": 0}}`,
@@ -137,7 +139,7 @@ func TestFilter(t *testing.T) {
 			name:            "Mode filter - Consensus not reached due to corrupt reveal",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{1, 1, 1, 1, 1, 1},
-			reveals: []keeper.RevealBody{
+			reveals: []types.RevealBody{
 				{Reveal: `{"resalt": {"text": "A", "number": 0}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 				{Reveal: `{"result": {"text": "A", "number": 101}}`},
