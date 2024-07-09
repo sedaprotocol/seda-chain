@@ -9,10 +9,6 @@ import (
 )
 
 type Filter interface {
-	// DecodeFilterInput parses a given filter input and
-	// populates the receiver.
-	DecodeFilterInput(input []byte) error
-
 	// ApplyFilter applies filter and returns an outlier list,
 	// a consensus boolean, and an error if applicable.
 	ApplyFilter(reveals []RevealBody) ([]int, bool, error)
@@ -25,23 +21,24 @@ type FilterMode struct {
 // Mode filter input looks as follows:
 // 0             1                  9       9+data_path_length
 // | filter_type | data_path_length |   data_path   |
-func (f *FilterMode) DecodeFilterInput(input []byte) error {
+func NewFilterMode(input []byte) (FilterMode, error) {
+	var filter FilterMode
 	if len(input) < 9 {
-		return ErrInvalidFilterInputLen.Wrapf("%d < %d", len(input), 9)
+		return filter, ErrInvalidFilterInputLen.Wrapf("%d < %d", len(input), 9)
 	}
 
 	var pathLen uint64
 	err := binary.Read(bytes.NewReader(input[1:9]), binary.BigEndian, &pathLen)
 	if err != nil {
-		return err
+		return filter, err
 	}
 
 	path := input[9:]
 	if len(path) != int(pathLen) {
-		return ErrInvalidPathLen.Wrapf("expected: %d got: %d", int(pathLen), len(path))
+		return filter, ErrInvalidPathLen.Wrapf("expected: %d got: %d", int(pathLen), len(path))
 	}
-	f.dataPath = string(path)
-	return nil
+	filter.dataPath = string(path)
+	return filter, nil
 }
 
 // ApplyFilter takes in a list of reveals. It returns an outlier list,
@@ -115,32 +112,33 @@ type FilterStdDev struct {
 // Standard deviation filter input looks as follows:
 // 0             1           9             10                 18 18+json_path_length
 // | filter_type | max_sigma | number_type | json_path_length | json_path |
-func (f *FilterStdDev) DecodeFilterInput(input []byte) error {
+func NewFilterStdDev(input []byte) (FilterStdDev, error) {
+	var filter FilterStdDev
 	if len(input) < 18 {
-		return ErrInvalidFilterInputLen.Wrapf("%d < %d", len(input), 18)
+		return filter, ErrInvalidFilterInputLen.Wrapf("%d < %d", len(input), 18)
 	}
 
 	var maxSigma uint64
 	err := binary.Read(bytes.NewReader(input[1:9]), binary.BigEndian, &maxSigma)
 	if err != nil {
-		return err
+		return filter, err
 	}
-	f.maxSigma = maxSigma
+	filter.maxSigma = maxSigma
 
-	f.numberType = input[9]
+	filter.numberType = input[9]
 
 	var pathLen uint64
 	err = binary.Read(bytes.NewReader(input[10:18]), binary.BigEndian, &pathLen)
 	if err != nil {
-		return err
+		return filter, err
 	}
 
 	path := input[18:]
 	if len(path) != int(pathLen) {
-		return ErrInvalidPathLen.Wrapf("expected: %d got: %d", int(pathLen), len(path))
+		return filter, ErrInvalidPathLen.Wrapf("expected: %d got: %d", int(pathLen), len(path))
 	}
-	f.dataPath = string(path)
-	return nil
+	filter.dataPath = string(path)
+	return filter, nil
 }
 
 // TODO
@@ -155,8 +153,8 @@ func (f FilterStdDev) ApplyFilter(reveals []RevealBody) ([]int, bool, error) {
 
 type FilterNone struct{}
 
-func (f *FilterNone) DecodeFilterInput(input []byte) error {
-	return nil
+func NewFilterNone(input []byte) (FilterNone, error) {
+	return FilterNone{}, nil
 }
 
 // FilterNone declares all reveals as non-outliers with consensus.

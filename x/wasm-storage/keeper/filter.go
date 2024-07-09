@@ -25,13 +25,14 @@ func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) 
 	}
 
 	var filter types.Filter
+	var err error
 	switch input[0] {
 	case filterTypeNone:
-		filter = new(types.FilterNone)
+		filter, err = types.NewFilterNone(input)
 	case filterTypeMode:
-		filter = new(types.FilterMode)
+		filter, err = types.NewFilterMode(input)
 	case filterTypeStdDev:
-		filter = new(types.FilterStdDev)
+		filter, err = types.NewFilterStdDev(input)
 	default:
 		// TODO: Return error?
 		outliers := make([]int, len(reveals))
@@ -40,8 +41,6 @@ func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) 
 		}
 		return outliers, false, nil
 	}
-
-	err := filter.DecodeFilterInput(input)
 	if err != nil {
 		return nil, false, err
 	}
