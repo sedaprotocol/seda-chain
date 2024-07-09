@@ -27,16 +27,13 @@ func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) 
 	var filter types.Filter
 	switch input[0] {
 	case filterTypeNone:
-		return make([]int, len(reveals)), true, nil
-
+		filter = new(types.FilterNone)
 	case filterTypeMode:
 		filter = new(types.FilterMode)
-
 	case filterTypeStdDev:
 		filter = new(types.FilterStdDev)
-
-	// TODO: Return error?
 	default:
+		// TODO: Return error?
 		outliers := make([]int, len(reveals))
 		for i := range outliers {
 			outliers[i] = 1

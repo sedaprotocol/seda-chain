@@ -4,22 +4,19 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/binary"
-	"unsafe"
 
 	"github.com/tidwall/gjson"
 )
 
 type Filter interface {
+	// DecodeFilterInput parses a given filter input and
+	// populates the receiver.
 	DecodeFilterInput(input []byte) error
+
+	// ApplyFilter applies filter and returns an outlier list,
+	// a consensus boolean, and an error if applicable.
 	ApplyFilter(reveals []RevealBody) ([]int, bool, error)
 }
-
-const (
-	b             byte   = 0
-	u             uint64 = 0
-	ByteLenFilter        = int(unsafe.Sizeof(b))
-	ByteLenUint64        = int(unsafe.Sizeof(u))
-)
 
 type FilterMode struct {
 	dataPath string // JSON path to reveal data
@@ -116,7 +113,7 @@ type FilterStdDev struct {
 }
 
 // Standard deviation filter input looks as follows:
-// 0             1           9             10                 18    18+json_path_length
+// 0             1           9             10                 18 18+json_path_length
 // | filter_type | max_sigma | number_type | json_path_length | json_path |
 func (f *FilterStdDev) DecodeFilterInput(input []byte) error {
 	if len(input) < 18 {
@@ -154,4 +151,15 @@ func (f FilterStdDev) ApplyFilter(reveals []RevealBody) ([]int, bool, error) {
 	}
 
 	return outliers, true, nil
+}
+
+type FilterNone struct{}
+
+func (f *FilterNone) DecodeFilterInput(input []byte) error {
+	return nil
+}
+
+// FilterNone declares all reveals as non-outliers with consensus.
+func (f FilterNone) ApplyFilter(reveals []RevealBody) ([]int, bool, error) {
+	return make([]int, len(reveals)), true, nil
 }
