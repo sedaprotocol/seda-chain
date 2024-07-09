@@ -50,8 +50,7 @@ func TestDecodeFilterInput(t *testing.T) {
 			b, err := hex.DecodeString(tt.hexStr)
 			require.NoError(t, err)
 
-			filter := new(FilterMode)
-			err = filter.DecodeFilterInput(b)
+			filter, err := NewFilterMode(b)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
