@@ -201,11 +201,6 @@ func initFixture(tb testing.TB) *fixture {
 	err = wasmStorageKeeper.ProxyContractRegistry.Set(ctx, contractAddr.String())
 	require.NoError(tb, err)
 
-	// Store the sample tally that will be used.
-	tallyWasm := types.NewWasm(testdata.SampleTallyWasm(), types.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), 100)
-	err = wasmStorageKeeper.DataRequestWasm.Set(ctx, tallyWasm.Hash, tallyWasm)
-	require.NoError(tb, err)
-
 	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, map[string]appmodule.AppModule{
 		authtypes.ModuleName:       authModule,
 		banktypes.ModuleName:       bankModule,

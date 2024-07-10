@@ -231,7 +231,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmRe
 }
 
 func tallyVMArg(inputArgs []byte, reveals []types.RevealBody, outliers []int) ([]string, error) {
-	arg := []string{string(inputArgs)}
+	arg := []string{hex.EncodeToString(inputArgs)}
 
 	r, err := json.Marshal(reveals)
 	if err != nil {

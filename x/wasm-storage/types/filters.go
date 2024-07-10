@@ -153,7 +153,7 @@ func (f FilterStdDev) ApplyFilter(reveals []RevealBody) ([]int, bool, error) {
 
 type FilterNone struct{}
 
-func NewFilterNone(input []byte) (FilterNone, error) {
+func NewFilterNone(_ []byte) (FilterNone, error) {
 	return FilterNone{}, nil
 }
 
