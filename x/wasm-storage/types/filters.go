@@ -158,19 +158,31 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma ui
 	rt := reflect.TypeOf(z)
 	numbers := make([]T, length)
 	for i, data := range dataList {
-		dataBytes, err := base64.StdEncoding.DecodeString(data)
+		bz, err := base64.StdEncoding.DecodeString(data)
 		if err != nil {
+			corruptCount++
+			continue
+		}
+		if len(bz) != int(rt.Size()) {
 			corruptCount++
 			continue
 		}
 
 		switch rt.Kind() {
+		case reflect.Int32:
+			var num int32
+			binary.Read(bytes.NewBuffer(bz), binary.BigEndian, &num)
+			numbers[i] = T(num)
+		case reflect.Int64:
+			var num int64
+			binary.Read(bytes.NewBuffer(bz), binary.BigEndian, &num)
+			numbers[i] = T(num)
+		case reflect.Uint32:
+			num := binary.BigEndian.Uint32(bz)
+			numbers[i] = T(num)
 		case reflect.Uint64:
-			// TODO length check?
-			data := binary.BigEndian.Uint64(dataBytes)
-			numbers[i] = T(data)
-
-		// TODO: Support other types
+			num := binary.BigEndian.Uint64(bz)
+			numbers[i] = T(num)
 		default:
 			panic("invalid number type") // TODO should never end up here
 		}
