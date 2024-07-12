@@ -198,6 +198,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmRe
 
 	outliers, consensus, err := ApplyFilter(filter, reveals)
 	if err != nil {
+		// TODO: Slash outliers
 		return tallyvm.VmResult{}, false, fmt.Errorf("error while applying filter: %w", err)
 	}
 

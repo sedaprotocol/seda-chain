@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/binary"
-	"fmt"
 	"reflect"
 	"slices"
 
@@ -12,9 +11,11 @@ import (
 )
 
 type Filter interface {
-	// ApplyFilter applies filter and returns an outlier list,
-	// a consensus boolean, and an error if applicable.
-	ApplyFilter(reveals []RevealBody) ([]int, bool, error)
+	// ApplyFilter takes in a list of reveals and returns an outlier
+	// list, whose value at index i indicates whether i-th reveal is
+	// an outlier. Value of 1 indicates an outlier, and value of 0
+	// indicates a non-outlier reveal.
+	ApplyFilter(reveals []RevealBody) ([]int, error)
 }
 
 type FilterMode struct {
@@ -44,35 +45,28 @@ func NewFilterMode(input []byte) (FilterMode, error) {
 	return filter, nil
 }
 
-// ApplyFilter takes in a list of reveals. It returns an outlier list,
-// a consensus boolean, and an error if applicable.
-// Value of 1 at index i in the outlier list indicates that the i-th
-// reveal is an outlier. Value of 0 indicates a non-outlier reveal.
-// A reveal is an outlier if it has less than or equal to 2/3 frequency.
-// The consensus boolean is true if one of the following criteria is met:
-// 1. More than 1/3 of the reveals are corrupted (non-zero exit code,
-// invalid data path, etc.)
-// 2. More than 2/3 of the reveals are identical.
-func (f FilterMode) ApplyFilter(reveals []RevealBody) ([]int, bool, error) {
-	dataList, outliers, consensus, freq, maxFreq := ParseReveals(reveals, f.dataPath)
-	if dataList == nil {
-		return outliers, consensus, nil
+// ApplyFilter applies the Mode Filter and returns an outlier list.
+// (i) If more than 1/3 of reveals are corrupted, a corrupt reveals
+// error is returned without an outlier list.
+// (ii) Otherwise, a reveal is declared an outlier if it does not
+// match the mode value. If less than 2/3 of the reveals are outliers,
+// no consensus error is returned along with an outlier list.
+func (f FilterMode) ApplyFilter(reveals []RevealBody) ([]int, error) {
+	dataList, dataAttrs, err := parseReveals(reveals, f.dataPath)
+	if err != nil {
+		return nil, err
 	}
 
-	outliers = allOutlierList(len(dataList))
-
-	// If less than 2/3 of the reveals match the max frequency,
-	// there is no consensus.
-	if maxFreq*3 < len(reveals)*2 {
-		return outliers, false, nil
-	}
-
+	outliers := make([]int, len(reveals))
 	for i, r := range dataList {
-		if freq[r] == maxFreq {
-			outliers[i] = 0
+		if dataAttrs.freqMap[r] != dataAttrs.maxFreq {
+			outliers[i] = 1
 		}
 	}
-	return outliers, true, nil
+	if dataAttrs.maxFreq*3 < len(reveals)*2 {
+		return outliers, ErrNoConsensus
+	}
+	return outliers, nil
 }
 
 type FilterStdDev struct {
@@ -113,21 +107,31 @@ func NewFilterStdDev(input []byte) (FilterStdDev, error) {
 	return filter, nil
 }
 
-// TODO Add comments
-func (f FilterStdDev) ApplyFilter(reveals []RevealBody) ([]int, bool, error) {
-	dataList, outliers, consensus, _, _ := ParseReveals(reveals, f.dataPath)
-	if dataList == nil {
-		return outliers, consensus, nil
+// ApplyFilter applies the Standard Deviation Filter and returns an
+// outlier list.
+// (i) If more than 1/3 of reveals are corrupted (i.e. invalid json
+// path, invalid bytes, etc.), a corrupt reveals error is returned
+// without an outlier list.
+// (ii) If the number type is invalid, an error is returned without
+// an outlier list.
+// (iii) Otherwise, an outlier list is returned. A reveal is declared
+// an outlier if it deviates from the median by more than the given
+// max sigma. If less than 2/3 of the reveals are outliers, no consensus
+// error is returned as well.
+func (f FilterStdDev) ApplyFilter(reveals []RevealBody) ([]int, error) {
+	dataList, _, err := parseReveals(reveals, f.dataPath)
+	if err != nil {
+		return nil, err
 	}
 
-	outliers, consensus, err := f.DetectOutliers(dataList)
+	outliers, err := f.DetectOutliers(dataList)
 	if err != nil {
-		return outliers, consensus, err
+		return outliers, err
 	}
-	return outliers, true, nil
+	return outliers, nil
 }
 
-func (f FilterStdDev) DetectOutliers(dataList []string) ([]int, bool, error) {
+func (f FilterStdDev) DetectOutliers(dataList []string) ([]int, error) {
 	switch f.numberType {
 	case 0x00: // Int32
 		return detectOutliersInteger[int32](dataList, f.maxSigma)
@@ -139,14 +143,11 @@ func (f FilterStdDev) DetectOutliers(dataList []string) ([]int, bool, error) {
 		return detectOutliersInteger[uint64](dataList, f.maxSigma)
 	// TODO: Support other types
 	default:
-		return nil, false, fmt.Errorf("invalid number type")
+		return nil, ErrInvalidNumberType
 	}
 }
 
-// detectOutliersInteger converts a list of data in string to a list of
-// numbers.
-// TODO elaborate comment
-func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma uint64) ([]int, bool, error) {
+func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma uint64) ([]int, error) {
 	length := len(dataList)
 	if length == 0 {
 		panic("zero data list length") // TODO should never end up here?
@@ -178,7 +179,7 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma ui
 	// If more than 1/3 of the reveals are corrupted,
 	// we reach consensus that the reveals are unusable.
 	if corruptCount*3 > length {
-		return allOutlierList(length), true, nil
+		return nil, ErrCorruptReveals
 	}
 
 	// Sort and find median.
@@ -210,9 +211,9 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma ui
 	// If less than 2/3 of the numbers fall within max sigma range
 	// from the median, there is no consensus.
 	if nonOutlierCount*3 < len(numbers)*2 {
-		return nil, false, nil
+		return outliers, ErrNoConsensus
 	}
-	return outliers, true, nil
+	return outliers, nil
 }
 
 func isOutlier[T constraints.Integer](maxSigma uint64, num, median T, medianHalf bool) bool {
@@ -246,6 +247,6 @@ func NewFilterNone(_ []byte) (FilterNone, error) {
 }
 
 // FilterNone declares all reveals as non-outliers with consensus.
-func (f FilterNone) ApplyFilter(reveals []RevealBody) ([]int, bool, error) {
-	return make([]int, len(reveals)), true, nil
+func (f FilterNone) ApplyFilter(reveals []RevealBody) ([]int, error) {
+	return make([]int, len(reveals)), nil
 }

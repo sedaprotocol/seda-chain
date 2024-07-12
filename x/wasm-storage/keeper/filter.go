@@ -14,8 +14,9 @@ const (
 // consensus filter. It returns an outlier list, which is a boolean list where
 // true at index i means that the reveal at index i is an outlier, consensus
 // boolean, and error.
+// TODO No need to return bool - Bc if error is not ErrNoConsensus, consensus=true
 func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) {
-	// TODO: Return error?
+	// TODO: Return invalid filter input error instead
 	if len(input) < 1 {
 		outliers := make([]int, len(reveals))
 		for i := range outliers {
@@ -34,7 +35,7 @@ func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) 
 	case filterTypeStdDev:
 		filter, err = types.NewFilterStdDev(input)
 	default:
-		// TODO: Return error?
+		// TODO: Return error instead?
 		outliers := make([]int, len(reveals))
 		for i := range outliers {
 			outliers[i] = 1
@@ -44,5 +45,23 @@ func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) 
 	if err != nil {
 		return nil, false, err
 	}
-	return filter.ApplyFilter(reveals)
+
+	outliers, err := filter.ApplyFilter(reveals)
+	if err != nil {
+		if err == types.ErrCorruptReveals {
+			return allOutliers(len(reveals)), true, err
+		} else if err == types.ErrNoConsensus {
+			return outliers, false, err
+		}
+		return nil, false, err
+	}
+	return outliers, true, nil
+}
+
+func allOutliers(length int) []int {
+	outliers := make([]int, length)
+	for i := 0; i < len(outliers); i++ {
+		outliers[i] = 1
+	}
+	return outliers
 }

@@ -22,7 +22,7 @@ func TestFilter(t *testing.T) {
 	}{
 		{
 			name:            "None filter",
-			tallyInputAsHex: "00", // filterProp{ Algo: 0}
+			tallyInputAsHex: "00",
 			outliers:        []int{0, 0, 0, 0, 0},
 			reveals: []types.RevealBody{
 				{},
@@ -96,7 +96,7 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"matter":"ignore this", "result": {"text": "C", "number": 10}}`},
 			},
 			consensus: true,
-			wantErr:   nil,
+			wantErr:   types.ErrCorruptReveals,
 		},
 		{
 			name:            "Mode filter - Valid reveal marked outlier due to non exit code [still consensus]",
@@ -133,7 +133,7 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 			},
 			consensus: false,
-			wantErr:   nil,
+			wantErr:   types.ErrNoConsensus,
 		},
 		{
 			name:            "Mode filter - Consensus not reached due to corrupt reveal",
@@ -148,11 +148,11 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 			},
 			consensus: false,
-			wantErr:   nil,
+			wantErr:   types.ErrNoConsensus,
 		},
 		{
-			name:            "Standard deviation filter - One outlier but consensus",
-			tallyInputAsHex: "02000000000016E36003000000000000000B726573756C742E74657874",
+			name:            "Standard deviation filter",
+			tallyInputAsHex: "02000000000016E36003000000000000000B726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = result.text
 			outliers:        []int{1, 0, 0, 0, 0, 1},
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`},   // 4
