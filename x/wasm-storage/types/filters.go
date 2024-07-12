@@ -171,11 +171,19 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma ui
 		switch rt.Kind() {
 		case reflect.Int32:
 			var num int32
-			binary.Read(bytes.NewBuffer(bz), binary.BigEndian, &num)
+			err = binary.Read(bytes.NewBuffer(bz), binary.BigEndian, &num)
+			if err != nil {
+				corruptCount++
+				continue
+			}
 			numbers[i] = T(num)
 		case reflect.Int64:
 			var num int64
-			binary.Read(bytes.NewBuffer(bz), binary.BigEndian, &num)
+			err = binary.Read(bytes.NewBuffer(bz), binary.BigEndian, &num)
+			if err != nil {
+				corruptCount++
+				continue
+			}
 			numbers[i] = T(num)
 		case reflect.Uint32:
 			num := binary.BigEndian.Uint32(bz)

@@ -151,8 +151,24 @@ func TestFilter(t *testing.T) {
 			wantErr:   types.ErrNoConsensus,
 		},
 		{
-			name:            "Standard deviation filter",
+			name:            "Standard deviation filter uint64",
 			tallyInputAsHex: "02000000000016E36003000000000000000B726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = result.text
+			outliers:        []int{1, 0, 0, 0, 0, 1},
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`},   // 4
+				{Reveal: `{"result": {"text": "AAAAAAAAAAU=", "number": 10}}`},  // 5
+				{Reveal: `{"result": {"text": "AAAAAAAAAAY=", "number": 101}}`}, // 6
+				{Reveal: `{"result": {"text": "AAAAAAAAAAc=", "number": 0}}`},   // 7
+				{Reveal: `{"result": {"text": "AAAAAAAAAAg=", "number": 0}}`},   // 8
+				{Reveal: `{"result": {"text": "AAAAAAAAAAk=", "number": 0}}`},   // 9
+
+			},
+			consensus: true,
+			wantErr:   nil,
+		},
+		{
+			name:            "Standard deviation filter int64",
+			tallyInputAsHex: "02000000000016E36001000000000000000b726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = result.text
 			outliers:        []int{1, 0, 0, 0, 0, 1},
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`},   // 4
@@ -182,7 +198,6 @@ func TestFilter(t *testing.T) {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
-
 			require.NoError(t, err)
 			require.Equal(t, tt.outliers, outliers)
 			require.Equal(t, tt.consensus, cons)
