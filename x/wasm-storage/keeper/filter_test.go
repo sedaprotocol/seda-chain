@@ -150,6 +150,22 @@ func TestFilter(t *testing.T) {
 			consensus: false,
 			wantErr:   nil,
 		},
+		{
+			name:            "Standard deviation filter - One outlier but consensus",
+			tallyInputAsHex: "02000000000016E36003000000000000000B726573756C742E74657874",
+			outliers:        []int{1, 0, 0, 0, 0, 1},
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`},   // 4
+				{Reveal: `{"result": {"text": "AAAAAAAAAAU=", "number": 10}}`},  // 5
+				{Reveal: `{"result": {"text": "AAAAAAAAAAY=", "number": 101}}`}, // 6
+				{Reveal: `{"result": {"text": "AAAAAAAAAAc=", "number": 0}}`},   // 7
+				{Reveal: `{"result": {"text": "AAAAAAAAAAg=", "number": 0}}`},   // 8
+				{Reveal: `{"result": {"text": "AAAAAAAAAAk=", "number": 0}}`},   // 9
+
+			},
+			consensus: true,
+			wantErr:   nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
