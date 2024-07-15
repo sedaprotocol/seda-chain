@@ -51,10 +51,10 @@ func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) 
 	switch {
 	case err == nil:
 		return outliers, true, nil
+	case errors.Is(err, types.ErrNoConsensus):
+		return outliers, false, nil
 	case errors.Is(err, types.ErrCorruptReveals):
 		return allOutliers(len(reveals)), true, err
-	case errors.Is(err, types.ErrNoConsensus):
-		return outliers, false, err
 	default:
 		return nil, false, err
 	}

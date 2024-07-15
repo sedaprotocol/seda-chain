@@ -120,7 +120,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - Consensus not reached due to exit code",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
-			outliers:        []int{1, 1, 1, 1, 1, 1},
+			outliers:        []int{1, 0, 0, 1, 1, 0},
 			reveals: []types.RevealBody{
 				{
 					ExitCode: 1,
@@ -133,12 +133,12 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 			},
 			consensus: false,
-			wantErr:   types.ErrNoConsensus,
+			wantErr:   nil,
 		},
 		{
 			name:            "Mode filter - Consensus not reached due to corrupt reveal",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
-			outliers:        []int{1, 1, 1, 1, 1, 1},
+			outliers:        []int{1, 0, 0, 1, 1, 0},
 			reveals: []types.RevealBody{
 				{Reveal: `{"resalt": {"text": "A", "number": 0}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
@@ -148,7 +148,7 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 			},
 			consensus: false,
-			wantErr:   types.ErrNoConsensus,
+			wantErr:   nil,
 		},
 		{
 			name:            "Standard deviation filter uint64",
@@ -199,6 +199,19 @@ func TestFilter(t *testing.T) {
 			},
 			consensus: true,
 			wantErr:   nil,
+		},
+		{
+			name:            "Standard deviation filter - One corrupt reveal",
+			tallyInputAsHex: "02000000000016E36001000000000000000b726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = result.text
+			outliers:        []int{1, 0, 0, 0, 1, 1},
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`},   // 4
+				{Reveal: `{"result": {"text": "AAAAAAAAAAU=", "number": 10}}`},  // 5
+				{Reveal: `{"result": {"text": "AAAAAAAAAAY=", "number": 101}}`}, // 6
+				{Reveal: `{"result": {"text": "AAAAAAAAAAc=", "number": 0}}`},   // 7
+				{Reveal: `{"result": {"number": 0}}`},                           // 8
+				{Reveal: `{"result": {"text": "AAAAAAAAAAk=", "number": 0}}`},   // 9
+			},
 		},
 	}
 	for _, tt := range tests {

@@ -11,12 +11,13 @@ type dataAttributes struct {
 	maxFreq int            // frequency of most frequent data in data list
 }
 
-// parseReveals parses a list of RevealBody objects using a given
-// data path and returns a data list. However, if more than 1/3 of
-// the reveals are corrupted (i.e. cannot be parsed), no data list
-// is returned and ErrCorruptReveals error is returned. When there
-// is no error, it also returns dataAttributes struct since some
-// filters require this information.
+// parseReveals parses a list of RevealBody objects using a given data
+// path and returns a data list. However, if more than 1/3 of the reveals
+// are corrupted (i.e. cannot be parsed), no data list is returned and
+// ErrCorruptReveals error is returned. When there is no error, it also
+// returns dataAttributes struct since some filters require this information.
+// Note that when an i-th reveal is corrupted, the i-th item in the data
+// list is left as an empty string.
 func parseReveals(reveals []RevealBody, dataPath string) ([]string, dataAttributes, error) {
 	if len(reveals) == 0 {
 		return nil, dataAttributes{}, ErrEmptyReveals
