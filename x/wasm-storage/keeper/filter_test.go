@@ -167,7 +167,7 @@ func TestFilter(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name:            "Standard deviation filter int64",
+			name:            "Standard deviation filter",
 			tallyInputAsHex: "02000000000016E36001000000000000000b726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = result.text
 			outliers:        []int{1, 0, 0, 0, 0, 1},
 			reveals: []types.RevealBody{
@@ -178,6 +178,24 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "AAAAAAAAAAg=", "number": 0}}`},   // 8
 				{Reveal: `{"result": {"text": "AAAAAAAAAAk=", "number": 0}}`},   // 9
 
+			},
+			consensus: true,
+			wantErr:   nil,
+		},
+		{
+			name:            "Standard deviation filter - Empty reveal",
+			tallyInputAsHex: "02000000000016E36001000000000000000b726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = result.text
+			outliers:        []int{0},
+			reveals:         []types.RevealBody{},
+			consensus:       true,
+			wantErr:         types.ErrEmptyReveals,
+		},
+		{
+			name:            "Standard deviation filter - Single reveal",
+			tallyInputAsHex: "02000000000016E36001000000000000000b726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = result.text
+			outliers:        []int{0},
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`}, // 4
 			},
 			consensus: true,
 			wantErr:   nil,

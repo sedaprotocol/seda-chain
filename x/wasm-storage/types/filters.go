@@ -22,6 +22,8 @@ type FilterMode struct {
 	dataPath string // JSON path to reveal data
 }
 
+// NewFilterMode constructs a new FilerMode object given a filter
+// input.
 // Mode filter input looks as follows:
 // 0             1                  9       9+data_path_length
 // | filter_type | data_path_length |   data_path   |
@@ -75,6 +77,8 @@ type FilterStdDev struct {
 	dataPath   string // JSON path to reveal data
 }
 
+// NewFilterStdDev constructs a new FilterStdDev object given a
+// filter input.
 // Standard deviation filter input looks as follows:
 // 0             1           9             10                 18 18+json_path_length
 // | filter_type | max_sigma | number_type | json_path_length | json_path |
@@ -124,14 +128,14 @@ func (f FilterStdDev) ApplyFilter(reveals []RevealBody) ([]int, error) {
 		return nil, err
 	}
 
-	outliers, err := f.DetectOutliers(dataList)
+	outliers, err := f.detectOutliers(dataList)
 	if err != nil {
 		return outliers, err
 	}
 	return outliers, nil
 }
 
-func (f FilterStdDev) DetectOutliers(dataList []string) ([]int, error) {
+func (f FilterStdDev) detectOutliers(dataList []string) ([]int, error) {
 	switch f.numberType {
 	case 0x00: // Int32
 		return detectOutliersInteger[int32](dataList, f.maxSigma)
@@ -141,21 +145,16 @@ func (f FilterStdDev) DetectOutliers(dataList []string) ([]int, error) {
 		return detectOutliersInteger[uint32](dataList, f.maxSigma)
 	case 0x03: // Uint64
 		return detectOutliersInteger[uint64](dataList, f.maxSigma)
-	// TODO: Support other types
 	default:
 		return nil, ErrInvalidNumberType
 	}
 }
 
 func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma uint64) ([]int, error) {
-	length := len(dataList)
-	if length == 0 {
-		panic("zero data list length") // TODO should never end up here?
-	}
-
 	var corruptCount int
 	var z T
 	rt := reflect.TypeOf(z)
+	length := len(dataList)
 	numbers := make([]T, length)
 	for i, data := range dataList {
 		bz, err := base64.StdEncoding.DecodeString(data)
@@ -238,14 +237,15 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma ui
 
 func isOutlier[T constraints.Integer](maxSigma uint64, num, median T, medianHalf bool) bool {
 	var diff uint64
-	if median > num {
+	switch {
+	case median > num:
 		diff = uint64(median - num) // + 0.5 if medianHalf=true
-	} else if median < num {
+	case median < num:
 		diff = uint64(num - median) // - 0.5 if medianHalf=true
 		if medianHalf {
 			diff--
 		}
-	} else {
+	case median == num:
 		return false
 	}
 
@@ -262,11 +262,12 @@ func isOutlier[T constraints.Integer](maxSigma uint64, num, median T, medianHalf
 
 type FilterNone struct{}
 
+// NewFilterNone constructs a new FilterNone object.
 func NewFilterNone(_ []byte) (FilterNone, error) {
 	return FilterNone{}, nil
 }
 
-// FilterNone declares all reveals as non-outliers with consensus.
+// FilterNone declares all reveals as non-outliers.
 func (f FilterNone) ApplyFilter(reveals []RevealBody) ([]int, error) {
 	return make([]int, len(reveals)), nil
 }

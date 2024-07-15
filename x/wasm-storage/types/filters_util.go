@@ -18,6 +18,10 @@ type dataAttributes struct {
 // is no error, it also returns dataAttributes struct since some
 // filters require this information.
 func parseReveals(reveals []RevealBody, dataPath string) ([]string, dataAttributes, error) {
+	if len(reveals) == 0 {
+		return nil, dataAttributes{}, ErrEmptyReveals
+	}
+
 	var maxFreq, corruptCount int
 	freq := make(map[string]int, len(reveals))
 	dataList := make([]string, len(reveals))
