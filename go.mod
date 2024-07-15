@@ -40,7 +40,6 @@ require (
 	github.com/hashicorp/go-hclog v1.6.2
 	github.com/hashicorp/go-metrics v0.5.3
 	github.com/hashicorp/go-plugin v1.6.0
-	github.com/josharian/atox v0.0.0-20220719193034-5fa70815fecc
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.32.0
