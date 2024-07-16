@@ -17,13 +17,8 @@ const (
 // a boolean list where true at index i means that the reveal at
 // index i is an outlier, consensus boolean, and error.
 func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) {
-	// TODO: Return invalid filter input error instead?
 	if len(input) < 1 {
-		outliers := make([]int, len(reveals))
-		for i := range outliers {
-			outliers[i] = 1
-		}
-		return outliers, false, nil
+		return make([]int, len(reveals)), false, types.ErrInvalidFilterType
 	}
 
 	var filter types.Filter
@@ -36,15 +31,10 @@ func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) 
 	case filterTypeStdDev:
 		filter, err = types.NewFilterStdDev(input)
 	default:
-		// TODO: Return invalid filter input error instead?
-		outliers := make([]int, len(reveals))
-		for i := range outliers {
-			outliers[i] = 1
-		}
-		return outliers, false, nil
+		return make([]int, len(reveals)), false, types.ErrInvalidFilterType
 	}
 	if err != nil {
-		return nil, false, err
+		return make([]int, len(reveals)), false, err
 	}
 
 	outliers, err := filter.ApplyFilter(reveals)
@@ -54,16 +44,8 @@ func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) 
 	case errors.Is(err, types.ErrNoConsensus):
 		return outliers, false, nil
 	case errors.Is(err, types.ErrCorruptReveals):
-		return allOutliers(len(reveals)), true, err
+		return make([]int, len(reveals)), false, err
 	default:
-		return nil, false, err
+		return make([]int, len(reveals)), false, err
 	}
-}
-
-func allOutliers(length int) []int {
-	outliers := make([]int, length)
-	for i := 0; i < len(outliers); i++ {
-		outliers[i] = 1
-	}
-	return outliers
 }

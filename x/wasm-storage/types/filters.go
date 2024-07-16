@@ -155,8 +155,8 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma ui
 	var corruptCount int
 	var corruptInds []int
 	var z T
-	rt := reflect.TypeOf(z)
-	length := len(dataList)
+	typeSize := int(reflect.TypeOf(z).Size())
+	dataLen := len(dataList)
 	for i, data := range dataList {
 		if data == "" {
 			corruptCount++
@@ -170,54 +170,61 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma ui
 			corruptInds = append(corruptInds, i)
 			continue
 		}
-		if len(bz) != int(rt.Size()) {
+		if len(bz) != typeSize {
 			corruptCount++
 			corruptInds = append(corruptInds, i)
 			continue
 		}
 
-		switch rt.Kind() {
-		case reflect.Int32:
-			var num int32
-			err = binary.Read(bytes.NewBuffer(bz), binary.BigEndian, &num)
-			if err != nil {
-				corruptCount++
-				corruptInds = append(corruptInds, i)
-				continue
-			}
-			nums = append(nums, T(num))
-
-		case reflect.Int64:
-			var num int64
-			err = binary.Read(bytes.NewBuffer(bz), binary.BigEndian, &num)
-			if err != nil {
-				corruptCount++
-				corruptInds = append(corruptInds, i)
-				continue
-			}
-			nums = append(nums, T(num))
-
-		case reflect.Uint32:
-			num := binary.BigEndian.Uint32(bz)
-			nums = append(nums, T(num))
-
-		case reflect.Uint64:
-			num := binary.BigEndian.Uint64(bz)
-			nums = append(nums, T(num))
-
-		default:
-			panic("invalid number type") // TODO should never end up here
+		var num T
+		err = binary.Read(bytes.NewBuffer(bz), binary.BigEndian, &num)
+		if err != nil {
+			corruptCount++
+			corruptInds = append(corruptInds, i)
+			continue
 		}
+		nums = append(nums, T(num))
 	}
 
 	// If more than 1/3 of the reveals are corrupted,
 	// we reach consensus that the reveals are unusable.
-	if corruptCount*3 > length {
+	if corruptCount*3 > dataLen {
 		return nil, ErrCorruptReveals
 	}
 
+	// Identify outliers and keep their count.
+	median, medianHalf := findMedian(nums)
+	outliers := make([]int, dataLen)
+	var nonOutlierCount int
+	i, j := 0, 0 // i tracks nums and j tracks corruptInds
+	for i+j < dataLen {
+		if corruptCount > 0 && i+j == corruptInds[j] {
+			outliers[i+j] = 1
+			corruptCount--
+			j++
+			continue
+		}
+
+		if isOutlier(maxSigma, nums[i], median, medianHalf) {
+			outliers[i+j] = 1
+		} else {
+			nonOutlierCount++
+		}
+		i++
+	}
+
+	// If less than 2/3 of the numbers fall within max sigma range
+	// from the median, there is no consensus.
+	if nonOutlierCount*3 < len(nums)*2 {
+		return outliers, ErrNoConsensus
+	}
+	return outliers, nil
+}
+
+func findMedian[T constraints.Integer](nums []T) (T, bool) {
 	// Sort and find median.
-	numsSorted := make([]T, len(nums))
+	length := len(nums)
+	numsSorted := make([]T, length)
 	copy(numsSorted, nums)
 	slices.Sort(numsSorted)
 
@@ -233,32 +240,7 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma ui
 			medianHalf = true
 		}
 	}
-
-	// Identify outliers and keep their count.
-	outliers := make([]int, len(dataList))
-	var nonOutlierCount int
-	i, j := 0, 0 // i tracks nums and j tracks corruptInds.
-	for i+j < len(dataList) {
-		if corruptCount > 0 && i+j == corruptInds[j] {
-			outliers[i+j] = 1
-			corruptCount--
-			j++
-			continue
-		}
-		if isOutlier(maxSigma, nums[i], median, medianHalf) {
-			outliers[i+j] = 1
-		} else {
-			nonOutlierCount++
-		}
-		i++
-	}
-
-	// If less than 2/3 of the numbers fall within max sigma range
-	// from the median, there is no consensus.
-	if nonOutlierCount*3 < len(nums)*2 {
-		return outliers, ErrNoConsensus
-	}
-	return outliers, nil
+	return median, medianHalf
 }
 
 func isOutlier[T constraints.Integer](maxSigma uint64, num, median T, medianHalf bool) bool {
@@ -281,7 +263,7 @@ func isOutlier[T constraints.Integer](maxSigma uint64, num, median T, medianHalf
 		// Means that diff = int(maxSigma) + 0.5
 		// so now check that maxSigma's decimal part is > 0.5
 		// by checking that last 6 digits of maxSigma
-		return maxSigma%1e6 > 5e6
+		return maxSigma%1e6 < 5e5
 	}
 	return false
 }
