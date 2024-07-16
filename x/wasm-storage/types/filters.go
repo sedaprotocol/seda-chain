@@ -18,6 +18,18 @@ type Filter interface {
 	ApplyFilter(reveals []RevealBody) ([]int, error)
 }
 
+type FilterNone struct{}
+
+// NewFilterNone constructs a new FilterNone object.
+func NewFilterNone(_ []byte) (FilterNone, error) {
+	return FilterNone{}, nil
+}
+
+// FilterNone declares all reveals as non-outliers.
+func (f FilterNone) ApplyFilter(reveals []RevealBody) ([]int, error) {
+	return make([]int, len(reveals)), nil
+}
+
 type FilterMode struct {
 	dataPath string // JSON path to reveal data
 }
@@ -152,65 +164,55 @@ func (f FilterStdDev) detectOutliers(dataList []string) ([]int, error) {
 
 func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma uint64) ([]int, error) {
 	var nums []T
-	var corruptCount int
-	var corruptInds []int
+	var corruptQueue []int // queue of corrupt indices in dataList
 	var z T
 	typeSize := int(reflect.TypeOf(z).Size())
-	dataLen := len(dataList)
 	for i, data := range dataList {
 		if data == "" {
-			corruptCount++
-			corruptInds = append(corruptInds, i)
+			corruptQueue = append(corruptQueue, i)
 			continue
 		}
-
 		bz, err := base64.StdEncoding.DecodeString(data)
 		if err != nil {
-			corruptCount++
-			corruptInds = append(corruptInds, i)
+			corruptQueue = append(corruptQueue, i)
 			continue
 		}
 		if len(bz) != typeSize {
-			corruptCount++
-			corruptInds = append(corruptInds, i)
+			corruptQueue = append(corruptQueue, i)
 			continue
 		}
 
 		var num T
 		err = binary.Read(bytes.NewBuffer(bz), binary.BigEndian, &num)
 		if err != nil {
-			corruptCount++
-			corruptInds = append(corruptInds, i)
+			corruptQueue = append(corruptQueue, i)
 			continue
 		}
 		nums = append(nums, T(num))
 	}
 
 	// If more than 1/3 of the reveals are corrupted,
-	// we reach consensus that the reveals are unusable.
-	if corruptCount*3 > dataLen {
+	// return corrupt reveals error.
+	if len(corruptQueue)*3 > len(dataList) {
 		return nil, ErrCorruptReveals
 	}
 
-	// Identify outliers and keep their count.
+	// Construct outliers list.
 	median, medianHalf := findMedian(nums)
-	outliers := make([]int, dataLen)
-	var nonOutlierCount int
-	i, j := 0, 0 // i tracks nums and j tracks corruptInds
-	for i+j < dataLen {
-		if corruptCount > 0 && i+j == corruptInds[j] {
-			outliers[i+j] = 1
-			corruptCount--
-			j++
-			continue
-		}
-
-		if isOutlier(maxSigma, nums[i], median, medianHalf) {
-			outliers[i+j] = 1
+	outliers := make([]int, len(dataList))
+	var nonOutlierCount, numsInd int
+	for i := range outliers {
+		if len(corruptQueue) > 0 && i == corruptQueue[0] {
+			outliers[i] = 1
+			corruptQueue = corruptQueue[1:]
 		} else {
-			nonOutlierCount++
+			if isOutlier(maxSigma, nums[numsInd], median, medianHalf) {
+				outliers[i] = 1
+			} else {
+				nonOutlierCount++
+			}
+			numsInd++
 		}
-		i++
 	}
 
 	// If less than 2/3 of the numbers fall within max sigma range
@@ -221,6 +223,10 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma ui
 	return outliers, nil
 }
 
+// findMedian sorts a given list of integers to find the median.
+// The median is represented by two variables of types T and bool,
+// respectively. T represents the integer part of the median and
+// the bool, if set to true, represents 0.5 step addition to T.
 func findMedian[T constraints.Integer](nums []T) (T, bool) {
 	// Sort and find median.
 	length := len(nums)
@@ -235,6 +241,8 @@ func findMedian[T constraints.Integer](nums []T) (T, bool) {
 	} else {
 		mid := length / 2
 		median = (numsSorted[mid-1] + numsSorted[mid]) / 2
+		// Consider the case when the median contains fractional part
+		// that has been truncated by the integer division.
 		if (numsSorted[mid-1]%2 == 0 && numsSorted[mid]%2 == 1) ||
 			(numsSorted[mid-1]%2 == 1 && numsSorted[mid]%2 == 0) {
 			medianHalf = true
@@ -247,9 +255,9 @@ func isOutlier[T constraints.Integer](maxSigma uint64, num, median T, medianHalf
 	var diff uint64
 	switch {
 	case median > num:
-		diff = uint64(median - num) // + 0.5 if medianHalf=true
+		diff = uint64(median - num)
 	case median < num:
-		diff = uint64(num - median) // - 0.5 if medianHalf=true
+		diff = uint64(num - median)
 		if medianHalf {
 			diff--
 		}
@@ -260,22 +268,11 @@ func isOutlier[T constraints.Integer](maxSigma uint64, num, median T, medianHalf
 	if diff > (maxSigma / 1e6) {
 		return true
 	} else if medianHalf && diff == (maxSigma/1e6) {
-		// Means that diff = int(maxSigma) + 0.5
-		// so now check that maxSigma's decimal part is > 0.5
-		// by checking that last 6 digits of maxSigma
+		// If we reach here, it means that diff = int(maxSigma) + 0.5.
+		// Therefore, we check that maxSigma's fractional part is
+		// smaller than 0.5 by checking maxSigma's fractional part
+		// represented by its last six digits.
 		return maxSigma%1e6 < 5e5
 	}
 	return false
-}
-
-type FilterNone struct{}
-
-// NewFilterNone constructs a new FilterNone object.
-func NewFilterNone(_ []byte) (FilterNone, error) {
-	return FilterNone{}, nil
-}
-
-// FilterNone declares all reveals as non-outliers.
-func (f FilterNone) ApplyFilter(reveals []RevealBody) ([]int, error) {
-	return make([]int, len(reveals)), nil
 }
