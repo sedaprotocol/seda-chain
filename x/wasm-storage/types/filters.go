@@ -84,7 +84,7 @@ func (f FilterMode) ApplyFilter(reveals []RevealBody) ([]int, error) {
 }
 
 type FilterStdDev struct {
-	maxSigma   uint64 // 10^6 precision
+	maxSigma   Sigma
 	numberType byte
 	dataPath   string // JSON path to reveal data
 }
@@ -100,8 +100,7 @@ func NewFilterStdDev(input []byte) (FilterStdDev, error) {
 		return filter, ErrInvalidFilterInputLen.Wrapf("%d < %d", len(input), 18)
 	}
 
-	var maxSigma uint64
-	err := binary.Read(bytes.NewReader(input[1:9]), binary.BigEndian, &maxSigma)
+	maxSigma, err := NewSigma(input[1:9])
 	if err != nil {
 		return filter, err
 	}
@@ -162,11 +161,10 @@ func (f FilterStdDev) detectOutliers(dataList []string) ([]int, error) {
 	}
 }
 
-func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma uint64) ([]int, error) {
-	var nums []T
-	var corruptQueue []int // queue of corrupt indices in dataList
-	var z T
-	typeSize := int(reflect.TypeOf(z).Size())
+func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma Sigma) ([]int, error) {
+	nums := make([]T, 0, len(dataList))
+	corruptQueue := make([]int, 0, len(dataList)) // queue of corrupt indices in dataList
+	typeSize := int(reflect.TypeOf(new(T)).Size())
 	for i, data := range dataList {
 		if data == "" {
 			corruptQueue = append(corruptQueue, i)
@@ -200,7 +198,7 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma ui
 	// Construct outliers list.
 	median, medianHalf := findMedian(nums)
 	outliers := make([]int, len(dataList))
-	var nonOutlierCount, numsInd int
+	var numsInd, nonOutlierCount int
 	for i := range outliers {
 		if len(corruptQueue) > 0 && i == corruptQueue[0] {
 			outliers[i] = 1
@@ -251,7 +249,7 @@ func findMedian[T constraints.Integer](nums []T) (T, bool) {
 	return median, medianHalf
 }
 
-func isOutlier[T constraints.Integer](maxSigma uint64, num, median T, medianHalf bool) bool {
+func isOutlier[T constraints.Integer](maxSigma Sigma, num, median T, medianHalf bool) bool {
 	var diff uint64
 	switch {
 	case median > num:
@@ -265,14 +263,13 @@ func isOutlier[T constraints.Integer](maxSigma uint64, num, median T, medianHalf
 		return false
 	}
 
-	if diff > (maxSigma / 1e6) {
+	if diff > maxSigma.WholeNumber() {
 		return true
-	} else if medianHalf && diff == (maxSigma/1e6) {
+	} else if medianHalf && diff == maxSigma.WholeNumber() {
 		// If we reach here, it means that diff = int(maxSigma) + 0.5.
 		// Therefore, we check that maxSigma's fractional part is
-		// smaller than 0.5 by checking maxSigma's fractional part
-		// represented by its last six digits.
-		return maxSigma%1e6 < 5e5
+		// smaller than 0.5.
+		return maxSigma.FractionalPart() < 5e5
 	}
 	return false
 }
