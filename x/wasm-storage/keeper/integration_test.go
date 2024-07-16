@@ -148,7 +148,7 @@ func initFixture(tb testing.TB) *fixture {
 		nil,
 		nil,
 		tempDir,
-		wasmtypes.DefaultWasmConfig(), //wasmConfig,
+		wasmtypes.DefaultWasmConfig(),
 		strings.Join(wasmCapabilities, ","),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		[]wasmkeeper.Option{}...,

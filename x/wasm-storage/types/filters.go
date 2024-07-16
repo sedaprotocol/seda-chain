@@ -186,7 +186,7 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma Si
 			corruptQueue = append(corruptQueue, i)
 			continue
 		}
-		nums = append(nums, T(num))
+		nums = append(nums, num)
 	}
 
 	// If more than 1/3 of the reveals are corrupted,
@@ -196,7 +196,7 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma Si
 	}
 
 	// Construct outliers list.
-	median, medianHalf := findMedian(nums)
+	median := findMedian(nums)
 	outliers := make([]int, len(dataList))
 	var numsInd, nonOutlierCount int
 	for i := range outliers {
@@ -204,10 +204,10 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma Si
 			outliers[i] = 1
 			corruptQueue = corruptQueue[1:]
 		} else {
-			if isOutlier(maxSigma, nums[numsInd], median, medianHalf) {
-				outliers[i] = 1
-			} else {
+			if median.IsWithinSigma(nums[numsInd], maxSigma) {
 				nonOutlierCount++
+			} else {
+				outliers[i] = 1
 			}
 			numsInd++
 		}
@@ -221,55 +221,20 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma Si
 	return outliers, nil
 }
 
-// findMedian sorts a given list of integers to find the median.
-// The median is represented by two variables of types T and bool,
-// respectively. T represents the integer part of the median and
-// the bool, if set to true, represents 0.5 step addition to T.
-func findMedian[T constraints.Integer](nums []T) (T, bool) {
-	// Sort and find median.
+// findMedian returns the median of a given slice of integers.
+// It makes a copy of the slice to leave the given slice intact.
+func findMedian[T constraints.Integer](nums []T) *HalfStepInt[T] {
 	length := len(nums)
 	numsSorted := make([]T, length)
 	copy(numsSorted, nums)
 	slices.Sort(numsSorted)
 
-	var median T
-	var medianHalf bool // if true, median must be corrected by adding 0.5
+	median := new(HalfStepInt[T])
+	mid := length / 2
 	if length%2 == 1 {
-		median = numsSorted[length/2]
+		median.Mid(numsSorted[mid], numsSorted[mid])
 	} else {
-		mid := length / 2
-		median = (numsSorted[mid-1] + numsSorted[mid]) / 2
-		// Consider the case when the median contains fractional part
-		// that has been truncated by the integer division.
-		if (numsSorted[mid-1]%2 == 0 && numsSorted[mid]%2 == 1) ||
-			(numsSorted[mid-1]%2 == 1 && numsSorted[mid]%2 == 0) {
-			medianHalf = true
-		}
+		median.Mid(numsSorted[mid-1], numsSorted[mid])
 	}
-	return median, medianHalf
-}
-
-func isOutlier[T constraints.Integer](maxSigma Sigma, num, median T, medianHalf bool) bool {
-	var diff uint64
-	switch {
-	case median > num:
-		diff = uint64(median - num)
-	case median < num:
-		diff = uint64(num - median)
-		if medianHalf {
-			diff--
-		}
-	case median == num:
-		return false
-	}
-
-	if diff > maxSigma.WholeNumber() {
-		return true
-	} else if medianHalf && diff == maxSigma.WholeNumber() {
-		// If we reach here, it means that diff = int(maxSigma) + 0.5.
-		// Therefore, we check that maxSigma's fractional part is
-		// smaller than 0.5.
-		return maxSigma.FractionalPart() < 5e5
-	}
-	return false
+	return median
 }
