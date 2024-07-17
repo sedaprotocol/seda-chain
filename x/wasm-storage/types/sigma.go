@@ -62,23 +62,28 @@ func (h *HalfStepInt[T]) Mid(x, y T) *HalfStepInt[T] {
 // returns true if and only if the absolute difference between x and h
 // is less than or equal to maxSigma.
 func (h HalfStepInt[T]) IsWithinSigma(x T, maxSigma Sigma) bool {
-	var absDiff uint64 // truncated absolute difference between h and x
+	// absDiff represents the integer part of the absolute difference
+	// between h and x. The true absolute difference may contain a
+	// half-step (0.5), which is inferred by h.halfStep.
+	var absDiff uint64
 	switch {
 	case h.integer >= x:
 		absDiff = uint64(h.integer - x)
-		// If h's halfStep direction and truncation direction match,
-		// absDiff must be decremented by one.
-		// Note if absDiff is zero, we do not adjust absDiff because
-		// the truncation direction changes.
-		if h.integer < 0 && h.halfStep && absDiff > 0 {
+		// If h's halfStep direction is to the left, absDiff must be
+		// decremented by one.
+		if h.integer < 0 && h.halfStep {
 			absDiff--
 		}
 	case h.integer < x:
 		absDiff = uint64(x - h.integer)
-		// Note absDiff > 0 check is unnecessary.
+		// If h's halfStep direction is to the left, absDiff must be
+		// decremented by one.
 		if h.integer >= 0 && h.halfStep {
 			absDiff--
 		}
+	case h.integer == x:
+		absDiff = 0
+		// It is never necessary to adjust absDiff since |0.5| = |-0.5|.
 	}
 
 	if absDiff > maxSigma.WholeNumber() {
