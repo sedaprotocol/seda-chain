@@ -33,12 +33,14 @@ func (s Sigma) FractionalPart() uint64 {
 // HalfStepInt is an integer type with half-step increments (0.5).
 type HalfStepInt[T constraints.Integer] struct {
 	integer  T
+	neg      bool // if true, the integer is negative (to represent -0.5)
 	halfStep bool // if true, the number contains fractional part (0.5)
 }
 
-func NewHalfStepInt[T constraints.Integer](integer T, halfStep bool) HalfStepInt[T] {
+func NewHalfStepInt[T constraints.Integer](integer T, halfStep, neg bool) HalfStepInt[T] {
 	return HalfStepInt[T]{
 		integer:  integer,
+		neg:      neg,
 		halfStep: halfStep,
 	}
 }
@@ -47,6 +49,7 @@ func NewHalfStepInt[T constraints.Integer](integer T, halfStep bool) HalfStepInt
 // and returns h.
 func (h *HalfStepInt[T]) Mid(x, y T) *HalfStepInt[T] {
 	h.integer = (x + y) / 2
+	h.neg = (x + y) < 0
 	h.halfStep = false
 	// Set h's halfStep to true if the earlier division operation has
 	// truncted the result.
@@ -67,18 +70,18 @@ func (h HalfStepInt[T]) IsWithinSigma(x T, maxSigma Sigma) bool {
 	// half-step (0.5), which is inferred by h.halfStep.
 	var absDiff uint64
 	switch {
-	case h.integer >= x:
+	case h.integer > x:
 		absDiff = uint64(h.integer - x)
 		// If h's halfStep direction is to the left, absDiff must be
 		// decremented by one.
-		if h.integer < 0 && h.halfStep {
+		if h.neg && h.halfStep { // h.integer < 0
 			absDiff--
 		}
 	case h.integer < x:
 		absDiff = uint64(x - h.integer)
 		// If h's halfStep direction is to the left, absDiff must be
 		// decremented by one.
-		if h.integer >= 0 && h.halfStep {
+		if !h.neg && h.halfStep { // h.integer >= 0
 			absDiff--
 		}
 	case h.integer == x:
