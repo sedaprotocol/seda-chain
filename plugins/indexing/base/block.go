@@ -19,6 +19,20 @@ func ExtractBlockUpdate(ctx *types.BlockContext, req abci.RequestFinalizeBlock, 
 		return nil, err
 	}
 
+	var filteredEvents []abci.Event
+	for _, event := range res.Events {
+		skip := false
+		for _, attribute := range event.Attributes {
+			if attribute.Key == "amount" && attribute.Value == "" {
+				skip = true
+				break
+			}
+		}
+		if !skip {
+			filteredEvents = append(filteredEvents, event)
+		}
+	}
+
 	data := struct {
 		Hash            string       `json:"hash"`
 		Time            time.Time    `json:"time"`
@@ -30,7 +44,7 @@ func ExtractBlockUpdate(ctx *types.BlockContext, req abci.RequestFinalizeBlock, 
 		Time:            req.Time,
 		TxCount:         txCount,
 		ProposerAddress: proposerAddress.String(),
-		Events:          res.Events,
+		Events:          filteredEvents,
 	}
 
 	return types.NewMessage("block", data, ctx), nil
