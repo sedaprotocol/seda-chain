@@ -8,8 +8,7 @@ import (
 )
 
 // Sigma is a 10^6 precision fixed-point unsigned number represented
-//
-//	by a uint64, whose last 6 digits represent the fractional part.
+// by a uint64, whose last 6 digits represent the fractional part.
 type Sigma uint64
 
 func NewSigma(data []byte) (Sigma, error) {
