@@ -37,14 +37,6 @@ type HalfStepInt[T constraints.Integer] struct {
 	halfStep bool // if true, the number contains fractional part (0.5)
 }
 
-func NewHalfStepInt[T constraints.Integer](integer T, halfStep, neg bool) HalfStepInt[T] {
-	return HalfStepInt[T]{
-		integer:  integer,
-		neg:      neg,
-		halfStep: halfStep,
-	}
-}
-
 // Mid sets h to the middle point between the two integers x and y
 // and returns h.
 func (h *HalfStepInt[T]) Mid(x, y T) *HalfStepInt[T] {
@@ -67,21 +59,21 @@ func (h *HalfStepInt[T]) Mid(x, y T) *HalfStepInt[T] {
 func (h HalfStepInt[T]) IsWithinSigma(x T, maxSigma Sigma) bool {
 	// absDiff represents the integer part of the absolute difference
 	// between h and x. The true absolute difference may contain a
-	// half-step (0.5), which is inferred by h.halfStep.
+	// half-step fractional part (0.5), which can be inferred by h.halfStep.
 	var absDiff uint64
 	switch {
 	case h.integer > x:
 		absDiff = uint64(h.integer - x)
-		// If h's halfStep direction is to the left, absDiff must be
-		// decremented by one.
-		if h.neg && h.halfStep { // h.integer < 0
+		// If h's halfStep direction pushes absDiff to the left,
+		// absDiff must be decremented by one.
+		if h.neg && h.halfStep {
 			absDiff--
 		}
 	case h.integer < x:
 		absDiff = uint64(x - h.integer)
-		// If h's halfStep direction is to the left, absDiff must be
-		// decremented by one.
-		if !h.neg && h.halfStep { // h.integer >= 0
+		// If h's halfStep direction pushes absDiff to the left,
+		// absDiff must be decremented by one.
+		if !h.neg && h.halfStep {
 			absDiff--
 		}
 	case h.integer == x:
