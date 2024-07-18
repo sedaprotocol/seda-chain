@@ -33,7 +33,7 @@ func FuzzStdDevFilter(f *testing.F) {
 			})
 		}
 
-		// Compute stats about nums using float arithmetics.
+		// Compute stats about nums using floating-point arithmetic.
 		length := len(nums)
 		numsSorted := make([]int64, length)
 		copy(numsSorted, nums)

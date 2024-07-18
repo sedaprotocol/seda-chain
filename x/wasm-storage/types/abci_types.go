@@ -58,14 +58,6 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 	})
 }
 
-type VMResult struct {
-	Salt        []byte `json:"salt"`
-	ExitCode    byte   `json:"exit_code"`
-	GasUsed     string `json:"gas_used"`
-	Reveal      []byte `json:"reveal"`
-	InConsensus byte   `json:"inConsensus"`
-}
-
 type Sudo struct {
 	ID       string     `json:"dr_id"`
 	Result   DataResult `json:"result"`

@@ -63,6 +63,22 @@ func TestFilter(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
+			name:            "Mode filter - Multiple modes",
+			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
+			outliers:        []int{0, 0, 0, 0, 0, 0, 1},
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": "A"}`},
+				{Reveal: `{"result": {"text": "A"}`},
+				{Reveal: `{"result": {"text": "A"}`},
+				{Reveal: `{"result": {"text": "B"}`},
+				{Reveal: `{"result": {"text": "B"}`},
+				{Reveal: `{"result": {"text": "B"}`},
+				{Reveal: `{"result": {"text": "C"}`},
+			},
+			consensus: false,
+			wantErr:   nil,
+		},
+		{
 			name:            "Mode filter - One corrupt reveal but consensus",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{0, 1, 0},
