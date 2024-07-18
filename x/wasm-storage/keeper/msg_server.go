@@ -93,13 +93,12 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 
 	hashString := hex.EncodeToString(wasm.Hash)
 	err = ctx.EventManager().EmitTypedEvent(
-		&EventStoreDataRequestWasmWrapper{
-			EventStoreDataRequestWasm: &types.EventStoreDataRequestWasm{
-				Hash:     hashString,
-				WasmType: msg.WasmType,
-				Bytecode: msg.Wasm,
-			},
-		})
+		&types.EventStoreDataRequestWasm{
+			Hash:     hashString,
+			WasmType: msg.WasmType,
+			Bytecode: msg.Wasm,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -138,13 +137,12 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 
 	hashString := hex.EncodeToString(wasm.Hash)
 	err = ctx.EventManager().EmitTypedEvent(
-		&EventStoreOverlayWasmWrapper{
-			EventStoreOverlayWasm: &types.EventStoreOverlayWasm{
-				Hash:     hashString,
-				WasmType: msg.WasmType,
-				Bytecode: msg.Wasm,
-			},
-		})
+		&types.EventStoreOverlayWasm{
+			Hash:     hashString,
+			WasmType: msg.WasmType,
+			Bytecode: msg.Wasm,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
