@@ -41,7 +41,7 @@ func TestTallyVM(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := tallyvm.ExecuteTallyVm(testdata.SampleTallyDebugWasm(), tc.args, map[string]string{
+			result := tallyvm.ExecuteTallyVm(testdata.SampleTallyWasm(), tc.args, map[string]string{
 				"VM_MODE":   "tally",
 				"CONSENSUS": "true",
 			})
@@ -93,7 +93,7 @@ func TestExecuteTally(t *testing.T) {
 			f.mockViewKeeper.EXPECT().QuerySmart(gomock.Any(), gomock.Any(), gomock.Any()).Return(tt.resp, nil)
 
 			// Store the tally wasms.
-			tallyWasm := types.NewWasm(testdata.SampleTallyDebugWasm(), types.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), 100)
+			tallyWasm := types.NewWasm(testdata.SampleTallyWasm(), types.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), 100)
 			err := f.wasmStorageKeeper.DataRequestWasm.Set(ctx, tallyWasm.Hash, tallyWasm)
 			require.NoError(t, err)
 
