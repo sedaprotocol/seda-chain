@@ -43,8 +43,8 @@ func (h *HalfStepInt[T]) Mid(x, y T) *HalfStepInt[T] {
 	h.integer = (x + y) / 2
 	h.neg = (x + y) < 0
 	h.halfStep = false
-	// Set h's halfStep to true if the earlier division operation has
-	// truncted the result.
+	// Set h's halfStep to true if x+y is odd, or equivalently,
+	// if only one of x and y is odd.
 	if (x%2 == 0 && y%2 != 0) ||
 		(x%2 != 0 && y%2 == 0) {
 		h.halfStep = true

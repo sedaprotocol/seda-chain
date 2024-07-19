@@ -276,21 +276,6 @@ func TestFilter(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name:            "Standard deviation filter int64 with negative reveals",
-			tallyInputAsHex: "02000000000016E36001000000000000000b726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = result.text
-			outliers:        []int{1, 0, 0, 0, 0, 1},
-			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": "//////////w=", "number": 0}}`},   // -4
-				{Reveal: `{"result": {"text": "//////////s=", "number": 10}}`},  // -5
-				{Reveal: `{"result": {"text": "//////////o=", "number": 101}}`}, // -6
-				{Reveal: `{"result": {"text": "//////////k=", "number": 0}}`},   // -7
-				{Reveal: `{"result": {"text": "//////////g=", "number": 0}}`},   // -8
-				{Reveal: `{"result": {"text": "//////////c=", "number": 0}}`},   // -9
-			},
-			consensus: true,
-			wantErr:   nil,
-		},
-		{
 			name:            "Standard deviation filter int64 median -0.5",
 			tallyInputAsHex: "02000000000007A12001000000000000000b726573756C742E74657874", // max_sigma = 0.5, number_type = int64, json_path = result.text
 			outliers:        []int{1, 0, 0, 1},

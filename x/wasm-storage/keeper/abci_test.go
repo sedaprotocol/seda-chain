@@ -106,7 +106,6 @@ func TestExecuteTally(t *testing.T) {
 			err = f.wasmStorageKeeper.ProcessTallies(ctx)
 			if len(tt.wantErrStr) != 0 {
 				for _, errStr := range tt.wantErrStr {
-					// TODO Must intercept and examine sudo msg instead
 					require.Contains(t, err.Error(), errStr)
 				}
 				return
