@@ -2,10 +2,10 @@ package types
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/binary"
 	"reflect"
 	"slices"
+	"strconv"
 
 	"golang.org/x/exp/constraints"
 )
@@ -139,14 +139,6 @@ func (f FilterStdDev) ApplyFilter(reveals []RevealBody) ([]int, error) {
 		return nil, err
 	}
 
-	outliers, err := f.detectOutliers(dataList)
-	if err != nil {
-		return outliers, err
-	}
-	return outliers, nil
-}
-
-func (f FilterStdDev) detectOutliers(dataList []string) ([]int, error) {
 	switch f.numberType {
 	case 0x00: // Int32
 		return detectOutliersInteger[int32](dataList, f.maxSigma)
@@ -162,31 +154,34 @@ func (f FilterStdDev) detectOutliers(dataList []string) ([]int, error) {
 }
 
 func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma Sigma) ([]int, error) {
+	var num T
+	rt := reflect.TypeOf(num)
 	nums := make([]T, 0, len(dataList))
 	corruptQueue := make([]int, 0, len(dataList)) // queue of corrupt indices in dataList
-	typeSize := int(reflect.TypeOf(new(T)).Size())
 	for i, data := range dataList {
 		if data == "" {
 			corruptQueue = append(corruptQueue, i)
 			continue
 		}
-		bz, err := base64.StdEncoding.DecodeString(data)
-		if err != nil {
-			corruptQueue = append(corruptQueue, i)
-			continue
-		}
-		if len(bz) != typeSize {
-			corruptQueue = append(corruptQueue, i)
-			continue
-		}
 
-		var num T
-		err = binary.Read(bytes.NewBuffer(bz), binary.BigEndian, &num)
+		var err error
+		switch rt.Kind() {
+		case reflect.Int32, reflect.Int64:
+			var t int64
+			t, err = strconv.ParseInt(data, 10, rt.Bits())
+			num = T(t)
+		case reflect.Uint32, reflect.Uint64:
+			var t uint64
+			t, err = strconv.ParseUint(data, 10, rt.Bits())
+			num = T(t)
+		default:
+			return nil, ErrFilterUnexpected // should not be reachable
+		}
 		if err != nil {
 			corruptQueue = append(corruptQueue, i)
-			continue
+		} else {
+			nums = append(nums, num)
 		}
-		nums = append(nums, num)
 	}
 
 	// If more than 1/3 of the reveals are corrupted,

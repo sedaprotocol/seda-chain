@@ -12,4 +12,5 @@ var (
 	ErrCorruptReveals        = errors.Register("wasm-storage", 7, "more than 1/3 of the reveals are corrupted")
 	ErrNoConsensus           = errors.Register("wasm-storage", 8, "less than 2/3 of the reveals in consensus range")
 	ErrInvalidNumberType     = errors.Register("wasm-storage", 9, "invalid number type specified")
+	ErrFilterUnexpected      = errors.Register("wasm-storage", 10, "unexpected error occurred in filter")
 )

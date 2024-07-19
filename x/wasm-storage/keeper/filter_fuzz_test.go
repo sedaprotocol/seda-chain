@@ -25,9 +25,7 @@ func FuzzStdDevFilter(f *testing.F) {
 		nums := []int64{n0, n1, n2, n3, n4, n5, n6, n7, n8, n9}
 		var reveals []types.RevealBody
 		for _, num := range nums {
-			buf := make([]byte, 8)
-			binary.BigEndian.PutUint64(buf, uint64(num))
-			revealStr := fmt.Sprintf(`{"result": {"text": "%s"}}`, base64.StdEncoding.EncodeToString(buf))
+			revealStr := fmt.Sprintf(`{"result": {"text": %d}}`, num)
 			reveals = append(reveals, types.RevealBody{
 				Reveal: base64.StdEncoding.EncodeToString([]byte(revealStr)),
 			})

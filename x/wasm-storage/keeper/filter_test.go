@@ -91,7 +91,7 @@ func TestFilter(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name:            "Mode filter - Consensus due to non exit code",
+			name:            "Mode filter - Too many bad exit codes",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{0, 0, 0, 0, 0, 0},
 			reveals: []types.RevealBody{
@@ -115,7 +115,7 @@ func TestFilter(t *testing.T) {
 			wantErr:   types.ErrCorruptReveals,
 		},
 		{
-			name:            "Mode filter - Valid reveal marked outlier due to non exit code [still consensus]",
+			name:            "Mode filter - Bad exit code but consensus",
 			tallyInputAsHex: "01000000000000000b726573756C742E74657874", // json_path = result.text
 			outliers:        []int{1, 0, 0, 1, 0, 0, 0},
 			reveals: []types.RevealBody{
@@ -171,13 +171,12 @@ func TestFilter(t *testing.T) {
 			tallyInputAsHex: "02000000000016E36003000000000000000B726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = result.text
 			outliers:        []int{1, 0, 0, 0, 0, 1},
 			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`},   // 4
-				{Reveal: `{"result": {"text": "AAAAAAAAAAU=", "number": 10}}`},  // 5
-				{Reveal: `{"result": {"text": "AAAAAAAAAAY=", "number": 101}}`}, // 6
-				{Reveal: `{"result": {"text": "AAAAAAAAAAc=", "number": 0}}`},   // 7
-				{Reveal: `{"result": {"text": "AAAAAAAAAAg=", "number": 0}}`},   // 8
-				{Reveal: `{"result": {"text": "AAAAAAAAAAk=", "number": 0}}`},   // 9
-
+				{Reveal: `{"result": {"text": 4, "number": 0}}`},
+				{Reveal: `{"result": {"text": "5", "number": 10}}`},
+				{Reveal: `{"result": {"text": 6, "number": 101}}`},
+				{Reveal: `{"result": {"text": 7, "number": 0}}`},
+				{Reveal: `{"result": {"text": "8", "number": 0}}`},
+				{Reveal: `{"result": {"text": "9", "number": 0}}`},
 			},
 			consensus: true,
 			wantErr:   nil,
@@ -187,12 +186,12 @@ func TestFilter(t *testing.T) {
 			tallyInputAsHex: "02000000000016E36001000000000000000b726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = result.text
 			outliers:        []int{1, 0, 0, 0, 0, 1},
 			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`},   // 4
-				{Reveal: `{"result": {"text": "AAAAAAAAAAU=", "number": 10}}`},  // 5
-				{Reveal: `{"result": {"text": "AAAAAAAAAAY=", "number": 101}}`}, // 6
-				{Reveal: `{"result": {"text": "AAAAAAAAAAc=", "number": 0}}`},   // 7
-				{Reveal: `{"result": {"text": "AAAAAAAAAAg=", "number": 0}}`},   // 8
-				{Reveal: `{"result": {"text": "AAAAAAAAAAk=", "number": 0}}`},   // 9
+				{Reveal: `{"result": {"text": 4, "number": 0}}`},
+				{Reveal: `{"result": {"text": 5, "number": 10}}`},
+				{Reveal: `{"result": {"text": 6, "number": 101}}`},
+				{Reveal: `{"result": {"text": 7, "number": 0}}`},
+				{Reveal: `{"result": {"text": 8, "number": 0}}`},
+				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
 			consensus: true,
 			wantErr:   nil,
@@ -210,7 +209,7 @@ func TestFilter(t *testing.T) {
 			tallyInputAsHex: "02000000000016E36001000000000000000b726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = result.text
 			outliers:        []int{0},
 			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`}, // 4
+				{Reveal: `{"result": {"text": 4, "number": 0}}`},
 			},
 			consensus: true,
 			wantErr:   nil,
@@ -220,12 +219,12 @@ func TestFilter(t *testing.T) {
 			tallyInputAsHex: "02000000000016E36001000000000000000b726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = result.text
 			outliers:        []int{1, 0, 0, 0, 1, 1},
 			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`},   // 4
-				{Reveal: `{"result": {"text": "AAAAAAAAAAU=", "number": 10}}`},  // 5
-				{Reveal: `{"result": {"text": "AAAAAAAAAAY=", "number": 101}}`}, // 6
-				{Reveal: `{"result": {"text": "AAAAAAAAAAc=", "number": 0}}`},   // 7
-				{Reveal: `{"result": {"number": 0}}`},                           // corrupt
-				{Reveal: `{"result": {"text": "AAAAAAAAAAk=", "number": 0}}`},   // 9
+				{Reveal: `{"result": {"text": 4, "number": 0}}`},
+				{Reveal: `{"result": {"text": 5, "number": 10}}`},
+				{Reveal: `{"result": {"text": 6, "number": 101}}`},
+				{Reveal: `{"result": {"text": 7, "number": 0}}`},
+				{Reveal: `{"result": {"number": 0}}`}, // corrupt
+				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
 			consensus: false,
 			wantErr:   nil,
@@ -235,12 +234,12 @@ func TestFilter(t *testing.T) {
 			tallyInputAsHex: "02000000000017A6B003000000000000000b726573756C742E74657874", // max_sigma = 1.55, number_type = uint64, json_path = result.text
 			outliers:        []int{1, 0, 0, 0, 0, 1},
 			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`},   // 4
-				{Reveal: `{"result": {"text": "AAAAAAAAAAU=", "number": 10}}`},  // 5
-				{Reveal: `{"result": {"text": "AAAAAAAAAAY=", "number": 101}}`}, // 6
-				{Reveal: `{"result": {"text": "AAAAAAAAAAc=", "number": 0}}`},   // 7
-				{Reveal: `{"result": {"text": "AAAAAAAAAAg=", "number": 0}}`},   // 8
-				{Reveal: `{"result": {"text": "AAAAAAAAAAk=", "number": 0}}`},   // 9
+				{Reveal: `{"result": {"text": 4, "number": 0}}`},
+				{Reveal: `{"result": {"text": 5, "number": 10}}`},
+				{Reveal: `{"result": {"text": 6, "number": 101}}`},
+				{Reveal: `{"result": {"text": 7, "number": 0}}`},
+				{Reveal: `{"result": {"text": 8, "number": 0}}`},
+				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
 			consensus: true,
 			wantErr:   nil,
@@ -250,12 +249,12 @@ func TestFilter(t *testing.T) {
 			tallyInputAsHex: "02000000000016201003000000000000000b726573756C742E74657874", // max_sigma = 1.45, number_type = uint64, json_path = result.text
 			outliers:        []int{1, 1, 0, 0, 1, 1},
 			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": "AAAAAAAAAAQ=", "number": 0}}`},   // 4
-				{Reveal: `{"result": {"text": "AAAAAAAAAAU=", "number": 10}}`},  // 5
-				{Reveal: `{"result": {"text": "AAAAAAAAAAY=", "number": 101}}`}, // 6
-				{Reveal: `{"result": {"text": "AAAAAAAAAAc=", "number": 0}}`},   // 7
-				{Reveal: `{"result": {"text": "AAAAAAAAAAg=", "number": 0}}`},   // 8
-				{Reveal: `{"result": {"text": "AAAAAAAAAAk=", "number": 0}}`},   // 9
+				{Reveal: `{"result": {"text": 4, "number": 0}}`},
+				{Reveal: `{"result": {"text": 5, "number": 10}}`},
+				{Reveal: `{"result": {"text": 6, "number": 101}}`},
+				{Reveal: `{"result": {"text": 7, "number": 0}}`},
+				{Reveal: `{"result": {"text": 8, "number": 0}}`},
+				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
 			consensus: false,
 			wantErr:   nil,
@@ -265,12 +264,12 @@ func TestFilter(t *testing.T) {
 			tallyInputAsHex: "02000000000016E36001000000000000000b726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = result.text
 			outliers:        []int{1, 0, 0, 0, 0, 1},
 			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": "//////////w=", "number": 0}}`},   // -4
-				{Reveal: `{"result": {"text": "//////////s=", "number": 10}}`},  // -5
-				{Reveal: `{"result": {"text": "//////////o=", "number": 101}}`}, // -6
-				{Reveal: `{"result": {"text": "//////////k=", "number": 0}}`},   // -7
-				{Reveal: `{"result": {"text": "//////////g=", "number": 0}}`},   // -8
-				{Reveal: `{"result": {"text": "//////////c=", "number": 0}}`},   // -9
+				{Reveal: `{"result": {"text": -4, "number": 0}}`},
+				{Reveal: `{"result": {"text": -5, "number": 10}}`},
+				{Reveal: `{"result": {"text": -6, "number": 101}}`},
+				{Reveal: `{"result": {"text": -7, "number": 0}}`},
+				{Reveal: `{"result": {"text": -8, "number": 0}}`},
+				{Reveal: `{"result": {"text": -9, "number": 0}}`},
 			},
 			consensus: true,
 			wantErr:   nil,
@@ -280,10 +279,10 @@ func TestFilter(t *testing.T) {
 			tallyInputAsHex: "02000000000007A12001000000000000000b726573756C742E74657874", // max_sigma = 0.5, number_type = int64, json_path = result.text
 			outliers:        []int{1, 0, 0, 1},
 			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": "AAAAAAAAAAE=", "number": 0}}`},  // 1
-				{Reveal: `{"result": {"text": "AAAAAAAAAAA=", "number": 0}}`},  // 0
-				{Reveal: `{"result": {"text": "//////////8=", "number": 10}}`}, // -1
-				{Reveal: `{"result": {"text": "//////////4=", "number": 10}}`}, // -2
+				{Reveal: `{"result": {"text": 1, "number": 0}}`},
+				{Reveal: `{"result": {"text": 0, "number": 0}}`},
+				{Reveal: `{"result": {"text": -1, "number": 10}}`},
+				{Reveal: `{"result": {"text": -2, "number": 10}}`},
 			},
 			consensus: false,
 			wantErr:   nil,
