@@ -162,6 +162,10 @@ lint:
 ###                                Protobuf                                 ###
 ###############################################################################
 
+protoVer=0.14.0
+protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
+protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
+
 proto-all: proto-gen proto-fmt proto-lint
 
 proto-dep-install:
@@ -185,7 +189,11 @@ proto-update-deps:
 	@echo "Updating Protobuf dependencies"
 	@buf mod update ./proto
 
-.PHONY: proto-gen proto-fmt proto-lint proto-update-deps
+proto-swagger-gen:
+	@echo "Generating Protobuf Swagger"
+	@$(protoImage) sh ./scripts/protoc-swagger-gen.sh
+
+.PHONY: proto-gen proto-fmt proto-lint proto-update-deps proto-swagger-gen
 
 ###############################################################################
 ##                                   Tests                                   ##
