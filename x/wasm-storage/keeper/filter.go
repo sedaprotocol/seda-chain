@@ -17,7 +17,7 @@ const (
 // a boolean list where true at index i means that the reveal at
 // index i is an outlier, consensus boolean, and error.
 func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) {
-	if len(input) < 1 {
+	if len(input) == 0 {
 		return make([]int, len(reveals)), false, types.ErrInvalidFilterType
 	}
 

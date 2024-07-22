@@ -21,11 +21,14 @@ func NewSigma(data []byte) (Sigma, error) {
 }
 
 // WholeNumber returns Sigma's whole number part.
+// For example, the whole number part of Sigma(1_000_000) is 1.
 func (s Sigma) WholeNumber() uint64 {
 	return uint64(s) / 1e6
 }
 
 // FractionalPart returns Sigma's fractional part as a uint64.
+// For example, the fractional part of Sigma(1_500_000) is 500_000,
+// representing the fraction 500_000 / 1_000_000.
 func (s Sigma) FractionalPart() uint64 {
 	return uint64(s) % 1e6
 }

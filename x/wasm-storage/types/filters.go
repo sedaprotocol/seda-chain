@@ -3,9 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
-	"reflect"
 	"slices"
-	"strconv"
 
 	"golang.org/x/exp/constraints"
 )
@@ -153,35 +151,20 @@ func (f FilterStdDev) ApplyFilter(reveals []RevealBody) ([]int, error) {
 	}
 }
 
-func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma Sigma) ([]int, error) {
-	var num T
-	rt := reflect.TypeOf(num)
+func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma) ([]int, error) {
 	nums := make([]T, 0, len(dataList))
 	corruptQueue := make([]int, 0, len(dataList)) // queue of corrupt indices in dataList
 	for i, data := range dataList {
-		if data == "" {
+		if data == nil {
 			corruptQueue = append(corruptQueue, i)
 			continue
 		}
-
-		var err error
-		switch rt.Kind() {
-		case reflect.Int32, reflect.Int64:
-			var t int64
-			t, err = strconv.ParseInt(data, 10, rt.Bits())
-			num = T(t)
-		case reflect.Uint32, reflect.Uint64:
-			var t uint64
-			t, err = strconv.ParseUint(data, 10, rt.Bits())
-			num = T(t)
-		default:
-			return nil, ErrFilterUnexpected // should not be reachable
-		}
-		if err != nil {
+		num, ok := data.(int64)
+		if !ok {
 			corruptQueue = append(corruptQueue, i)
-		} else {
-			nums = append(nums, num)
+			continue
 		}
+		nums = append(nums, T(num))
 	}
 
 	// If more than 1/3 of the reveals are corrupted,
