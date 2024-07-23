@@ -15,7 +15,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 	if err := k.Params.Set(ctx, data.Params); err != nil {
 		panic(err)
 	}
-	if err := k.ProxyContractRegistry.Set(ctx, data.ProxyContractRegistry); err != nil {
+	if err := k.CoreContractRegistry.Set(ctx, data.CoreContractRegistry); err != nil {
 		panic(err)
 	}
 
@@ -42,12 +42,12 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	}
 
 	wasms := k.GetAllWasms(ctx)
-	proxy, err := k.ProxyContractRegistry.Get(ctx)
+	core, err := k.CoreContractRegistry.Get(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
 			return types.NewGenesisState(params, wasms, "")
 		}
 		panic(err)
 	}
-	return types.NewGenesisState(params, wasms, proxy)
+	return types.NewGenesisState(params, wasms, core)
 }

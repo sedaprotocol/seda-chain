@@ -162,7 +162,7 @@ func (s *IntegrationTestSuite) execGovVoteYes(
 func (s *IntegrationTestSuite) execGetSeedQuery(
 	c *chain,
 	valIdx int,
-	proxyContractAddr string,
+	coreContractAddr string,
 	_ bool,
 	opt ...flagOption,
 ) {
@@ -171,21 +171,21 @@ func (s *IntegrationTestSuite) execGetSeedQuery(
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	// sedad query wasm contract-state smart $PROXY_CONTRACT_ADDRESS '{"query_seed_request":{}}' --node $RPC_URL --output json
+	// sedad query wasm contract-state smart $CORE_CONTRACT_ADDRESS '{"query_seed_request":{}}' --node $RPC_URL --output json
 	command := []string{
 		binary,
 		queryCommand,
 		wasmtypes.ModuleName,
 		"contract-state",
 		"smart",
-		proxyContractAddr,
+		coreContractAddr,
 		`{"query_seed_request":{}}`,
 	}
 	for flag, value := range opts {
 		command = append(command, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
-	s.T().Logf("getting seed from contract %s on chain %s", proxyContractAddr, c.id)
+	s.T().Logf("getting seed from contract %s on chain %s", coreContractAddr, c.id)
 
 	s.executeQuery(ctx, c, command, valIdx, s.validateGetSeedResponse(false))
 }

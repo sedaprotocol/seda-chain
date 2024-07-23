@@ -20,9 +20,9 @@ var (
 	OverlayPrefix = collections.NewPrefix(1)
 	// WasmExpPrefix defines prefix to track wasm expiration.
 	WasmExpPrefix = collections.NewPrefix(2)
-	// ProxyContractRegistryPrefix defines prefix to store address of
-	// Proxy Contract.
-	ProxyContractRegistryPrefix = collections.NewPrefix(3)
+	// CoreContractRegistryPrefix defines prefix to store address of
+	// Core Contract.
+	CoreContractRegistryPrefix = collections.NewPrefix(3)
 	// ParamsPrefix defines prefix to store parameters of wasm-storage module.
 	ParamsPrefix = collections.NewPrefix(4)
 )

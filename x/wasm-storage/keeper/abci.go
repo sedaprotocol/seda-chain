@@ -68,13 +68,13 @@ func (k Keeper) ProcessExpiredWasms(ctx sdk.Context) error {
 	return nil
 }
 
-// ProcessTallies fetches from the proxy contract the list of requests
+// ProcessTallies fetches from the core contract the list of requests
 // to be tallied and then goes through it to filter and tally.
 func (k Keeper) ProcessTallies(ctx sdk.Context) error {
-	// Get proxy contract address.
-	contractAddrBech32, err := k.ProxyContractRegistry.Get(ctx)
+	// Get core contract address.
+	contractAddrBech32, err := k.CoreContractRegistry.Get(ctx)
 	if contractAddrBech32 == "" || errors.Is(err, collections.ErrNotFound) {
-		return fmt.Errorf("proxy contract not registered")
+		return fmt.Errorf("core contract not registered")
 	}
 	if err != nil {
 		return err

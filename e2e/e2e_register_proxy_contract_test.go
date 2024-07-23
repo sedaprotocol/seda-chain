@@ -15,7 +15,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-func (s *IntegrationTestSuite) testInstantiateAndRegisterProxyContract() {
+func (s *IntegrationTestSuite) testInstantiateAndRegisterCoreContract() {
 	proposalCounter++
 	proposalID := proposalCounter
 
@@ -23,16 +23,16 @@ func (s *IntegrationTestSuite) testInstantiateAndRegisterProxyContract() {
 	s.Require().NoError(err)
 	sender := senderAddress.String()
 
-	_, err = os.ReadFile(filepath.Join(localWasmDirPath, proxyWasm))
+	_, err = os.ReadFile(filepath.Join(localWasmDirPath, coreWasm))
 	s.Require().NoError(err)
 
-	s.execWasmStore(s.chain, 0, proxyWasm, sender, standardFees.String(), false)
-	s.execInstantiateAndRegisterProxyContract(s.chain, 0, "clean_title", "sustainable_summary", "data-request-executor", sender, standardFees.String(), false, proposalID)
+	s.execWasmStore(s.chain, 0, coreWasm, sender, standardFees.String(), false)
+	s.execInstantiateAndRegisterCoreContract(s.chain, 0, "clean_title", "sustainable_summary", "data-request-executor", sender, standardFees.String(), false, proposalID)
 	s.execGovVoteYes(s.chain, 0, sender, standardFees.String(), false, proposalID)
 
 	s.Require().Eventually(
 		func() bool {
-			res, err := queryProxyContractRegistry(s.endpoint)
+			res, err := queryCoreContractRegistry(s.endpoint)
 			s.Require().NoError(err)
 
 			_, err = sdktypes.AccAddressFromBech32(res.Address)
@@ -49,7 +49,7 @@ func (s *IntegrationTestSuite) testInstantiateAndRegisterProxyContract() {
 	)
 }
 
-func (s *IntegrationTestSuite) execInstantiateAndRegisterProxyContract(
+func (s *IntegrationTestSuite) execInstantiateAndRegisterCoreContract(
 	c *chain,
 	valIdx int,
 	title,
@@ -85,7 +85,7 @@ func (s *IntegrationTestSuite) execInstantiateAndRegisterProxyContract(
 		txCommand,
 		types.ModuleName,
 		"submit-proposal",
-		"instantiate-and-register-proxy-contract",
+		"instantiate-and-register-core-contract",
 		codeID,
 		"{\"token\":\"aseda\"}",
 		"74657374696e67", // salt
@@ -95,7 +95,7 @@ func (s *IntegrationTestSuite) execInstantiateAndRegisterProxyContract(
 		command = append(command, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
-	s.T().Logf("proposing to instantiate and register as proxy contract (code ID %s) on chain %s", codeID, c.id)
+	s.T().Logf("proposing to instantiate and register as core contract (code ID %s) on chain %s", codeID, c.id)
 
 	s.executeTx(ctx, c, command, valIdx, s.expectErrExecValidation(c, valIdx, expectErr))
 

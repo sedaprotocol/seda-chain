@@ -12,5 +12,5 @@ message GenesisState {
   // Params represents module specific parameters.
   Params params = 1 [ (gogoproto.nullable) = false ];
   repeated Wasm wasms = 2 [ (gogoproto.nullable) = false ];
-  string proxy_contract_registry = 3;
+  string core_contract_registry = 3;
 }

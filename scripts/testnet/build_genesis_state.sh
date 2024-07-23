@@ -73,16 +73,12 @@ function store_and_instantiate() {
 
 source config.sh
 
-# flags: add-wasm-contracts and add-groups
-ADD_WASM_CONTRACTS=false
+# flags: add-groups
 ADD_GROUPS=false
 
 while [ ! $# -eq 0 ]
 do
 	case "$1" in
-		--add-wasm-contracts)
-			ADD_WASM_CONTRACTS=true
-			;;
 		--add-groups)
 			ADD_GROUPS=true
 			;;
@@ -91,8 +87,8 @@ do
 done
 
 # at least one flag should be on
-if [ $ADD_WASM_CONTRACTS = false ] && [ $ADD_GROUPS = false ]; then
-    echo "add at least one flag: --add-wasm-contracts or --add-groups"
+if [ $ADD_GROUPS = false ]; then
+    echo "add a flag: --add-groups"
     exit 1
 fi
 
@@ -107,13 +103,6 @@ fi
 
 TMP_HOME=./tmp
 rm -rf $TMP_HOME
-
-if [ $ADD_WASM_CONTRACTS = true ]; then
-  rm -rf $WASM_DIR
-  download_contract_release proxy_contract.wasm
-  download_contract_release staking.wasm
-  download_contract_release data_requests.wasm
-fi
 
 TEMP_CHAIN_ID=temp-seda-chain
 
@@ -158,20 +147,6 @@ if [ $ADD_GROUPS = true ]; then
 fi
 
 
-if [ $ADD_WASM_CONTRACTS = true ]; then
-  # Store and instantiate three contracts
-  PROXY_ADDR=$(store_and_instantiate proxy_contract.wasm '{"token":"aseda"}')
-  ARG='{"token":"aseda", "proxy": "'$PROXY_ADDR'" }'
-  STAKING_ADDR=$(store_and_instantiate staking.wasm "$ARG")
-  DR_ADDR=$(store_and_instantiate data_requests.wasm "$ARG")
-
-  # Call SetStaking and SetDataRequests on Proxy contract to set circular dependency
-  $LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_staking":{"contract":"'$STAKING_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test --fees 1seda --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
-  sleep 10
-  $LOCAL_BIN tx wasm execute $PROXY_ADDR '{"set_data_requests":{"contract":"'$DR_ADDR'"}}' --from $ADDR --gas auto --gas-adjustment 1.2 --keyring-backend test --fees 1seda --home $TMP_HOME --chain-id $TEMP_CHAIN_ID -y
-  sleep 10
-fi
-
 #
 #   TERMINATE CHAIN PROCESS, EXPORT, AND MODIFY GIVEN GENESIS
 #
@@ -213,19 +188,6 @@ if [ $ADD_GROUPS = true ]; then
     jq '.app_state["wasm"]["params"]["instantiate_default_permission"]="AnyOfAddresses"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
     jq '.app_state["wasm"]["params"]["code_upload_access"]["addresses"]=['$SECURITY_GROUP_POLICY_ADDR']' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
   fi
-fi
-
-# Modify wasm codes, contracts, and sequences. 
-# Also modify wasm-storage's proxy contract registery.
-if [ $ADD_WASM_CONTRACTS = true ]; then
-  jq '.app_state["wasm"]["codes"]' $EXPORTED_GENESIS > $TMP_HOME/codes.tmp
-  jq '.app_state["wasm"]["contracts"]' $EXPORTED_GENESIS > $TMP_HOME/contracts.tmp
-  jq '.app_state["wasm"]["sequences"]' $EXPORTED_GENESIS > $TMP_HOME/sequences.tmp
-
-  jq '.app_state["wasm-storage"]["proxy_contract_registry"]="'$PROXY_ADDR'"' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  jq --slurpfile codes $TMP_HOME/codes.tmp '.app_state["wasm"]["codes"] = $codes[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  jq --slurpfile contracts $TMP_HOME/contracts.tmp '.app_state["wasm"]["contracts"] = $contracts[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
-  jq --slurpfile sequences $TMP_HOME/sequences.tmp '.app_state["wasm"]["sequences"] = $sequences[0]' $TMP_GENESIS > $TMP_TMP_GENESIS && mv $TMP_TMP_GENESIS $TMP_GENESIS
 fi
 
 mv $TMP_GENESIS $ORIGINAL_GENESIS

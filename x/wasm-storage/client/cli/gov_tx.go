@@ -43,7 +43,7 @@ func SubmitProposalCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		ProposalStoreOverlayCmd(),
-		ProposalInstantiateAndRegisterProxyContract(),
+		ProposalInstantiateAndRegisterCoreContract(),
 	)
 	return cmd
 }
@@ -91,12 +91,12 @@ func ProposalStoreOverlayCmd() *cobra.Command {
 	return cmd
 }
 
-func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
+func ProposalInstantiateAndRegisterCoreContract() *cobra.Command {
 	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{
-		Use: "instantiate-and-register-proxy-contract [code_id_int64] [json_encoded_init_args] [salt] --label [text] --admin [address,optional] " +
+		Use: "instantiate-and-register-core-contract [code_id_int64] [json_encoded_init_args] [salt] --label [text] --admin [address,optional] " +
 			"--fix-msg [bool,optional] --title [string] --summary [string] --deposit 10000000aseda",
-		Short: "Submit a proposal to instantiate a proxy contract and register its address",
+		Short: "Submit a proposal to instantiate a core contract and register its address",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
@@ -112,7 +112,7 @@ func ProposalInstantiateAndRegisterProxyContract() *cobra.Command {
 				return errors.New("authority address is required")
 			}
 
-			src, err := parseInstantiateAndRegisterProxyContractArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
+			src, err := parseInstantiateAndRegisterCoreContractArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -156,7 +156,7 @@ func parseStoreOverlayArgs(file, sender string, _ *flag.FlagSet) (*types.MsgStor
 	return msg, nil
 }
 
-func parseInstantiateAndRegisterProxyContractArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender string, flags *flag.FlagSet) (*types.MsgInstantiateAndRegisterProxyContract, error) {
+func parseInstantiateAndRegisterCoreContractArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender string, flags *flag.FlagSet) (*types.MsgInstantiateAndRegisterCoreContract, error) {
 	codeID, err := strconv.ParseUint(rawCodeID, 10, 64)
 	if err != nil {
 		return nil, err
@@ -217,7 +217,7 @@ func parseInstantiateAndRegisterProxyContractArgs(rawCodeID, initMsg string, kr 
 		return nil, fmt.Errorf("fix msg: %w", err)
 	}
 
-	msg := types.MsgInstantiateAndRegisterProxyContract{
+	msg := types.MsgInstantiateAndRegisterCoreContract{
 		Sender: sender,
 		CodeID: codeID,
 		Label:  label,

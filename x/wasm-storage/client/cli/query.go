@@ -26,7 +26,7 @@ func GetQueryCmd(_ string) *cobra.Command {
 		GetCmdQueryOverlayWasm(),
 		GetCmdQueryDataRequestWasms(),
 		GetCmdQueryOverlayWasms(),
-		GetCmdQueryProxyContractRegistry(),
+		GetCmdQueryCoreContractRegistry(),
 	)
 	return cmd
 }
@@ -139,12 +139,12 @@ func GetCmdQueryOverlayWasms() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryProxyContractRegistry returns the command for querying
-// Proxy Contract registry.
-func GetCmdQueryProxyContractRegistry() *cobra.Command {
+// GetCmdQueryCoreContractRegistry returns the command for querying
+// Core Contract registry.
+func GetCmdQueryCoreContractRegistry() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "proxy-contract-registry",
-		Short: "Get the address of Proxy Contract",
+		Use:   "core-contract-registry",
+		Short: "Get the address of Core Contract",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -153,9 +153,9 @@ func GetCmdQueryProxyContractRegistry() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.ProxyContractRegistry(
+			res, err := queryClient.CoreContractRegistry(
 				cmd.Context(),
-				&types.QueryProxyContractRegistryRequest{},
+				&types.QueryCoreContractRegistryRequest{},
 			)
 			if err != nil {
 				return err

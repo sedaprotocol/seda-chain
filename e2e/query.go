@@ -106,10 +106,10 @@ func queryOverlayWasms(endpoint string) (wasmstoragetypes.QueryOverlayWasmsRespo
 	return res, nil
 }
 
-func queryProxyContractRegistry(endpoint string) (wasmstoragetypes.QueryProxyContractRegistryResponse, error) {
-	var res wasmstoragetypes.QueryProxyContractRegistryResponse
+func queryCoreContractRegistry(endpoint string) (wasmstoragetypes.QueryCoreContractRegistryResponse, error) {
+	var res wasmstoragetypes.QueryCoreContractRegistryResponse
 
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/proxy_contract_registry", endpoint))
+	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/core_contract_registry", endpoint))
 	if err != nil {
 		return res, err
 	}

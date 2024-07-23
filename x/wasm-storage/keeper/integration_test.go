@@ -198,7 +198,7 @@ func initFixture(tb testing.TB) *fixture {
 	require.NoError(tb, err)
 	require.NotEmpty(tb, contractAddr)
 
-	err = wasmStorageKeeper.ProxyContractRegistry.Set(ctx, contractAddr.String())
+	err = wasmStorageKeeper.CoreContractRegistry.Set(ctx, contractAddr.String())
 	require.NoError(tb, err)
 
 	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, map[string]appmodule.AppModule{

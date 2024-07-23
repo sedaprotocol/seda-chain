@@ -7,11 +7,11 @@ import (
 )
 
 // NewGenesisState constructs a GenesisState object.
-func NewGenesisState(params Params, wasms []Wasm, proxyAddr string) GenesisState {
+func NewGenesisState(params Params, wasms []Wasm, coreAddr string) GenesisState {
 	return GenesisState{
-		Params:                params,
-		Wasms:                 wasms,
-		ProxyContractRegistry: proxyAddr,
+		Params:               params,
+		Wasms:                wasms,
+		CoreContractRegistry: coreAddr,
 	}
 }
 
@@ -23,10 +23,10 @@ func DefaultGenesisState() *GenesisState {
 
 // ValidateGenesis validates wasm-storage genesis data.
 func ValidateGenesis(gs GenesisState) error {
-	if gs.ProxyContractRegistry != "" {
-		_, err := sdk.AccAddressFromBech32(gs.ProxyContractRegistry)
+	if gs.CoreContractRegistry != "" {
+		_, err := sdk.AccAddressFromBech32(gs.CoreContractRegistry)
 		if err != nil {
-			return fmt.Errorf("invalid Proxy contract address %w", err)
+			return fmt.Errorf("invalid Core contract address %w", err)
 		}
 	}
 	return gs.Params.ValidateBasic()

@@ -372,22 +372,22 @@ func (m *QueryOverlayWasmsResponse) GetHashTypePairs() []string {
 	return nil
 }
 
-// The request message for QueryProxyContractRegistry RPC.
-type QueryProxyContractRegistryRequest struct {
+// The request message for QueryCoreContractRegistry RPC.
+type QueryCoreContractRegistryRequest struct {
 }
 
-func (m *QueryProxyContractRegistryRequest) Reset()         { *m = QueryProxyContractRegistryRequest{} }
-func (m *QueryProxyContractRegistryRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryProxyContractRegistryRequest) ProtoMessage()    {}
-func (*QueryProxyContractRegistryRequest) Descriptor() ([]byte, []int) {
+func (m *QueryCoreContractRegistryRequest) Reset()         { *m = QueryCoreContractRegistryRequest{} }
+func (m *QueryCoreContractRegistryRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryCoreContractRegistryRequest) ProtoMessage()    {}
+func (*QueryCoreContractRegistryRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0e3a991a3b0319b3, []int{8}
 }
-func (m *QueryProxyContractRegistryRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryCoreContractRegistryRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryProxyContractRegistryRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryCoreContractRegistryRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryProxyContractRegistryRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryCoreContractRegistryRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -397,35 +397,35 @@ func (m *QueryProxyContractRegistryRequest) XXX_Marshal(b []byte, deterministic 
 		return b[:n], nil
 	}
 }
-func (m *QueryProxyContractRegistryRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryProxyContractRegistryRequest.Merge(m, src)
+func (m *QueryCoreContractRegistryRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryCoreContractRegistryRequest.Merge(m, src)
 }
-func (m *QueryProxyContractRegistryRequest) XXX_Size() int {
+func (m *QueryCoreContractRegistryRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryProxyContractRegistryRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryProxyContractRegistryRequest.DiscardUnknown(m)
+func (m *QueryCoreContractRegistryRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryCoreContractRegistryRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryProxyContractRegistryRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryCoreContractRegistryRequest proto.InternalMessageInfo
 
-// The response message for QueryProxyContractRegistry RPC.
-type QueryProxyContractRegistryResponse struct {
+// The response message for QueryCoreContractRegistry RPC.
+type QueryCoreContractRegistryResponse struct {
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 }
 
-func (m *QueryProxyContractRegistryResponse) Reset()         { *m = QueryProxyContractRegistryResponse{} }
-func (m *QueryProxyContractRegistryResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryProxyContractRegistryResponse) ProtoMessage()    {}
-func (*QueryProxyContractRegistryResponse) Descriptor() ([]byte, []int) {
+func (m *QueryCoreContractRegistryResponse) Reset()         { *m = QueryCoreContractRegistryResponse{} }
+func (m *QueryCoreContractRegistryResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryCoreContractRegistryResponse) ProtoMessage()    {}
+func (*QueryCoreContractRegistryResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0e3a991a3b0319b3, []int{9}
 }
-func (m *QueryProxyContractRegistryResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryCoreContractRegistryResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryProxyContractRegistryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryCoreContractRegistryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryProxyContractRegistryResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryCoreContractRegistryResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -435,19 +435,19 @@ func (m *QueryProxyContractRegistryResponse) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
-func (m *QueryProxyContractRegistryResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryProxyContractRegistryResponse.Merge(m, src)
+func (m *QueryCoreContractRegistryResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryCoreContractRegistryResponse.Merge(m, src)
 }
-func (m *QueryProxyContractRegistryResponse) XXX_Size() int {
+func (m *QueryCoreContractRegistryResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryProxyContractRegistryResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryProxyContractRegistryResponse.DiscardUnknown(m)
+func (m *QueryCoreContractRegistryResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryCoreContractRegistryResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryProxyContractRegistryResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryCoreContractRegistryResponse proto.InternalMessageInfo
 
-func (m *QueryProxyContractRegistryResponse) GetAddress() string {
+func (m *QueryCoreContractRegistryResponse) GetAddress() string {
 	if m != nil {
 		return m.Address
 	}
@@ -463,8 +463,8 @@ func init() {
 	proto.RegisterType((*QueryOverlayWasmResponse)(nil), "sedachain.wasm_storage.v1.QueryOverlayWasmResponse")
 	proto.RegisterType((*QueryOverlayWasmsRequest)(nil), "sedachain.wasm_storage.v1.QueryOverlayWasmsRequest")
 	proto.RegisterType((*QueryOverlayWasmsResponse)(nil), "sedachain.wasm_storage.v1.QueryOverlayWasmsResponse")
-	proto.RegisterType((*QueryProxyContractRegistryRequest)(nil), "sedachain.wasm_storage.v1.QueryProxyContractRegistryRequest")
-	proto.RegisterType((*QueryProxyContractRegistryResponse)(nil), "sedachain.wasm_storage.v1.QueryProxyContractRegistryResponse")
+	proto.RegisterType((*QueryCoreContractRegistryRequest)(nil), "sedachain.wasm_storage.v1.QueryCoreContractRegistryRequest")
+	proto.RegisterType((*QueryCoreContractRegistryResponse)(nil), "sedachain.wasm_storage.v1.QueryCoreContractRegistryResponse")
 }
 
 func init() {
@@ -472,43 +472,42 @@ func init() {
 }
 
 var fileDescriptor_0e3a991a3b0319b3 = []byte{
-	// 561 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x55, 0x4f, 0x6b, 0x13, 0x41,
-	0x14, 0xcf, 0x68, 0xb5, 0xf4, 0x55, 0xa9, 0x0c, 0x88, 0xe9, 0x5a, 0xd7, 0xba, 0x62, 0x09, 0xd8,
-	0xec, 0x9a, 0xa4, 0xd8, 0x0a, 0xea, 0xc1, 0x0a, 0x1e, 0xdb, 0x46, 0x41, 0xf0, 0xb2, 0x4c, 0x93,
-	0x61, 0xb3, 0x90, 0xec, 0x6c, 0x67, 0x26, 0xb1, 0x8b, 0x78, 0xf1, 0x13, 0x08, 0x7e, 0x0a, 0xc1,
-	0x83, 0x67, 0xc1, 0xbb, 0x27, 0x29, 0x78, 0xf1, 0x28, 0x89, 0x1f, 0x44, 0x66, 0x32, 0x89, 0x49,
-	0x93, 0x4d, 0xba, 0x7a, 0x9b, 0xcc, 0xbc, 0xdf, 0xbf, 0x37, 0x6f, 0xb2, 0x70, 0x47, 0xd0, 0x3a,
-	0xa9, 0x35, 0x48, 0x18, 0x79, 0xaf, 0x89, 0x68, 0xf9, 0x42, 0x32, 0x4e, 0x02, 0xea, 0x75, 0x4a,
-	0xde, 0x51, 0x9b, 0xf2, 0xc4, 0x8d, 0x39, 0x93, 0x0c, 0xaf, 0x0e, 0xcb, 0xdc, 0xd1, 0x32, 0xb7,
-	0x53, 0xb2, 0xd6, 0x02, 0xc6, 0x82, 0x26, 0xf5, 0x48, 0x1c, 0x7a, 0x24, 0x8a, 0x98, 0x24, 0x32,
-	0x64, 0x91, 0xe8, 0x03, 0xad, 0xcd, 0x74, 0xfe, 0x31, 0x22, 0x5d, 0xed, 0x94, 0xe0, 0xfa, 0x81,
-	0x52, 0x7d, 0x4a, 0x24, 0xa9, 0xd2, 0xa3, 0x36, 0x15, 0xf2, 0x25, 0x11, 0x2d, 0xb3, 0xc4, 0x18,
-	0x16, 0x1a, 0x44, 0x34, 0xf2, 0x68, 0x1d, 0x15, 0x96, 0xaa, 0x7a, 0xed, 0x3c, 0x87, 0xb5, 0xe9,
-	0x10, 0x11, 0xb3, 0x48, 0x50, 0x5c, 0x81, 0x05, 0x25, 0xa4, 0x31, 0xcb, 0xe5, 0x9b, 0x6e, 0x6a,
-	0x10, 0x57, 0xc3, 0x74, 0xb1, 0x63, 0x4f, 0x27, 0x15, 0x66, 0xed, 0x3c, 0x83, 0x1b, 0x29, 0xe7,
-	0x46, 0x75, 0x03, 0x56, 0x94, 0x3b, 0x5f, 0x26, 0x31, 0xf5, 0x63, 0x12, 0x72, 0x91, 0x47, 0xeb,
-	0xe7, 0x0b, 0x4b, 0xd5, 0xcb, 0x6a, 0xfb, 0x45, 0x12, 0xd3, 0x7d, 0xb5, 0xe9, 0x14, 0xe1, 0x9a,
-	0x26, 0xda, 0xeb, 0x50, 0xde, 0x24, 0xc9, 0xbc, 0xb0, 0x7b, 0x90, 0x9f, 0x2c, 0xff, 0x9f, 0xa0,
-	0xd6, 0x24, 0xe1, 0x30, 0xe4, 0x2e, 0xac, 0x4e, 0x39, 0xcb, 0x18, 0xf0, 0x36, 0xdc, 0xd2, 0x24,
-	0xfb, 0x9c, 0x1d, 0x27, 0xbb, 0x2c, 0x92, 0x9c, 0xd4, 0x64, 0x95, 0x06, 0xa1, 0x90, 0x3c, 0x19,
-	0x28, 0x3d, 0x06, 0x67, 0x56, 0x91, 0x91, 0xcc, 0xc3, 0x22, 0xa9, 0xd7, 0x39, 0x15, 0xc2, 0xf4,
-	0x64, 0xf0, 0xb3, 0xfc, 0x79, 0x11, 0x2e, 0x68, 0x02, 0xfc, 0x15, 0xc1, 0xca, 0xa9, 0x4b, 0xc1,
-	0xf7, 0x67, 0xb4, 0x62, 0xc6, 0xb4, 0x59, 0xdb, 0x99, 0x71, 0x7d, 0xa3, 0xce, 0x83, 0x77, 0x3f,
-	0x7e, 0x7f, 0x38, 0x57, 0xc1, 0x25, 0x4f, 0x11, 0x14, 0xff, 0x4e, 0x7f, 0x71, 0x30, 0xfd, 0x75,
-	0x22, 0x89, 0xcf, 0xfb, 0x50, 0x5f, 0x9d, 0x78, 0x6f, 0x54, 0xdb, 0xde, 0xe2, 0x2f, 0x08, 0xae,
-	0x9c, 0x1e, 0x2a, 0x9c, 0xd5, 0xc8, 0xe0, 0x06, 0xad, 0x9d, 0xec, 0x40, 0x13, 0xa1, 0xa2, 0x23,
-	0x14, 0xf1, 0xdd, 0xb3, 0x47, 0x10, 0xf8, 0x13, 0x82, 0xe5, 0x91, 0x61, 0xc1, 0xe5, 0x79, 0xf2,
-	0x93, 0x53, 0x6f, 0x55, 0x32, 0x61, 0x8c, 0xdb, 0x2d, 0xed, 0xd6, 0xc5, 0x9b, 0xa9, 0x6e, 0x59,
-	0x1f, 0x35, 0xd6, 0xeb, 0x8f, 0x08, 0x2e, 0x8d, 0xce, 0x36, 0xce, 0xa2, 0x3d, 0xec, 0xf1, 0x56,
-	0x36, 0x90, 0x71, 0xec, 0x6a, 0xc7, 0x05, 0xbc, 0x71, 0x26, 0xc7, 0x02, 0x7f, 0x47, 0x70, 0x75,
-	0xea, 0xeb, 0xc0, 0x0f, 0xe7, 0xe9, 0xcf, 0x7a, 0x79, 0xd6, 0xa3, 0x7f, 0x44, 0x9b, 0x18, 0x3b,
-	0x3a, 0x46, 0x19, 0xdf, 0x4b, 0x8d, 0x11, 0x2b, 0xbc, 0x5f, 0x33, 0x04, 0x3e, 0x37, 0x0c, 0x4f,
-	0x0e, 0xbe, 0x75, 0x6d, 0x74, 0xd2, 0xb5, 0xd1, 0xaf, 0xae, 0x8d, 0xde, 0xf7, 0xec, 0xdc, 0x49,
-	0xcf, 0xce, 0xfd, 0xec, 0xd9, 0xb9, 0x57, 0xdb, 0x41, 0x28, 0x1b, 0xed, 0x43, 0xb7, 0xc6, 0x5a,
-	0x9a, 0x55, 0x7f, 0x19, 0x6a, 0xac, 0x39, 0x2a, 0x71, 0x3c, 0x2e, 0xa2, 0xfe, 0x84, 0xc4, 0xe1,
-	0x45, 0x5d, 0x59, 0xf9, 0x13, 0x00, 0x00, 0xff, 0xff, 0x4d, 0x03, 0x35, 0xcc, 0xd3, 0x06, 0x00,
-	0x00,
+	// 560 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x55, 0x4f, 0x6b, 0x13, 0x4d,
+	0x18, 0xcf, 0xbc, 0x6f, 0xb5, 0xf4, 0xa9, 0x52, 0x19, 0x04, 0xd3, 0xb5, 0xae, 0x71, 0xc1, 0x12,
+	0xb0, 0xd9, 0x25, 0xd9, 0x62, 0x14, 0xf5, 0x62, 0x04, 0x8f, 0xb5, 0x51, 0x10, 0xbc, 0x2c, 0xd3,
+	0xcd, 0xb0, 0x59, 0x48, 0x76, 0xb6, 0x33, 0x93, 0xe8, 0x22, 0x5e, 0xfc, 0x04, 0x82, 0x9f, 0x42,
+	0xe8, 0x27, 0x10, 0xbc, 0x8b, 0xa7, 0x82, 0x17, 0x8f, 0x92, 0xf8, 0x41, 0x64, 0x27, 0x93, 0x98,
+	0x34, 0xd9, 0xa4, 0xab, 0xb7, 0xc9, 0xcc, 0xf3, 0xfb, 0xf7, 0xcc, 0x33, 0x59, 0xb8, 0x2d, 0x68,
+	0x8b, 0xf8, 0x6d, 0x12, 0x46, 0xce, 0x6b, 0x22, 0xba, 0x9e, 0x90, 0x8c, 0x93, 0x80, 0x3a, 0xfd,
+	0xaa, 0x73, 0xdc, 0xa3, 0x3c, 0xb1, 0x63, 0xce, 0x24, 0xc3, 0xdb, 0x93, 0x32, 0x7b, 0xba, 0xcc,
+	0xee, 0x57, 0x8d, 0x9d, 0x80, 0xb1, 0xa0, 0x43, 0x1d, 0x12, 0x87, 0x0e, 0x89, 0x22, 0x26, 0x89,
+	0x0c, 0x59, 0x24, 0x46, 0x40, 0x63, 0x2f, 0x9b, 0x7f, 0x86, 0x48, 0x55, 0x5b, 0x55, 0xb8, 0x7e,
+	0x98, 0xaa, 0x3e, 0x21, 0x92, 0x34, 0xe9, 0x71, 0x8f, 0x0a, 0xf9, 0x92, 0x88, 0xae, 0x5e, 0x62,
+	0x0c, 0x6b, 0x6d, 0x22, 0xda, 0x45, 0x54, 0x42, 0xe5, 0x8d, 0xa6, 0x5a, 0x5b, 0xcf, 0x61, 0x67,
+	0x31, 0x44, 0xc4, 0x2c, 0x12, 0x14, 0xbb, 0xb0, 0x96, 0x0a, 0x29, 0xcc, 0x66, 0xed, 0xa6, 0x9d,
+	0x19, 0xc4, 0x56, 0x30, 0x55, 0x6c, 0x99, 0x8b, 0x49, 0x85, 0x5e, 0x5b, 0x4f, 0xe1, 0x46, 0xc6,
+	0xb9, 0x56, 0xdd, 0x85, 0xad, 0xd4, 0x9d, 0x27, 0x93, 0x98, 0x7a, 0x31, 0x09, 0xb9, 0x28, 0xa2,
+	0xd2, 0xff, 0xe5, 0x8d, 0xe6, 0xe5, 0x74, 0xfb, 0x45, 0x12, 0xd3, 0x67, 0xe9, 0xa6, 0x55, 0x81,
+	0x6b, 0x8a, 0xe8, 0xa0, 0x4f, 0x79, 0x87, 0x24, 0xab, 0xc2, 0x1e, 0x40, 0x71, 0xbe, 0xfc, 0x5f,
+	0x82, 0x1a, 0xf3, 0x84, 0x93, 0x90, 0x0d, 0xd8, 0x5e, 0x70, 0x96, 0x33, 0xa0, 0x05, 0x25, 0x45,
+	0xd2, 0x60, 0x9c, 0x36, 0x58, 0x24, 0x39, 0xf1, 0x65, 0x93, 0x06, 0xa1, 0x90, 0x3c, 0x19, 0x0b,
+	0x3d, 0x82, 0x5b, 0x4b, 0x6a, 0xb4, 0x60, 0x11, 0xd6, 0x49, 0xab, 0xc5, 0xa9, 0x10, 0xba, 0x23,
+	0xe3, 0x9f, 0xb5, 0x93, 0x75, 0xb8, 0xa0, 0xf0, 0xf8, 0x0b, 0x82, 0xad, 0x33, 0x57, 0x82, 0xef,
+	0x2e, 0x69, 0xc4, 0x92, 0x59, 0x33, 0xea, 0xb9, 0x71, 0x23, 0xa3, 0xd6, 0xfd, 0xf7, 0xdf, 0x7f,
+	0x7d, 0xfc, 0xcf, 0xc5, 0x55, 0x27, 0x25, 0xa8, 0xfc, 0x99, 0xfd, 0xca, 0x78, 0xf6, 0x5b, 0x44,
+	0x12, 0x8f, 0x8f, 0xa0, 0x5e, 0x7a, 0xe2, 0xbc, 0x4d, 0x9b, 0xf6, 0x0e, 0x7f, 0x46, 0x70, 0xe5,
+	0xec, 0x48, 0xe1, 0xbc, 0x46, 0xc6, 0xf7, 0x67, 0xdc, 0xcb, 0x0f, 0xd4, 0x11, 0x5c, 0x15, 0xa1,
+	0x82, 0xef, 0x9c, 0x3f, 0x82, 0xc0, 0x27, 0x08, 0x36, 0xa7, 0x46, 0x05, 0xd7, 0x56, 0xc9, 0xcf,
+	0xcf, 0xbc, 0xe1, 0xe6, 0xc2, 0x68, 0xb7, 0xfb, 0xca, 0xad, 0x8d, 0xf7, 0x32, 0xdd, 0xb2, 0x11,
+	0x6a, 0xa6, 0xd7, 0x9f, 0x10, 0x5c, 0x9a, 0x9e, 0x6c, 0x9c, 0x47, 0x7b, 0xd2, 0xe3, 0xfd, 0x7c,
+	0x20, 0xed, 0xd8, 0x56, 0x8e, 0xcb, 0x78, 0xf7, 0x5c, 0x8e, 0x05, 0xfe, 0x86, 0xe0, 0xea, 0xa2,
+	0xc7, 0x81, 0x1f, 0xac, 0x92, 0x5f, 0xf2, 0xec, 0x8c, 0x87, 0x7f, 0x07, 0xd6, 0x19, 0xea, 0x2a,
+	0x43, 0x15, 0x3b, 0x99, 0x19, 0x7c, 0xc6, 0xa9, 0xe7, 0x6b, 0xbc, 0xc7, 0x35, 0xc1, 0xe3, 0xc3,
+	0xaf, 0x03, 0x13, 0x9d, 0x0e, 0x4c, 0xf4, 0x73, 0x60, 0xa2, 0x0f, 0x43, 0xb3, 0x70, 0x3a, 0x34,
+	0x0b, 0x3f, 0x86, 0x66, 0xe1, 0x55, 0x3d, 0x08, 0x65, 0xbb, 0x77, 0x64, 0xfb, 0xac, 0xab, 0x48,
+	0xd5, 0x37, 0xc1, 0x67, 0x9d, 0x69, 0x85, 0x37, 0xb3, 0x1a, 0xe9, 0xdf, 0x8f, 0x38, 0xba, 0xa8,
+	0x2a, 0xdd, 0xdf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x2e, 0x72, 0x77, 0x51, 0xcd, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -531,8 +530,8 @@ type QueryClient interface {
 	OverlayWasm(ctx context.Context, in *QueryOverlayWasmRequest, opts ...grpc.CallOption) (*QueryOverlayWasmResponse, error)
 	// OverlayWasms returns all Overlay Wasms.
 	OverlayWasms(ctx context.Context, in *QueryOverlayWasmsRequest, opts ...grpc.CallOption) (*QueryOverlayWasmsResponse, error)
-	// ProxyContractRegistry returns the Proxy Contract Registry address.
-	ProxyContractRegistry(ctx context.Context, in *QueryProxyContractRegistryRequest, opts ...grpc.CallOption) (*QueryProxyContractRegistryResponse, error)
+	// CoreContractRegistry returns the Core Contract Registry address.
+	CoreContractRegistry(ctx context.Context, in *QueryCoreContractRegistryRequest, opts ...grpc.CallOption) (*QueryCoreContractRegistryResponse, error)
 }
 
 type queryClient struct {
@@ -579,9 +578,9 @@ func (c *queryClient) OverlayWasms(ctx context.Context, in *QueryOverlayWasmsReq
 	return out, nil
 }
 
-func (c *queryClient) ProxyContractRegistry(ctx context.Context, in *QueryProxyContractRegistryRequest, opts ...grpc.CallOption) (*QueryProxyContractRegistryResponse, error) {
-	out := new(QueryProxyContractRegistryResponse)
-	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/ProxyContractRegistry", in, out, opts...)
+func (c *queryClient) CoreContractRegistry(ctx context.Context, in *QueryCoreContractRegistryRequest, opts ...grpc.CallOption) (*QueryCoreContractRegistryResponse, error) {
+	out := new(QueryCoreContractRegistryResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/CoreContractRegistry", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -598,8 +597,8 @@ type QueryServer interface {
 	OverlayWasm(context.Context, *QueryOverlayWasmRequest) (*QueryOverlayWasmResponse, error)
 	// OverlayWasms returns all Overlay Wasms.
 	OverlayWasms(context.Context, *QueryOverlayWasmsRequest) (*QueryOverlayWasmsResponse, error)
-	// ProxyContractRegistry returns the Proxy Contract Registry address.
-	ProxyContractRegistry(context.Context, *QueryProxyContractRegistryRequest) (*QueryProxyContractRegistryResponse, error)
+	// CoreContractRegistry returns the Core Contract Registry address.
+	CoreContractRegistry(context.Context, *QueryCoreContractRegistryRequest) (*QueryCoreContractRegistryResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -618,8 +617,8 @@ func (*UnimplementedQueryServer) OverlayWasm(ctx context.Context, req *QueryOver
 func (*UnimplementedQueryServer) OverlayWasms(ctx context.Context, req *QueryOverlayWasmsRequest) (*QueryOverlayWasmsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OverlayWasms not implemented")
 }
-func (*UnimplementedQueryServer) ProxyContractRegistry(ctx context.Context, req *QueryProxyContractRegistryRequest) (*QueryProxyContractRegistryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ProxyContractRegistry not implemented")
+func (*UnimplementedQueryServer) CoreContractRegistry(ctx context.Context, req *QueryCoreContractRegistryRequest) (*QueryCoreContractRegistryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CoreContractRegistry not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -698,20 +697,20 @@ func _Query_OverlayWasms_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_ProxyContractRegistry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryProxyContractRegistryRequest)
+func _Query_CoreContractRegistry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryCoreContractRegistryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).ProxyContractRegistry(ctx, in)
+		return srv.(QueryServer).CoreContractRegistry(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/sedachain.wasm_storage.v1.Query/ProxyContractRegistry",
+		FullMethod: "/sedachain.wasm_storage.v1.Query/CoreContractRegistry",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ProxyContractRegistry(ctx, req.(*QueryProxyContractRegistryRequest))
+		return srv.(QueryServer).CoreContractRegistry(ctx, req.(*QueryCoreContractRegistryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -737,8 +736,8 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_OverlayWasms_Handler,
 		},
 		{
-			MethodName: "ProxyContractRegistry",
-			Handler:    _Query_ProxyContractRegistry_Handler,
+			MethodName: "CoreContractRegistry",
+			Handler:    _Query_CoreContractRegistry_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -985,7 +984,7 @@ func (m *QueryOverlayWasmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryProxyContractRegistryRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryCoreContractRegistryRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -995,12 +994,12 @@ func (m *QueryProxyContractRegistryRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryProxyContractRegistryRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryCoreContractRegistryRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryProxyContractRegistryRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryCoreContractRegistryRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1008,7 +1007,7 @@ func (m *QueryProxyContractRegistryRequest) MarshalToSizedBuffer(dAtA []byte) (i
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryProxyContractRegistryResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryCoreContractRegistryResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1018,12 +1017,12 @@ func (m *QueryProxyContractRegistryResponse) Marshal() (dAtA []byte, err error) 
 	return dAtA[:n], nil
 }
 
-func (m *QueryProxyContractRegistryResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryCoreContractRegistryResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryProxyContractRegistryResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryCoreContractRegistryResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1149,7 +1148,7 @@ func (m *QueryOverlayWasmsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryProxyContractRegistryRequest) Size() (n int) {
+func (m *QueryCoreContractRegistryRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1158,7 +1157,7 @@ func (m *QueryProxyContractRegistryRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryProxyContractRegistryResponse) Size() (n int) {
+func (m *QueryCoreContractRegistryResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1777,7 +1776,7 @@ func (m *QueryOverlayWasmsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryProxyContractRegistryRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryCoreContractRegistryRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1800,10 +1799,10 @@ func (m *QueryProxyContractRegistryRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryProxyContractRegistryRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryCoreContractRegistryRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryProxyContractRegistryRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryCoreContractRegistryRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -1827,7 +1826,7 @@ func (m *QueryProxyContractRegistryRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryProxyContractRegistryResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryCoreContractRegistryResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1850,10 +1849,10 @@ func (m *QueryProxyContractRegistryResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryProxyContractRegistryResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryCoreContractRegistryResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryProxyContractRegistryResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryCoreContractRegistryResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

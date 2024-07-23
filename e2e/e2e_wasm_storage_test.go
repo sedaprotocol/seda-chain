@@ -18,7 +18,7 @@ const (
 	drWasm      = "burner.wasm"
 	tallyWasm   = "reflect.wasm"
 	overlayWasm = "staking.wasm"
-	proxyWasm   = "proxy_contract.wasm"
+	coreWasm    = "core_contract.wasm"
 )
 
 func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {

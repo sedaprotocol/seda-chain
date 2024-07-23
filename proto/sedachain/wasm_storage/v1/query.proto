@@ -34,11 +34,11 @@ service Query {
     option (google.api.http).get = "/seda-chain/wasm-storage/overlay_wasms";
   }
 
-  // ProxyContractRegistry returns the Proxy Contract Registry address.
-  rpc ProxyContractRegistry(QueryProxyContractRegistryRequest)
-      returns (QueryProxyContractRegistryResponse) {
+  // CoreContractRegistry returns the Core Contract Registry address.
+  rpc CoreContractRegistry(QueryCoreContractRegistryRequest)
+      returns (QueryCoreContractRegistryResponse) {
     option (google.api.http).get =
-        "/seda-chain/wasm-storage/proxy_contract_registry";
+        "/seda-chain/wasm-storage/core_contract_registry";
   }
 }
 
@@ -66,8 +66,8 @@ message QueryOverlayWasmsRequest {}
 // The response message for QueryOverlayWasms RPC.
 message QueryOverlayWasmsResponse { repeated string hash_type_pairs = 1; }
 
-// The request message for QueryProxyContractRegistry RPC.
-message QueryProxyContractRegistryRequest {}
+// The request message for QueryCoreContractRegistry RPC.
+message QueryCoreContractRegistryRequest {}
 
-// The response message for QueryProxyContractRegistry RPC.
-message QueryProxyContractRegistryResponse { string address = 1; }
+// The response message for QueryCoreContractRegistry RPC.
+message QueryCoreContractRegistryResponse { string address = 1; }

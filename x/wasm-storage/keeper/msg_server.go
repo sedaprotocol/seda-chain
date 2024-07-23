@@ -154,9 +154,9 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 	}, nil
 }
 
-// InstantiateAndRegisterProxyContract instantiate a new contract with
-// a predictable address and updates the Proxy Contract registry.
-func (m msgServer) InstantiateAndRegisterProxyContract(goCtx context.Context, msg *types.MsgInstantiateAndRegisterProxyContract) (*types.MsgInstantiateAndRegisterProxyContractResponse, error) {
+// InstantiateAndRegisterCoreContract instantiate a new contract with
+// a predictable address and updates the Core Contract registry.
+func (m msgServer) InstantiateAndRegisterCoreContract(goCtx context.Context, msg *types.MsgInstantiateAndRegisterCoreContract) (*types.MsgInstantiateAndRegisterCoreContractResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if err := msg.ValidateBasic(); err != nil {
@@ -176,13 +176,13 @@ func (m msgServer) InstantiateAndRegisterProxyContract(goCtx context.Context, ms
 		return nil, err
 	}
 
-	// update proxy contract registry
-	err = m.ProxyContractRegistry.Set(ctx, contractAddr.String())
+	// update core contract registry
+	err = m.CoreContractRegistry.Set(ctx, contractAddr.String())
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.MsgInstantiateAndRegisterProxyContractResponse{
+	return &types.MsgInstantiateAndRegisterCoreContractResponse{
 		ContractAddress: contractAddr.String(),
 	}, nil
 }

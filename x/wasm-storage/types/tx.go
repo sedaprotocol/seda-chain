@@ -49,15 +49,15 @@ func (msg *MsgStoreOverlayWasm) ValidateBasic() error {
 	return nil
 }
 
-func (msg *MsgInstantiateAndRegisterProxyContract) Route() string {
+func (msg *MsgInstantiateAndRegisterCoreContract) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgInstantiateAndRegisterProxyContract) Type() string {
-	return "instantiate-and-register-proxy-contract"
+func (msg *MsgInstantiateAndRegisterCoreContract) Type() string {
+	return "instantiate-and-register-core-contract"
 }
 
-func (msg *MsgInstantiateAndRegisterProxyContract) ValidateBasic() error {
+func (msg *MsgInstantiateAndRegisterCoreContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return fmt.Errorf("invalid sender: %w", err)
 	}

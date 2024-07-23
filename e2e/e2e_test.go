@@ -7,6 +7,6 @@ func (s *IntegrationTestSuite) TestWasmStorage() {
 		s.T().Skip()
 	}
 	s.testWasmStorageStoreDataRequestWasm()
-	s.testWasmStorageStoreOverlayWasm()         // involves gov process
-	s.testInstantiateAndRegisterProxyContract() // involves gov process
+	s.testWasmStorageStoreOverlayWasm()        // involves gov process
+	s.testInstantiateAndRegisterCoreContract() // involves gov process
 }
