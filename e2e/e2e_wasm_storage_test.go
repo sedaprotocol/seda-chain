@@ -65,9 +65,9 @@ func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {
 				s.Require().NoError(err)
 
 				if fmt.Sprintf("%s,%s", drHashStr, types.WasmTypeDataRequest.String()) == wasms.HashTypePairs[0] {
-					return fmt.Sprintf("%s,%s", tallyHashStr, types.WasmTypeTally.String()) == wasms.HashTypePairs[1]
+					return fmt.Sprintf("%s,%s", tallyHashStr, types.WasmTypeDataRequest.String()) == wasms.HashTypePairs[1]
 				}
-				if fmt.Sprintf("%s,%s", tallyHashStr, types.WasmTypeTally.String()) == wasms.HashTypePairs[0] {
+				if fmt.Sprintf("%s,%s", tallyHashStr, types.WasmTypeDataRequest.String()) == wasms.HashTypePairs[0] {
 					return fmt.Sprintf("%s,%s", drHashStr, types.WasmTypeDataRequest.String()) == wasms.HashTypePairs[1]
 				}
 				return false

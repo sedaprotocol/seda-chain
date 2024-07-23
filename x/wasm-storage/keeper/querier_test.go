@@ -17,9 +17,8 @@ func (s *KeeperTestSuite) TestDataRequestWasm() {
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)
 	input := types.MsgStoreDataRequestWasm{
-		Sender:   s.authority,
-		Wasm:     compWasm,
-		WasmType: types.WasmTypeDataRequest,
+		Sender: s.authority,
+		Wasm:   compWasm,
 	}
 	storedWasm, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &input)
 	s.Require().NoError(err)
@@ -60,9 +59,8 @@ func (s *KeeperTestSuite) TestDataRequestWasms() {
 	s.Require().NoError(err)
 
 	input := types.MsgStoreDataRequestWasm{
-		Sender:   s.authority,
-		Wasm:     compWasm,
-		WasmType: types.WasmTypeDataRequest,
+		Sender: s.authority,
+		Wasm:   compWasm,
 	}
 	storedWasm, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &input)
 	s.Require().NoError(err)
@@ -72,9 +70,8 @@ func (s *KeeperTestSuite) TestDataRequestWasms() {
 	compWasm2, err := ioutils.GzipIt(wasm2)
 	s.Require().NoError(err)
 	input2 := types.MsgStoreDataRequestWasm{
-		Sender:   s.authority,
-		Wasm:     compWasm2,
-		WasmType: types.WasmTypeDataRequest,
+		Sender: s.authority,
+		Wasm:   compWasm2,
 	}
 	storedWasm2, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &input2)
 	s.Require().NoError(err)

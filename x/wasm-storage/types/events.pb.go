@@ -73,7 +73,7 @@ func (m *EventStoreDataRequestWasm) GetWasmType() WasmType {
 	if m != nil {
 		return m.WasmType
 	}
-	return WasmTypeNil
+	return WasmTypeDataRequest
 }
 
 func (m *EventStoreDataRequestWasm) GetBytecode() []byte {
@@ -134,7 +134,7 @@ func (m *EventStoreOverlayWasm) GetWasmType() WasmType {
 	if m != nil {
 		return m.WasmType
 	}
-	return WasmTypeNil
+	return WasmTypeDataRequest
 }
 
 func (m *EventStoreOverlayWasm) GetBytecode() []byte {

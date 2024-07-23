@@ -27,6 +27,7 @@ import (
 var DefaultGovAuthority = sdk.AccAddress(address.Module("gov"))
 
 const (
+	flagWasmType  = "wasm-type"
 	flagAuthority = "authority"
 	flagAmount    = "amount"
 	flagLabel     = "label"
@@ -82,8 +83,8 @@ func ProposalStoreOverlayCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 
-	cmd.Flags().String(FlagWasmType, "", "Overlay Wasm type: data-request-executor or relayer")
-	err := cmd.MarkFlagRequired(FlagWasmType)
+	cmd.Flags().String(flagWasmType, "", "Overlay Wasm type: data-request-executor or relayer")
+	err := cmd.MarkFlagRequired(flagWasmType)
 	if err != nil {
 		panic(err)
 	}
@@ -151,7 +152,7 @@ func parseStoreOverlayArgs(file, sender string, _ *flag.FlagSet) (*types.MsgStor
 	msg := &types.MsgStoreOverlayWasm{
 		Sender:   sender,
 		Wasm:     zipped,
-		WasmType: types.WasmTypeFromString(viper.GetString(FlagWasmType)),
+		WasmType: types.WasmTypeFromString(viper.GetString(flagWasmType)),
 	}
 	return msg, nil
 }

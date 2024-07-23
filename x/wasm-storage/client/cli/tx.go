@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -14,8 +13,6 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
-
-const FlagWasmType = "wasm-type"
 
 // GetTxCmd returns the CLI transaction commands for this module
 func GetTxCmd() *cobra.Command {
@@ -52,19 +49,13 @@ func GetCmdStoreDataRequestWasm() *cobra.Command {
 			}
 
 			msg := &types.MsgStoreDataRequestWasm{
-				Sender:   clientCtx.GetFromAddress().String(),
-				Wasm:     wasm,
-				WasmType: types.WasmTypeFromString(viper.GetString(FlagWasmType)),
+				Sender: clientCtx.GetFromAddress().String(),
+				Wasm:   wasm,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
-	cmd.Flags().String(FlagWasmType, "", "Data Request Wasm type: data-request or tally")
-	err := cmd.MarkFlagRequired(FlagWasmType)
-	if err != nil {
-		panic(err)
-	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

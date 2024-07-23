@@ -19,9 +19,6 @@ func (msg *MsgStoreDataRequestWasm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}
-	if msg.WasmType != WasmTypeDataRequest && msg.WasmType != WasmTypeTally {
-		return fmt.Errorf("data Request Wasm type must be data-request or tally")
-	}
 	if err := validateWasmSize(msg.Wasm); err != nil {
 		return fmt.Errorf("invalid request: %w", err)
 	}

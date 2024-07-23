@@ -22,19 +22,14 @@ message Wasm {
 enum WasmType {
   option (gogoproto.goproto_enum_prefix) = false;
 
-  // An unspecified kind of wasm.
-  WASM_TYPE_UNSPECIFIED = 0
-      [ (gogoproto.enumvalue_customname) = "WasmTypeNil" ];
-  // A wasm that is a data request.
-  WASM_TYPE_DATA_REQUEST = 1
+  // WASM_TYPE_DATA_REQUEST is for data request and tally wasms.
+  WASM_TYPE_DATA_REQUEST = 0
       [ (gogoproto.enumvalue_customname) = "WasmTypeDataRequest" ];
-  // A wasm that is a DR tally.
-  WASM_TYPE_TALLY = 2 [ (gogoproto.enumvalue_customname) = "WasmTypeTally" ];
-  // A wasm that is an overlay executor.
-  WASM_TYPE_DATA_REQUEST_EXECUTOR = 3
+  // WASM_TYPE_DATA_REQUEST_EXECUTOR is for overlay executors.
+  WASM_TYPE_DATA_REQUEST_EXECUTOR = 1
       [ (gogoproto.enumvalue_customname) = "WasmTypeDataRequestExecutor" ];
-  // A wasm that is an overlay relayer.
-  WASM_TYPE_RELAYER = 4
+  // WASM_TYPE_RELAYER is for overlay relayers.
+  WASM_TYPE_RELAYER = 2
       [ (gogoproto.enumvalue_customname) = "WasmTypeRelayer" ];
 }
 

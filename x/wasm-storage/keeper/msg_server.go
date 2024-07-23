@@ -79,7 +79,7 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 		return nil, err
 	}
 
-	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
+	wasm := types.NewWasm(unzipped, types.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
 	if exists, _ := m.DataRequestWasm.Has(ctx, wasm.Hash); exists {
 		return nil, errors.Wrapf(types.ErrAlreadyExists, "wasm type: [%s] hash: [%v]", wasm.WasmType, wasm.Hash)
 	}
@@ -96,7 +96,6 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 		&EventStoreDataRequestWasmWrapper{
 			EventStoreDataRequestWasm: &types.EventStoreDataRequestWasm{
 				Hash:     hashString,
-				WasmType: msg.WasmType,
 				Bytecode: msg.Wasm,
 			},
 		})

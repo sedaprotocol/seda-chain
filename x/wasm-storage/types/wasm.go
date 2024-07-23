@@ -51,13 +51,11 @@ func WasmTypeFromString(s string) WasmType {
 	switch strings.ToUpper(s) {
 	case "DATA-REQUEST":
 		return WasmTypeDataRequest
-	case "TALLY":
-		return WasmTypeTally
 	case "DATA-REQUEST-EXECUTOR":
 		return WasmTypeDataRequestExecutor
 	case "RELAYER":
 		return WasmTypeRelayer
 	default:
-		return WasmTypeNil
+		panic("unexpected wasm type")
 	}
 }

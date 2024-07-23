@@ -49,4 +49,4 @@ CORE_CONTRACT_ADDRESS=$($BIN query wasm-storage core-contract-registry --output 
 echo "Deployed core contract to: $CORE_CONTRACT_ADDRESS"
 
 echo "Storing sample tally wasm"
-$BIN tx wasm-storage store-data-request-wasm ./x/wasm-storage/keeper/testdata/sample_tally.wasm --wasm-type tally --from $DEV_ACCOUNT --keyring-backend test --gas auto --gas-adjustment 1.5 --gas-prices 10000000000aseda --chain-id $CHAIN_ID -y
+$BIN tx wasm-storage store-data-request-wasm ./x/wasm-storage/keeper/testdata/sample_tally.wasm --from $DEV_ACCOUNT --keyring-backend test --gas auto --gas-adjustment 1.5 --gas-prices 10000000000aseda --chain-id $CHAIN_ID -y

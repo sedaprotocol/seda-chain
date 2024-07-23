@@ -22,7 +22,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 	for i := range data.Wasms {
 		wasm := data.Wasms[i]
 		switch wasm.WasmType {
-		case types.WasmTypeDataRequest, types.WasmTypeTally:
+		case types.WasmTypeDataRequest:
 			if err := k.DataRequestWasm.Set(ctx, wasm.Hash, wasm); err != nil {
 				panic(err)
 			}
@@ -30,6 +30,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 			if err := k.OverlayWasm.Set(ctx, wasm.Hash, wasm); err != nil {
 				panic(err)
 			}
+		default:
+			panic("unexpected wasm type")
 		}
 	}
 }

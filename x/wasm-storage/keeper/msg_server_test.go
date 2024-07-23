@@ -39,9 +39,8 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 			name:   "happy path",
 			preRun: func() {},
 			input: types.MsgStoreDataRequestWasm{
-				Sender:   s.authority,
-				Wasm:     regWasmZipped,
-				WasmType: types.WasmTypeDataRequest,
+				Sender: s.authority,
+				Wasm:   regWasmZipped,
 			},
 			expErr: false,
 			expOutput: types.MsgStoreDataRequestWasmResponse{
@@ -51,15 +50,13 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 		{
 			name: "Data Request wasm already exist",
 			input: types.MsgStoreDataRequestWasm{
-				Sender:   s.authority,
-				Wasm:     regWasmZipped,
-				WasmType: types.WasmTypeDataRequest,
+				Sender: s.authority,
+				Wasm:   regWasmZipped,
 			},
 			preRun: func() {
 				input := types.MsgStoreDataRequestWasm{
-					Sender:   s.authority,
-					Wasm:     regWasmZipped,
-					WasmType: types.WasmTypeDataRequest,
+					Sender: s.authority,
+					Wasm:   regWasmZipped,
 				}
 				_, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &input)
 				s.Require().Nil(err)
@@ -70,9 +67,8 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 		{
 			name: "unzipped Wasm",
 			input: types.MsgStoreDataRequestWasm{
-				Sender:   s.authority,
-				Wasm:     regWasm,
-				WasmType: types.WasmTypeDataRequest,
+				Sender: s.authority,
+				Wasm:   regWasm,
 			},
 			preRun:    func() {},
 			expErr:    true,
@@ -81,9 +77,8 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 		{
 			name: "oversized Wasm",
 			input: types.MsgStoreDataRequestWasm{
-				Sender:   s.authority,
-				Wasm:     oversizedWasmZipped,
-				WasmType: types.WasmTypeDataRequest,
+				Sender: s.authority,
+				Wasm:   oversizedWasmZipped,
 			},
 			preRun:    func() {},
 			expErr:    true,
@@ -342,9 +337,8 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	s.Require().NoError(err)
 
 	resp1, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &types.MsgStoreDataRequestWasm{
-		Sender:   s.authority,
-		Wasm:     drWasmZipped1,
-		WasmType: types.WasmTypeDataRequest,
+		Sender: s.authority,
+		Wasm:   drWasmZipped1,
 	})
 	s.Require().NoError(err)
 
@@ -359,9 +353,8 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	s.Require().NoError(err)
 
 	resp2, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &types.MsgStoreDataRequestWasm{
-		Sender:   s.authority,
-		Wasm:     drWasmZipped2,
-		WasmType: types.WasmTypeDataRequest,
+		Sender: s.authority,
+		Wasm:   drWasmZipped2,
 	})
 	s.Require().NoError(err)
 
