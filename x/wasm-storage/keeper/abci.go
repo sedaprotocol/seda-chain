@@ -164,7 +164,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeTallyCompletion,
-				sdk.NewAttribute(types.AttributeRequestID, req.ID),
+				sdk.NewAttribute(types.AttributeDataRequestID, req.ID),
 				sdk.NewAttribute(types.AttributeTypeConsensus, strconv.FormatBool(consensus)),
 				sdk.NewAttribute(types.AttributeTallyVMStdOut, strings.Join(vmRes.Stdout, "\n")),
 				sdk.NewAttribute(types.AttributeTallyVMStdErr, strings.Join(vmRes.Stderr, "\n")),

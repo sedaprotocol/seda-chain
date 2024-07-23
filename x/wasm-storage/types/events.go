@@ -8,7 +8,7 @@ const (
 
 	AttributeWasmHash      = "wasm_hash"
 	AttributeWasmType      = "wasm_type"
-	AttributeRequestID     = "request_id"
+	AttributeDataRequestID = "dr_id"
 	AttributeTypeConsensus = "consensus"
 	AttributeTallyVMStdOut = "tally_vm_stdout"
 	AttributeTallyVMStdErr = "tally_vm_stderr"
