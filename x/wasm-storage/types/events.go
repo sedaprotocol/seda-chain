@@ -12,4 +12,5 @@ const (
 	AttributeTypeConsensus = "consensus"
 	AttributeTallyVMStdOut = "tally_vm_stdout"
 	AttributeTallyVMStdErr = "tally_vm_stderr"
+	AttributeTallyExitCode = "exit_code"
 )

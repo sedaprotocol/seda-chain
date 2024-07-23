@@ -168,6 +168,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 				sdk.NewAttribute(types.AttributeTypeConsensus, strconv.FormatBool(consensus)),
 				sdk.NewAttribute(types.AttributeTallyVMStdOut, strings.Join(vmRes.Stdout, "\n")),
 				sdk.NewAttribute(types.AttributeTallyVMStdErr, strings.Join(vmRes.Stderr, "\n")),
+				sdk.NewAttribute(types.AttributeTallyExitCode, fmt.Sprintf("%02x", sudoMsg.ExitCode)),
 			),
 		)
 	}
