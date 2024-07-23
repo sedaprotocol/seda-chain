@@ -226,7 +226,6 @@ func (s *KeeperTestSuite) TestMarshalJSON() {
 			hash: "8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261",
 			body: &types.EventStoreDataRequestWasm{
 				Hash:     "8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261",
-				WasmType: types.WasmTypeDataRequest,
 				Bytecode: []byte("test WasmTypeDataRequest"),
 			},
 			expected: `{"hash":"8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261","wasm_type":1,"bytecode":"dGVzdCBXYXNtVHlwZURhdGFSZXF1ZXN0"}`,
@@ -238,7 +237,6 @@ func (s *KeeperTestSuite) TestMarshalJSON() {
 			wrapper := &keeper.EventStoreDataRequestWasmWrapper{
 				EventStoreDataRequestWasm: &types.EventStoreDataRequestWasm{
 					Hash:     tc.hash,
-					WasmType: tc.body.WasmType,
 					Bytecode: tc.body.Bytecode,
 				},
 			}

@@ -8,8 +8,7 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 // The msg for storing a data request wasm.
 message EventStoreDataRequestWasm {
   string hash = 1;
-  WasmType wasm_type = 2;
-  bytes bytecode = 3;
+  bytes bytecode = 2;
 }
 
 // The msg for storing a overlay wasm(i.e. relayer or executor)
