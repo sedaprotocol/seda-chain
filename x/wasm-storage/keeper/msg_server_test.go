@@ -134,16 +134,6 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			},
 		},
 		{
-			name: "invalid wasm type",
-			input: types.MsgStoreOverlayWasm{
-				Sender: s.authority,
-				Wasm:   regWasm,
-			},
-			preRun:    func() {},
-			expErr:    true,
-			expErrMsg: "overlay Wasm type must be data-request-executor or relayer",
-		},
-		{
 			name: "invalid authority",
 			input: types.MsgStoreOverlayWasm{
 				Sender: "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
@@ -221,7 +211,7 @@ func (s *KeeperTestSuite) TestMarshalJSON() {
 				Hash:     "8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261",
 				Bytecode: []byte("test WasmTypeDataRequest"),
 			},
-			expected: `{"hash":"8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261","wasm_type":1,"bytecode":"dGVzdCBXYXNtVHlwZURhdGFSZXF1ZXN0"}`,
+			expected: `{"hash":"8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261","bytecode":"dGVzdCBXYXNtVHlwZURhdGFSZXF1ZXN0"}`,
 		},
 	}
 

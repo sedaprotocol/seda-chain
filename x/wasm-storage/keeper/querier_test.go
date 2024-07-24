@@ -112,6 +112,6 @@ func (s *KeeperTestSuite) TestOverlayWasms() {
 	res, err := s.queryClient.OverlayWasms(s.ctx, &req)
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
-	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm.Hash, "WASM_TYPE_RELAYER"), res.HashTypePairs[0])
-	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm2.Hash, "WASM_TYPE_RELAYER"), res.HashTypePairs[1])
+	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm.Hash, "WASM_TYPE_DATA_REQUEST_EXECUTOR"), res.HashTypePairs[0])
+	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm2.Hash, "WASM_TYPE_DATA_REQUEST_EXECUTOR"), res.HashTypePairs[1])
 }
