@@ -37,9 +37,6 @@ func (msg *MsgStoreOverlayWasm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}
-	if msg.WasmType != WasmTypeDataRequestExecutor && msg.WasmType != WasmTypeRelayer {
-		return fmt.Errorf("overlay Wasm type must be data-request-executor or relayer")
-	}
 	if err := validateWasmSize(msg.Wasm); err != nil {
 		return fmt.Errorf("invalid request: %w", err)
 	}

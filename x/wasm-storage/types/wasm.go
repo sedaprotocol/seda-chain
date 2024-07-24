@@ -53,9 +53,7 @@ func WasmTypeFromString(s string) WasmType {
 		return WasmTypeDataRequest
 	case "DATA-REQUEST-EXECUTOR":
 		return WasmTypeDataRequestExecutor
-	case "RELAYER":
-		return WasmTypeRelayer
 	default:
-		panic("unexpected wasm type")
+		panic("unexpected wasm type string")
 	}
 }

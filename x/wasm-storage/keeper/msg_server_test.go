@@ -123,9 +123,8 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 		{
 			name: "happy path",
 			input: types.MsgStoreOverlayWasm{
-				Sender:   s.authority,
-				Wasm:     regWasmZipped,
-				WasmType: types.WasmTypeRelayer,
+				Sender: s.authority,
+				Wasm:   regWasmZipped,
 			},
 			preRun:    func() {},
 			expErr:    false,
@@ -137,9 +136,8 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 		{
 			name: "invalid wasm type",
 			input: types.MsgStoreOverlayWasm{
-				Sender:   s.authority,
-				Wasm:     regWasm,
-				WasmType: types.WasmTypeDataRequest,
+				Sender: s.authority,
+				Wasm:   regWasm,
 			},
 			preRun:    func() {},
 			expErr:    true,
@@ -148,9 +146,8 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 		{
 			name: "invalid authority",
 			input: types.MsgStoreOverlayWasm{
-				Sender:   "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
-				Wasm:     regWasmZipped,
-				WasmType: types.WasmTypeRelayer,
+				Sender: "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
+				Wasm:   regWasmZipped,
 			},
 			preRun:    func() {},
 			expErr:    true,
@@ -159,15 +156,13 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 		{
 			name: "Overlay wasm already exist",
 			input: types.MsgStoreOverlayWasm{
-				Sender:   s.authority,
-				Wasm:     regWasmZipped,
-				WasmType: types.WasmTypeRelayer,
+				Sender: s.authority,
+				Wasm:   regWasmZipped,
 			},
 			preRun: func() {
 				input := types.MsgStoreOverlayWasm{
-					Sender:   s.authority,
-					Wasm:     regWasmZipped,
-					WasmType: types.WasmTypeRelayer,
+					Sender: s.authority,
+					Wasm:   regWasmZipped,
 				}
 				_, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
 				s.Require().NoError(err)
@@ -178,9 +173,8 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 		{
 			name: "unzipped Wasm",
 			input: types.MsgStoreOverlayWasm{
-				Sender:   s.authority,
-				Wasm:     regWasm,
-				WasmType: types.WasmTypeRelayer,
+				Sender: s.authority,
+				Wasm:   regWasm,
 			},
 			preRun:    func() {},
 			expErr:    true,
@@ -189,9 +183,8 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 		{
 			name: "oversized Wasm",
 			input: types.MsgStoreOverlayWasm{
-				Sender:   s.authority,
-				Wasm:     oversizedWasmZipped,
-				WasmType: types.WasmTypeRelayer,
+				Sender: s.authority,
+				Wasm:   oversizedWasmZipped,
 			},
 			preRun:    func() {},
 			expErr:    true,

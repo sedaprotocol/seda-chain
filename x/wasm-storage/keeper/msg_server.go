@@ -126,7 +126,7 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 		return nil, err
 	}
 
-	wasm := types.NewWasm(unzipped, msg.WasmType, ctx.BlockTime(), ctx.BlockHeight(), -1)
+	wasm := types.NewWasm(unzipped, types.WasmTypeDataRequestExecutor, ctx.BlockTime(), ctx.BlockHeight(), -1)
 	exists, _ := m.Keeper.OverlayWasm.Has(ctx, wasm.Hash)
 	if exists {
 		return nil, fmt.Errorf("overlay Wasm with given hash already exists")
@@ -140,7 +140,6 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 		&EventStoreOverlayWasmWrapper{
 			EventStoreOverlayWasm: &types.EventStoreOverlayWasm{
 				Hash:     hashString,
-				WasmType: msg.WasmType,
 				Bytecode: msg.Wasm,
 			},
 		})

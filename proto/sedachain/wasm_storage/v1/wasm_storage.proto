@@ -28,9 +28,6 @@ enum WasmType {
   // WASM_TYPE_DATA_REQUEST_EXECUTOR is for overlay executors.
   WASM_TYPE_DATA_REQUEST_EXECUTOR = 1
       [ (gogoproto.enumvalue_customname) = "WasmTypeDataRequestExecutor" ];
-  // WASM_TYPE_RELAYER is for overlay relayers.
-  WASM_TYPE_RELAYER = 2
-      [ (gogoproto.enumvalue_customname) = "WasmTypeRelayer" ];
 }
 
 // Params to define the max wasm size allowed.

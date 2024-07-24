@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
-	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -27,7 +26,6 @@ import (
 var DefaultGovAuthority = sdk.AccAddress(address.Module("gov"))
 
 const (
-	flagWasmType  = "wasm-type"
 	flagAuthority = "authority"
 	flagAmount    = "amount"
 	flagLabel     = "label"
@@ -83,11 +81,6 @@ func ProposalStoreOverlayCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 
-	cmd.Flags().String(flagWasmType, "", "Overlay Wasm type: data-request-executor or relayer")
-	err := cmd.MarkFlagRequired(flagWasmType)
-	if err != nil {
-		panic(err)
-	}
 	addCommonProposalFlags(cmd)
 	return cmd
 }
@@ -150,9 +143,8 @@ func parseStoreOverlayArgs(file, sender string, _ *flag.FlagSet) (*types.MsgStor
 	}
 
 	msg := &types.MsgStoreOverlayWasm{
-		Sender:   sender,
-		Wasm:     zipped,
-		WasmType: types.WasmTypeFromString(viper.GetString(flagWasmType)),
+		Sender: sender,
+		Wasm:   zipped,
 	}
 	return msg, nil
 }

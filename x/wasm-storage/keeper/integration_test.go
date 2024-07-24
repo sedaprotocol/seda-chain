@@ -194,7 +194,7 @@ func initFixture(tb testing.TB) *fixture {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(tb, err)
 
-	contractAddr, _, err := contractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, "DR Contract", sdk.NewCoins())
+	contractAddr, _, err := contractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, "Core Contract", sdk.NewCoins())
 	require.NoError(tb, err)
 	require.NotEmpty(tb, contractAddr)
 

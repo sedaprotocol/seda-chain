@@ -26,7 +26,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 			if err := k.DataRequestWasm.Set(ctx, wasm.Hash, wasm); err != nil {
 				panic(err)
 			}
-		case types.WasmTypeDataRequestExecutor, types.WasmTypeRelayer:
+		case types.WasmTypeDataRequestExecutor:
 			if err := k.OverlayWasm.Set(ctx, wasm.Hash, wasm); err != nil {
 				panic(err)
 			}

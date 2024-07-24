@@ -51,13 +51,13 @@ func (s *KeeperTestSuite) TestHasDataRequestWasm() {
 
 func (s *KeeperTestSuite) TestSetOverlayWasm() {
 	s.SetupTest()
-	mockWasm := types.NewWasm(mockedByteArray, types.WasmTypeRelayer, time.Now().UTC(), 1000, 100)
+	mockWasm := types.NewWasm(mockedByteArray, types.WasmTypeDataRequestExecutor, time.Now().UTC(), 1000, 100)
 	s.Require().NoError(s.keeper.OverlayWasm.Set(s.ctx, mockWasm.Hash, mockWasm))
 }
 
 func (s *KeeperTestSuite) TestGetOverlayWasm() {
 	s.SetupTest()
-	mockWasm := types.NewWasm(mockedByteArray, types.WasmTypeRelayer, time.Now().UTC(), 1000, 100)
+	mockWasm := types.NewWasm(mockedByteArray, types.WasmTypeDataRequestExecutor, time.Now().UTC(), 1000, 100)
 	err := s.keeper.OverlayWasm.Set(s.ctx, mockWasm.Hash, mockWasm)
 	s.Require().NoError(err)
 	value, _ := s.keeper.OverlayWasm.Get(s.ctx, mockWasm.Hash)
@@ -67,7 +67,7 @@ func (s *KeeperTestSuite) TestGetOverlayWasm() {
 
 func (s *KeeperTestSuite) TestHasOverlayWasm() {
 	s.SetupTest()
-	mockWasm := types.NewWasm(mockedByteArray, types.WasmTypeRelayer, time.Now().UTC(), 1000, 100)
+	mockWasm := types.NewWasm(mockedByteArray, types.WasmTypeDataRequestExecutor, time.Now().UTC(), 1000, 100)
 	has, _ := s.keeper.OverlayWasm.Has(s.ctx, mockWasm.Hash)
 	s.Assert().False(has)
 	err := s.keeper.OverlayWasm.Set(s.ctx, mockWasm.Hash, mockWasm)
@@ -109,8 +109,8 @@ func (s *KeeperTestSuite) TestListDateRequestWasm() {
 
 func (s *KeeperTestSuite) TestListOverlayWasm() {
 	s.SetupTest()
-	mockWasm1 := types.NewWasm(mockedByteArray, types.WasmTypeRelayer, time.Now().UTC(), 1000, 100)
-	mockWasm2 := types.NewWasm(append(mockedByteArray, 2), types.WasmTypeRelayer, time.Now().UTC(), 1000, 100)
+	mockWasm1 := types.NewWasm(mockedByteArray, types.WasmTypeDataRequestExecutor, time.Now().UTC(), 1000, 100)
+	mockWasm2 := types.NewWasm(append(mockedByteArray, 2), types.WasmTypeDataRequestExecutor, time.Now().UTC(), 1000, 100)
 
 	err := s.keeper.OverlayWasm.Set(s.ctx, mockWasm1.Hash, mockWasm1)
 	s.Require().NoError(err)
@@ -132,8 +132,8 @@ func (s *KeeperTestSuite) TestGetAllWasms() {
 	err = s.keeper.DataRequestWasm.Set(s.ctx, mockWasm2.Hash, mockWasm2)
 	s.Require().NoError(err)
 
-	mockWasm3 := types.NewWasm(mockedByteArray, types.WasmTypeRelayer, time.Now().UTC(), 1000, 100)
-	mockWasm4 := types.NewWasm(append(mockedByteArray, 2), types.WasmTypeRelayer, time.Now().UTC(), 1000, 100)
+	mockWasm3 := types.NewWasm(mockedByteArray, types.WasmTypeDataRequestExecutor, time.Now().UTC(), 1000, 100)
+	mockWasm4 := types.NewWasm(append(mockedByteArray, 2), types.WasmTypeDataRequestExecutor, time.Now().UTC(), 1000, 100)
 
 	err = s.keeper.OverlayWasm.Set(s.ctx, mockWasm3.Hash, mockWasm3)
 	s.Require().NoError(err)

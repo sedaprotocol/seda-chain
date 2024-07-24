@@ -45,7 +45,6 @@ message MsgStoreOverlayWasm {
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   bytes wasm = 2;
-  WasmType wasm_type = 3;
 }
 
 // The response message for the StoreOverlayWasm method.

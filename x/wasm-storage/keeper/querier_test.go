@@ -37,9 +37,8 @@ func (s *KeeperTestSuite) TestOverlayWasm() {
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)
 	input := types.MsgStoreOverlayWasm{
-		Sender:   s.authority,
-		Wasm:     compWasm,
-		WasmType: types.WasmTypeDataRequestExecutor,
+		Sender: s.authority,
+		Wasm:   compWasm,
 	}
 	storedWasm, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
 	s.Require().NoError(err)
@@ -92,9 +91,8 @@ func (s *KeeperTestSuite) TestOverlayWasms() {
 	s.Require().NoError(err)
 
 	input := types.MsgStoreOverlayWasm{
-		Sender:   s.authority,
-		Wasm:     compWasm,
-		WasmType: types.WasmTypeRelayer,
+		Sender: s.authority,
+		Wasm:   compWasm,
 	}
 	storedWasm, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
 	s.Require().NoError(err)
@@ -104,9 +102,8 @@ func (s *KeeperTestSuite) TestOverlayWasms() {
 	compWasm2, err := ioutils.GzipIt(wasm2)
 	s.Require().NoError(err)
 	input2 := types.MsgStoreOverlayWasm{
-		Sender:   s.authority,
-		Wasm:     compWasm2,
-		WasmType: types.WasmTypeRelayer,
+		Sender: s.authority,
+		Wasm:   compWasm2,
 	}
 	storedWasm2, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input2)
 	s.Require().NoError(err)
