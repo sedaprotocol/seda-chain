@@ -7,9 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 	gomock "go.uber.org/mock/gomock"
 
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper/testdata"
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
+
+	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper/testdata"
+	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 func TestTallyVM(t *testing.T) {
@@ -93,17 +94,17 @@ func TestExecuteTally(t *testing.T) {
 			f.mockViewKeeper.EXPECT().QuerySmart(gomock.Any(), gomock.Any(), gomock.Any()).Return(tt.resp, nil)
 
 			// Store the tally wasms.
-			tallyWasm := types.NewWasm(testdata.SampleTallyWasm(), types.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), 100)
+			tallyWasm := wasmstoragetypes.NewWasm(testdata.SampleTallyWasm(), wasmstoragetypes.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), 100)
 			err := f.wasmStorageKeeper.DataRequestWasm.Set(ctx, tallyWasm.Hash, tallyWasm)
 			require.NoError(t, err)
 
-			tallyWasm = types.NewWasm(testdata.SampleTallyWasm(), types.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), 100)
+			tallyWasm = wasmstoragetypes.NewWasm(testdata.SampleTallyWasm(), wasmstoragetypes.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), 100)
 			err = f.wasmStorageKeeper.DataRequestWasm.Set(ctx, tallyWasm.Hash, tallyWasm)
 			require.NoError(t, err)
 
 			// Contract should return not found in response to post data result
 			// since the fetch data was mocked.
-			err = f.wasmStorageKeeper.ProcessTallies(ctx)
+			err = f.tallyKeeper.ProcessTallies(ctx)
 			if len(tt.wantErrStr) != 0 {
 				for _, errStr := range tt.wantErrStr {
 					require.Contains(t, err.Error(), errStr)

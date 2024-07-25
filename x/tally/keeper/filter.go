@@ -3,7 +3,7 @@ package keeper
 import (
 	"errors"
 
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
+	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
 const (

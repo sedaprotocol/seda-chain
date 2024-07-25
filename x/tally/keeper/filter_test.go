@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
+	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
+	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
 func TestFilter(t *testing.T) {

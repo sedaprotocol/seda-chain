@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -60,6 +62,36 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, au
 // GetAuthority returns the module's authority.
 func (k Keeper) GetAuthority() string {
 	return k.authority
+}
+
+// GetCoreContractAddr retrieves the core contract address.
+func (k Keeper) GetCoreContractAddr(ctx context.Context) (sdk.AccAddress, error) {
+	contractAddrBech32, err := k.CoreContractRegistry.Get(ctx)
+	if contractAddrBech32 == "" || errors.Is(err, collections.ErrNotFound) {
+		return nil, fmt.Errorf("core contract has not been registered")
+	}
+	if err != nil {
+		return nil, err
+	}
+	contractAddr, err := sdk.AccAddressFromBech32(contractAddrBech32)
+	if err != nil {
+		return nil, err
+	}
+	return contractAddr, nil
+}
+
+// GetDataRequestWasm retrieves the data request wasm from the store
+// given its hex-encoded hash.
+func (k Keeper) GetDataRequestWasm(ctx context.Context, hash string) (types.Wasm, error) {
+	hexHash, err := hex.DecodeString(hash)
+	if err != nil {
+		return types.Wasm{}, fmt.Errorf("failed to hex-encoded wasm hash: %w", err)
+	}
+	wasm, err := k.DataRequestWasm.Get(ctx, hexHash)
+	if err != nil {
+		return types.Wasm{}, fmt.Errorf("failed to get data request wasm: %w", err)
+	}
+	return wasm, nil
 }
 
 // IterateAllDataRequestWasms iterates over the all the stored Data Request

@@ -23,15 +23,10 @@ func NewQuerierImpl(keeper Keeper) types.QueryServer {
 
 func (q Querier) DataRequestWasm(c context.Context, req *types.QueryDataRequestWasmRequest) (*types.QueryDataRequestWasmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	hash, err := hex.DecodeString(req.Hash)
+	wasm, err := q.Keeper.GetDataRequestWasm(ctx, req.Hash)
 	if err != nil {
 		return nil, err
 	}
-	wasm, err := q.Keeper.DataRequestWasm.Get(ctx, hash)
-	if err != nil {
-		return nil, err
-	}
-
 	return &types.QueryDataRequestWasmResponse{
 		Wasm: &wasm,
 	}, nil
@@ -68,11 +63,11 @@ func (q Querier) OverlayWasms(c context.Context, _ *types.QueryOverlayWasmsReque
 
 func (q Querier) CoreContractRegistry(c context.Context, _ *types.QueryCoreContractRegistryRequest) (*types.QueryCoreContractRegistryResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	coreAddress, err := q.Keeper.CoreContractRegistry.Get(ctx)
+	coreAddress, err := q.Keeper.GetCoreContractAddr(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return &types.QueryCoreContractRegistryResponse{
-		Address: coreAddress,
+		Address: coreAddress.String(),
 	}, nil
 }

@@ -134,6 +134,9 @@ import (
 	"github.com/sedaprotocol/seda-chain/docs"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
+	"github.com/sedaprotocol/seda-chain/x/tally"
+	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
+	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
@@ -175,10 +178,11 @@ var (
 		ibctm.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 		transfer.AppModuleBasic{},
-		wasmstorage.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		packetforward.AppModuleBasic{},
+		wasmstorage.AppModuleBasic{},
+		tally.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -229,11 +233,12 @@ type App struct {
 	keys    map[string]*storetypes.KVStoreKey
 	memKeys map[string]*storetypes.MemoryStoreKey
 
-	// keepers
+	// Cosmos SDK modules keepers
 	keepers.AppKeepers
 
-	// seda modules
+	// SEDA modules keepers
 	WasmStorageKeeper wasmstoragekeeper.Keeper
+	TallyKeeper       tallykeeper.Keeper
 
 	mm  *module.Manager
 	bmm module.BasicManager
@@ -617,7 +622,8 @@ func NewApp(
 		contractKeeper,
 		app.WasmKeeper,
 	)
-	wasmStorageModule := wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper)
+
+	app.TallyKeeper = tallykeeper.NewKeeper(app.WasmStorageKeeper, contractKeeper, app.WasmKeeper)
 
 	/* =================================================== */
 	/*                  TRANSFER STACK                     */
@@ -730,7 +736,8 @@ func NewApp(
 		ica.NewAppModule(&icaControllerKeeper, &app.ICAHostKeeper),
 		ibctm.AppModule{},
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
-		wasmStorageModule,
+		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
+		tally.NewAppModule(app.TallyKeeper),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -786,6 +793,7 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 		// custom modules
 		wasmstoragetypes.ModuleName,
+		tallytypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -815,6 +823,7 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 		// custom modules
 		wasmstoragetypes.ModuleName,
+		tallytypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after sdkstaking so that pools are
@@ -850,6 +859,7 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 		// custom modules
 		wasmstoragetypes.ModuleName,
+		tallytypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)

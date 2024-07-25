@@ -44,12 +44,12 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	}
 
 	wasms := k.GetAllWasms(ctx)
-	core, err := k.CoreContractRegistry.Get(ctx)
+	core, err := k.GetCoreContractAddr(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
 			return types.NewGenesisState(params, wasms, "")
 		}
 		panic(err)
 	}
-	return types.NewGenesisState(params, wasms, core)
+	return types.NewGenesisState(params, wasms, core.String())
 }

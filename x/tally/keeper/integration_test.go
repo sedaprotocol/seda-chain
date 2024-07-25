@@ -41,11 +41,14 @@ import (
 	"github.com/sedaprotocol/seda-chain/integration"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
+	"github.com/sedaprotocol/seda-chain/x/tally"
+	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
+	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
+	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper/testdata"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper/testutil"
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
+	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 var wasmCapabilities = []string{
@@ -71,7 +74,8 @@ type fixture struct {
 	stakingKeeper     stakingkeeper.Keeper
 	contractKeeper    wasmkeeper.PermissionedKeeper
 	wasmKeeper        wasmkeeper.Keeper
-	wasmStorageKeeper keeper.Keeper
+	wasmStorageKeeper wasmstoragekeeper.Keeper
+	tallyKeeper       keeper.Keeper
 	mockViewKeeper    *testutil.MockViewKeeper
 	logBuf            *bytes.Buffer
 }
@@ -82,7 +86,7 @@ func initFixture(tb testing.TB) *fixture {
 	tempDir := tb.TempDir()
 
 	keys := storetypes.NewKVStoreKeys(
-		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, types.StoreKey, wasmtypes.StoreKey,
+		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, wasmstoragetypes.StoreKey, wasmtypes.StoreKey,
 	)
 	cdc := moduletestutil.MakeTestEncodingConfig(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}).Codec
 
@@ -99,7 +103,7 @@ func initFixture(tb testing.TB) *fixture {
 		minttypes.ModuleName:              {authtypes.Minter},
 		sdkstakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		sdkstakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		types.ModuleName:                  {authtypes.Burner},
+		wasmtypes.ModuleName:              {authtypes.Burner},
 	}
 
 	accountKeeper := authkeeper.NewAccountKeeper(
@@ -135,7 +139,7 @@ func initFixture(tb testing.TB) *fixture {
 	// x/wasm
 	wasmKeeper := wasmkeeper.NewKeeper(
 		cdc,
-		runtime.NewKVStoreService(keys[types.StoreKey]),
+		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
@@ -161,9 +165,9 @@ func initFixture(tb testing.TB) *fixture {
 	ctrl := gomock.NewController(tb)
 	viewKeeper := testutil.NewMockViewKeeper(ctrl)
 
-	wasmStorageKeeper := keeper.NewKeeper(
+	wasmStorageKeeper := wasmstoragekeeper.NewKeeper(
 		cdc,
-		runtime.NewKVStoreService(keys[types.StoreKey]),
+		runtime.NewKVStoreService(keys[wasmstoragetypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		accountKeeper,
 		bankKeeper,
@@ -171,10 +175,13 @@ func initFixture(tb testing.TB) *fixture {
 		viewKeeper,
 	)
 
+	tallyKeeper := keeper.NewKeeper(wasmStorageKeeper, contractKeeper, viewKeeper)
+
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
 	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, nil)
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
+	tallyModule := tally.NewAppModule(tallyKeeper)
 
 	// Upload and instantiate the SEDA contract.
 	creator := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -202,10 +209,11 @@ func initFixture(tb testing.TB) *fixture {
 	require.NoError(tb, err)
 
 	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, map[string]appmodule.AppModule{
-		authtypes.ModuleName:       authModule,
-		banktypes.ModuleName:       bankModule,
-		sdkstakingtypes.ModuleName: stakingModule,
-		types.ModuleName:           wasmStorageModule,
+		authtypes.ModuleName:        authModule,
+		banktypes.ModuleName:        bankModule,
+		sdkstakingtypes.ModuleName:  stakingModule,
+		wasmstoragetypes.ModuleName: wasmStorageModule,
+		types.ModuleName:            tallyModule,
 	})
 
 	return &fixture{
@@ -217,6 +225,7 @@ func initFixture(tb testing.TB) *fixture {
 		contractKeeper:    *contractKeeper,
 		wasmKeeper:        wasmKeeper,
 		wasmStorageKeeper: *wasmStorageKeeper,
+		tallyKeeper:       tallyKeeper,
 		mockViewKeeper:    viewKeeper,
 		logBuf:            buf,
 	}
