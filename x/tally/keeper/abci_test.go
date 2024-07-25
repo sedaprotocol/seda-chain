@@ -135,7 +135,7 @@ func TestEndBlock(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f.mockViewKeeper.EXPECT().QuerySmart(gomock.Any(), gomock.Any(), gomock.Any()).Return(tt.resp, nil)
 
-			err := f.wasmStorageKeeper.EndBlock(f.Context())
+			err := f.tallyKeeper.EndBlock(f.Context())
 			// Error must be handled by defer function and logged as an error.
 			require.NoError(t, err)
 			if len(tt.expErrLog) != 0 {
