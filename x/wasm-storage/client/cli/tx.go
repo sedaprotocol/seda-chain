@@ -31,11 +31,12 @@ func GetTxCmd() *cobra.Command {
 	return cmd
 }
 
-// GetCmdStoreDataRequestWasm returns the command for storing Data Request Wasm.
+// GetCmdStoreDataRequestWasm returns the command for storing a
+// data request wasm file.
 func GetCmdStoreDataRequestWasm() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "store-data-request-wasm [wasm file]",
-		Short: "Store Data Request Wasm file",
+		Short: "Store data request wasm file",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)

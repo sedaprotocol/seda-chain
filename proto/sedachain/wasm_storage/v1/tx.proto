@@ -17,7 +17,8 @@ service Msg {
   // StoreExecutorWasm stores an executor wasm.
   rpc StoreExecutorWasm(MsgStoreExecutorWasm)
       returns (MsgStoreExecutorWasmResponse);
-  // InstantiateCoreContract instantiates the Core Contract and registers its address.
+  // InstantiateCoreContract instantiates the Core Contract and registers its
+  // address.
   rpc InstantiateCoreContract(MsgInstantiateCoreContract)
       returns (MsgInstantiateCoreContractResponse);
   // The UpdateParams method updates the module's parameters.

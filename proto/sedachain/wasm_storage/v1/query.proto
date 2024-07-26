@@ -23,7 +23,8 @@ service Query {
   }
 
   // ExecutorWasm returns an executor wasm given its hash.
-  rpc ExecutorWasm(QueryExecutorWasmRequest) returns (QueryExecutorWasmResponse) {
+  rpc ExecutorWasm(QueryExecutorWasmRequest)
+      returns (QueryExecutorWasmResponse) {
     option (google.api.http).get =
         "/seda-chain/wasm-storage/executor_wasm/{hash}";
   }

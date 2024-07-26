@@ -31,11 +31,11 @@ func GetQueryCmd(_ string) *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryDataRequestWasm returns the command for querying Data Request Wasm.
+// GetCmdQueryDataRequestWasm returns the command for querying data request wasm..
 func GetCmdQueryDataRequestWasm() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "data-request-wasm <hash>",
-		Short: "Get Data Request Wasm given its hash",
+		Short: "Get data request wasm given its hash",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -88,11 +88,11 @@ func GetCmdQueryExecutorWasm() *cobra.Command {
 }
 
 // GetCmdQueryDataRequestWasms returns the command for querying
-// hashes and types of all Data Request Wasms.
+// hashes and types of all data request wasms.
 func GetCmdQueryDataRequestWasms() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-data-request-wasms",
-		Short: "List hashes and types of all Data Request Wasms",
+		Short: "List hashes and types of all data request wasms",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)

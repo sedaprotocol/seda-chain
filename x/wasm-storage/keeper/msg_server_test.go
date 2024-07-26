@@ -49,7 +49,7 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 			},
 		},
 		{
-			name: "Data Request wasm already exist",
+			name: "data request wasm already exist",
 			input: types.MsgStoreDataRequestWasm{
 				Sender: s.authority,
 				Wasm:   regWasmZipped,
@@ -308,7 +308,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	s.Require().NoError(err)
 	wasmTTL := params.WasmTTL
 
-	// Get the list of all Data Request Wasms
+	// Get the list of all data request wasms.
 	dataRequestWasms := s.keeper.ListDataRequestWasms(s.ctx)
 	s.Require().Empty(dataRequestWasms)
 
