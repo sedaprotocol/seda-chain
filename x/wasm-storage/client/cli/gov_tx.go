@@ -37,20 +37,20 @@ const (
 func SubmitProposalCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "submit-proposal",
-		Short:        "Submit a wasm proposal.",
+		Short:        "Submit a wasm-storage proposal.",
 		SilenceUsage: true,
 	}
 	cmd.AddCommand(
-		ProposalStoreOverlayCmd(),
-		ProposalInstantiateAndRegisterCoreContract(),
+		ProposalStoreExecutorCmd(),
+		ProposalInstantiateCoreContract(),
 	)
 	return cmd
 }
 
-func ProposalStoreOverlayCmd() *cobra.Command {
+func ProposalStoreExecutorCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store-overlay-wasm [wasm file] --wasm-type [wasm_type] --title [text] --summary [text] --authority [address]",
-		Short: "Submit a proposal to store a new Overlay Wasm",
+		Use:   "store-executor-wasm [wasm file] --wasm-type [wasm_type] --title [text] --summary [text] --authority [address]",
+		Short: "Submit a proposal to store an executor wasm",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
@@ -66,7 +66,7 @@ func ProposalStoreOverlayCmd() *cobra.Command {
 				return errors.New("authority address is required")
 			}
 
-			src, err := parseStoreOverlayArgs(args[0], authority, cmd.Flags())
+			src, err := parseStoreExecutorArgs(args[0], authority, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -85,10 +85,10 @@ func ProposalStoreOverlayCmd() *cobra.Command {
 	return cmd
 }
 
-func ProposalInstantiateAndRegisterCoreContract() *cobra.Command {
+func ProposalInstantiateCoreContract() *cobra.Command {
 	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{
-		Use: "instantiate-and-register-core-contract [code_id_int64] [json_encoded_init_args] [salt] --label [text] --admin [address,optional] " +
+		Use: "instantiate-core-contract [code_id_int64] [json_encoded_init_args] [salt] --label [text] --admin [address,optional] " +
 			"--fix-msg [bool,optional] --title [string] --summary [string] --deposit 10000000aseda",
 		Short: "Submit a proposal to instantiate a core contract and register its address",
 		Args:  cobra.ExactArgs(3),
@@ -106,7 +106,7 @@ func ProposalInstantiateAndRegisterCoreContract() *cobra.Command {
 				return errors.New("authority address is required")
 			}
 
-			src, err := parseInstantiateAndRegisterCoreContractArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
+			src, err := parseInstantiateCoreContractArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -136,20 +136,20 @@ func ProposalInstantiateAndRegisterCoreContract() *cobra.Command {
 	return cmd
 }
 
-func parseStoreOverlayArgs(file, sender string, _ *flag.FlagSet) (*types.MsgStoreOverlayWasm, error) {
+func parseStoreExecutorArgs(file, sender string, _ *flag.FlagSet) (*types.MsgStoreExecutorWasm, error) {
 	zipped, err := gzipWasmFile(file)
 	if err != nil {
 		return nil, err
 	}
 
-	msg := &types.MsgStoreOverlayWasm{
+	msg := &types.MsgStoreExecutorWasm{
 		Sender: sender,
 		Wasm:   zipped,
 	}
 	return msg, nil
 }
 
-func parseInstantiateAndRegisterCoreContractArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender string, flags *flag.FlagSet) (*types.MsgInstantiateAndRegisterCoreContract, error) {
+func parseInstantiateCoreContractArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender string, flags *flag.FlagSet) (*types.MsgInstantiateCoreContract, error) {
 	codeID, err := strconv.ParseUint(rawCodeID, 10, 64)
 	if err != nil {
 		return nil, err
@@ -210,7 +210,7 @@ func parseInstantiateAndRegisterCoreContractArgs(rawCodeID, initMsg string, kr k
 		return nil, fmt.Errorf("fix msg: %w", err)
 	}
 
-	msg := types.MsgInstantiateAndRegisterCoreContract{
+	msg := types.MsgInstantiateCoreContract{
 		Sender: sender,
 		CodeID: codeID,
 		Label:  label,

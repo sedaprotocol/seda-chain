@@ -37,18 +37,18 @@ func (e EventStoreDataRequestWasmWrapper) MarshalJSON() ([]byte, error) {
 	})
 }
 
-type EventStoreOverlayWasmWrapper struct {
-	*types.EventStoreOverlayWasm
+type EventStoreExecutorWasmWrapper struct {
+	*types.EventStoreExecutorWasm
 }
 
-func (e EventStoreOverlayWasmWrapper) MarshalJSON() ([]byte, error) {
-	type Alias types.EventStoreOverlayWasm
+func (e EventStoreExecutorWasmWrapper) MarshalJSON() ([]byte, error) {
+	type Alias types.EventStoreExecutorWasm
 	return json.Marshal(&struct {
 		Hash json.RawMessage `json:"hash"`
 		*Alias
 	}{
 		Hash:  json.RawMessage(`"` + e.Hash + `"`),
-		Alias: (*Alias)(e.EventStoreOverlayWasm),
+		Alias: (*Alias)(e.EventStoreExecutorWasm),
 	})
 }
 
@@ -79,9 +79,9 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 		return nil, err
 	}
 
-	wasm := types.NewWasm(unzipped, types.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
+	wasm := types.NewDataRequestWasm(unzipped, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
 	if exists, _ := m.DataRequestWasm.Has(ctx, wasm.Hash); exists {
-		return nil, errors.Wrapf(types.ErrAlreadyExists, "wasm type: [%s] hash: [%v]", wasm.WasmType, wasm.Hash)
+		return nil, errors.Wrapf(types.ErrAlreadyExists, "data request hash: [%v]", wasm.Hash)
 	}
 	if err := m.DataRequestWasm.Set(ctx, wasm.Hash, wasm); err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	}, nil
 }
 
-func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOverlayWasm) (*types.MsgStoreOverlayWasmResponse, error) {
+func (m msgServer) StoreExecutorWasm(goCtx context.Context, msg *types.MsgStoreExecutorWasm) (*types.MsgStoreExecutorWasmResponse, error) {
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -126,19 +126,19 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 		return nil, err
 	}
 
-	wasm := types.NewWasm(unzipped, types.WasmTypeDataRequestExecutor, ctx.BlockTime(), ctx.BlockHeight(), -1)
-	exists, _ := m.Keeper.OverlayWasm.Has(ctx, wasm.Hash)
+	wasm := types.NewExecutorWasm(unzipped, ctx.BlockTime())
+	exists, _ := m.Keeper.ExecutorWasm.Has(ctx, wasm.Hash)
 	if exists {
-		return nil, fmt.Errorf("overlay Wasm with given hash already exists")
+		return nil, fmt.Errorf("executor wasm with given hash already exists")
 	}
-	if err = m.Keeper.OverlayWasm.Set(ctx, wasm.Hash, wasm); err != nil {
+	if err = m.Keeper.ExecutorWasm.Set(ctx, wasm.Hash, wasm); err != nil {
 		return nil, err
 	}
 
 	hashString := hex.EncodeToString(wasm.Hash)
 	err = ctx.EventManager().EmitTypedEvent(
-		&EventStoreOverlayWasmWrapper{
-			EventStoreOverlayWasm: &types.EventStoreOverlayWasm{
+		&EventStoreExecutorWasmWrapper{
+			EventStoreExecutorWasm: &types.EventStoreExecutorWasm{
 				Hash:     hashString,
 				Bytecode: msg.Wasm,
 			},
@@ -147,14 +147,14 @@ func (m msgServer) StoreOverlayWasm(goCtx context.Context, msg *types.MsgStoreOv
 		return nil, err
 	}
 
-	return &types.MsgStoreOverlayWasmResponse{
+	return &types.MsgStoreExecutorWasmResponse{
 		Hash: hashString,
 	}, nil
 }
 
-// InstantiateAndRegisterCoreContract instantiate a new contract with
+// InstantiateCoreContract instantiate a new contract with
 // a predictable address and updates the Core Contract registry.
-func (m msgServer) InstantiateAndRegisterCoreContract(goCtx context.Context, msg *types.MsgInstantiateAndRegisterCoreContract) (*types.MsgInstantiateAndRegisterCoreContractResponse, error) {
+func (m msgServer) InstantiateCoreContract(goCtx context.Context, msg *types.MsgInstantiateCoreContract) (*types.MsgInstantiateCoreContractResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if err := msg.ValidateBasic(); err != nil {
@@ -180,7 +180,7 @@ func (m msgServer) InstantiateAndRegisterCoreContract(goCtx context.Context, msg
 		return nil, err
 	}
 
-	return &types.MsgInstantiateAndRegisterCoreContractResponse{
+	return &types.MsgInstantiateCoreContractResponse{
 		ContractAddress: contractAddr.String(),
 	}, nil
 }

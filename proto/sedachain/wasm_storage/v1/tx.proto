@@ -11,19 +11,15 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
 // Msg service defines the wasm-storage tx gRPC methods.
 service Msg {
-  // The StoreDataRequestWasm method stores a dr wasm in the wasm-storage
-  // module.
+  // StoreDataRequestWasm stores a data request wasm.
   rpc StoreDataRequestWasm(MsgStoreDataRequestWasm)
       returns (MsgStoreDataRequestWasmResponse);
-  // The StoreOverlayWasm method stores an overlay wasm in the wasm-storage
-  // module.
-  rpc StoreOverlayWasm(MsgStoreOverlayWasm)
-      returns (MsgStoreOverlayWasmResponse);
-  // The InstantiateAndRegisterCoreContract method instantiates the Core
-  // Contract and registers its address.
-  rpc InstantiateAndRegisterCoreContract(
-      MsgInstantiateAndRegisterCoreContract)
-      returns (MsgInstantiateAndRegisterCoreContractResponse);
+  // StoreExecutorWasm stores an executor wasm.
+  rpc StoreExecutorWasm(MsgStoreExecutorWasm)
+      returns (MsgStoreExecutorWasmResponse);
+  // InstantiateCoreContract instantiates the Core Contract and registers its address.
+  rpc InstantiateCoreContract(MsgInstantiateCoreContract)
+      returns (MsgInstantiateCoreContractResponse);
   // The UpdateParams method updates the module's parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
@@ -39,19 +35,19 @@ message MsgStoreDataRequestWasm {
 // The response message for the StoreDataRequestWasm method.
 message MsgStoreDataRequestWasmResponse { string hash = 1; }
 
-// The request message for the StoreOverlayWasm method.
-message MsgStoreOverlayWasm {
+// The request message for the StoreExecutorWasm method.
+message MsgStoreExecutorWasm {
   option (cosmos.msg.v1.signer) = "sender";
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   bytes wasm = 2;
 }
 
-// The response message for the StoreOverlayWasm method.
-message MsgStoreOverlayWasmResponse { string hash = 1; }
+// The response message for the StoreExecutorWasm method.
+message MsgStoreExecutorWasmResponse { string hash = 1; }
 
-// The request message for the InstantiateAndRegisterCoreContract method.
-message MsgInstantiateAndRegisterCoreContract {
+// The request message for the InstantiateCoreContract method.
+message MsgInstantiateCoreContract {
   option (cosmos.msg.v1.signer) = "sender";
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
@@ -69,8 +65,8 @@ message MsgInstantiateAndRegisterCoreContract {
   bool fix_msg = 8;
 }
 
-// The response message for the InstantiateAndRegisterCoreContract method.
-message MsgInstantiateAndRegisterCoreContractResponse {
+// The response message for the InstantiateCoreContract method.
+message MsgInstantiateCoreContractResponse {
   string contract_address = 1
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
@@ -82,7 +78,6 @@ message MsgUpdateParams {
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
   string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-
   Params params = 2 [ (gogoproto.nullable) = false ];
 }
 

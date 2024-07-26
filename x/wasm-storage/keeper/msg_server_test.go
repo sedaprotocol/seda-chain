@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 
@@ -101,7 +102,7 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 	}
 }
 
-func (s *KeeperTestSuite) TestStoreOverlayWasm() {
+func (s *KeeperTestSuite) TestStoreExecutorWasm() {
 	regWasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	regWasmZipped, err := ioutils.GzipIt(regWasm)
@@ -115,27 +116,27 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 	cases := []struct {
 		name      string
 		preRun    func()
-		input     types.MsgStoreOverlayWasm
+		input     types.MsgStoreExecutorWasm
 		expErr    bool
 		expErrMsg string
-		expOutput types.MsgStoreOverlayWasmResponse
+		expOutput types.MsgStoreExecutorWasmResponse
 	}{
 		{
 			name: "happy path",
-			input: types.MsgStoreOverlayWasm{
+			input: types.MsgStoreExecutorWasm{
 				Sender: s.authority,
 				Wasm:   regWasmZipped,
 			},
 			preRun:    func() {},
 			expErr:    false,
 			expErrMsg: "",
-			expOutput: types.MsgStoreOverlayWasmResponse{
+			expOutput: types.MsgStoreExecutorWasmResponse{
 				Hash: hex.EncodeToString(crypto.Keccak256(regWasm)),
 			},
 		},
 		{
 			name: "invalid authority",
-			input: types.MsgStoreOverlayWasm{
+			input: types.MsgStoreExecutorWasm{
 				Sender: "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
 				Wasm:   regWasmZipped,
 			},
@@ -144,25 +145,25 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			expErrMsg: "invalid authority",
 		},
 		{
-			name: "Overlay wasm already exist",
-			input: types.MsgStoreOverlayWasm{
+			name: "executor wasm already exist",
+			input: types.MsgStoreExecutorWasm{
 				Sender: s.authority,
 				Wasm:   regWasmZipped,
 			},
 			preRun: func() {
-				input := types.MsgStoreOverlayWasm{
+				input := types.MsgStoreExecutorWasm{
 					Sender: s.authority,
 					Wasm:   regWasmZipped,
 				}
-				_, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
+				_, err := s.msgSrvr.StoreExecutorWasm(s.ctx, &input)
 				s.Require().NoError(err)
 			},
 			expErr:    true,
-			expErrMsg: "overlay Wasm with given hash already exists",
+			expErrMsg: "executor wasm with given hash already exists",
 		},
 		{
-			name: "unzipped Wasm",
-			input: types.MsgStoreOverlayWasm{
+			name: "unzipped wasm",
+			input: types.MsgStoreExecutorWasm{
 				Sender: s.authority,
 				Wasm:   regWasm,
 			},
@@ -171,8 +172,8 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			expErrMsg: "wasm is not gzip compressed",
 		},
 		{
-			name: "oversized Wasm",
-			input: types.MsgStoreOverlayWasm{
+			name: "oversized wasm",
+			input: types.MsgStoreExecutorWasm{
 				Sender: s.authority,
 				Wasm:   oversizedWasmZipped,
 			},
@@ -186,7 +187,7 @@ func (s *KeeperTestSuite) TestStoreOverlayWasm() {
 			s.SetupTest()
 			tc.preRun()
 			input := tc.input
-			res, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
+			res, err := s.msgSrvr.StoreExecutorWasm(s.ctx, &input)
 			if tc.expErr {
 				s.Require().ErrorContains(err, tc.expErrMsg)
 				return
@@ -351,8 +352,9 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 
 	// H = params.WasmTTL. || firstWasmPruneHeight => 0 + params.WasmTTL
 	// We still have 2 wasms.
-	drWasmHash := s.keeper.ListDataRequestWasms(s.ctx)
-	s.Require().ElementsMatch(drWasmHash, []string{resp1.Hash + ",WASM_TYPE_DATA_REQUEST", resp2.Hash + ",WASM_TYPE_DATA_REQUEST"})
+	list := s.keeper.ListDataRequestWasms(s.ctx)
+
+	s.Require().ElementsMatch(list, []string{fmt.Sprintf("%s,%d", resp1.Hash, firstWasmPruneHeight), fmt.Sprintf("%s,%d", resp2.Hash, secondWasmPruneHeight)})
 	// Check WsmExp is in sync
 	s.Require().Len(getAllWasmExpEntry(s.T(), s.ctx, s.keeper), 2)
 
@@ -365,15 +367,15 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	// Simulate EndBlocker Call. This EndBlocker call will have no effect. As at this height no wasm to prune.
 	s.Require().NoError(s.keeper.EndBlock(s.ctx))
 	// Check: 1 wasm was pruned, 1 remained.
-	drWasmHash = s.keeper.ListDataRequestWasms(s.ctx)
-	s.Require().ElementsMatch(drWasmHash, []string{resp2.Hash + ",WASM_TYPE_DATA_REQUEST"})
+	list = s.keeper.ListDataRequestWasms(s.ctx)
+	s.Require().ElementsMatch(list, []string{fmt.Sprintf("%s,%d", resp2.Hash, secondWasmPruneHeight)})
 	// Check WsmExp is in sync
 	s.Require().Len(getAllWasmExpEntry(s.T(), s.ctx, s.keeper), 1)
 
 	// H = 2 * params.WasmTTL.
 	s.ctx = s.ctx.WithBlockHeight(secondWasmPruneHeight)
-	drWasmHash = s.keeper.ListDataRequestWasms(s.ctx)
-	s.Require().ElementsMatch(drWasmHash, []string{resp2.Hash + ",WASM_TYPE_DATA_REQUEST"})
+	list = s.keeper.ListDataRequestWasms(s.ctx)
+	s.Require().ElementsMatch(list, []string{fmt.Sprintf("%s,%d", resp2.Hash, secondWasmPruneHeight)})
 	// Simulate EndBlocker Call
 	s.Require().NoError(s.keeper.EndBlock(s.ctx))
 
@@ -381,8 +383,8 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	s.ctx = s.ctx.WithBlockHeight(secondWasmPruneHeight + 1)
 
 	// Both wasm must be pruned.
-	drWasmHash = s.keeper.ListDataRequestWasms(s.ctx)
-	s.Require().Empty(drWasmHash) // Check WsmExp is in sync
+	list = s.keeper.ListDataRequestWasms(s.ctx)
+	s.Require().Empty(list) // Check WsmExp is in sync
 	s.Require().Empty(getAllWasmExpEntry(s.T(), s.ctx, s.keeper))
 }
 

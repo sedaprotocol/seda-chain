@@ -94,11 +94,11 @@ func TestExecuteTally(t *testing.T) {
 			f.mockViewKeeper.EXPECT().QuerySmart(gomock.Any(), gomock.Any(), gomock.Any()).Return(tt.resp, nil)
 
 			// Store the tally wasms.
-			tallyWasm := wasmstoragetypes.NewWasm(testdata.SampleTallyWasm(), wasmstoragetypes.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), 100)
+			tallyWasm := wasmstoragetypes.NewDataRequestWasm(testdata.SampleTallyWasm(), ctx.BlockTime(), ctx.BlockHeight(), 100)
 			err := f.wasmStorageKeeper.DataRequestWasm.Set(ctx, tallyWasm.Hash, tallyWasm)
 			require.NoError(t, err)
 
-			tallyWasm = wasmstoragetypes.NewWasm(testdata.SampleTallyWasm(), wasmstoragetypes.WasmTypeDataRequest, ctx.BlockTime(), ctx.BlockHeight(), 100)
+			tallyWasm = wasmstoragetypes.NewDataRequestWasm(testdata.SampleTallyWasm(), ctx.BlockTime(), ctx.BlockHeight(), 100)
 			err = f.wasmStorageKeeper.DataRequestWasm.Set(ctx, tallyWasm.Hash, tallyWasm)
 			require.NoError(t, err)
 

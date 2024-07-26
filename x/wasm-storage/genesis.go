@@ -19,19 +19,14 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		panic(err)
 	}
 
-	for i := range data.Wasms {
-		wasm := data.Wasms[i]
-		switch wasm.WasmType {
-		case types.WasmTypeDataRequest:
-			if err := k.DataRequestWasm.Set(ctx, wasm.Hash, wasm); err != nil {
-				panic(err)
-			}
-		case types.WasmTypeDataRequestExecutor:
-			if err := k.OverlayWasm.Set(ctx, wasm.Hash, wasm); err != nil {
-				panic(err)
-			}
-		default:
-			panic("unexpected wasm type")
+	for _, wasm := range data.DataRequestWasms {
+		if err := k.DataRequestWasm.Set(ctx, wasm.Hash, wasm); err != nil {
+			panic(err)
+		}
+	}
+	for _, wasm := range data.ExecutorWasms {
+		if err := k.ExecutorWasm.Set(ctx, wasm.Hash, wasm); err != nil {
+			panic(err)
 		}
 	}
 }
@@ -42,14 +37,14 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
-
-	wasms := k.GetAllWasms(ctx)
+	drWasms := k.GetAllDataRequestWasms(ctx)
+	execWasms := k.GetAllExecutorWasms(ctx)
 	core, err := k.GetCoreContractAddr(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			return types.NewGenesisState(params, wasms, "")
+			return types.NewGenesisState(params, drWasms, execWasms, "")
 		}
 		panic(err)
 	}
-	return types.NewGenesisState(params, wasms, core.String())
+	return types.NewGenesisState(params, drWasms, execWasms, core.String())
 }

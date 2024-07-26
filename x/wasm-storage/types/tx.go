@@ -25,15 +25,15 @@ func (msg *MsgStoreDataRequestWasm) ValidateBasic() error {
 	return nil
 }
 
-func (msg *MsgStoreOverlayWasm) Route() string {
+func (msg *MsgStoreExecutorWasm) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgStoreOverlayWasm) Type() string {
-	return "store-overlay-wasm"
+func (msg *MsgStoreExecutorWasm) Type() string {
+	return "store-executor-wasm"
 }
 
-func (msg *MsgStoreOverlayWasm) ValidateBasic() error {
+func (msg *MsgStoreExecutorWasm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}
@@ -43,15 +43,15 @@ func (msg *MsgStoreOverlayWasm) ValidateBasic() error {
 	return nil
 }
 
-func (msg *MsgInstantiateAndRegisterCoreContract) Route() string {
+func (msg *MsgInstantiateCoreContract) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgInstantiateAndRegisterCoreContract) Type() string {
-	return "instantiate-and-register-core-contract"
+func (msg *MsgInstantiateCoreContract) Type() string {
+	return "instantiate-core-contract"
 }
 
-func (msg *MsgInstantiateAndRegisterCoreContract) ValidateBasic() error {
+func (msg *MsgInstantiateCoreContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return fmt.Errorf("invalid sender: %w", err)
 	}

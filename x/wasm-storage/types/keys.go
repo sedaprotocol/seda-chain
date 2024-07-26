@@ -14,10 +14,10 @@ const (
 )
 
 var (
-	// DataRequestPrefix defines prefix to store Data Request Wasm binaries.
+	// DataRequestPrefix defines prefix to store data request wasms.
 	DataRequestPrefix = collections.NewPrefix(0)
-	// OverlayPrefix defines prefix to store Overlay Wasm binaries.
-	OverlayPrefix = collections.NewPrefix(1)
+	// ExecutorPrefix defines prefix to store executor wasms.
+	ExecutorPrefix = collections.NewPrefix(1)
 	// WasmExpPrefix defines prefix to track wasm expiration.
 	WasmExpPrefix = collections.NewPrefix(2)
 	// CoreContractRegistryPrefix defines prefix to store address of

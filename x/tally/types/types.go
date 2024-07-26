@@ -15,5 +15,5 @@ const (
 
 type WasmStorageKeeper interface {
 	GetCoreContractAddr(ctx context.Context) (sdk.AccAddress, error)
-	GetDataRequestWasm(ctx context.Context, hash string) (types.Wasm, error)
+	GetDataRequestWasm(ctx context.Context, hash string) (types.DataRequestWasm, error)
 }

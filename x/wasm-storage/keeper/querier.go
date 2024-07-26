@@ -35,29 +35,29 @@ func (q Querier) DataRequestWasm(c context.Context, req *types.QueryDataRequestW
 func (q Querier) DataRequestWasms(c context.Context, _ *types.QueryDataRequestWasmsRequest) (*types.QueryDataRequestWasmsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryDataRequestWasmsResponse{
-		HashTypePairs: q.ListDataRequestWasms(ctx),
+		List: q.ListDataRequestWasms(ctx),
 	}, nil
 }
 
-func (q Querier) OverlayWasm(c context.Context, req *types.QueryOverlayWasmRequest) (*types.QueryOverlayWasmResponse, error) {
+func (q Querier) ExecutorWasm(c context.Context, req *types.QueryExecutorWasmRequest) (*types.QueryExecutorWasmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	hash, err := hex.DecodeString(req.Hash)
 	if err != nil {
 		return nil, err
 	}
-	wasm, err := q.Keeper.OverlayWasm.Get(ctx, hash)
+	wasm, err := q.Keeper.ExecutorWasm.Get(ctx, hash)
 	if err != nil {
 		return nil, err
 	}
-	return &types.QueryOverlayWasmResponse{
+	return &types.QueryExecutorWasmResponse{
 		Wasm: &wasm,
 	}, nil
 }
 
-func (q Querier) OverlayWasms(c context.Context, _ *types.QueryOverlayWasmsRequest) (*types.QueryOverlayWasmsResponse, error) {
+func (q Querier) ExecutorWasms(c context.Context, _ *types.QueryExecutorWasmsRequest) (*types.QueryExecutorWasmsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	return &types.QueryOverlayWasmsResponse{
-		HashTypePairs: q.ListOverlayWasms(ctx),
+	return &types.QueryExecutorWasmsResponse{
+		List: q.ListExecutorWasms(ctx),
 	}, nil
 }
 

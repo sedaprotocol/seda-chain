@@ -27,57 +27,28 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// WasmType is an enum for the type of wasm.
-type WasmType int32
-
-const (
-	// WASM_TYPE_DATA_REQUEST is for data request and tally wasms.
-	WasmTypeDataRequest WasmType = 0
-	// WASM_TYPE_DATA_REQUEST_EXECUTOR is for overlay executors.
-	WasmTypeDataRequestExecutor WasmType = 1
-)
-
-var WasmType_name = map[int32]string{
-	0: "WASM_TYPE_DATA_REQUEST",
-	1: "WASM_TYPE_DATA_REQUEST_EXECUTOR",
-}
-
-var WasmType_value = map[string]int32{
-	"WASM_TYPE_DATA_REQUEST":          0,
-	"WASM_TYPE_DATA_REQUEST_EXECUTOR": 1,
-}
-
-func (x WasmType) String() string {
-	return proto.EnumName(WasmType_name, int32(x))
-}
-
-func (WasmType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_9a4bda463450c942, []int{0}
-}
-
-// A Wasm msg.
-type Wasm struct {
+// DataRequestWasm represents a wasm used for data requests.
+type DataRequestWasm struct {
 	Hash     []byte    `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
 	Bytecode []byte    `protobuf:"bytes,2,opt,name=bytecode,proto3" json:"bytecode,omitempty"`
-	WasmType WasmType  `protobuf:"varint,3,opt,name=wasm_type,json=wasmType,proto3,enum=sedachain.wasm_storage.v1.WasmType" json:"wasm_type,omitempty"`
-	AddedAt  time.Time `protobuf:"bytes,4,opt,name=added_at,json=addedAt,proto3,stdtime" json:"added_at"`
+	AddedAt  time.Time `protobuf:"bytes,3,opt,name=added_at,json=addedAt,proto3,stdtime" json:"added_at"`
 	// ExpirationHeight represents the block height at which the data request
 	// wasm will be pruned. The value of zero means no expiration.
-	ExpirationHeight int64 `protobuf:"varint,5,opt,name=expiration_height,json=expirationHeight,proto3" json:"expiration_height,omitempty"`
+	ExpirationHeight int64 `protobuf:"varint,4,opt,name=expiration_height,json=expirationHeight,proto3" json:"expiration_height,omitempty"`
 }
 
-func (m *Wasm) Reset()         { *m = Wasm{} }
-func (m *Wasm) String() string { return proto.CompactTextString(m) }
-func (*Wasm) ProtoMessage()    {}
-func (*Wasm) Descriptor() ([]byte, []int) {
+func (m *DataRequestWasm) Reset()         { *m = DataRequestWasm{} }
+func (m *DataRequestWasm) String() string { return proto.CompactTextString(m) }
+func (*DataRequestWasm) ProtoMessage()    {}
+func (*DataRequestWasm) Descriptor() ([]byte, []int) {
 	return fileDescriptor_9a4bda463450c942, []int{0}
 }
-func (m *Wasm) XXX_Unmarshal(b []byte) error {
+func (m *DataRequestWasm) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *Wasm) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *DataRequestWasm) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_Wasm.Marshal(b, m, deterministic)
+		return xxx_messageInfo_DataRequestWasm.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -87,51 +58,105 @@ func (m *Wasm) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Wasm) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Wasm.Merge(m, src)
+func (m *DataRequestWasm) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DataRequestWasm.Merge(m, src)
 }
-func (m *Wasm) XXX_Size() int {
+func (m *DataRequestWasm) XXX_Size() int {
 	return m.Size()
 }
-func (m *Wasm) XXX_DiscardUnknown() {
-	xxx_messageInfo_Wasm.DiscardUnknown(m)
+func (m *DataRequestWasm) XXX_DiscardUnknown() {
+	xxx_messageInfo_DataRequestWasm.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Wasm proto.InternalMessageInfo
+var xxx_messageInfo_DataRequestWasm proto.InternalMessageInfo
 
-func (m *Wasm) GetHash() []byte {
+func (m *DataRequestWasm) GetHash() []byte {
 	if m != nil {
 		return m.Hash
 	}
 	return nil
 }
 
-func (m *Wasm) GetBytecode() []byte {
+func (m *DataRequestWasm) GetBytecode() []byte {
 	if m != nil {
 		return m.Bytecode
 	}
 	return nil
 }
 
-func (m *Wasm) GetWasmType() WasmType {
-	if m != nil {
-		return m.WasmType
-	}
-	return WasmTypeDataRequest
-}
-
-func (m *Wasm) GetAddedAt() time.Time {
+func (m *DataRequestWasm) GetAddedAt() time.Time {
 	if m != nil {
 		return m.AddedAt
 	}
 	return time.Time{}
 }
 
-func (m *Wasm) GetExpirationHeight() int64 {
+func (m *DataRequestWasm) GetExpirationHeight() int64 {
 	if m != nil {
 		return m.ExpirationHeight
 	}
 	return 0
+}
+
+// ExecutorWasm represents a wasm used for some execution in the protocol.
+type ExecutorWasm struct {
+	Hash     []byte    `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Bytecode []byte    `protobuf:"bytes,2,opt,name=bytecode,proto3" json:"bytecode,omitempty"`
+	AddedAt  time.Time `protobuf:"bytes,3,opt,name=added_at,json=addedAt,proto3,stdtime" json:"added_at"`
+}
+
+func (m *ExecutorWasm) Reset()         { *m = ExecutorWasm{} }
+func (m *ExecutorWasm) String() string { return proto.CompactTextString(m) }
+func (*ExecutorWasm) ProtoMessage()    {}
+func (*ExecutorWasm) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9a4bda463450c942, []int{1}
+}
+func (m *ExecutorWasm) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ExecutorWasm) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ExecutorWasm.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ExecutorWasm) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ExecutorWasm.Merge(m, src)
+}
+func (m *ExecutorWasm) XXX_Size() int {
+	return m.Size()
+}
+func (m *ExecutorWasm) XXX_DiscardUnknown() {
+	xxx_messageInfo_ExecutorWasm.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ExecutorWasm proto.InternalMessageInfo
+
+func (m *ExecutorWasm) GetHash() []byte {
+	if m != nil {
+		return m.Hash
+	}
+	return nil
+}
+
+func (m *ExecutorWasm) GetBytecode() []byte {
+	if m != nil {
+		return m.Bytecode
+	}
+	return nil
+}
+
+func (m *ExecutorWasm) GetAddedAt() time.Time {
+	if m != nil {
+		return m.AddedAt
+	}
+	return time.Time{}
 }
 
 // Params to define the max wasm size allowed.
@@ -146,7 +171,7 @@ func (m *Params) Reset()         { *m = Params{} }
 func (m *Params) String() string { return proto.CompactTextString(m) }
 func (*Params) ProtoMessage()    {}
 func (*Params) Descriptor() ([]byte, []int) {
-	return fileDescriptor_9a4bda463450c942, []int{1}
+	return fileDescriptor_9a4bda463450c942, []int{2}
 }
 func (m *Params) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -190,8 +215,8 @@ func (m *Params) GetWasmTTL() int64 {
 }
 
 func init() {
-	proto.RegisterEnum("sedachain.wasm_storage.v1.WasmType", WasmType_name, WasmType_value)
-	proto.RegisterType((*Wasm)(nil), "sedachain.wasm_storage.v1.Wasm")
+	proto.RegisterType((*DataRequestWasm)(nil), "sedachain.wasm_storage.v1.DataRequestWasm")
+	proto.RegisterType((*ExecutorWasm)(nil), "sedachain.wasm_storage.v1.ExecutorWasm")
 	proto.RegisterType((*Params)(nil), "sedachain.wasm_storage.v1.Params")
 }
 
@@ -200,38 +225,32 @@ func init() {
 }
 
 var fileDescriptor_9a4bda463450c942 = []byte{
-	// 485 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x52, 0x41, 0x6b, 0xd4, 0x40,
-	0x14, 0xce, 0xb8, 0xb1, 0x8d, 0xb3, 0x2a, 0xeb, 0x28, 0x1a, 0x23, 0x24, 0x61, 0x05, 0x59, 0xd4,
-	0x26, 0xb4, 0x3d, 0x08, 0x5e, 0x74, 0xd7, 0x0d, 0x78, 0x50, 0x6c, 0x67, 0x53, 0xaa, 0xbd, 0x84,
-	0xd9, 0x64, 0x4c, 0x02, 0x9b, 0x4e, 0xcc, 0xcc, 0xb6, 0xd9, 0xfe, 0x02, 0xa9, 0x97, 0xfe, 0x81,
-	0x82, 0xe0, 0x9f, 0xe9, 0xb1, 0x47, 0x4f, 0x55, 0x76, 0x41, 0xfc, 0x19, 0x92, 0x89, 0xa9, 0x14,
-	0xea, 0xed, 0x7d, 0xef, 0x7d, 0x1f, 0xf3, 0x7d, 0xf3, 0x1e, 0x7c, 0xca, 0x69, 0x44, 0xc2, 0x84,
-	0xa4, 0xbb, 0xee, 0x3e, 0xe1, 0x59, 0xc0, 0x05, 0x2b, 0x48, 0x4c, 0xdd, 0xbd, 0xd5, 0x0b, 0xd8,
-	0xc9, 0x0b, 0x26, 0x18, 0xba, 0x7f, 0xce, 0x76, 0x2e, 0x4c, 0xf7, 0x56, 0x8d, 0x3b, 0x31, 0x8b,
-	0x99, 0x64, 0xb9, 0x55, 0x55, 0x0b, 0x0c, 0x2b, 0x66, 0x2c, 0x9e, 0x50, 0x57, 0xa2, 0xf1, 0xf4,
-	0xa3, 0x2b, 0xd2, 0x8c, 0x72, 0x41, 0xb2, 0xbc, 0x26, 0x74, 0x7f, 0x01, 0xa8, 0x6e, 0x13, 0x9e,
-	0x21, 0x04, 0xd5, 0x84, 0xf0, 0x44, 0x07, 0x36, 0xe8, 0x5d, 0xc7, 0xb2, 0x46, 0x06, 0xd4, 0xc6,
-	0x33, 0x41, 0x43, 0x16, 0x51, 0xfd, 0x8a, 0xec, 0x9f, 0x63, 0xf4, 0x12, 0x5e, 0x93, 0x16, 0xc4,
-	0x2c, 0xa7, 0x7a, 0xcb, 0x06, 0xbd, 0x9b, 0x6b, 0x0f, 0x9d, 0xff, 0xda, 0x73, 0xaa, 0x37, 0xfc,
-	0x59, 0x4e, 0xb1, 0xb6, 0xff, 0xb7, 0x42, 0x2f, 0xa0, 0x46, 0xa2, 0x88, 0x46, 0x01, 0x11, 0xba,
-	0x6a, 0x83, 0x5e, 0x7b, 0xcd, 0x70, 0x6a, 0xbb, 0x4e, 0x63, 0xd7, 0xf1, 0x1b, 0xbb, 0x03, 0xed,
-	0xe4, 0xcc, 0x52, 0x8e, 0x7e, 0x58, 0x00, 0x2f, 0x4b, 0x55, 0x5f, 0xa0, 0x27, 0xf0, 0x16, 0x2d,
-	0xf3, 0xb4, 0x20, 0x22, 0x65, 0xbb, 0x41, 0x42, 0xd3, 0x38, 0x11, 0xfa, 0x55, 0x1b, 0xf4, 0x5a,
-	0xb8, 0xf3, 0x6f, 0xf0, 0x5a, 0xf6, 0xbb, 0x3b, 0x70, 0x69, 0x83, 0x14, 0x24, 0xe3, 0xa8, 0x0b,
-	0x6f, 0x64, 0xa4, 0x0c, 0x6a, 0x87, 0xe9, 0x01, 0x95, 0x91, 0x5b, 0xb8, 0x9d, 0x91, 0xb2, 0x72,
-	0x39, 0x4a, 0x0f, 0x28, 0x7a, 0x04, 0xb5, 0x3a, 0x9d, 0x98, 0xc8, 0xe4, 0xad, 0x41, 0x7b, 0x7e,
-	0x66, 0x2d, 0xcb, 0x14, 0xfe, 0x1b, 0xbc, 0x2c, 0x43, 0x88, 0xc9, 0x73, 0xf5, 0xf7, 0x57, 0x0b,
-	0x3c, 0xfe, 0x02, 0xa0, 0xd6, 0x04, 0x44, 0xeb, 0xf0, 0xee, 0x76, 0x7f, 0xf4, 0x36, 0xf0, 0x3f,
-	0x6c, 0x78, 0xc1, 0xb0, 0xef, 0xf7, 0x03, 0xec, 0x6d, 0x6e, 0x79, 0x23, 0xbf, 0xa3, 0x18, 0xf7,
-	0x0e, 0x8f, 0xed, 0xdb, 0x0d, 0x73, 0x48, 0x04, 0xc1, 0xf4, 0xd3, 0x94, 0x72, 0x81, 0x86, 0xd0,
-	0xba, 0x5c, 0x14, 0x78, 0xef, 0xbd, 0x57, 0x5b, 0xfe, 0x3b, 0xdc, 0x01, 0x86, 0x75, 0x78, 0x6c,
-	0x3f, 0xb8, 0x44, 0xed, 0x95, 0x34, 0x9c, 0x0a, 0x56, 0x18, 0xea, 0xe7, 0x6f, 0xa6, 0x32, 0xd8,
-	0x3c, 0x99, 0x9b, 0xe0, 0x74, 0x6e, 0x82, 0x9f, 0x73, 0x13, 0x1c, 0x2d, 0x4c, 0xe5, 0x74, 0x61,
-	0x2a, 0xdf, 0x17, 0xa6, 0xb2, 0xf3, 0x2c, 0x4e, 0x45, 0x32, 0x1d, 0x3b, 0x21, 0xcb, 0xdc, 0x6a,
-	0x55, 0xf2, 0x9b, 0x43, 0x36, 0x91, 0x60, 0xa5, 0xbe, 0xc2, 0x52, 0xde, 0xdd, 0x4a, 0x73, 0x87,
-	0xd5, 0x7a, 0xf9, 0x78, 0x49, 0x32, 0xd7, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0xcc, 0x97, 0x16,
-	0xe1, 0xae, 0x02, 0x00, 0x00,
+	// 393 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x52, 0xc1, 0x6a, 0xd4, 0x50,
+	0x14, 0x9d, 0x67, 0x86, 0x4e, 0x78, 0x53, 0x51, 0x1f, 0x2e, 0x62, 0x16, 0xc9, 0x90, 0x85, 0x0c,
+	0x68, 0x13, 0xaa, 0x0b, 0xc1, 0x8d, 0x38, 0x28, 0xb8, 0x70, 0xa1, 0x31, 0x20, 0x74, 0x13, 0x6e,
+	0x92, 0x67, 0xf2, 0x20, 0xaf, 0x2f, 0xe6, 0xdd, 0xd4, 0xb4, 0x1b, 0x7f, 0xa1, 0x9f, 0xe0, 0x1f,
+	0xf8, 0x1b, 0x5d, 0x76, 0xe9, 0xaa, 0x4a, 0x66, 0xe3, 0x67, 0x48, 0x5e, 0x98, 0x4a, 0xbf, 0xa0,
+	0xbb, 0x7b, 0xee, 0x39, 0x97, 0x73, 0xe0, 0x1e, 0xfa, 0x54, 0xf3, 0x02, 0xf2, 0x0a, 0xc4, 0x71,
+	0xf4, 0x0d, 0xb4, 0x4c, 0x35, 0xaa, 0x16, 0x4a, 0x1e, 0x9d, 0x1c, 0xde, 0xc0, 0x61, 0xd3, 0x2a,
+	0x54, 0xec, 0xd1, 0xb5, 0x3a, 0xbc, 0xc1, 0x9e, 0x1c, 0xba, 0x0f, 0x4b, 0x55, 0x2a, 0xa3, 0x8a,
+	0xc6, 0x69, 0x3a, 0x70, 0xfd, 0x52, 0xa9, 0xb2, 0xe6, 0x91, 0x41, 0x59, 0xf7, 0x25, 0x42, 0x21,
+	0xb9, 0x46, 0x90, 0xcd, 0x24, 0x08, 0x7e, 0x12, 0x7a, 0xef, 0x0d, 0x20, 0xc4, 0xfc, 0x6b, 0xc7,
+	0x35, 0x7e, 0x06, 0x2d, 0x19, 0xa3, 0xf3, 0x0a, 0x74, 0xe5, 0x90, 0x15, 0x59, 0xef, 0xc7, 0x66,
+	0x66, 0x2e, 0xb5, 0xb3, 0x53, 0xe4, 0xb9, 0x2a, 0xb8, 0x73, 0xc7, 0xec, 0xaf, 0x31, 0x7b, 0x45,
+	0x6d, 0x28, 0x0a, 0x5e, 0xa4, 0x80, 0x8e, 0xb5, 0x22, 0xeb, 0xe5, 0x33, 0x37, 0x9c, 0x7c, 0xc3,
+	0x9d, 0x6f, 0x98, 0xec, 0x7c, 0x37, 0xf6, 0xc5, 0x95, 0x3f, 0x3b, 0xff, 0xed, 0x93, 0x78, 0x61,
+	0xae, 0x5e, 0x23, 0x7b, 0x42, 0x1f, 0xf0, 0xbe, 0x11, 0x2d, 0xa0, 0x50, 0xc7, 0x69, 0xc5, 0x45,
+	0x59, 0xa1, 0x33, 0x5f, 0x91, 0xb5, 0x15, 0xdf, 0xff, 0x4f, 0xbc, 0x33, 0xfb, 0xe0, 0x3b, 0xdd,
+	0x7f, 0xdb, 0xf3, 0xbc, 0x43, 0xd5, 0xde, 0x4a, 0xda, 0xe0, 0x88, 0xee, 0x7d, 0x80, 0x16, 0xa4,
+	0x66, 0x01, 0xbd, 0x2b, 0xa1, 0x4f, 0xa7, 0x57, 0x88, 0x33, 0x6e, 0x32, 0x58, 0xf1, 0x52, 0x42,
+	0x3f, 0x46, 0xfb, 0x24, 0xce, 0x38, 0x7b, 0x4c, 0x6d, 0xc3, 0x23, 0xd6, 0x26, 0x8a, 0xb5, 0x59,
+	0x0e, 0x57, 0xfe, 0x62, 0xe4, 0x93, 0xe4, 0x7d, 0xbc, 0x18, 0xc9, 0x04, 0xeb, 0x97, 0xf3, 0xbf,
+	0x3f, 0x7c, 0xb2, 0xf9, 0x78, 0x31, 0x78, 0xe4, 0x72, 0xf0, 0xc8, 0x9f, 0xc1, 0x23, 0xe7, 0x5b,
+	0x6f, 0x76, 0xb9, 0xf5, 0x66, 0xbf, 0xb6, 0xde, 0xec, 0xe8, 0x45, 0x29, 0xb0, 0xea, 0xb2, 0x30,
+	0x57, 0x32, 0x1a, 0x5b, 0x60, 0xb2, 0xe6, 0xaa, 0x36, 0xe0, 0x60, 0x6a, 0x50, 0x6f, 0x3a, 0x73,
+	0xb0, 0xeb, 0x10, 0x9e, 0x36, 0x5c, 0x67, 0x7b, 0x46, 0xf9, 0xfc, 0x5f, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0x08, 0xfb, 0x9c, 0x11, 0x6a, 0x02, 0x00, 0x00,
 }
 
 func (this *Params) Equal(that interface{}) bool {
@@ -261,7 +280,7 @@ func (this *Params) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (m *Wasm) Marshal() (dAtA []byte, err error) {
+func (m *DataRequestWasm) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -271,12 +290,12 @@ func (m *Wasm) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Wasm) MarshalTo(dAtA []byte) (int, error) {
+func (m *DataRequestWasm) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *Wasm) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *DataRequestWasm) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -284,7 +303,7 @@ func (m *Wasm) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	if m.ExpirationHeight != 0 {
 		i = encodeVarintWasmStorage(dAtA, i, uint64(m.ExpirationHeight))
 		i--
-		dAtA[i] = 0x28
+		dAtA[i] = 0x20
 	}
 	n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.AddedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.AddedAt):])
 	if err1 != nil {
@@ -293,12 +312,52 @@ func (m *Wasm) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i -= n1
 	i = encodeVarintWasmStorage(dAtA, i, uint64(n1))
 	i--
-	dAtA[i] = 0x22
-	if m.WasmType != 0 {
-		i = encodeVarintWasmStorage(dAtA, i, uint64(m.WasmType))
+	dAtA[i] = 0x1a
+	if len(m.Bytecode) > 0 {
+		i -= len(m.Bytecode)
+		copy(dAtA[i:], m.Bytecode)
+		i = encodeVarintWasmStorage(dAtA, i, uint64(len(m.Bytecode)))
 		i--
-		dAtA[i] = 0x18
+		dAtA[i] = 0x12
 	}
+	if len(m.Hash) > 0 {
+		i -= len(m.Hash)
+		copy(dAtA[i:], m.Hash)
+		i = encodeVarintWasmStorage(dAtA, i, uint64(len(m.Hash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ExecutorWasm) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ExecutorWasm) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ExecutorWasm) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.AddedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.AddedAt):])
+	if err2 != nil {
+		return 0, err2
+	}
+	i -= n2
+	i = encodeVarintWasmStorage(dAtA, i, uint64(n2))
+	i--
+	dAtA[i] = 0x1a
 	if len(m.Bytecode) > 0 {
 		i -= len(m.Bytecode)
 		copy(dAtA[i:], m.Bytecode)
@@ -360,7 +419,7 @@ func encodeVarintWasmStorage(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *Wasm) Size() (n int) {
+func (m *DataRequestWasm) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -374,14 +433,30 @@ func (m *Wasm) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovWasmStorage(uint64(l))
 	}
-	if m.WasmType != 0 {
-		n += 1 + sovWasmStorage(uint64(m.WasmType))
-	}
 	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.AddedAt)
 	n += 1 + l + sovWasmStorage(uint64(l))
 	if m.ExpirationHeight != 0 {
 		n += 1 + sovWasmStorage(uint64(m.ExpirationHeight))
 	}
+	return n
+}
+
+func (m *ExecutorWasm) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Hash)
+	if l > 0 {
+		n += 1 + l + sovWasmStorage(uint64(l))
+	}
+	l = len(m.Bytecode)
+	if l > 0 {
+		n += 1 + l + sovWasmStorage(uint64(l))
+	}
+	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.AddedAt)
+	n += 1 + l + sovWasmStorage(uint64(l))
 	return n
 }
 
@@ -406,7 +481,7 @@ func sovWasmStorage(x uint64) (n int) {
 func sozWasmStorage(x uint64) (n int) {
 	return sovWasmStorage(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *Wasm) Unmarshal(dAtA []byte) error {
+func (m *DataRequestWasm) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -429,10 +504,10 @@ func (m *Wasm) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Wasm: wiretype end group for non-group")
+			return fmt.Errorf("proto: DataRequestWasm: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Wasm: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: DataRequestWasm: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -504,25 +579,6 @@ func (m *Wasm) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field WasmType", wireType)
-			}
-			m.WasmType = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowWasmStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.WasmType |= WasmType(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AddedAt", wireType)
 			}
@@ -555,7 +611,7 @@ func (m *Wasm) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ExpirationHeight", wireType)
 			}
@@ -574,6 +630,157 @@ func (m *Wasm) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipWasmStorage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthWasmStorage
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ExecutorWasm) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowWasmStorage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ExecutorWasm: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ExecutorWasm: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowWasmStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthWasmStorage
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthWasmStorage
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hash = append(m.Hash[:0], dAtA[iNdEx:postIndex]...)
+			if m.Hash == nil {
+				m.Hash = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Bytecode", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowWasmStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthWasmStorage
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthWasmStorage
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Bytecode = append(m.Bytecode[:0], dAtA[iNdEx:postIndex]...)
+			if m.Bytecode == nil {
+				m.Bytecode = []byte{}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AddedAt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowWasmStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthWasmStorage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthWasmStorage
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.AddedAt, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipWasmStorage(dAtA[iNdEx:])

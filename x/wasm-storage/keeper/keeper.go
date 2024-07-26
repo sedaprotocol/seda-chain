@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -23,13 +22,13 @@ type Keeper struct {
 	wasmViewKeeper wasmtypes.ViewKeeper
 
 	// authority is the address capable of executing MsgUpdateParams
-	// or MsgStoreOverlayWasm. Typically, this should be the gov module
+	// or MsgStoreExecutorWasm. Typically, this should be the gov module
 	// address.
 	authority string
 
 	Schema               collections.Schema
-	DataRequestWasm      collections.Map[[]byte, types.Wasm]
-	OverlayWasm          collections.Map[[]byte, types.Wasm]
+	DataRequestWasm      collections.Map[[]byte, types.DataRequestWasm]
+	ExecutorWasm         collections.Map[[]byte, types.ExecutorWasm]
 	WasmExpiration       collections.KeySet[collections.Pair[int64, []byte]]
 	CoreContractRegistry collections.Item[string]
 	Params               collections.Item[types.Params]
@@ -44,8 +43,8 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, au
 		bankKeeper:           bk,
 		wasmKeeper:           wk,
 		wasmViewKeeper:       wvk,
-		DataRequestWasm:      collections.NewMap(sb, types.DataRequestPrefix, "data_request_wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
-		OverlayWasm:          collections.NewMap(sb, types.OverlayPrefix, "overlay_wasm", collections.BytesKey, codec.CollValue[types.Wasm](cdc)),
+		DataRequestWasm:      collections.NewMap(sb, types.DataRequestPrefix, "data_request_wasm", collections.BytesKey, codec.CollValue[types.DataRequestWasm](cdc)),
+		ExecutorWasm:         collections.NewMap(sb, types.ExecutorPrefix, "executor_wasm", collections.BytesKey, codec.CollValue[types.ExecutorWasm](cdc)),
 		WasmExpiration:       collections.NewKeySet(sb, types.WasmExpPrefix, "wasm_expiration", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
 		CoreContractRegistry: collections.NewItem(sb, types.CoreContractRegistryPrefix, "core_contract_registry", collections.StringValue),
 		Params:               collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
@@ -67,9 +66,9 @@ func (k Keeper) GetAuthority() string {
 // GetCoreContractAddr retrieves the core contract address.
 func (k Keeper) GetCoreContractAddr(ctx context.Context) (sdk.AccAddress, error) {
 	contractAddrBech32, err := k.CoreContractRegistry.Get(ctx)
-	if contractAddrBech32 == "" || errors.Is(err, collections.ErrNotFound) {
-		return nil, fmt.Errorf("core contract has not been registered")
-	}
+	// if contractAddrBech32 == "" || errors.Is(err, collections.ErrNotFound) {
+	// 	return nil, fmt.Errorf("core contract has not been registered")
+	// }
 	if err != nil {
 		return nil, err
 	}
@@ -82,21 +81,21 @@ func (k Keeper) GetCoreContractAddr(ctx context.Context) (sdk.AccAddress, error)
 
 // GetDataRequestWasm retrieves the data request wasm from the store
 // given its hex-encoded hash.
-func (k Keeper) GetDataRequestWasm(ctx context.Context, hash string) (types.Wasm, error) {
+func (k Keeper) GetDataRequestWasm(ctx context.Context, hash string) (types.DataRequestWasm, error) {
 	hexHash, err := hex.DecodeString(hash)
 	if err != nil {
-		return types.Wasm{}, fmt.Errorf("failed to hex-encoded wasm hash: %w", err)
+		return types.DataRequestWasm{}, fmt.Errorf("failed to hex-encoded wasm hash: %w", err)
 	}
 	wasm, err := k.DataRequestWasm.Get(ctx, hexHash)
 	if err != nil {
-		return types.Wasm{}, fmt.Errorf("failed to get data request wasm: %w", err)
+		return types.DataRequestWasm{}, fmt.Errorf("failed to get data request wasm: %w", err)
 	}
 	return wasm, nil
 }
 
-// IterateAllDataRequestWasms iterates over the all the stored Data Request
-// Wasms and performs a given callback function.
-func (k Keeper) IterateAllDataRequestWasms(ctx sdk.Context, callback func(wasm types.Wasm) (stop bool)) error {
+// IterateDataRequestWasms iterates over the data request wasms and
+// performs a given callback function.
+func (k Keeper) IterateDataRequestWasms(ctx sdk.Context, callback func(wasm types.DataRequestWasm) (stop bool)) error {
 	iter, err := k.DataRequestWasm.Iterate(ctx, nil)
 	if err != nil {
 		return err
@@ -116,10 +115,10 @@ func (k Keeper) IterateAllDataRequestWasms(ctx sdk.Context, callback func(wasm t
 	return nil
 }
 
-// IterateAllOverlayWasms iterates over the all the stored Overlay Wasms
-// and performs a given callback function.
-func (k Keeper) IterateAllOverlayWasms(ctx sdk.Context, callback func(wasm types.Wasm) (stop bool)) error {
-	iter, err := k.OverlayWasm.Iterate(ctx, nil)
+// IterateExecutorWasms iterates over the executor wasms and performs
+// a given callback function.
+func (k Keeper) IterateExecutorWasms(ctx sdk.Context, callback func(wasm types.ExecutorWasm) (stop bool)) error {
+	iter, err := k.ExecutorWasm.Iterate(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -138,43 +137,48 @@ func (k Keeper) IterateAllOverlayWasms(ctx sdk.Context, callback func(wasm types
 	return nil
 }
 
-// ListDataRequestWasms returns hashes and types of all Data Request Wasms
-// in the store.
+// ListDataRequestWasms returns hashes and expiration block heights
+// of all data request wasms in the store.
 func (k Keeper) ListDataRequestWasms(ctx sdk.Context) []string {
-	var hashTypePairs []string
-	err := k.IterateAllDataRequestWasms(ctx, func(w types.Wasm) bool {
-		hashTypePairs = append(hashTypePairs, hex.EncodeToString(w.Hash)+","+w.WasmType.String())
+	var results []string
+	err := k.IterateDataRequestWasms(ctx, func(w types.DataRequestWasm) bool {
+		results = append(results, fmt.Sprintf("%s,%d", hex.EncodeToString(w.Hash), w.ExpirationHeight))
 		return false
 	})
 	if err != nil {
 		return nil
 	}
-	return hashTypePairs
+	return results
 }
 
-// ListOverlayWasms returns hashes and types of all Overlay Wasms in the store.
-func (k Keeper) ListOverlayWasms(ctx sdk.Context) []string {
-	var hashTypePairs []string
-	err := k.IterateAllOverlayWasms(ctx, func(w types.Wasm) bool {
-		hashTypePairs = append(hashTypePairs, hex.EncodeToString(w.Hash)+","+w.WasmType.String())
+// ListExecutorWasms returns hex-encoded hashes of all executor wasms in the store.
+func (k Keeper) ListExecutorWasms(ctx sdk.Context) []string {
+	var hashes []string
+	err := k.IterateExecutorWasms(ctx, func(w types.ExecutorWasm) bool {
+		hashes = append(hashes, hex.EncodeToString(w.Hash))
 		return false
 	})
 	if err != nil {
 		return nil
 	}
-	return hashTypePairs
+	return hashes
 }
 
-func (k Keeper) GetAllWasms(ctx sdk.Context) []types.Wasm {
-	var wasms []types.Wasm
-	err := k.IterateAllDataRequestWasms(ctx, func(wasm types.Wasm) bool {
+func (k Keeper) GetAllDataRequestWasms(ctx sdk.Context) []types.DataRequestWasm {
+	var wasms []types.DataRequestWasm
+	err := k.IterateDataRequestWasms(ctx, func(wasm types.DataRequestWasm) bool {
 		wasms = append(wasms, wasm)
 		return false
 	})
 	if err != nil {
 		return nil
 	}
-	err = k.IterateAllOverlayWasms(ctx, func(wasm types.Wasm) bool {
+	return wasms
+}
+
+func (k Keeper) GetAllExecutorWasms(ctx sdk.Context) []types.ExecutorWasm {
+	var wasms []types.ExecutorWasm
+	err := k.IterateExecutorWasms(ctx, func(wasm types.ExecutorWasm) bool {
 		wasms = append(wasms, wasm)
 		return false
 	})

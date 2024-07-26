@@ -75,7 +75,7 @@ func (m *QueryDataRequestWasmRequest) GetHash() string {
 
 // The response message for QueryDataRequestWasm RPC.
 type QueryDataRequestWasmResponse struct {
-	Wasm *Wasm `protobuf:"bytes,1,opt,name=wasm,proto3" json:"wasm,omitempty"`
+	Wasm *DataRequestWasm `protobuf:"bytes,1,opt,name=wasm,proto3" json:"wasm,omitempty"`
 }
 
 func (m *QueryDataRequestWasmResponse) Reset()         { *m = QueryDataRequestWasmResponse{} }
@@ -111,7 +111,7 @@ func (m *QueryDataRequestWasmResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryDataRequestWasmResponse proto.InternalMessageInfo
 
-func (m *QueryDataRequestWasmResponse) GetWasm() *Wasm {
+func (m *QueryDataRequestWasmResponse) GetWasm() *DataRequestWasm {
 	if m != nil {
 		return m.Wasm
 	}
@@ -157,7 +157,7 @@ var xxx_messageInfo_QueryDataRequestWasmsRequest proto.InternalMessageInfo
 
 // The response message for QueryDataRequestWasms RPC.
 type QueryDataRequestWasmsResponse struct {
-	HashTypePairs []string `protobuf:"bytes,1,rep,name=hash_type_pairs,json=hashTypePairs,proto3" json:"hash_type_pairs,omitempty"`
+	List []string `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
 }
 
 func (m *QueryDataRequestWasmsResponse) Reset()         { *m = QueryDataRequestWasmsResponse{} }
@@ -193,30 +193,30 @@ func (m *QueryDataRequestWasmsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryDataRequestWasmsResponse proto.InternalMessageInfo
 
-func (m *QueryDataRequestWasmsResponse) GetHashTypePairs() []string {
+func (m *QueryDataRequestWasmsResponse) GetList() []string {
 	if m != nil {
-		return m.HashTypePairs
+		return m.List
 	}
 	return nil
 }
 
-// The request message for QueryOverlayWasm RPC.
-type QueryOverlayWasmRequest struct {
+// The request message for QueryExecutorWasm RPC.
+type QueryExecutorWasmRequest struct {
 	Hash string `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
 }
 
-func (m *QueryOverlayWasmRequest) Reset()         { *m = QueryOverlayWasmRequest{} }
-func (m *QueryOverlayWasmRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryOverlayWasmRequest) ProtoMessage()    {}
-func (*QueryOverlayWasmRequest) Descriptor() ([]byte, []int) {
+func (m *QueryExecutorWasmRequest) Reset()         { *m = QueryExecutorWasmRequest{} }
+func (m *QueryExecutorWasmRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryExecutorWasmRequest) ProtoMessage()    {}
+func (*QueryExecutorWasmRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0e3a991a3b0319b3, []int{4}
 }
-func (m *QueryOverlayWasmRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryExecutorWasmRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryOverlayWasmRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryExecutorWasmRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryOverlayWasmRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryExecutorWasmRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -226,42 +226,42 @@ func (m *QueryOverlayWasmRequest) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-func (m *QueryOverlayWasmRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryOverlayWasmRequest.Merge(m, src)
+func (m *QueryExecutorWasmRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryExecutorWasmRequest.Merge(m, src)
 }
-func (m *QueryOverlayWasmRequest) XXX_Size() int {
+func (m *QueryExecutorWasmRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryOverlayWasmRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryOverlayWasmRequest.DiscardUnknown(m)
+func (m *QueryExecutorWasmRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryExecutorWasmRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryOverlayWasmRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryExecutorWasmRequest proto.InternalMessageInfo
 
-func (m *QueryOverlayWasmRequest) GetHash() string {
+func (m *QueryExecutorWasmRequest) GetHash() string {
 	if m != nil {
 		return m.Hash
 	}
 	return ""
 }
 
-// The response message for QueryOverlayWasm RPC.
-type QueryOverlayWasmResponse struct {
-	Wasm *Wasm `protobuf:"bytes,1,opt,name=wasm,proto3" json:"wasm,omitempty"`
+// The response message for QueryExecutorWasm RPC.
+type QueryExecutorWasmResponse struct {
+	Wasm *ExecutorWasm `protobuf:"bytes,1,opt,name=wasm,proto3" json:"wasm,omitempty"`
 }
 
-func (m *QueryOverlayWasmResponse) Reset()         { *m = QueryOverlayWasmResponse{} }
-func (m *QueryOverlayWasmResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryOverlayWasmResponse) ProtoMessage()    {}
-func (*QueryOverlayWasmResponse) Descriptor() ([]byte, []int) {
+func (m *QueryExecutorWasmResponse) Reset()         { *m = QueryExecutorWasmResponse{} }
+func (m *QueryExecutorWasmResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryExecutorWasmResponse) ProtoMessage()    {}
+func (*QueryExecutorWasmResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0e3a991a3b0319b3, []int{5}
 }
-func (m *QueryOverlayWasmResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryExecutorWasmResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryOverlayWasmResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryExecutorWasmResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryOverlayWasmResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryExecutorWasmResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -271,41 +271,41 @@ func (m *QueryOverlayWasmResponse) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *QueryOverlayWasmResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryOverlayWasmResponse.Merge(m, src)
+func (m *QueryExecutorWasmResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryExecutorWasmResponse.Merge(m, src)
 }
-func (m *QueryOverlayWasmResponse) XXX_Size() int {
+func (m *QueryExecutorWasmResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryOverlayWasmResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryOverlayWasmResponse.DiscardUnknown(m)
+func (m *QueryExecutorWasmResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryExecutorWasmResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryOverlayWasmResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryExecutorWasmResponse proto.InternalMessageInfo
 
-func (m *QueryOverlayWasmResponse) GetWasm() *Wasm {
+func (m *QueryExecutorWasmResponse) GetWasm() *ExecutorWasm {
 	if m != nil {
 		return m.Wasm
 	}
 	return nil
 }
 
-// The request message for QueryOverlayWasms RPC.
-type QueryOverlayWasmsRequest struct {
+// The request message for QueryExecutorWasms RPC.
+type QueryExecutorWasmsRequest struct {
 }
 
-func (m *QueryOverlayWasmsRequest) Reset()         { *m = QueryOverlayWasmsRequest{} }
-func (m *QueryOverlayWasmsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryOverlayWasmsRequest) ProtoMessage()    {}
-func (*QueryOverlayWasmsRequest) Descriptor() ([]byte, []int) {
+func (m *QueryExecutorWasmsRequest) Reset()         { *m = QueryExecutorWasmsRequest{} }
+func (m *QueryExecutorWasmsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryExecutorWasmsRequest) ProtoMessage()    {}
+func (*QueryExecutorWasmsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0e3a991a3b0319b3, []int{6}
 }
-func (m *QueryOverlayWasmsRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryExecutorWasmsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryOverlayWasmsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryExecutorWasmsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryOverlayWasmsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryExecutorWasmsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -315,35 +315,35 @@ func (m *QueryOverlayWasmsRequest) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *QueryOverlayWasmsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryOverlayWasmsRequest.Merge(m, src)
+func (m *QueryExecutorWasmsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryExecutorWasmsRequest.Merge(m, src)
 }
-func (m *QueryOverlayWasmsRequest) XXX_Size() int {
+func (m *QueryExecutorWasmsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryOverlayWasmsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryOverlayWasmsRequest.DiscardUnknown(m)
+func (m *QueryExecutorWasmsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryExecutorWasmsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryOverlayWasmsRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryExecutorWasmsRequest proto.InternalMessageInfo
 
-// The response message for QueryOverlayWasms RPC.
-type QueryOverlayWasmsResponse struct {
-	HashTypePairs []string `protobuf:"bytes,1,rep,name=hash_type_pairs,json=hashTypePairs,proto3" json:"hash_type_pairs,omitempty"`
+// The response message for QueryExecutorWasms RPC.
+type QueryExecutorWasmsResponse struct {
+	List []string `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
 }
 
-func (m *QueryOverlayWasmsResponse) Reset()         { *m = QueryOverlayWasmsResponse{} }
-func (m *QueryOverlayWasmsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryOverlayWasmsResponse) ProtoMessage()    {}
-func (*QueryOverlayWasmsResponse) Descriptor() ([]byte, []int) {
+func (m *QueryExecutorWasmsResponse) Reset()         { *m = QueryExecutorWasmsResponse{} }
+func (m *QueryExecutorWasmsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryExecutorWasmsResponse) ProtoMessage()    {}
+func (*QueryExecutorWasmsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0e3a991a3b0319b3, []int{7}
 }
-func (m *QueryOverlayWasmsResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryExecutorWasmsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryOverlayWasmsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryExecutorWasmsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryOverlayWasmsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryExecutorWasmsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -353,21 +353,21 @@ func (m *QueryOverlayWasmsResponse) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-func (m *QueryOverlayWasmsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryOverlayWasmsResponse.Merge(m, src)
+func (m *QueryExecutorWasmsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryExecutorWasmsResponse.Merge(m, src)
 }
-func (m *QueryOverlayWasmsResponse) XXX_Size() int {
+func (m *QueryExecutorWasmsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryOverlayWasmsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryOverlayWasmsResponse.DiscardUnknown(m)
+func (m *QueryExecutorWasmsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryExecutorWasmsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryOverlayWasmsResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryExecutorWasmsResponse proto.InternalMessageInfo
 
-func (m *QueryOverlayWasmsResponse) GetHashTypePairs() []string {
+func (m *QueryExecutorWasmsResponse) GetList() []string {
 	if m != nil {
-		return m.HashTypePairs
+		return m.List
 	}
 	return nil
 }
@@ -459,10 +459,10 @@ func init() {
 	proto.RegisterType((*QueryDataRequestWasmResponse)(nil), "sedachain.wasm_storage.v1.QueryDataRequestWasmResponse")
 	proto.RegisterType((*QueryDataRequestWasmsRequest)(nil), "sedachain.wasm_storage.v1.QueryDataRequestWasmsRequest")
 	proto.RegisterType((*QueryDataRequestWasmsResponse)(nil), "sedachain.wasm_storage.v1.QueryDataRequestWasmsResponse")
-	proto.RegisterType((*QueryOverlayWasmRequest)(nil), "sedachain.wasm_storage.v1.QueryOverlayWasmRequest")
-	proto.RegisterType((*QueryOverlayWasmResponse)(nil), "sedachain.wasm_storage.v1.QueryOverlayWasmResponse")
-	proto.RegisterType((*QueryOverlayWasmsRequest)(nil), "sedachain.wasm_storage.v1.QueryOverlayWasmsRequest")
-	proto.RegisterType((*QueryOverlayWasmsResponse)(nil), "sedachain.wasm_storage.v1.QueryOverlayWasmsResponse")
+	proto.RegisterType((*QueryExecutorWasmRequest)(nil), "sedachain.wasm_storage.v1.QueryExecutorWasmRequest")
+	proto.RegisterType((*QueryExecutorWasmResponse)(nil), "sedachain.wasm_storage.v1.QueryExecutorWasmResponse")
+	proto.RegisterType((*QueryExecutorWasmsRequest)(nil), "sedachain.wasm_storage.v1.QueryExecutorWasmsRequest")
+	proto.RegisterType((*QueryExecutorWasmsResponse)(nil), "sedachain.wasm_storage.v1.QueryExecutorWasmsResponse")
 	proto.RegisterType((*QueryCoreContractRegistryRequest)(nil), "sedachain.wasm_storage.v1.QueryCoreContractRegistryRequest")
 	proto.RegisterType((*QueryCoreContractRegistryResponse)(nil), "sedachain.wasm_storage.v1.QueryCoreContractRegistryResponse")
 }
@@ -472,42 +472,42 @@ func init() {
 }
 
 var fileDescriptor_0e3a991a3b0319b3 = []byte{
-	// 560 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x55, 0x4f, 0x6b, 0x13, 0x4d,
-	0x18, 0xcf, 0xbc, 0x6f, 0xb5, 0xf4, 0xa9, 0x52, 0x19, 0x04, 0xd3, 0xb5, 0xae, 0x71, 0xc1, 0x12,
-	0xb0, 0xd9, 0x25, 0xd9, 0x62, 0x14, 0xf5, 0x62, 0x04, 0x8f, 0xb5, 0x51, 0x10, 0xbc, 0x2c, 0xd3,
-	0xcd, 0xb0, 0x59, 0x48, 0x76, 0xb6, 0x33, 0x93, 0xe8, 0x22, 0x5e, 0xfc, 0x04, 0x82, 0x9f, 0x42,
-	0xe8, 0x27, 0x10, 0xbc, 0x8b, 0xa7, 0x82, 0x17, 0x8f, 0x92, 0xf8, 0x41, 0x64, 0x27, 0x93, 0x98,
-	0x34, 0xd9, 0xa4, 0xab, 0xb7, 0xc9, 0xcc, 0xf3, 0xfb, 0xf7, 0xcc, 0x33, 0x59, 0xb8, 0x2d, 0x68,
-	0x8b, 0xf8, 0x6d, 0x12, 0x46, 0xce, 0x6b, 0x22, 0xba, 0x9e, 0x90, 0x8c, 0x93, 0x80, 0x3a, 0xfd,
-	0xaa, 0x73, 0xdc, 0xa3, 0x3c, 0xb1, 0x63, 0xce, 0x24, 0xc3, 0xdb, 0x93, 0x32, 0x7b, 0xba, 0xcc,
-	0xee, 0x57, 0x8d, 0x9d, 0x80, 0xb1, 0xa0, 0x43, 0x1d, 0x12, 0x87, 0x0e, 0x89, 0x22, 0x26, 0x89,
-	0x0c, 0x59, 0x24, 0x46, 0x40, 0x63, 0x2f, 0x9b, 0x7f, 0x86, 0x48, 0x55, 0x5b, 0x55, 0xb8, 0x7e,
-	0x98, 0xaa, 0x3e, 0x21, 0x92, 0x34, 0xe9, 0x71, 0x8f, 0x0a, 0xf9, 0x92, 0x88, 0xae, 0x5e, 0x62,
-	0x0c, 0x6b, 0x6d, 0x22, 0xda, 0x45, 0x54, 0x42, 0xe5, 0x8d, 0xa6, 0x5a, 0x5b, 0xcf, 0x61, 0x67,
-	0x31, 0x44, 0xc4, 0x2c, 0x12, 0x14, 0xbb, 0xb0, 0x96, 0x0a, 0x29, 0xcc, 0x66, 0xed, 0xa6, 0x9d,
-	0x19, 0xc4, 0x56, 0x30, 0x55, 0x6c, 0x99, 0x8b, 0x49, 0x85, 0x5e, 0x5b, 0x4f, 0xe1, 0x46, 0xc6,
-	0xb9, 0x56, 0xdd, 0x85, 0xad, 0xd4, 0x9d, 0x27, 0x93, 0x98, 0x7a, 0x31, 0x09, 0xb9, 0x28, 0xa2,
-	0xd2, 0xff, 0xe5, 0x8d, 0xe6, 0xe5, 0x74, 0xfb, 0x45, 0x12, 0xd3, 0x67, 0xe9, 0xa6, 0x55, 0x81,
-	0x6b, 0x8a, 0xe8, 0xa0, 0x4f, 0x79, 0x87, 0x24, 0xab, 0xc2, 0x1e, 0x40, 0x71, 0xbe, 0xfc, 0x5f,
-	0x82, 0x1a, 0xf3, 0x84, 0x93, 0x90, 0x0d, 0xd8, 0x5e, 0x70, 0x96, 0x33, 0xa0, 0x05, 0x25, 0x45,
-	0xd2, 0x60, 0x9c, 0x36, 0x58, 0x24, 0x39, 0xf1, 0x65, 0x93, 0x06, 0xa1, 0x90, 0x3c, 0x19, 0x0b,
-	0x3d, 0x82, 0x5b, 0x4b, 0x6a, 0xb4, 0x60, 0x11, 0xd6, 0x49, 0xab, 0xc5, 0xa9, 0x10, 0xba, 0x23,
-	0xe3, 0x9f, 0xb5, 0x93, 0x75, 0xb8, 0xa0, 0xf0, 0xf8, 0x0b, 0x82, 0xad, 0x33, 0x57, 0x82, 0xef,
-	0x2e, 0x69, 0xc4, 0x92, 0x59, 0x33, 0xea, 0xb9, 0x71, 0x23, 0xa3, 0xd6, 0xfd, 0xf7, 0xdf, 0x7f,
-	0x7d, 0xfc, 0xcf, 0xc5, 0x55, 0x27, 0x25, 0xa8, 0xfc, 0x99, 0xfd, 0xca, 0x78, 0xf6, 0x5b, 0x44,
-	0x12, 0x8f, 0x8f, 0xa0, 0x5e, 0x7a, 0xe2, 0xbc, 0x4d, 0x9b, 0xf6, 0x0e, 0x7f, 0x46, 0x70, 0xe5,
-	0xec, 0x48, 0xe1, 0xbc, 0x46, 0xc6, 0xf7, 0x67, 0xdc, 0xcb, 0x0f, 0xd4, 0x11, 0x5c, 0x15, 0xa1,
-	0x82, 0xef, 0x9c, 0x3f, 0x82, 0xc0, 0x27, 0x08, 0x36, 0xa7, 0x46, 0x05, 0xd7, 0x56, 0xc9, 0xcf,
-	0xcf, 0xbc, 0xe1, 0xe6, 0xc2, 0x68, 0xb7, 0xfb, 0xca, 0xad, 0x8d, 0xf7, 0x32, 0xdd, 0xb2, 0x11,
-	0x6a, 0xa6, 0xd7, 0x9f, 0x10, 0x5c, 0x9a, 0x9e, 0x6c, 0x9c, 0x47, 0x7b, 0xd2, 0xe3, 0xfd, 0x7c,
-	0x20, 0xed, 0xd8, 0x56, 0x8e, 0xcb, 0x78, 0xf7, 0x5c, 0x8e, 0x05, 0xfe, 0x86, 0xe0, 0xea, 0xa2,
-	0xc7, 0x81, 0x1f, 0xac, 0x92, 0x5f, 0xf2, 0xec, 0x8c, 0x87, 0x7f, 0x07, 0xd6, 0x19, 0xea, 0x2a,
-	0x43, 0x15, 0x3b, 0x99, 0x19, 0x7c, 0xc6, 0xa9, 0xe7, 0x6b, 0xbc, 0xc7, 0x35, 0xc1, 0xe3, 0xc3,
-	0xaf, 0x03, 0x13, 0x9d, 0x0e, 0x4c, 0xf4, 0x73, 0x60, 0xa2, 0x0f, 0x43, 0xb3, 0x70, 0x3a, 0x34,
-	0x0b, 0x3f, 0x86, 0x66, 0xe1, 0x55, 0x3d, 0x08, 0x65, 0xbb, 0x77, 0x64, 0xfb, 0xac, 0xab, 0x48,
-	0xd5, 0x37, 0xc1, 0x67, 0x9d, 0x69, 0x85, 0x37, 0xb3, 0x1a, 0xe9, 0xdf, 0x8f, 0x38, 0xba, 0xa8,
-	0x2a, 0xdd, 0xdf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x2e, 0x72, 0x77, 0x51, 0xcd, 0x06, 0x00, 0x00,
+	// 554 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x95, 0x4f, 0x6f, 0xd3, 0x30,
+	0x18, 0xc6, 0x67, 0x28, 0x4c, 0x18, 0x10, 0xe8, 0x15, 0x87, 0x2e, 0x1b, 0x51, 0x89, 0x84, 0xc6,
+	0xbf, 0xc6, 0x74, 0x61, 0x14, 0x34, 0xe0, 0xc0, 0xe0, 0x03, 0xac, 0x17, 0x10, 0x07, 0x22, 0x2f,
+	0xb5, 0xd2, 0x48, 0x6d, 0xdc, 0xd9, 0xee, 0x58, 0x85, 0xb8, 0xf0, 0x09, 0x90, 0xf8, 0x1c, 0x48,
+	0x1c, 0x38, 0x21, 0x71, 0x47, 0x9c, 0x26, 0x71, 0xe1, 0x88, 0x5a, 0x3e, 0x08, 0x8a, 0xeb, 0x96,
+	0xa6, 0x4a, 0xd2, 0x85, 0x9b, 0x2b, 0xbf, 0xbf, 0xe7, 0x7d, 0x9e, 0x37, 0xaf, 0x55, 0x7c, 0x5d,
+	0xb2, 0x36, 0x0d, 0x3a, 0x34, 0x8a, 0xc9, 0x1b, 0x2a, 0x7b, 0xbe, 0x54, 0x5c, 0xd0, 0x90, 0x91,
+	0xc3, 0x06, 0x39, 0x18, 0x30, 0x31, 0x74, 0xfb, 0x82, 0x2b, 0x0e, 0x6b, 0xb3, 0x32, 0x77, 0xbe,
+	0xcc, 0x3d, 0x6c, 0x58, 0x1b, 0x21, 0xe7, 0x61, 0x97, 0x11, 0xda, 0x8f, 0x08, 0x8d, 0x63, 0xae,
+	0xa8, 0x8a, 0x78, 0x2c, 0x27, 0xa0, 0x75, 0x27, 0x5f, 0x3f, 0x25, 0xa4, 0xab, 0x9d, 0x06, 0x5e,
+	0xdf, 0x4b, 0xba, 0x3e, 0xa3, 0x8a, 0xb6, 0xd8, 0xc1, 0x80, 0x49, 0xf5, 0x82, 0xca, 0x9e, 0x39,
+	0x02, 0xe0, 0x4a, 0x87, 0xca, 0x4e, 0x15, 0xd5, 0xd0, 0x8d, 0x73, 0x2d, 0x7d, 0x76, 0x5e, 0xe3,
+	0x8d, 0x6c, 0x44, 0xf6, 0x79, 0x2c, 0x19, 0x3c, 0xc1, 0x95, 0xa4, 0x91, 0x66, 0xce, 0x6f, 0xdd,
+	0x72, 0x73, 0x83, 0xb8, 0x8b, 0x0a, 0x9a, 0x73, 0xec, 0x6c, 0x7d, 0x69, 0xce, 0x8e, 0x87, 0xaf,
+	0xe6, 0xdc, 0x1b, 0x03, 0x80, 0x2b, 0xdd, 0x48, 0xaa, 0x2a, 0xaa, 0x9d, 0x4e, 0x4c, 0x27, 0x67,
+	0xc7, 0xc5, 0x55, 0x0d, 0x3d, 0x3f, 0x62, 0xc1, 0x40, 0x71, 0xb1, 0x2c, 0xe4, 0x4b, 0xbc, 0x96,
+	0x51, 0x6f, 0x1a, 0xec, 0xa4, 0x12, 0x6e, 0x16, 0x24, 0x4c, 0xe1, 0x93, 0x78, 0xeb, 0x19, 0xca,
+	0xb3, 0x6c, 0x77, 0xb1, 0x95, 0x75, 0x59, 0x10, 0xcc, 0xc1, 0x35, 0x4d, 0xec, 0x72, 0xc1, 0x76,
+	0x79, 0xac, 0x04, 0x0d, 0x54, 0x8b, 0x85, 0x91, 0x54, 0x62, 0x38, 0x55, 0x7d, 0x8c, 0xaf, 0x15,
+	0xd4, 0x18, 0xf1, 0x2a, 0x5e, 0xa5, 0xed, 0xb6, 0x60, 0x52, 0x9a, 0x41, 0x4c, 0x7f, 0x6e, 0x7d,
+	0x59, 0xc5, 0x67, 0x34, 0x0f, 0xdf, 0x10, 0xbe, 0xb4, 0x30, 0x76, 0xb8, 0x5f, 0x10, 0xbf, 0x60,
+	0xb5, 0xac, 0x66, 0x69, 0x6e, 0x62, 0xd4, 0x79, 0xf8, 0xfe, 0xe7, 0x9f, 0x8f, 0xa7, 0x3c, 0x68,
+	0x90, 0x44, 0xa0, 0xfe, 0x6f, 0xd5, 0xeb, 0xd3, 0x55, 0x6f, 0x53, 0x45, 0x7d, 0x31, 0x41, 0xfd,
+	0xe4, 0x86, 0xbc, 0x4d, 0x3e, 0xea, 0x3b, 0xf8, 0x8a, 0xf0, 0xe5, 0xc5, 0xb5, 0x81, 0xb2, 0x46,
+	0xa6, 0x1f, 0xcb, 0x7a, 0x50, 0x1e, 0x34, 0x11, 0x3c, 0x1d, 0xa1, 0x0e, 0xb7, 0x4f, 0x1e, 0x41,
+	0xc2, 0x67, 0x84, 0x2f, 0xcc, 0xef, 0x05, 0x78, 0xcb, 0xfa, 0x67, 0x2c, 0xbb, 0x75, 0xaf, 0x1c,
+	0x64, 0x0c, 0x6f, 0x6b, 0xc3, 0x04, 0xea, 0xb9, 0x86, 0x99, 0xc1, 0x52, 0xf3, 0xfe, 0x84, 0xf0,
+	0xc5, 0xd4, 0x2a, 0x43, 0xa9, 0xf6, 0xb3, 0x49, 0x6f, 0x97, 0xa4, 0x8c, 0x6b, 0xa2, 0x5d, 0xdf,
+	0x84, 0xcd, 0x93, 0xb9, 0x96, 0xf0, 0x03, 0xe1, 0x2b, 0x59, 0x8f, 0x04, 0x76, 0x96, 0x19, 0x28,
+	0x78, 0x7e, 0xd6, 0xa3, 0xff, 0x83, 0x4d, 0x88, 0xa6, 0x0e, 0xd1, 0x00, 0x92, 0x1b, 0x22, 0xe0,
+	0x82, 0xf9, 0x81, 0xe1, 0x7d, 0x61, 0x04, 0x9e, 0xee, 0x7d, 0x1f, 0xd9, 0xe8, 0x78, 0x64, 0xa3,
+	0xdf, 0x23, 0x1b, 0x7d, 0x18, 0xdb, 0x2b, 0xc7, 0x63, 0x7b, 0xe5, 0xd7, 0xd8, 0x5e, 0x79, 0xd5,
+	0x0c, 0x23, 0xd5, 0x19, 0xec, 0xbb, 0x01, 0xef, 0x69, 0x51, 0xfd, 0x57, 0x10, 0xf0, 0xee, 0x7c,
+	0x87, 0xa3, 0x74, 0x0f, 0x35, 0xec, 0x33, 0xb9, 0x7f, 0x56, 0x57, 0x7a, 0x7f, 0x03, 0x00, 0x00,
+	0xff, 0xff, 0x50, 0x88, 0x92, 0x96, 0xc4, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -522,14 +522,14 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// DataRequestWasm returns Data Request Wasm given its hash.
+	// DataRequestWasm returns a data request wasm given its hash.
 	DataRequestWasm(ctx context.Context, in *QueryDataRequestWasmRequest, opts ...grpc.CallOption) (*QueryDataRequestWasmResponse, error)
-	// DataRequestWasms returns all Data Request Wasms.
+	// DataRequestWasms returns all data request wasms.
 	DataRequestWasms(ctx context.Context, in *QueryDataRequestWasmsRequest, opts ...grpc.CallOption) (*QueryDataRequestWasmsResponse, error)
-	// OverlayWasm returns Overlay Wasm given its hash.
-	OverlayWasm(ctx context.Context, in *QueryOverlayWasmRequest, opts ...grpc.CallOption) (*QueryOverlayWasmResponse, error)
-	// OverlayWasms returns all Overlay Wasms.
-	OverlayWasms(ctx context.Context, in *QueryOverlayWasmsRequest, opts ...grpc.CallOption) (*QueryOverlayWasmsResponse, error)
+	// ExecutorWasm returns an executor wasm given its hash.
+	ExecutorWasm(ctx context.Context, in *QueryExecutorWasmRequest, opts ...grpc.CallOption) (*QueryExecutorWasmResponse, error)
+	// ExecutorWasms returns all executor wasms.
+	ExecutorWasms(ctx context.Context, in *QueryExecutorWasmsRequest, opts ...grpc.CallOption) (*QueryExecutorWasmsResponse, error)
 	// CoreContractRegistry returns the Core Contract Registry address.
 	CoreContractRegistry(ctx context.Context, in *QueryCoreContractRegistryRequest, opts ...grpc.CallOption) (*QueryCoreContractRegistryResponse, error)
 }
@@ -560,18 +560,18 @@ func (c *queryClient) DataRequestWasms(ctx context.Context, in *QueryDataRequest
 	return out, nil
 }
 
-func (c *queryClient) OverlayWasm(ctx context.Context, in *QueryOverlayWasmRequest, opts ...grpc.CallOption) (*QueryOverlayWasmResponse, error) {
-	out := new(QueryOverlayWasmResponse)
-	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/OverlayWasm", in, out, opts...)
+func (c *queryClient) ExecutorWasm(ctx context.Context, in *QueryExecutorWasmRequest, opts ...grpc.CallOption) (*QueryExecutorWasmResponse, error) {
+	out := new(QueryExecutorWasmResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/ExecutorWasm", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) OverlayWasms(ctx context.Context, in *QueryOverlayWasmsRequest, opts ...grpc.CallOption) (*QueryOverlayWasmsResponse, error) {
-	out := new(QueryOverlayWasmsResponse)
-	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/OverlayWasms", in, out, opts...)
+func (c *queryClient) ExecutorWasms(ctx context.Context, in *QueryExecutorWasmsRequest, opts ...grpc.CallOption) (*QueryExecutorWasmsResponse, error) {
+	out := new(QueryExecutorWasmsResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/ExecutorWasms", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -589,14 +589,14 @@ func (c *queryClient) CoreContractRegistry(ctx context.Context, in *QueryCoreCon
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// DataRequestWasm returns Data Request Wasm given its hash.
+	// DataRequestWasm returns a data request wasm given its hash.
 	DataRequestWasm(context.Context, *QueryDataRequestWasmRequest) (*QueryDataRequestWasmResponse, error)
-	// DataRequestWasms returns all Data Request Wasms.
+	// DataRequestWasms returns all data request wasms.
 	DataRequestWasms(context.Context, *QueryDataRequestWasmsRequest) (*QueryDataRequestWasmsResponse, error)
-	// OverlayWasm returns Overlay Wasm given its hash.
-	OverlayWasm(context.Context, *QueryOverlayWasmRequest) (*QueryOverlayWasmResponse, error)
-	// OverlayWasms returns all Overlay Wasms.
-	OverlayWasms(context.Context, *QueryOverlayWasmsRequest) (*QueryOverlayWasmsResponse, error)
+	// ExecutorWasm returns an executor wasm given its hash.
+	ExecutorWasm(context.Context, *QueryExecutorWasmRequest) (*QueryExecutorWasmResponse, error)
+	// ExecutorWasms returns all executor wasms.
+	ExecutorWasms(context.Context, *QueryExecutorWasmsRequest) (*QueryExecutorWasmsResponse, error)
 	// CoreContractRegistry returns the Core Contract Registry address.
 	CoreContractRegistry(context.Context, *QueryCoreContractRegistryRequest) (*QueryCoreContractRegistryResponse, error)
 }
@@ -611,11 +611,11 @@ func (*UnimplementedQueryServer) DataRequestWasm(ctx context.Context, req *Query
 func (*UnimplementedQueryServer) DataRequestWasms(ctx context.Context, req *QueryDataRequestWasmsRequest) (*QueryDataRequestWasmsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DataRequestWasms not implemented")
 }
-func (*UnimplementedQueryServer) OverlayWasm(ctx context.Context, req *QueryOverlayWasmRequest) (*QueryOverlayWasmResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method OverlayWasm not implemented")
+func (*UnimplementedQueryServer) ExecutorWasm(ctx context.Context, req *QueryExecutorWasmRequest) (*QueryExecutorWasmResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExecutorWasm not implemented")
 }
-func (*UnimplementedQueryServer) OverlayWasms(ctx context.Context, req *QueryOverlayWasmsRequest) (*QueryOverlayWasmsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method OverlayWasms not implemented")
+func (*UnimplementedQueryServer) ExecutorWasms(ctx context.Context, req *QueryExecutorWasmsRequest) (*QueryExecutorWasmsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExecutorWasms not implemented")
 }
 func (*UnimplementedQueryServer) CoreContractRegistry(ctx context.Context, req *QueryCoreContractRegistryRequest) (*QueryCoreContractRegistryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CoreContractRegistry not implemented")
@@ -661,38 +661,38 @@ func _Query_DataRequestWasms_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_OverlayWasm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryOverlayWasmRequest)
+func _Query_ExecutorWasm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryExecutorWasmRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).OverlayWasm(ctx, in)
+		return srv.(QueryServer).ExecutorWasm(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/sedachain.wasm_storage.v1.Query/OverlayWasm",
+		FullMethod: "/sedachain.wasm_storage.v1.Query/ExecutorWasm",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).OverlayWasm(ctx, req.(*QueryOverlayWasmRequest))
+		return srv.(QueryServer).ExecutorWasm(ctx, req.(*QueryExecutorWasmRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_OverlayWasms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryOverlayWasmsRequest)
+func _Query_ExecutorWasms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryExecutorWasmsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).OverlayWasms(ctx, in)
+		return srv.(QueryServer).ExecutorWasms(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/sedachain.wasm_storage.v1.Query/OverlayWasms",
+		FullMethod: "/sedachain.wasm_storage.v1.Query/ExecutorWasms",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).OverlayWasms(ctx, req.(*QueryOverlayWasmsRequest))
+		return srv.(QueryServer).ExecutorWasms(ctx, req.(*QueryExecutorWasmsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -728,12 +728,12 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_DataRequestWasms_Handler,
 		},
 		{
-			MethodName: "OverlayWasm",
-			Handler:    _Query_OverlayWasm_Handler,
+			MethodName: "ExecutorWasm",
+			Handler:    _Query_ExecutorWasm_Handler,
 		},
 		{
-			MethodName: "OverlayWasms",
-			Handler:    _Query_OverlayWasms_Handler,
+			MethodName: "ExecutorWasms",
+			Handler:    _Query_ExecutorWasms_Handler,
 		},
 		{
 			MethodName: "CoreContractRegistry",
@@ -852,11 +852,11 @@ func (m *QueryDataRequestWasmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, 
 	_ = i
 	var l int
 	_ = l
-	if len(m.HashTypePairs) > 0 {
-		for iNdEx := len(m.HashTypePairs) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.HashTypePairs[iNdEx])
-			copy(dAtA[i:], m.HashTypePairs[iNdEx])
-			i = encodeVarintQuery(dAtA, i, uint64(len(m.HashTypePairs[iNdEx])))
+	if len(m.List) > 0 {
+		for iNdEx := len(m.List) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.List[iNdEx])
+			copy(dAtA[i:], m.List[iNdEx])
+			i = encodeVarintQuery(dAtA, i, uint64(len(m.List[iNdEx])))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -864,7 +864,7 @@ func (m *QueryDataRequestWasmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, 
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryOverlayWasmRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryExecutorWasmRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -874,12 +874,12 @@ func (m *QueryOverlayWasmRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryOverlayWasmRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryExecutorWasmRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryOverlayWasmRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryExecutorWasmRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -894,7 +894,7 @@ func (m *QueryOverlayWasmRequest) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryOverlayWasmResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryExecutorWasmResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -904,12 +904,12 @@ func (m *QueryOverlayWasmResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryOverlayWasmResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryExecutorWasmResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryOverlayWasmResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryExecutorWasmResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -929,7 +929,7 @@ func (m *QueryOverlayWasmResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryOverlayWasmsRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryExecutorWasmsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -939,12 +939,12 @@ func (m *QueryOverlayWasmsRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryOverlayWasmsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryExecutorWasmsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryOverlayWasmsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryExecutorWasmsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -952,7 +952,7 @@ func (m *QueryOverlayWasmsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryOverlayWasmsResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryExecutorWasmsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -962,21 +962,21 @@ func (m *QueryOverlayWasmsResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryOverlayWasmsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryExecutorWasmsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryOverlayWasmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryExecutorWasmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.HashTypePairs) > 0 {
-		for iNdEx := len(m.HashTypePairs) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.HashTypePairs[iNdEx])
-			copy(dAtA[i:], m.HashTypePairs[iNdEx])
-			i = encodeVarintQuery(dAtA, i, uint64(len(m.HashTypePairs[iNdEx])))
+	if len(m.List) > 0 {
+		for iNdEx := len(m.List) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.List[iNdEx])
+			copy(dAtA[i:], m.List[iNdEx])
+			i = encodeVarintQuery(dAtA, i, uint64(len(m.List[iNdEx])))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -1089,8 +1089,8 @@ func (m *QueryDataRequestWasmsResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.HashTypePairs) > 0 {
-		for _, s := range m.HashTypePairs {
+	if len(m.List) > 0 {
+		for _, s := range m.List {
 			l = len(s)
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1098,7 +1098,7 @@ func (m *QueryDataRequestWasmsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryOverlayWasmRequest) Size() (n int) {
+func (m *QueryExecutorWasmRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1111,7 +1111,7 @@ func (m *QueryOverlayWasmRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryOverlayWasmResponse) Size() (n int) {
+func (m *QueryExecutorWasmResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1124,7 +1124,7 @@ func (m *QueryOverlayWasmResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryOverlayWasmsRequest) Size() (n int) {
+func (m *QueryExecutorWasmsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1133,14 +1133,14 @@ func (m *QueryOverlayWasmsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryOverlayWasmsResponse) Size() (n int) {
+func (m *QueryExecutorWasmsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.HashTypePairs) > 0 {
-		for _, s := range m.HashTypePairs {
+	if len(m.List) > 0 {
+		for _, s := range m.List {
 			l = len(s)
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1317,7 +1317,7 @@ func (m *QueryDataRequestWasmResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Wasm == nil {
-				m.Wasm = &Wasm{}
+				m.Wasm = &DataRequestWasm{}
 			}
 			if err := m.Wasm.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1425,7 +1425,7 @@ func (m *QueryDataRequestWasmsResponse) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field HashTypePairs", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field List", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1453,7 +1453,7 @@ func (m *QueryDataRequestWasmsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.HashTypePairs = append(m.HashTypePairs, string(dAtA[iNdEx:postIndex]))
+			m.List = append(m.List, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1476,7 +1476,7 @@ func (m *QueryDataRequestWasmsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryOverlayWasmRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryExecutorWasmRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1499,10 +1499,10 @@ func (m *QueryOverlayWasmRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryOverlayWasmRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryExecutorWasmRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryOverlayWasmRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryExecutorWasmRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1558,7 +1558,7 @@ func (m *QueryOverlayWasmRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryOverlayWasmResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryExecutorWasmResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1581,10 +1581,10 @@ func (m *QueryOverlayWasmResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryOverlayWasmResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryExecutorWasmResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryOverlayWasmResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryExecutorWasmResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1617,7 +1617,7 @@ func (m *QueryOverlayWasmResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Wasm == nil {
-				m.Wasm = &Wasm{}
+				m.Wasm = &ExecutorWasm{}
 			}
 			if err := m.Wasm.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1644,7 +1644,7 @@ func (m *QueryOverlayWasmResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryOverlayWasmsRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryExecutorWasmsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1667,10 +1667,10 @@ func (m *QueryOverlayWasmsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryOverlayWasmsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryExecutorWasmsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryOverlayWasmsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryExecutorWasmsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -1694,7 +1694,7 @@ func (m *QueryOverlayWasmsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryOverlayWasmsResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryExecutorWasmsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1717,15 +1717,15 @@ func (m *QueryOverlayWasmsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryOverlayWasmsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryExecutorWasmsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryOverlayWasmsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryExecutorWasmsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field HashTypePairs", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field List", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1753,7 +1753,7 @@ func (m *QueryOverlayWasmsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.HashTypePairs = append(m.HashTypePairs, string(dAtA[iNdEx:postIndex]))
+			m.List = append(m.List, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

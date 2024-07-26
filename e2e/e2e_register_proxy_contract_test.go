@@ -15,7 +15,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-func (s *IntegrationTestSuite) testInstantiateAndRegisterCoreContract() {
+func (s *IntegrationTestSuite) testInstantiateCoreContract() {
 	proposalCounter++
 	proposalID := proposalCounter
 
@@ -27,7 +27,7 @@ func (s *IntegrationTestSuite) testInstantiateAndRegisterCoreContract() {
 	s.Require().NoError(err)
 
 	s.execWasmStore(s.chain, 0, coreWasm, sender, standardFees.String(), false)
-	s.execInstantiateAndRegisterCoreContract(s.chain, 0, "clean_title", "sustainable_summary", "data-request-executor", sender, standardFees.String(), false, proposalID)
+	s.execInstantiateCoreContract(s.chain, 0, "clean_title", "sustainable_summary", "data-request-executor", sender, standardFees.String(), false, proposalID)
 	s.execGovVoteYes(s.chain, 0, sender, standardFees.String(), false, proposalID)
 
 	s.Require().Eventually(
@@ -49,7 +49,7 @@ func (s *IntegrationTestSuite) testInstantiateAndRegisterCoreContract() {
 	)
 }
 
-func (s *IntegrationTestSuite) execInstantiateAndRegisterCoreContract(
+func (s *IntegrationTestSuite) execInstantiateCoreContract(
 	c *chain,
 	valIdx int,
 	title,
@@ -85,7 +85,7 @@ func (s *IntegrationTestSuite) execInstantiateAndRegisterCoreContract(
 		txCommand,
 		types.ModuleName,
 		"submit-proposal",
-		"instantiate-and-register-core-contract",
+		"instantiate-core-contract",
 		codeID,
 		"{\"token\":\"aseda\"}",
 		"74657374696e67", // salt

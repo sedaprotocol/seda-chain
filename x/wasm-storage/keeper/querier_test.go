@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"encoding/hex"
-	"fmt"
 	"os"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
@@ -30,21 +29,21 @@ func (s *KeeperTestSuite) TestDataRequestWasm() {
 	s.Require().Equal(storedWasm.Hash, hex.EncodeToString(res.Wasm.Hash))
 }
 
-func (s *KeeperTestSuite) TestOverlayWasm() {
+func (s *KeeperTestSuite) TestExecutorWasm() {
 	s.SetupTest()
 	wasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)
-	input := types.MsgStoreOverlayWasm{
+	input := types.MsgStoreExecutorWasm{
 		Sender: s.authority,
 		Wasm:   compWasm,
 	}
-	storedWasm, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
+	storedWasm, err := s.msgSrvr.StoreExecutorWasm(s.ctx, &input)
 	s.Require().NoError(err)
 
-	req := types.QueryOverlayWasmRequest{Hash: storedWasm.Hash}
-	res, err := s.queryClient.OverlayWasm(s.ctx, &req)
+	req := types.QueryExecutorWasmRequest{Hash: storedWasm.Hash}
+	res, err := s.queryClient.ExecutorWasm(s.ctx, &req)
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
 	s.Require().Equal(storedWasm.Hash, hex.EncodeToString(res.Wasm.Hash))
@@ -79,39 +78,39 @@ func (s *KeeperTestSuite) TestDataRequestWasms() {
 	res, err := s.queryClient.DataRequestWasms(s.ctx, &req)
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
-	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm.Hash, "WASM_TYPE_DATA_REQUEST"), res.HashTypePairs[0])
-	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm2.Hash, "WASM_TYPE_DATA_REQUEST"), res.HashTypePairs[1])
+	s.Require().Contains(res.List[0], storedWasm.Hash)
+	s.Require().Contains(res.List[1], storedWasm2.Hash)
 }
 
-func (s *KeeperTestSuite) TestOverlayWasms() {
+func (s *KeeperTestSuite) TestExecutorWasms() {
 	s.SetupTest()
 	wasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)
 
-	input := types.MsgStoreOverlayWasm{
+	input := types.MsgStoreExecutorWasm{
 		Sender: s.authority,
 		Wasm:   compWasm,
 	}
-	storedWasm, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input)
+	storedWasm, err := s.msgSrvr.StoreExecutorWasm(s.ctx, &input)
 	s.Require().NoError(err)
 
 	wasm2, err := os.ReadFile("testutil/cowsay.wasm")
 	s.Require().NoError(err)
 	compWasm2, err := ioutils.GzipIt(wasm2)
 	s.Require().NoError(err)
-	input2 := types.MsgStoreOverlayWasm{
+	input2 := types.MsgStoreExecutorWasm{
 		Sender: s.authority,
 		Wasm:   compWasm2,
 	}
-	storedWasm2, err := s.msgSrvr.StoreOverlayWasm(s.ctx, &input2)
+	storedWasm2, err := s.msgSrvr.StoreExecutorWasm(s.ctx, &input2)
 	s.Require().NoError(err)
 
-	req := types.QueryOverlayWasmsRequest{}
-	res, err := s.queryClient.OverlayWasms(s.ctx, &req)
+	req := types.QueryExecutorWasmsRequest{}
+	res, err := s.queryClient.ExecutorWasms(s.ctx, &req)
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
-	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm.Hash, "WASM_TYPE_DATA_REQUEST_EXECUTOR"), res.HashTypePairs[0])
-	s.Require().Equal(fmt.Sprintf("%s,%s", storedWasm2.Hash, "WASM_TYPE_DATA_REQUEST_EXECUTOR"), res.HashTypePairs[1])
+	s.Require().Equal(storedWasm.Hash, res.List[0])
+	s.Require().Equal(storedWasm2.Hash, res.List[1])
 }

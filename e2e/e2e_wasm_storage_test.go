@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -15,10 +16,10 @@ import (
 )
 
 const (
-	drWasm      = "burner.wasm"
-	tallyWasm   = "reflect.wasm"
-	overlayWasm = "staking.wasm"
-	coreWasm    = "core_contract.wasm"
+	drWasm       = "burner.wasm"
+	tallyWasm    = "reflect.wasm"
+	executorWasm = "staking.wasm"
+	coreWasm     = "core_contract.wasm"
 )
 
 func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {
@@ -53,22 +54,21 @@ func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {
 
 		s.Require().Eventually(
 			func() bool {
+				// Query wasms individually.
 				drWasmRes, err := queryDataRequestWasm(s.endpoint, drHashStr)
 				s.Require().NoError(err)
 				s.Require().True(bytes.Equal(drHashBytes, drWasmRes.Wasm.Hash))
-
 				tallyWasmRes, err := queryDataRequestWasm(s.endpoint, tallyHashStr)
 				s.Require().NoError(err)
 				s.Require().True(bytes.Equal(tallyHashBytes, tallyWasmRes.Wasm.Hash))
 
-				wasms, err := queryDataRequestWasms(s.endpoint)
+				// Query wasms at once.
+				res, err := queryDataRequestWasms(s.endpoint)
 				s.Require().NoError(err)
-
-				if fmt.Sprintf("%s,%s", drHashStr, types.WasmTypeDataRequest.String()) == wasms.HashTypePairs[0] {
-					return fmt.Sprintf("%s,%s", tallyHashStr, types.WasmTypeDataRequest.String()) == wasms.HashTypePairs[1]
-				}
-				if fmt.Sprintf("%s,%s", tallyHashStr, types.WasmTypeDataRequest.String()) == wasms.HashTypePairs[0] {
-					return fmt.Sprintf("%s,%s", drHashStr, types.WasmTypeDataRequest.String()) == wasms.HashTypePairs[1]
+				if len(res.List) == 2 {
+					concat := strings.Join(res.List, "\n")
+					strings.Contains(concat, drHashStr)
+					strings.Contains(concat, tallyHashStr)
 				}
 				return false
 			},
@@ -111,7 +111,7 @@ func (s *IntegrationTestSuite) execWasmStorageStoreDataRequest(
 		command = append(command, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
-	s.T().Logf("storing data request Wasm %s on chain %s", wasmFilePath, c.id)
+	s.T().Logf("storing data request wasm %s on chain %s", wasmFilePath, c.id)
 
 	s.executeTx(ctx, c, command, valIdx, s.expectErrExecValidation(c, valIdx, expectErr))
 }

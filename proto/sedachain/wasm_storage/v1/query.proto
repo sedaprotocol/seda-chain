@@ -8,30 +8,30 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // DataRequestWasm returns Data Request Wasm given its hash.
+  // DataRequestWasm returns a data request wasm given its hash.
   rpc DataRequestWasm(QueryDataRequestWasmRequest)
       returns (QueryDataRequestWasmResponse) {
     option (google.api.http).get =
         "/seda-chain/wasm-storage/data_request_wasm/{hash}";
   }
 
-  // DataRequestWasms returns all Data Request Wasms.
+  // DataRequestWasms returns all data request wasms.
   rpc DataRequestWasms(QueryDataRequestWasmsRequest)
       returns (QueryDataRequestWasmsResponse) {
     option (google.api.http).get =
         "/seda-chain/wasm-storage/data_request_wasms";
   }
 
-  // OverlayWasm returns Overlay Wasm given its hash.
-  rpc OverlayWasm(QueryOverlayWasmRequest) returns (QueryOverlayWasmResponse) {
+  // ExecutorWasm returns an executor wasm given its hash.
+  rpc ExecutorWasm(QueryExecutorWasmRequest) returns (QueryExecutorWasmResponse) {
     option (google.api.http).get =
-        "/seda-chain/wasm-storage/overlay_wasm/{hash}";
+        "/seda-chain/wasm-storage/executor_wasm/{hash}";
   }
 
-  // OverlayWasms returns all Overlay Wasms.
-  rpc OverlayWasms(QueryOverlayWasmsRequest)
-      returns (QueryOverlayWasmsResponse) {
-    option (google.api.http).get = "/seda-chain/wasm-storage/overlay_wasms";
+  // ExecutorWasms returns all executor wasms.
+  rpc ExecutorWasms(QueryExecutorWasmsRequest)
+      returns (QueryExecutorWasmsResponse) {
+    option (google.api.http).get = "/seda-chain/wasm-storage/executor_wasms";
   }
 
   // CoreContractRegistry returns the Core Contract Registry address.
@@ -46,25 +46,25 @@ service Query {
 message QueryDataRequestWasmRequest { string hash = 1; }
 
 // The response message for QueryDataRequestWasm RPC.
-message QueryDataRequestWasmResponse { Wasm wasm = 1; }
+message QueryDataRequestWasmResponse { DataRequestWasm wasm = 1; }
 
 // The request message for QueryDataRequestWasms RPC.
 message QueryDataRequestWasmsRequest {}
 
 // The response message for QueryDataRequestWasms RPC.
-message QueryDataRequestWasmsResponse { repeated string hash_type_pairs = 1; }
+message QueryDataRequestWasmsResponse { repeated string list = 1; }
 
-// The request message for QueryOverlayWasm RPC.
-message QueryOverlayWasmRequest { string hash = 1; }
+// The request message for QueryExecutorWasm RPC.
+message QueryExecutorWasmRequest { string hash = 1; }
 
-// The response message for QueryOverlayWasm RPC.
-message QueryOverlayWasmResponse { Wasm wasm = 1; }
+// The response message for QueryExecutorWasm RPC.
+message QueryExecutorWasmResponse { ExecutorWasm wasm = 1; }
 
-// The request message for QueryOverlayWasms RPC.
-message QueryOverlayWasmsRequest {}
+// The request message for QueryExecutorWasms RPC.
+message QueryExecutorWasmsRequest {}
 
-// The response message for QueryOverlayWasms RPC.
-message QueryOverlayWasmsResponse { repeated string hash_type_pairs = 1; }
+// The response message for QueryExecutorWasms RPC.
+message QueryExecutorWasmsResponse { repeated string list = 1; }
 
 // The request message for QueryCoreContractRegistry RPC.
 message QueryCoreContractRegistryRequest {}

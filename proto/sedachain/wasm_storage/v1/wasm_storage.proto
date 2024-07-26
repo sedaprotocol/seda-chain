@@ -6,28 +6,23 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
-// A Wasm msg.
-message Wasm {
+// DataRequestWasm represents a wasm used for data requests.
+message DataRequestWasm {
   bytes hash = 1;
   bytes bytecode = 2;
-  WasmType wasm_type = 3;
-  google.protobuf.Timestamp added_at = 4
+  google.protobuf.Timestamp added_at = 3
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
   // ExpirationHeight represents the block height at which the data request
   // wasm will be pruned. The value of zero means no expiration.
-  int64 expiration_height = 5;
+  int64 expiration_height = 4;
 }
 
-// WasmType is an enum for the type of wasm.
-enum WasmType {
-  option (gogoproto.goproto_enum_prefix) = false;
-
-  // WASM_TYPE_DATA_REQUEST is for data request and tally wasms.
-  WASM_TYPE_DATA_REQUEST = 0
-      [ (gogoproto.enumvalue_customname) = "WasmTypeDataRequest" ];
-  // WASM_TYPE_DATA_REQUEST_EXECUTOR is for overlay executors.
-  WASM_TYPE_DATA_REQUEST_EXECUTOR = 1
-      [ (gogoproto.enumvalue_customname) = "WasmTypeDataRequestExecutor" ];
+// ExecutorWasm represents a wasm used for some execution in the protocol.
+message ExecutorWasm {
+  bytes hash = 1;
+  bytes bytecode = 2;
+  google.protobuf.Timestamp added_at = 3
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 
 // Params to define the max wasm size allowed.

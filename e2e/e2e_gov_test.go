@@ -21,7 +21,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-func (s *IntegrationTestSuite) testWasmStorageStoreOverlayWasm() {
+func (s *IntegrationTestSuite) testWasmStorageStoreExecutorWasm() {
 	proposalCounter++
 	proposalID := proposalCounter
 
@@ -29,39 +29,39 @@ func (s *IntegrationTestSuite) testWasmStorageStoreOverlayWasm() {
 	s.Require().NoError(err)
 	sender := senderAddress.String()
 
-	bytecode, err := os.ReadFile(filepath.Join(localWasmDirPath, overlayWasm))
+	bytecode, err := os.ReadFile(filepath.Join(localWasmDirPath, executorWasm))
 	if err != nil {
 		panic("failed to read data request Wasm file")
 	}
-	overlayHashBytes := crypto.Keccak256(bytecode)
-	if overlayHashBytes == nil {
+	executorHashBytes := crypto.Keccak256(bytecode)
+	if executorHashBytes == nil {
 		panic("failed to compute hash")
 	}
-	overlayHashStr := hex.EncodeToString(overlayHashBytes)
+	executorHashStr := hex.EncodeToString(executorHashBytes)
 
-	s.execWasmStorageStoreOverlay(s.chain, 0, overlayWasm, "clean_title", "sustainable_summary", "data-request-executor", sender, standardFees.String(), false, proposalID)
+	s.execWasmStorageStoreExecutor(s.chain, 0, executorWasm, "clean_title", "sustainable_summary", "data-request-executor", sender, standardFees.String(), false, proposalID)
 	s.execGovVoteYes(s.chain, 0, sender, standardFees.String(), false, proposalID)
 
 	s.Require().Eventually(
 		func() bool {
-			overlayWasmRes, err := queryOverlayWasm(s.endpoint, overlayHashStr)
+			executorWasmRes, err := queryExecutorWasm(s.endpoint, executorHashStr)
 			s.Require().NoError(err)
-			s.Require().True(bytes.Equal(overlayHashBytes, overlayWasmRes.Wasm.Hash))
+			s.Require().True(bytes.Equal(executorHashBytes, executorWasmRes.Wasm.Hash))
 
-			wasms, err := queryOverlayWasms(s.endpoint)
+			wasms, err := queryExecutorWasms(s.endpoint)
 			s.Require().NoError(err)
 
-			return fmt.Sprintf("%s,%s", overlayHashStr, types.WasmTypeDataRequestExecutor.String()) == wasms.HashTypePairs[0]
+			return executorHashStr == wasms.List[0]
 		},
 		30*time.Second,
 		5*time.Second,
 	)
 }
 
-func (s *IntegrationTestSuite) execWasmStorageStoreOverlay(
+func (s *IntegrationTestSuite) execWasmStorageStoreExecutor(
 	c *chain,
 	valIdx int,
-	overlayWasm,
+	executorWasm,
 	title,
 	summary,
 	wasmType,
@@ -83,14 +83,14 @@ func (s *IntegrationTestSuite) execWasmStorageStoreOverlay(
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	wasmFilePath := filepath.Join(containerWasmDirPath, overlayWasm)
+	wasmFilePath := filepath.Join(containerWasmDirPath, executorWasm)
 
 	command := []string{
 		binary,
 		txCommand,
 		types.ModuleName,
 		"submit-proposal",
-		"store-overlay-wasm",
+		"store-executor-wasm",
 		wasmFilePath,
 		"-y",
 	}
@@ -98,7 +98,7 @@ func (s *IntegrationTestSuite) execWasmStorageStoreOverlay(
 		command = append(command, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
-	s.T().Logf("proposing to store overlay Wasm %s on chain %s", wasmFilePath, c.id)
+	s.T().Logf("proposing to store executor wasm %s on chain %s", wasmFilePath, c.id)
 
 	s.executeTx(ctx, c, command, valIdx, s.expectErrExecValidation(c, valIdx, expectErr))
 

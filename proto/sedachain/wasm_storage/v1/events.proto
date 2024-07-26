@@ -1,8 +1,6 @@
 syntax = "proto3";
 package sedachain.wasm_storage.v1;
 
-import "sedachain/wasm_storage/v1/wasm_storage.proto";
-
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
 // The msg for storing a data request wasm.
@@ -11,8 +9,8 @@ message EventStoreDataRequestWasm {
   bytes bytecode = 2;
 }
 
-// The msg for storing a overlay wasm(i.e. relayer or executor)
-message EventStoreOverlayWasm {
+// The msg for storing an executor wasm.
+message EventStoreExecutorWasm {
   string hash = 1;
   bytes bytecode = 2;
 }

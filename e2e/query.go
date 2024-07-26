@@ -64,10 +64,10 @@ func queryDataRequestWasm(endpoint, drHash string) (wasmstoragetypes.QueryDataRe
 	return res, nil
 }
 
-func queryOverlayWasm(endpoint, hash string) (wasmstoragetypes.QueryOverlayWasmResponse, error) {
-	var res wasmstoragetypes.QueryOverlayWasmResponse
+func queryExecutorWasm(endpoint, hash string) (wasmstoragetypes.QueryExecutorWasmResponse, error) {
+	var res wasmstoragetypes.QueryExecutorWasmResponse
 
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/overlay_wasm/%s", endpoint, hash))
+	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/executor_wasm/%s", endpoint, hash))
 	if err != nil {
 		return res, err
 	}
@@ -92,10 +92,10 @@ func queryDataRequestWasms(endpoint string) (wasmstoragetypes.QueryDataRequestWa
 	return res, nil
 }
 
-func queryOverlayWasms(endpoint string) (wasmstoragetypes.QueryOverlayWasmsResponse, error) {
-	var res wasmstoragetypes.QueryOverlayWasmsResponse
+func queryExecutorWasms(endpoint string) (wasmstoragetypes.QueryExecutorWasmsResponse, error) {
+	var res wasmstoragetypes.QueryExecutorWasmsResponse
 
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/overlay_wasms", endpoint))
+	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/executor_wasms", endpoint))
 	if err != nil {
 		return res, err
 	}

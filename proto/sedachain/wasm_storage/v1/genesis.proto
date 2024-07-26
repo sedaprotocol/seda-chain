@@ -9,8 +9,8 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 // GenesisState defines the wasm module's genesis state(i.e wasms stored at
 // genesis.)
 message GenesisState {
-  // Params represents module specific parameters.
   Params params = 1 [ (gogoproto.nullable) = false ];
-  repeated Wasm wasms = 2 [ (gogoproto.nullable) = false ];
-  string core_contract_registry = 3;
+  repeated DataRequestWasm data_request_wasms = 2 [ (gogoproto.nullable) = false ];
+  repeated ExecutorWasm executor_wasms = 3 [ (gogoproto.nullable) = false ];
+  string core_contract_registry = 4;
 }

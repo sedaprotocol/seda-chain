@@ -23,9 +23,9 @@ func GetQueryCmd(_ string) *cobra.Command {
 
 	cmd.AddCommand(
 		GetCmdQueryDataRequestWasm(),
-		GetCmdQueryOverlayWasm(),
+		GetCmdQueryExecutorWasm(),
 		GetCmdQueryDataRequestWasms(),
-		GetCmdQueryOverlayWasms(),
+		GetCmdQueryExecutorWasms(),
 		GetCmdQueryCoreContractRegistry(),
 	)
 	return cmd
@@ -59,11 +59,11 @@ func GetCmdQueryDataRequestWasm() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryOverlayWasm returns the command for querying Overlay Wasm.
-func GetCmdQueryOverlayWasm() *cobra.Command {
+// GetCmdQueryExecutorWasm returns the command for querying an executor Wasm.
+func GetCmdQueryExecutorWasm() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "overlay-wasm <hash>",
-		Short: "Get Overlay Wasm given its hash",
+		Use:   "executor-wasm <hash>",
+		Short: "Get an executor wasm given its hash",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -72,10 +72,10 @@ func GetCmdQueryOverlayWasm() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryOverlayWasmRequest{
+			req := &types.QueryExecutorWasmRequest{
 				Hash: args[0],
 			}
-			res, err := queryClient.OverlayWasm(cmd.Context(), req)
+			res, err := queryClient.ExecutorWasm(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
@@ -113,12 +113,12 @@ func GetCmdQueryDataRequestWasms() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryOverlayWasms returns the command for querying
-// hashes and types of all Overlay Wasms.
-func GetCmdQueryOverlayWasms() *cobra.Command {
+// GetCmdQueryExecutorWasms returns the command for querying all
+// executor wasms.
+func GetCmdQueryExecutorWasms() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list-overlay-wasms",
-		Short: "List hashes and types of all Overlay Wasms",
+		Use:   "list-executor-wasms",
+		Short: "List hashes of all executor wasms",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -127,7 +127,7 @@ func GetCmdQueryOverlayWasms() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.OverlayWasms(cmd.Context(), &types.QueryOverlayWasmsRequest{})
+			res, err := queryClient.ExecutorWasms(cmd.Context(), &types.QueryExecutorWasmsRequest{})
 			if err != nil {
 				return err
 			}
