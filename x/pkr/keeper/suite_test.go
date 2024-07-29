@@ -58,7 +58,6 @@ func setupKeeper(t *testing.T) (*keeper.Keeper, moduletestutil.TestEncodingConfi
 	pkrtypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 
 	pkrKeeper := keeper.NewKeeper(encCfg.Codec, runtime.NewKVStoreService(key))
-	pkrKeeper.Modules = []string{"pkr"} // TODO: Stinks!!
 
 	return pkrKeeper, encCfg, testCtx.Ctx
 }

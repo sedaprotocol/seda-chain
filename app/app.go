@@ -631,7 +631,11 @@ func NewApp(
 
 	app.TallyKeeper = tallykeeper.NewKeeper(app.WasmStorageKeeper, contractKeeper, app.WasmKeeper)
 
-	app.PkrKeeper = *pkrkeeper.NewKeeper(appCodec, runtime.NewKVStoreService(keys[pkrtypes.StoreKey]))
+	app.PkrKeeper = *pkrkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[pkrtypes.StoreKey]),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+	)
 
 	/* =================================================== */
 	/*                  TRANSFER STACK                     */
@@ -946,7 +950,6 @@ func NewApp(
 	app.ScopedWasmKeeper = scopedWasmKeeper
 	app.ScopedICAHostKeeper = scopedICAHostKeeper
 	app.ScopedICAControllerKeeper = scopedICAControllerKeeper
-	app.PkrKeeper.Modules = app.mm.ModuleNames() // TODO: Figure out if we can assign this in constructor.
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
