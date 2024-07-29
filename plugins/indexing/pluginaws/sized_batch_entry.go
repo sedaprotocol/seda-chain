@@ -70,7 +70,6 @@ func (sc *SqsClient) createSizedBatchEntries(data []*types.Message) ([]*sizedBat
 
 		sizedEntry, err := newSizedBatchEntry(&sqs.SendMessageBatchRequestEntry{
 			Id:                aws.String(fmt.Sprintf("%s-%d", message.Type, i)),
-			MessageGroupId:    aws.String("chain_events"),
 			MessageAttributes: attributes,
 			MessageBody:       aws.String(string(serialisedMessage)),
 		})

@@ -122,7 +122,7 @@ To simplify local development we use [a SQS emulator](https://github.com/Admiral
 
 ```sh
 # Example urls
-export SQS_QUEUE_URL=http://localhost/4100/test-queue.fifo
+export SQS_QUEUE_URL=http://localhost/4100/test-queue
 export SQS_ENDPOINT=http://localhost:4100
 export S3_LARGE_MSG_BUCKET_NAME="indexer-localnet-large-messages"
 export S3_ENDPOINT=http://localhost:9444
