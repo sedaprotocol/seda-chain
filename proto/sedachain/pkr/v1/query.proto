@@ -3,24 +3,25 @@ package sedachain.pkr.v1;
 
 import "google/protobuf/any.proto";
 import "google/api/annotations.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/pkr/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // KeysByApplication returns application specific vrf publick keys.
-  rpc KeysByApplication(KeysByApplicationRequest)
-      returns (KeysByApplicationResponse) {
-    option (google.api.http).get = "/seda-chain/wasm-storage/pkr/keys_by_application";
+  // ValidatorKeys returns a given validator's registered keys.
+  rpc ValidatorKeys(QueryValidatorKeysRequest)
+      returns (QueryValidatorKeysResponse) {
+    option (google.api.http).get = "/seda-chain/pkr/validator_keys";
   }
 }
 
-// KeysByApplicationRequest ...
-message KeysByApplicationRequest {
-  string application = 1;
+// QueryValidatorKeysRequest is request type for the Query/ValidatorKeys RPC method.
+message QueryValidatorKeysRequest {
+  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
 }
 
-// KeysByApplicationResponse ...
-message KeysByApplicationResponse {
-  repeated google.protobuf.Any keys = 1;
+// QueryValidatorKeysResponse is response type for the Query/ValidatorKeys RPC method.
+message QueryValidatorKeysResponse {
+  repeated string index_pubkey_pairs = 1;
 }

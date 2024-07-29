@@ -7,4 +7,4 @@ const (
 	StoreKey
 )
 
-var VRFKeyPrefix = collections.NewPrefix(1)
+var PubKeysPrefix = collections.NewPrefix(0)

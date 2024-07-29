@@ -30,26 +30,25 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgAddVRFKey defines a SDK message for creating a new vrf key.
-type MsgAddVRFKey struct {
-	Sender      string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
-	Name        string     `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Application string     `protobuf:"bytes,3,opt,name=application,proto3" json:"application,omitempty"`
-	Pubkey      *types.Any `protobuf:"bytes,4,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
+// MsgAddKey defines a message for registering a new public key.
+type MsgAddKey struct {
+	ValidatorAddress string     `protobuf:"bytes,1,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
+	Index            uint32     `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
+	Pubkey           *types.Any `protobuf:"bytes,3,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
 }
 
-func (m *MsgAddVRFKey) Reset()         { *m = MsgAddVRFKey{} }
-func (m *MsgAddVRFKey) String() string { return proto.CompactTextString(m) }
-func (*MsgAddVRFKey) ProtoMessage()    {}
-func (*MsgAddVRFKey) Descriptor() ([]byte, []int) {
+func (m *MsgAddKey) Reset()         { *m = MsgAddKey{} }
+func (m *MsgAddKey) String() string { return proto.CompactTextString(m) }
+func (*MsgAddKey) ProtoMessage()    {}
+func (*MsgAddKey) Descriptor() ([]byte, []int) {
 	return fileDescriptor_39f67da0296e516c, []int{0}
 }
-func (m *MsgAddVRFKey) XXX_Unmarshal(b []byte) error {
+func (m *MsgAddKey) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgAddVRFKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgAddKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgAddVRFKey.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgAddKey.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -59,62 +58,55 @@ func (m *MsgAddVRFKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *MsgAddVRFKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgAddVRFKey.Merge(m, src)
+func (m *MsgAddKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddKey.Merge(m, src)
 }
-func (m *MsgAddVRFKey) XXX_Size() int {
+func (m *MsgAddKey) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgAddVRFKey) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgAddVRFKey.DiscardUnknown(m)
+func (m *MsgAddKey) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddKey.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgAddVRFKey proto.InternalMessageInfo
+var xxx_messageInfo_MsgAddKey proto.InternalMessageInfo
 
-func (m *MsgAddVRFKey) GetSender() string {
+func (m *MsgAddKey) GetValidatorAddress() string {
 	if m != nil {
-		return m.Sender
+		return m.ValidatorAddress
 	}
 	return ""
 }
 
-func (m *MsgAddVRFKey) GetName() string {
+func (m *MsgAddKey) GetIndex() uint32 {
 	if m != nil {
-		return m.Name
+		return m.Index
 	}
-	return ""
+	return 0
 }
 
-func (m *MsgAddVRFKey) GetApplication() string {
-	if m != nil {
-		return m.Application
-	}
-	return ""
-}
-
-func (m *MsgAddVRFKey) GetPubkey() *types.Any {
+func (m *MsgAddKey) GetPubkey() *types.Any {
 	if m != nil {
 		return m.Pubkey
 	}
 	return nil
 }
 
-// MsgAddVrfKeyResponse defines the Msg/CreateValidator response type.
-type MsgAddVrfKeyResponse struct {
+// MsgAddKeyResponse defines the Msg/MsgAddKey response type.
+type MsgAddKeyResponse struct {
 }
 
-func (m *MsgAddVrfKeyResponse) Reset()         { *m = MsgAddVrfKeyResponse{} }
-func (m *MsgAddVrfKeyResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgAddVrfKeyResponse) ProtoMessage()    {}
-func (*MsgAddVrfKeyResponse) Descriptor() ([]byte, []int) {
+func (m *MsgAddKeyResponse) Reset()         { *m = MsgAddKeyResponse{} }
+func (m *MsgAddKeyResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgAddKeyResponse) ProtoMessage()    {}
+func (*MsgAddKeyResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_39f67da0296e516c, []int{1}
 }
-func (m *MsgAddVrfKeyResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgAddKeyResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgAddVrfKeyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgAddKeyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgAddVrfKeyResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgAddKeyResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -124,51 +116,51 @@ func (m *MsgAddVrfKeyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (m *MsgAddVrfKeyResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgAddVrfKeyResponse.Merge(m, src)
+func (m *MsgAddKeyResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddKeyResponse.Merge(m, src)
 }
-func (m *MsgAddVrfKeyResponse) XXX_Size() int {
+func (m *MsgAddKeyResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgAddVrfKeyResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgAddVrfKeyResponse.DiscardUnknown(m)
+func (m *MsgAddKeyResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddKeyResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgAddVrfKeyResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgAddKeyResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgAddVRFKey)(nil), "sedachain.pkr.v1.MsgAddVRFKey")
-	proto.RegisterType((*MsgAddVrfKeyResponse)(nil), "sedachain.pkr.v1.MsgAddVrfKeyResponse")
+	proto.RegisterType((*MsgAddKey)(nil), "sedachain.pkr.v1.MsgAddKey")
+	proto.RegisterType((*MsgAddKeyResponse)(nil), "sedachain.pkr.v1.MsgAddKeyResponse")
 }
 
 func init() { proto.RegisterFile("sedachain/pkr/v1/tx.proto", fileDescriptor_39f67da0296e516c) }
 
 var fileDescriptor_39f67da0296e516c = []byte{
-	// 378 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x91, 0x4f, 0x8b, 0x1a, 0x31,
-	0x18, 0xc6, 0x4d, 0xb5, 0x82, 0xb1, 0x87, 0x12, 0xa4, 0x1d, 0xe7, 0x30, 0x88, 0x87, 0x22, 0x82,
-	0x49, 0xb5, 0xb7, 0xde, 0xf4, 0x20, 0x05, 0x11, 0xca, 0x08, 0x3d, 0xf4, 0x52, 0xe6, 0x4f, 0x8c,
-	0x83, 0x4e, 0x12, 0x92, 0x19, 0x71, 0x6e, 0xa5, 0x9f, 0xa0, 0x1f, 0xc5, 0x43, 0x3f, 0x44, 0x69,
-	0x2f, 0xb2, 0xa7, 0x3d, 0x2e, 0x7a, 0xf0, 0x6b, 0x2c, 0x93, 0x99, 0x75, 0xdd, 0x85, 0xbd, 0xcd,
-	0x33, 0xbf, 0x27, 0x4f, 0xf2, 0xbc, 0x2f, 0x6c, 0x6b, 0x1a, 0x7a, 0xc1, 0xca, 0x8b, 0x38, 0x91,
-	0x6b, 0x45, 0xb6, 0x43, 0x92, 0xec, 0xb0, 0x54, 0x22, 0x11, 0xe8, 0xed, 0x05, 0x61, 0xb9, 0x56,
-	0x78, 0x3b, 0xb4, 0xdb, 0x4c, 0x08, 0xb6, 0xa1, 0xc4, 0x70, 0x3f, 0x5d, 0x12, 0x8f, 0x67, 0x85,
-	0xd9, 0x6e, 0x07, 0x42, 0xc7, 0x42, 0xff, 0x30, 0x8a, 0x14, 0xa2, 0x44, 0xef, 0x0b, 0x45, 0x62,
-	0xcd, 0xf2, 0xfc, 0x58, 0xb3, 0x02, 0x74, 0xff, 0x03, 0xf8, 0x66, 0xae, 0xd9, 0x38, 0x0c, 0xbf,
-	0xb9, 0xd3, 0x19, 0xcd, 0xd0, 0x47, 0x58, 0xd7, 0x94, 0x87, 0x54, 0x59, 0xa0, 0x03, 0x7a, 0x8d,
-	0x89, 0x75, 0xf3, 0x67, 0xd0, 0x2a, 0xb3, 0xc6, 0x61, 0xa8, 0xa8, 0xd6, 0x8b, 0x44, 0x45, 0x9c,
-	0xb9, 0xa5, 0x0f, 0x21, 0x58, 0xe3, 0x5e, 0x4c, 0xad, 0x57, 0xb9, 0xdf, 0x35, 0xdf, 0xa8, 0x03,
-	0x9b, 0x9e, 0x94, 0x9b, 0x28, 0xf0, 0x92, 0x48, 0x70, 0xab, 0x6a, 0xd0, 0xf5, 0x2f, 0x34, 0x85,
-	0x75, 0x99, 0xfa, 0x6b, 0x9a, 0x59, 0xb5, 0x0e, 0xe8, 0x35, 0x47, 0x2d, 0x5c, 0x14, 0xc3, 0x0f,
-	0xc5, 0xf0, 0x98, 0x67, 0x13, 0xeb, 0xdf, 0xe3, 0xed, 0x81, 0xca, 0x64, 0x22, 0xf0, 0xd7, 0xd4,
-	0x9f, 0xd1, 0xcc, 0x2d, 0x4f, 0x7f, 0x6e, 0xfe, 0x3a, 0xef, 0xfb, 0xe5, 0x53, 0xba, 0xef, 0x60,
-	0xab, 0x2c, 0xa3, 0x96, 0xb9, 0x89, 0x6a, 0x29, 0xb8, 0xa6, 0x23, 0x0f, 0x56, 0xe7, 0x9a, 0xa1,
-	0x05, 0x6c, 0x5c, 0x18, 0x72, 0xf0, 0xf3, 0xd9, 0xe2, 0xeb, 0x41, 0xd8, 0x1f, 0x5e, 0xe4, 0x4f,
-	0xb2, 0xed, 0xd7, 0x3f, 0xcf, 0xfb, 0x3e, 0x98, 0x7c, 0xf9, 0x7b, 0x74, 0xc0, 0xe1, 0xe8, 0x80,
-	0xbb, 0xa3, 0x03, 0x7e, 0x9f, 0x9c, 0xca, 0xe1, 0xe4, 0x54, 0x6e, 0x4f, 0x4e, 0xe5, 0x3b, 0x66,
-	0x51, 0xb2, 0x4a, 0x7d, 0x1c, 0x88, 0x98, 0xe4, 0x91, 0xa6, 0x60, 0x20, 0x36, 0x46, 0x0c, 0x8a,
-	0xbd, 0xef, 0xcc, 0xe6, 0x93, 0x4c, 0x52, 0xed, 0xd7, 0x8d, 0xe1, 0xd3, 0x7d, 0x00, 0x00, 0x00,
-	0xff, 0xff, 0xef, 0xd8, 0xac, 0x6b, 0x17, 0x02, 0x00, 0x00,
+	// 369 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x91, 0x4f, 0x4b, 0x02, 0x41,
+	0x18, 0xc6, 0x9d, 0x44, 0xc1, 0x89, 0x40, 0x37, 0xa9, 0x75, 0xa3, 0xc5, 0xec, 0x22, 0x82, 0x33,
+	0x68, 0xb7, 0x6e, 0x7a, 0x88, 0x48, 0x8c, 0xd8, 0x20, 0xa2, 0x8b, 0xec, 0x9f, 0x69, 0x5c, 0x74,
+	0x77, 0x96, 0x9d, 0xdd, 0xc5, 0xbd, 0x45, 0x9f, 0xa0, 0x8f, 0xe2, 0xc1, 0x0f, 0x11, 0x9d, 0xac,
+	0x53, 0xc7, 0xd0, 0x83, 0x5f, 0x23, 0xdc, 0x59, 0x3d, 0x18, 0x74, 0x7c, 0xe6, 0x79, 0xde, 0x67,
+	0xe6, 0x37, 0x2f, 0xac, 0x70, 0x62, 0xe9, 0xe6, 0x50, 0xb7, 0x5d, 0xec, 0x8d, 0x7c, 0x1c, 0xb5,
+	0x70, 0x30, 0x41, 0x9e, 0xcf, 0x02, 0x26, 0x15, 0xb7, 0x16, 0xf2, 0x46, 0x3e, 0x8a, 0x5a, 0x4a,
+	0x85, 0x32, 0x46, 0xc7, 0x04, 0x27, 0xbe, 0x11, 0x3e, 0x63, 0xdd, 0x8d, 0x45, 0x58, 0xa9, 0x98,
+	0x8c, 0x3b, 0x8c, 0x0f, 0x12, 0x85, 0x85, 0x48, 0xad, 0x63, 0xa1, 0xb0, 0xc3, 0xe9, 0xba, 0xdf,
+	0xe1, 0x54, 0x18, 0xb5, 0x4f, 0x00, 0x0b, 0x7d, 0x4e, 0x3b, 0x96, 0xd5, 0x23, 0xb1, 0x74, 0x0b,
+	0x4b, 0x91, 0x3e, 0xb6, 0x2d, 0x3d, 0x60, 0xfe, 0x40, 0xb7, 0x2c, 0x9f, 0x70, 0x2e, 0x83, 0x2a,
+	0xa8, 0x17, 0xba, 0x67, 0x5f, 0xb3, 0xe6, 0x69, 0xda, 0xf9, 0xb0, 0xc9, 0x74, 0x44, 0xe4, 0x3e,
+	0xf0, 0x6d, 0x97, 0x6a, 0xc5, 0x68, 0xe7, 0x5c, 0x2a, 0xc3, 0x9c, 0xed, 0x5a, 0x64, 0x22, 0xef,
+	0x55, 0x41, 0xfd, 0x40, 0x13, 0x42, 0xba, 0x82, 0x79, 0x2f, 0x34, 0x46, 0x24, 0x96, 0xb3, 0x55,
+	0x50, 0xdf, 0x6f, 0x97, 0x91, 0x60, 0x42, 0x1b, 0x26, 0xd4, 0x71, 0xe3, 0xae, 0xfc, 0x31, 0x6b,
+	0x96, 0xd3, 0x0b, 0x4d, 0x3f, 0xf6, 0x02, 0x86, 0xee, 0x42, 0xa3, 0x47, 0x62, 0x2d, 0x9d, 0xbe,
+	0x3c, 0x7a, 0x5d, 0x4d, 0x1b, 0x7f, 0x1f, 0x5c, 0x3b, 0x84, 0xa5, 0x2d, 0x92, 0x46, 0xb8, 0xc7,
+	0x5c, 0x4e, 0xda, 0x8f, 0x30, 0xdb, 0xe7, 0x54, 0xba, 0x81, 0xf9, 0x94, 0xf5, 0x04, 0xed, 0xfe,
+	0x2d, 0xda, 0x4e, 0x29, 0xe7, 0xff, 0x98, 0x9b, 0x4a, 0x25, 0xf7, 0xb2, 0x9a, 0x36, 0x40, 0xf7,
+	0xfa, 0x7d, 0xa1, 0x82, 0xf9, 0x42, 0x05, 0x3f, 0x0b, 0x15, 0xbc, 0x2d, 0xd5, 0xcc, 0x7c, 0xa9,
+	0x66, 0xbe, 0x97, 0x6a, 0xe6, 0x09, 0x51, 0x3b, 0x18, 0x86, 0x06, 0x32, 0x99, 0x83, 0xd7, 0x7d,
+	0x09, 0x9f, 0xc9, 0xc6, 0x89, 0x68, 0x8a, 0x8d, 0x4f, 0x92, 0x9d, 0x07, 0xb1, 0x47, 0xb8, 0x91,
+	0x4f, 0x02, 0x17, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x59, 0x5e, 0x2e, 0xd5, 0x11, 0x02, 0x00,
+	0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -183,8 +175,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// AddVrfKey defines a method for creating a new vrf-key.
-	AddVrfKey(ctx context.Context, in *MsgAddVRFKey, opts ...grpc.CallOption) (*MsgAddVrfKeyResponse, error)
+	// AddKey defines a method for registering a new public key.
+	AddKey(ctx context.Context, in *MsgAddKey, opts ...grpc.CallOption) (*MsgAddKeyResponse, error)
 }
 
 type msgClient struct {
@@ -195,9 +187,9 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) AddVrfKey(ctx context.Context, in *MsgAddVRFKey, opts ...grpc.CallOption) (*MsgAddVrfKeyResponse, error) {
-	out := new(MsgAddVrfKeyResponse)
-	err := c.cc.Invoke(ctx, "/sedachain.pkr.v1.Msg/AddVrfKey", in, out, opts...)
+func (c *msgClient) AddKey(ctx context.Context, in *MsgAddKey, opts ...grpc.CallOption) (*MsgAddKeyResponse, error) {
+	out := new(MsgAddKeyResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.pkr.v1.Msg/AddKey", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -206,36 +198,36 @@ func (c *msgClient) AddVrfKey(ctx context.Context, in *MsgAddVRFKey, opts ...grp
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// AddVrfKey defines a method for creating a new vrf-key.
-	AddVrfKey(context.Context, *MsgAddVRFKey) (*MsgAddVrfKeyResponse, error)
+	// AddKey defines a method for registering a new public key.
+	AddKey(context.Context, *MsgAddKey) (*MsgAddKeyResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) AddVrfKey(ctx context.Context, req *MsgAddVRFKey) (*MsgAddVrfKeyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddVrfKey not implemented")
+func (*UnimplementedMsgServer) AddKey(ctx context.Context, req *MsgAddKey) (*MsgAddKeyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddKey not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
 }
 
-func _Msg_AddVrfKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgAddVRFKey)
+func _Msg_AddKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddKey)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).AddVrfKey(ctx, in)
+		return srv.(MsgServer).AddKey(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/sedachain.pkr.v1.Msg/AddVrfKey",
+		FullMethod: "/sedachain.pkr.v1.Msg/AddKey",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).AddVrfKey(ctx, req.(*MsgAddVRFKey))
+		return srv.(MsgServer).AddKey(ctx, req.(*MsgAddKey))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -245,15 +237,15 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AddVrfKey",
-			Handler:    _Msg_AddVrfKey_Handler,
+			MethodName: "AddKey",
+			Handler:    _Msg_AddKey_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "sedachain/pkr/v1/tx.proto",
 }
 
-func (m *MsgAddVRFKey) Marshal() (dAtA []byte, err error) {
+func (m *MsgAddKey) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -263,12 +255,12 @@ func (m *MsgAddVRFKey) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgAddVRFKey) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgAddKey) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgAddVRFKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgAddKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -283,33 +275,24 @@ func (m *MsgAddVRFKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			i = encodeVarintTx(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.Application) > 0 {
-		i -= len(m.Application)
-		copy(dAtA[i:], m.Application)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Application)))
-		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Name)))
+	if m.Index != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.Index))
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x10
 	}
-	if len(m.Sender) > 0 {
-		i -= len(m.Sender)
-		copy(dAtA[i:], m.Sender)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+	if len(m.ValidatorAddress) > 0 {
+		i -= len(m.ValidatorAddress)
+		copy(dAtA[i:], m.ValidatorAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ValidatorAddress)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgAddVrfKeyResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgAddKeyResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -319,12 +302,12 @@ func (m *MsgAddVrfKeyResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgAddVrfKeyResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgAddKeyResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgAddVrfKeyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgAddKeyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -343,23 +326,18 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgAddVRFKey) Size() (n int) {
+func (m *MsgAddKey) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Sender)
+	l = len(m.ValidatorAddress)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.Application)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
+	if m.Index != 0 {
+		n += 1 + sovTx(uint64(m.Index))
 	}
 	if m.Pubkey != nil {
 		l = m.Pubkey.Size()
@@ -368,7 +346,7 @@ func (m *MsgAddVRFKey) Size() (n int) {
 	return n
 }
 
-func (m *MsgAddVrfKeyResponse) Size() (n int) {
+func (m *MsgAddKeyResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -383,7 +361,7 @@ func sovTx(x uint64) (n int) {
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *MsgAddVRFKey) Unmarshal(dAtA []byte) error {
+func (m *MsgAddKey) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -406,15 +384,15 @@ func (m *MsgAddVRFKey) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgAddVRFKey: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgAddKey: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgAddVRFKey: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgAddKey: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorAddress", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -442,13 +420,13 @@ func (m *MsgAddVRFKey) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Sender = string(dAtA[iNdEx:postIndex])
+			m.ValidatorAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Index", wireType)
 			}
-			var stringLen uint64
+			m.Index = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTx
@@ -458,57 +436,12 @@ func (m *MsgAddVRFKey) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				m.Index |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Application", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Application = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Pubkey", wireType)
 			}
@@ -565,7 +498,7 @@ func (m *MsgAddVRFKey) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgAddVrfKeyResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgAddKeyResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -588,10 +521,10 @@ func (m *MsgAddVrfKeyResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgAddVrfKeyResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgAddKeyResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgAddVrfKeyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgAddKeyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

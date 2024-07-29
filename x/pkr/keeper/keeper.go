@@ -2,30 +2,36 @@ package keeper
 
 import (
 	"cosmossdk.io/collections"
+	"cosmossdk.io/core/address"
 	storetypes "cosmossdk.io/core/store"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
 )
 
 type Keeper struct {
-	Modules []string
+	validatorAddressCodec address.Codec
 
-	Schema     collections.Schema
-	PublicKeys collections.Map[collections.Pair[string, string], cryptotypes.PubKey]
+	Schema  collections.Schema
+	PubKeys collections.Map[collections.Pair[[]byte, uint32], cryptotypes.PubKey]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService) *Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, validatorAddressCodec address.Codec) *Keeper {
+	if validatorAddressCodec == nil {
+		panic("validator address codec is nil")
+	}
+
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
-		PublicKeys: collections.NewMap(sb, types.VRFKeyPrefix, "vrf_key", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollInterfaceValue[cryptotypes.PubKey](cdc)),
+		validatorAddressCodec: validatorAddressCodec,
+		PubKeys:               collections.NewMap(sb, types.PubKeysPrefix, "pubkeys", collections.PairKeyCodec(collections.BytesKey, collections.Uint32Key), codec.CollInterfaceValue[cryptotypes.PubKey](cdc)),
 	}
 
 	schema, err := sb.Build()
 	if err != nil {
 		panic(err)
 	}
-
 	k.Schema = schema
 	return &k
 }

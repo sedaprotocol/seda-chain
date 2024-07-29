@@ -2,34 +2,29 @@ syntax = "proto3";
 package sedachain.pkr.v1;
 
 import "google/protobuf/any.proto";
-//import "gogoproto/gogo.proto";
 
 import "cosmos_proto/cosmos.proto";
 import "cosmos/msg/v1/msg.proto";
-//import "cosmos/base/v1beta1/coin.proto";
-//import "cosmos/staking/v1beta1/staking.proto";
-//import "amino/amino.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/pkr/types";
 
-// Msg defines the staking Msg service.
+// Msg defines the pkr Msg service.
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
-  // AddVrfKey defines a method for creating a new vrf-key.
-  rpc AddVrfKey(MsgAddVRFKey)
-      returns (MsgAddVrfKeyResponse);
+  // AddKey defines a method for registering a new public key.
+  rpc AddKey(MsgAddKey)
+      returns (MsgAddKeyResponse);
 }
 
-// MsgAddVRFKey defines a SDK message for creating a new vrf key.
-message MsgAddVRFKey {
-  option (cosmos.msg.v1.signer) = "sender";
+// MsgAddKey defines a message for registering a new public key.
+message MsgAddKey {
+  option (cosmos.msg.v1.signer) = "validator_address";
 
-  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  string name = 2;
-  string application = 3;
-  google.protobuf.Any pubkey = 4 [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
+  string validator_address = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  uint32 index = 2;
+  google.protobuf.Any pubkey = 3 [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
 }
 
-// MsgAddVrfKeyResponse defines the Msg/CreateValidator response type.
-message MsgAddVrfKeyResponse {}
+// MsgAddKeyResponse defines the Msg/MsgAddKey response type.
+message MsgAddKeyResponse {}

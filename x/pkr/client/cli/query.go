@@ -3,11 +3,12 @@ package cli
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
-	"github.com/spf13/cobra"
 )
 
 // GetQueryCmd returns the CLI query commands for this module
@@ -20,16 +21,17 @@ func GetQueryCmd(_ string) *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		GetCmdApplicationKeys(),
+		GetCmdValidatorKeys(),
 	)
 	return cmd
 }
 
-// GetCmdApplicationKeys returns the command for querying Application specific VRF keys.
-func GetCmdApplicationKeys() *cobra.Command {
+// GetCmdValidatorKeys returns the command for querying a given
+// validator's public keys.
+func GetCmdValidatorKeys() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get <application>",
-		Short: "Get application/module specific VRF keys.",
+		Use:   "validator-keys <validator_address>",
+		Short: "Query a given validator's registered public keys",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -38,10 +40,10 @@ func GetCmdApplicationKeys() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.KeysByApplicationRequest{
-				Application: args[0],
+			req := &types.QueryValidatorKeysRequest{
+				ValidatorAddr: args[0],
 			}
-			res, err := queryClient.KeysByApplication(cmd.Context(), req)
+			res, err := queryClient.ValidatorKeys(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
