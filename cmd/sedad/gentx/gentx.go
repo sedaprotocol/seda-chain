@@ -93,7 +93,7 @@ $ %s gentx my-key-name 1000000seda --home=/path/to/home/dir --keyring-backend=os
 			if err != nil {
 				return errors.Wrap(err, "failed to initialize node validator files")
 			}
-			vrfPubKey, err := utils.InitializeVRFKey(serverCtx.Config, utils.VRFKeyFileName)
+			vrfPubKey, err := utils.InitializeVRFKey(serverCtx.Config, "", "") // TODO (#314)
 			if err != nil {
 				return errors.Wrap(err, "failed to initialize VRF key")
 			}

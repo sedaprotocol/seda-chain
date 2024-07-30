@@ -5,49 +5,37 @@ import (
 	"path/filepath"
 
 	"cosmossdk.io/collections"
+	gomock "go.uber.org/mock/gomock"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
 )
 
-func (s *KeeperTestSuite) Test_msgServer_AddVrfKey() {
+func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 	tests := []struct {
 		name    string
-		msg     *types.MsgAddVRFKey
-		want    *types.MsgAddVrfKeyResponse
+		msg     *types.MsgAddKey
+		want    *types.MsgAddKeyResponse
 		wantErr error
 	}{
 		{
 			name: "Happy Path",
-			msg: &types.MsgAddVRFKey{
-				Name:        "valid_name",
-				Application: "pkr",
+			msg: &types.MsgAddKey{
+				ValidatorAddress: "sedavaloper10hpwdkc76wgqm5lg4my6vz33kps0jr05u9uxga",
+				Index:            0,
 				Pubkey: func() *codectypes.Any {
-					pk, err := utils.InitializeVRFKey(s.serverCtx.Config, "valid_name")
+					pk, err := utils.InitializeVRFKey(s.serverCtx.Config, "", "")
 					s.Require().NoError(err)
 					pkAny, err := codectypes.NewAnyWithValue(pk)
 					s.Require().NoError(err)
 					return pkAny
 				}(),
 			},
-			want:    &types.MsgAddVrfKeyResponse{},
+			want:    &types.MsgAddKeyResponse{},
 			wantErr: nil,
-		},
-		{
-			name: "Validation Failed - Invalid Name",
-			msg: &types.MsgAddVRFKey{
-				Name:        "XX",
-				Application: "pkr",
-				Pubkey: func() *codectypes.Any {
-					pk, err := utils.InitializeVRFKey(s.serverCtx.Config, "valid_name")
-					s.Require().NoError(err)
-					pkAny, err := codectypes.NewAnyWithValue(pk)
-					s.Require().NoError(err)
-					return pkAny
-				}(),
-			},
-			want:    nil,
-			wantErr: types.ErrInvalidInput,
 		},
 	}
 	for _, tt := range tests {
@@ -57,7 +45,11 @@ func (s *KeeperTestSuite) Test_msgServer_AddVrfKey() {
 				path = filepath.Dir(path)
 				s.Require().NoError(os.RemoveAll(path))
 			})
-			got, err := s.msgSrvr.AddVrfKey(s.ctx, tt.msg)
+
+			// Validator must exist.
+			s.mockStakingKeeper.EXPECT().GetValidator(gomock.Any(), gomock.Any()).Return(stakingtypes.Validator{}, nil)
+
+			got, err := s.msgSrvr.AddKey(s.ctx, tt.msg)
 			if tt.wantErr != nil {
 				s.Require().ErrorIs(err, tt.wantErr)
 				s.Require().Nil(got)
@@ -66,7 +58,10 @@ func (s *KeeperTestSuite) Test_msgServer_AddVrfKey() {
 			s.Require().NoError(err)
 			s.Require().NotNil(got)
 
-			pkActual, err := s.keeper.PublicKeys.Get(s.ctx, collections.Join(tt.msg.Application, tt.msg.Name))
+			valAddr, err := s.valCdc.StringToBytes(tt.msg.ValidatorAddress)
+			s.Require().NoError(err)
+
+			pkActual, err := s.keeper.PubKeys.Get(s.ctx, collections.Join(valAddr, tt.msg.Index))
 			pkExpected, err := tt.msg.PublicKey()
 			s.Require().NoError(err)
 
