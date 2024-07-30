@@ -12,6 +12,7 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -201,19 +202,14 @@ func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
 	return vrfKey, nil
 }
 
-// InitializeVRFKey initializes a VRF key and returns its public key.
-// If vrfKeyFile is specified, it loads the VRF key file at the specified
+// LoadOrGenVRFKey initializes a VRF key and returns its public key.
+// If keyFilePath is specified, it loads the VRF key file at the specified
 // path. Otherwise, it generates a new VRF key, whose entropy is randomly
-// generated or obtained from the mneomic, if provided.
-func InitializeVRFKey(config *cfg.Config, vrfKeyFile, mnemonic string) (vrfPubKey sdkcrypto.PubKey, err error) {
-	pvKeyFile := config.PrivValidatorKeyFile()
-	if err := os.MkdirAll(filepath.Dir(pvKeyFile), 0o700); err != nil {
-		return nil, fmt.Errorf("could not create directory %q: %w", filepath.Dir(pvKeyFile), err)
-	}
-
+// generated or obtained from the mnemonic, if provided.
+func LoadOrGenVRFKey(config *cfg.Config, keyFilePath, mnemonic string) (vrfPubKey sdkcrypto.PubKey, err error) {
 	var vrfKey *VRFKey
-	if vrfKeyFile != "" {
-		vrfKey, err = LoadVRFKey(vrfKeyFile)
+	if keyFilePath != "" {
+		vrfKey, err = LoadVRFKey(keyFilePath)
 		if err != nil {
 			return nil, err
 		}
@@ -226,11 +222,11 @@ func InitializeVRFKey(config *cfg.Config, vrfKeyFile, mnemonic string) (vrfPubKe
 		}
 
 		// VRF key file is placed in the same directory as the validator key file.
-		vrfKeyFile := filepath.Join(filepath.Dir(config.PrivValidatorKeyFile()), VRFKeyFileName)
-		if _, err := os.Stat(vrfKeyFile); err == nil {
-			return nil, fmt.Errorf("vrf key file already exists at %s", vrfKeyFile)
+		keyFilePath := filepath.Join(filepath.Dir(config.PrivValidatorKeyFile()), VRFKeyFileName)
+		if cmtos.FileExists(keyFilePath) {
+			return nil, fmt.Errorf("vrf key file already exists at %s", keyFilePath)
 		}
-		vrfKey, err = NewVRFKey(privKey, vrfKeyFile)
+		vrfKey, err = NewVRFKey(privKey, keyFilePath)
 		if err != nil {
 			return nil, err
 		}
