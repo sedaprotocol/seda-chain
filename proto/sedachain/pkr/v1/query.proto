@@ -12,7 +12,7 @@ service Query {
   // ValidatorKeys returns a given validator's registered keys.
   rpc ValidatorKeys(QueryValidatorKeysRequest)
       returns (QueryValidatorKeysResponse) {
-    option (google.api.http).get = "/seda-chain/pkr/validator_keys";
+    option (google.api.http).get = "/seda-chain/pkr/validator_keys/{validator_addr}";
   }
 }
 
