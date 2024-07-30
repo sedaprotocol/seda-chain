@@ -179,31 +179,6 @@ func NewVRFKey(privKey crypto.PrivKey, keyFilePath string) (*VRFKey, error) {
 	}, nil
 }
 
-// // LoadOrGenVRFKey loads a VRFKey from the given file path
-// // or else generates a new one and saves it to the file path.
-// func LoadOrGenVRFKey(keyFilePath string) (*VRFKey, error) {
-// 	var vrfKey *VRFKey
-// 	var err error
-// 	if cmtos.FileExists(keyFilePath) {
-// 		vrfKey, err = LoadVRFKey(keyFilePath)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 	} else {
-// 		privKey := secp256k1.GenPrivKeySecp256k1([]byte(mnemonic))
-
-// 		vrfKey, err = NewVRFKey(secp256k1.GenPrivKey(), keyFilePath)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		err = vrfKey.Save()
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 	}
-// 	return vrfKey, nil
-// }
-
 func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
 	keyJSONBytes, err := os.ReadFile(keyFilePath)
 	if err != nil {
@@ -226,6 +201,10 @@ func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
 	return vrfKey, nil
 }
 
+// InitializeVRFKey initializes a VRF key and returns its public key.
+// If vrfKeyFile is specified, it loads the VRF key file at the specified
+// path. Otherwise, it generates a new VRF key, whose entropy is randomly
+// generated or obtained from the mneomic, if provided.
 func InitializeVRFKey(config *cfg.Config, vrfKeyFile, mnemonic string) (vrfPubKey sdkcrypto.PubKey, err error) {
 	pvKeyFile := config.PrivValidatorKeyFile()
 	if err := os.MkdirAll(filepath.Dir(pvKeyFile), 0o700); err != nil {
