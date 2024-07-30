@@ -21,7 +21,7 @@ func (s *KeeperTestSuite) TestQuerier_ValidatorKeys() {
 	pubKeys := make([]cryptotypes.PubKey, 0, 3)
 	pubKeysAny := make([]*codectypes.Any, 0, 3)
 	for i := 0; i < 3; i++ {
-		pk, err := utils.InitializeVRFKey(s.serverCtx.Config, "", "")
+		pk, err := utils.LoadOrGenVRFKey(s.serverCtx.Config, "", "")
 		s.Require().NoError(err)
 		pubKeys = append(pubKeys, pk)
 

@@ -27,7 +27,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 				ValidatorAddress: "sedavaloper10hpwdkc76wgqm5lg4my6vz33kps0jr05u9uxga",
 				Index:            0,
 				Pubkey: func() *codectypes.Any {
-					pk, err := utils.InitializeVRFKey(s.serverCtx.Config, "", "")
+					pk, err := utils.LoadOrGenVRFKey(s.serverCtx.Config, "", "")
 					s.Require().NoError(err)
 					pkAny, err := codectypes.NewAnyWithValue(pk)
 					s.Require().NoError(err)

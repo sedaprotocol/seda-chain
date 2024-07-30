@@ -99,7 +99,7 @@ func AddKey(ac address.Codec) *cobra.Command {
 			switch index {
 			case 0:
 				// VRF key derived using secp256k1
-				pk, err = utils.InitializeVRFKey(serverCtx.Config, keyFile, mnemonic)
+				pk, err = utils.LoadOrGenVRFKey(serverCtx.Config, keyFile, mnemonic)
 				if err != nil {
 					return errorsmod.Wrap(err, "failed to initialize a new key")
 				}
