@@ -13,16 +13,11 @@ var (
 )
 
 func (m *MsgAddKey) Validate() error {
-	// var pkAny *codectypes.Any
-	// if m.Pubkey != nil {
-	// 	var err error
-	// 	if pkAny, err = codectypes.NewAnyWithValue(pubKey); err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-
+	if m.ValidatorAddress == "" {
+		return ErrEmptyValue.Wrap("empty validator address")
+	}
 	if m.Pubkey == nil {
-		return ErrNilValue.Wrap("msg.Pubkey")
+		return ErrEmptyValue.Wrap("empty public key")
 	}
 	return nil
 }

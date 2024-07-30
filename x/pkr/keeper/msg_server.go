@@ -5,7 +5,6 @@ import (
 
 	"cosmossdk.io/collections"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
@@ -23,7 +22,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{Keeper: keeper}
 }
 
-func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.MsgAddKeyResponse, error) {
+func (m msgServer) AddKey(ctx context.Context, msg *types.MsgAddKey) (*types.MsgAddKeyResponse, error) {
 	if err := msg.Validate(); err != nil {
 		return nil, err
 	}
@@ -32,15 +31,15 @@ func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.M
 	if err != nil {
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
 	}
-
-	// TODO check if validator is in the store
+	if _, err := m.stakingKeeper.GetValidator(ctx, valAddr); err != nil {
+		return nil, types.ErrValidatorNotFound
+	}
 
 	pubKey, ok := msg.Pubkey.GetCachedValue().(cryptotypes.PubKey)
 	if !ok {
 		return nil, sdkerrors.ErrInvalidType.Wrapf("%T is not a cryptotypes.PubKey", pubKey)
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
 	if err := m.Keeper.PubKeys.Set(ctx, collections.Join(valAddr, msg.Index), pubKey); err != nil {
 		return nil, err
 	}

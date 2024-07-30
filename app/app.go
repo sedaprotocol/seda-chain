@@ -634,6 +634,7 @@ func NewApp(
 	app.PkrKeeper = *pkrkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[pkrtypes.StoreKey]),
+		app.StakingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 	)
 
