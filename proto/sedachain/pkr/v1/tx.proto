@@ -2,7 +2,6 @@ syntax = "proto3";
 package sedachain.pkr.v1;
 
 import "google/protobuf/any.proto";
-
 import "cosmos_proto/cosmos.proto";
 import "cosmos/msg/v1/msg.proto";
 
@@ -19,11 +18,11 @@ service Msg {
 
 // MsgAddKey defines a message for registering a new public key.
 message MsgAddKey {
-  option (cosmos.msg.v1.signer) = "validator_address";
+  option (cosmos.msg.v1.signer) = "validator_addr";
 
-  string validator_address = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
   uint32 index = 2;
-  google.protobuf.Any pubkey = 3 [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
+  google.protobuf.Any pub_key = 3 [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
 }
 
 // MsgAddKeyResponse defines the Msg/MsgAddKey response type.

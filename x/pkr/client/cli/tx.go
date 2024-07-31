@@ -112,9 +112,9 @@ func AddKey(ac address.Codec) *cobra.Command {
 				return err
 			}
 			msg := &types.MsgAddKey{
-				ValidatorAddress: valAddr,
-				Index:            uint32(index),
-				Pubkey:           pkAny,
+				ValidatorAddr: valAddr,
+				Index:         uint32(index),
+				PubKey:        pkAny,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
