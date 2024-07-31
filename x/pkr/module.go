@@ -5,23 +5,25 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"cosmossdk.io/api/tendermint/abci"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/cobra"
+
 	"cosmossdk.io/core/appmodule"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+
 	"github.com/sedaprotocol/seda-chain/x/pkr/client/cli"
 	"github.com/sedaprotocol/seda-chain/x/pkr/keeper"
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
-	"github.com/spf13/cobra"
 )
 
 var (
 	_ module.AppModuleBasic = AppModuleBasic{}
 	_ appmodule.AppModule   = AppModule{}
+	_ module.HasGenesis     = AppModule{}
 )
 
 // ----------------------------------------------------------------------------
@@ -116,16 +118,15 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the module's genesis initialization. It returns no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
 	var genesisState types.GenesisState
 	cdc.MustUnmarshalJSON(gs, &genesisState)
-	InitGenesis(ctx, keeper.Keeper{}, genesisState)
-	return []abci.ValidatorUpdate{}
+	am.keeper.InitGenesis(ctx, genesisState)
 }
 
 // ExportGenesis returns the module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	gs := ExportGenesis(ctx, am.keeper)
+	gs := am.keeper.ExportGenesis(ctx)
 	return cdc.MustMarshalJSON(&gs)
 }
 
@@ -138,6 +139,6 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 }
 
 // EndBlock returns the end block logic for the wasm-storage module.
-func (am AppModule) EndBlock(ctx context.Context) error {
+func (am AppModule) EndBlock(_ context.Context) error {
 	return nil
 }

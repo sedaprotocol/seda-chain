@@ -24,10 +24,10 @@ import (
 )
 
 var (
-	_ module.AppModuleBasic = AppModuleBasic{}
-
+	_ module.AppModuleBasic   = AppModuleBasic{}
 	_ appmodule.AppModule     = AppModule{}
 	_ appmodule.HasEndBlocker = AppModule{}
+	_ module.HasABCIGenesis   = AppModule{}
 )
 
 // ----------------------------------------------------------------------------

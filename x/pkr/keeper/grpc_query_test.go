@@ -1,11 +1,8 @@
 package keeper_test
 
 import (
-	"encoding/hex"
-	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -37,16 +34,16 @@ func (s *KeeperTestSuite) TestQuerier_ValidatorKeys() {
 		s.Require().NoError(os.RemoveAll(keyFileDir))
 	})
 
-	// Store the pubKeys
+	// Store the public keys.
 	valAddr := "sedavaloper10hpwdkc76wgqm5lg4my6vz33kps0jr05u9uxga"
 	for i, pk := range pubKeysAny {
 		addMsg := types.MsgAddKey{
-			ValidatorAddress: valAddr,
-			Index:            uint32(i),
-			Pubkey:           pk,
+			ValidatorAddr: valAddr,
+			Index:         uint32(i),
+			PubKey:        pk,
 		}
 
-		// Validator must exist.
+		// Mock GetValidator()
 		s.mockStakingKeeper.EXPECT().GetValidator(gomock.Any(), gomock.Any()).Return(stakingtypes.Validator{}, nil)
 
 		resp, err := s.msgSrvr.AddKey(s.ctx, &addMsg)
@@ -56,9 +53,10 @@ func (s *KeeperTestSuite) TestQuerier_ValidatorKeys() {
 
 	resp, err := s.queryClient.ValidatorKeys(s.ctx, &types.QueryValidatorKeysRequest{ValidatorAddr: valAddr})
 	s.Require().NoError(err)
-	s.Require().Equal(len(pubKeys), len(resp.IndexPubkeyPairs))
-	for i := range pubKeys {
-		expected := strings.ToUpper(hex.EncodeToString(pubKeys[i].Bytes()))
-		s.Require().True(resp.IndexPubkeyPairs[i] == fmt.Sprintf("%d,PubKeySecp256k1{%s}", i, expected))
+
+	s.Require().Equal(len(pubKeys), len(resp.ValidatorPubKeys.PubKeys))
+	for i, pk := range resp.ValidatorPubKeys.PubKeys {
+		s.Require().Equal(uint32(i), pk.Index)
+		s.Require().Equal(pubKeysAny[i].Value, pk.PubKey.Value)
 	}
 }
