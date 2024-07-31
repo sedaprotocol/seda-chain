@@ -39,6 +39,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### Features
 * (x/tally) [#311](https://github.com/sedaprotocol/seda-chain/pull/311) New module `x/tally`
+* (x/pkr) [#299](https://github.com/sedaprotocol/seda-chain/pull/299) New module `x/pkr`
 
 ### API Breaking
 * (x/wasm-storage) [#311](https://github.com/sedaprotocol/seda-chain/pull/311) "Overlay" renamed to "executor" and a few other API changes
