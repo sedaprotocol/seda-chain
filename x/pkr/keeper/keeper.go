@@ -1,11 +1,15 @@
 package keeper
 
 import (
+	"context"
+
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/address"
 	storetypes "cosmossdk.io/core/store"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
 )
@@ -36,4 +40,39 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, sk
 	}
 	k.Schema = schema
 	return &k
+}
+
+func (k Keeper) GetValidatorKeys(ctx context.Context, validatorAddr string) (result types.ValidatorPubKeys, err error) {
+	valAddr, err := k.validatorAddressCodec.StringToBytes(validatorAddr)
+	if err != nil {
+		return result, sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
+	}
+
+	rng := collections.NewPrefixedPairRange[[]byte, uint32](valAddr)
+	itr, err := k.PubKeys.Iterate(ctx, rng)
+	if err != nil {
+		return result, err
+	}
+	defer itr.Close()
+
+	kvs, err := itr.KeyValues()
+	if err != nil {
+		return result, err
+	}
+	if len(kvs) == 0 {
+		return result, sdkerrors.ErrNotFound
+	}
+
+	result.ValidatorAddr = validatorAddr
+	for _, kv := range kvs {
+		pkAny, err := codectypes.NewAnyWithValue(kv.Value)
+		if err != nil {
+			panic(err)
+		}
+		result.PubKeys = append(result.PubKeys, types.IndexPubKeyPair{
+			Index:  kv.Key.K2(),
+			PubKey: pkAny,
+		})
+	}
+	return result, nil
 }

@@ -8,6 +8,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
@@ -24,9 +25,9 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 		{
 			name: "Happy Path",
 			msg: &types.MsgAddKey{
-				ValidatorAddress: "sedavaloper10hpwdkc76wgqm5lg4my6vz33kps0jr05u9uxga",
-				Index:            0,
-				Pubkey: func() *codectypes.Any {
+				ValidatorAddr: "sedavaloper10hpwdkc76wgqm5lg4my6vz33kps0jr05u9uxga",
+				Index:         0,
+				PubKey: func() *codectypes.Any {
 					pk, err := utils.LoadOrGenVRFKey(s.serverCtx.Config, "", "")
 					s.Require().NoError(err)
 					pkAny, err := codectypes.NewAnyWithValue(pk)
@@ -58,14 +59,12 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 			s.Require().NoError(err)
 			s.Require().NotNil(got)
 
-			valAddr, err := s.valCdc.StringToBytes(tt.msg.ValidatorAddress)
+			valAddr, err := s.valCdc.StringToBytes(tt.msg.ValidatorAddr)
 			s.Require().NoError(err)
-
 			pkActual, err := s.keeper.PubKeys.Get(s.ctx, collections.Join(valAddr, tt.msg.Index))
-			pkExpected, err := tt.msg.PublicKey()
 			s.Require().NoError(err)
-
-			s.Require().NoError(err)
+			pkExpected, ok := tt.msg.PubKey.GetCachedValue().(cryptotypes.PubKey)
+			s.Require().True(ok)
 			s.Require().Equal(pkExpected, pkActual)
 		})
 	}

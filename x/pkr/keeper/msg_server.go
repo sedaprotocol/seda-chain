@@ -27,7 +27,7 @@ func (m msgServer) AddKey(ctx context.Context, msg *types.MsgAddKey) (*types.Msg
 		return nil, err
 	}
 
-	valAddr, err := m.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
+	valAddr, err := m.validatorAddressCodec.StringToBytes(msg.ValidatorAddr)
 	if err != nil {
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
 	}
@@ -35,7 +35,7 @@ func (m msgServer) AddKey(ctx context.Context, msg *types.MsgAddKey) (*types.Msg
 		return nil, types.ErrValidatorNotFound
 	}
 
-	pubKey, ok := msg.Pubkey.GetCachedValue().(cryptotypes.PubKey)
+	pubKey, ok := msg.PubKey.GetCachedValue().(cryptotypes.PubKey)
 	if !ok {
 		return nil, sdkerrors.ErrInvalidType.Wrapf("%T is not a cryptotypes.PubKey", pubKey)
 	}

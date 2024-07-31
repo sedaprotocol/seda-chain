@@ -203,13 +203,13 @@ func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
 }
 
 // LoadOrGenVRFKey initializes a VRF key and returns its public key.
-// If keyFilePath is specified, it loads the VRF key file at the specified
+// If loadPath is specified, it loads the VRF key file at the specified
 // path. Otherwise, it generates a new VRF key, whose entropy is randomly
 // generated or obtained from the mnemonic, if provided.
-func LoadOrGenVRFKey(config *cfg.Config, keyFilePath, mnemonic string) (vrfPubKey sdkcrypto.PubKey, err error) {
+func LoadOrGenVRFKey(config *cfg.Config, loadPath, mnemonic string) (vrfPubKey sdkcrypto.PubKey, err error) {
 	var vrfKey *VRFKey
-	if keyFilePath != "" {
-		vrfKey, err = LoadVRFKey(keyFilePath)
+	if loadPath != "" {
+		vrfKey, err = LoadVRFKey(loadPath)
 		if err != nil {
 			return nil, err
 		}
@@ -222,11 +222,17 @@ func LoadOrGenVRFKey(config *cfg.Config, keyFilePath, mnemonic string) (vrfPubKe
 		}
 
 		// VRF key file is placed in the same directory as the validator key file.
-		keyFilePath := filepath.Join(filepath.Dir(config.PrivValidatorKeyFile()), VRFKeyFileName)
-		if cmtos.FileExists(keyFilePath) {
-			return nil, fmt.Errorf("vrf key file already exists at %s", keyFilePath)
+		pvKeyFile := config.PrivValidatorKeyFile()
+		savePath := filepath.Join(filepath.Dir(pvKeyFile), VRFKeyFileName)
+		if cmtos.FileExists(savePath) {
+			return nil, fmt.Errorf("vrf key file already exists at %s", savePath)
 		}
-		vrfKey, err = NewVRFKey(privKey, keyFilePath)
+		err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0o700)
+		if err != nil {
+			return nil, err
+		}
+
+		vrfKey, err = NewVRFKey(privKey, savePath)
 		if err != nil {
 			return nil, err
 		}
