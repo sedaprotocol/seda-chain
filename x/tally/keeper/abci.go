@@ -48,7 +48,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	}
 
 	// Fetch tally-ready data requests.
-	// TODO: Deal with offset and limits.
+	// TODO: Deal with offset and limits. (#313)
 	queryRes, err := k.wasmViewKeeper.QuerySmart(ctx, coreContract, []byte(`{"get_data_requests_by_status":{"status": "tallying", "offset": 0, "limit": 100}}`))
 	if err != nil {
 		return err
