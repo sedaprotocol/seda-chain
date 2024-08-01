@@ -24,11 +24,11 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 	defer func() {
 		// Handle a panic.
 		if r := recover(); r != nil {
-			k.Logger(ctx).Error("recovered from panic in wasm-storage EndBlock", "err", r)
+			k.Logger(ctx).Error("recovered from panic in tally end block", "err", r)
 		}
 		// Handle an error.
 		if err != nil {
-			k.Logger(ctx).Error("error in wasm-storage EndBlock", "err", err)
+			k.Logger(ctx).Error("error in tally end block", "err", err)
 		}
 		err = nil
 	}()
