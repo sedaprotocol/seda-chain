@@ -2,9 +2,11 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"cosmossdk.io/collections"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
@@ -22,7 +24,9 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{Keeper: keeper}
 }
 
-func (m msgServer) AddKey(ctx context.Context, msg *types.MsgAddKey) (*types.MsgAddKeyResponse, error) {
+func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.MsgAddKeyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
 	if err := msg.Validate(); err != nil {
 		return nil, err
 	}
@@ -43,5 +47,14 @@ func (m msgServer) AddKey(ctx context.Context, msg *types.MsgAddKey) (*types.Msg
 	if err := m.Keeper.PubKeys.Set(ctx, collections.Join(valAddr, msg.Index), pubKey); err != nil {
 		return nil, err
 	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeAddKey,
+			sdk.NewAttribute(types.AttributeValidatorAddr, msg.ValidatorAddr),
+			sdk.NewAttribute(types.AttributePubKeyIndex, fmt.Sprintf("%d", msg.Index)),
+			sdk.NewAttribute(types.AttributePublicKey, pubKey.String()),
+		),
+	)
 	return &types.MsgAddKeyResponse{}, nil
 }

@@ -1,62 +1,38 @@
 package keeper_test
 
 import (
-	"os"
-	"path/filepath"
-
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gomock "go.uber.org/mock/gomock"
 
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
 )
 
 func (s *KeeperTestSuite) TestQuerier_ValidatorKeys() {
-	keyFileDir := filepath.Dir(s.serverCtx.Config.PrivValidatorKeyFile())
-	pubKeys := make([]cryptotypes.PubKey, 0, 3)
-	pubKeysAny := make([]*codectypes.Any, 0, 3)
-	for i := 0; i < 3; i++ {
-		pk, err := utils.LoadOrGenVRFKey(s.serverCtx.Config, "", "")
-		s.Require().NoError(err)
-		pubKeys = append(pubKeys, pk)
+	pubKeys, valAddrs := s.generatePubKeysAndValAddrs(10)
 
-		pkAny, err := codectypes.NewAnyWithValue(pk)
-		s.Require().NoError(err)
-		pubKeysAny = append(pubKeysAny, pkAny)
-
-		// Remove key file so we can create another one.
-		s.Require().NoError(os.Remove(filepath.Join(keyFileDir, utils.VRFKeyFileName)))
-	}
-
-	s.T().Cleanup(func() {
-		s.Require().NoError(os.RemoveAll(keyFileDir))
-	})
-
-	// Store the public keys.
-	valAddr := "sedavaloper10hpwdkc76wgqm5lg4my6vz33kps0jr05u9uxga"
-	for i, pk := range pubKeysAny {
+	// Store the public keys - one for each validator.
+	for i := range pubKeys {
 		addMsg := types.MsgAddKey{
-			ValidatorAddr: valAddr,
+			ValidatorAddr: valAddrs[i].String(),
 			Index:         uint32(i),
-			PubKey:        pk,
+			PubKey:        pubKeys[i],
 		}
 
 		// Mock GetValidator()
-		s.mockStakingKeeper.EXPECT().GetValidator(gomock.Any(), gomock.Any()).Return(stakingtypes.Validator{}, nil)
+		s.mockStakingKeeper.EXPECT().GetValidator(gomock.Any(), valAddrs[i].Bytes()).Return(stakingtypes.Validator{}, nil)
 
 		resp, err := s.msgSrvr.AddKey(s.ctx, &addMsg)
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 	}
 
-	resp, err := s.queryClient.ValidatorKeys(s.ctx, &types.QueryValidatorKeysRequest{ValidatorAddr: valAddr})
-	s.Require().NoError(err)
+	for j := range valAddrs {
+		resp, err := s.queryClient.ValidatorKeys(s.ctx, &types.QueryValidatorKeysRequest{ValidatorAddr: valAddrs[j].String()})
+		s.Require().NoError(err)
 
-	s.Require().Equal(len(pubKeys), len(resp.ValidatorPubKeys.PubKeys))
-	for i, pk := range resp.ValidatorPubKeys.PubKeys {
-		s.Require().Equal(uint32(i), pk.Index)
-		s.Require().Equal(pubKeysAny[i].Value, pk.PubKey.Value)
+		s.Require().Equal(1, len(resp.ValidatorPubKeys.PubKeys))
+		pk := resp.ValidatorPubKeys.PubKeys[0]
+		s.Require().Equal(uint32(j), pk.Index)
+		s.Require().Equal(pubKeys[j].Value, pk.PubKey.Value)
 	}
 }

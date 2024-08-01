@@ -9,34 +9,44 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
 )
 
 func (s *KeeperTestSuite) TestMsgServer_AddKey() {
+	pubKeys, valAddrs := s.generatePubKeysAndValAddrs(2)
+
 	tests := []struct {
-		name    string
-		msg     *types.MsgAddKey
-		want    *types.MsgAddKeyResponse
-		wantErr error
+		name         string
+		msg          *types.MsgAddKey
+		valAddrBytes []byte
+		wantErr      error
 	}{
 		{
-			name: "Happy Path",
+			name: "Happy path",
 			msg: &types.MsgAddKey{
-				ValidatorAddr: "sedavaloper10hpwdkc76wgqm5lg4my6vz33kps0jr05u9uxga",
+				ValidatorAddr: valAddrs[0].String(),
+				Index:         0,
+				PubKey:        pubKeys[0],
+			},
+			valAddrBytes: valAddrs[0].Bytes(),
+			wantErr:      nil,
+		},
+		{
+			name: "Fake plastic Any",
+			msg: &types.MsgAddKey{
+				ValidatorAddr: valAddrs[1].String(),
 				Index:         0,
 				PubKey: func() *codectypes.Any {
-					pk, err := utils.LoadOrGenVRFKey(s.serverCtx.Config, "", "")
+					fakeAny, err := codectypes.NewAnyWithValue(&stakingtypes.Commission{})
 					s.Require().NoError(err)
-					pkAny, err := codectypes.NewAnyWithValue(pk)
-					s.Require().NoError(err)
-					return pkAny
+					return fakeAny
 				}(),
 			},
-			want:    &types.MsgAddKeyResponse{},
-			wantErr: nil,
+			valAddrBytes: valAddrs[1].Bytes(),
+			wantErr:      sdkerrors.ErrInvalidType,
 		},
 	}
 	for _, tt := range tests {
@@ -48,7 +58,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 			})
 
 			// Validator must exist.
-			s.mockStakingKeeper.EXPECT().GetValidator(gomock.Any(), gomock.Any()).Return(stakingtypes.Validator{}, nil)
+			s.mockStakingKeeper.EXPECT().GetValidator(gomock.Any(), tt.valAddrBytes).Return(stakingtypes.Validator{}, nil)
 
 			got, err := s.msgSrvr.AddKey(s.ctx, tt.msg)
 			if tt.wantErr != nil {
@@ -59,9 +69,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 			s.Require().NoError(err)
 			s.Require().NotNil(got)
 
-			valAddr, err := s.valCdc.StringToBytes(tt.msg.ValidatorAddr)
-			s.Require().NoError(err)
-			pkActual, err := s.keeper.PubKeys.Get(s.ctx, collections.Join(valAddr, tt.msg.Index))
+			pkActual, err := s.keeper.PubKeys.Get(s.ctx, collections.Join(tt.valAddrBytes, tt.msg.Index))
 			s.Require().NoError(err)
 			pkExpected, ok := tt.msg.PubKey.GetCachedValue().(cryptotypes.PubKey)
 			s.Require().True(ok)
