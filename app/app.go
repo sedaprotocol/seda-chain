@@ -7,7 +7,6 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/spf13/cast"
 
@@ -32,12 +31,8 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	wasmapp "github.com/CosmWasm/wasmd/app"
-	wasm "github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
 	abci "github.com/cometbft/cometbft/abci/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -139,9 +134,6 @@ import (
 	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
-	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
-	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
-	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 const (
@@ -173,7 +165,6 @@ var (
 		consensus.AppModuleBasic{},
 		circuit.AppModuleBasic{},
 		capability.AppModuleBasic{},
-		wasm.AppModuleBasic{},
 		ibc.AppModuleBasic{},
 		ibctm.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
@@ -181,7 +172,6 @@ var (
 		ica.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		packetforward.AppModuleBasic{},
-		wasmstorage.AppModuleBasic{},
 		tally.AppModuleBasic{},
 	)
 
@@ -196,7 +186,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         nil,
 		icatypes.ModuleName:            nil,
-		wasmtypes.ModuleName:           {authtypes.Burner},
+		// wasmtypes.ModuleName:           {authtypes.Burner},
 	}
 )
 
@@ -237,8 +227,7 @@ type App struct {
 	keepers.AppKeepers
 
 	// SEDA modules keepers
-	WasmStorageKeeper wasmstoragekeeper.Keeper
-	TallyKeeper       tallykeeper.Keeper
+	TallyKeeper tallykeeper.Keeper
 
 	mm  *module.Manager
 	bmm module.BasicManager
@@ -302,8 +291,8 @@ func NewApp(
 		govtypes.StoreKey, consensusparamtypes.StoreKey, upgradetypes.StoreKey,
 		feegrant.StoreKey, evidencetypes.StoreKey, circuittypes.StoreKey, authzkeeper.StoreKey, group.StoreKey,
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
-		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
-		crisistypes.StoreKey, wasmstoragetypes.StoreKey,
+		icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
+		crisistypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -343,7 +332,7 @@ func NewApp(
 	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 	scopedICAControllerKeeper := app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
+	// scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 	app.CapabilityKeeper.Seal()
 
 	// add keepers
@@ -553,34 +542,34 @@ func NewApp(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
-	wasmDir := filepath.Join(homePath, "wasm")
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
-	if err != nil {
-		panic(fmt.Sprintf("error while reading wasm config: %s", err))
-	}
+	// wasmDir := filepath.Join(homePath, "wasm")
+	// wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	// if err != nil {
+	// 	panic(fmt.Sprintf("error while reading wasm config: %s", err))
+	// }
 
-	var wasmOpts []wasmkeeper.Option
+	// var wasmOpts []wasmkeeper.Option
 
-	app.WasmKeeper = wasmkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-		distrkeeper.NewQuerier(app.DistrKeeper),
-		app.IBCFeeKeeper,
-		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
-		scopedWasmKeeper,
-		app.TransferKeeper,
-		app.MsgServiceRouter(),
-		app.GRPCQueryRouter(),
-		wasmDir,
-		wasmConfig,
-		GetWasmCapabilities(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		wasmOpts...,
-	)
+	// app.WasmKeeper = wasmkeeper.NewKeeper(
+	// 	appCodec,
+	// 	runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+	// 	app.AccountKeeper,
+	// 	app.BankKeeper,
+	// 	app.StakingKeeper,
+	// 	distrkeeper.NewQuerier(app.DistrKeeper),
+	// 	app.IBCFeeKeeper,
+	// 	app.IBCKeeper.ChannelKeeper,
+	// 	app.IBCKeeper.PortKeeper,
+	// 	scopedWasmKeeper,
+	// 	app.TransferKeeper,
+	// 	app.MsgServiceRouter(),
+	// 	app.GRPCQueryRouter(),
+	// 	wasmDir,
+	// 	wasmConfig,
+	// 	GetWasmCapabilities(),
+	// 	authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	// 	wasmOpts...,
+	// )
 
 	govConfig := govtypes.DefaultConfig()
 	govKeeper := govkeeper.NewKeeper(
@@ -605,25 +594,7 @@ func NewApp(
 		panic(err)
 	}
 
-	if maxSize := os.Getenv("MAX_WASM_SIZE"); maxSize != "" {
-		// https://github.com/CosmWasm/wasmd#compile-time-parameters
-		val, _ := strconv.ParseInt(maxSize, 10, 32)
-		wasmtypes.MaxWasmSize = int(val) // default 819200 (800 * 1024)
-	}
-
-	contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
-
-	app.WasmStorageKeeper = *wasmstoragekeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[wasmstoragetypes.StoreKey]),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		app.AccountKeeper,
-		app.BankKeeper,
-		contractKeeper,
-		app.WasmKeeper,
-	)
-
-	app.TallyKeeper = tallykeeper.NewKeeper(app.WasmStorageKeeper, contractKeeper, app.WasmKeeper)
+	app.TallyKeeper = tallykeeper.NewKeeper()
 
 	/* =================================================== */
 	/*                  TRANSFER STACK                     */
@@ -667,12 +638,12 @@ func NewApp(
 	icaHostStack = icahost.NewIBCModule(app.ICAHostKeeper)
 	icaHostStack = ibcfee.NewIBCMiddleware(icaHostStack, app.IBCFeeKeeper)
 
-	/* =================================================== */
-	/*                    WASM STACK                       */
-	/* =================================================== */
-	var wasmStack ibcporttypes.IBCModule
-	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
-	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.IBCFeeKeeper)
+	// /* =================================================== */
+	// /*                    WASM STACK                       */
+	// /* =================================================== */
+	// var wasmStack ibcporttypes.IBCModule
+	// wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
+	// wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.IBCFeeKeeper)
 
 	/* =================================================== */
 	/*                    IBC ROUTING                      */
@@ -681,7 +652,7 @@ func NewApp(
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter().
 		AddRoute(icahosttypes.SubModuleName, icaHostStack).
-		AddRoute(wasmtypes.ModuleName, wasmStack).
+		// AddRoute(wasmtypes.ModuleName, wasmStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(ibctransfertypes.ModuleName, transferStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
@@ -729,14 +700,12 @@ func NewApp(
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
 		circuit.NewAppModule(appCodec, app.CircuitKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
-		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), nil),
 		ibc.NewAppModule(app.IBCKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
 		ica.NewAppModule(&icaControllerKeeper, &app.ICAHostKeeper),
 		ibctm.AppModule{},
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
-		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
 		tally.NewAppModule(app.TallyKeeper),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
@@ -789,10 +758,9 @@ func NewApp(
 		ibcexported.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		wasmtypes.ModuleName,
+		// wasmtypes.ModuleName,
 		packetforwardtypes.ModuleName,
 		// custom modules
-		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
 	)
 
@@ -819,10 +787,9 @@ func NewApp(
 		ibcexported.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		wasmtypes.ModuleName,
+		// wasmtypes.ModuleName,
 		packetforwardtypes.ModuleName,
 		// custom modules
-		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
 	)
 
@@ -855,10 +822,9 @@ func NewApp(
 		ibcexported.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		wasmtypes.ModuleName, // wasm after ibc transfer
+		// wasmtypes.ModuleName, // wasm after ibc transfer
 		packetforwardtypes.ModuleName,
 		// custom modules
-		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
@@ -894,22 +860,42 @@ func NewApp(
 	app.MountMemoryStores(memKeys)
 
 	// initialize BaseApp
-	anteHandler, err := wasmapp.NewAnteHandler(
-		wasmapp.HandlerOptions{
-			HandlerOptions: ante.HandlerOptions{
-				AccountKeeper:   app.AccountKeeper,
-				BankKeeper:      app.BankKeeper,
-				SignModeHandler: txConfig.SignModeHandler(),
-				FeegrantKeeper:  app.FeeGrantKeeper,
-				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
-			},
-			IBCKeeper:             app.IBCKeeper,
-			WasmConfig:            &wasmConfig,
-			WasmKeeper:            &app.WasmKeeper,
-			TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
-			CircuitKeeper:         &app.CircuitKeeper,
+	// anteHandler, err := wasmapp.NewAnteHandler(
+	// 	wasmapp.HandlerOptions{
+	// 		HandlerOptions: ante.HandlerOptions{
+	// 			AccountKeeper:   app.AccountKeeper,
+	// 			BankKeeper:      app.BankKeeper,
+	// 			SignModeHandler: txConfig.SignModeHandler(),
+	// 			FeegrantKeeper:  app.FeeGrantKeeper,
+	// 			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
+	// 		},
+	// 		IBCKeeper:             app.IBCKeeper,
+	// 		WasmConfig:            &wasmConfig,
+	// 		WasmKeeper:            &app.WasmKeeper,
+	// 		TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+	// 		CircuitKeeper:         &app.CircuitKeeper,
+	// 	},
+	// )
+	anteHandler, err := ante.NewAnteHandler(
+		// HandlerOptions{
+		ante.HandlerOptions{
+			AccountKeeper: app.AccountKeeper,
+			BankKeeper:    app.BankKeeper,
+			// ExtensionOptionChecker: nil,
+			SignModeHandler: txConfig.SignModeHandler(),
+			FeegrantKeeper:  app.FeeGrantKeeper,
+			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
+			// TxFeeChecker:           nil,
 		},
+		// &app.CircuitKeeper,
+		// },
 	)
+	if err != nil {
+		panic(err)
+	}
+
+	// Set the AnteHandler for the app
+	app.SetAnteHandler(anteHandler)
 	if err != nil {
 		panic(fmt.Errorf("failed to create AnteHandler: %w", err))
 	}
@@ -920,18 +906,18 @@ func NewApp(
 	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(anteHandler)
 
-	if manager := app.SnapshotManager(); manager != nil {
-		err = manager.RegisterExtensions(
-			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WasmKeeper),
-		)
-		if err != nil {
-			panic("failed to register snapshot extension: " + err.Error())
-		}
-	}
+	// if manager := app.SnapshotManager(); manager != nil {
+	// 	err = manager.RegisterExtensions(
+	// 		wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WasmKeeper),
+	// 	)
+	// 	if err != nil {
+	// 		panic("failed to register snapshot extension: " + err.Error())
+	// 	}
+	// }
 
 	app.ScopedIBCKeeper = scopedIBCKeeper
 	app.ScopedTransferKeeper = scopedTransferKeeper
-	app.ScopedWasmKeeper = scopedWasmKeeper
+	// app.ScopedWasmKeeper = scopedWasmKeeper
 	app.ScopedICAHostKeeper = scopedICAHostKeeper
 	app.ScopedICAControllerKeeper = scopedICAControllerKeeper
 
@@ -939,12 +925,12 @@ func NewApp(
 		if err := app.LoadLatestVersion(); err != nil {
 			panic(fmt.Errorf("error loading last version: %w", err))
 		}
-		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		// ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
 
-		// Initialize pinned codes in wasmvm as they are not persisted there
-		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
-			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
-		}
+		// // Initialize pinned codes in wasmvm as they are not persisted there
+		// if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
+		// 	panic(fmt.Sprintf("failed initialize pinned codes %s", err))
+		// }
 	}
 
 	return app
