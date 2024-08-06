@@ -4,9 +4,15 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/spf13/cobra"
+
+	cfg "github.com/cometbft/cometbft/config"
+	cmtjson "github.com/cometbft/cometbft/libs/json"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 
 	"cosmossdk.io/core/address"
 	errorsmod "cosmossdk.io/errors"
@@ -15,15 +21,22 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	crypto "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/go-bip39"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
 )
 
 const (
+	flagHDPath    = "hd-path"
+	flagAddrIndex = "addr-index"
+	flagCoinType  = "coin-type"
+	flagAccount   = "account"
+
 	// FlagKeyFile defines a flag to specify an existing key file.
 	FlagKeyFile = "key-file"
 	// FlagMnemonic defines a flag to generate a key from a mnemonic.
@@ -31,6 +44,8 @@ const (
 	// FlagNonDeterministic defines a flag to generate a non-deterministic
 	// key.
 	FlagNonDeterministic = "non-deterministic"
+
+	mnemonicEntropySize = 256
 )
 
 // GetTxCmd returns the CLI transaction commands for this module
@@ -77,6 +92,8 @@ func AddKey(ac address.Codec) *cobra.Command {
 				return fmt.Errorf("set one of the flags: %s, %s, or %s", FlagMnemonic, FlagKeyFile, FlagNonDeterministic)
 			}
 
+			// mnemonic & bip39 passphrase
+			var bip39Passphrase string
 			var mnemonic string
 			if isMnemonic {
 				inBuf := bufio.NewReader(cmd.InOrStdin())
@@ -89,24 +106,50 @@ func AddKey(ac address.Codec) *cobra.Command {
 				if !bip39.IsMnemonicValid(mnemonic) {
 					return errors.New("invalid mnemonic")
 				}
+			} else {
+				// read entropy seed straight from cmtcrypto.Rand and convert to mnemonic
+				entropySeed, err := bip39.NewEntropy(mnemonicEntropySize)
+				if err != nil {
+					return err
+				}
+
+				mnemonic, err = bip39.NewMnemonic(entropySeed)
+				if err != nil {
+					return err
+				}
 			}
 
+			// Index & algo & name
 			index, err := strconv.ParseUint(args[0], 10, 32)
 			if err != nil {
 				return errorsmod.Wrap(fmt.Errorf("invalid index: %d", index), "invalid index")
 			}
-			var pk crypto.PubKey
+			var name string
+			var algo keyring.SignatureAlgo
 			switch index {
 			case 0:
-				// VRF key derived using secp256k1
-				pk, err = utils.LoadOrGenVRFKey(serverCtx.Config, keyFile, mnemonic)
-				if err != nil {
-					return errorsmod.Wrap(err, "failed to initialize a new key")
-				}
+				name = "vrf_key.json" // TODO without .json
+				algo = hd.Secp256k1
 			default:
 				panic("unsupported index")
 			}
 
+			// HD Path
+			coinType, _ := cmd.Flags().GetUint32(flagCoinType)
+			account, _ := cmd.Flags().GetUint32(flagAccount)
+			addrIndex, _ := cmd.Flags().GetUint32(flagAddrIndex)
+			hdPath, _ := cmd.Flags().GetString(flagHDPath)
+			if len(hdPath) == 0 {
+				hdPath = hd.CreateHDPath(coinType, account, addrIndex).String()
+			}
+
+			// Derive and save key.
+			pk, err := deriveKeyAndSaveToFile(serverCtx.Config, name, mnemonic, bip39Passphrase, hdPath, algo)
+			if err != nil {
+				return err
+			}
+
+			// Generate and broadcast tx.
 			pkAny, err := codectypes.NewAnyWithValue(pk)
 			if err != nil {
 				return err
@@ -120,6 +163,10 @@ func AddKey(ac address.Codec) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().String(flagHDPath, "", "Manual HD Path derivation (overrides BIP44 config)")
+	cmd.Flags().Uint32(flagCoinType, sdk.GetConfig().GetCoinType(), "coin type number for HD derivation")
+	cmd.Flags().Uint32(flagAccount, 0, "Account number for HD derivation (less than equal 2147483647)")
+	cmd.Flags().Uint32(flagAddrIndex, 0, "Address index number for HD derivation (less than equal 2147483647)")
 	cmd.Flags().Bool(FlagNonDeterministic, false, "generate a key non-deterministically")
 	cmd.Flags().String(FlagKeyFile, "", "path to an existing key file")
 	cmd.Flags().Bool(FlagMnemonic, false, "provide master seed from which the new key is derived")
@@ -137,4 +184,43 @@ func isOnlyOneTrue(bools ...bool) bool {
 		}
 	}
 	return trueCount == 1
+}
+
+func deriveKeyAndSaveToFile(config *cfg.Config, keyFileName, mnemonic, bip39Passphrase, hdPath string, algo keyring.SignatureAlgo) (pubKey crypto.PubKey, err error) {
+	derivedPriv, err := algo.Derive()(mnemonic, bip39Passphrase, hdPath)
+	if err != nil {
+		return nil, err
+	}
+	privKey := algo.Generate()(derivedPriv)
+
+	// The key file is placed in the same directory as the validator key file.
+	pvKeyFile := config.PrivValidatorKeyFile()
+	savePath := filepath.Join(filepath.Dir(pvKeyFile), keyFileName)
+	if cmtos.FileExists(savePath) {
+		return nil, fmt.Errorf("key file already exists at %s", savePath)
+	}
+	err = cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0o700)
+	if err != nil {
+		return nil, err
+	}
+
+	keyFile := struct {
+		PrivKey crypto.PrivKey `json:"priv_key"`
+		PubKey  crypto.PubKey  `json:"pub_key"`
+	}{
+		PrivKey: privKey,
+		PubKey:  privKey.PubKey(),
+	}
+
+	jsonBytes, err := cmtjson.MarshalIndent(keyFile, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal key: %v", err)
+	}
+
+	err = os.WriteFile(savePath, jsonBytes, 0o600)
+	if err != nil {
+		return nil, fmt.Errorf("failed to write key file: %v", err)
+	}
+
+	return privKey.PubKey(), nil
 }

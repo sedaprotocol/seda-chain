@@ -9,15 +9,13 @@ import (
 	vrf "github.com/sedaprotocol/vrf-go"
 
 	cfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/secp256k1"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	crypto "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -26,9 +24,9 @@ import (
 const VRFKeyFileName = "vrf_key.json"
 
 type VRFKey struct {
-	Address types.Address    `json:"address"`
-	PubKey  sdkcrypto.PubKey `json:"pub_key"`
-	PrivKey crypto.PrivKey   `json:"priv_key"`
+	Address types.Address  `json:"address"`
+	PubKey  crypto.PubKey  `json:"pub_key"`
+	PrivKey crypto.PrivKey `json:"priv_key"`
 
 	filePath string
 	vrf      *vrf.VRFStruct
@@ -41,17 +39,12 @@ func (v VRFKey) Save() error {
 		return fmt.Errorf("key's file path is empty")
 	}
 
-	cmtPubKey, err := cryptocodec.ToCmtPubKeyInterface(v.PubKey)
-	if err != nil {
-		return fmt.Errorf("failed to convert key type from SDK to Comet: %v", err)
-	}
-
 	vrfKeyFile := struct {
 		PrivKey crypto.PrivKey `json:"priv_key"`
 		PubKey  crypto.PubKey  `json:"pub_key"`
 	}{
 		PrivKey: v.PrivKey,
-		PubKey:  cmtPubKey,
+		PubKey:  v.PubKey,
 	}
 
 	jsonBytes, err := cmtjson.MarshalIndent(vrfKeyFile, "", "  ")
@@ -167,13 +160,9 @@ func (v *VRFKey) IsNil() bool {
 // NewVRFKey generates a new VRFKey from the given key and key file path.
 func NewVRFKey(privKey crypto.PrivKey, keyFilePath string) (*VRFKey, error) {
 	vrfStruct := vrf.NewK256VRF()
-	pubKey, err := cryptocodec.FromCmtPubKeyInterface(privKey.PubKey())
-	if err != nil {
-		return nil, err
-	}
 	return &VRFKey{
 		Address:  privKey.PubKey().Address(),
-		PubKey:   pubKey,
+		PubKey:   privKey.PubKey(),
 		PrivKey:  privKey,
 		filePath: keyFilePath,
 		vrf:      &vrfStruct,
@@ -204,9 +193,8 @@ func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
 
 // LoadOrGenVRFKey initializes a VRF key and returns its public key.
 // If loadPath is specified, it loads the VRF key file at the specified
-// path. Otherwise, it generates a new VRF key, whose entropy is randomly
-// generated or obtained from the mnemonic, if provided.
-func LoadOrGenVRFKey(config *cfg.Config, loadPath, mnemonic string) (vrfPubKey sdkcrypto.PubKey, err error) {
+// path. Otherwise, it generates a new VRF key from random entropy.
+func LoadOrGenVRFKey(config *cfg.Config, loadPath string) (vrfPubKey crypto.PubKey, err error) {
 	var vrfKey *VRFKey
 	if loadPath != "" {
 		vrfKey, err = LoadVRFKey(loadPath)
@@ -214,12 +202,7 @@ func LoadOrGenVRFKey(config *cfg.Config, loadPath, mnemonic string) (vrfPubKey s
 			return nil, err
 		}
 	} else {
-		var privKey secp256k1.PrivKey
-		if mnemonic != "" {
-			privKey = secp256k1.GenPrivKeySecp256k1([]byte(mnemonic))
-		} else {
-			privKey = secp256k1.GenPrivKey()
-		}
+		privKey := secp256k1.GenPrivKey()
 
 		// VRF key file is placed in the same directory as the validator key file.
 		pvKeyFile := config.PrivValidatorKeyFile()
