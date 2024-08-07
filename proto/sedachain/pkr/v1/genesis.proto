@@ -4,7 +4,6 @@ package sedachain.pkr.v1;
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "cosmos_proto/cosmos.proto";
-import "cosmos/msg/v1/msg.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/pkr/types";
 
@@ -20,6 +19,7 @@ message ValidatorPubKeys {
   repeated IndexPubKeyPair pub_keys = 2 [(gogoproto.nullable) = false];
 }
 
+// IndexPubKeyPair defines an index - public key pair.
 message IndexPubKeyPair {
   uint32 index = 1;
   google.protobuf.Any pub_key = 2 [(cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey"];
