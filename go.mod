@@ -1,8 +1,8 @@
 module github.com/sedaprotocol/seda-chain
 
-go 1.21.6
+go 1.22.2
 
-toolchain go1.21.10
+toolchain go1.22.6
 
 require (
 	cosmossdk.io/api v0.7.5
@@ -29,7 +29,7 @@ require (
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8 v8.0.1
 	github.com/cosmos/ibc-go/modules/capability v1.0.0
 	github.com/cosmos/ibc-go/v8 v8.2.0
-	github.com/cosmos/rosetta v0.0.0-00010101000000-000000000000
+	// github.com/cosmos/rosetta v0.0.0-00010101000000-000000000000
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -50,6 +50,8 @@ require (
 	google.golang.org/grpc v1.64.1
 	google.golang.org/protobuf v1.34.2
 )
+
+require github.com/cosmos/rosetta v0.50.9
 
 require (
 	cloud.google.com/go v0.112.1 // indirect
@@ -224,4 +226,4 @@ require (
 
 replace github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 
-replace github.com/cosmos/rosetta => github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529
+// replace github.com/cosmos/rosetta => github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529

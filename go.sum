@@ -396,6 +396,8 @@ github.com/cosmos/ics23/go v0.10.0 h1:iXqLLgp2Lp+EdpIuwXTYIQU+AiHj9mOC2X9ab++bZD
 github.com/cosmos/ics23/go v0.10.0/go.mod h1:ZfJSmng/TBNTBkFemHHHj5YY7VAU/MBU980F4VU1NG0=
 github.com/cosmos/ledger-cosmos-go v0.13.3 h1:7ehuBGuyIytsXbd4MP43mLeoN2LTOEnk5nvue4rK+yM=
 github.com/cosmos/ledger-cosmos-go v0.13.3/go.mod h1:HENcEP+VtahZFw38HZ3+LS3Iv5XV6svsnkk9vdJtLr8=
+github.com/cosmos/rosetta v0.50.9 h1:mV09lIDlEnbe8D1yuldY5GBjqk0ggkAbjbRQOrpoOIs=
+github.com/cosmos/rosetta v0.50.9/go.mod h1:EYloh7qKmHpqiOB133k2WS6jqZsf3RIPLrVpFz48ZZU=
 github.com/cosmos/rosetta-sdk-go v0.10.0 h1:E5RhTruuoA7KTIXUcMicL76cffyeoyvNybzUGSKFTcM=
 github.com/cosmos/rosetta-sdk-go v0.10.0/go.mod h1:SImAZkb96YbwvoRkzSMQB6noNJXFgWl/ENIznEoYQI4=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
@@ -983,8 +985,6 @@ github.com/sasha-s/go-deadlock v0.3.1 h1:sqv7fDNShgjcaxkO0JNcOAlr8B9+cV5Ey/OB71e
 github.com/sasha-s/go-deadlock v0.3.1/go.mod h1:F73l+cr82YSh10GxyRI6qZiCgK64VaZjwesgfQ1/iLM=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/seccomp/libseccomp-golang v0.9.2-0.20220502022130-f33da4d89646/go.mod h1:JA8cRccbGaA1s33RQf7Y1+q9gHmZX1yB/z9WDN1C6fg=
-github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529 h1:VbJcd022MkoohRyAfktHnN99Brt/4eJr01mdLqPhGaE=
-github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529/go.mod h1:GdlDqGJN2g55PHiwYJs2bQMlL0rdlQQbauK4dcrOI6w=
 github.com/sedaprotocol/seda-wasm-vm/tallyvm v1.0.1 h1:TFD8UFBH7WXggRGkS+vkpD1DPtBKtcyza91HQn1ORxE=
 github.com/sedaprotocol/seda-wasm-vm/tallyvm v1.0.1/go.mod h1:AaX9uRy6qD2q+o1SapTRnGUe9HHZWTmBN2BVNAptq3U=
 github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c h1:PbSn7HpWeox6lqBu6Ba6YZS3On3euwn1BPz/egsnEgA=
