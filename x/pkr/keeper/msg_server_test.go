@@ -35,14 +35,14 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 			wantErr:      nil,
 		},
 		{
-			name: "Fake plastic Any",
+			name: "Invalid Any",
 			msg: &types.MsgAddKey{
 				ValidatorAddr: valAddrs[1].String(),
 				Index:         0,
 				PubKey: func() *codectypes.Any {
-					fakeAny, err := codectypes.NewAnyWithValue(&stakingtypes.Commission{})
+					any, err := codectypes.NewAnyWithValue(&stakingtypes.Commission{})
 					s.Require().NoError(err)
-					return fakeAny
+					return any
 				}(),
 			},
 			valAddrBytes: valAddrs[1].Bytes(),
