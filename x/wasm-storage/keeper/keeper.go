@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -66,9 +67,9 @@ func (k Keeper) GetAuthority() string {
 // GetCoreContractAddr retrieves the core contract address.
 func (k Keeper) GetCoreContractAddr(ctx context.Context) (sdk.AccAddress, error) {
 	contractAddrBech32, err := k.CoreContractRegistry.Get(ctx)
-	// if contractAddrBech32 == "" || errors.Is(err, collections.ErrNotFound) {
-	// 	return nil, fmt.Errorf("core contract has not been registered")
-	// }
+	if contractAddrBech32 == "" || errors.Is(err, collections.ErrNotFound) {
+		return nil, collections.ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
