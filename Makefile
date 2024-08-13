@@ -67,7 +67,7 @@ ifeq (rocksdb,$(findstring rocksdb,$(COSMOS_BUILD_OPTIONS)))
   endif
 endif
 
-# Rosetta
+# Rosetta support
 ifeq ($(ENABLE_ROSETTA),true)
   BUILD_TAGS += rosetta
 endif
