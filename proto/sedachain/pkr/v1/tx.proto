@@ -1,9 +1,11 @@
 syntax = "proto3";
 package sedachain.pkr.v1;
 
+import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/msg/v1/msg.proto";
+import "sedachain/pkr/v1/pkr.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/pkr/types";
 
@@ -21,8 +23,7 @@ message MsgAddKey {
   option (cosmos.msg.v1.signer) = "validator_addr";
 
   string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
-  uint32 index = 2;
-  google.protobuf.Any pub_key = 3 [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
+  repeated IndexedPubKey indexed_pub_keys = 2 [(gogoproto.nullable) = false];
 }
 
 // MsgAddKeyResponse defines the Msg/MsgAddKey response type.

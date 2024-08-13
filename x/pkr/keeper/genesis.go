@@ -17,7 +17,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 		if err != nil {
 			panic(err)
 		}
-		for _, pk := range val.PubKeys {
+		for _, pk := range val.IndexedPubKeys {
 			pubKey, ok := pk.PubKey.GetCachedValue().(cryptotypes.PubKey)
 			if !ok {
 				panic("failed to unpack public key")

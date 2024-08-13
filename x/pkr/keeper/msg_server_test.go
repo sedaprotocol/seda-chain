@@ -28,8 +28,12 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 			name: "Happy path",
 			msg: &types.MsgAddKey{
 				ValidatorAddr: valAddrs[0].String(),
-				Index:         0,
-				PubKey:        pubKeys[0],
+				IndexedPubKeys: []types.IndexedPubKey{
+					{
+						Index:  0,
+						PubKey: pubKeys[0],
+					},
+				},
 			},
 			valAddrBytes: valAddrs[0].Bytes(),
 			wantErr:      nil,
@@ -38,12 +42,16 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 			name: "Invalid Any",
 			msg: &types.MsgAddKey{
 				ValidatorAddr: valAddrs[1].String(),
-				Index:         0,
-				PubKey: func() *codectypes.Any {
-					any, err := codectypes.NewAnyWithValue(&stakingtypes.Commission{})
-					s.Require().NoError(err)
-					return any
-				}(),
+				IndexedPubKeys: []types.IndexedPubKey{
+					{
+						Index: 0,
+						PubKey: func() *codectypes.Any {
+							any, err := codectypes.NewAnyWithValue(&stakingtypes.Commission{})
+							s.Require().NoError(err)
+							return any
+						}(),
+					},
+				},
 			},
 			valAddrBytes: valAddrs[1].Bytes(),
 			wantErr:      sdkerrors.ErrInvalidType,
@@ -69,9 +77,9 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 			s.Require().NoError(err)
 			s.Require().NotNil(got)
 
-			pkActual, err := s.keeper.PubKeys.Get(s.ctx, collections.Join(tt.valAddrBytes, tt.msg.Index))
+			pkActual, err := s.keeper.PubKeys.Get(s.ctx, collections.Join(tt.valAddrBytes, tt.msg.IndexedPubKeys[0].Index))
 			s.Require().NoError(err)
-			pkExpected, ok := tt.msg.PubKey.GetCachedValue().(cryptotypes.PubKey)
+			pkExpected, ok := tt.msg.IndexedPubKeys[0].PubKey.GetCachedValue().(cryptotypes.PubKey)
 			s.Require().True(ok)
 			s.Require().Equal(pkExpected, pkActual)
 		})

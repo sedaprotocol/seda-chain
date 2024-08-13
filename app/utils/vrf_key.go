@@ -206,7 +206,7 @@ func LoadVRFKey(keyFilePath string) (*VRFKey, error) {
 // If loadPath is specified, it loads the VRF key file at the specified
 // path. Otherwise, it generates a new VRF key, whose entropy is randomly
 // generated or obtained from the mnemonic, if provided.
-func LoadOrGenVRFKey(config *cfg.Config, loadPath, mnemonic string) (vrfPubKey sdkcrypto.PubKey, err error) {
+func LoadOrGenVRFKey(config *cfg.Config, loadPath string) (vrfPubKey sdkcrypto.PubKey, err error) {
 	var vrfKey *VRFKey
 	if loadPath != "" {
 		vrfKey, err = LoadVRFKey(loadPath)
@@ -214,12 +214,7 @@ func LoadOrGenVRFKey(config *cfg.Config, loadPath, mnemonic string) (vrfPubKey s
 			return nil, err
 		}
 	} else {
-		var privKey secp256k1.PrivKey
-		if mnemonic != "" {
-			privKey = secp256k1.GenPrivKeySecp256k1([]byte(mnemonic))
-		} else {
-			privKey = secp256k1.GenPrivKey()
-		}
+		privKey := secp256k1.GenPrivKey()
 
 		// VRF key file is placed in the same directory as the validator key file.
 		pvKeyFile := config.PrivValidatorKeyFile()

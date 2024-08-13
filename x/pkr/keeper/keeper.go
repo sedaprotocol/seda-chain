@@ -69,7 +69,7 @@ func (k Keeper) GetValidatorKeys(ctx context.Context, validatorAddr string) (res
 		if err != nil {
 			panic(err)
 		}
-		result.PubKeys = append(result.PubKeys, types.IndexPubKeyPair{
+		result.IndexedPubKeys = append(result.IndexedPubKeys, types.IndexedPubKey{
 			Index:  kv.Key.K2(),
 			PubKey: pkAny,
 		})
