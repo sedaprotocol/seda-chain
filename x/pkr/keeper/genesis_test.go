@@ -35,7 +35,7 @@ func (s *KeeperTestSuite) TestImportExportGenesis() {
 		ValidatorPubKeys: []types.ValidatorPubKeys{
 			{
 				ValidatorAddr: valAddrs[0].String(),
-				PubKeys: []types.IndexPubKeyPair{
+				IndexedPubKeys: []types.IndexedPubKey{
 					{Index: 0, PubKey: pubKeys[0]},
 					{Index: 1, PubKey: pubKeys[1]},
 					{Index: 2, PubKey: pubKeys[2]},
@@ -44,27 +44,27 @@ func (s *KeeperTestSuite) TestImportExportGenesis() {
 			},
 			{
 				ValidatorAddr: valAddrs[1].String(),
-				PubKeys: []types.IndexPubKeyPair{
+				IndexedPubKeys: []types.IndexedPubKey{
 					{Index: 0, PubKey: pubKeys[4]},
 					{Index: 2, PubKey: pubKeys[5]},
 				},
 			},
 			{
 				ValidatorAddr: valAddrs[2].String(),
-				PubKeys: []types.IndexPubKeyPair{
+				IndexedPubKeys: []types.IndexedPubKey{
 					{Index: 0, PubKey: pubKeys[6]},
 					{Index: 3, PubKey: pubKeys[7]},
 				},
 			},
 			{
 				ValidatorAddr: valAddrs[3].String(),
-				PubKeys: []types.IndexPubKeyPair{
+				IndexedPubKeys: []types.IndexedPubKey{
 					{Index: 0, PubKey: pubKeys[8]},
 				},
 			},
 			{
 				ValidatorAddr: valAddrs[4].String(),
-				PubKeys: []types.IndexPubKeyPair{
+				IndexedPubKeys: []types.IndexedPubKey{
 					{Index: 1, PubKey: pubKeys[9]},
 				},
 			},

@@ -1,36 +1,33 @@
 package cli
 
 import (
-	"bufio"
-	"errors"
 	"fmt"
-	"strconv"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
+	cfg "github.com/cometbft/cometbft/config"
+	cmtjson "github.com/cometbft/cometbft/libs/json"
+	cmtos "github.com/cometbft/cometbft/libs/os"
+
 	"cosmossdk.io/core/address"
-	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	crypto "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/go-bip39"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/pkr/types"
 )
 
 const (
+	SEDAKeyFileName = "seda_keys.json"
+
 	// FlagKeyFile defines a flag to specify an existing key file.
 	FlagKeyFile = "key-file"
-	// FlagMnemonic defines a flag to generate a key from a mnemonic.
-	FlagMnemonic = "mnemonic"
-	// FlagNonDeterministic defines a flag to generate a non-deterministic
-	// key.
-	FlagNonDeterministic = "non-deterministic"
 )
 
 // GetTxCmd returns the CLI transaction commands for this module
@@ -51,90 +48,139 @@ func GetTxCmd(valAddrCodec address.Codec) *cobra.Command {
 // public key on chain at a given index.
 func AddKey(ac address.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-key [index]",
-		Short: "Generate a key and upload its public key on chain at a given index",
-		Args:  cobra.ExactArgs(1),
+		Use:   "add-key",
+		Short: "Generate the SEDA keys and upload their public keys on chain at a given index",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-			serverCtx := server.GetServerContextFromCmd(cmd)
+			serverCfg := server.GetServerContextFromCmd(cmd).Config
 
 			valAddr, err := ac.BytesToString(clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
 
-			isNonDet, _ := cmd.Flags().GetBool(FlagNonDeterministic)
-			isMnemonic, _ := cmd.Flags().GetBool(FlagMnemonic)
+			var pks []types.IndexedPubKey
 			keyFile, _ := cmd.Flags().GetString(FlagKeyFile)
-			var isKeyFile bool
 			if keyFile != "" {
-				isKeyFile = true
-			}
-			if ok := isOnlyOneTrue(isMnemonic, isKeyFile, isNonDet); !ok {
-				return fmt.Errorf("set one of the flags: %s, %s, or %s", FlagMnemonic, FlagKeyFile, FlagNonDeterministic)
-			}
-
-			var mnemonic string
-			if isMnemonic {
-				inBuf := bufio.NewReader(cmd.InOrStdin())
-				value, err := input.GetString("Enter your bip39 mnemonic", inBuf)
+				pks, err = loadSEDAPubKeys(keyFile)
 				if err != nil {
 					return err
 				}
-
-				mnemonic = value
-				if !bip39.IsMnemonicValid(mnemonic) {
-					return errors.New("invalid mnemonic")
-				}
-			}
-
-			index, err := strconv.ParseUint(args[0], 10, 32)
-			if err != nil {
-				return errorsmod.Wrap(fmt.Errorf("invalid index: %d", index), "invalid index")
-			}
-			var pk crypto.PubKey
-			switch index {
-			case 0:
-				// VRF key derived using secp256k1
-				pk, err = utils.LoadOrGenVRFKey(serverCtx.Config, keyFile, mnemonic)
+			} else {
+				pks, err = generateSEDAKeys(
+					serverCfg,
+					[]privKeyGenerator{secp256k1GenPrivKey},
+				)
 				if err != nil {
-					return errorsmod.Wrap(err, "failed to initialize a new key")
+					return err
 				}
-			default:
-				panic("unsupported index")
 			}
 
-			pkAny, err := codectypes.NewAnyWithValue(pk)
-			if err != nil {
-				return err
-			}
 			msg := &types.MsgAddKey{
-				ValidatorAddr: valAddr,
-				Index:         uint32(index),
-				PubKey:        pkAny,
+				ValidatorAddr:  valAddr,
+				IndexedPubKeys: pks,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
-	cmd.Flags().Bool(FlagNonDeterministic, false, "generate a key non-deterministically")
-	cmd.Flags().String(FlagKeyFile, "", "path to an existing key file")
-	cmd.Flags().Bool(FlagMnemonic, false, "provide master seed from which the new key is derived")
+	cmd.Flags().String(FlagKeyFile, "", "path to an existing SEDA key file")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
-// isOnlyOneTrue returns true if only one of the boolean variables is
-// true.
-func isOnlyOneTrue(bools ...bool) bool {
-	trueCount := 0
-	for _, b := range bools {
-		if b {
-			trueCount++
-		}
+type IndexKey struct {
+	Index   uint32         `json:"index"`
+	PubKey  crypto.PubKey  `json:"pub_key"`
+	PrivKey crypto.PrivKey `json:"priv_key"`
+}
+
+// saveSEDAKeys saves a given list of IndexKeys at a given path.
+func saveSEDAKeys(keys []IndexKey, savePath string) error {
+	jsonBytes, err := cmtjson.MarshalIndent(keys, "", "  ") // TODO use simple json.Marshal?
+	if err != nil {
+		return fmt.Errorf("failed to marshal SEDA keys: %v", err)
 	}
-	return trueCount == 1
+	err = os.WriteFile(savePath, jsonBytes, 0o600)
+	if err != nil {
+		return fmt.Errorf("failed to write SEDA key file: %v", err)
+	}
+	return nil
+}
+
+// loadSEDAPubKeys loads the SEDA key file from the given path and
+// returns a list of index-public key pairs.
+func loadSEDAPubKeys(loadPath string) ([]types.IndexedPubKey, error) {
+	keysJSONBytes, err := os.ReadFile(loadPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read SEDA keys from %v: %v", loadPath, err)
+	}
+	var keys []IndexKey
+	err = cmtjson.Unmarshal(keysJSONBytes, keys)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal SEDA keys from %v: %v", loadPath, err)
+	}
+
+	var result []types.IndexedPubKey
+	for _, key := range keys {
+		pkAny, err := codectypes.NewAnyWithValue(key.PubKey)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, types.IndexedPubKey{
+			Index:  key.Index,
+			PubKey: pkAny,
+		})
+	}
+	return result, nil
+}
+
+type privKeyGenerator func() crypto.PrivKey
+
+func secp256k1GenPrivKey() crypto.PrivKey {
+	return secp256k1.GenPrivKey()
+}
+
+// generateSEDAKeys generates SEDA keys given a list of private key
+// generators, saves them to the SEDA key file, and returns the resulting
+// index-public key pairs. Index is assigned incrementally in the order
+// of the given private key generators.
+func generateSEDAKeys(config *cfg.Config, generators []privKeyGenerator) ([]types.IndexedPubKey, error) {
+	var keys []IndexKey
+	var result []types.IndexedPubKey
+	for i, generator := range generators {
+		privKey := generator()
+		keys = append(keys, IndexKey{
+			Index:   uint32(i),
+			PrivKey: privKey,
+			PubKey:  privKey.PubKey(),
+		})
+
+		pkAny, err := codectypes.NewAnyWithValue(privKey.PubKey())
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, types.IndexedPubKey{
+			Index:  uint32(i),
+			PubKey: pkAny,
+		})
+	}
+
+	// The key file is placed in the same directory as the validator key file.
+	pvKeyFile := config.PrivValidatorKeyFile()
+	savePath := filepath.Join(filepath.Dir(pvKeyFile), SEDAKeyFileName)
+	if cmtos.FileExists(savePath) {
+		return nil, fmt.Errorf("SEDA key file already exists at %s", savePath)
+	}
+	err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0o700)
+	if err != nil {
+		return nil, err
+	}
+	saveSEDAKeys(keys, savePath)
+
+	return result, nil
 }

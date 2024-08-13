@@ -15,17 +15,21 @@ func (m *MsgAddKey) Validate() error {
 	if m.ValidatorAddr == "" {
 		return ErrEmptyValue.Wrap("empty validator address")
 	}
-	if m.PubKey == nil {
-		return ErrEmptyValue.Wrap("empty public key")
+	for i, pair := range m.IndexedPubKeys {
+		if pair.PubKey == nil {
+			return ErrEmptyValue.Wrapf("empty public key at index %d", i)
+		}
 	}
 	return nil
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
 func (m *MsgAddKey) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
-	if m.PubKey != nil {
-		var pubKey cryptotypes.PubKey
-		return unpacker.UnpackAny(m.PubKey, &pubKey)
+	for _, pair := range m.IndexedPubKeys {
+		if pair.PubKey != nil {
+			var pubKey cryptotypes.PubKey
+			return unpacker.UnpackAny(pair.PubKey, &pubKey)
+		}
 	}
 	return nil
 }

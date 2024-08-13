@@ -39,22 +39,24 @@ func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.M
 		return nil, types.ErrValidatorNotFound
 	}
 
-	pubKey, ok := msg.PubKey.GetCachedValue().(cryptotypes.PubKey)
-	if !ok {
-		return nil, sdkerrors.ErrInvalidType.Wrapf("%T is not a cryptotypes.PubKey", pubKey)
-	}
+	for _, indPubKey := range msg.IndexedPubKeys {
+		pubKey, ok := indPubKey.PubKey.GetCachedValue().(cryptotypes.PubKey)
+		if !ok {
+			return nil, sdkerrors.ErrInvalidType.Wrapf("%T is not a cryptotypes.PubKey", pubKey)
+		}
 
-	if err := m.Keeper.PubKeys.Set(ctx, collections.Join(valAddr, msg.Index), pubKey); err != nil {
-		return nil, err
-	}
+		if err := m.Keeper.PubKeys.Set(ctx, collections.Join(valAddr, indPubKey.Index), pubKey); err != nil {
+			return nil, err
+		}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeAddKey,
-			sdk.NewAttribute(types.AttributeValidatorAddr, msg.ValidatorAddr),
-			sdk.NewAttribute(types.AttributePubKeyIndex, fmt.Sprintf("%d", msg.Index)),
-			sdk.NewAttribute(types.AttributePublicKey, pubKey.String()),
-		),
-	)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeAddKey,
+				sdk.NewAttribute(types.AttributeValidatorAddr, msg.ValidatorAddr),
+				sdk.NewAttribute(types.AttributePubKeyIndex, fmt.Sprintf("%d", indPubKey.Index)),
+				sdk.NewAttribute(types.AttributePublicKey, pubKey.String()),
+			),
+		)
+	}
 	return &types.MsgAddKeyResponse{}, nil
 }

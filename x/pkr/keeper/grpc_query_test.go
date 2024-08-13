@@ -14,8 +14,12 @@ func (s *KeeperTestSuite) TestQuerier_ValidatorKeys() {
 	for i := range pubKeys {
 		addMsg := types.MsgAddKey{
 			ValidatorAddr: valAddrs[i].String(),
-			Index:         uint32(i),
-			PubKey:        pubKeys[i],
+			IndexedPubKeys: []types.IndexedPubKey{
+				{
+					Index:  uint32(i),
+					PubKey: pubKeys[i],
+				},
+			},
 		}
 
 		// Mock GetValidator()
@@ -30,8 +34,8 @@ func (s *KeeperTestSuite) TestQuerier_ValidatorKeys() {
 		resp, err := s.queryClient.ValidatorKeys(s.ctx, &types.QueryValidatorKeysRequest{ValidatorAddr: valAddrs[j].String()})
 		s.Require().NoError(err)
 
-		s.Require().Equal(1, len(resp.ValidatorPubKeys.PubKeys))
-		pk := resp.ValidatorPubKeys.PubKeys[0]
+		s.Require().Equal(1, len(resp.ValidatorPubKeys.IndexedPubKeys))
+		pk := resp.ValidatorPubKeys.IndexedPubKeys[0]
 		s.Require().Equal(uint32(j), pk.Index)
 		s.Require().Equal(pubKeys[j].Value, pk.PubKey.Value)
 	}

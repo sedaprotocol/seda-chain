@@ -2,8 +2,8 @@ syntax = "proto3";
 package sedachain.pkr.v1;
 
 import "gogoproto/gogo.proto";
-import "google/protobuf/any.proto";
 import "cosmos_proto/cosmos.proto";
+import "sedachain/pkr/v1/pkr.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/pkr/types";
 
@@ -16,11 +16,5 @@ message GenesisState {
 // primarily used in the x/pkr genesis state. 
 message ValidatorPubKeys {
   string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
-  repeated IndexPubKeyPair pub_keys = 2 [(gogoproto.nullable) = false];
-}
-
-// IndexPubKeyPair defines an index - public key pair.
-message IndexPubKeyPair {
-  uint32 index = 1;
-  google.protobuf.Any pub_key = 2 [(cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey"];
+  repeated IndexedPubKey indexed_pub_keys = 2 [(gogoproto.nullable) = false];
 }
