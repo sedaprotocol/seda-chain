@@ -67,6 +67,11 @@ ifeq (rocksdb,$(findstring rocksdb,$(COSMOS_BUILD_OPTIONS)))
   endif
 endif
 
+# Rosetta
+ifeq ($(ENABLE_ROSETTA),true)
+  BUILD_TAGS += rosetta
+endif
+
 # For building statically linked binaries
 ifeq ($(LINK_STATICALLY),true)
 	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
