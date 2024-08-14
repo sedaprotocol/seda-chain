@@ -74,7 +74,10 @@ endif
 
 # For building statically linked binaries
 ifeq ($(LINK_STATICALLY),true)
-	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
+  ifeq ($(ENABLE_ROSETTA),true)
+    $(error Cannot link statically when Rosetta is enabled)
+  endif
+  ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
 endif
 
 ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
