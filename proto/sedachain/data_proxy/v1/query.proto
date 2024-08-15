@@ -1,0 +1,27 @@
+syntax = "proto3";
+package sedachain.data_proxy.v1;
+
+import "google/api/annotations.proto";
+import "sedachain/data_proxy/v1/data_proxy.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/data-proxy/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // DataProxyConfig returns a data proxy config when given its public key as a
+  // hex encoded string.
+  rpc DataProxyConfig(QueryDataProxyConfigRequest)
+      returns (QueryDataProxyConfigResponse) {
+    option (google.api.http).get =
+        "/seda-chain/data-proxy/data-proxy/{pub_key}";
+  }
+}
+
+// The request message for QueryDataProxyConfig RPC method.
+message QueryDataProxyConfigRequest {
+  // A hex encoded string of the public key of the data proxy.
+  string pub_key = 1;
+}
+
+// The response message for QueryDataProxyConfig RPC method.
+message QueryDataProxyConfigResponse { ProxyConfig config = 1; }
