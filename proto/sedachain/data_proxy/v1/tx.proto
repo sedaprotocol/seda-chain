@@ -1,0 +1,81 @@
+syntax = "proto3";
+package sedachain.data_proxy.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "sedachain/data_proxy/v1/data_proxy.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/data-proxy/types";
+
+// Msg service defines the data-proxy tx gRPC methods.
+service Msg {
+  // Registers a new data proxy entry in the registry.
+  rpc RegisterDataProxy(MsgRegisterDataProxy)
+      returns (MsgRegisterDataProxyResponse);
+
+  // Edits an existing data proxy.
+  rpc EditDataProxy(MsgEditDataProxy) returns (MsgEditDataProxyResponse);
+
+  // Used to update the modules parameters through governance.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+}
+
+// All data required for a new data proxy.
+message MsgRegisterDataProxy {
+  string payout_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  cosmos.base.v1beta1.Coin fee = 2;
+
+  string memo = 3;
+
+  // hex encoded bytes as the expected flow already uses hex encoded bytes to go
+  // from the CLI to the browser where the transaction is signed.
+  string pub_key = 4;
+
+  // hex encoded bytes as the expected flow already uses hex encoded bytes to go
+  // from the CLI to the browser where the transaction is signed.
+  string signature = 5;
+}
+
+// No response required.
+message MsgRegisterDataProxyResponse {}
+
+// Allow updating memo and payout address instantly and/or scheduling a fee
+// update.
+message MsgEditDataProxy {
+  string new_payout_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  string new_memo = 2 [ (gogoproto.nullable) = true ];
+
+  cosmos.base.v1beta1.Coin new_fee = 3 [ (gogoproto.nullable) = true ];
+
+  uint32 fee_update_delay = 4 [ (gogoproto.nullable) = true ];
+
+  // hex encoded bytes as the expected flow already uses hex encoded bytes to go
+  // from the CLI to the browser where the transaction is signed.
+  string pub_key = 5;
+
+  // hex encoded bytes as the expected flow already uses hex encoded bytes to go
+  // from the CLI to the browser where the transaction is signed.
+  string signature = 6;
+}
+
+// Returns the height at which the fee update will go into effect.
+message MsgEditDataProxyResponse { int64 update_height = 1; }
+
+// The request message for the UpdateParams method.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  Params params = 2 [ (gogoproto.nullable) = false ];
+}
+
+// No response required.
+message MsgUpdateParamsResponse {}
