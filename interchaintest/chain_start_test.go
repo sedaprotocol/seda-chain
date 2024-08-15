@@ -3,11 +3,13 @@ package interchaintest
 import (
 	"testing"
 
-	"cosmossdk.io/math"
-	"github.com/sedaprotocol/seda-chain/interchaintest/conformance"
 	"github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/math"
+
+	"github.com/sedaprotocol/seda-chain/interchaintest/conformance"
 )
 
 func TestChainStart(t *testing.T) {

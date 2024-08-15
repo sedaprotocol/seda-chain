@@ -11,6 +11,7 @@ linters:
     - errcheck
     - goconst
     - gocritic
+    - gci
     - gofumpt
     - gosec
     - gosimple
@@ -32,6 +33,7 @@ linters:
     - nolintlint
 
 issues:
+  fix: true
   exclude-rules:
     - text: "Use of weak random number generator"
       linters:
@@ -59,6 +61,20 @@ issues:
   max-same-issues: 10000
 
 linters-settings:
+  gci:
+    custom-order: true
+    sections:
+      - standard # Standard section: captures all standard packages.
+      - default # Default section: contains all imports that could not be matched to another section type.
+      - prefix(github.com/cometbft/cometbft)
+      - prefix(github.com/CosmWasm)
+      - prefix(github.com/cosmos)
+      - prefix(github.com/cosmos/ibc)
+      - prefix(cosmossdk.io)
+      - prefix(github.com/cosmos/cosmos-sdk)
+      - prefix(github.com/sedaprotocol)
+      - prefix(github.com/sedaprotocol/seda-chain)
+    skip-generated: false
   dogsled:
     max-blank-identifiers: 3
   maligned:

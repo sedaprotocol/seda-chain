@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"cosmossdk.io/math"
-
 	cmttypes "github.com/cometbft/cometbft/types"
+
+	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"

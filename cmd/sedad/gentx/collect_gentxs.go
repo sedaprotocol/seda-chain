@@ -9,10 +9,11 @@ import (
 	"sort"
 	"strings"
 
-	"cosmossdk.io/errors"
 	"github.com/spf13/cobra"
 
 	cfg "github.com/cometbft/cometbft/config"
+
+	"cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

@@ -5,11 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/math"
-
-	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/docker/docker/client"
-	"github.com/sedaprotocol/seda-chain/interchaintest/types"
 	"github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
@@ -18,7 +14,14 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
 	ibclocalhost "github.com/cosmos/ibc-go/v8/modules/light-clients/09-localhost"
+
+	"cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
+
+	"github.com/sedaprotocol/seda-chain/interchaintest/types"
 )
 
 var (

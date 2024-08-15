@@ -6,17 +6,18 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
 	"github.com/docker/docker/client"
-	"github.com/sedaprotocol/seda-chain/interchaintest/conformance"
-	"github.com/sedaprotocol/seda-chain/interchaintest/helpers"
 	"github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+
+	"github.com/sedaprotocol/seda-chain/interchaintest/conformance"
+	"github.com/sedaprotocol/seda-chain/interchaintest/helpers"
 )
 
 const (

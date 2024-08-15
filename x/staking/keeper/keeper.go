@@ -3,9 +3,10 @@ package keeper
 import (
 	"context"
 	"fmt"
-	stdmath "math"
+	"math"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -34,8 +35,8 @@ func (k *Keeper) SetHooks(sh types.StakingHooks) {
 // entries to ensure that all redelegations are matched by sufficient shares.
 // Note that no tokens are transferred to or from any pool or account, since no
 // delegation is actually changing state.
-func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.AccAddress, valAddr sdk.ValAddress, wantShares math.LegacyDec) (math.LegacyDec, error) {
-	transferred := math.LegacyZeroDec()
+func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.AccAddress, valAddr sdk.ValAddress, wantShares sdkmath.LegacyDec) (sdkmath.LegacyDec, error) {
+	transferred := sdkmath.LegacyZeroDec()
 
 	// sanity checks
 	if !wantShares.IsPositive() {
@@ -104,7 +105,7 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 	delTo, err := k.GetDelegation(ctx, toAddr, valAddr)
 	if err != nil {
 		if err == types.ErrNoDelegation {
-			delTo = types.NewDelegation(toAddr.String(), validator.GetOperator(), math.LegacyZeroDec())
+			delTo = types.NewDelegation(toAddr.String(), validator.GetOperator(), sdkmath.LegacyZeroDec())
 			err = k.Hooks().BeforeDelegationCreated(ctx, toAddr, valAddr)
 		} else {
 			return transferred, err
@@ -161,7 +162,7 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 	// keeping a liability for 25 shares and transferring one for 75 shares.
 	// Of course, the redelegations themselves can have multiple entries for
 	// different timestamps, so we're actually working at a finer granularity.
-	redelegations, err := k.GetRedelegations(ctx, fromAddr, stdmath.MaxUint16)
+	redelegations, err := k.GetRedelegations(ctx, fromAddr, math.MaxUint16)
 	if err != nil {
 		return transferred, err
 	}
@@ -188,7 +189,7 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 
 			// Partition SharesDst between keeping and sending
 			sharesToKeep := entry.SharesDst
-			sharesToSend := math.LegacyZeroDec()
+			sharesToSend := sdkmath.LegacyZeroDec()
 			if entry.SharesDst.GT(remaining) {
 				sharesToKeep = remaining
 				sharesToSend = entry.SharesDst.Sub(sharesToKeep)
@@ -204,7 +205,7 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 				// Transfer the whole entry, delete locally
 				toRed, err := k.SetRedelegationEntry(
 					ctx, toAddr, valSrcAddr, valDstAddr,
-					entry.CreationHeight, entry.CompletionTime, entry.InitialBalance, math.LegacyZeroDec(), sharesToSend,
+					entry.CreationHeight, entry.CompletionTime, entry.InitialBalance, sdkmath.LegacyZeroDec(), sharesToSend,
 				)
 				if err != nil {
 					return transferred, err
@@ -224,7 +225,7 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 				balanceToKeep := entry.InitialBalance.Sub(balanceToSend)
 				toRed, err := k.SetRedelegationEntry(
 					ctx, toAddr, valSrcAddr, valDstAddr,
-					entry.CreationHeight, entry.CompletionTime, balanceToSend, math.LegacyZeroDec(), sharesToSend,
+					entry.CreationHeight, entry.CompletionTime, balanceToSend, sdkmath.LegacyZeroDec(), sharesToSend,
 				)
 				if err != nil {
 					return transferred, err
@@ -262,8 +263,8 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 // TransferUnbonding changes the ownership of UnbondingDelegation entries
 // until the desired number of tokens have changed hands. Returns the actual
 // number of tokens transferred.
-func (k Keeper) TransferUnbonding(ctx context.Context, fromAddr, toAddr sdk.AccAddress, valAddr sdk.ValAddress, wantAmt math.Int) (math.Int, error) {
-	transferred := math.ZeroInt()
+func (k Keeper) TransferUnbonding(ctx context.Context, fromAddr, toAddr sdk.AccAddress, valAddr sdk.ValAddress, wantAmt sdkmath.Int) (sdkmath.Int, error) {
+	transferred := sdkmath.ZeroInt()
 	ubdFrom, err := k.GetUnbondingDelegation(ctx, fromAddr, valAddr)
 	if err != nil {
 		return transferred, err

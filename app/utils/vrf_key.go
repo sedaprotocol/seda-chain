@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	vrf "github.com/sedaprotocol/vrf-go"
-
 	cfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
@@ -21,6 +19,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+
+	vrf "github.com/sedaprotocol/vrf-go"
 )
 
 const VRFKeyFileName = "vrf_key.json"

@@ -6,20 +6,22 @@ import (
 
 	"github.com/hashicorp/go-plugin"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+
+	"github.com/cosmos/gogoproto/proto"
+
 	streamingabci "cosmossdk.io/store/streaming/abci"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/tx/signing"
-	abci "github.com/cometbft/cometbft/abci/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
-
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/auth"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/bank"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/base"

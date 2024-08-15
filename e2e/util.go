@@ -7,9 +7,10 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/cosmos/go-bip39"
+
 	"github.com/cosmos/cosmos-sdk/codec/unknownproto"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
-	"github.com/cosmos/go-bip39"
 )
 
 // createMnemonic creates a random string mnemonic

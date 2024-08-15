@@ -14,9 +14,10 @@ import (
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/privval"
 
+	"github.com/cosmos/go-bip39"
+
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/cosmos/go-bip39"
 
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
 )

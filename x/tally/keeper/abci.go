@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
 
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
@@ -67,7 +67,9 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
-	for _, req := range tallyList {
+	sudoMsgs := make([]types.Sudo, len(tallyList))
+	vmResults := make([]tallyvm.VmResult, len(tallyList))
+	for i, req := range tallyList {
 		// Construct barebone sudo message to be posted to the contract
 		// here and populate its results fields after FilterAndTally.
 		sudoMsg := types.Sudo{
@@ -97,45 +99,54 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			sudoMsg.Result.Result = vmRes.Result
 			sudoMsg.Result.Consensus = consensus
 		}
-
-		// Post results to the SEDA contract.
-		msg, err := json.Marshal(struct {
-			PostDataResult types.Sudo `json:"post_data_result"`
-		}{
-			PostDataResult: sudoMsg,
-		})
-		if err != nil {
-			return err
-		}
-
 		k.Logger(ctx).Info(
-			"posting execution results to SEDA contract",
+			"completed tally execution",
 			"request_id", req.ID,
 			"execution_result", vmRes,
 			"sudo_message", sudoMsg,
 		)
-		postRes, err := k.wasmKeeper.Sudo(ctx, coreContract, msg)
-		if err != nil {
-			return err
-		}
 
+		sudoMsgs[i] = sudoMsg
+		vmResults[i] = vmRes
+	}
+
+	msg, err := json.Marshal(struct {
+		PostDataResults struct {
+			Results []types.Sudo `json:"results"`
+		} `json:"post_data_results"`
+	}{
+		PostDataResults: struct {
+			Results []types.Sudo `json:"results"`
+		}{
+			Results: sudoMsgs,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	postRes, err := k.wasmKeeper.Sudo(ctx, coreContract, msg)
+	if err != nil {
+		return err
+	}
+
+	for i := range sudoMsgs {
 		k.Logger(ctx).Info(
 			"tally flow completed",
-			"request_id", req.ID,
+			"request_id", sudoMsgs[i].ID,
 			"post_result", postRes,
 		)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeTallyCompletion,
-				sdk.NewAttribute(types.AttributeDataRequestID, req.ID),
-				sdk.NewAttribute(types.AttributeTypeConsensus, strconv.FormatBool(consensus)),
-				sdk.NewAttribute(types.AttributeTallyVMStdOut, strings.Join(vmRes.Stdout, "\n")),
-				sdk.NewAttribute(types.AttributeTallyVMStdErr, strings.Join(vmRes.Stderr, "\n")),
-				sdk.NewAttribute(types.AttributeTallyExitCode, fmt.Sprintf("%02x", sudoMsg.ExitCode)),
+				sdk.NewAttribute(types.AttributeDataRequestID, sudoMsgs[i].ID),
+				sdk.NewAttribute(types.AttributeTypeConsensus, strconv.FormatBool(sudoMsgs[i].Result.Consensus)),
+				sdk.NewAttribute(types.AttributeTallyVMStdOut, strings.Join(vmResults[i].Stdout, "\n")),
+				sdk.NewAttribute(types.AttributeTallyVMStdErr, strings.Join(vmResults[i].Stderr, "\n")),
+				sdk.NewAttribute(types.AttributeTallyExitCode, fmt.Sprintf("%02x", sudoMsgs[i].ExitCode)),
 			),
 		)
 	}
-
 	return nil
 }
 
