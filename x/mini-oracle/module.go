@@ -1,4 +1,4 @@
-package test
+package mini_oracle
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 )
 
-const ModuleName = "test"
+const ModuleName = "mini-oracle"
 
 var (
 	_ appmodule.AppModule        = (*AppModule)(nil)

@@ -1,4 +1,4 @@
-package test
+package mini_oracle
 
 import (
 	abci "github.com/cometbft/cometbft/abci/types"

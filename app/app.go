@@ -132,12 +132,12 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/docs"
+	minioracle "github.com/sedaprotocol/seda-chain/x/mini-oracle"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally"
 	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
-	"github.com/sedaprotocol/seda-chain/x/test"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
@@ -184,7 +184,7 @@ var (
 		packetforward.AppModuleBasic{},
 		wasmstorage.AppModuleBasic{},
 		tally.AppModuleBasic{},
-		test.AppModuleBasic{},
+		minioracle.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -740,7 +740,7 @@ func NewApp(
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
 		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
 		tally.NewAppModule(app.TallyKeeper),
-		test.NewAppModule(appCodec),
+		minioracle.NewAppModule(appCodec),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -863,7 +863,7 @@ func NewApp(
 		// custom modules
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
-		test.ModuleName,
+		minioracle.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)
@@ -939,7 +939,7 @@ func NewApp(
 	app.ScopedICAHostKeeper = scopedICAHostKeeper
 	app.ScopedICAControllerKeeper = scopedICAControllerKeeper
 
-	proposalHandler := test.NewDefaultProposalHandler(bApp)
+	proposalHandler := minioracle.NewDefaultProposalHandler(bApp)
 	app.SetPrepareProposal(proposalHandler.PrepareProposalHandler(txConfig))
 	app.SetProcessProposal(proposalHandler.ProcessProposalHandler(txConfig))
 
