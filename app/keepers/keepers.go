@@ -1,12 +1,10 @@
 package keepers
 
 import (
-	// ibc
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	// ica
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/keeper"
 	icahostkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/keeper"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/keeper"
