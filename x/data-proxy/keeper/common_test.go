@@ -3,7 +3,10 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -12,7 +15,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
 	dataproxy "github.com/sedaprotocol/seda-chain/x/data-proxy"

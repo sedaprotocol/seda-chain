@@ -9,4 +9,5 @@ var (
 	ErrInvalidSignature = errors.Register(ModuleName, 4, "invalid signature")
 	ErrInvalidAddress   = errors.Register(ModuleName, 5, "invalid address")
 	ErrInvalidHex       = errors.Register(ModuleName, 6, "invalid hex string")
+	ErrUnknownDataProxy = errors.Register(ModuleName, 7, "unknown public key")
 )

@@ -6,6 +6,7 @@ import (
 
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/core/store"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
