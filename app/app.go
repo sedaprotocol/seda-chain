@@ -130,6 +130,9 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
+	dataproxy "github.com/sedaprotocol/seda-chain/x/data-proxy"
+	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
+	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally"
@@ -184,6 +187,7 @@ var (
 		packetforward.AppModuleBasic{},
 		wasmstorage.AppModuleBasic{},
 		tally.AppModuleBasic{},
+		dataproxy.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -240,6 +244,7 @@ type App struct {
 	// SEDA modules keepers
 	WasmStorageKeeper wasmstoragekeeper.Keeper
 	TallyKeeper       tallykeeper.Keeper
+	DataProxyKeeper   dataproxykeeper.Keeper
 
 	mm  *module.Manager
 	bmm module.BasicManager
@@ -304,7 +309,7 @@ func NewApp(
 		feegrant.StoreKey, evidencetypes.StoreKey, circuittypes.StoreKey, authzkeeper.StoreKey, group.StoreKey,
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
-		crisistypes.StoreKey, wasmstoragetypes.StoreKey,
+		crisistypes.StoreKey, wasmstoragetypes.StoreKey, dataproxytypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -626,6 +631,8 @@ func NewApp(
 
 	app.TallyKeeper = tallykeeper.NewKeeper(app.WasmStorageKeeper, contractKeeper, app.WasmKeeper)
 
+	app.DataProxyKeeper = *dataproxykeeper.NewKeeper(appCodec, runtime.NewKVStoreService(keys[dataproxytypes.StoreKey]), authtypes.NewModuleAddress(govtypes.ModuleName).String())
+
 	/* =================================================== */
 	/*                  TRANSFER STACK                     */
 	/* =================================================== */
@@ -739,6 +746,7 @@ func NewApp(
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
 		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
 		tally.NewAppModule(app.TallyKeeper),
+		dataproxy.NewAppModule(appCodec, app.DataProxyKeeper),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -795,6 +803,7 @@ func NewApp(
 		// custom modules
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
+		dataproxytypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -825,6 +834,7 @@ func NewApp(
 		// custom modules
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
+		dataproxytypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after sdkstaking so that pools are
@@ -861,6 +871,7 @@ func NewApp(
 		// custom modules
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
+		dataproxytypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)
