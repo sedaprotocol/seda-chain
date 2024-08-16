@@ -201,10 +201,10 @@ BINDIR ?= $(GOPATH)/bin
 STATIK = $(BINDIR)/statik
 
 proto-swagger-gen:
-	# @make clean
-	# @echo "Downloading Protobuf dependencies"
-	# @make proto-download-deps
-	# @echo "Generating Protobuf Swagger"
+	@make clean
+	@echo "Downloading Protobuf dependencies"
+	@make proto-download-deps
+	@echo "Generating Protobuf Swagger"
 	@$(protoImage) sh ./scripts/protoc-swagger-gen.sh
 	@echo "Generating static files for swagger docs"
 	$(MAKE) update-swagger-docs

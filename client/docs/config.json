@@ -69,7 +69,13 @@
         }
       },
       {
-        "url": "./tmp-swagger-gen/cosmos/group/v1beta1/query.swagger.json"
+        "url": "./tmp-swagger-gen/cosmos/group/v1/query.swagger.json",
+        "operationIds": {
+          "rename": {
+            "TallyResult": "GroupTallyResult",
+            "Proposal": "GroupProposal"
+          }
+        }
       },
       {
         "url": "./tmp-swagger-gen/cosmos/mint/v1beta1/query.swagger.json",
