@@ -40,6 +40,14 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["voting_p
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["expedited_voting_period"]="15s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 cat $HOME/.sedad/config/genesis.json | jq '.consensus_params["block"]["max_gas"]="100000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' 's/swagger = false/swagger = true/' $HOME/.sedad/config/app.toml
+else
+    sed 's/swagger = false/swagger = true/' $HOME/.sedad/config/app.toml > tmp
+    cat tmp > $HOME/.sedad/config/app.toml 
+    rm tmp
+fi
+
 # update genesis
 add_key_and_account "fixedacc" "100000000000000000seda" "tortoise chunk claim human keen potato venue follow physical weasel famous series source upgrade give rare gossip practice artist truly shell buddy garment design"
 add_key_and_account "fixedacc2" "100000000000000000seda" "hole bag crumble table stage eternal gather two cabbage define write update run biology side deal great casual absorb panther month better heart trigger"

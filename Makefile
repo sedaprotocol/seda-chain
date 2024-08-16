@@ -1,14 +1,14 @@
 #!/usr/bin/env make -f
-###############################################################################
-##                                   Set Env Vars                            ##
-###############################################################################
+##########################################################################
+##                              Set Env Vars                            ##
+##########################################################################
 export CGO_ENABLED=1
 export VERSION := $(shell echo $(shell git describe --tags --always --match "v*"))
 export COMMIT := $(shell git log -1 --format='%H')
 
-###############################################################################
-##                                   Set Local Vars                          ##
-###############################################################################
+#########################################################################
+##                             Set Local Vars                          ##
+#########################################################################
 LEDGER_ENABLED ?= true
 BUILDDIR ?= $(CURDIR)/build
 DOCKER := $(shell which docker)
@@ -162,10 +162,6 @@ lint:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-protoVer=0.14.0
-protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
-
 proto-all: proto-gen proto-fmt proto-lint
 
 proto-dep-install:
@@ -189,21 +185,29 @@ proto-update-deps:
 	@echo "Updating Protobuf dependencies"
 	@buf mod update ./proto
 
-# proto-swagger-gen:
-# 	@echo "Generating Protobuf Swagger"
-# 	@$(protoImage) sh ./scripts/protoc-swagger-gen.sh
+
+############################################################################
+###                             Documentation                            ###
+############################################################################
+
+protoVer=0.14.0
+protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
+protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
+cosmosVer=$(shell go list -m github.com/cosmos/cosmos-sdk | sed 's/.* //')
+
+SWAGGER_DIR=./swagger-proto
+THIRD_PARTY_DIR=$(SWAGGER_DIR)/third_party
+BINDIR ?= $(GOPATH)/bin
+STATIK = $(BINDIR)/statik
 
 proto-swagger-gen:
 	# @make clean
 	# @echo "Downloading Protobuf dependencies"
 	# @make proto-download-deps
 	# @echo "Generating Protobuf Swagger"
-	$(protoImage) sh ./scripts/protoc-swagger-gen.sh
+	@$(protoImage) sh ./scripts/protoc-swagger-gen.sh
 	@echo "Generating static files for swagger docs"
 	$(MAKE) update-swagger-docs
-
-SWAGGER_DIR=./swagger-proto
-THIRD_PARTY_DIR=$(SWAGGER_DIR)/third_party
 
 proto-download-deps:
 	mkdir -p "$(THIRD_PARTY_DIR)/cosmos_tmp" && \
@@ -212,7 +216,8 @@ proto-download-deps:
 	git remote add origin "https://github.com/cosmos/cosmos-sdk.git" && \
 	git config core.sparseCheckout true && \
 	printf "proto\nthird_party\n" > .git/info/sparse-checkout && \
-	git pull origin main && \
+	git fetch --depth=1 origin "$(cosmosVer)" && \
+	git checkout FETCH_HEAD && \
 	rm -f ./proto/buf.* && \
 	mv ./proto/* ..
 	rm -rf "$(THIRD_PARTY_DIR)/cosmos_tmp"
@@ -249,26 +254,6 @@ proto-download-deps:
 	mkdir -p "$(THIRD_PARTY_DIR)/cosmos/ics23/v1" && \
 	curl -sSL https://raw.githubusercontent.com/cosmos/ics23/master/proto/cosmos/ics23/v1/proofs.proto > "$(THIRD_PARTY_DIR)/cosmos/ics23/v1/proofs.proto"
 
-# docs:
-# 	@echo
-# 	@echo "=========== Generate Message ============"
-# 	@echo
-# 	@make proto-download-deps
-# 	./scripts/generate-docs.sh
-
-# 	statik -src=client/docs/static -dest=client/docs -f -m
-# 	@if [ -n "$(git status --porcelain)" ]; then \
-#         echo "\033[91mSwagger docs are out of sync!!!\033[0m";\
-#         exit 1;\
-#     else \
-#         echo "\033[92mSwagger docs are in sync\033[0m";\
-#     fi
-# 	@echo
-# 	@echo "=========== Generate Complete ============"
-# 	@echo
-
-.PHONY: proto-gen proto-fmt proto-lint proto-update-deps proto-swagger-gen #docs
-
 update-swagger-docs: statik
 	$(BINDIR)/statik -src=client/docs/swagger-ui -dest=client/docs -f -m
 	@if [ -n "$(git status --porcelain)" ]; then \
@@ -278,7 +263,12 @@ update-swagger-docs: statik
 		echo "\033[92mSwagger docs are in sync\033[0m";\
 	fi
 
-.PHONY: update-swagger-docs
+statik: $(STATIK)
+$(STATIK):
+	@echo "Installing statik..."
+	go install github.com/rakyll/statik@v0.1.6
+
+.PHONY: proto-gen proto-fmt proto-lint proto-update-deps proto-swagger-gen update-swagger-docs docs
 
 ###############################################################################
 ##                                   Tests                                   ##
