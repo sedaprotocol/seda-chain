@@ -28,9 +28,12 @@ message ProxyConfig {
   // memo defines an optional string which is not used by the protocol.
   string memo = 3;
 
+  // only the admin address of a data proxy can submit config updates.
+  string admin_address = 4;
+
   // fee_update defines an upcoming fee change which will take effect at a
   // future height.
-  FeeUpdate fee_update = 4 [ (gogoproto.nullable) = true ];
+  FeeUpdate fee_update = 5 [ (gogoproto.nullable) = true ];
 }
 
 // FeeUpdate defines a new fee amount and the height at which it will take

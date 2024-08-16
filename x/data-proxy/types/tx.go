@@ -9,7 +9,7 @@ func (m *MsgRegisterDataProxy) Validate() error {
 		return ErrEmptyValue.Wrap("empty payout address")
 	}
 	if _, err := sdk.AccAddressFromBech32(m.PayoutAddress); err != nil {
-		return err
+		return ErrInvalidAddress.Wrap(err.Error())
 	}
 	if m.Fee == nil {
 		return ErrEmptyValue.Wrap("empty fee")
