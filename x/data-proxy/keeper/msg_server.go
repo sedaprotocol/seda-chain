@@ -2,7 +2,11 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -21,8 +25,59 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{Keeper: keeper}
 }
 
-func (m msgServer) RegisterDataProxy(_ context.Context, _ *types.MsgRegisterDataProxy) (*types.MsgRegisterDataProxyResponse, error) {
-	// TODO
+func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegisterDataProxy) (*types.MsgRegisterDataProxyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := msg.Validate(); err != nil {
+		return nil, err
+	}
+
+	if _, err := sdk.AccAddressFromBech32(msg.AdminAddress); err != nil {
+		return nil, types.ErrInvalidAddress.Wrapf("invalid admin address %s", err)
+	}
+
+	pubKeyBytes, err := hex.DecodeString(msg.PubKey)
+	if err != nil {
+		return nil, types.ErrInvalidHex.Wrap(err.Error())
+	}
+
+	signatureBytes, err := hex.DecodeString(msg.Signature)
+	if err != nil {
+		return nil, types.ErrInvalidHex.Wrap(err.Error())
+	}
+
+	found, err := m.DataProxyConfigs.Has(ctx, pubKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		return nil, types.ErrAlreadyExists
+	}
+
+	feeBytes := []byte(msg.Fee.String())
+	payoutAddressBytes := []byte(msg.PayoutAddress)
+	memoBytes := []byte(msg.Memo)
+
+	payload := make([]byte, 0, len(feeBytes)+len(payoutAddressBytes)+len(memoBytes))
+	payload = append(payload, feeBytes...)
+	payload = append(payload, payoutAddressBytes...)
+	payload = append(payload, memoBytes...)
+
+	if valid := secp256k1.VerifySignature(pubKeyBytes, crypto.Keccak256(payload), signatureBytes); !valid {
+		return nil, types.ErrInvalidSignature
+	}
+
+	err = m.DataProxyConfigs.Set(ctx, pubKeyBytes, types.ProxyConfig{
+		PayoutAddress: msg.PayoutAddress,
+		Fee:           msg.Fee,
+		Memo:          msg.Memo,
+		FeeUpdate:     nil,
+		AdminAddress:  msg.AdminAddress,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.MsgRegisterDataProxyResponse{}, nil
 }
 
