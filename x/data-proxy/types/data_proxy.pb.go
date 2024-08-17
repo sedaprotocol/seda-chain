@@ -161,7 +161,7 @@ func (m *ProxyConfig) GetFeeUpdate() *FeeUpdate {
 type FeeUpdate struct {
 	// new_fee defines the new fee for the data proxy.
 	NewFee types.Coin `protobuf:"bytes,1,opt,name=new_fee,json=newFee,proto3" json:"new_fee"`
-	// update_height defines the height at which the new fee comes into effect.
+	// update_height defines the height after which the new fee comes into effect.
 	UpdateHeight int64 `protobuf:"varint,2,opt,name=update_height,json=updateHeight,proto3" json:"update_height,omitempty"`
 }
 

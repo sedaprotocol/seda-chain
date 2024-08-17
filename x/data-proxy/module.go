@@ -139,7 +139,7 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 	return nil
 }
 
-// EndBlock returns the end block logic for the wasm-storage module.
-func (am AppModule) EndBlock(_ context.Context) error {
-	return nil
+// EndBlock contains the logic that is automatically triggered at the end of each block
+func (am AppModule) EndBlock(ctx context.Context) error {
+	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
 }
