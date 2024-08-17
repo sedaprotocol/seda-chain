@@ -20,11 +20,32 @@ func (m *MsgRegisterDataProxy) Validate() error {
 	if m.Signature == "" {
 		return ErrEmptyValue.Wrap("empty signature")
 	}
+
 	return nil
 }
 
 func (m *MsgEditDataProxy) Validate() error {
-	// TODO
+	if m.PubKey == "" {
+		return ErrEmptyValue.Wrap("empty public key")
+	}
+	if m.Sender == "" {
+		return ErrEmptyValue.Wrap("empty sender")
+	}
+
+	hasNewPayoutAddress := m.NewPayoutAddress != DoNotModifyField
+	hasNewMemo := m.NewMemo != DoNotModifyField
+	hasNewFee := m.NewFee != nil
+
+	if !hasNewPayoutAddress && !hasNewMemo && !hasNewFee {
+		return ErrEmptyUpdate
+	}
+
+	if hasNewPayoutAddress {
+		if _, err := sdk.AccAddressFromBech32(m.NewPayoutAddress); err != nil {
+			return ErrInvalidAddress.Wrap(err.Error())
+		}
+	}
+
 	return nil
 }
 
