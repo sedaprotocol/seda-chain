@@ -73,7 +73,7 @@ message MsgEditDataProxy {
   string pub_key = 6;
 }
 
-// Returns the height at which the fee update will go into effect.
+// Returns the height after which the fee update will go into effect.
 message MsgEditDataProxyResponse { int64 fee_update_height = 1; }
 
 // The request message for the UpdateParams method.
