@@ -3,10 +3,13 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+
+	"cosmossdk.io/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -46,6 +49,8 @@ func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegist
 		return nil, types.ErrInvalidHex.Wrap(err.Error())
 	}
 
+	// TODO check if fee is in native denom
+
 	found, err := m.DataProxyConfigs.Has(ctx, pubKeyBytes)
 	if err != nil {
 		return nil, err
@@ -67,13 +72,20 @@ func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegist
 		return nil, types.ErrInvalidSignature
 	}
 
-	err = m.DataProxyConfigs.Set(ctx, pubKeyBytes, types.ProxyConfig{
+	proxyConfig := types.ProxyConfig{
 		PayoutAddress: msg.PayoutAddress,
 		Fee:           msg.Fee,
 		Memo:          msg.Memo,
 		FeeUpdate:     nil,
 		AdminAddress:  msg.AdminAddress,
-	})
+	}
+
+	err = proxyConfig.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.DataProxyConfigs.Set(ctx, pubKeyBytes, proxyConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -81,9 +93,70 @@ func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegist
 	return &types.MsgRegisterDataProxyResponse{}, nil
 }
 
-func (m msgServer) EditDataProxy(_ context.Context, _ *types.MsgEditDataProxy) (*types.MsgEditDataProxyResponse, error) {
-	// TODO
-	return &types.MsgEditDataProxyResponse{}, nil
+func (m msgServer) EditDataProxy(goCtx context.Context, msg *types.MsgEditDataProxy) (*types.MsgEditDataProxyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := msg.Validate(); err != nil {
+		return nil, err
+	}
+
+	pubKeyBytes, err := hex.DecodeString(msg.PubKey)
+	if err != nil {
+		return nil, types.ErrInvalidHex.Wrap(err.Error())
+	}
+
+	proxyConfig, err := m.DataProxyConfigs.Get(ctx, pubKeyBytes)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, types.ErrUnknownDataProxy.Wrapf("no data proxy registered for %s", msg.PubKey)
+		}
+		return nil, err
+	}
+
+	if msg.Sender != proxyConfig.AdminAddress {
+		return nil, types.ErrUnauthorized
+	}
+
+	err = proxyConfig.UpdateBasic(msg.NewPayoutAddress, msg.NewMemo)
+	if err != nil {
+		return nil, err
+	}
+
+	// If there is no new fee we can terminate early
+	if msg.NewFee == nil {
+		err = m.DataProxyConfigs.Set(ctx, pubKeyBytes, proxyConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		return &types.MsgEditDataProxyResponse{}, nil
+	}
+
+	// TODO check if fee is in native denom
+
+	params, err := m.Keeper.Params.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	updateDelay := params.MinFeeUpdateDelay
+	// Validate custom delay if passed
+	if msg.FeeUpdateDelay != types.UseMinimumDelay {
+		if msg.FeeUpdateDelay < params.MinFeeUpdateDelay {
+			return nil, types.ErrInvalidDelay.Wrapf("minimum delay %d, got %d", params.MinFeeUpdateDelay, msg.FeeUpdateDelay)
+		}
+
+		updateDelay = msg.FeeUpdateDelay
+	}
+
+	updateHeight, err := m.Keeper.processProxyFeeUpdate(ctx, pubKeyBytes, &proxyConfig, msg.NewFee, updateDelay)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgEditDataProxyResponse{
+		FeeUpdateHeight: updateHeight,
+	}, nil
 }
 
 func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {

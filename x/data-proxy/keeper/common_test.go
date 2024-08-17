@@ -72,4 +72,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	querier := keeper.Querier{Keeper: *s.keeper}
 	types.RegisterQueryServer(queryHelper, querier)
 	s.queryClient = types.NewQueryClient(queryHelper)
+
+	err := s.keeper.Params.Set(s.ctx, types.DefaultParams())
+	s.Require().NoError(err)
 }
