@@ -28,17 +28,17 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 			name: "Happy path",
 			msg: &types.MsgRegisterDataProxy{
 				AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
-				PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
 				Fee: &sdk.Coin{
 					Denom:  "aseda",
 					Amount: s.NewIntFromString("10000000000000000000"),
 				},
 				Memo:      "",
-				PubKey:    "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
-				Signature: "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
+				PubKey:    "034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+				Signature: "628e5f1a2662872636c91fe2103602b2f0d5b0c3a52c5cc564171b424b902612048704f4a3349c70f0d0c618ecc65aa884c545e717d94be2272a4f2d6021fa6b",
 			},
 			expected: &types.ProxyConfig{
-				PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
 				Fee: &sdk.Coin{
 					Denom:  "aseda",
 					Amount: s.NewIntFromString("10000000000000000000"),
@@ -53,20 +53,20 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 			name: "Happy path with memo",
 			msg: &types.MsgRegisterDataProxy{
 				AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
-				PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
 				Fee: &sdk.Coin{
 					Denom:  "aseda",
-					Amount: s.NewIntFromString("10000000000000000000"),
+					Amount: s.NewIntFromString("9000000000000000000"),
 				},
 				Memo:      "This is a sweet proxy",
-				PubKey:    "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
-				Signature: "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
+				PubKey:    "034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+				Signature: "65b010f830dd52d54c940cec63140354e99484e4a2db9df3e0a7524a4bfaf87e146c82faddcba00df59e57dd774fb147994fbccea16be841e60e9791ccdbb4c4",
 			},
 			expected: &types.ProxyConfig{
-				PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
 				Fee: &sdk.Coin{
 					Denom:  "aseda",
-					Amount: s.NewIntFromString("10000000000000000000"),
+					Amount: s.NewIntFromString("9000000000000000000"),
 				},
 				Memo:         "This is a sweet proxy",
 				FeeUpdate:    nil,
