@@ -81,3 +81,35 @@ func (k Keeper) GetFeeUpdatePubKeys(ctx context.Context, activationHeight int64)
 
 	return pubkeys, nil
 }
+
+func (k Keeper) processProxyFeeUpdate(ctx sdk.Context, pubKeyBytes []byte, proxyConfig *types.ProxyConfig, newFee *sdk.Coin, updateDelay uint32) (int64, error) {
+
+	// Determine update height
+	updateHeight := ctx.BlockHeight() + int64(updateDelay)
+	feeUpdate := &types.FeeUpdate{
+		NewFee:       *newFee,
+		UpdateHeight: updateHeight,
+	}
+
+	// Delete previous pending update, if applicable
+	if proxyConfig.FeeUpdate != nil {
+		err := k.FeeUpdateQueue.Remove(ctx, collections.Join(proxyConfig.FeeUpdate.UpdateHeight, pubKeyBytes))
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	// Schedule new update
+	proxyConfig.FeeUpdate = feeUpdate
+	err := k.FeeUpdateQueue.Set(ctx, collections.Join(updateHeight, pubKeyBytes))
+	if err != nil {
+		return 0, err
+	}
+
+	err = k.DataProxyConfigs.Set(ctx, pubKeyBytes, *proxyConfig)
+	if err != nil {
+		return 0, err
+	}
+
+	return updateHeight, nil
+}

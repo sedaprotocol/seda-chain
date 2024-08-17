@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	// FlagKeyFile defines a flag to add arbitrary data to a data proxy.
-	FlagMemo = "memo"
+	FlagMemo             = "memo"
+	FlagNewPayoutAddress = "payout-address"
+	FlagNewFee           = "fee"
+	FlagFeeUpdateDelay   = "fee-delay"
 )
 
 // GetTxCmd returns the CLI transaction commands for this module
@@ -28,12 +30,11 @@ func GetTxCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		RegisterDataProxy(),
+		EditDataProxy(),
 	)
 	return cmd
 }
 
-// AddKey returns the command for adding a new key and uploading its
-// public key on chain at a given index.
 func RegisterDataProxy() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "register [payout_address] [fee] [public_key_hex] [signature_hex] --from [admin_address]",
@@ -70,4 +71,51 @@ func RegisterDataProxy() *cobra.Command {
 	return cmd
 }
 
-// TODO Edit tx
+func EditDataProxy() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "edit [public_key_hex] --from [admin_address]",
+		Short: "Edit an existing data proxy. Payout address and memo take effect instantly, fee updates are scheduled according to the minimum delay or a custom delay",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			newMemo, _ := cmd.Flags().GetString(FlagMemo)
+			newPayoutAddress, _ := cmd.Flags().GetString(FlagNewPayoutAddress)
+
+			msg := &types.MsgEditDataProxy{
+				Sender:           clientCtx.GetFromAddress().String(),
+				PubKey:           args[0],
+				NewMemo:          newMemo,
+				NewPayoutAddress: newPayoutAddress,
+			}
+
+			feeValue, _ := cmd.Flags().GetString(FlagNewFee)
+			if feeValue != "" {
+				fee, err := sdk.ParseCoinNormalized(feeValue)
+				if err != nil {
+					return err
+				}
+
+				msg.NewFee = &fee
+
+				feeUpdateDelay, _ := cmd.Flags().GetUint32(FlagFeeUpdateDelay)
+
+				msg.FeeUpdateDelay = feeUpdateDelay
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	cmd.Flags().String(FlagMemo, types.DoNotModifyField, "Optionally add a description to the data proxy config")
+	cmd.Flags().String(FlagNewPayoutAddress, types.DoNotModifyField, "The new payout address for this data proxy")
+	cmd.Flags().String(FlagNewFee, "", "The new fee to be scheduled for this data proxy")
+	cmd.Flags().Uint32(FlagFeeUpdateDelay, types.UseMinimumDelay, "Optionally specify a custom delay in blocks. Must be larger than minimum set in module params")
+
+	return cmd
+}
