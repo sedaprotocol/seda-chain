@@ -42,6 +42,6 @@ message FeeUpdate {
   // new_fee defines the new fee for the data proxy.
   cosmos.base.v1beta1.Coin new_fee = 1 [ (gogoproto.nullable) = false ];
 
-  // update_height defines the height at which the new fee comes into effect.
+  // update_height defines the height after which the new fee comes into effect.
   int64 update_height = 2;
 }

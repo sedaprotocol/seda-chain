@@ -3,9 +3,11 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/core/store"
+	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -112,4 +114,8 @@ func (k Keeper) processProxyFeeUpdate(ctx sdk.Context, pubKeyBytes []byte, proxy
 	}
 
 	return updateHeight, nil
+}
+
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
