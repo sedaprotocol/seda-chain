@@ -10,7 +10,7 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/data-proxy/types";
 message GenesisState {
   Params params = 1 [ (gogoproto.nullable) = false ];
 
-  repeated DataProxyConfigs data_proxy_configs = 2
+  repeated DataProxyConfig data_proxy_configs = 2
       [ (gogoproto.nullable) = false ];
 
   repeated FeeUpdateQueueRecord fee_update_queue = 3
@@ -18,15 +18,15 @@ message GenesisState {
 }
 
 // DataProxyConfigs define the data proxy entries in the registry.
-message DataProxyConfigs {
-  string data_proxy_pubkey = 1;
+message DataProxyConfig {
+  bytes data_proxy_pubkey = 1;
 
   ProxyConfig config = 2;
 }
 
 // FeeUpdateQueueRecord defines an entry in the data proxy update queue.
 message FeeUpdateQueueRecord {
-  string data_proxy_pubkey = 1;
+  bytes data_proxy_pubkey = 1;
 
   int64 update_height = 2;
 }
