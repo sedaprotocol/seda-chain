@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -75,4 +76,17 @@ func (s *KeeperTestSuite) SetupTest() {
 
 	err := s.keeper.Params.Set(s.ctx, types.DefaultParams())
 	s.Require().NoError(err)
+}
+
+func (s *KeeperTestSuite) NewIntFromString(val string) math.Int {
+	amount, success := math.NewIntFromString(val)
+	s.Require().True(success)
+	return amount
+}
+
+func (s *KeeperTestSuite) NewFeeFromString(val string) *sdk.Coin {
+	return &sdk.Coin{
+		Denom:  "aseda",
+		Amount: s.NewIntFromString(val),
+	}
 }
