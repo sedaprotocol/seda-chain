@@ -10,4 +10,5 @@ const (
 var (
 	DataProxyConfigPrefix = collections.NewPrefix(0)
 	ParamsPrefix          = collections.NewPrefix(1)
+	FeeUpdatesPrefix      = collections.NewPrefix(2)
 )
