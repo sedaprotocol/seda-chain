@@ -18,6 +18,9 @@ service Msg {
   // Edits an existing data proxy.
   rpc EditDataProxy(MsgEditDataProxy) returns (MsgEditDataProxyResponse);
 
+  // Transfers the admin address of a data proxy
+  rpc TransferAdmin(MsgTransferAdmin) returns (MsgTransferAdminResponse);
+
   // Used to update the modules parameters through governance.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
@@ -72,6 +75,23 @@ message MsgEditDataProxy {
   // browser
   string pub_key = 6;
 }
+
+// Allow transferring the admin role to a different address.
+message MsgTransferAdmin {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  string new_admin_address = 2
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // hex encoded bytes as the expected flow is users sending updates from the
+  // browser
+  string pub_key = 3;
+}
+
+// No response required.
+message MsgTransferAdminResponse {}
 
 // Returns the height after which the fee update will go into effect.
 message MsgEditDataProxyResponse { int64 fee_update_height = 1; }

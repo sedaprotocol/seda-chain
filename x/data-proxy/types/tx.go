@@ -49,6 +49,21 @@ func (m *MsgEditDataProxy) Validate() error {
 	return nil
 }
 
+func (m *MsgTransferAdmin) Validate() error {
+	if m.Sender == "" {
+		return ErrEmptyValue.Wrap("empty sender")
+	}
+
+	if m.NewAdminAddress == "" {
+		return ErrEmptyValue.Wrap("empty admin address")
+	}
+	if _, err := sdk.AccAddressFromBech32(m.NewAdminAddress); err != nil {
+		return ErrInvalidAddress.Wrap(err.Error())
+	}
+
+	return nil
+}
+
 func (m *MsgUpdateParams) Validate() error {
 	// TODO
 	return nil

@@ -159,6 +159,40 @@ func (m msgServer) EditDataProxy(goCtx context.Context, msg *types.MsgEditDataPr
 	}, nil
 }
 
+func (m msgServer) TransferAdmin(goCtx context.Context, msg *types.MsgTransferAdmin) (*types.MsgTransferAdminResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := msg.Validate(); err != nil {
+		return nil, err
+	}
+
+	pubKeyBytes, err := hex.DecodeString(msg.PubKey)
+	if err != nil {
+		return nil, types.ErrInvalidHex.Wrap(err.Error())
+	}
+
+	proxyConfig, err := m.DataProxyConfigs.Get(ctx, pubKeyBytes)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, types.ErrUnknownDataProxy.Wrapf("no data proxy registered for %s", msg.PubKey)
+		}
+		return nil, err
+	}
+
+	if msg.Sender != proxyConfig.AdminAddress {
+		return nil, types.ErrUnauthorized
+	}
+
+	proxyConfig.AdminAddress = msg.NewAdminAddress
+
+	err = m.DataProxyConfigs.Set(ctx, pubKeyBytes, proxyConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgTransferAdminResponse{}, nil
+}
+
 func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
