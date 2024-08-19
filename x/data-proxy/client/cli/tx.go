@@ -31,6 +31,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		RegisterDataProxy(),
 		EditDataProxy(),
+		TransferAdmin(),
 	)
 	return cmd
 }
@@ -116,6 +117,32 @@ func EditDataProxy() *cobra.Command {
 	cmd.Flags().String(FlagNewPayoutAddress, types.DoNotModifyField, "The new payout address for this data proxy")
 	cmd.Flags().String(FlagNewFee, "", "The new fee to be scheduled for this data proxy")
 	cmd.Flags().Uint32(FlagFeeUpdateDelay, types.UseMinimumDelay, "Optionally specify a custom delay in blocks. Must be larger than minimum set in module params")
+
+	return cmd
+}
+
+func TransferAdmin() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer-admin [public_key_hex] [new_admin_address] --from [admin_address]",
+		Short: "Transfer the admin rights of the data proxy to a different address",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgTransferAdmin{
+				Sender:          clientCtx.GetFromAddress().String(),
+				PubKey:          args[0],
+				NewAdminAddress: args[1],
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }

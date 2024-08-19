@@ -358,4 +358,33 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 		s.Require().NoError(err)
 		s.Require().False(firstUpdateNoLongerScheduled)
 	})
+
+	s.Run("Transferring admin address should allow the new address to submit changes", func() {
+		s.SetupTest()
+
+		err = s.keeper.DataProxyConfigs.Set(s.ctx, pubKeyBytes, initialProxyConfig)
+		s.Require().NoError(err)
+
+		editMsg := &types.MsgEditDataProxy{
+			Sender:           "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+			NewPayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+			NewMemo:          types.DoNotModifyField,
+			PubKey:           "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+		}
+		failedEdit, err := s.msgSrvr.EditDataProxy(s.ctx, editMsg)
+		s.Require().ErrorIs(err, types.ErrUnauthorized)
+		s.Require().Nil(failedEdit)
+
+		transferRes, err := s.msgSrvr.TransferAdmin(s.ctx, &types.MsgTransferAdmin{
+			Sender:          "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			NewAdminAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+			PubKey:          "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+		})
+		s.Require().NoError(err)
+		s.Require().NotNil(transferRes)
+
+		successfulEdit, err := s.msgSrvr.EditDataProxy(s.ctx, editMsg)
+		s.Require().NoError(err)
+		s.Require().NotNil(successfulEdit)
+	})
 }
