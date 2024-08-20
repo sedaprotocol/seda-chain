@@ -1,9 +1,13 @@
 package keeper
 
 import (
+	"encoding/hex"
+
 	"cosmossdk.io/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 )
 
 func (k *Keeper) EndBlock(ctx sdk.Context) (err error) {
@@ -48,7 +52,10 @@ func (k *Keeper) ProcessFeeUpdates(ctx sdk.Context) error {
 			return err
 		}
 
-		// TODO emit events
+		pubKeyHex := hex.EncodeToString(pubkey)
+		ctx.EventManager().EmitEvent(sdk.NewEvent(types.EventTypeFeeUpdate,
+			sdk.NewAttribute(types.AttributePubKey, pubKeyHex),
+			sdk.NewAttribute(types.AttributeFee, proxyConfig.Fee.String())))
 	}
 	return nil
 }

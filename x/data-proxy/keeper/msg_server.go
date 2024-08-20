@@ -92,6 +92,8 @@ func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegist
 		return nil, err
 	}
 
+	emitProxyConfigEvent(ctx, types.EventTypeRegisterProxy, msg.PubKey, &proxyConfig)
+
 	return &types.MsgRegisterDataProxyResponse{}, nil
 }
 
@@ -131,6 +133,8 @@ func (m msgServer) EditDataProxy(goCtx context.Context, msg *types.MsgEditDataPr
 			return nil, err
 		}
 
+		emitProxyConfigEvent(ctx, types.EventTypeEditProxy, msg.PubKey, &proxyConfig)
+
 		return &types.MsgEditDataProxyResponse{}, nil
 	}
 
@@ -156,9 +160,30 @@ func (m msgServer) EditDataProxy(goCtx context.Context, msg *types.MsgEditDataPr
 		return nil, err
 	}
 
+	emitProxyConfigEvent(ctx, types.EventTypeEditProxy, msg.PubKey, &proxyConfig)
+
 	return &types.MsgEditDataProxyResponse{
 		FeeUpdateHeight: updateHeight,
 	}, nil
+}
+
+func emitProxyConfigEvent(ctx sdk.Context, eventType string, pubKey string, proxyConfig *types.ProxyConfig) {
+	event := sdk.NewEvent(eventType,
+		sdk.NewAttribute(types.AttributePubKey, pubKey),
+		sdk.NewAttribute(types.AttributePayoutAddress, proxyConfig.PayoutAddress),
+		sdk.NewAttribute(types.AttributeFee, proxyConfig.Fee.String()),
+		sdk.NewAttribute(types.AttributeMemo, proxyConfig.Memo),
+		sdk.NewAttribute(types.AttributeAdminAddress, proxyConfig.AdminAddress),
+	)
+
+	if proxyConfig.FeeUpdate != nil {
+		event.AppendAttributes(
+			sdk.NewAttribute(types.AttributeNewFee, proxyConfig.FeeUpdate.String()),
+			sdk.NewAttribute(types.AttributeNewFeeHeight, fmt.Sprintf("%d", proxyConfig.FeeUpdate.UpdateHeight)),
+		)
+	}
+
+	ctx.EventManager().EmitEvent(event)
 }
 
 func (m msgServer) TransferAdmin(goCtx context.Context, msg *types.MsgTransferAdmin) (*types.MsgTransferAdminResponse, error) {
@@ -191,6 +216,11 @@ func (m msgServer) TransferAdmin(goCtx context.Context, msg *types.MsgTransferAd
 	if err != nil {
 		return nil, err
 	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(types.EventTypeTransferAdmin,
+		sdk.NewAttribute(types.AttributePubKey, msg.PubKey),
+		sdk.NewAttribute(types.AttributeAdminAddress, proxyConfig.AdminAddress),
+	))
 
 	return &types.MsgTransferAdminResponse{}, nil
 }
