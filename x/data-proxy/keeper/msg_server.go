@@ -10,8 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 
 	"cosmossdk.io/collections"
+	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 )
@@ -36,17 +38,17 @@ func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegist
 	}
 
 	if _, err := sdk.AccAddressFromBech32(msg.AdminAddress); err != nil {
-		return nil, types.ErrInvalidAddress.Wrapf("invalid admin address %s", err)
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid admin address: %s", msg.AdminAddress)
 	}
 
 	pubKeyBytes, err := hex.DecodeString(msg.PubKey)
 	if err != nil {
-		return nil, types.ErrInvalidHex.Wrap(err.Error())
+		return nil, errorsmod.Wrapf(err, "invalid hex in pubkey: %s", msg.PubKey)
 	}
 
 	signatureBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
-		return nil, types.ErrInvalidHex.Wrap(err.Error())
+		return nil, errorsmod.Wrapf(err, "invalid hex in signature: %s", msg.Signature)
 	}
 
 	// TODO check if fee is in native denom
@@ -102,19 +104,19 @@ func (m msgServer) EditDataProxy(goCtx context.Context, msg *types.MsgEditDataPr
 
 	pubKeyBytes, err := hex.DecodeString(msg.PubKey)
 	if err != nil {
-		return nil, types.ErrInvalidHex.Wrap(err.Error())
+		return nil, errorsmod.Wrapf(err, "invalid hex in pubkey: %s", msg.PubKey)
 	}
 
 	proxyConfig, err := m.DataProxyConfigs.Get(ctx, pubKeyBytes)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			return nil, types.ErrUnknownDataProxy.Wrapf("no data proxy registered for %s", msg.PubKey)
+			return nil, sdkerrors.ErrNotFound.Wrapf("no data proxy registered for %s", msg.PubKey)
 		}
 		return nil, err
 	}
 
 	if msg.Sender != proxyConfig.AdminAddress {
-		return nil, types.ErrUnauthorized
+		return nil, sdkerrors.ErrorInvalidSigner
 	}
 
 	err = proxyConfig.UpdateBasic(msg.NewPayoutAddress, msg.NewMemo)
@@ -168,19 +170,19 @@ func (m msgServer) TransferAdmin(goCtx context.Context, msg *types.MsgTransferAd
 
 	pubKeyBytes, err := hex.DecodeString(msg.PubKey)
 	if err != nil {
-		return nil, types.ErrInvalidHex.Wrap(err.Error())
+		return nil, errorsmod.Wrapf(err, "invalid hex in pubkey: %s", msg.PubKey)
 	}
 
 	proxyConfig, err := m.DataProxyConfigs.Get(ctx, pubKeyBytes)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			return nil, types.ErrUnknownDataProxy.Wrapf("no data proxy registered for %s", msg.PubKey)
+			return nil, sdkerrors.ErrNotFound.Wrapf("no data proxy registered for %s", msg.PubKey)
 		}
 		return nil, err
 	}
 
 	if msg.Sender != proxyConfig.AdminAddress {
-		return nil, types.ErrUnauthorized
+		return nil, sdkerrors.ErrorInvalidSigner
 	}
 
 	proxyConfig.AdminAddress = msg.NewAdminAddress
@@ -200,7 +202,7 @@ func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParam
 		return nil, fmt.Errorf("invalid authority address: %s", err)
 	}
 	if m.GetAuthority() != req.Authority {
-		return nil, fmt.Errorf("unauthorized authority; expected %s, got %s", m.GetAuthority(), req.Authority)
+		return nil, sdkerrors.ErrorInvalidSigner.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), req.Authority)
 	}
 
 	if err := req.Params.Validate(); err != nil {

@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (m *MsgRegisterDataProxy) Validate() error {
@@ -9,7 +10,7 @@ func (m *MsgRegisterDataProxy) Validate() error {
 		return ErrEmptyValue.Wrap("empty payout address")
 	}
 	if _, err := sdk.AccAddressFromBech32(m.PayoutAddress); err != nil {
-		return ErrInvalidAddress.Wrap(err.Error())
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid payout address: %s", m.PayoutAddress)
 	}
 	if m.Fee == nil {
 		return ErrEmptyValue.Wrap("empty fee")
@@ -42,7 +43,7 @@ func (m *MsgEditDataProxy) Validate() error {
 
 	if hasNewPayoutAddress {
 		if _, err := sdk.AccAddressFromBech32(m.NewPayoutAddress); err != nil {
-			return ErrInvalidAddress.Wrap(err.Error())
+			return sdkerrors.ErrInvalidAddress.Wrapf("invalid new payout address: %s", m.NewPayoutAddress)
 		}
 	}
 
@@ -58,7 +59,7 @@ func (m *MsgTransferAdmin) Validate() error {
 		return ErrEmptyValue.Wrap("empty admin address")
 	}
 	if _, err := sdk.AccAddressFromBech32(m.NewAdminAddress); err != nil {
-		return ErrInvalidAddress.Wrap(err.Error())
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid new admin address: %s", m.NewAdminAddress)
 	}
 
 	return nil
