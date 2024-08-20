@@ -53,6 +53,7 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
+	_ "github.com/sedaprotocol/seda-chain/client/docs/statik" // for swagger docs
 )
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
