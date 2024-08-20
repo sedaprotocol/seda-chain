@@ -38,7 +38,14 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ## [Unreleased]
 
 ### Features
+* (docs) [#326](https://github.com/sedaprotocol/seda-chain/pull/326) Swagger API documentation
 * (x/tally) [#311](https://github.com/sedaprotocol/seda-chain/pull/311) New module `x/tally`
+
+### Bug Fixes
+* (build) [#321](https://github.com/sedaprotocol/seda-chain/pull/321) Rosetta build tag (not to be used with static compilation) 
 
 ### API Breaking
 * (x/wasm-storage) [#311](https://github.com/sedaprotocol/seda-chain/pull/311) "Overlay" renamed to "executor" and a few other API changes
+
+### State Machine Breaking
+* (x/tally) [#323](https://github.com/sedaprotocol/seda-chain/pull/323) Post data results in batches

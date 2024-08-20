@@ -68,7 +68,7 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["distribution"]["params"][
 if [ "$SHORT_VOTING_PERIOD" = "true" ]; then
     cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="180s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
     cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="300s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
-    cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="180s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+    cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["expedited_voting_period"]="180s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 else 
     cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="432000s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
     cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="432000s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
