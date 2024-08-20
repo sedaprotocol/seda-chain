@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -195,40 +194,6 @@ func (s *KeeperTestSuite) TestStoreExecutorWasm() {
 			}
 			s.Require().NoError(err)
 			s.Require().Equal(tc.expOutput, *res)
-		})
-	}
-}
-
-func (s *KeeperTestSuite) TestMarshalJSON() {
-	cases := []struct {
-		name     string
-		hash     string
-		body     *types.EventStoreDataRequestWasm
-		expected string
-	}{
-		{
-			name: "Test WasmTypeDataRequest",
-			hash: "8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261",
-			body: &types.EventStoreDataRequestWasm{
-				Hash:     "8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261",
-				Bytecode: []byte("test WasmTypeDataRequest"),
-			},
-			expected: `{"hash":"8558424e10c60eb4594cb2f1de834d5dd7a3b073d98d8641f8985fdbd84c3261","bytecode":"dGVzdCBXYXNtVHlwZURhdGFSZXF1ZXN0"}`,
-		},
-	}
-
-	for _, tc := range cases {
-		s.Run(tc.name, func() {
-			wrapper := &keeper.EventStoreDataRequestWasmWrapper{
-				EventStoreDataRequestWasm: &types.EventStoreDataRequestWasm{
-					Hash:     tc.hash,
-					Bytecode: tc.body.Bytecode,
-				},
-			}
-
-			data, err := json.Marshal(wrapper)
-			s.Require().NoError(err)
-			s.Require().Equal(tc.expected, string(data))
 		})
 	}
 }

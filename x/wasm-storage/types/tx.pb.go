@@ -549,7 +549,8 @@ type MsgClient interface {
 	StoreDataRequestWasm(ctx context.Context, in *MsgStoreDataRequestWasm, opts ...grpc.CallOption) (*MsgStoreDataRequestWasmResponse, error)
 	// StoreExecutorWasm stores an executor wasm.
 	StoreExecutorWasm(ctx context.Context, in *MsgStoreExecutorWasm, opts ...grpc.CallOption) (*MsgStoreExecutorWasmResponse, error)
-	// InstantiateCoreContract instantiates the Core Contract and registers its address.
+	// InstantiateCoreContract instantiates the Core Contract and registers its
+	// address.
 	InstantiateCoreContract(ctx context.Context, in *MsgInstantiateCoreContract, opts ...grpc.CallOption) (*MsgInstantiateCoreContractResponse, error)
 	// The UpdateParams method updates the module's parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
@@ -605,7 +606,8 @@ type MsgServer interface {
 	StoreDataRequestWasm(context.Context, *MsgStoreDataRequestWasm) (*MsgStoreDataRequestWasmResponse, error)
 	// StoreExecutorWasm stores an executor wasm.
 	StoreExecutorWasm(context.Context, *MsgStoreExecutorWasm) (*MsgStoreExecutorWasmResponse, error)
-	// InstantiateCoreContract instantiates the Core Contract and registers its address.
+	// InstantiateCoreContract instantiates the Core Contract and registers its
+	// address.
 	InstantiateCoreContract(context.Context, *MsgInstantiateCoreContract) (*MsgInstantiateCoreContractResponse, error)
 	// The UpdateParams method updates the module's parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)

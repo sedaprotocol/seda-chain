@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
-	"encoding/json"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
@@ -16,38 +15,6 @@ import (
 
 type msgServer struct {
 	Keeper
-}
-type EventStoreDataRequestWasmWrapper struct {
-	*types.EventStoreDataRequestWasm
-}
-
-// MarshalJSON customizes the JSON encoding of the type that implements it
-func (e EventStoreDataRequestWasmWrapper) MarshalJSON() ([]byte, error) {
-	// avoid infinite recursion when calling json.Marshal
-	type Alias types.EventStoreDataRequestWasm
-
-	return json.Marshal(&struct {
-		Hash json.RawMessage `json:"hash"`
-		*Alias
-	}{
-		Hash:  json.RawMessage(`"` + e.Hash + `"`),   // wrap the raw json value in double quotes
-		Alias: (*Alias)(e.EventStoreDataRequestWasm), // cast to embedded type
-	})
-}
-
-type EventStoreExecutorWasmWrapper struct {
-	*types.EventStoreExecutorWasm
-}
-
-func (e EventStoreExecutorWasmWrapper) MarshalJSON() ([]byte, error) {
-	type Alias types.EventStoreExecutorWasm
-	return json.Marshal(&struct {
-		Hash json.RawMessage `json:"hash"`
-		*Alias
-	}{
-		Hash:  json.RawMessage(`"` + e.Hash + `"`),
-		Alias: (*Alias)(e.EventStoreExecutorWasm),
-	})
 }
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
@@ -89,13 +56,12 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	}
 
 	hashString := hex.EncodeToString(wasm.Hash)
-	err = ctx.EventManager().EmitTypedEvent(
-		&EventStoreDataRequestWasmWrapper{
-			EventStoreDataRequestWasm: &types.EventStoreDataRequestWasm{
-				Hash:     hashString,
-				Bytecode: msg.Wasm,
-			},
-		})
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeStoreDataRequestWasm,
+			sdk.NewAttribute(types.AttributeWasmHash, hashString),
+		),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -137,13 +103,12 @@ func (m msgServer) StoreExecutorWasm(goCtx context.Context, msg *types.MsgStoreE
 	}
 
 	hashString := hex.EncodeToString(wasm.Hash)
-	err = ctx.EventManager().EmitTypedEvent(
-		&EventStoreExecutorWasmWrapper{
-			EventStoreExecutorWasm: &types.EventStoreExecutorWasm{
-				Hash:     hashString,
-				Bytecode: msg.Wasm,
-			},
-		})
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeExecutorWasm,
+			sdk.NewAttribute(types.AttributeWasmHash, hashString),
+		),
+	)
 	if err != nil {
 		return nil, err
 	}
