@@ -130,6 +130,8 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
+	// Used in cosmos-sdk when registering the route for swagger docs.
+	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally"
@@ -140,9 +142,6 @@ import (
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
-
-	// Used in cosmos-sdk when registering the route for swagger docs.
-	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 )
 
 const (

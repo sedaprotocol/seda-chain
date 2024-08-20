@@ -17,20 +17,14 @@ func (msg *MsgStoreDataRequestWasm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}
-	if err := validateWasmSize(msg.Wasm); err != nil {
-		return err
-	}
-	return nil
+	return validateWasmSize(msg.Wasm)
 }
 
 func (msg *MsgStoreExecutorWasm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}
-	if err := validateWasmSize(msg.Wasm); err != nil {
-		return err
-	}
-	return nil
+	return validateWasmSize(msg.Wasm)
 }
 
 func (msg *MsgInstantiateCoreContract) ValidateBasic() error {
@@ -54,8 +48,5 @@ func (msg *MsgInstantiateCoreContract) ValidateBasic() error {
 	if err := msg.Msg.ValidateBasic(); err != nil {
 		return err
 	}
-	if err := wasmtypes.ValidateSalt(msg.Salt); err != nil {
-		return err
-	}
-	return nil
+	return wasmtypes.ValidateSalt(msg.Salt)
 }

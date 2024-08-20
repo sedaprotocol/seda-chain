@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"slices"
-
 	"golang.org/x/exp/constraints"
 )
 

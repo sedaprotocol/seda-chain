@@ -3,12 +3,13 @@ package staking
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+
+	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -77,7 +78,7 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
 	var data sdktypes.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
-		return fmt.Errorf("failed to unmarshal %s genesis state: %w", sdktypes.ModuleName, err)
+		return errorsmod.Wrapf(err, "failed to unmarshal %s genesis state", sdktypes.ModuleName)
 	}
 
 	return staking.ValidateGenesis(&data)
