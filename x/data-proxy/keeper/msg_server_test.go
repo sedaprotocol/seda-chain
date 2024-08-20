@@ -5,6 +5,8 @@ import (
 
 	"cosmossdk.io/collections"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 )
 
@@ -64,7 +66,7 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				Signature:     "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
 			},
 			expected: nil,
-			wantErr:  types.ErrInvalidAddress,
+			wantErr:  sdkerrors.ErrInvalidAddress,
 		},
 		{
 			name: "Invalid signature",
@@ -90,7 +92,7 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				Signature:     "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
 			},
 			expected: nil,
-			wantErr:  types.ErrInvalidHex,
+			wantErr:  hex.InvalidByteError(byte('g')),
 		},
 		{
 			name: "Invalid signature hex",
@@ -103,7 +105,7 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				Signature:     "5076g9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
 			},
 			expected: nil,
-			wantErr:  types.ErrInvalidHex,
+			wantErr:  hex.InvalidByteError(byte('g')),
 		},
 	}
 	for _, tt := range tests {
@@ -272,7 +274,7 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 				PubKey:           "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
 			},
 			expected: nil,
-			wantErr:  types.ErrUnauthorized,
+			wantErr:  sdkerrors.ErrorInvalidSigner,
 		},
 	}
 	for _, tt := range tests {
@@ -372,7 +374,7 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 			PubKey:           "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
 		}
 		failedEdit, err := s.msgSrvr.EditDataProxy(s.ctx, editMsg)
-		s.Require().ErrorIs(err, types.ErrUnauthorized)
+		s.Require().ErrorIs(err, sdkerrors.ErrorInvalidSigner)
 		s.Require().Nil(failedEdit)
 
 		transferRes, err := s.msgSrvr.TransferAdmin(s.ctx, &types.MsgTransferAdmin{

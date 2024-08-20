@@ -85,7 +85,6 @@ func (k Keeper) GetFeeUpdatePubKeys(ctx context.Context, activationHeight int64)
 }
 
 func (k Keeper) processProxyFeeUpdate(ctx sdk.Context, pubKeyBytes []byte, proxyConfig *types.ProxyConfig, newFee *sdk.Coin, updateDelay uint32) (int64, error) {
-
 	// Determine update height
 	updateHeight := ctx.BlockHeight() + int64(updateDelay)
 	feeUpdate := &types.FeeUpdate{

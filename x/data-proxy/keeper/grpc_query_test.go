@@ -6,6 +6,7 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 )
@@ -48,7 +49,7 @@ func (s *KeeperTestSuite) TestQuerier_ProxyConfig() {
 			name:      "Unknown pubkey",
 			config:    nil,
 			pubKeyHex: "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
-			wantErr:   types.ErrUnknownDataProxy,
+			wantErr:   sdkerrors.ErrNotFound,
 		},
 	}
 
