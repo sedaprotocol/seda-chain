@@ -1,14 +1,13 @@
 package types
 
 import (
-	"fmt"
-
 	"cosmossdk.io/core/address"
 	"cosmossdk.io/math"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -52,7 +51,7 @@ func NewMsgCreateValidatorWithVRF(
 // Validate validates the MsgCreateValidatorWithVRF sdk msg.
 func (msg MsgCreateValidatorWithVRF) Validate(ac address.Codec) error {
 	if msg.Pubkey == nil || msg.VrfPubkey == nil {
-		return fmt.Errorf("empty validator public key or VRF public key")
+		return sdkerrors.ErrInvalidRequest.Wrap("empty validator public key or VRF public key")
 	}
 
 	msgCreateVal := &types.MsgCreateValidator{

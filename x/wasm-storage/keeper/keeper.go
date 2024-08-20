@@ -87,11 +87,11 @@ func (k Keeper) GetCoreContractAddr(ctx context.Context) (sdk.AccAddress, error)
 func (k Keeper) GetDataRequestWasm(ctx context.Context, hash string) (types.DataRequestWasm, error) {
 	hexHash, err := hex.DecodeString(hash)
 	if err != nil {
-		return types.DataRequestWasm{}, fmt.Errorf("failed to hex-encoded wasm hash: %w", err)
+		return types.DataRequestWasm{}, types.ErrInvalidHexWasmHash
 	}
 	wasm, err := k.DataRequestWasm.Get(ctx, hexHash)
 	if err != nil {
-		return types.DataRequestWasm{}, fmt.Errorf("failed to get data request wasm: %w", err)
+		return types.DataRequestWasm{}, err
 	}
 	return wasm, nil
 }

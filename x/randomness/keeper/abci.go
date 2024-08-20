@@ -3,7 +3,6 @@ package keeper
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
@@ -44,7 +43,7 @@ func (h *ProposalHandler) PrepareProposalHandler(
 ) sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (*abci.ResponsePrepareProposal, error) {
 		if vrfSigner.IsNil() {
-			return nil, fmt.Errorf("vrf signer is nil")
+			return nil, types.ErrNilVRFSigner
 		}
 
 		defer h.txSelector.Clear()
@@ -61,7 +60,7 @@ func (h *ProposalHandler) PrepareProposalHandler(
 			return nil, err
 		}
 		if prevSeed == "" {
-			return nil, fmt.Errorf("previous seed is empty - this should never happen")
+			return nil, types.ErrEmptyPreviousSeed
 		}
 		timestamp, err := req.Time.MarshalBinary()
 		if err != nil {
@@ -96,7 +95,7 @@ func (h *ProposalHandler) PrepareProposalHandler(
 
 		stop := h.txSelector.SelectTxForProposal(ctx, uint64(req.MaxTxBytes), maxBlockGas, newSeedTx, newSeedTxBz)
 		if stop {
-			return nil, fmt.Errorf("max block gas or tx bytes exceeded by just new seed tx")
+			return nil, types.ErrNewSeedTxNotIncluded
 		}
 
 		// include txs in the proposal until max tx bytes or block gas limits are reached
@@ -169,7 +168,7 @@ func (h *ProposalHandler) ProcessProposalHandler(
 			return nil, err
 		}
 		if prevSeed == "" {
-			panic("seed should never be empty")
+			return nil, types.ErrEmptyPreviousSeed
 		}
 		timestamp, err := req.Time.MarshalBinary()
 		if err != nil {

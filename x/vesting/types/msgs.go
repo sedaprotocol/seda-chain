@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (
@@ -20,9 +21,26 @@ func NewMsgCreateVestingAccount(fromAddr, toAddr sdk.AccAddress, amount sdk.Coin
 	}
 }
 
+func (m *MsgCreateVestingAccount) ValidateBasic() error {
+	if err := validateAmount(m.Amount); err != nil {
+		return err
+	}
+	if m.EndTime <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("invalid end time")
+	}
+	return nil
+}
+
 func NewMsgClawback(funder, vestingAccount sdk.AccAddress) *MsgClawback {
 	return &MsgClawback{
 		FunderAddress:  funder.String(),
 		AccountAddress: vestingAccount.String(),
 	}
+}
+
+func validateAmount(amount sdk.Coins) error {
+	if !amount.IsValid() || !amount.IsAllPositive() {
+		return sdkerrors.ErrInvalidCoins.Wrap(amount.String())
+	}
+	return nil
 }

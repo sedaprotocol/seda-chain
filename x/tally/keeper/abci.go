@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
@@ -155,7 +157,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmResult, bool, error) {
 	filter, err := base64.StdEncoding.DecodeString(req.ConsensusFilter)
 	if err != nil {
-		return tallyvm.VmResult{}, false, fmt.Errorf("failed to decode consensus filter: %w", err)
+		return tallyvm.VmResult{}, false, errorsmod.Wrap(err, "failed to decode consensus filter")
 	}
 
 	// Sort reveals.
@@ -173,7 +175,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmRe
 
 	outliers, consensus, err := ApplyFilter(filter, reveals)
 	if err != nil {
-		return tallyvm.VmResult{}, false, fmt.Errorf("error while applying filter: %w", err)
+		return tallyvm.VmResult{}, false, errorsmod.Wrap(err, "error while applying filter")
 	}
 
 	tallyWasm, err := k.wasmStorageKeeper.GetDataRequestWasm(ctx, req.TallyBinaryID)
@@ -182,12 +184,12 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmRe
 	}
 	tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
 	if err != nil {
-		return tallyvm.VmResult{}, false, fmt.Errorf("failed to decode tally inputs: %w", err)
+		return tallyvm.VmResult{}, false, errorsmod.Wrap(err, "failed to decode tally inputs")
 	}
 
 	args, err := tallyVMArg(tallyInputs, reveals, outliers)
 	if err != nil {
-		return tallyvm.VmResult{}, false, fmt.Errorf("failed to construct tally VM arguments: %w", err)
+		return tallyvm.VmResult{}, false, errorsmod.Wrap(err, "failed to construct tally VM arguments")
 	}
 
 	k.Logger(ctx).Info(

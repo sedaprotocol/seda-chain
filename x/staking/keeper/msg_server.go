@@ -4,7 +4,6 @@ import (
 	"context"
 
 	addresscodec "cosmossdk.io/core/address"
-	errorsmod "cosmossdk.io/errors"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -43,7 +42,7 @@ func (k msgServer) CreateValidatorWithVRF(ctx context.Context, msg *types.MsgCre
 	// create an account based on VRF public key to send NewSeed txs when proposing blocks
 	vrfPubKey, ok := msg.VrfPubkey.GetCachedValue().(cryptotypes.PubKey)
 	if !ok {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", vrfPubKey)
+		return nil, sdkerrors.ErrInvalidType.Wrapf("expected cryptotypes.PubKey, got %T", vrfPubKey)
 	}
 
 	addr := sdk.AccAddress(vrfPubKey.Address().Bytes())
@@ -53,7 +52,7 @@ func (k msgServer) CreateValidatorWithVRF(ctx context.Context, msg *types.MsgCre
 	// register VRF public key to validator consensus address
 	consPubKey, ok := msg.Pubkey.GetCachedValue().(cryptotypes.PubKey)
 	if !ok {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", consPubKey)
+		return nil, sdkerrors.ErrInvalidType.Wrapf("expected cryptotypes.PubKey, got %T", consPubKey)
 	}
 	err := k.randomnessKeeper.SetValidatorVRFPubKey(ctx, sdk.GetConsAddress(consPubKey).String(), vrfPubKey)
 	if err != nil {

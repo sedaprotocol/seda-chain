@@ -33,7 +33,7 @@ func (msg *MsgStoreExecutorWasm) ValidateBasic() error {
 	return nil
 }
 
-func (msg *MsgInstantiateCoreContract) Validate() error {
+func (msg *MsgInstantiateCoreContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}

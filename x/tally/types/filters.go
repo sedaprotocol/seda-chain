@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"golang.org/x/exp/constraints"
 	"slices"
+
+	"golang.org/x/exp/constraints"
 )
 
 type Filter interface {
@@ -40,7 +41,7 @@ type FilterMode struct {
 func NewFilterMode(input []byte) (FilterMode, error) {
 	var filter FilterMode
 	if len(input) < 9 {
-		return filter, ErrInvalidFilterInputLen.Wrapf("%d < %d", len(input), 9)
+		return filter, ErrFilterInputTooShort.Wrapf("%d < %d", len(input), 9)
 	}
 
 	var pathLen uint64
@@ -95,7 +96,7 @@ type FilterStdDev struct {
 func NewFilterStdDev(input []byte) (FilterStdDev, error) {
 	var filter FilterStdDev
 	if len(input) < 18 {
-		return filter, ErrInvalidFilterInputLen.Wrapf("%d < %d", len(input), 18)
+		return filter, ErrFilterInputTooShort.Wrapf("%d < %d", len(input), 18)
 	}
 
 	maxSigma, err := NewSigma(input[1:9])

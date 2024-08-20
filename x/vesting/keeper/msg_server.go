@@ -2,12 +2,9 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 	"math"
 
 	"github.com/hashicorp/go-metrics"
-
-	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,42 +31,37 @@ func NewMsgServerImpl(ak types.AccountKeeper, bk types.BankKeeper, sk types.Stak
 var _ types.MsgServer = msgServer{}
 
 func (m msgServer) CreateVestingAccount(goCtx context.Context, msg *types.MsgCreateVestingAccount) (*types.MsgCreateVestingAccountResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	err := msg.ValidateBasic()
+	if err != nil {
+		return nil, err
+	}
 	from, err := m.ak.AddressCodec().StringToBytes(msg.FromAddress)
 	if err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid 'from' address: %s", err)
+		return nil, err
 	}
-
 	to, err := m.ak.AddressCodec().StringToBytes(msg.ToAddress)
 	if err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid 'to' address: %s", err)
-	}
-
-	if err := validateAmount(msg.Amount); err != nil {
 		return nil, err
 	}
 
-	if msg.EndTime <= 0 {
-		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid end time")
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
 	if err := m.bk.IsSendEnabledCoins(ctx, msg.Amount...); err != nil {
 		return nil, err
 	}
 
 	if m.bk.BlockedAddr(to) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "%s is not allowed to receive funds", msg.ToAddress)
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("%s is not allowed to receive funds", msg.ToAddress)
 	}
-
 	if acc := m.ak.GetAccount(ctx, to); acc != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "account %s already exists", msg.ToAddress)
+		return nil, sdkerrors.ErrInvalidRequest.Wrapf("account %s already exists", msg.ToAddress)
 	}
 
 	baseAccount := authtypes.NewBaseAccountWithAddress(to)
 	baseAccount = m.ak.NewAccount(ctx, baseAccount).(*authtypes.BaseAccount)
 	baseVestingAccount, err := sdkvestingtypes.NewBaseVestingAccount(baseAccount, msg.Amount.Sort(), msg.EndTime)
 	if err != nil {
-		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+		return nil, err
 	}
 
 	vestingAccount := types.NewClawbackContinuousVestingAccountRaw(baseVestingAccount, ctx.BlockTime().Unix(), msg.FromAddress)
@@ -118,42 +110,40 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 	// authority account, because in that case the destination address is hardcored to the
 	// community pool address anyway (see further below).
 	if m.bk.BlockedAddr(funderAddr) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized,
-			"%s is a blocked address and not allowed to receive funds", msg.FunderAddress,
-		)
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("%s is not allowed to receive funds", msg.FunderAddress)
 	}
 
 	// retrieve the vesting account and perform preliminary checks
 	acc := m.ak.GetAccount(ctx, vestingAccAddr)
 	if acc == nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownAddress, "account at address '%s' does not exist", vestingAccAddr.String())
+		return nil, sdkerrors.ErrUnknownAddress.Wrapf("%s", msg.AccountAddress)
 	}
 	vestingAccount, isClawback := acc.(*types.ClawbackContinuousVestingAccount)
 	if !isClawback {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "account %s is not of type ClawbackContinuousVestingAccount", vestingAccAddr.String())
+		return nil, types.ErrNotClawbackAccount
 	}
 	if vestingAccount.GetVestingCoins(ctx.BlockTime()).IsZero() {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "account %s does not have currently vesting coins", msg.AccountAddress)
+		return nil, types.ErrNoVestingCoins
 	}
 	if vestingAccount.FunderAddress == "" {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "vesting account has no funder registered (clawback disabled): %s", msg.AccountAddress)
+		return nil, types.ErrNoFunderRegistered
 	}
 	if vestingAccount.FunderAddress != msg.FunderAddress {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "clawback can only be requested by original funder: %s", vestingAccount.FunderAddress)
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("clawback can only be requested by original funder: %s", vestingAccount.FunderAddress)
 	}
 
 	// Compute the clawback based on bank balance and delegation, and update account
 	bondedAmt, err := m.sk.GetDelegatorBonded(ctx, vestingAccAddr)
 	if err != nil {
-		return nil, fmt.Errorf("error while getting bonded amount: %w", err)
+		return nil, err
 	}
 	unbondingAmt, err := m.sk.GetDelegatorUnbonding(ctx, vestingAccAddr)
 	if err != nil {
-		return nil, fmt.Errorf("error while getting unbonding amount: %w", err)
+		return nil, err
 	}
 	bondDenom, err := m.sk.BondDenom(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get bond denomination")
+		return nil, err
 	}
 
 	bonded := sdk.NewCoins(sdk.NewCoin(bondDenom, bondedAmt))
@@ -191,7 +181,7 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 		// first from unbonding delegations
 		unbondings, err := m.sk.GetUnbondingDelegations(ctx, vestingAccAddr, math.MaxUint16)
 		if err != nil {
-			return nil, fmt.Errorf("error while getting unbonding delegations: %w", err)
+			return nil, err
 		}
 		for _, unbonding := range unbondings {
 			valAddr, err := sdk.ValAddressFromBech32(unbonding.ValidatorAddress)
@@ -215,7 +205,7 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 		if toClawBackStaking.IsPositive() {
 			delegations, err := m.sk.GetDelegatorDelegations(ctx, vestingAccAddr, math.MaxUint16)
 			if err != nil {
-				return nil, fmt.Errorf("error while getting delegations: %w", err)
+				return nil, err
 			}
 
 			for _, delegation := range delegations {
@@ -255,7 +245,7 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 		}
 
 		if !toClawBackStaking.IsZero() {
-			return nil, fmt.Errorf("failed to claw back full amount")
+			return nil, types.ErrIncompleteClawback
 		}
 	}
 
@@ -264,18 +254,6 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 		ClawedUnbonding: clawedBackUnbonding,
 		ClawedBonded:    clawedBackBonded,
 	}, nil
-}
-
-func validateAmount(amount sdk.Coins) error {
-	if !amount.IsValid() {
-		return sdkerrors.ErrInvalidCoins.Wrap(amount.String())
-	}
-
-	if !amount.IsAllPositive() {
-		return sdkerrors.ErrInvalidCoins.Wrap(amount.String())
-	}
-
-	return nil
 }
 
 // coinsMin returns the minimum of its inputs for all denominations.

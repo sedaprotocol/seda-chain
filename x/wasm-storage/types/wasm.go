@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -16,10 +15,10 @@ const (
 
 func validateWasmSize(s []byte) error {
 	if len(s) < MinWasmSize {
-		return fmt.Errorf("wasm code must be larger than %d bytes", MinWasmSize)
+		return ErrWasmTooSmall.Wrapf("%d < %d", len(s), MinWasmSize)
 	}
 	if len(s) > MaxWasmSize {
-		return fmt.Errorf("wasm code cannot be larger than %d bytes", MaxWasmSize)
+		return ErrWasmTooLarge.Wrapf("%d > %d", len(s), MaxWasmSize)
 	}
 	return nil
 }

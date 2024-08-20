@@ -1,11 +1,5 @@
 package types
 
-import (
-	"fmt"
-
-	"cosmossdk.io/errors"
-)
-
 const (
 	DefaultMaxWasmSize int64 = 800 * 1024
 	DefaultWasmTTL           = 259200 // 21 days
@@ -19,14 +13,13 @@ func DefaultParams() Params {
 	}
 }
 
-// ValidateBasic performs basic validation on wasm-storage
-// module parameters.
-func (p *Params) ValidateBasic() error {
+// Validate validates the wasm-storage module parameters.
+func (p *Params) Validate() error {
 	if p.WasmTTL < 2 {
-		return errors.Wrapf(ErrInvalidParam, "WasmTTL %d < 2", p.WasmTTL)
+		return ErrInvalidParam.Wrapf("WasmTTL %d < 2", p.WasmTTL)
 	}
 	if p.MaxWasmSize <= 0 {
-		return fmt.Errorf("invalid max Wasm size: %d", p.MaxWasmSize)
+		return ErrInvalidParam.Wrapf("invalid max wasm size %d", p.MaxWasmSize)
 	}
 	return nil
 }

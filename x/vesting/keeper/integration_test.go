@@ -75,7 +75,7 @@ type fixture struct {
 func initFixture(tb testing.TB) *fixture {
 	tb.Helper()
 	keys := storetypes.NewKVStoreKeys(
-		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, types.StoreKey,
+		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey,
 	)
 	cdc := moduletestutil.MakeTestEncodingConfig(auth.AppModuleBasic{}, bank.AppModuleBasic{}, vesting.AppModuleBasic{}).Codec
 

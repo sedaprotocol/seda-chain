@@ -1,8 +1,6 @@
 package types
 
 import (
-	fmt "fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -27,8 +25,8 @@ func ValidateGenesis(gs GenesisState) error {
 	if gs.CoreContractRegistry != "" {
 		_, err := sdk.AccAddressFromBech32(gs.CoreContractRegistry)
 		if err != nil {
-			return fmt.Errorf("invalid Core contract address %w", err)
+			return err
 		}
 	}
-	return gs.Params.ValidateBasic()
+	return gs.Params.Validate()
 }
