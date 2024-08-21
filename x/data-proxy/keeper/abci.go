@@ -3,8 +3,6 @@ package keeper
 import (
 	"encoding/hex"
 
-	"cosmossdk.io/collections"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
@@ -36,7 +34,7 @@ func (k *Keeper) ProcessFeeUpdates(ctx sdk.Context) error {
 	}
 
 	for _, pubkey := range pubkeys {
-		proxyConfig, err := k.DataProxyConfigs.Get(ctx, pubkey)
+		proxyConfig, err := k.GetDataProxyConfig(ctx, pubkey)
 		if err != nil {
 			return err
 		}
@@ -44,11 +42,11 @@ func (k *Keeper) ProcessFeeUpdates(ctx sdk.Context) error {
 		proxyConfig.Fee = proxyConfig.FeeUpdate.NewFee
 		proxyConfig.FeeUpdate = nil
 
-		if err := k.DataProxyConfigs.Set(ctx, pubkey, proxyConfig); err != nil {
+		if err := k.SetDataProxyConfig(ctx, pubkey, proxyConfig); err != nil {
 			return err
 		}
 
-		if err := k.FeeUpdateQueue.Remove(ctx, collections.Join(blockHeight, pubkey)); err != nil {
+		if err := k.RemoveFeeUpdate(ctx, blockHeight, pubkey); err != nil {
 			return err
 		}
 

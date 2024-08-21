@@ -5,8 +5,6 @@ import (
 
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 
-	"cosmossdk.io/collections"
-
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 )
 
@@ -15,9 +13,8 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 		s.SetupTest()
 
 		pubKeyBytes := secp256k1.GenPrivKey().PubKey().Bytes()
-		pubKeyHex := hex.EncodeToString(pubKeyBytes)
 
-		err := s.keeper.DataProxyConfigs.Set(s.ctx, pubKeyBytes, types.ProxyConfig{
+		err := s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, types.ProxyConfig{
 			PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 			Fee:           s.NewFeeFromString("10000"),
 			Memo:          "test",
@@ -28,13 +25,13 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 			AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 		})
 		s.Require().NoError(err)
-		err = s.keeper.FeeUpdateQueue.Set(s.ctx, collections.Join(int64(0), pubKeyBytes))
+		err = s.keeper.SetFeeUpdate(s.ctx, int64(0), pubKeyBytes)
 		s.Require().NoError(err)
 
 		err = s.keeper.EndBlock(s.ctx)
 		s.Require().NoError(err)
 
-		proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, pubKeyHex)
+		proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, pubKeyBytes)
 		s.Require().NoError(err)
 
 		s.Require().Equal(types.ProxyConfig{
@@ -45,7 +42,7 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 			AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 		}, proxyConfig)
 
-		found, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(int64(0), pubKeyBytes))
+		found, err := s.keeper.HasFeeUpdate(s.ctx, int64(0), pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().False(found)
 	})
@@ -71,7 +68,7 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 				updateHeight = int64(1)
 			}
 
-			err := s.keeper.DataProxyConfigs.Set(s.ctx, pubKeyBytes, types.ProxyConfig{
+			err := s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, types.ProxyConfig{
 				PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 				Fee:           s.NewFeeFromString("10"),
 				Memo:          "test",
@@ -82,7 +79,7 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 			})
 			s.Require().NoError(err)
-			err = s.keeper.FeeUpdateQueue.Set(s.ctx, collections.Join(updateHeight, pubKeyBytes))
+			err = s.keeper.SetFeeUpdate(s.ctx, updateHeight, pubKeyBytes)
 			s.Require().NoError(err)
 		}
 
@@ -90,7 +87,7 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 		s.Require().NoError(err)
 
 		for i, testInput := range pubKeys {
-			proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, testInput.pubKeyHex)
+			proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, testInput.pubKeyBytes)
 			s.Require().NoError(err)
 
 			expected := types.ProxyConfig{
@@ -114,7 +111,7 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 			if i >= 5 {
 				updateHeight = int64(1)
 			}
-			found, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(updateHeight, testInput.pubKeyBytes))
+			found, err := s.keeper.HasFeeUpdate(s.ctx, updateHeight, testInput.pubKeyBytes)
 			s.Require().NoError(err)
 			if i < 5 {
 				s.Require().False(found)
@@ -129,7 +126,7 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 		s.Require().NoError(err)
 
 		for i, testInput := range pubKeys {
-			proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, testInput.pubKeyHex)
+			proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, testInput.pubKeyBytes)
 			s.Require().NoError(err)
 
 			expected := types.ProxyConfig{
@@ -152,7 +149,7 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 			if i >= 5 {
 				updateHeight = int64(1)
 			}
-			found, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(updateHeight, testInput.pubKeyBytes))
+			found, err := s.keeper.HasFeeUpdate(s.ctx, updateHeight, testInput.pubKeyBytes)
 			s.Require().NoError(err)
 			s.Require().False(found)
 		}

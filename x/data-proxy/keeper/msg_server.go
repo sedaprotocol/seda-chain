@@ -51,9 +51,7 @@ func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegist
 		return nil, errorsmod.Wrapf(err, "invalid hex in signature: %s", msg.Signature)
 	}
 
-	// TODO check if fee is in native denom
-
-	found, err := m.DataProxyConfigs.Has(ctx, pubKeyBytes)
+	found, err := m.HasDataProxy(ctx, pubKeyBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +85,7 @@ func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegist
 		return nil, err
 	}
 
-	err = m.DataProxyConfigs.Set(ctx, pubKeyBytes, proxyConfig)
+	err = m.SetDataProxyConfig(ctx, pubKeyBytes, proxyConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +107,7 @@ func (m msgServer) EditDataProxy(goCtx context.Context, msg *types.MsgEditDataPr
 		return nil, errorsmod.Wrapf(err, "invalid hex in pubkey: %s", msg.PubKey)
 	}
 
-	proxyConfig, err := m.DataProxyConfigs.Get(ctx, pubKeyBytes)
+	proxyConfig, err := m.GetDataProxyConfig(ctx, pubKeyBytes)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
 			return nil, sdkerrors.ErrNotFound.Wrapf("no data proxy registered for %s", msg.PubKey)
@@ -128,7 +126,7 @@ func (m msgServer) EditDataProxy(goCtx context.Context, msg *types.MsgEditDataPr
 
 	// If there is no new fee we can terminate early
 	if msg.NewFee == nil {
-		err = m.DataProxyConfigs.Set(ctx, pubKeyBytes, proxyConfig)
+		err = m.SetDataProxyConfig(ctx, pubKeyBytes, proxyConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -138,22 +136,22 @@ func (m msgServer) EditDataProxy(goCtx context.Context, msg *types.MsgEditDataPr
 		return &types.MsgEditDataProxyResponse{}, nil
 	}
 
-	params, err := m.Keeper.Params.Get(ctx)
+	minimumUpdateDelay, err := m.GetMinimumUpdateDelay(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	updateDelay := params.MinFeeUpdateDelay
+	updateDelay := minimumUpdateDelay
 	// Validate custom delay if passed
 	if msg.FeeUpdateDelay != types.UseMinimumDelay {
-		if msg.FeeUpdateDelay < params.MinFeeUpdateDelay {
-			return nil, types.ErrInvalidDelay.Wrapf("minimum delay %d, got %d", params.MinFeeUpdateDelay, msg.FeeUpdateDelay)
+		if msg.FeeUpdateDelay < minimumUpdateDelay {
+			return nil, types.ErrInvalidDelay.Wrapf("minimum delay %d, got %d", minimumUpdateDelay, msg.FeeUpdateDelay)
 		}
 
 		updateDelay = msg.FeeUpdateDelay
 	}
 
-	updateHeight, err := m.Keeper.processProxyFeeUpdate(ctx, pubKeyBytes, &proxyConfig, msg.NewFee, updateDelay)
+	updateHeight, err := m.processProxyFeeUpdate(ctx, pubKeyBytes, proxyConfig, msg.NewFee, updateDelay)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +194,7 @@ func (m msgServer) TransferAdmin(goCtx context.Context, msg *types.MsgTransferAd
 		return nil, errorsmod.Wrapf(err, "invalid hex in pubkey: %s", msg.PubKey)
 	}
 
-	proxyConfig, err := m.DataProxyConfigs.Get(ctx, pubKeyBytes)
+	proxyConfig, err := m.GetDataProxyConfig(ctx, pubKeyBytes)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
 			return nil, sdkerrors.ErrNotFound.Wrapf("no data proxy registered for %s", msg.PubKey)
@@ -210,7 +208,7 @@ func (m msgServer) TransferAdmin(goCtx context.Context, msg *types.MsgTransferAd
 
 	proxyConfig.AdminAddress = msg.NewAdminAddress
 
-	err = m.DataProxyConfigs.Set(ctx, pubKeyBytes, proxyConfig)
+	err = m.SetDataProxyConfig(ctx, pubKeyBytes, proxyConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -223,20 +221,20 @@ func (m msgServer) TransferAdmin(goCtx context.Context, msg *types.MsgTransferAd
 	return &types.MsgTransferAdminResponse{}, nil
 }
 
-func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, err := sdk.AccAddressFromBech32(req.Authority); err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid authority address: %s", req.Authority)
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid authority address: %s", msg.Authority)
 	}
-	if m.GetAuthority() != req.Authority {
-		return nil, sdkerrors.ErrorInvalidSigner.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), req.Authority)
+	if m.GetAuthority() != msg.Authority {
+		return nil, sdkerrors.ErrorInvalidSigner.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Authority)
 	}
 
-	if err := req.Params.Validate(); err != nil {
+	if err := msg.Params.Validate(); err != nil {
 		return nil, err
 	}
-	if err := m.Params.Set(ctx, req.Params); err != nil {
+	if err := m.SetParams(ctx, msg.Params); err != nil {
 		return nil, err
 	}
 

@@ -61,7 +61,7 @@ func (s *KeeperTestSuite) TestQuerier_ProxyConfig() {
 				pubkeyBytes, err := hex.DecodeString(tt.pubKeyHex)
 				s.Require().NoError(err)
 
-				err = s.keeper.DataProxyConfigs.Set(s.ctx, pubkeyBytes, *tt.config)
+				err = s.keeper.SetDataProxyConfig(s.ctx, pubkeyBytes, *tt.config)
 				s.Require().NoError(err)
 			}
 
