@@ -23,7 +23,7 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 			Memo:          "test",
 			FeeUpdate: &types.FeeUpdate{
 				UpdateHeight: 0,
-				NewFee:       *s.NewFeeFromString("987654321"),
+				NewFee:       s.NewFeeFromString("987654321"),
 			},
 			AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 		})
@@ -77,7 +77,7 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 				Memo:          "test",
 				FeeUpdate: &types.FeeUpdate{
 					UpdateHeight: updateHeight,
-					NewFee:       *s.NewFeeFromString("30"),
+					NewFee:       s.NewFeeFromString("30"),
 				},
 				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 			})
@@ -99,12 +99,12 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 				Memo:          "test",
 				FeeUpdate: &types.FeeUpdate{
 					UpdateHeight: 1,
-					NewFee:       *s.NewFeeFromString("30"),
+					NewFee:       s.NewFeeFromString("30"),
 				},
 				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 			}
 			if i < 5 {
-				expected.Fee = &expected.FeeUpdate.NewFee
+				expected.Fee = expected.FeeUpdate.NewFee
 				expected.FeeUpdate = nil
 			}
 
@@ -138,12 +138,12 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 				Memo:          "test",
 				FeeUpdate: &types.FeeUpdate{
 					UpdateHeight: 1,
-					NewFee:       *s.NewFeeFromString("30"),
+					NewFee:       s.NewFeeFromString("30"),
 				},
 				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 			}
 
-			expected.Fee = &expected.FeeUpdate.NewFee
+			expected.Fee = expected.FeeUpdate.NewFee
 			expected.FeeUpdate = nil
 
 			s.Require().Equal(expected, proxyConfig)

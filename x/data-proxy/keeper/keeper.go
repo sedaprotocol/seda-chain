@@ -88,7 +88,7 @@ func (k Keeper) processProxyFeeUpdate(ctx sdk.Context, pubKeyBytes []byte, proxy
 	// Determine update height
 	updateHeight := ctx.BlockHeight() + int64(updateDelay)
 	feeUpdate := &types.FeeUpdate{
-		NewFee:       *newFee,
+		NewFee:       newFee,
 		UpdateHeight: updateHeight,
 	}
 

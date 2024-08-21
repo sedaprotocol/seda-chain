@@ -38,7 +38,7 @@ func (s *KeeperTestSuite) TestQuerier_ProxyConfig() {
 				Fee:           &sdk.Coin{Denom: "aseda", Amount: math.NewInt(5)},
 				Memo:          "",
 				FeeUpdate: &types.FeeUpdate{
-					NewFee:       sdk.Coin{Denom: "aseda", Amount: math.NewInt(10)},
+					NewFee:       &sdk.Coin{Denom: "aseda", Amount: math.NewInt(10)},
 					UpdateHeight: 6,
 				},
 			},

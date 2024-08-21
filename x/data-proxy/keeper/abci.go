@@ -41,7 +41,7 @@ func (k *Keeper) ProcessFeeUpdates(ctx sdk.Context) error {
 			return err
 		}
 
-		proxyConfig.Fee = &proxyConfig.FeeUpdate.NewFee
+		proxyConfig.Fee = proxyConfig.FeeUpdate.NewFee
 		proxyConfig.FeeUpdate = nil
 
 		if err := k.DataProxyConfigs.Set(ctx, pubkey, proxyConfig); err != nil {

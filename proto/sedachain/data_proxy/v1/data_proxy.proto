@@ -33,14 +33,14 @@ message ProxyConfig {
 
   // fee_update defines an upcoming fee change which will take effect at a
   // future height.
-  FeeUpdate fee_update = 5 [ (gogoproto.nullable) = true ];
+  FeeUpdate fee_update = 5;
 }
 
 // FeeUpdate defines a new fee amount and the height at which it will take
 // effect.
 message FeeUpdate {
   // new_fee defines the new fee for the data proxy.
-  cosmos.base.v1beta1.Coin new_fee = 1 [ (gogoproto.nullable) = false ];
+  cosmos.base.v1beta1.Coin new_fee = 1;
 
   // update_height defines the height after which the new fee comes into effect.
   int64 update_height = 2;
