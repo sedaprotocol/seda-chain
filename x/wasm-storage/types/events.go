@@ -6,4 +6,5 @@ const (
 	EventTypeWasmExpiration       = "wasm_expiration"
 
 	AttributeWasmHash = "wasm_hash"
+	AttributeSender   = "sender"
 )

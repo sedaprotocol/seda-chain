@@ -59,6 +59,7 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeStoreDataRequestWasm,
+			sdk.NewAttribute(types.AttributeSender, msg.Sender),
 			sdk.NewAttribute(types.AttributeWasmHash, hashString),
 		),
 	)
@@ -106,6 +107,7 @@ func (m msgServer) StoreExecutorWasm(goCtx context.Context, msg *types.MsgStoreE
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeExecutorWasm,
+			sdk.NewAttribute(types.AttributeSender, msg.Sender),
 			sdk.NewAttribute(types.AttributeWasmHash, hashString),
 		),
 	)
