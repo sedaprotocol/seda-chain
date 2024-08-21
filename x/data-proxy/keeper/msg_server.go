@@ -138,8 +138,6 @@ func (m msgServer) EditDataProxy(goCtx context.Context, msg *types.MsgEditDataPr
 		return &types.MsgEditDataProxyResponse{}, nil
 	}
 
-	// TODO check if fee is in native denom
-
 	params, err := m.Keeper.Params.Get(ctx)
 	if err != nil {
 		return nil, err
@@ -229,7 +227,7 @@ func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParam
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if _, err := sdk.AccAddressFromBech32(req.Authority); err != nil {
-		return nil, fmt.Errorf("invalid authority address: %s", err)
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid authority address: %s", req.Authority)
 	}
 	if m.GetAuthority() != req.Authority {
 		return nil, sdkerrors.ErrorInvalidSigner.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), req.Authority)

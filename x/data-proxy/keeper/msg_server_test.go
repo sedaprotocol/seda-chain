@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/collections"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
@@ -106,6 +107,35 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 			},
 			expected: nil,
 			wantErr:  hex.InvalidByteError(byte('g')),
+		},
+		{
+			name: "Empty payout address",
+			msg: &types.MsgRegisterDataProxy{
+				AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PayoutAddress: "",
+				Fee:           s.NewFeeFromString("10000000000000000000"),
+				Memo:          "",
+				PubKey:        "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4f3",
+				Signature:     "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
+			},
+			expected: nil,
+			wantErr:  sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "Invalid fee denom",
+			msg: &types.MsgRegisterDataProxy{
+				AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				Fee: &sdk.Coin{
+					Denom:  "uatom",
+					Amount: s.NewIntFromString("10000"),
+				},
+				Memo:      "",
+				PubKey:    "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4f3",
+				Signature: "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
+			},
+			expected: nil,
+			wantErr:  sdkerrors.ErrInvalidRequest,
 		},
 	}
 	for _, tt := range tests {
@@ -276,6 +306,21 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 			expected: nil,
 			wantErr:  sdkerrors.ErrorInvalidSigner,
 		},
+		{
+			name: "Update fee with invalid fee denom",
+			msg: &types.MsgEditDataProxy{
+				Sender:           "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewPayoutAddress: types.DoNotModifyField,
+				NewMemo:          types.DoNotModifyField,
+				NewFee: &sdk.Coin{
+					Denom:  "uatom",
+					Amount: s.NewIntFromString("10000"),
+				},
+				PubKey: "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+			},
+			expected: nil,
+			wantErr:  sdkerrors.ErrInvalidRequest,
+		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
@@ -388,5 +433,128 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 		successfulEdit, err := s.msgSrvr.EditDataProxy(s.ctx, editMsg)
 		s.Require().NoError(err)
 		s.Require().NotNil(successfulEdit)
+	})
+}
+
+func (s *KeeperTestSuite) TestMsgServer_UpdateParamsErrors() {
+	authority := s.keeper.GetAuthority()
+	cases := []struct {
+		name    string
+		input   types.MsgUpdateParams
+		wantErr error
+	}{
+		{
+			name: "invalid minimum update delay",
+			input: types.MsgUpdateParams{
+				Authority: authority,
+				Params: types.Params{
+					MinFeeUpdateDelay: 0,
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "invalid authority",
+			input: types.MsgUpdateParams{
+				Authority: "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
+				Params: types.Params{
+					MinFeeUpdateDelay: 8000,
+				},
+			},
+			wantErr: sdkerrors.ErrorInvalidSigner,
+		},
+	}
+
+	s.SetupTest()
+	for _, tt := range cases {
+		s.Run(tt.name, func() {
+			res, err := s.msgSrvr.UpdateParams(s.ctx, &tt.input)
+			s.Require().ErrorIs(err, tt.wantErr)
+			s.Require().Nil(res)
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
+	authority := s.keeper.GetAuthority()
+	pubKeyHex := "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3"
+	pubKeyBytes, err := hex.DecodeString(pubKeyHex)
+	s.Require().NoError(err)
+
+	initialProxyConfig := types.ProxyConfig{
+		PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+		Fee:           s.NewFeeFromString("9"),
+		Memo:          "test",
+		FeeUpdate:     nil,
+		AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+	}
+
+	s.Run("Updating the minimum delay should not affect existing updates", func() {
+		s.SetupTest()
+
+		// Register data proxy
+		err = s.keeper.DataProxyConfigs.Set(s.ctx, pubKeyBytes, initialProxyConfig)
+		s.Require().NoError(err)
+
+		// Edit data proxy fee and verify it is scheduled with the default delay
+		firstEditMsg := &types.MsgEditDataProxy{
+			Sender:           "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			NewPayoutAddress: types.DoNotModifyField,
+			NewMemo:          types.DoNotModifyField,
+			NewFee:           s.NewFeeFromString("1337"),
+			PubKey:           pubKeyHex,
+		}
+
+		firstEditRes, err := s.msgSrvr.EditDataProxy(s.ctx, firstEditMsg)
+		s.Require().NoError(err)
+		s.Require().NotNil(firstEditRes)
+
+		firstProxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, firstEditMsg.PubKey)
+		s.Require().NoError(err)
+		s.Require().NotNil(firstProxyConfig.FeeUpdate)
+
+		firstUpdateScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(firstEditRes.FeeUpdateHeight, pubKeyBytes))
+		s.Require().NoError(err)
+		s.Require().True(firstUpdateScheduled)
+
+		// Update params, increasing the minimum delay
+		_, err = s.msgSrvr.UpdateParams(s.ctx, &types.MsgUpdateParams{
+			Authority: authority,
+			Params: types.Params{
+				MinFeeUpdateDelay: types.DefaultMinFeeUpdateDelay + 100,
+			},
+		})
+		s.Require().NoError(err)
+
+		// Verify update is still pending at the original height
+		firstUpdateStillScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(firstEditRes.FeeUpdateHeight, pubKeyBytes))
+		s.Require().NoError(err)
+		s.Require().True(firstUpdateStillScheduled)
+
+		// Schedule a new fee update
+		secondEditMsg := &types.MsgEditDataProxy{
+			Sender:           "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			NewPayoutAddress: types.DoNotModifyField,
+			NewMemo:          types.DoNotModifyField,
+			NewFee:           s.NewFeeFromString("1984"),
+			PubKey:           "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+		}
+
+		secondEditRes, err := s.msgSrvr.EditDataProxy(s.ctx, secondEditMsg)
+		s.Require().NoError(err)
+		s.Require().NotNil(secondEditRes)
+
+		secondProxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, secondEditMsg.PubKey)
+		s.Require().NoError(err)
+		s.Require().NotNil(secondProxyConfig.FeeUpdate)
+
+		// Verify the new update is scheduled and the old one is cancelled
+		secondUpdateScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(secondEditRes.FeeUpdateHeight, pubKeyBytes))
+		s.Require().NoError(err)
+		s.Require().True(secondUpdateScheduled)
+
+		firstUpdateNoLongerScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(firstEditRes.FeeUpdateHeight, pubKeyBytes))
+		s.Require().NoError(err)
+		s.Require().False(firstUpdateNoLongerScheduled)
 	})
 }
