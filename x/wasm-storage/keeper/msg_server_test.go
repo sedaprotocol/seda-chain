@@ -159,7 +159,7 @@ func (s *KeeperTestSuite) TestStoreExecutorWasm() {
 				s.Require().NoError(err)
 			},
 			expErr:    true,
-			expErrMsg: "executor wasm with given hash already exists",
+			expErrMsg: "wasm with the same hash already exists",
 		},
 		{
 			name: "unzipped wasm",
@@ -225,7 +225,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 					WasmTTL:     1000,
 				},
 			},
-			expErrMsg: "invalid authority; expected " + authority + ", got seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
+			expErrMsg: "expected " + authority + ", got seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l: invalid authority",
 		},
 		{
 			name: "invalid max wasm size",
@@ -236,7 +236,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 					WasmTTL:     100,
 				},
 			},
-			expErrMsg: "invalid max Wasm size: 0",
+			expErrMsg: "invalid max wasm size 0: invalid param",
 		},
 		{
 			name: "invalid wasm time to live",
