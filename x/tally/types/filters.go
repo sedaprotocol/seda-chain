@@ -51,7 +51,7 @@ func NewFilterMode(input []byte) (FilterMode, error) {
 	}
 
 	path := input[9:]
-	if len(path) != int(pathLen) { // #nosec G115
+	if len(path) != int(pathLen) /* #nosec G115 */ {
 		return filter, ErrInvalidPathLen.Wrapf("expected: %d got: %d", int(pathLen), len(path)) // #nosec G115
 	}
 	filter.dataPath = string(path)
@@ -114,7 +114,7 @@ func NewFilterStdDev(input []byte) (FilterStdDev, error) {
 	}
 
 	path := input[18:]
-	if len(path) != int(pathLen) { // #nosec G115
+	if len(path) != int(pathLen) /* #nosec G115 */ {
 		return filter, ErrInvalidPathLen.Wrapf("expected: %d got: %d", int(pathLen), len(path)) // #nosec G115
 	}
 	filter.dataPath = string(path)
