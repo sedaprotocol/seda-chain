@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"golang.org/x/exp/constraints"
 	"slices"
+
+	"golang.org/x/exp/constraints"
 )
 
 type Filter interface {
