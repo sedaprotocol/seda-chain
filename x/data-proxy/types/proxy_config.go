@@ -1,5 +1,7 @@
 package types
 
+import sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 const (
 	MaxMemoLength    = 3000
 	DoNotModifyField = "[do-not-modify]"
@@ -8,7 +10,7 @@ const (
 
 func (p *ProxyConfig) Validate() error {
 	if len(p.Memo) > MaxMemoLength {
-		return ErrInvalidParam.Wrapf("invalid memo length; got: %d, max < %d", len(p.Memo), MaxMemoLength)
+		return sdkerrors.ErrInvalidRequest.Wrapf("invalid memo length; got: %d, max < %d", len(p.Memo), MaxMemoLength)
 	}
 
 	return nil
