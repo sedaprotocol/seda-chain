@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -22,18 +21,18 @@ type Keeper struct {
 	authority string
 
 	Schema           collections.Schema
-	DataProxyConfigs collections.Map[[]byte, types.ProxyConfig]
-	FeeUpdateQueue   collections.KeySet[collections.Pair[int64, []byte]]
-	Params           collections.Item[types.Params]
+	dataProxyConfigs collections.Map[[]byte, types.ProxyConfig]
+	feeUpdateQueue   collections.KeySet[collections.Pair[int64, []byte]]
+	params           collections.Item[types.Params]
 }
 
 func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, authority string) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
 		authority:        authority,
-		DataProxyConfigs: collections.NewMap(sb, types.DataProxyConfigPrefix, "configs", collections.BytesKey, codec.CollValue[types.ProxyConfig](cdc)),
-		FeeUpdateQueue:   collections.NewKeySet(sb, types.FeeUpdatesPrefix, "fee_updates", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
-		Params:           collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
+		dataProxyConfigs: collections.NewMap(sb, types.DataProxyConfigPrefix, "configs", collections.BytesKey, codec.CollValue[types.ProxyConfig](cdc)),
+		feeUpdateQueue:   collections.NewKeySet(sb, types.FeeUpdatesPrefix, "fee_updates", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
+		params:           collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
 	}
 
 	schema, err := sb.Build()
@@ -49,13 +48,16 @@ func (k Keeper) GetAuthority() string {
 	return k.authority
 }
 
-func (k Keeper) GetDataProxyConfig(ctx context.Context, pubKey string) (result types.ProxyConfig, err error) {
-	pubKeyBytes, err := hex.DecodeString(pubKey)
-	if err != nil {
-		return types.ProxyConfig{}, err
-	}
+func (k Keeper) HasDataProxy(ctx sdk.Context, pubKey []byte) (bool, error) {
+	return k.dataProxyConfigs.Has(ctx, pubKey)
+}
 
-	config, err := k.DataProxyConfigs.Get(ctx, pubKeyBytes)
+func (k Keeper) SetDataProxyConfig(ctx context.Context, pubKey []byte, proxyConfig types.ProxyConfig) error {
+	return k.dataProxyConfigs.Set(ctx, pubKey, proxyConfig)
+}
+
+func (k Keeper) GetDataProxyConfig(ctx context.Context, pubKey []byte) (result types.ProxyConfig, err error) {
+	config, err := k.dataProxyConfigs.Get(ctx, pubKey)
 	if err != nil {
 		return types.ProxyConfig{}, err
 	}
@@ -63,11 +65,50 @@ func (k Keeper) GetDataProxyConfig(ctx context.Context, pubKey string) (result t
 	return config, nil
 }
 
-func (k Keeper) GetFeeUpdatePubKeys(ctx context.Context, activationHeight int64) ([][]byte, error) {
+func (k Keeper) SetFeeUpdate(ctx sdk.Context, height int64, pubKey []byte) error {
+	return k.feeUpdateQueue.Set(ctx, collections.Join(height, pubKey))
+}
+
+func (k Keeper) RemoveFeeUpdate(ctx sdk.Context, height int64, pubKey []byte) error {
+	return k.feeUpdateQueue.Remove(ctx, collections.Join(height, pubKey))
+}
+
+func (k Keeper) processProxyFeeUpdate(ctx sdk.Context, pubKeyBytes []byte, proxyConfig types.ProxyConfig, newFee *sdk.Coin, updateDelay uint32) (int64, error) {
+	// Determine update height
+	updateHeight := ctx.BlockHeight() + int64(updateDelay)
+	feeUpdate := &types.FeeUpdate{
+		NewFee:       newFee,
+		UpdateHeight: updateHeight,
+	}
+
+	// Delete previous pending update, if applicable
+	if proxyConfig.FeeUpdate != nil {
+		err := k.RemoveFeeUpdate(ctx, proxyConfig.FeeUpdate.UpdateHeight, pubKeyBytes)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	// Schedule new update
+	proxyConfig.FeeUpdate = feeUpdate
+	err := k.SetFeeUpdate(ctx, updateHeight, pubKeyBytes)
+	if err != nil {
+		return 0, err
+	}
+
+	err = k.SetDataProxyConfig(ctx, pubKeyBytes, proxyConfig)
+	if err != nil {
+		return 0, err
+	}
+
+	return updateHeight, nil
+}
+
+func (k Keeper) GetFeeUpdatePubKeys(ctx sdk.Context, activationHeight int64) ([][]byte, error) {
 	pubkeys := make([][]byte, 0)
 	rng := collections.NewPrefixedPairRange[int64, []byte](activationHeight)
 
-	itr, err := k.FeeUpdateQueue.Iterate(ctx, rng)
+	itr, err := k.feeUpdateQueue.Iterate(ctx, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -84,35 +125,8 @@ func (k Keeper) GetFeeUpdatePubKeys(ctx context.Context, activationHeight int64)
 	return pubkeys, nil
 }
 
-func (k Keeper) processProxyFeeUpdate(ctx sdk.Context, pubKeyBytes []byte, proxyConfig *types.ProxyConfig, newFee *sdk.Coin, updateDelay uint32) (int64, error) {
-	// Determine update height
-	updateHeight := ctx.BlockHeight() + int64(updateDelay)
-	feeUpdate := &types.FeeUpdate{
-		NewFee:       newFee,
-		UpdateHeight: updateHeight,
-	}
-
-	// Delete previous pending update, if applicable
-	if proxyConfig.FeeUpdate != nil {
-		err := k.FeeUpdateQueue.Remove(ctx, collections.Join(proxyConfig.FeeUpdate.UpdateHeight, pubKeyBytes))
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	// Schedule new update
-	proxyConfig.FeeUpdate = feeUpdate
-	err := k.FeeUpdateQueue.Set(ctx, collections.Join(updateHeight, pubKeyBytes))
-	if err != nil {
-		return 0, err
-	}
-
-	err = k.DataProxyConfigs.Set(ctx, pubKeyBytes, *proxyConfig)
-	if err != nil {
-		return 0, err
-	}
-
-	return updateHeight, nil
+func (k Keeper) HasFeeUpdate(ctx sdk.Context, height int64, pubKey []byte) (bool, error) {
+	return k.feeUpdateQueue.Has(ctx, collections.Join(height, pubKey))
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

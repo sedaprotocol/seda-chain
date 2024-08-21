@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"cosmossdk.io/collections"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
@@ -10,18 +8,18 @@ import (
 
 // InitGenesis initializes the store based on the given genesis state.
 func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
-	if err := k.Params.Set(ctx, data.Params); err != nil {
+	if err := k.SetParams(ctx, data.Params); err != nil {
 		panic(err)
 	}
 
 	for _, dataProxyConfig := range data.DataProxyConfigs {
-		if err := k.DataProxyConfigs.Set(ctx, dataProxyConfig.DataProxyPubkey, *dataProxyConfig.Config); err != nil {
+		if err := k.SetDataProxyConfig(ctx, dataProxyConfig.DataProxyPubkey, *dataProxyConfig.Config); err != nil {
 			panic(err)
 		}
 	}
 
 	for _, feeUpdate := range data.FeeUpdateQueue {
-		if err := k.FeeUpdateQueue.Set(ctx, collections.Join(feeUpdate.UpdateHeight, feeUpdate.DataProxyPubkey)); err != nil {
+		if err := k.SetFeeUpdate(ctx, feeUpdate.UpdateHeight, feeUpdate.DataProxyPubkey); err != nil {
 			panic(err)
 		}
 	}
@@ -31,7 +29,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	var gs types.GenesisState
 
-	params, err := k.Params.Get(ctx)
+	params, err := k.params.Get(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +53,7 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 func (k Keeper) getAllDataProxyConfigs(ctx sdk.Context) ([]types.DataProxyConfig, error) {
 	configs := make([]types.DataProxyConfig, 0)
 
-	itr, err := k.DataProxyConfigs.Iterate(ctx, nil)
+	itr, err := k.dataProxyConfigs.Iterate(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +77,7 @@ func (k Keeper) getAllDataProxyConfigs(ctx sdk.Context) ([]types.DataProxyConfig
 func (k Keeper) getAllFeeUpdateRecords(ctx sdk.Context) ([]types.FeeUpdateQueueRecord, error) {
 	feeUpdates := make([]types.FeeUpdateQueueRecord, 0)
 
-	itr, err := k.FeeUpdateQueue.Iterate(ctx, nil)
+	itr, err := k.feeUpdateQueue.Iterate(ctx, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -3,8 +3,6 @@ package keeper_test
 import (
 	"encoding/hex"
 
-	"cosmossdk.io/collections"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -151,7 +149,10 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 
 			s.Require().NoError(err)
 
-			proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, tt.msg.PubKey)
+			pubKeyBytes, err := hex.DecodeString(tt.msg.PubKey)
+			s.Require().NoError(err)
+
+			proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, pubKeyBytes)
 			s.Require().NoError(err)
 			s.Require().Equal(tt.expected, &proxyConfig)
 		})
@@ -170,7 +171,10 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 		_, err := s.msgSrvr.RegisterDataProxy(s.ctx, msg)
 		s.Require().NoError(err)
 
-		proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, msg.PubKey)
+		pubKeyBytes, err := hex.DecodeString(msg.PubKey)
+		s.Require().NoError(err)
+
+		proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().Equal(&types.ProxyConfig{
 			PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
@@ -326,7 +330,7 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 		s.Run(tt.name, func() {
 			s.SetupTest()
 
-			err = s.keeper.DataProxyConfigs.Set(s.ctx, pubKeyBytes, initialProxyConfig)
+			err = s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, initialProxyConfig)
 			s.Require().NoError(err)
 
 			res, err := s.msgSrvr.EditDataProxy(s.ctx, tt.msg)
@@ -338,12 +342,15 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 
 			s.Require().NoError(err)
 
-			proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, tt.msg.PubKey)
+			pubKeyBytes, err := hex.DecodeString(tt.msg.PubKey)
+			s.Require().NoError(err)
+
+			proxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, pubKeyBytes)
 			s.Require().NoError(err)
 			s.Require().Equal(tt.expected, &proxyConfig)
 
 			if proxyConfig.FeeUpdate != nil {
-				updateScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(proxyConfig.FeeUpdate.UpdateHeight, pubKeyBytes))
+				updateScheduled, err := s.keeper.HasFeeUpdate(s.ctx, proxyConfig.FeeUpdate.UpdateHeight, pubKeyBytes)
 				s.Require().NoError(err)
 				s.Require().True(updateScheduled)
 			}
@@ -356,7 +363,7 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 		firstUpdateHeight := int64(types.DefaultMinFeeUpdateDelay + 100)
 		secondUpdateHeight := int64(types.DefaultMinFeeUpdateDelay + 37)
 
-		err = s.keeper.DataProxyConfigs.Set(s.ctx, pubKeyBytes, initialProxyConfig)
+		err = s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, initialProxyConfig)
 		s.Require().NoError(err)
 
 		firstMsg := &types.MsgEditDataProxy{
@@ -372,11 +379,11 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 		s.Require().NoError(err)
 		s.Require().NotNil(firstRes)
 
-		firstProxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, firstMsg.PubKey)
+		firstProxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().NotNil(firstProxyConfig.FeeUpdate)
 
-		firstUpdateScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(firstUpdateHeight, pubKeyBytes))
+		firstUpdateScheduled, err := s.keeper.HasFeeUpdate(s.ctx, firstUpdateHeight, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().True(firstUpdateScheduled)
 
@@ -393,15 +400,15 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 		s.Require().NoError(err)
 		s.Require().NotNil(secondRes)
 
-		secondProxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, secondMsg.PubKey)
+		secondProxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().NotNil(secondProxyConfig.FeeUpdate)
 
-		secondUpdateScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(secondUpdateHeight, pubKeyBytes))
+		secondUpdateScheduled, err := s.keeper.HasFeeUpdate(s.ctx, secondUpdateHeight, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().True(secondUpdateScheduled)
 
-		firstUpdateNoLongerScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(firstUpdateHeight, pubKeyBytes))
+		firstUpdateNoLongerScheduled, err := s.keeper.HasFeeUpdate(s.ctx, firstUpdateHeight, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().False(firstUpdateNoLongerScheduled)
 	})
@@ -409,7 +416,7 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 	s.Run("Transferring admin address should allow the new address to submit changes", func() {
 		s.SetupTest()
 
-		err = s.keeper.DataProxyConfigs.Set(s.ctx, pubKeyBytes, initialProxyConfig)
+		err = s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, initialProxyConfig)
 		s.Require().NoError(err)
 
 		editMsg := &types.MsgEditDataProxy{
@@ -493,7 +500,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 		s.SetupTest()
 
 		// Register data proxy
-		err = s.keeper.DataProxyConfigs.Set(s.ctx, pubKeyBytes, initialProxyConfig)
+		err = s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, initialProxyConfig)
 		s.Require().NoError(err)
 
 		// Edit data proxy fee and verify it is scheduled with the default delay
@@ -509,11 +516,11 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 		s.Require().NoError(err)
 		s.Require().NotNil(firstEditRes)
 
-		firstProxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, firstEditMsg.PubKey)
+		firstProxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().NotNil(firstProxyConfig.FeeUpdate)
 
-		firstUpdateScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(firstEditRes.FeeUpdateHeight, pubKeyBytes))
+		firstUpdateScheduled, err := s.keeper.HasFeeUpdate(s.ctx, firstEditRes.FeeUpdateHeight, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().True(firstUpdateScheduled)
 
@@ -527,7 +534,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 		s.Require().NoError(err)
 
 		// Verify update is still pending at the original height
-		firstUpdateStillScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(firstEditRes.FeeUpdateHeight, pubKeyBytes))
+		firstUpdateStillScheduled, err := s.keeper.HasFeeUpdate(s.ctx, firstEditRes.FeeUpdateHeight, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().True(firstUpdateStillScheduled)
 
@@ -544,16 +551,16 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 		s.Require().NoError(err)
 		s.Require().NotNil(secondEditRes)
 
-		secondProxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, secondEditMsg.PubKey)
+		secondProxyConfig, err := s.keeper.GetDataProxyConfig(s.ctx, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().NotNil(secondProxyConfig.FeeUpdate)
 
 		// Verify the new update is scheduled and the old one is cancelled
-		secondUpdateScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(secondEditRes.FeeUpdateHeight, pubKeyBytes))
+		secondUpdateScheduled, err := s.keeper.HasFeeUpdate(s.ctx, secondEditRes.FeeUpdateHeight, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().True(secondUpdateScheduled)
 
-		firstUpdateNoLongerScheduled, err := s.keeper.FeeUpdateQueue.Has(s.ctx, collections.Join(firstEditRes.FeeUpdateHeight, pubKeyBytes))
+		firstUpdateNoLongerScheduled, err := s.keeper.HasFeeUpdate(s.ctx, firstEditRes.FeeUpdateHeight, pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().False(firstUpdateNoLongerScheduled)
 	})
