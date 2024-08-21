@@ -66,7 +66,7 @@ message MsgEditDataProxy {
 
   string new_memo = 3;
 
-  cosmos.base.v1beta1.Coin new_fee = 4 [ (gogoproto.nullable) = true ];
+  cosmos.base.v1beta1.Coin new_fee = 4;
 
   // 0 will default to the minimum delay configured in the params
   uint32 fee_update_delay = 5;

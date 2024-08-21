@@ -252,7 +252,7 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 				Fee:           s.NewFeeFromString("9"),
 				Memo:          "test",
 				FeeUpdate: &types.FeeUpdate{
-					NewFee: *s.NewFeeFromString("1337"),
+					NewFee: s.NewFeeFromString("1337"),
 					// Height in test is 0, so update height should be minimum
 					UpdateHeight: int64(types.DefaultMinFeeUpdateDelay),
 				},
@@ -275,7 +275,7 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 				Fee:           s.NewFeeFromString("9"),
 				Memo:          "test",
 				FeeUpdate: &types.FeeUpdate{
-					NewFee:       *s.NewFeeFromString("1337"),
+					NewFee:       s.NewFeeFromString("1337"),
 					UpdateHeight: int64(types.DefaultMinFeeUpdateDelay + 100),
 				},
 				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",

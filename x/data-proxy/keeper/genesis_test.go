@@ -34,7 +34,7 @@ func (s *KeeperTestSuite) TestImportExportGenesis() {
 					Fee:           s.NewFeeFromString("5000"),
 					Memo:          "not my proxy friend",
 					FeeUpdate: &types.FeeUpdate{
-						NewFee:       *s.NewFeeFromString("10000"),
+						NewFee:       s.NewFeeFromString("10000"),
 						UpdateHeight: 500,
 					},
 				},
