@@ -4,8 +4,9 @@ This file describes the process for contributing to `seda-chain`.
 
 ## Starting
 
-First and foremost, [fork](https://github.com/sedaprotocol/seda-chain/fork) the repository. Then please read the
-[developing instructions](DEVELOPING.md) for setting up your environment.
+First and foremost, [fork](https://github.com/sedaprotocol/seda-chain/fork) the
+repository. Then please read the [developing instructions](DEVELOPING.md) for 
+setting up your environment.
 
 ## Commits
 
@@ -17,9 +18,9 @@ Sign all commits with a GPG key. GitHub has extensive documentation on how to:
 
 - [Create](https://docs.github.com/en/authentication/managing-commit-signature-verification/generating-a-new-gpg-key)
   a new GPG key.
-- [Add](https://docs.github.com/en/authentication/managing-commit-signature-verification/A-a-gpg-key-to-your-github-account)
+- [Add](https://docs.github.com/en/authentication/managing-commit-signature-verification/adding-a-gpg-key-to-your-github-account)
   a GPG key to your GitHub.
-- [Sign](https://docs.github.com/en/authentication/managing-commit-signature-verification/A-a-gpg-key-to-your-github-account)
+- [Sign](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits)
   your commits.
 
 ### Convention
@@ -28,25 +29,51 @@ All commits are to follow the
 [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard.
 Commit messages should always be meaningful.
 
-## Getting Ready For a PR
+## Error Handling
 
-This section describes actions to keep in mind while developing.
+If you already have an error you can return, just return it. If you would like 
+to add context to the error, use `errorsmod.Wrapf()`. For instance:
 
-### Change Size
+```go
+import (
+	errorsmod "cosmossdk.io/errors"
+)
 
-Please try to keep changes small to make reviews easier. We will reject more
-extensive unless there is a valid reason.
+err := cdc.UnmarshalJSON(bz, &data)
+if err != nil {
+	return errorsmod.Wrapf(err, "failed to unmarshal %s genesis state", types.ModuleName)
+}
+```
 
-### Formatting and Cleanliness
+If there is no error at hand, you need to create an error or make use of SDK 
+errors. To create a new error, add an error in `types/errors.go` and return it. 
+To make use of SDK errors, find an appropriate error from Cosmos SDK package's 
+`types/errors/errors.go` and return it. For example, we return a `ErrInvalidRequest` 
+error when there is a failure in preliminary validation of transaction request 
+parameters.
 
-Please ensure your code is formatted and clippy gives no warnings.
+```go
+import (
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+)
+func (m *MsgCreateVestingAccount) ValidateBasic() error {
+	if m.EndTime <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("invalid end time")
+	}
+	return nil
+}
+```
 
-## PRs
+## Formatting and Cleanliness
+
+Please run `make lint` before making a commit to format the code.
+
+## Creating a Pull Request
 
 For creating the PR, please follow the instructions below.
 
 1. Firstly, please open a
-   [PR](https://github.com/SedaProtocol/seda-chain/compare) from your forked repo
+   [PR](https://github.com/sedaprotocol/seda-chain/compare) from your forked repo
    to the `main` branch of `seda-chain`.
 2. Please fill in the PR template that is there.
 3. Then assign it to yourself and anyone else who worked on the issue with you.
@@ -54,8 +81,7 @@ For creating the PR, please follow the instructions below.
 5. Finally, please assign at least two reviewers to your PR:
    - [FranklinWaller](https://github.com/FranklinWaller)
    - [gluax](https://github.com/gluax)
-   - [jamesondh](https://github.com/jamesondh)
    - [mariocao](https://github.com/mariocao)
-   - [mennatabuelnaga](https://github.com/mennatabuelnaga)
    - [Thomasvdam](https://github.com/Thomasvdam)
    - [hacheigriega](https://github.com/hacheigriega)
+   - [NikolaCehic95](https://github.com/NikolaCehic95)

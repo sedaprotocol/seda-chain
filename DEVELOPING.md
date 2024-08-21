@@ -100,7 +100,7 @@ You can install that by running:
 sudo ./scripts/install_wasmvm.sh
 ```
 
-## Building using Make
+## Building Using Make
 
 To build the protobuf (only necessary if you made changes in the proto files) you will need to run:
 
