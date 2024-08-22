@@ -10,4 +10,4 @@ fi
 # Generate mocks for the given package
 $mockgen_cmd -source=$GOPATH/pkg/mod/github.com/\!cosm\!wasm/wasmd@v0.50.0/x/wasm/types/exported_keepers.go -package testutil -destination x/wasm-storage/keeper/testutil/wasm_keepers_mock.go
 $mockgen_cmd -source=x/wasm-storage/types/expected_keepers.go -package testutil -destination x/wasm-storage/keeper/testutil/expected_keepers_mock.go
-$mockgen_cmd -source=x/pkr/types/expected_keepers.go -package testutil -destination x/pkr/keeper/testutil/expected_keepers_mock.go
+$mockgen_cmd -source=x/pubkey/types/expected_keepers.go -package testutil -destination x/pubkey/keeper/testutil/expected_keepers_mock.go

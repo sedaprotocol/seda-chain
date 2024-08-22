@@ -1,0 +1,20 @@
+syntax = "proto3";
+package sedachain.pubkey.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "sedachain/pubkey/v1/pubkey.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/pubkey/types";
+
+// GenesisState defines pubkey module's genesis state.
+message GenesisState {
+  repeated ValidatorPubKeys validator_pub_keys = 1 [(gogoproto.nullable) = false];
+}
+
+// ValidatorPubKeys defines a validator's list of registered public keys
+// primarily used in the x/pubkey genesis state. 
+message ValidatorPubKeys {
+  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  repeated IndexedPubKey indexed_pub_keys = 2 [(gogoproto.nullable) = false];
+}
