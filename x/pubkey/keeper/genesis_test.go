@@ -12,21 +12,21 @@ import (
 // generatePubKeysAndValAddrs randomly generates a given number of
 // public keys encoded in codectypes.Any type and their validator
 // addresses.
-func (s *KeeperTestSuite) generatePubKeysAndValAddrs(num uint) ([]*codectypes.Any, []sdk.ValAddress) {
-	var pubKeys []*codectypes.Any
+func (s *KeeperTestSuite) generatePubKeysAndValAddrs(num int) ([]*codectypes.Any, []sdk.ValAddress) {
+	var pkAnys []*codectypes.Any
 	var valAddrs []sdk.ValAddress
-	for i := 0; i < 10; i++ {
+	for i := 0; i < num; i++ {
 		privKey := secp256k1.GenPrivKey()
 		pubKey, err := cryptocodec.FromCmtPubKeyInterface(privKey.PubKey())
 		s.Require().NoError(err)
 
-		any, err := codectypes.NewAnyWithValue(pubKey)
+		pkAny, err := codectypes.NewAnyWithValue(pubKey)
 		s.Require().NoError(err)
-		pubKeys = append(pubKeys, any)
+		pkAnys = append(pkAnys, pkAny)
 
 		valAddrs = append(valAddrs, sdk.ValAddress(privKey.PubKey().Address()))
 	}
-	return pubKeys, valAddrs
+	return pkAnys, valAddrs
 }
 
 func (s *KeeperTestSuite) TestImportExportGenesis() {

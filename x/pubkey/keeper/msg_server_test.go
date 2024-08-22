@@ -46,9 +46,9 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 					{
 						Index: 0,
 						PubKey: func() *codectypes.Any {
-							any, err := codectypes.NewAnyWithValue(&stakingtypes.Commission{})
+							wrongAny, err := codectypes.NewAnyWithValue(&stakingtypes.Commission{})
 							s.Require().NoError(err)
-							return any
+							return wrongAny
 						}(),
 					},
 				},

@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cfg "github.com/cometbft/cometbft/config"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 
@@ -72,8 +71,8 @@ func AddKey(ac address.Codec) *cobra.Command {
 				}
 			} else {
 				pks, err = generateSEDAKeys(
-					serverCfg,
 					[]privKeyGenerator{secp256k1GenPrivKey},
+					filepath.Dir(serverCfg.PrivValidatorKeyFile()),
 				)
 				if err != nil {
 					return err
@@ -99,19 +98,6 @@ type IndexKey struct {
 	PrivKey crypto.PrivKey `json:"priv_key"`
 }
 
-// saveSEDAKeys saves a given list of IndexKeys at a given path.
-func saveSEDAKeys(keys []IndexKey, savePath string) error {
-	jsonBytes, err := cmtjson.MarshalIndent(keys, "", "  ") // TODO use simple json.Marshal?
-	if err != nil {
-		return fmt.Errorf("failed to marshal SEDA keys: %v", err)
-	}
-	err = os.WriteFile(savePath, jsonBytes, 0o600)
-	if err != nil {
-		return fmt.Errorf("failed to write SEDA key file: %v", err)
-	}
-	return nil
-}
-
 // loadSEDAPubKeys loads the SEDA key file from the given path and
 // returns a list of index-public key pairs.
 func loadSEDAPubKeys(loadPath string) ([]types.IndexedPubKey, error) {
@@ -125,18 +111,39 @@ func loadSEDAPubKeys(loadPath string) ([]types.IndexedPubKey, error) {
 		return nil, fmt.Errorf("failed to unmarshal SEDA keys from %v: %v", loadPath, err)
 	}
 
-	var result []types.IndexedPubKey
-	for _, key := range keys {
+	result := make([]types.IndexedPubKey, len(keys))
+	for i, key := range keys {
 		pkAny, err := codectypes.NewAnyWithValue(key.PubKey)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, types.IndexedPubKey{
+		result[i] = types.IndexedPubKey{
 			Index:  key.Index,
 			PubKey: pkAny,
-		})
+		}
 	}
 	return result, nil
+}
+
+// saveSEDAKeys saves a given list of IndexKeys in the directory at dirPath.
+func saveSEDAKeys(keys []IndexKey, dirPath string) error {
+	savePath := filepath.Join(dirPath, SEDAKeyFileName)
+	if cmtos.FileExists(savePath) {
+		return fmt.Errorf("SEDA key file already exists at %s", savePath)
+	}
+	err := cmtos.EnsureDir(filepath.Dir(savePath), 0o700)
+	if err != nil {
+		return err
+	}
+	jsonBytes, err := cmtjson.MarshalIndent(keys, "", "  ") // TODO use simple json.Marshal?
+	if err != nil {
+		return fmt.Errorf("failed to marshal SEDA keys: %v", err)
+	}
+	err = os.WriteFile(savePath, jsonBytes, 0o600)
+	if err != nil {
+		return fmt.Errorf("failed to write SEDA key file: %v", err)
+	}
+	return nil
 }
 
 type privKeyGenerator func() crypto.PrivKey
@@ -148,39 +155,33 @@ func secp256k1GenPrivKey() crypto.PrivKey {
 // generateSEDAKeys generates SEDA keys given a list of private key
 // generators, saves them to the SEDA key file, and returns the resulting
 // index-public key pairs. Index is assigned incrementally in the order
-// of the given private key generators.
-func generateSEDAKeys(config *cfg.Config, generators []privKeyGenerator) ([]types.IndexedPubKey, error) {
-	var keys []IndexKey
-	var result []types.IndexedPubKey
+// of the given private key generators. The key file is stored in the
+// directory given by dirPath.
+func generateSEDAKeys(generators []privKeyGenerator, dirPath string) ([]types.IndexedPubKey, error) {
+	keys := make([]IndexKey, len(generators))
+	result := make([]types.IndexedPubKey, len(generators))
 	for i, generator := range generators {
 		privKey := generator()
-		keys = append(keys, IndexKey{
+		keys[i] = IndexKey{
 			Index:   uint32(i),
 			PrivKey: privKey,
 			PubKey:  privKey.PubKey(),
-		})
+		}
 
 		pkAny, err := codectypes.NewAnyWithValue(privKey.PubKey())
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, types.IndexedPubKey{
+		result[i] = types.IndexedPubKey{
 			Index:  uint32(i),
 			PubKey: pkAny,
-		})
+		}
 	}
 
 	// The key file is placed in the same directory as the validator key file.
-	pvKeyFile := config.PrivValidatorKeyFile()
-	savePath := filepath.Join(filepath.Dir(pvKeyFile), SEDAKeyFileName)
-	if cmtos.FileExists(savePath) {
-		return nil, fmt.Errorf("SEDA key file already exists at %s", savePath)
-	}
-	err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0o700)
+	err := saveSEDAKeys(keys, dirPath)
 	if err != nil {
 		return nil, err
 	}
-	saveSEDAKeys(keys, savePath)
-
 	return result, nil
 }
