@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
-	"github.com/sedaprotocol/seda-chain/x/pkr/types"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 // GetQueryCmd returns the CLI query commands for this module

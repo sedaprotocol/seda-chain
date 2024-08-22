@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/sedaprotocol/seda-chain/x/pkr"
-
 	"github.com/spf13/cast"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -182,7 +180,7 @@ var (
 		ibcfee.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		wasmstorage.AppModuleBasic{},
-		pkr.AppModuleBasic{},
+		pubkey.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		packetforward.AppModuleBasic{},
@@ -244,7 +242,7 @@ type App struct {
 	// SEDA modules keepers
 	WasmStorageKeeper wasmstoragekeeper.Keeper
 	TallyKeeper       tallykeeper.Keeper
-	PkrKeeper         pkrkeeper.Keeper
+	PkrKeeper         pubkeykeeper.Keeper
 
 	mm  *module.Manager
 	bmm module.BasicManager
@@ -309,7 +307,7 @@ func NewApp(
 		feegrant.StoreKey, evidencetypes.StoreKey, circuittypes.StoreKey, authzkeeper.StoreKey, group.StoreKey,
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
-		crisistypes.StoreKey, wasmstoragetypes.StoreKey, pkrtypes.StoreKey,
+		crisistypes.StoreKey, wasmstoragetypes.StoreKey, pubkeytypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -631,9 +629,9 @@ func NewApp(
 
 	app.TallyKeeper = tallykeeper.NewKeeper(app.WasmStorageKeeper, contractKeeper, app.WasmKeeper)
 
-	app.PkrKeeper = *pkrkeeper.NewKeeper(
+	app.PkrKeeper = *pubkeykeeper.NewKeeper(
 		appCodec,
-		runtime.NewKVStoreService(keys[pkrtypes.StoreKey]),
+		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		app.StakingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 	)
@@ -751,7 +749,7 @@ func NewApp(
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
 		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
 		tally.NewAppModule(app.TallyKeeper),
-		pkr.NewAppModule(appCodec, app.PkrKeeper),
+		pubkey.NewAppModule(appCodec, app.PkrKeeper),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -808,7 +806,7 @@ func NewApp(
 		// custom modules
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
-		pkrtypes.ModuleName,
+		pubkeytypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -839,7 +837,7 @@ func NewApp(
 		// custom modules
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
-		pkrtypes.ModuleName,
+		pubkeytypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after sdkstaking so that pools are
@@ -876,7 +874,7 @@ func NewApp(
 		// custom modules
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
-		pkrtypes.ModuleName,
+		pubkeytypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)

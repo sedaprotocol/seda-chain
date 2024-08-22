@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/sedaprotocol/seda-chain/x/pkr/types"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 type msgServer struct {

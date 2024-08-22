@@ -12,7 +12,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/sedaprotocol/seda-chain/x/pkr/types"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 func (s *KeeperTestSuite) TestMsgServer_AddKey() {

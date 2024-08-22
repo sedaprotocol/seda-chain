@@ -4,7 +4,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gomock "go.uber.org/mock/gomock"
 
-	"github.com/sedaprotocol/seda-chain/x/pkr/types"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 func (s *KeeperTestSuite) TestQuerier_ValidatorKeys() {

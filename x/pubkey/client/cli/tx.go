@@ -20,7 +20,7 @@ import (
 	crypto "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 
-	"github.com/sedaprotocol/seda-chain/x/pkr/types"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 const (

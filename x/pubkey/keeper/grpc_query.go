@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/sedaprotocol/seda-chain/x/pkr/types"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 var _ types.QueryServer = Querier{}

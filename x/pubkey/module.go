@@ -1,4 +1,4 @@
-package pkr
+package pubkey
 
 import (
 	"context"
@@ -15,9 +15,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/sedaprotocol/seda-chain/x/pkr/client/cli"
-	"github.com/sedaprotocol/seda-chain/x/pkr/keeper"
-	"github.com/sedaprotocol/seda-chain/x/pkr/types"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/client/cli"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 var (

@@ -18,10 +18,10 @@ import (
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
-	"github.com/sedaprotocol/seda-chain/x/pkr"
-	"github.com/sedaprotocol/seda-chain/x/pkr/keeper"
-	"github.com/sedaprotocol/seda-chain/x/pkr/keeper/testutil"
-	pkrtypes "github.com/sedaprotocol/seda-chain/x/pkr/types"
+	"github.com/sedaprotocol/seda-chain/x/pubkey"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/keeper/testutil"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 type KeeperTestSuite struct {
@@ -31,8 +31,8 @@ type KeeperTestSuite struct {
 	mockStakingKeeper *testutil.MockStakingKeeper
 	cdc               codec.Codec
 	valCdc            address.Codec
-	msgSrvr           pkrtypes.MsgServer
-	queryClient       pkrtypes.QueryClient
+	msgSrvr           types.MsgServer
+	queryClient       types.QueryClient
 	serverCtx         *server.Context
 }
 
@@ -43,10 +43,10 @@ func TestKeeperTestSuite(t *testing.T) {
 func (s *KeeperTestSuite) SetupTest() {
 	t := s.T()
 	t.Helper()
-	key := storetypes.NewKVStoreKey(pkrtypes.StoreKey)
+	key := storetypes.NewKVStoreKey(types.StoreKey)
 	testCtx := sdktestutil.DefaultContextWithDB(t, key, storetypes.NewTransientStoreKey("transient_test"))
-	encCfg := moduletestutil.MakeTestEncodingConfig(pkr.AppModuleBasic{})
-	pkrtypes.RegisterInterfaces(encCfg.InterfaceRegistry)
+	encCfg := moduletestutil.MakeTestEncodingConfig(pubkey.AppModuleBasic{})
+	types.RegisterInterfaces(encCfg.InterfaceRegistry)
 
 	ctrl := gomock.NewController(t)
 	s.mockStakingKeeper = testutil.NewMockStakingKeeper(ctrl)
@@ -66,6 +66,6 @@ func (s *KeeperTestSuite) SetupTest() {
 
 	queryHelper := baseapp.NewQueryServerTestHelper(s.ctx, encCfg.InterfaceRegistry)
 	querier := keeper.Querier{Keeper: *s.keeper}
-	pkrtypes.RegisterQueryServer(queryHelper, querier)
-	s.queryClient = pkrtypes.NewQueryClient(queryHelper)
+	types.RegisterQueryServer(queryHelper, querier)
+	s.queryClient = types.NewQueryClient(queryHelper)
 }

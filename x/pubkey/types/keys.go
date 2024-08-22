@@ -3,7 +3,7 @@ package types
 import "cosmossdk.io/collections"
 
 const (
-	ModuleName = "pkr"
+	ModuleName = "pubkey"
 	StoreKey
 )
 
