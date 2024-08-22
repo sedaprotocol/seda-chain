@@ -1,9 +1,12 @@
 package types
 
 import (
+	"sort"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (
@@ -15,9 +18,18 @@ func (m *MsgAddKey) Validate() error {
 	if m.ValidatorAddr == "" {
 		return ErrEmptyValue.Wrap("empty validator address")
 	}
+
+	sort.Slice(m.IndexedPubKeys, func(i, j int) bool {
+		return m.IndexedPubKeys[i].Index < m.IndexedPubKeys[j].Index
+	})
 	for i, pair := range m.IndexedPubKeys {
+		if i > 0 {
+			if pair.Index == m.IndexedPubKeys[i-1].Index {
+				return sdkerrors.ErrInvalidRequest.Wrapf("duplicate index at %d", pair.Index)
+			}
+		}
 		if pair.PubKey == nil {
-			return ErrEmptyValue.Wrapf("empty public key at index %d", i)
+			return sdkerrors.ErrInvalidRequest.Wrapf("empty public key at index %d", pair.Index)
 		}
 	}
 	return nil

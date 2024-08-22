@@ -9,6 +9,7 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -16,13 +17,14 @@ import (
 )
 
 func (s *KeeperTestSuite) TestMsgServer_AddKey() {
-	pubKeys, valAddrs := s.generatePubKeysAndValAddrs(2)
+	pubKeys, valAddrs := s.generatePubKeysAndValAddrs(10)
 
 	tests := []struct {
-		name         string
-		msg          *types.MsgAddKey
-		valAddrBytes []byte
-		wantErr      error
+		name       string
+		msg        *types.MsgAddKey
+		valAddr    sdk.ValAddress
+		wantErr    error
+		wantErrMsg string
 	}{
 		{
 			name: "Happy path",
@@ -33,15 +35,54 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 						Index:  0,
 						PubKey: pubKeys[0],
 					},
+					{
+						Index:  3,
+						PubKey: pubKeys[1],
+					},
+					{
+						Index:  57,
+						PubKey: pubKeys[2],
+					},
 				},
 			},
-			valAddrBytes: valAddrs[0].Bytes(),
-			wantErr:      nil,
+			valAddr: valAddrs[0],
+			wantErr: nil,
+		},
+		{
+			name: "Duplicate index",
+			msg: &types.MsgAddKey{
+				ValidatorAddr: valAddrs[1].String(),
+				IndexedPubKeys: []types.IndexedPubKey{
+					{
+						Index:  12,
+						PubKey: pubKeys[0],
+					},
+					{
+						Index:  48,
+						PubKey: pubKeys[1],
+					},
+					{
+						Index:  5,
+						PubKey: pubKeys[2],
+					},
+					{
+						Index:  12,
+						PubKey: pubKeys[3],
+					},
+					{
+						Index:  50,
+						PubKey: pubKeys[4],
+					},
+				},
+			},
+			valAddr:    valAddrs[1],
+			wantErr:    sdkerrors.ErrInvalidRequest,
+			wantErrMsg: "duplicate index at 12",
 		},
 		{
 			name: "Invalid Any",
 			msg: &types.MsgAddKey{
-				ValidatorAddr: valAddrs[1].String(),
+				ValidatorAddr: valAddrs[2].String(),
 				IndexedPubKeys: []types.IndexedPubKey{
 					{
 						Index: 0,
@@ -53,8 +94,8 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 					},
 				},
 			},
-			valAddrBytes: valAddrs[1].Bytes(),
-			wantErr:      sdkerrors.ErrInvalidType,
+			valAddr: valAddrs[2],
+			wantErr: sdkerrors.ErrInvalidType,
 		},
 	}
 	for _, tt := range tests {
@@ -65,23 +106,32 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 				s.Require().NoError(os.RemoveAll(path))
 			})
 
-			// Validator must exist.
-			s.mockStakingKeeper.EXPECT().GetValidator(gomock.Any(), tt.valAddrBytes).Return(stakingtypes.Validator{}, nil)
+			// Mock validator store.
+			s.mockStakingKeeper.EXPECT().GetValidator(gomock.Any(), tt.valAddr.Bytes()).Return(stakingtypes.Validator{}, nil).AnyTimes()
 
 			got, err := s.msgSrvr.AddKey(s.ctx, tt.msg)
 			if tt.wantErr != nil {
 				s.Require().ErrorIs(err, tt.wantErr)
+				s.Require().Contains(err.Error(), tt.wantErrMsg)
 				s.Require().Nil(got)
 				return
 			}
 			s.Require().NoError(err)
 			s.Require().NotNil(got)
 
-			pkActual, err := s.keeper.PubKeys.Get(s.ctx, collections.Join(tt.valAddrBytes, tt.msg.IndexedPubKeys[0].Index))
-			s.Require().NoError(err)
-			pkExpected, ok := tt.msg.IndexedPubKeys[0].PubKey.GetCachedValue().(cryptotypes.PubKey)
-			s.Require().True(ok)
-			s.Require().Equal(pkExpected, pkActual)
+			// Check the validator's keys at once.
+			pksActual, err := s.keeper.GetValidatorKeys(s.ctx, tt.valAddr.String())
+			s.Require().Equal(tt.valAddr.String(), pksActual.ValidatorAddr)
+			s.Require().Equal(len(tt.msg.IndexedPubKeys), len(pksActual.IndexedPubKeys))
+
+			// Check each index.
+			for _, indPubKey := range tt.msg.IndexedPubKeys {
+				pkActual, err := s.keeper.PubKeys.Get(s.ctx, collections.Join(tt.valAddr.Bytes(), indPubKey.Index))
+				s.Require().NoError(err)
+				pkExpected, ok := indPubKey.PubKey.GetCachedValue().(cryptotypes.PubKey)
+				s.Require().True(ok)
+				s.Require().Equal(pkExpected, pkActual)
+			}
 		})
 	}
 }
