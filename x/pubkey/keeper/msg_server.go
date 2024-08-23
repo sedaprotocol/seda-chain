@@ -36,7 +36,7 @@ func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.M
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
 	}
 	if _, err := m.stakingKeeper.GetValidator(ctx, valAddr); err != nil {
-		return nil, types.ErrValidatorNotFound
+		return nil, sdkerrors.ErrNotFound.Wrapf("validator not found %s", msg.ValidatorAddr)
 	}
 
 	for _, indPubKey := range msg.IndexedPubKeys {

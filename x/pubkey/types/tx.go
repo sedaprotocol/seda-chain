@@ -16,7 +16,7 @@ var (
 
 func (m *MsgAddKey) Validate() error {
 	if m.ValidatorAddr == "" {
-		return ErrEmptyValue.Wrap("empty validator address")
+		return sdkerrors.ErrInvalidRequest.Wrap("empty validator address")
 	}
 
 	sort.Slice(m.IndexedPubKeys, func(i, j int) bool {
