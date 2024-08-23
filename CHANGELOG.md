@@ -40,6 +40,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Features
 * (docs) [#326](https://github.com/sedaprotocol/seda-chain/pull/326) Swagger API documentation
 * (x/tally) [#311](https://github.com/sedaprotocol/seda-chain/pull/311) New module `x/tally`
+* (x/data-proxy) [#339](https://github.com/sedaprotocol/seda-chain/pull/339) New module `x/data-proxy`
 
 ### Bug Fixes
 * (build) [#321](https://github.com/sedaprotocol/seda-chain/pull/321) Rosetta build tag (not to be used with static compilation) 
