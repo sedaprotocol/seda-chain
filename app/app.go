@@ -242,7 +242,7 @@ type App struct {
 	// SEDA modules keepers
 	WasmStorageKeeper wasmstoragekeeper.Keeper
 	TallyKeeper       tallykeeper.Keeper
-	PkrKeeper         pubkeykeeper.Keeper
+	PubKeyKeeper      pubkeykeeper.Keeper
 
 	mm  *module.Manager
 	bmm module.BasicManager
@@ -629,7 +629,7 @@ func NewApp(
 
 	app.TallyKeeper = tallykeeper.NewKeeper(app.WasmStorageKeeper, contractKeeper, app.WasmKeeper)
 
-	app.PkrKeeper = *pubkeykeeper.NewKeeper(
+	app.PubKeyKeeper = *pubkeykeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		app.StakingKeeper,
@@ -749,7 +749,7 @@ func NewApp(
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
 		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
 		tally.NewAppModule(app.TallyKeeper),
-		pubkey.NewAppModule(appCodec, app.PkrKeeper),
+		pubkey.NewAppModule(appCodec, app.PubKeyKeeper),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 

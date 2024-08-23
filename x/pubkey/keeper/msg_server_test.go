@@ -121,6 +121,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 
 			// Check the validator's keys at once.
 			pksActual, err := s.keeper.GetValidatorKeys(s.ctx, tt.valAddr.String())
+			s.Require().NoError(err)
 			s.Require().Equal(tt.valAddr.String(), pksActual.ValidatorAddr)
 			s.Require().Equal(len(tt.msg.IndexedPubKeys), len(pksActual.IndexedPubKeys))
 

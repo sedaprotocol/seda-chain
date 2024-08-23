@@ -134,6 +134,6 @@ func (s *CLITestSuite) TestAddSEDAKeys() {
 }
 
 func (s *CLITestSuite) TearDownSuite() {
-	err := os.RemoveAll(filepath.Join(s.saveDir))
+	err := os.RemoveAll(s.saveDir)
 	s.Require().NoError(err)
 }

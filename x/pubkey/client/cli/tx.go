@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 
@@ -15,8 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	crypto "github.com/cosmos/cosmos-sdk/crypto/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
@@ -43,12 +44,12 @@ func GetTxCmd(valAddrCodec address.Codec) *cobra.Command {
 	return cmd
 }
 
-// AddKey returns the command for adding a new key and uploading its
-// public key on chain at a given index.
+// AddKey returns the command for generating the SEDA keys and
+// uploading their public keys on chain.
 func AddKey(ac address.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-key",
-		Short: "Generate the SEDA keys and upload their public keys on chain at a given index",
+		Use:   "add-seda-keys",
+		Short: "Generate the SEDA keys and upload their public keys.",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -57,7 +58,11 @@ func AddKey(ac address.Codec) *cobra.Command {
 			}
 			serverCfg := server.GetServerContextFromCmd(cmd).Config
 
-			valAddr, err := ac.BytesToString(clientCtx.GetFromAddress())
+			fromAddr := clientCtx.GetFromAddress()
+			if fromAddr.Empty() {
+				return fmt.Errorf("set the from address using --from flag")
+			}
+			valAddr, err := ac.BytesToString(fromAddr)
 			if err != nil {
 				return err
 			}
@@ -92,10 +97,9 @@ func AddKey(ac address.Codec) *cobra.Command {
 	return cmd
 }
 
-type IndexKey struct {
-	Index   uint32         `json:"index"`
-	PubKey  crypto.PubKey  `json:"pub_key"`
-	PrivKey crypto.PrivKey `json:"priv_key"`
+type IndexedPrivKey struct {
+	Index   uint32            `json:"index"`
+	PrivKey cmtcrypto.PrivKey `json:"priv_key"`
 }
 
 // loadSEDAPubKeys loads the SEDA key file from the given path and
@@ -105,15 +109,20 @@ func loadSEDAPubKeys(loadPath string) ([]types.IndexedPubKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read SEDA keys from %v: %v", loadPath, err)
 	}
-	var keys []IndexKey
-	err = cmtjson.Unmarshal(keysJSONBytes, keys)
+	var keys []IndexedPrivKey
+	err = cmtjson.Unmarshal(keysJSONBytes, &keys)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal SEDA keys from %v: %v", loadPath, err)
 	}
 
 	result := make([]types.IndexedPubKey, len(keys))
 	for i, key := range keys {
-		pkAny, err := codectypes.NewAnyWithValue(key.PubKey)
+		// Convert to SDK type for app-level use.
+		pubKey, err := cryptocodec.FromCmtPubKeyInterface(key.PrivKey.PubKey())
+		if err != nil {
+			return nil, err
+		}
+		pkAny, err := codectypes.NewAnyWithValue(pubKey)
 		if err != nil {
 			return nil, err
 		}
@@ -125,8 +134,9 @@ func loadSEDAPubKeys(loadPath string) ([]types.IndexedPubKey, error) {
 	return result, nil
 }
 
-// saveSEDAKeys saves a given list of IndexKeys in the directory at dirPath.
-func saveSEDAKeys(keys []IndexKey, dirPath string) error {
+// saveSEDAKeys saves a given list of IndexedPrivKey in the directory
+// at dirPath.
+func saveSEDAKeys(keys []IndexedPrivKey, dirPath string) error {
 	savePath := filepath.Join(dirPath, SEDAKeyFileName)
 	if cmtos.FileExists(savePath) {
 		return fmt.Errorf("SEDA key file already exists at %s", savePath)
@@ -135,7 +145,7 @@ func saveSEDAKeys(keys []IndexKey, dirPath string) error {
 	if err != nil {
 		return err
 	}
-	jsonBytes, err := cmtjson.MarshalIndent(keys, "", "  ") // TODO use simple json.Marshal?
+	jsonBytes, err := cmtjson.MarshalIndent(keys, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal SEDA keys: %v", err)
 	}
@@ -146,9 +156,9 @@ func saveSEDAKeys(keys []IndexKey, dirPath string) error {
 	return nil
 }
 
-type privKeyGenerator func() crypto.PrivKey
+type privKeyGenerator func() cmtcrypto.PrivKey
 
-func secp256k1GenPrivKey() crypto.PrivKey {
+func secp256k1GenPrivKey() cmtcrypto.PrivKey {
 	return secp256k1.GenPrivKey()
 }
 
@@ -158,17 +168,21 @@ func secp256k1GenPrivKey() crypto.PrivKey {
 // of the given private key generators. The key file is stored in the
 // directory given by dirPath.
 func generateSEDAKeys(generators []privKeyGenerator, dirPath string) ([]types.IndexedPubKey, error) {
-	keys := make([]IndexKey, len(generators))
+	keys := make([]IndexedPrivKey, len(generators))
 	result := make([]types.IndexedPubKey, len(generators))
 	for i, generator := range generators {
 		privKey := generator()
-		keys[i] = IndexKey{
+		keys[i] = IndexedPrivKey{
 			Index:   uint32(i),
 			PrivKey: privKey,
-			PubKey:  privKey.PubKey(),
 		}
 
-		pkAny, err := codectypes.NewAnyWithValue(privKey.PubKey())
+		// Convert to SDK type for app-level use.
+		pubKey, err := cryptocodec.FromCmtPubKeyInterface(privKey.PubKey())
+		if err != nil {
+			return nil, err
+		}
+		pkAny, err := codectypes.NewAnyWithValue(pubKey)
 		if err != nil {
 			return nil, err
 		}
