@@ -34,7 +34,6 @@ require (
 	github.com/cosmos/rosetta v0.0.0-00010101000000-000000000000
 	github.com/ethereum/go-ethereum v1.13.14
 	github.com/golang/protobuf v1.5.4
-	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
 	github.com/hashicorp/go-hclog v1.6.2
@@ -45,7 +44,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/zerolog v1.32.0
-	github.com/sedaprotocol/seda-wasm-vm/tallyvm v1.0.1
+	github.com/sedaprotocol/seda-wasm-vm/tallyvm v1.1.0
 	github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c
 	github.com/spf13/cast v1.6.0
 	github.com/spf13/cobra v1.8.0
@@ -147,6 +146,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.3 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/goware/urlx v0.3.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
