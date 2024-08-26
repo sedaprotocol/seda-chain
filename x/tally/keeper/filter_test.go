@@ -322,6 +322,71 @@ func TestFilter(t *testing.T) {
 			wantErr:   types.ErrNoBasicConsensus,
 		},
 		{
+			name:            "Mode filter - Half with different reveals but consensus",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
+			outliers:        []int{0, 0, 1, 0},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
+				{ExitCode: 0, ProxyPubKeys: []string{"invalid_proxy_pubkey"}, Reveal: `{"result": {"text": "mac"}}`},
+			},
+			consensus: true,
+			wantErr:   nil,
+		},
+		{
+			name:            "Mode filter - No consensus due to non-zero exit code invalidating data",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
+			outliers:        []int{0, 0, 1, 1},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
+				{ExitCode: 1, ProxyPubKeys: []string{"invalid_proxy_pubkey"}, Reveal: `{"result": {"text": "mac"}}`},
+			},
+			consensus: false,
+			wantErr:   nil,
+		},
+		{
+			name:            "Mode filter - No consensus with exit code invalidating a reveal",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
+			outliers:        []int{0, 0, 0, 1},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": ""}}`},
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
+				{ExitCode: 1, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
+			},
+			consensus: false,
+			wantErr:   nil,
+		},
+		{
+			name:            "Mode filter - One reports bad pubkey but is not an outlier",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
+			outliers:        []int{1, 0, 0, 0},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
+				{ExitCode: 0, ProxyPubKeys: []string{"qwerty"}, Reveal: `{"result": {"text": "windows"}}`},
+			},
+			consensus: true,
+			wantErr:   nil,
+		},
+		{
+			name:            "Mode filter - Too many bad exit codes",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
+			outliers:        []int{0, 0, 0, 0},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
+				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
+				{ExitCode: 1, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
+				{ExitCode: 1, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
+			},
+			consensus: false,
+			wantErr:   types.ErrNoBasicConsensus,
+		},
+		{
 			name:            "Mode filter - Bad exit code but consensus",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
 			outliers:        []int{1, 0, 0, 1, 0, 0, 0},
