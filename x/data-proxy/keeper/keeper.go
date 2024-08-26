@@ -15,9 +15,7 @@ import (
 )
 
 type Keeper struct {
-	// authority is the address capable of executing MsgUpdateParams
-	// or MsgStoreExecutorWasm. Typically, this should be the gov module
-	// address.
+	// authority is the address capable of executing MsgUpdateParams. Typically, this should be the gov module address.
 	authority string
 
 	Schema           collections.Schema

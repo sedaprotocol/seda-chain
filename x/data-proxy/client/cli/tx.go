@@ -116,7 +116,7 @@ func EditDataProxy() *cobra.Command {
 	cmd.Flags().String(FlagMemo, types.DoNotModifyField, "Optionally add a description to the data proxy config")
 	cmd.Flags().String(FlagNewPayoutAddress, types.DoNotModifyField, "The new payout address for this data proxy")
 	cmd.Flags().String(FlagNewFee, "", "The new fee to be scheduled for this data proxy")
-	cmd.Flags().Uint32(FlagFeeUpdateDelay, types.UseMinimumDelay, "Optionally specify a custom delay in blocks. Must be larger than minimum set in module params")
+	cmd.Flags().Uint32(FlagFeeUpdateDelay, types.UseMinimumDelay, "Optionally specify in blocks a custom delay in fee update. Must be larger than minimum set in module params")
 
 	return cmd
 }

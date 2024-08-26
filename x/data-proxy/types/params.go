@@ -9,15 +9,14 @@ const (
 	LowestFeeUpdateDelay     uint32 = 1
 )
 
-// DefaultParams returns default wasm-storage module parameters.
+// DefaultParams returns default data-proxy module parameters.
 func DefaultParams() Params {
 	return Params{
 		MinFeeUpdateDelay: DefaultMinFeeUpdateDelay,
 	}
 }
 
-// ValidateBasic performs basic validation on wasm-storage
-// module parameters.
+// ValidateBasic performs basic validation on data-proxy module parameters.
 func (p *Params) Validate() error {
 	if p.MinFeeUpdateDelay < LowestFeeUpdateDelay {
 		return sdkerrors.ErrInvalidRequest.Wrapf("MinFeeUpdateDelay lower than %d < %d", p.MinFeeUpdateDelay, LowestFeeUpdateDelay)

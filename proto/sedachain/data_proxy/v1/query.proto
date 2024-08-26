@@ -13,7 +13,7 @@ service Query {
   rpc DataProxyConfig(QueryDataProxyConfigRequest)
       returns (QueryDataProxyConfigResponse) {
     option (google.api.http).get =
-        "/seda-chain/data-proxy/data-proxy/{pub_key}";
+        "/seda-chain/data-proxy/data_proxy_config/{pub_key}";
   }
 }
 
