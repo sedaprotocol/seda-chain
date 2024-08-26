@@ -23,15 +23,14 @@ func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) 
 		return make([]int, len(reveals)), false, types.ErrInvalidFilterType
 	}
 
-	// Determine consensus on tuple of (exit_code, proxy_pub_keys)
+	// Determine basic consensus on tuple of (exit_code, proxy_pub_keys)
 	var maxFreq int
 	freq := make(map[string]int, len(reveals))
 	for _, reveal := range reveals {
 		var success bool
-		if reveal.ExitCode != 0 {
-			success = false
+		if reveal.ExitCode == 0 {
+			success = true
 		}
-
 		tuple := fmt.Sprintf("%v%v", success, reveal.ProxyPubKeys)
 		freq[tuple]++
 		maxFreq = max(freq[tuple], maxFreq)

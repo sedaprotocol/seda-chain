@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -91,28 +92,234 @@ func TestFilter(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name:            "Mode filter - Too many bad exit codes",
+			name:            "Mode filter - No consensus on exit code",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
+			outliers:        []int{0, 0, 0, 0, 0, 0},
+			reveals: []types.RevealBody{
+				{ExitCode: 1, Reveal: `{"high_level_prop1":"ignore this", "result": {"text": "A", "number": 0}}`},
+				{ExitCode: 1, Reveal: `{"makes_this_json":"ignore this", "result": {"text": "A", "number": 10}}`},
+				{ExitCode: 1, Reveal: `{"unstructured":"ignore this", "result": {"text": "B", "number": 101}}`},
+				{ExitCode: 0, Reveal: `{"but":"ignore this", "result": {"text": "B", "number": 10}}`},
+				{ExitCode: 0, Reveal: `{"it_does_not":"ignore this", "result": {"text": "C", "number": 10}}`},
+				{ExitCode: 0, Reveal: `{"matter":"ignore this", "result": {"text": "C", "number": 10}}`},
+			},
+			consensus: false,
+			wantErr:   types.ErrNoBasicConsensus,
+		},
+		{
+			name:            "Mode filter - Corrupt due to too many bad exit codes",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
+			outliers:        []int{0, 0, 0, 0, 0, 0},
+			reveals: []types.RevealBody{
+				{ExitCode: 1, Reveal: `{"high_level_prop1":"ignore this", "result": {"text": "A", "number": 0}}`},
+				{ExitCode: 1, Reveal: `{"makes_this_json":"ignore this", "result": {"text": "A", "number": 10}}`},
+				{ExitCode: 1, Reveal: `{"unstructured":"ignore this", "result": {"text": "B", "number": 101}}`},
+				{ExitCode: 1, Reveal: `{"but":"ignore this", "result": {"text": "B", "number": 10}}`},
+				{ExitCode: 0, Reveal: `{"it_does_not":"ignore this", "result": {"text": "C", "number": 10}}`},
+				{ExitCode: 0, Reveal: `{"matter":"ignore this", "result": {"text": "C", "number": 10}}`},
+			},
+			consensus: false,
+			wantErr:   types.ErrCorruptReveals,
+		},
+		{
+			name:            "Mode filter - Uniform reveals",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
+			outliers:        []int{0, 0, 0, 0, 0, 0},
+			reveals: []types.RevealBody{
+				{
+					ExitCode: 0,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode: 0,
+					ProxyPubKeys: []string{
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode: 0,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode: 0,
+					ProxyPubKeys: []string{
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode: 0,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode: 0,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+			},
+			consensus: true,
+			wantErr:   nil,
+		},
+		{
+			name:            "Mode filter - Basic consensus but corrupt due to too many bad exit codes",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
 			outliers:        []int{0, 0, 0, 0, 0, 0},
 			reveals: []types.RevealBody{
 				{
 					ExitCode: 1,
-					Reveal:   `{"high_level_prop1":"ignore this", "result": {"text": "A", "number": 0}}`,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode: 0,
+					ProxyPubKeys: []string{
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
 				},
 				{
 					ExitCode: 1,
-					Reveal:   `{"makes_this_json":"ignore this", "result": {"text": "A", "number": 10}}`,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
 				},
 				{
 					ExitCode: 1,
-					Reveal:   `{"unstructured":"ignore this", "result": {"text": "B", "number": 101}}`,
+					ProxyPubKeys: []string{
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
 				},
-				{Reveal: `{"but":"ignore this", "result": {"text": "B", "number": 10}}`},
-				{Reveal: `{"it_does_not":"ignore this", "result": {"text": "C", "number": 10}}`},
-				{Reveal: `{"matter":"ignore this", "result": {"text": "C", "number": 10}}`},
+				{
+					ExitCode: 1,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode: 1,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
 			},
 			consensus: false,
 			wantErr:   types.ErrCorruptReveals,
+		},
+		{
+			name:            "Mode filter with proxy pubkeys - No basic consensus",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
+			outliers:        []int{0, 0, 0, 0, 0, 0},
+			reveals: []types.RevealBody{
+				{
+					ExitCode: 1,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode: 0,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode:     0,
+					ProxyPubKeys: []string{},
+					Reveal:       `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode: 0,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode: 0,
+					ProxyPubKeys: []string{
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+				{
+					ExitCode: 0,
+					ProxyPubKeys: []string{
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+						"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+						"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+					},
+					Reveal: `{"result": {"text": "A"}}`,
+				},
+			},
+			consensus: false,
+			wantErr:   types.ErrNoBasicConsensus,
 		},
 		{
 			name:            "Mode filter - Bad exit code but consensus",
@@ -138,12 +345,9 @@ func TestFilter(t *testing.T) {
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
 			outliers:        []int{1, 0, 0, 1, 1, 0},
 			reveals: []types.RevealBody{
-				{
-					ExitCode: 1,
-					Reveal:   `{"result": {"text": "A", "number": 0}}`,
-				},
-				{Reveal: `{"result": {"text": "A", "number": 10}}`},
-				{Reveal: `{"result": {"text": "A", "number": 101}}`},
+				{Reveal: `{"result": {"text": "A", "number": 0}}`, ExitCode: 1},
+				{Reveal: `{"result": {"text": "A", "number": 0}}`},
+				{Reveal: `{"result": {"text": "A", "number": 0}}`},
 				{Reveal: `{"result": {"text": "B", "number": 10}}`},
 				{Reveal: `{"result": {"text": "C", "number": 10}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
@@ -296,6 +500,11 @@ func TestFilter(t *testing.T) {
 			// For illustration
 			for i := 0; i < len(tt.reveals); i++ {
 				tt.reveals[i].Reveal = base64.StdEncoding.EncodeToString([]byte(tt.reveals[i].Reveal))
+			}
+
+			// Since ApplyFilter assumes the pubkeys are sorted.
+			for i := range tt.reveals {
+				sort.Strings(tt.reveals[i].ProxyPubKeys)
 			}
 
 			outliers, cons, err := keeper.ApplyFilter(filter, tt.reveals)
