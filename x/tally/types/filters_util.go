@@ -28,11 +28,6 @@ func parseReveals(reveals []RevealBody, dataPath string) ([]any, dataAttributes,
 	freq := make(map[any]int, len(reveals))
 	dataList := make([]any, len(reveals))
 	for i, r := range reveals {
-		if r.ExitCode != 0 {
-			corruptCount++
-			continue
-		}
-
 		revealBytes, err := base64.StdEncoding.DecodeString(r.Reveal)
 		if err != nil {
 			corruptCount++

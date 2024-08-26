@@ -167,7 +167,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmRe
 	}
 	paybackAddrHex := hex.EncodeToString(decodedBytes)
 
-	// Sort reveals.
+	// Sort reveals and proxy public keys.
 	keys := make([]string, len(req.Reveals))
 	i := 0
 	for k := range req.Reveals {
@@ -178,6 +178,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmRe
 	reveals := make([]types.RevealBody, len(req.Reveals))
 	for i, k := range keys {
 		reveals[i] = req.Reveals[k]
+		sort.Strings(reveals[i].ProxyPubKeys)
 	}
 
 	outliers, consensus, err := ApplyFilter(filter, reveals)

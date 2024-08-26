@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
@@ -15,10 +16,28 @@ const (
 // ApplyFilter processes filter of the type specified in the first
 // byte of consensus filter. It returns an outlier list, which is
 // a boolean list where true at index i means that the reveal at
-// index i is an outlier, consensus boolean, and error.
+// index i is an outlier, consensus boolean, and error. It assumes
+// that the reveals and their proxy public keys are sorted.
 func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, error) {
 	if len(input) == 0 {
 		return make([]int, len(reveals)), false, types.ErrInvalidFilterType
+	}
+
+	// Determine consensus on tuple of (exit_code, proxy_pub_keys)
+	var maxFreq int
+	freq := make(map[string]int, len(reveals))
+	for _, reveal := range reveals {
+		var success bool
+		if reveal.ExitCode != 0 {
+			success = false
+		}
+
+		tuple := fmt.Sprintf("%v%v", success, reveal.ProxyPubKeys)
+		freq[tuple]++
+		maxFreq = max(freq[tuple], maxFreq)
+	}
+	if maxFreq*3 < len(reveals)*2 {
+		return make([]int, len(reveals)), false, types.ErrNoBasicConsensus
 	}
 
 	var filter types.Filter
