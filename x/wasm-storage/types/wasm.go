@@ -31,7 +31,7 @@ func NewDataRequestWasm(bytecode []byte, addedAt time.Time, curBlock, ttl int64)
 		panic("failed to compute hash")
 	}
 	var expHeight int64
-	// TODO Expiration is disabled for now.
+	// TODO(#347) Expiration is disabled for now.
 	// if ttl > 0 {
 	// 	expHeight = curBlock + ttl
 	// }
