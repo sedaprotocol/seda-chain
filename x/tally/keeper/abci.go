@@ -200,8 +200,16 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmRe
 		"arguments", args,
 	)
 	vmRes := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
-		"VM_MODE":   "tally",
-		"CONSENSUS": fmt.Sprintf("%v", consensus),
+		"VM_MODE":               "tally",
+		"CONSENSUS":             fmt.Sprintf("%v", consensus),
+		"DR_ID":                 req.ID,
+		"DR_INPUT":              req.DrInputs,
+		"BINARY_ID":             req.DrBinaryID,
+		"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", req.ReplicationFactor),
+		"DR_GAS_PRICE":          req.GasPrice,
+		"DR_GAS_LIMIT":          req.GasLimit,
+		"DR_MEMO":               req.Memo,
+		"DR_PAYBACK_ADDRESS":    req.PaybackAddress,
 	})
 	return vmRes, consensus, nil
 }

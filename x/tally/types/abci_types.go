@@ -71,7 +71,7 @@ type DataResult struct {
 	ExitCode       byte   `json:"exit_code"`
 	GasUsed        string `json:"gas_used"`
 	Result         []byte `json:"result"`
-	PaybackAddress string `json:"payback_address"`
+	PaybackAddress string `json:"payback_address"` // base64-encoded string
 	SedaPayload    string `json:"seda_payload"`
 	Consensus      bool   `json:"consensus"`
 }

@@ -45,10 +45,10 @@ import (
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally"
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
+	"github.com/sedaprotocol/seda-chain/x/tally/keeper/testdata"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper/testdata"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper/testutil"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -187,7 +187,7 @@ func initFixture(tb testing.TB) *fixture {
 
 	// Upload and instantiate the SEDA contract.
 	creator := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	codeID, _, err := contractKeeper.Create(ctx, creator, testdata.SedaContractWasm(), nil)
+	codeID, _, err := contractKeeper.Create(ctx, creator, testdata.CoreContractWasm(), nil)
 	require.NoError(tb, err)
 	require.Equal(tb, uint64(1), codeID)
 
