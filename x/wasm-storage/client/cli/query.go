@@ -88,11 +88,11 @@ func GetCmdQueryExecutorWasm() *cobra.Command {
 }
 
 // GetCmdQueryDataRequestWasms returns the command for querying
-// hashes and types of all data request wasms.
+// data request wasms in the store.
 func GetCmdQueryDataRequestWasms() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-data-request-wasms",
-		Short: "List hashes and types of all data request wasms",
+		Short: "List hashes and expiration heights of all data request wasms",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
