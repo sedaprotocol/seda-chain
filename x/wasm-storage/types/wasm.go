@@ -25,7 +25,7 @@ func validateWasmSize(s []byte) error {
 
 // NewDataRequestWasm constructs a new DataRequestWasm object given
 // bytecode. It panics if it fails to compute hash of bytecode.
-func NewDataRequestWasm(bytecode []byte, addedAt time.Time, curBlock, ttl int64) DataRequestWasm {
+func NewDataRequestWasm(bytecode []byte, addedAt time.Time, _, ttl int64) DataRequestWasm {
 	hash := crypto.Keccak256(bytecode)
 	if hash == nil {
 		panic("failed to compute hash")

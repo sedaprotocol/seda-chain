@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"encoding/hex"
-	"fmt"
 	"os"
 	"testing"
 
@@ -269,6 +268,8 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 	}
 }
 
+// TODO(#347) Expiration is disabled for now.
+/*
 func (s *KeeperTestSuite) TestDRWasmPruning() {
 	params, err := s.keeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
@@ -353,6 +354,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	s.Require().Empty(list) // Check WsmExp is in sync
 	s.Require().Empty(getAllWasmExpEntry(s.T(), s.ctx, s.keeper))
 }
+*/
 
 func getAllWasmExpEntry(t *testing.T, c sdk.Context, k *keeper.Keeper) []string {
 	t.Helper()
