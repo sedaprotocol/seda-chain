@@ -25,6 +25,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/auth"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/bank"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/base"
+	dataproxy "github.com/sedaprotocol/seda-chain/plugins/indexing/data-proxy"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pluginaws"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/staking"
@@ -90,6 +91,8 @@ func (p *IndexerPlugin) extractUpdate(change *storetypes.StoreKVPair) (*types.Me
 		return auth.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	case staking.StoreKey:
 		return staking.ExtractUpdate(p.block, p.cdc, p.logger, change)
+	case dataproxy.StoreKey:
+		return dataproxy.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	default:
 		return nil, nil
 	}
