@@ -3,16 +3,12 @@ package keeper_test
 import (
 	"encoding/hex"
 	"os"
-	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
+	// "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -201,12 +197,12 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 	authority := s.keeper.GetAuthority()
 	cases := []struct {
 		name      string
-		input     types.MsgUpdateParams
+		input     *types.MsgUpdateParams
 		expErrMsg string
 	}{
 		{
 			name: "happy path",
-			input: types.MsgUpdateParams{
+			input: &types.MsgUpdateParams{
 				Authority: s.authority,
 				Params: types.Params{
 					MaxWasmSize: 1000000, // 1 MB
@@ -217,7 +213,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 		},
 		{
 			name: "invalid authority",
-			input: types.MsgUpdateParams{
+			input: &types.MsgUpdateParams{
 				Authority: "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
 				Params: types.Params{
 					MaxWasmSize: 1, // 1 MB
@@ -228,7 +224,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 		},
 		{
 			name: "invalid max wasm size",
-			input: types.MsgUpdateParams{
+			input: &types.MsgUpdateParams{
 				Authority: authority,
 				Params: types.Params{
 					MaxWasmSize: 0, // 0 MB
@@ -239,7 +235,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 		},
 		{
 			name: "invalid wasm time to live",
-			input: types.MsgUpdateParams{
+			input: &types.MsgUpdateParams{
 				Authority: authority,
 				Params: types.Params{
 					MaxWasmSize: 111110,
@@ -253,7 +249,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 	s.SetupTest()
 	for _, tc := range cases {
 		s.Run(tc.name, func() {
-			_, err := s.msgSrvr.UpdateParams(s.ctx, &tc.input)
+			_, err := s.msgSrvr.UpdateParams(s.ctx, tc.input)
 			if tc.expErrMsg != "" {
 				s.Require().Error(err)
 				s.Require().Equal(tc.expErrMsg, err.Error())
@@ -354,7 +350,6 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	s.Require().Empty(list) // Check WsmExp is in sync
 	s.Require().Empty(getAllWasmExpEntry(s.T(), s.ctx, s.keeper))
 }
-*/
 
 func getAllWasmExpEntry(t *testing.T, c sdk.Context, k *keeper.Keeper) []string {
 	t.Helper()
@@ -368,3 +363,4 @@ func getAllWasmExpEntry(t *testing.T, c sdk.Context, k *keeper.Keeper) []string 
 	}
 	return hashes
 }
+*/

@@ -272,7 +272,7 @@ func testDistribution(ctx context.Context, t *testing.T, chain *cosmos.CosmosCha
 
 	newWithdrawAddr := testAddresses[0]
 
-	t.Run("misc queries", func(t *testing.T) {
+	t.Run("misc queries", func(_ *testing.T) {
 		slashes, err := chain.DistributionQueryValidatorSlashes(ctx, valAddr)
 		require.NoError(err)
 		require.EqualValues(0, len(slashes))
@@ -295,7 +295,7 @@ func testDistribution(ctx context.Context, t *testing.T, chain *cosmos.CosmosCha
 		require.EqualValues(chain.Config().Denom, comm.Commission[0].Denom)
 	})
 
-	t.Run("withdraw-all-rewards", func(t *testing.T) {
+	t.Run("withdraw-all-rewards", func(_ *testing.T) {
 		err = node.StakingDelegate(ctx, users[2].KeyName(), valAddr, fmt.Sprintf("%d%s", uint64(100*math.Pow10(6)), chain.Config().Denom))
 		require.NoError(err)
 
@@ -312,12 +312,12 @@ func testDistribution(ctx context.Context, t *testing.T, chain *cosmos.CosmosCha
 		require.True(after.GT(before))
 	})
 
-	t.Run("fund-pools", func(t *testing.T) {
+	t.Run("fund-pools", func(_ *testing.T) {
 		bal, err := chain.BankQueryBalance(ctx, acc.String(), chain.Config().Denom)
 		require.NoError(err)
 		fmt.Printf("CP balance: %+v\n", bal)
 
-		amount := uint64(9_000 * math.Pow10(6))
+		amount := int64(9_000 * math.Pow10(6))
 
 		err = node.DistributionFundCommunityPool(ctx, users[0].KeyName(), fmt.Sprintf("%d%s", amount, chain.Config().Denom))
 		require.NoError(err)
@@ -329,15 +329,15 @@ func testDistribution(ctx context.Context, t *testing.T, chain *cosmos.CosmosCha
 		require.NoError(err)
 		fmt.Printf("New CP balance: %+v\n", bal2) // 9147579661
 
-		require.True(bal2.Sub(bal).GT(sdkmath.NewInt(int64(amount))))
+		require.True(bal2.Sub(bal).GT(sdkmath.NewInt(amount)))
 
 		// queries
 		coins, err := chain.DistributionQueryCommunityPool(ctx)
 		require.NoError(err)
-		require.True(coins.AmountOf(chain.Config().Denom).GT(sdkmath.LegacyNewDec(int64(amount))))
+		require.True(coins.AmountOf(chain.Config().Denom).GT(sdkmath.LegacyNewDec((amount))))
 	})
 
-	t.Run("set-custiom-withdraw-address", func(t *testing.T) {
+	t.Run("set-custiom-withdraw-address", func(_ *testing.T) {
 		err = node.DistributionSetWithdrawAddr(ctx, users[0].KeyName(), newWithdrawAddr)
 		require.NoError(err)
 
@@ -346,7 +346,7 @@ func testDistribution(ctx context.Context, t *testing.T, chain *cosmos.CosmosCha
 		require.EqualValues(withdrawAddr, newWithdrawAddr)
 	})
 
-	t.Run("delegator", func(t *testing.T) {
+	t.Run("delegator", func(_ *testing.T) {
 		delRewards, err := chain.DistributionQueryDelegationTotalRewards(ctx, delAddr)
 		require.NoError(err)
 		r := delRewards.Rewards[0]
@@ -489,6 +489,7 @@ func testStaking(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain, u
 		height, err := chain.Height(ctx)
 		require.NoError(t, err)
 
+		//nolint:gosec // G115: Test will fail if conversion overflows
 		searchHeight := int64(height - 1)
 
 		hi, err := chain.StakingQueryHistoricalInfo(ctx, searchHeight)

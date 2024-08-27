@@ -146,7 +146,7 @@ fmt:
 ###                                Linting                                  ###
 ###############################################################################
 
-golangci_version=v1.53.3
+golangci_version=v1.60.3
 
 lint-install:
 	@echo "--> Installing golangci-lint $(golangci_version)"

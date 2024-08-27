@@ -220,7 +220,7 @@ func appStateRandomizedFn(
 
 	appParams.GetOrGenerate(
 		StakePerAccount, &initialStake, r,
-		func(r *rand.Rand) {
+		func(_ *rand.Rand) {
 			initialStake = math.NewIntFromBigInt(initialStakeAmount)
 		},
 	)

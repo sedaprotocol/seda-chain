@@ -360,8 +360,8 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 	s.Run("Updating the fee for a proxy that already has a pending update should cancel the old update", func() {
 		s.SetupTest()
 
-		firstUpdateHeight := int64(types.DefaultMinFeeUpdateDelay + 100)
-		secondUpdateHeight := int64(types.DefaultMinFeeUpdateDelay + 37)
+		firstUpdateHeight := types.DefaultMinFeeUpdateDelay + 100
+		secondUpdateHeight := types.DefaultMinFeeUpdateDelay + 37
 
 		err = s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, initialProxyConfig)
 		s.Require().NoError(err)
@@ -371,7 +371,7 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 			NewPayoutAddress: types.DoNotModifyField,
 			NewMemo:          types.DoNotModifyField,
 			NewFee:           s.NewFeeFromString("1337"),
-			FeeUpdateDelay:   uint32(firstUpdateHeight),
+			FeeUpdateDelay:   firstUpdateHeight,
 			PubKey:           "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
 		}
 
@@ -383,7 +383,7 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 		s.Require().NoError(err)
 		s.Require().NotNil(firstProxyConfig.FeeUpdate)
 
-		firstUpdateScheduled, err := s.keeper.HasFeeUpdate(s.ctx, firstUpdateHeight, pubKeyBytes)
+		firstUpdateScheduled, err := s.keeper.HasFeeUpdate(s.ctx, int64(firstUpdateHeight), pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().True(firstUpdateScheduled)
 
@@ -392,7 +392,7 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 			NewPayoutAddress: types.DoNotModifyField,
 			NewMemo:          types.DoNotModifyField,
 			NewFee:           s.NewFeeFromString("1984"),
-			FeeUpdateDelay:   uint32(secondUpdateHeight),
+			FeeUpdateDelay:   secondUpdateHeight,
 			PubKey:           "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
 		}
 
@@ -404,11 +404,11 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 		s.Require().NoError(err)
 		s.Require().NotNil(secondProxyConfig.FeeUpdate)
 
-		secondUpdateScheduled, err := s.keeper.HasFeeUpdate(s.ctx, secondUpdateHeight, pubKeyBytes)
+		secondUpdateScheduled, err := s.keeper.HasFeeUpdate(s.ctx, int64(secondUpdateHeight), pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().True(secondUpdateScheduled)
 
-		firstUpdateNoLongerScheduled, err := s.keeper.HasFeeUpdate(s.ctx, firstUpdateHeight, pubKeyBytes)
+		firstUpdateNoLongerScheduled, err := s.keeper.HasFeeUpdate(s.ctx, int64(firstUpdateHeight), pubKeyBytes)
 		s.Require().NoError(err)
 		s.Require().False(firstUpdateNoLongerScheduled)
 	})
@@ -447,12 +447,12 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParamsErrors() {
 	authority := s.keeper.GetAuthority()
 	cases := []struct {
 		name    string
-		input   types.MsgUpdateParams
+		input   *types.MsgUpdateParams
 		wantErr error
 	}{
 		{
 			name: "invalid minimum update delay",
-			input: types.MsgUpdateParams{
+			input: &types.MsgUpdateParams{
 				Authority: authority,
 				Params: types.Params{
 					MinFeeUpdateDelay: 0,
@@ -462,7 +462,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParamsErrors() {
 		},
 		{
 			name: "invalid authority",
-			input: types.MsgUpdateParams{
+			input: &types.MsgUpdateParams{
 				Authority: "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
 				Params: types.Params{
 					MinFeeUpdateDelay: 8000,
@@ -475,7 +475,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParamsErrors() {
 	s.SetupTest()
 	for _, tt := range cases {
 		s.Run(tt.name, func() {
-			res, err := s.msgSrvr.UpdateParams(s.ctx, &tt.input)
+			res, err := s.msgSrvr.UpdateParams(s.ctx, tt.input)
 			s.Require().ErrorIs(err, tt.wantErr)
 			s.Require().Nil(res)
 		})

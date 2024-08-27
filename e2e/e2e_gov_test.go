@@ -192,7 +192,7 @@ func (s *IntegrationTestSuite) execGetSeedQuery(
 }
 
 func (s *IntegrationTestSuite) validateGetSeedResponse(expectEmpty bool) func([]byte, []byte) bool {
-	return func(stdOut, stdErr []byte) bool {
+	return func(stdOut, _ []byte) bool {
 		var getSeedResponse struct {
 			Data struct {
 				BlockHeight int    `json:"block_height"`
