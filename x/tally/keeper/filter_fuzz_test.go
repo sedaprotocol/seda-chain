@@ -57,7 +57,7 @@ func FuzzStdDevFilter(f *testing.F) {
 		filter, err := hex.DecodeString(filterHex)
 		require.NoError(t, err)
 
-		outliers, _, err := keeper.ApplyFilter(filter, reveals)
+		outliers, _, _, err := keeper.ApplyFilter(filter, reveals)
 		require.Equal(t, expOutliers, outliers)
 		require.ErrorIs(t, err, nil)
 	})

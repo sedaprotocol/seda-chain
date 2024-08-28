@@ -21,7 +21,7 @@ const (
 // proxy public keys are sorted.
 func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, []string, error) {
 	if len(input) == 0 {
-		return make([]int, len(reveals)), false, []string{}, types.ErrInvalidFilterType
+		return make([]int, len(reveals)), false, nil, types.ErrInvalidFilterType
 	}
 
 	// Determine basic consensus on tuple of (exit_code, proxy_pub_keys)
@@ -39,7 +39,7 @@ func ApplyFilter(input []byte, reveals []types.RevealBody) ([]int, bool, []strin
 		}
 	}
 	if maxFreq*3 < len(reveals)*2 {
-		return make([]int, len(reveals)), false, proxyPubKeys, types.ErrNoBasicConsensus
+		return make([]int, len(reveals)), false, nil, types.ErrNoBasicConsensus
 	}
 
 	var filter types.Filter

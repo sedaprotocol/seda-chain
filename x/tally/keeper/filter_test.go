@@ -19,6 +19,7 @@ func TestFilter(t *testing.T) {
 		outliers        []int
 		reveals         []types.RevealBody
 		consensus       bool
+		consPubKeys     []string // expected proxy public keys in basic consensus
 		wantErr         error
 	}{
 		{
@@ -32,8 +33,9 @@ func TestFilter(t *testing.T) {
 				{},
 				{},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Mode filter - Happy Path",
@@ -48,8 +50,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"matter":"ignore this", "result": {"text": "A", "number": 10}}`},
 				{Reveal: `{"matter":"ignore this", "result": {"text": "A", "number": 10}}`},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Mode filter - One outlier but consensus",
@@ -60,8 +63,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 				{Reveal: `{"result": {"text": "B", "number": 101}}`},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Mode filter - Multiple modes",
@@ -76,8 +80,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "B"}}`},
 				{Reveal: `{"result": {"text": "C"}}`},
 			},
-			consensus: false,
-			wantErr:   nil,
+			consensus:   false,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Mode filter - One corrupt reveal but consensus",
@@ -88,8 +93,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"resultt": {"text": "A", "number": 10}}`},
 				{Reveal: `{"result": {"text": "A", "number": 101}}`},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Mode filter - No consensus on exit code",
@@ -103,8 +109,9 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, Reveal: `{"it_does_not":"ignore this", "result": {"text": "C", "number": 10}}`},
 				{ExitCode: 0, Reveal: `{"matter":"ignore this", "result": {"text": "C", "number": 10}}`},
 			},
-			consensus: false,
-			wantErr:   types.ErrNoBasicConsensus,
+			consensus:   false,
+			consPubKeys: nil,
+			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
 			name:            "Mode filter - Corrupt due to too many bad exit codes",
@@ -118,8 +125,9 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, Reveal: `{"it_does_not":"ignore this", "result": {"text": "C", "number": 10}}`},
 				{ExitCode: 0, Reveal: `{"matter":"ignore this", "result": {"text": "C", "number": 10}}`},
 			},
-			consensus: false,
-			wantErr:   types.ErrCorruptReveals,
+			consensus:   false,
+			consPubKeys: nil,
+			wantErr:     types.ErrCorruptReveals,
 		},
 		{
 			name:            "Mode filter - Uniform reveals",
@@ -188,7 +196,13 @@ func TestFilter(t *testing.T) {
 				},
 			},
 			consensus: true,
-			wantErr:   nil,
+			consPubKeys: []string{
+				"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+				"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+			},
+			wantErr: nil,
 		},
 		{
 			name:            "Mode filter - Basic consensus but corrupt due to too many bad exit codes",
@@ -256,7 +270,13 @@ func TestFilter(t *testing.T) {
 				},
 			},
 			consensus: false,
-			wantErr:   types.ErrCorruptReveals,
+			consPubKeys: []string{
+				"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
+				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+				"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
+			},
+			wantErr: types.ErrCorruptReveals,
 		},
 		{
 			name:            "Mode filter with proxy pubkeys - No basic consensus",
@@ -318,8 +338,9 @@ func TestFilter(t *testing.T) {
 					Reveal: `{"result": {"text": "A"}}`,
 				},
 			},
-			consensus: false,
-			wantErr:   types.ErrNoBasicConsensus,
+			consensus:   false,
+			consPubKeys: nil,
+			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
 			name:            "Mode filter - Half with different reveals but consensus",
@@ -331,8 +352,9 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 				{ExitCode: 0, ProxyPubKeys: []string{"invalid_proxy_pubkey"}, Reveal: `{"result": {"text": "mac"}}`},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			wantErr:     nil,
 		},
 		{
 			name:            "Mode filter - No consensus due to non-zero exit code invalidating data",
@@ -344,8 +366,9 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 				{ExitCode: 1, ProxyPubKeys: []string{"invalid_proxy_pubkey"}, Reveal: `{"result": {"text": "mac"}}`},
 			},
-			consensus: false,
-			wantErr:   nil,
+			consensus:   false,
+			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			wantErr:     nil,
 		},
 		{
 			name:            "Mode filter - No consensus with exit code invalidating a reveal",
@@ -357,8 +380,9 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 				{ExitCode: 1, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 			},
-			consensus: false,
-			wantErr:   nil,
+			consensus:   false,
+			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			wantErr:     nil,
 		},
 		{
 			name:            "Mode filter - One reports bad pubkey but is not an outlier",
@@ -370,8 +394,9 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 				{ExitCode: 0, ProxyPubKeys: []string{"qwerty"}, Reveal: `{"result": {"text": "windows"}}`},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			wantErr:     nil,
 		},
 		{
 			name:            "Mode filter - Too many bad exit codes",
@@ -383,8 +408,9 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 1, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 				{ExitCode: 1, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 			},
-			consensus: false,
-			wantErr:   types.ErrNoBasicConsensus,
+			consensus:   false,
+			consPubKeys: nil,
+			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
 			name:            "Mode filter - Bad exit code but consensus",
@@ -402,8 +428,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"xx":"ignore this", "result": {"text": "A", "number": 10}}`},
 				{Reveal: `{"xx":"ignore this", "result": {"text": "A", "number": 10}}`},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Mode filter - Consensus not reached due to exit code",
@@ -417,8 +444,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "C", "number": 10}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 			},
-			consensus: false,
-			wantErr:   nil,
+			consensus:   false,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Mode filter - Consensus not reached due to corrupt reveal",
@@ -432,8 +460,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "C", "number": 10}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 			},
-			consensus: false,
-			wantErr:   nil,
+			consensus:   false,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Standard deviation filter uint64",
@@ -447,8 +476,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": 8, "number": 0}}`},
 				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Standard deviation filter int64",
@@ -462,8 +492,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": 8, "number": 0}}`},
 				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Standard deviation filter - Empty reveal",
@@ -471,6 +502,7 @@ func TestFilter(t *testing.T) {
 			outliers:        []int{},
 			reveals:         []types.RevealBody{},
 			consensus:       false,
+			consPubKeys:     nil,
 			wantErr:         types.ErrEmptyReveals,
 		},
 		{
@@ -480,8 +512,9 @@ func TestFilter(t *testing.T) {
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": 4, "number": 0}}`},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Standard deviation filter - One corrupt reveal",
@@ -495,8 +528,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"number": 0}}`}, // corrupt
 				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
-			consensus: false,
-			wantErr:   nil,
+			consensus:   false,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Standard deviation filter - Max sigma 1.55",
@@ -510,8 +544,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": 8, "number": 0}}`},
 				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Standard deviation filter - Max sigma 1.45",
@@ -525,8 +560,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": 8, "number": 0}}`},
 				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
-			consensus: false,
-			wantErr:   nil,
+			consensus:   false,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Standard deviation filter int64 with negative reveals",
@@ -540,8 +576,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": -8, "number": 0}}`},
 				{Reveal: `{"result": {"text": -9, "number": 0}}`},
 			},
-			consensus: true,
-			wantErr:   nil,
+			consensus:   true,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 		{
 			name:            "Standard deviation filter int64 median -0.5",
@@ -553,8 +590,9 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": -1, "number": 10}}`},
 				{Reveal: `{"result": {"text": -2, "number": 10}}`},
 			},
-			consensus: false,
-			wantErr:   nil,
+			consensus:   false,
+			consPubKeys: nil,
+			wantErr:     nil,
 		},
 	}
 	for _, tt := range tests {
@@ -572,8 +610,16 @@ func TestFilter(t *testing.T) {
 				sort.Strings(tt.reveals[i].ProxyPubKeys)
 			}
 
-			outliers, cons, err := keeper.ApplyFilter(filter, tt.reveals)
+			outliers, cons, pks, err := keeper.ApplyFilter(filter, tt.reveals)
 			require.ErrorIs(t, err, tt.wantErr)
+			if tt.consPubKeys == nil {
+				require.Nil(t, nil, pks)
+			} else {
+				for _, pk := range tt.consPubKeys {
+					require.Contains(t, pks, pk)
+				}
+			}
+
 			require.Equal(t, tt.outliers, outliers)
 			require.Equal(t, tt.consensus, cons)
 		})
