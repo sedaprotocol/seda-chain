@@ -47,7 +47,7 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 			ModuleName string                `json:"moduleName"`
 			Params     dataproxytypes.Params `json:"params"`
 		}{
-			ModuleName: "staking",
+			ModuleName: "data-proxy",
 			Params:     val,
 		}
 
