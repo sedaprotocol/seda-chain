@@ -70,7 +70,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
 	sudoMsgs := make([]types.Sudo, len(tallyList))
-	tallyResults := make([]tallyResult, len(tallyList))
+	tallyResults := make([]TallyResult, len(tallyList))
 	for i, req := range tallyList {
 		// Construct barebone sudo message to be posted to the contract
 		// here and populate its results fields after FilterAndTally.
@@ -153,7 +153,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	return nil
 }
 
-type tallyResult struct {
+type TallyResult struct {
 	consensus    bool
 	stdout       []string
 	stderr       []string
@@ -165,8 +165,8 @@ type tallyResult struct {
 // FilterAndTally applies filter and executes tally. It returns the
 // tally VM result, consensus boolean, consensus data proxy public keys,
 // and error if applicable.
-func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyResult, error) {
-	var result tallyResult
+func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult, error) {
+	var result TallyResult
 	filter, err := base64.StdEncoding.DecodeString(req.ConsensusFilter)
 	if err != nil {
 		return result, errorsmod.Wrap(err, "failed to decode consensus filter")
