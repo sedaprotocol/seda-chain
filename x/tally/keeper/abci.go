@@ -175,7 +175,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyResult,
 	// the tally VM expects.
 	decodedBytes, err := base64.StdEncoding.DecodeString(req.PaybackAddress)
 	if err != nil {
-		return tallyvm.VmResult{}, false, errorsmod.Wrap(err, "failed to decode payback address")
+		return result, errorsmod.Wrap(err, "failed to decode payback address")
 	}
 	paybackAddrHex := hex.EncodeToString(decodedBytes)
 
