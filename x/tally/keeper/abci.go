@@ -159,6 +159,13 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmRe
 	if err != nil {
 		return tallyvm.VmResult{}, false, errorsmod.Wrap(err, "failed to decode consensus filter")
 	}
+	// Convert base64-encoded payback address to hex encoding that
+	// the tally VM expects.
+	decodedBytes, err := base64.StdEncoding.DecodeString(req.PaybackAddress)
+	if err != nil {
+		return tallyvm.VmResult{}, false, errorsmod.Wrap(err, "failed to decode payback address")
+	}
+	paybackAddrHex := hex.EncodeToString(decodedBytes)
 
 	// Sort reveals.
 	keys := make([]string, len(req.Reveals))
@@ -199,6 +206,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmRe
 		"consensus", consensus,
 		"arguments", args,
 	)
+
 	vmRes := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
 		"VM_MODE":               "tally",
 		"CONSENSUS":             fmt.Sprintf("%v", consensus),
@@ -209,7 +217,8 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (tallyvm.VmRe
 		"DR_GAS_PRICE":          req.GasPrice,
 		"DR_GAS_LIMIT":          req.GasLimit,
 		"DR_MEMO":               req.Memo,
-		"DR_PAYBACK_ADDRESS":    req.PaybackAddress,
+		"DR_PAYBACK_ADDRESS":    paybackAddrHex,
+		"BLOCK_HEIGHT":          fmt.Sprintf("%d", ctx.BlockHeight()),
 	})
 	return vmRes, consensus, nil
 }
