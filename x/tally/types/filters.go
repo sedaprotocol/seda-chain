@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"golang.org/x/exp/constraints"
 	"slices"
+
+	"golang.org/x/exp/constraints"
 )
 
 type Filter interface {
@@ -23,8 +24,23 @@ func NewFilterNone(_ []byte) (FilterNone, error) {
 	return FilterNone{}, nil
 }
 
-// FilterNone declares all reveals as non-outliers.
+// FilterNone declares all reveals as non-outliers, unless there
 func (f FilterNone) ApplyFilter(reveals []RevealBody) ([]int, error) {
+	if len(reveals) == 0 {
+		return nil, ErrEmptyReveals
+	}
+
+	var corruptCount int
+	for _, r := range reveals {
+		if r.ExitCode != 0 {
+			corruptCount++
+			continue
+		}
+	}
+	if corruptCount*3 > len(reveals) {
+		return nil, ErrCorruptReveals
+	}
+
 	return make([]int, len(reveals)), nil
 }
 
