@@ -24,7 +24,8 @@ func NewFilterNone(_ []byte) (FilterNone, error) {
 	return FilterNone{}, nil
 }
 
-// FilterNone declares all reveals as non-outliers, unless there
+// FilterNone declares all reveals as non-outliers, unless reveals are
+// empty or corrupt.
 func (f FilterNone) ApplyFilter(reveals []RevealBody) ([]int, error) {
 	if len(reveals) == 0 {
 		return nil, ErrEmptyReveals
