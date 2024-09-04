@@ -1,0 +1,35 @@
+syntax = "proto3";
+package sedachain.batching.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "sedachain/batching/v1/batching.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/batching/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  rpc Batch(QueryBatchRequest)
+      returns (QueryBatchResponse) {
+    option (google.api.http).get =
+        "/seda-chain/batching/batch/{batch_number}";
+  }
+
+  rpc Batches(QueryBatchesRequest)
+      returns (QueryBatchesResponse) {
+    option (google.api.http).get =
+        "/seda-chain/batching/batches";
+  }
+}
+
+// The request message for QueryBatch RPC.
+message QueryBatchRequest { uint64 batch_number = 1; }
+
+// The response message for QueryBatch RPC.
+message QueryBatchResponse { Batch batch = 1 [(gogoproto.nullable) = false]; }
+
+// The request message for QueryBatches RPC.
+message QueryBatchesRequest {}
+
+// The response message for QueryBatches RPC.
+message QueryBatchesResponse { repeated Batch batches = 1 [(gogoproto.nullable) = false]; }

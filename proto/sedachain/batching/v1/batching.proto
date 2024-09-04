@@ -1,0 +1,60 @@
+syntax = "proto3";
+package sedachain.batching.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/batching/types";
+
+// Batch is an aggregation of data request results along with validator 
+// signatures used to prove these results on destination chains.
+message Batch {
+  // batch_number is a unique identifier of the batch incremented
+  // every time a batch is created.
+  uint64 batch_number = 1;
+  // block_height is the height at which the batch was created.
+  int64 block_height = 2;
+  // data_result_root is the root of the data result merkle tree.
+  string data_result_root = 3;
+  // validator_root is the root of the validator merkle tree.
+  string validator_root = 4;
+  // votes is the canonical set of votes on the batch from validators.
+  repeated Vote votes = 5;
+  // block_time is the time at which the batch was created.
+  google.protobuf.Timestamp block_time = 6
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+}
+
+// Vote contains basic validator data and its batch signatures under various
+// cryptographic schemes.
+message Vote {
+  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  int64 voting_power = 2;
+  repeated Signature signatures = 3;
+}
+
+// Signature is a batch signature under a given scheme.
+message Signature {
+  option (gogoproto.equal) = true;
+
+  // scheme is the signature scheme that corresponds to index in x/pubkey.
+  uint32 scheme = 1;
+  // signature is the signature of the batch.
+  string signature = 2;
+  // public_key is the public key corresponding to the signature that 
+  // should have been registered in x/pubkey
+  string public_key = 3;
+  // merkle_proof is the proof of inclusion of the signer in the validator
+  // tree. 
+  string merkle_proof = 4;
+}
+
+// Module parameters which can be changed through governance.
+message Params {
+  option (gogoproto.equal) = true;
+
+  // validator_set_trim_percentage is the percentage of the validator
+  // set to store in the validator merkle tree in the batch.
+  uint32 validator_set_trim_percentage = 1;
+}

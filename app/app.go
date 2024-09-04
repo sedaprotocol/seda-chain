@@ -132,6 +132,9 @@ import (
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
+	"github.com/sedaprotocol/seda-chain/x/batching"
+	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 	dataproxy "github.com/sedaprotocol/seda-chain/x/data-proxy"
 	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
@@ -192,6 +195,7 @@ var (
 		wasmstorage.AppModuleBasic{},
 		tally.AppModuleBasic{},
 		dataproxy.AppModuleBasic{},
+		batching.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -250,6 +254,7 @@ type App struct {
 	TallyKeeper       tallykeeper.Keeper
 	DataProxyKeeper   dataproxykeeper.Keeper
 	PubKeyKeeper      pubkeykeeper.Keeper
+	BatchingKeeper    batchingkeeper.Keeper
 
 	mm  *module.Manager
 	bmm module.BasicManager
@@ -315,6 +320,7 @@ func NewApp(
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
 		crisistypes.StoreKey, wasmstoragetypes.StoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey,
+		batchingtypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -633,12 +639,24 @@ func NewApp(
 
 	app.TallyKeeper = tallykeeper.NewKeeper(app.WasmStorageKeeper, contractKeeper, app.WasmKeeper)
 
-	app.DataProxyKeeper = *dataproxykeeper.NewKeeper(appCodec, runtime.NewKVStoreService(keys[dataproxytypes.StoreKey]), authtypes.NewModuleAddress(govtypes.ModuleName).String())
 	app.PubKeyKeeper = *pubkeykeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		app.StakingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+	)
+
+	app.DataProxyKeeper = *dataproxykeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[dataproxytypes.StoreKey]),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	app.BatchingKeeper = batchingkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[batchingtypes.StoreKey]),
+		authtypes.NewModuleAddress(batchingtypes.ModuleName).String(),
+		app.StakingKeeper,
 	)
 
 	/* =================================================== */
@@ -756,6 +774,7 @@ func NewApp(
 		tally.NewAppModule(app.TallyKeeper),
 		dataproxy.NewAppModule(appCodec, app.DataProxyKeeper),
 		pubkey.NewAppModule(appCodec, app.PubKeyKeeper),
+		batching.NewAppModule(appCodec, app.BatchingKeeper),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -814,6 +833,7 @@ func NewApp(
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
 		pubkeytypes.ModuleName,
+		batchingtypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -846,6 +866,7 @@ func NewApp(
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
 		pubkeytypes.ModuleName,
+		batchingtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after sdkstaking so that pools are
@@ -884,6 +905,7 @@ func NewApp(
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
 		pubkeytypes.ModuleName,
+		batchingtypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)
