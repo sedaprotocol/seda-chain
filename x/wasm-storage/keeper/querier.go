@@ -63,11 +63,11 @@ func (q Querier) ExecutorWasms(c context.Context, _ *types.QueryExecutorWasmsReq
 
 func (q Querier) CoreContractRegistry(c context.Context, _ *types.QueryCoreContractRegistryRequest) (*types.QueryCoreContractRegistryResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	coreAddress, err := q.Keeper.GetCoreContractAddr(ctx)
+	coreAddress, err := q.Keeper.CoreContractRegistry.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return &types.QueryCoreContractRegistryResponse{
-		Address: coreAddress.String(),
+		Address: coreAddress,
 	}, nil
 }

@@ -130,6 +130,7 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
+
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	dataproxy "github.com/sedaprotocol/seda-chain/x/data-proxy"
@@ -292,6 +293,7 @@ func NewApp(
 	/* =================================================== */
 	/*                   BASEAPP CONFIG                    */
 	/* =================================================== */
+	baseAppOptions = append(baseAppOptions, baseapp.SetOptimisticExecution())
 	bApp := baseapp.NewBaseApp(Name, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
@@ -927,6 +929,36 @@ func NewApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(anteHandler)
+
+	app.SetPrepareProposal(func(ctx sdk.Context, req *abci.RequestPrepareProposal) (*abci.ResponsePrepareProposal, error) {
+		fmt.Println("asdfasdf")
+		wow := req.LocalLastCommit.Votes[0]
+		fmt.Println(wow)
+		return &abci.ResponsePrepareProposal{}, err
+	})
+
+	// voteExtensionsHandler := NewVoteExtensionHandler(app.Logger(), app.WasmStorageKeeper)
+	// app.SetExtendVoteHandler(voteExtensionsHandler.ExtendVoteHandler())
+	app.SetExtendVoteHandler(func(ctx sdk.Context, req *abci.RequestExtendVote) (*abci.ResponseExtendVote, error) {
+		cms, err := app.LongShot(req.Hash)
+		if err != nil {
+			return nil, err
+		}
+		newCtx := sdk.NewContext(cms, ctx.BlockHeader(), false, logger)
+
+		coreAddress, err := app.WasmStorageKeeper.CoreContractRegistry.Get(newCtx)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(coreAddress)
+
+		return &abci.ResponseExtendVote{VoteExtension: []byte(coreAddress)}, nil
+	})
+
+	app.SetVerifyVoteExtensionHandler(func(ctx sdk.Context, req *abci.RequestVerifyVoteExtension) (*abci.ResponseVerifyVoteExtension, error) {
+		fmt.Println("eonviosif")
+		return &abci.ResponseVerifyVoteExtension{Status: abci.ResponseVerifyVoteExtension_ACCEPT}, nil
+	})
 
 	if manager := app.SnapshotManager(); manager != nil {
 		err = manager.RegisterExtensions(
