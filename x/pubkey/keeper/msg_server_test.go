@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"cosmossdk.io/collections"
 	gomock "go.uber.org/mock/gomock"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -127,7 +126,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 
 			// Check each index.
 			for _, indPubKey := range tt.msg.IndexedPubKeys {
-				pkActual, err := s.keeper.PubKeys.Get(s.ctx, collections.Join(tt.valAddr.Bytes(), indPubKey.Index))
+				pkActual, err := s.keeper.GetValidatorKeyAtIndex(s.ctx, tt.valAddr, indPubKey.Index)
 				s.Require().NoError(err)
 				pkExpected, ok := indPubKey.PubKey.GetCachedValue().(cryptotypes.PubKey)
 				s.Require().True(ok)

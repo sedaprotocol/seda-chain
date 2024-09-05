@@ -3,7 +3,6 @@ package keeper
 import (
 	"bytes"
 
-	"cosmossdk.io/collections"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -22,7 +21,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 			if !ok {
 				panic("failed to unpack public key")
 			}
-			err = k.PubKeys.Set(ctx, collections.Join(valAddr, pk.Index), pubKey)
+			err = k.SetValidatorKeyAtIndex(ctx, valAddr, pk.Index, pubKey)
 			if err != nil {
 				panic(err)
 			}
@@ -34,7 +33,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	var gs types.GenesisState
 
-	itr, err := k.PubKeys.Iterate(ctx, nil)
+	itr, err := k.pubKeys.Iterate(ctx, nil)
 	if err != nil {
 		panic(err)
 	}

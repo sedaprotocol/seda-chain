@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
@@ -19,7 +20,7 @@ type Keeper struct {
 	validatorAddressCodec address.Codec
 
 	Schema  collections.Schema
-	PubKeys collections.Map[collections.Pair[[]byte, uint32], cryptotypes.PubKey]
+	pubKeys collections.Map[collections.Pair[[]byte, uint32], cryptotypes.PubKey]
 }
 
 func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, sk types.StakingKeeper, validatorAddressCodec address.Codec) *Keeper {
@@ -31,7 +32,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, sk
 	k := Keeper{
 		stakingKeeper:         sk,
 		validatorAddressCodec: validatorAddressCodec,
-		PubKeys:               collections.NewMap(sb, types.PubKeysPrefix, "pubkeys", collections.PairKeyCodec(collections.BytesKey, collections.Uint32Key), codec.CollInterfaceValue[cryptotypes.PubKey](cdc)),
+		pubKeys:               collections.NewMap(sb, types.PubKeysPrefix, "pubkeys", collections.PairKeyCodec(collections.BytesKey, collections.Uint32Key), codec.CollInterfaceValue[cryptotypes.PubKey](cdc)),
 	}
 
 	schema, err := sb.Build()
@@ -42,6 +43,22 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, sk
 	return &k
 }
 
+func (k Keeper) SetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index uint32, pubKey cryptotypes.PubKey) error {
+	err := k.pubKeys.Set(ctx, collections.Join(validatorAddr.Bytes(), index), pubKey)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (k Keeper) GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index uint32) (cryptotypes.PubKey, error) {
+	pubKey, err := k.pubKeys.Get(ctx, collections.Join(validatorAddr.Bytes(), index))
+	if err != nil {
+		return nil, err
+	}
+	return pubKey, nil
+}
+
 func (k Keeper) GetValidatorKeys(ctx context.Context, validatorAddr string) (result types.ValidatorPubKeys, err error) {
 	valAddr, err := k.validatorAddressCodec.StringToBytes(validatorAddr)
 	if err != nil {
@@ -49,7 +66,7 @@ func (k Keeper) GetValidatorKeys(ctx context.Context, validatorAddr string) (res
 	}
 
 	rng := collections.NewPrefixedPairRange[[]byte, uint32](valAddr)
-	itr, err := k.PubKeys.Iterate(ctx, rng)
+	itr, err := k.pubKeys.Iterate(ctx, rng)
 	if err != nil {
 		return result, err
 	}

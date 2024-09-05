@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"cosmossdk.io/collections"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -45,7 +44,7 @@ func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.M
 			return nil, sdkerrors.ErrInvalidType.Wrapf("%T is not a cryptotypes.PubKey", pubKey)
 		}
 
-		if err := m.Keeper.PubKeys.Set(ctx, collections.Join(valAddr, indPubKey.Index), pubKey); err != nil {
+		if err := m.SetValidatorKeyAtIndex(ctx, valAddr, indPubKey.Index, pubKey); err != nil {
 			return nil, err
 		}
 
