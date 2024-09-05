@@ -12,7 +12,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 		panic(err)
 	}
 	for _, batch := range data.Batches {
-		if err := k.SetBatch(ctx, batch.BatchNumber, batch); err != nil {
+		if err := k.SetBatch(ctx, batch); err != nil {
 			panic(err)
 		}
 	}

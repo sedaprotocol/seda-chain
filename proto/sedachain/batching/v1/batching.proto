@@ -15,9 +15,9 @@ message Batch {
   uint64 batch_number = 1;
   // block_height is the height at which the batch was created.
   int64 block_height = 2;
-  // data_result_root is the root of the data result merkle tree.
+  // data_result_root is the hex-encoded root of the data result merkle tree.
   string data_result_root = 3;
-  // validator_root is the root of the validator merkle tree.
+  // validator_root is the hex-encoded root of the validator merkle tree.
   string validator_root = 4;
   // votes is the canonical set of votes on the batch from validators.
   repeated Vote votes = 5;
@@ -54,7 +54,7 @@ message Signature {
 message Params {
   option (gogoproto.equal) = true;
 
-  // validator_set_trim_percentage is the percentage of the validator
+  // validator_set_trim_percent is the percentage of the validator
   // set to store in the validator merkle tree in the batch.
-  uint32 validator_set_trim_percentage = 1;
+  uint32 validator_set_trim_percent = 1;
 }

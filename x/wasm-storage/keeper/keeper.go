@@ -37,7 +37,15 @@ type Keeper struct {
 	Params               collections.Item[types.Params]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, authority string, ak types.AccountKeeper, bk types.BankKeeper, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper) *Keeper {
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeService storetypes.KVStoreService,
+	authority string,
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
+	wk wasmtypes.ContractOpsKeeper,
+	wvk wasmtypes.ViewKeeper,
+) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{

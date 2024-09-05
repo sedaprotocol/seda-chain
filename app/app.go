@@ -657,6 +657,11 @@ func NewApp(
 		runtime.NewKVStoreService(keys[batchingtypes.StoreKey]),
 		authtypes.NewModuleAddress(batchingtypes.ModuleName).String(),
 		app.StakingKeeper,
+		app.WasmStorageKeeper,
+		app.PubKeyKeeper,
+		contractKeeper,
+		app.WasmKeeper,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 	)
 
 	/* =================================================== */

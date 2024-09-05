@@ -7,7 +7,7 @@ const (
 // DefaultParams returns default batching module parameters.
 func DefaultParams() Params {
 	return Params{
-		ValidatorSetTrimPercentage: DefaultValSetTrimPercent,
+		ValidatorSetTrimPercent: DefaultValSetTrimPercent,
 	}
 }
 

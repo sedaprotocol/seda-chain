@@ -16,5 +16,5 @@ func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 
 func (k Keeper) GetValSetTrimPercent(ctx sdk.Context) (uint32, error) {
 	params, err := k.params.Get(ctx)
-	return params.ValidatorSetTrimPercentage, err
+	return params.ValidatorSetTrimPercent, err
 }
