@@ -8,7 +8,6 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"golang.org/x/crypto/sha3"
 
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
@@ -104,12 +103,12 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, string, erro
 		leaves = append(leaves, resHash)
 	}
 
-	curRoot := utils.HashFromByteSlices(leaves)
+	curRoot := utils.RootFromEntries(leaves)
 	prevRoot, err := k.GetPreviousDataResultRoot(ctx)
 	if err != nil {
 		return nil, "", err
 	}
-	root := utils.HashFromByteSlices([][]byte{prevRoot, curRoot})
+	root := utils.SuperRootWithEntry(curRoot, prevRoot)
 
 	// TODO update data result status on contract
 
@@ -123,9 +122,10 @@ type validatorPower struct {
 
 // ConstructValidatorTree constructs a validator tree based on the
 // validators in the active set and their registered public keys.
-// It returns the tree's leaves and hex-encoded root.
+// It returns the tree's entries (unhashed leaf contents) and hex-encoded
+// root.
 func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, string, error) {
-	var leaves [][]byte
+	var entries [][]byte
 	err := k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
 		pubKey, err := k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeysIndexSecp256k1)
 		if err != nil {
@@ -136,25 +136,19 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, string, error
 			}
 		}
 
-		// Construct a leaf content and hash it.
 		pkBytes := pubKey.Bytes()
-		buf := make([]byte, len(pkBytes)+8)
-		copy(buf[:len(pkBytes)], pkBytes)
-		binary.BigEndian.PutUint64(buf[len(pkBytes):], uint64(power))
+		entry := make([]byte, len(pkBytes)+8)
 
-		hash := sha3.New256()
-		hash.Write(buf)
-		hashed := hash.Sum(nil)
+		copy(entry[:len(pkBytes)], pkBytes)
+		binary.BigEndian.PutUint64(entry[len(pkBytes):], uint64(power))
 
-		leaves = append(leaves, hashed)
+		entries = append(entries, entry)
 		return false
 	})
 	if err != nil {
 		return nil, "", err
 	}
 
-	secp256k1Root := utils.HashFromByteSlices(leaves)
-	root := utils.HashFromByteSlices([][]byte{secp256k1Root})
-
-	return leaves, hex.EncodeToString(root), nil
+	secp256k1Root := utils.RootFromEntries(entries)
+	return entries, hex.EncodeToString(secp256k1Root), nil
 }
