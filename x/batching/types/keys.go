@@ -12,6 +12,7 @@ const (
 
 var (
 	CurrentBatchNumberKey = collections.NewPrefix(0)
-	BatchPrefix           = collections.NewPrefix(1)
-	ParamsKey             = collections.NewPrefix(2)
+	BatchesKeyPrefix      = collections.NewPrefix(1)
+	VotesKeyPrefix        = collections.NewPrefix(2)
+	ParamsKey             = collections.NewPrefix(3)
 )

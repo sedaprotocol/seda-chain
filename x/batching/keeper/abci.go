@@ -52,69 +52,68 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
 	if err != nil {
 		return types.Batch{}, err
 	}
-	dataRootHex, err := k.ConstructDataResultTree(ctx)
+	dataLeaves, dataRootHex, err := k.ConstructDataResultTree(ctx)
 	if err != nil {
 		return types.Batch{}, err
 	}
-	valRootHex, err := k.ConstructValidatorTree(ctx)
+	valLeaves, valRootHex, err := k.ConstructValidatorTree(ctx)
 	if err != nil {
 		return types.Batch{}, err
 	}
 
 	return types.Batch{
-		BatchNumber:    curBatchNum,
-		BlockHeight:    ctx.BlockHeight(),
-		DataResultRoot: dataRootHex,
-		ValidatorRoot:  valRootHex,
-		BlockTime:      ctx.BlockTime(),
+		BatchNumber:      curBatchNum,
+		BlockHeight:      ctx.BlockHeight(),
+		DataResultRoot:   dataRootHex,
+		ValidatorRoot:    valRootHex,
+		DataResultLeaves: dataLeaves,
+		ValidatorLeaves:  valLeaves,
+		BlockTime:        ctx.BlockTime(),
 	}, nil
 }
 
 // ConstructDataResultTree constructs a data result tree based on the
 // batching-ready data results returned from the core contract and
-// returns a hex-encoded tree root.
-func (k Keeper) ConstructDataResultTree(ctx sdk.Context) (string, error) {
+// returns its leaves and its hex-encoded tree root.
+func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, string, error) {
 	coreContract, err := k.wasmStorageKeeper.GetCoreContractAddr(ctx)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 	// TODO: Deal with offset and limits. (#313)
 	queryRes, err := k.wasmViewKeeper.QuerySmart(ctx, coreContract, []byte(`{"get_data_results_by_status":{"status": "tallied", "offset": 0, "limit": 100}}`))
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 	if string(queryRes) == "[]" {
-		return "", err
+		return nil, "", err
 	}
 
 	var dataResults []tallytypes.DataResult
 	err = json.Unmarshal(queryRes, &dataResults)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 
 	leaves := make([][]byte, len(dataResults))
 	for _, res := range dataResults {
 		resHash, err := hex.DecodeString(res.ID)
 		if err != nil {
-			return "", err
+			return nil, "", err
 		}
 		leaves = append(leaves, resHash)
 	}
 
-	// TODO construct the whole tree. (and merkle proofs?)
-	// curRoot := merkle.HashFromByteSlices(leaves)
 	curRoot := utils.HashFromByteSlices(leaves)
 	prevRoot, err := k.GetPreviousDataResultRoot(ctx)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
-	// root := merkle.HashFromByteSlices([][]byte{prevRoot, curRoot})
 	root := utils.HashFromByteSlices([][]byte{prevRoot, curRoot})
 
 	// TODO update data result status on contract
 
-	return hex.EncodeToString(root), nil
+	return leaves, hex.EncodeToString(root), nil
 }
 
 type validatorPower struct {
@@ -124,18 +123,18 @@ type validatorPower struct {
 
 // ConstructValidatorTree constructs a validator tree based on the
 // validators in the active set and their registered public keys.
-func (k Keeper) ConstructValidatorTree(ctx sdk.Context) (string, error) {
+// It returns the tree's leaves and hex-encoded root.
+func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, string, error) {
 	var activeSet []validatorPower
 	err := k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
 		activeSet = append(activeSet, validatorPower{ValAddr: valAddr, Power: power})
 		return false
 	})
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 
 	var leaves [][]byte
-	var votes []types.Vote
 	for _, vp := range activeSet {
 		pubKey, err := k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, vp.ValAddr, utils.SEDAKeysIndexSecp256k1)
 		if err != nil {
@@ -155,23 +154,10 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) (string, error) {
 		hashed := hash.Sum(nil)
 
 		leaves = append(leaves, hashed)
-		votes = append(votes, types.Vote{
-			ValidatorAddr: vp.ValAddr.String(),
-			VotingPower:   vp.Power,
-			Signatures: []*types.Signature{{
-				Scheme:      utils.SEDAKeysIndexSecp256k1,
-				Signature:   "",
-				PublicKey:   pubKey.String(),
-				MerkleProof: "", // TODO populate this
-			}},
-		})
 	}
 
-	// TODO construct the whole tree and populate merkle proof fields.
-	// secp256k1Root := merkle.HashFromByteSlices(leaves)
-	// root := merkle.HashFromByteSlices([][]byte{{}, secp256k1Root})
 	secp256k1Root := utils.HashFromByteSlices(leaves)
 	root := utils.HashFromByteSlices([][]byte{{}, secp256k1Root})
 
-	return hex.EncodeToString(root), nil
+	return leaves, hex.EncodeToString(root), nil
 }

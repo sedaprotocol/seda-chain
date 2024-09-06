@@ -19,10 +19,12 @@ message Batch {
   string data_result_root = 3;
   // validator_root is the hex-encoded root of the validator merkle tree.
   string validator_root = 4;
-  // votes is the canonical set of votes on the batch from validators.
-  repeated Vote votes = 5;
+  // data_result_leaves are the leaves of the data result tree.
+  repeated bytes data_result_leaves = 5;
+  // validator_leaves are the leaves of the validator tree.
+  repeated bytes validator_leaves = 6;
   // block_time is the time at which the batch was created.
-  google.protobuf.Timestamp block_time = 6
+  google.protobuf.Timestamp block_time = 7
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 

@@ -32,7 +32,8 @@ type Keeper struct {
 
 	Schema             collections.Schema
 	currentBatchNumber collections.Sequence
-	batch              collections.Map[uint64, types.Batch]
+	batches            collections.Map[uint64, types.Batch]
+	votes              collections.Map[collections.Pair[uint64, []byte], types.Vote]
 	params             collections.Item[types.Params]
 }
 
@@ -58,7 +59,8 @@ func NewKeeper(
 		validatorAddressCodec: validatorAddressCodec,
 		authority:             authority,
 		currentBatchNumber:    collections.NewSequence(sb, types.CurrentBatchNumberKey, "current_batch_number"),
-		batch:                 collections.NewMap(sb, types.BatchPrefix, "batch", collections.Uint64Key, codec.CollValue[types.Batch](cdc)),
+		batches:               collections.NewMap(sb, types.BatchesKeyPrefix, "batches", collections.Uint64Key, codec.CollValue[types.Batch](cdc)),
+		votes:                 collections.NewMap(sb, types.VotesKeyPrefix, "votes", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.Vote](cdc)),
 		params:                collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
 
@@ -88,11 +90,11 @@ func (k Keeper) GetCurrentBatchNum(ctx context.Context) (uint64, error) {
 }
 
 func (k Keeper) SetBatch(ctx context.Context, batch types.Batch) error {
-	return k.batch.Set(ctx, batch.BatchNumber, batch)
+	return k.batches.Set(ctx, batch.BatchNumber, batch)
 }
 
 func (k Keeper) GetBatch(ctx context.Context, batchNum uint64) (types.Batch, error) {
-	batch, err := k.batch.Get(ctx, batchNum)
+	batch, err := k.batches.Get(ctx, batchNum)
 	if err != nil {
 		return types.Batch{}, err
 	}
@@ -110,7 +112,7 @@ func (k Keeper) GetPreviousDataResultRoot(ctx context.Context) ([]byte, error) {
 	if curBatchNum == 0 {
 		return []byte{}, err
 	}
-	batch, err := k.batch.Get(ctx, curBatchNum-1)
+	batch, err := k.batches.Get(ctx, curBatchNum-1)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +126,7 @@ func (k Keeper) GetPreviousDataResultRoot(ctx context.Context) ([]byte, error) {
 // IterateBatches iterates over the batches and performs a given
 // callback function.
 func (k Keeper) IterateBatches(ctx sdk.Context, callback func(types.Batch) (stop bool)) error {
-	iter, err := k.batch.Iterate(ctx, nil)
+	iter, err := k.batches.Iterate(ctx, nil)
 	if err != nil {
 		return err
 	}
