@@ -1015,8 +1015,8 @@ github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg
 github.com/seccomp/libseccomp-golang v0.9.2-0.20220502022130-f33da4d89646/go.mod h1:JA8cRccbGaA1s33RQf7Y1+q9gHmZX1yB/z9WDN1C6fg=
 github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529 h1:VbJcd022MkoohRyAfktHnN99Brt/4eJr01mdLqPhGaE=
 github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529/go.mod h1:GdlDqGJN2g55PHiwYJs2bQMlL0rdlQQbauK4dcrOI6w=
-github.com/sedaprotocol/seda-wasm-vm/tallyvm v1.1.0 h1:dd3xF6p0eC6ka+ra+bI/b3mWDpy1IF5sqw1DPD3m+Ck=
-github.com/sedaprotocol/seda-wasm-vm/tallyvm v1.1.0/go.mod h1:AaX9uRy6qD2q+o1SapTRnGUe9HHZWTmBN2BVNAptq3U=
+github.com/sedaprotocol/seda-wasm-vm/tallyvm v1.1.1 h1:HSG3/sUzS+QwbBoaCdxNYVEHAjl2R7VPg34GO6fANIc=
+github.com/sedaprotocol/seda-wasm-vm/tallyvm v1.1.1/go.mod h1:AaX9uRy6qD2q+o1SapTRnGUe9HHZWTmBN2BVNAptq3U=
 github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c h1:PbSn7HpWeox6lqBu6Ba6YZS3On3euwn1BPz/egsnEgA=
 github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c/go.mod h1:DEIXHk41VUzOMVbZnIApssPXtZ+2zrETDP7kJjGc1RM=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
