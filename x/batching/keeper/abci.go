@@ -125,21 +125,14 @@ type validatorPower struct {
 // validators in the active set and their registered public keys.
 // It returns the tree's leaves and hex-encoded root.
 func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, string, error) {
-	var activeSet []validatorPower
-	err := k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
-		activeSet = append(activeSet, validatorPower{ValAddr: valAddr, Power: power})
-		return false
-	})
-	if err != nil {
-		return nil, "", err
-	}
-
 	var leaves [][]byte
-	for _, vp := range activeSet {
-		pubKey, err := k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, vp.ValAddr, utils.SEDAKeysIndexSecp256k1)
+	err := k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
+		pubKey, err := k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeysIndexSecp256k1)
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
-				continue // TODO check
+				return false
+			} else {
+				panic(err)
 			}
 		}
 
@@ -147,17 +140,21 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, string, error
 		pkBytes := pubKey.Bytes()
 		buf := make([]byte, len(pkBytes)+8)
 		copy(buf[:len(pkBytes)], pkBytes)
-		binary.BigEndian.PutUint64(buf[len(pkBytes):], uint64(vp.Power))
+		binary.BigEndian.PutUint64(buf[len(pkBytes):], uint64(power))
 
 		hash := sha3.New256()
 		hash.Write(buf)
 		hashed := hash.Sum(nil)
 
 		leaves = append(leaves, hashed)
+		return false
+	})
+	if err != nil {
+		return nil, "", err
 	}
 
 	secp256k1Root := utils.HashFromByteSlices(leaves)
-	root := utils.HashFromByteSlices([][]byte{{}, secp256k1Root})
+	root := utils.HashFromByteSlices([][]byte{secp256k1Root})
 
 	return leaves, hex.EncodeToString(root), nil
 }
