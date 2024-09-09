@@ -41,7 +41,6 @@ func TestStateSync(t *testing.T) {
 	latestHeight, err := chain.Height(ctx)
 	require.NoError(t, err, "failed to fetch latest chain height")
 
-	//nolint:gosec // G115: Test will fail if conversion overflows
 	trustHeight := int64(latestHeight) - stateSyncSnapshotInterval
 
 	firstFullNode := chain.FullNodes[0]

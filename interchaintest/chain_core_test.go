@@ -489,7 +489,6 @@ func testStaking(ctx context.Context, t *testing.T, chain *cosmos.CosmosChain, u
 		height, err := chain.Height(ctx)
 		require.NoError(t, err)
 
-		//nolint:gosec // G115: Test will fail if conversion overflows
 		searchHeight := int64(height - 1)
 
 		hi, err := chain.StakingQueryHistoricalInfo(ctx, searchHeight)

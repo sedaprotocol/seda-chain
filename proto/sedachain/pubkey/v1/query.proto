@@ -13,16 +13,20 @@ service Query {
   // ValidatorKeys returns a given validator's registered keys.
   rpc ValidatorKeys(QueryValidatorKeysRequest)
       returns (QueryValidatorKeysResponse) {
-    option (google.api.http).get = "/seda-chain/pubkey/validator_keys/{validator_addr}";
+    option (google.api.http).get =
+        "/seda-chain/pubkey/validator_keys/{validator_addr}";
   }
 }
 
-// QueryValidatorKeysRequest is request type for the Query/ValidatorKeys RPC method.
+// QueryValidatorKeysRequest is request type for the Query/ValidatorKeys RPC
+// method.
 message QueryValidatorKeysRequest {
-  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  string validator_addr = 1
+      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
 }
 
-// QueryValidatorKeysResponse is response type for the Query/ValidatorKeys RPC method.
+// QueryValidatorKeysResponse is response type for the Query/ValidatorKeys RPC
+// method.
 message QueryValidatorKeysResponse {
-  ValidatorPubKeys validator_pub_keys = 1 [(gogoproto.nullable) = false];
+  ValidatorPubKeys validator_pub_keys = 1 [ (gogoproto.nullable) = false ];
 }

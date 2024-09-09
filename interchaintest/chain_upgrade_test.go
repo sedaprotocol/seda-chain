@@ -205,7 +205,7 @@ func ValidatorVoting(t *testing.T, ctx context.Context, chain *cosmos.CosmosChai
 	require.NoError(t, err, "error fetching height before upgrade")
 
 	// this should timeout due to chain halt at upgrade height
-	//nolint:gosec // G115: Test will fail if conversion overflows
+
 	_ = testutil.WaitForBlocks(timeoutCtx, int(haltHeight-currentHeight), chain)
 
 	currentHeight, err = chain.Height(ctx)
@@ -227,7 +227,7 @@ func SubmitUpgradeProposal(t *testing.T, ctx context.Context, chain *cosmos.Cosm
 		Authority: "seda10d07y265gmmuvt4z0w9aw880jnsr700jvvla4j", // gov module account; sedad q auth module-account gov
 		Plan: upgradetypes.Plan{
 			Name: upgradeName,
-			//nolint:gosec // G115: Test will fail if conversion overflows
+
 			Height: int64(haltHeight),
 		},
 	}

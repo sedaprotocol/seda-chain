@@ -130,7 +130,6 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
-
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	dataproxy "github.com/sedaprotocol/seda-chain/x/data-proxy"

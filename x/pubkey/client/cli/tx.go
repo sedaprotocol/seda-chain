@@ -13,6 +13,7 @@ import (
 	cmtos "github.com/cometbft/cometbft/libs/os"
 
 	"cosmossdk.io/core/address"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"

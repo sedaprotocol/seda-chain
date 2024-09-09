@@ -1,8 +1,9 @@
 package keeper_test
 
 import (
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gomock "go.uber.org/mock/gomock"
+
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
