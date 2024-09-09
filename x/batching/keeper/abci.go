@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"cosmossdk.io/collections"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
@@ -115,11 +116,6 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, string, erro
 	return leaves, hex.EncodeToString(root), nil
 }
 
-type validatorPower struct {
-	ValAddr sdk.ValAddress
-	Power   int64
-}
-
 // ConstructValidatorTree constructs a validator tree based on the
 // validators in the active set and their registered public keys.
 // It returns the tree's entries (unhashed leaf contents) and hex-encoded
@@ -131,9 +127,8 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, string, error
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
 				return false
-			} else {
-				panic(err)
 			}
+			panic(err)
 		}
 
 		pkBytes := pubKey.Bytes()

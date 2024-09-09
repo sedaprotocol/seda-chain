@@ -18,6 +18,6 @@ func DefaultGenesisState() *GenesisState {
 }
 
 // ValidateGenesis validates batching genesis data.
-func ValidateGenesis(gs GenesisState) error {
+func ValidateGenesis(_ GenesisState) error {
 	return nil
 }

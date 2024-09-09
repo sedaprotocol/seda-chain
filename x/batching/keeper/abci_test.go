@@ -9,11 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
 )
 
@@ -36,6 +38,7 @@ func Test_ConstructValidatorTree(t *testing.T) {
 
 	// Generate proof for each entry and verify.
 	rootBytes, err := hex.DecodeString(root)
+	require.NoError(t, err)
 	for i := range entries {
 		pf, err := utils.GenerateProof(entries, i)
 		require.NoError(t, err)
@@ -75,9 +78,11 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 		require.NoError(t, err)
 		require.NotNil(t, res)
 
-		f.stakingKeeper.Keeper.EndBlocker(ctx)
+		_, err = f.stakingKeeper.Keeper.EndBlocker(ctx)
+		require.NoError(t, err)
 
-		f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, 0, pubKey)
+		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, 0, pubKey)
+		require.NoError(t, err)
 	}
 	return addrs, pubKeys, powers
 }
