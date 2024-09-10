@@ -34,7 +34,7 @@ func GenerateProof(entries [][]byte, i int) ([][]byte, error) {
 }
 
 func VerifyProof(proof [][]byte, root, entry []byte) bool {
-	return bytes.Equal(processProof(sha3.New256(), proof, entry), root)
+	return bytes.Equal(processProof(sha3.NewLegacyKeccak256(), proof, entry), root)
 }
 
 func processProof(sha hash.Hash, proof [][]byte, entry []byte) []byte {

@@ -17,7 +17,7 @@ import (
 //   - Each hash pair is sorted to make proofs more succinct.
 //   - "Super root" computation is supported.
 func RootFromEntries(entries [][]byte) []byte {
-	return rootFromEntries(sha3.New256(), entries)
+	return rootFromEntries(sha3.NewLegacyKeccak256(), entries)
 }
 
 func rootFromEntries(sha hash.Hash, entries [][]byte) []byte {
@@ -40,14 +40,14 @@ func rootFromEntries(sha hash.Hash, entries [][]byte) []byte {
 
 // SuperRoot computes the merkle parent of two existing merkle roots.
 func SuperRoot(root1, root2 []byte) []byte {
-	sha := sha3.New256()
+	sha := sha3.NewLegacyKeccak256()
 	return parentHash(sha, root1, root2)
 }
 
 // SuperRootWithLeaf computes the merkle parent of an existing root
 // and a new (unhashed) entry in a byte slice.
 func SuperRootWithEntry(root, entry []byte) []byte {
-	sha := sha3.New256()
+	sha := sha3.NewLegacyKeccak256()
 	var hashedLeaf []byte
 	if len(entry) == 0 {
 		hashedLeaf = emptyHash(sha)
