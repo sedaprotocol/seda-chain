@@ -3,6 +3,8 @@ package types
 import (
 	"encoding/base64"
 	"encoding/json"
+
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
 type Request struct {
@@ -60,19 +62,7 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 }
 
 type Sudo struct {
-	ID       string     `json:"dr_id"`
-	Result   DataResult `json:"result"`
-	ExitCode byte       `json:"exit_code"`
-}
-
-type DataResult struct {
-	Version        string `json:"version"`
-	ID             string `json:"dr_id"`
-	BlockHeight    uint64 `json:"block_height"`
-	ExitCode       byte   `json:"exit_code"`
-	GasUsed        string `json:"gas_used"`
-	Result         []byte `json:"result"`
-	PaybackAddress string `json:"payback_address"` // base64-encoded string
-	SedaPayload    string `json:"seda_payload"`
-	Consensus      bool   `json:"consensus"`
+	ID       string                   `json:"dr_id"`
+	Result   batchingtypes.DataResult `json:"result"`
+	ExitCode byte                     `json:"exit_code"`
 }

@@ -41,6 +41,10 @@ import (
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/integration"
+	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally"
@@ -88,7 +92,8 @@ func initFixture(tb testing.TB) *fixture {
 	tempDir := tb.TempDir()
 
 	keys := storetypes.NewKVStoreKeys(
-		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, wasmstoragetypes.StoreKey, wasmtypes.StoreKey,
+		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, wasmstoragetypes.StoreKey,
+		wasmtypes.StoreKey, pubkeytypes.StoreKey, batchingtypes.StoreKey,
 	)
 	cdc := moduletestutil.MakeTestEncodingConfig(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}).Codec
 
@@ -163,7 +168,6 @@ func initFixture(tb testing.TB) *fixture {
 
 	contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&wasmKeeper)
 
-	// x/wasm-storage
 	ctrl := gomock.NewController(tb)
 	viewKeeper := testutil.NewMockViewKeeper(ctrl)
 
@@ -177,7 +181,29 @@ func initFixture(tb testing.TB) *fixture {
 		viewKeeper,
 	)
 
-	tallyKeeper := keeper.NewKeeper(wasmStorageKeeper, contractKeeper, viewKeeper)
+	pubKeyKeeper := pubkeykeeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
+		stakingKeeper,
+		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
+	)
+	batchingKeeper := batchingkeeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(keys[batchingtypes.StoreKey]),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		stakingKeeper,
+		wasmStorageKeeper,
+		pubKeyKeeper,
+		contractKeeper,
+		viewKeeper,
+		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
+	)
+	tallyKeeper := keeper.NewKeeper(
+		wasmStorageKeeper,
+		batchingKeeper,
+		contractKeeper,
+		viewKeeper,
+	)
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)

@@ -52,11 +52,35 @@ message Signature {
   string merkle_proof = 4;
 }
 
-// Module parameters which can be changed through governance.
+// Params is a list of parameters which can be changed through governance.
 message Params {
   option (gogoproto.equal) = true;
 
   // validator_set_trim_percent is the percentage of the validator
   // set to store in the validator merkle tree in the batch.
   uint32 validator_set_trim_percent = 1;
+}
+
+// DataResult represents the result of a resolved data request. 
+message DataResult {
+  // version is a semantic version string.
+  string version = 1;
+  // dr_id is the data request identifier.
+  string dr_id = 2;
+  // block_height is the height at which the data request was tallied.
+  uint64 block_height = 3;
+  // exit_code is the exit code of the tally wasm binary execution.
+  uint32 exit_code = 4;
+  // gas_used is the gas used by the data request execution.
+  string gas_used = 5;
+  // result is the result of the tally wasm binary execution.
+  bytes result = 6;
+  // payback_address is the payback address set by the relayer.
+  string payback_address = 7;
+  // seda_payload is the payload set by SEDA Protocol (e.g. OEC-enabled
+  // data requests)
+  string seda_payload = 8;
+  // consensus indicates whether consensus was reached in the tally 
+  // process.
+  bool consensus = 9;
 }

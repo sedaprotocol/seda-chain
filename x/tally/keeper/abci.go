@@ -15,6 +15,7 @@ import (
 
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
 
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
@@ -76,10 +77,9 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 		// here and populate its results fields after FilterAndTally.
 		sudoMsg := types.Sudo{
 			ID: req.ID,
-			Result: types.DataResult{
-				Version: req.Version,
-				ID:      req.ID,
-				//nolint:gosec // G115: We shouldn't get negative block heights anwyay...
+			Result: batchingtypes.DataResult{
+				Version:        req.Version,
+				DrId:           req.ID,
 				BlockHeight:    uint64(ctx.BlockHeight()),
 				GasUsed:        "0", // TODO
 				PaybackAddress: req.PaybackAddress,
@@ -98,7 +98,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			sudoMsg.Result.Consensus = result.consensus
 		} else {
 			sudoMsg.ExitCode = byte(result.exitInfo.ExitCode)
-			sudoMsg.Result.ExitCode = byte(result.exitInfo.ExitCode)
+			sudoMsg.Result.ExitCode = uint32(result.exitInfo.ExitCode)
 			sudoMsg.Result.Result = result.result
 			sudoMsg.Result.Consensus = result.consensus
 		}

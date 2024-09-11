@@ -171,7 +171,6 @@ func initFixture(tb testing.TB) *fixture {
 
 	contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&wasmKeeper)
 
-	// x/wasm-storage
 	ctrl := gomock.NewController(tb)
 	viewKeeper := testutil.NewMockViewKeeper(ctrl)
 
@@ -185,15 +184,12 @@ func initFixture(tb testing.TB) *fixture {
 		viewKeeper,
 	)
 
-	tallyKeeper := tallykeeper.NewKeeper(wasmStorageKeeper, contractKeeper, viewKeeper)
-
 	pubKeyKeeper := pubkeykeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		stakingKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
-
 	batchingKeeper := keeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[types.StoreKey]),
@@ -204,6 +200,12 @@ func initFixture(tb testing.TB) *fixture {
 		contractKeeper,
 		viewKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
+	)
+	tallyKeeper := tallykeeper.NewKeeper(
+		wasmStorageKeeper,
+		batchingKeeper,
+		contractKeeper,
+		viewKeeper,
 	)
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)

@@ -637,8 +637,6 @@ func NewApp(
 		app.WasmKeeper,
 	)
 
-	app.TallyKeeper = tallykeeper.NewKeeper(app.WasmStorageKeeper, contractKeeper, app.WasmKeeper)
-
 	app.PubKeyKeeper = *pubkeykeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
@@ -662,6 +660,13 @@ func NewApp(
 		contractKeeper,
 		app.WasmKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+	)
+
+	app.TallyKeeper = tallykeeper.NewKeeper(
+		app.WasmStorageKeeper,
+		app.BatchingKeeper,
+		contractKeeper,
+		app.WasmKeeper,
 	)
 
 	/* =================================================== */

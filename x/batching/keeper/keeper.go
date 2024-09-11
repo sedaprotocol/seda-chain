@@ -31,6 +31,7 @@ type Keeper struct {
 	authority string
 
 	Schema             collections.Schema
+	dataResults        collections.Map[collections.Pair[bool, string], types.DataResult]
 	currentBatchNumber collections.Sequence
 	batches            collections.Map[uint64, types.Batch]
 	votes              collections.Map[collections.Pair[uint64, []byte], types.Vote]
@@ -58,6 +59,7 @@ func NewKeeper(
 		wasmViewKeeper:        wvk,
 		validatorAddressCodec: validatorAddressCodec,
 		authority:             authority,
+		dataResults:           collections.NewMap(sb, types.DataResultsPrefix, "data_results", collections.PairKeyCodec(collections.BoolKey, collections.StringKey), codec.CollValue[types.DataResult](cdc)),
 		currentBatchNumber:    collections.NewSequence(sb, types.CurrentBatchNumberKey, "current_batch_number"),
 		batches:               collections.NewMap(sb, types.BatchesKeyPrefix, "batches", collections.Uint64Key, codec.CollValue[types.Batch](cdc)),
 		votes:                 collections.NewMap(sb, types.VotesKeyPrefix, "votes", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.Vote](cdc)),
@@ -70,6 +72,39 @@ func NewKeeper(
 	}
 	k.Schema = schema
 	return k
+}
+
+// SetDataResultForBatching stores a data result so that it is ready
+// to be batched.
+func (k Keeper) SetDataResultForBatching(ctx context.Context, result types.DataResult) error {
+	return k.dataResults.Set(ctx, collections.Join(false, result.DrId), result)
+}
+
+// setDataResultAfterBatching stores a data result after batching
+// under the status "batched."
+func (k Keeper) setDataResultAfterBatching(ctx context.Context, result types.DataResult) error {
+	return k.dataResults.Set(ctx, collections.Join(true, result.DrId), result)
+}
+
+// getDataResults returns a list of data results under a given status
+// (batched or not).
+func (k Keeper) getDataResults(ctx context.Context, batched bool) ([]types.DataResult, error) {
+	var results []types.DataResult
+	err := k.IterateDataResults(ctx, batched, func(_ collections.Pair[bool, string], value types.DataResult) (bool, error) {
+		results = append(results, value)
+		return false, nil
+	})
+	return results, err
+}
+
+// IterateDataResults iterates over all data results under a given
+// status (batched or not) and performs a given callback function.
+func (k Keeper) IterateDataResults(ctx context.Context, batched bool, cb func(key collections.Pair[bool, string], value types.DataResult) (bool, error)) error {
+	rng := collections.NewPrefixedPairRange[bool, string](false)
+	if err := k.dataResults.Walk(ctx, rng, cb); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (k Keeper) SetCurrentBatchNum(ctx context.Context, batchNum uint64) error {
