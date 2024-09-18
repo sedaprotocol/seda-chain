@@ -77,8 +77,9 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 		sudoMsg := types.Sudo{
 			ID: req.ID,
 			Result: types.DataResult{
-				Version:        req.Version,
-				ID:             req.ID,
+				Version: req.Version,
+				ID:      req.ID,
+				//nolint:gosec // G115: We shouldn't get negative block heights anwyay...
 				BlockHeight:    uint64(ctx.BlockHeight()),
 				GasUsed:        "0", // TODO
 				PaybackAddress: req.PaybackAddress,

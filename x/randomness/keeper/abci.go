@@ -50,6 +50,7 @@ func (h *ProposalHandler) PrepareProposalHandler(
 
 		var maxBlockGas uint64
 		if b := ctx.ConsensusParams().Block; b != nil {
+			//nolint:gosec // G115: We should always have a gas limit for blocks.
 			maxBlockGas = uint64(b.MaxGas)
 		}
 
@@ -93,7 +94,9 @@ func (h *ProposalHandler) PrepareProposalHandler(
 			return nil, err
 		}
 
-		stop := h.txSelector.SelectTxForProposal(ctx, uint64(req.MaxTxBytes), maxBlockGas, newSeedTx, newSeedTxBz)
+		//nolint:gosec // G115: We should always have a bytes limit for transactions
+		maxTxBytes := uint64(req.MaxTxBytes)
+		stop := h.txSelector.SelectTxForProposal(ctx, maxTxBytes, maxBlockGas, newSeedTx, newSeedTxBz)
 		if stop {
 			return nil, types.ErrNewSeedTxNotIncluded
 		}
@@ -111,7 +114,7 @@ func (h *ProposalHandler) PrepareProposalHandler(
 				continue
 			}
 
-			stop := h.txSelector.SelectTxForProposal(ctx, uint64(req.MaxTxBytes), maxBlockGas, tx, txBz)
+			stop := h.txSelector.SelectTxForProposal(ctx, maxTxBytes, maxBlockGas, tx, txBz)
 			if stop {
 				break
 			}
@@ -130,9 +133,10 @@ func (h *ProposalHandler) ProcessProposalHandler(
 ) sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
 		var totalTxGas uint64
-		var maxBlockGas int64
+		var maxBlockGas uint64
 		if b := ctx.ConsensusParams().Block; b != nil {
-			maxBlockGas = b.MaxGas
+			//nolint:gosec // G115: We should always have a gas limit for blocks.
+			maxBlockGas = uint64(b.MaxGas)
 		}
 
 		// process the NewSeed tx
@@ -147,7 +151,7 @@ func (h *ProposalHandler) ProcessProposalHandler(
 				totalTxGas += gasTx.GetGas()
 			}
 
-			if totalTxGas > uint64(maxBlockGas) {
+			if totalTxGas > maxBlockGas {
 				return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 			}
 		}
@@ -216,7 +220,7 @@ func (h *ProposalHandler) ProcessProposalHandler(
 					totalTxGas += gasTx.GetGas()
 				}
 
-				if totalTxGas > uint64(maxBlockGas) {
+				if totalTxGas > maxBlockGas {
 					return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 				}
 			}
