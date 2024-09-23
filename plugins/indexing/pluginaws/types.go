@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 
@@ -47,7 +48,9 @@ func NewSqsClient(logger *log.Logger) (*SqsClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialise session: %w", err)
 	}
-	awsSqsClient := sqs.New(sess)
+	sqsConfig := aws.NewConfig()
+	AddRetryToConfig(sqsConfig)
+	awsSqsClient := sqs.New(sess, sqsConfig)
 
 	s3Config, err := NewS3Config()
 	if err != nil {

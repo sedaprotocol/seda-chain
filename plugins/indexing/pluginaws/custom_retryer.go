@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/request"
 )
@@ -27,4 +28,16 @@ func (r CustomRetryer) ShouldRetry(req *request.Request) bool {
 
 	// Fallback to SDK's built in retry rules
 	return r.DefaultRetryer.ShouldRetry(req)
+}
+
+func AddRetryToConfig(cfg *aws.Config) *aws.Config {
+	request.WithRetryer(cfg, CustomRetryer{DefaultRetryer: client.DefaultRetryer{
+		NumMaxRetries:    client.DefaultRetryerMaxNumRetries,
+		MinRetryDelay:    client.DefaultRetryerMinRetryDelay,
+		MaxRetryDelay:    client.DefaultRetryerMaxRetryDelay,
+		MinThrottleDelay: client.DefaultRetryerMinThrottleDelay,
+		MaxThrottleDelay: client.DefaultRetryerMaxThrottleDelay,
+	}})
+
+	return cfg
 }
