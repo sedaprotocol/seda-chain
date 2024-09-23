@@ -28,8 +28,8 @@ import (
 	dataproxy "github.com/sedaprotocol/seda-chain/plugins/indexing/data-proxy"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pluginaws"
-	"github.com/sedaprotocol/seda-chain/plugins/indexing/staking"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
+	// "github.com/sedaprotocol/seda-chain/plugins/indexing/staking"
 )
 
 var _ storetypes.ABCIListener = &IndexerPlugin{}
@@ -89,8 +89,9 @@ func (p *IndexerPlugin) extractUpdate(change *storetypes.StoreKVPair) (*types.Me
 		return bank.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	case auth.StoreKey:
 		return auth.ExtractUpdate(p.block, p.cdc, p.logger, change)
-	case staking.StoreKey:
-		return staking.ExtractUpdate(p.block, p.cdc, p.logger, change)
+	// Enable when indexer supports these messages
+	// case staking.StoreKey:
+	// 	return staking.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	case dataproxy.StoreKey:
 		return dataproxy.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	default:
