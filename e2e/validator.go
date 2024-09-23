@@ -30,7 +30,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
-	"github.com/sedaprotocol/seda-chain/app/utils"
 )
 
 type validator struct {
@@ -42,7 +41,6 @@ type validator struct {
 	privateKey       cryptotypes.PrivKey
 	consensusKey     privval.FilePVKey
 	consensusPrivKey cryptotypes.PrivKey //nolint:unused // unused
-	vrfKey           *utils.VRFKey
 	nodeKey          p2p.NodeKey
 }
 
@@ -130,16 +128,6 @@ func (v *validator) createConsensusKey() error {
 	filePV.Save()
 
 	v.consensusKey = filePV.Key
-
-	_, err := utils.LoadOrGenVRFKey(config, "")
-	if err != nil {
-		return err
-	}
-	vrfKey, err := utils.LoadVRFKey(filepath.Join(filepath.Dir(config.PrivValidatorKeyFile()), utils.VRFKeyFileName))
-	if err != nil {
-		return err
-	}
-	v.vrfKey = vrfKey
 	return nil
 }
 
