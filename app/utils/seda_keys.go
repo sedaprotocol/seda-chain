@@ -122,19 +122,19 @@ func saveSEDAKeys(keys []indexedPrivKey, dirPath string) error {
 	return nil
 }
 
-type sedaSigner interface {
+type SEDASigner interface {
 	Sign(input []byte, index uint32) (signature []byte, err error)
 }
 
-var _ sedaSigner = &sedaKeys{}
+var _ SEDASigner = &sedaKeys{}
 
 type sedaKeys struct {
 	keys []indexedPrivKey
 }
 
-// LoadSEDASigner loads the SEDA keys from the given file and returns
-// a sedaKeys object.
-func LoadSEDASigner(loadPath string) (*sedaKeys, error) {
+// LoadSEDASigner loads the SEDA keys from a given file and returns
+// a SEDASigner interface.
+func LoadSEDASigner(loadPath string) (SEDASigner, error) {
 	keysJSONBytes, err := os.ReadFile(loadPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read SEDA keys from %v: %v", loadPath, err)
