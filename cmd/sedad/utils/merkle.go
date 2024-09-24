@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"hash"
 	"math/bits"
+	"sort"
 
 	"golang.org/x/crypto/sha3"
 )
@@ -12,11 +13,14 @@ import (
 // leaves are the entries given in byte slices in the provided order.
 // It largely follows RFC-6962 with some modifications:
 //   - It uses Keccak-256 hashing algorithm.
-//   - Leaves are double-hashed for second preimage resistance. No hashing
-//     prefixes are used.
+//   - The leaves are sorted.
 //   - Each hash pair is sorted to make proofs more succinct.
+//   - No hashing prefixes are used.
 //   - "Super root" computation is supported.
 func RootFromEntries(entries [][]byte) []byte {
+	sort.Slice(entries, func(i, j int) bool {
+		return bytes.Compare(entries[i], entries[j]) == -1
+	})
 	return rootFromEntries(sha3.NewLegacyKeccak256(), entries)
 }
 
@@ -77,9 +81,6 @@ func emptyHash(s hash.Hash) []byte {
 func leafHash(s hash.Hash, leaf []byte) []byte {
 	s.Reset()
 	s.Write(leaf)
-	single := s.Sum(nil)
-	s.Reset()
-	s.Write(single)
 	return s.Sum(nil)
 }
 

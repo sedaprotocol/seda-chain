@@ -23,7 +23,7 @@ func TestRootFromEntries(t *testing.T) {
 		{
 			name:     "single entry",
 			entries:  []string{"a6f4b3e2d9c18f75ba7e3c21d5f8a239ce4b7a2d3f85c9e6b7d2f3a4c9d8f2"},
-			expected: "5e1756cab080e11a355db5b61438d37608798fa026a73217aab18174fb9908c1",
+			expected: "10580d33d16c58046698b4ac4ef92bf7d73fcd778cab0885e95d8e8e1e24ad5f",
 		},
 		{
 			name: "two entries",
@@ -31,7 +31,7 @@ func TestRootFromEntries(t *testing.T) {
 				"22e922a540bb7af9b2456ecb0663619804db6e736f28702398c594b93e526acaefa2d0fb95f0c45c",
 				"a54cfd0002b948adba2acd65025cad55aa8558ccd84e421f6e6b9519f2e465a577be05ba32de0317",
 			},
-			expected: "53ab91fafdc336733a74a2121ddfb07347b5f2a3972a2d8461bddceeb4269c8f",
+			expected: "fbb5a63d65fec2bf6f5903994c763f354f66b9a45711b8342979a9f67ef8e27b",
 		},
 		{
 			name: "five entries",
@@ -42,7 +42,7 @@ func TestRootFromEntries(t *testing.T) {
 				"3940ae8fd7928039a8d630301e25d9ede15bd94700f4b73c5543b3089bc47efcfdaa0a4104418dd6",
 				"67b17cf31449cf9c738738b4382afa789d8bb794eab3a42ac0c6990d67d23c8f7e785b2d3d317fda",
 			},
-			expected: "89e1e3bdeee88210c0d09c9aa2c7522178b08834d3274dbd8cd6af62a0da36c2",
+			expected: "5784dd7a32bb4df072e7f1053d3ae4eb5d8833ecb52062e95f4a26ec9b2d244b",
 		},
 	}
 
