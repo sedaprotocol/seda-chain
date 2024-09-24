@@ -44,7 +44,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 // ProcessTallies fetches from the core contract the list of requests
 // to be tallied and then goes through it to filter and tally.
 func (k Keeper) ProcessTallies(ctx sdk.Context) error {
-	// Get core contract address.
+	// Get the Core Contract address.
 	coreContract, err := k.wasmStorageKeeper.GetCoreContractAddr(ctx)
 	if err != nil {
 		return err
@@ -70,21 +70,19 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
-	sudoMsgs := make([]types.Sudo, len(tallyList))
 	tallyResults := make([]TallyResult, len(tallyList))
+	sudoMsgs := make([]types.SudoPostDataResult, len(tallyList))
+	dataResults := make([]batchingtypes.DataResult, len(tallyList))
 	for i, req := range tallyList {
-		// Construct barebone sudo message to be posted to the contract
-		// here and populate its results fields after FilterAndTally.
-		sudoMsg := types.Sudo{
-			ID: req.ID,
-			Result: batchingtypes.DataResult{
-				Version:        req.Version,
-				DrId:           req.ID,
-				BlockHeight:    uint64(ctx.BlockHeight()),
-				GasUsed:        "0", // TODO
-				PaybackAddress: req.PaybackAddress,
-				SedaPayload:    req.SedaPayload,
-			},
+		dataResults[i] = batchingtypes.DataResult{
+			Id:      "replacewithhash",
+			DrId:    req.ID,
+			Version: req.Version,
+			//nolint:gosec // G115: We shouldn't get negative block heights anwyay.
+			BlockHeight:    uint64(ctx.BlockHeight()),
+			GasUsed:        "0", // TODO
+			PaybackAddress: req.PaybackAddress,
+			SedaPayload:    req.SedaPayload,
 		}
 
 		result, err := k.FilterAndTally(ctx, req)
@@ -92,34 +90,33 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			// Return with exit code 255 to signify that the tally VM
 			// was not executed due to the error specified in the result
 			// field.
-			sudoMsg.ExitCode = 0xff
-			sudoMsg.Result.ExitCode = 0xff
-			sudoMsg.Result.Result = []byte(err.Error())
-			sudoMsg.Result.Consensus = result.consensus
+			dataResults[i].ExitCode = 0xff
+			dataResults[i].Result = []byte(err.Error())
+			dataResults[i].Consensus = result.consensus
 		} else {
-			sudoMsg.ExitCode = byte(result.exitInfo.ExitCode)
-			sudoMsg.Result.ExitCode = uint32(result.exitInfo.ExitCode)
-			sudoMsg.Result.Result = result.result
-			sudoMsg.Result.Consensus = result.consensus
+			//nolint:gosec // G115: We shouldn't get negative exit code anyway.
+			dataResults[i].ExitCode = uint32(result.exitInfo.ExitCode)
+			dataResults[i].Result = result.result
+			dataResults[i].Consensus = result.consensus
 		}
 		k.Logger(ctx).Info(
 			"completed tally execution",
 			"request_id", req.ID,
-			"result", result,
-			"sudo_message", sudoMsg,
+			"tally_result", result,
 		)
 
-		sudoMsgs[i] = sudoMsg
+		sudoMsgs[i] = types.SudoPostDataResult{ID: req.ID}
 		tallyResults[i] = result
 	}
 
+	// Notify the Core Contract of tally completion.
 	msg, err := json.Marshal(struct {
 		PostDataResults struct {
-			Results []types.Sudo `json:"results"`
+			Results []types.SudoPostDataResult `json:"results"`
 		} `json:"post_data_results"`
 	}{
 		PostDataResults: struct {
-			Results []types.Sudo `json:"results"`
+			Results []types.SudoPostDataResult `json:"results"`
 		}{
 			Results: sudoMsgs,
 		},
@@ -127,26 +124,31 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	if err != nil {
 		return err
 	}
-
 	postRes, err := k.wasmKeeper.Sudo(ctx, coreContract, msg)
 	if err != nil {
 		return err
 	}
 
+	// Store the data results for batching.
+	for i := range dataResults {
+		k.batchingKeeper.SetDataResultForBatching(ctx, dataResults[i])
+	}
+
 	for i := range sudoMsgs {
 		k.Logger(ctx).Info(
 			"tally flow completed",
-			"request_id", sudoMsgs[i].ID,
+			"request_id", dataResults[i].DrId,
 			"post_result", postRes,
 		)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeTallyCompletion,
-				sdk.NewAttribute(types.AttributeDataRequestID, sudoMsgs[i].ID),
-				sdk.NewAttribute(types.AttributeTypeConsensus, strconv.FormatBool(sudoMsgs[i].Result.Consensus)),
+				sdk.NewAttribute(types.AttributeDataResultID, dataResults[i].Id),
+				sdk.NewAttribute(types.AttributeDataRequestID, dataResults[i].DrId),
+				sdk.NewAttribute(types.AttributeTypeConsensus, strconv.FormatBool(dataResults[i].Consensus)),
 				sdk.NewAttribute(types.AttributeTallyVMStdOut, strings.Join(tallyResults[i].stdout, "\n")),
 				sdk.NewAttribute(types.AttributeTallyVMStdErr, strings.Join(tallyResults[i].stderr, "\n")),
-				sdk.NewAttribute(types.AttributeTallyExitCode, fmt.Sprintf("%02x", sudoMsgs[i].ExitCode)),
+				sdk.NewAttribute(types.AttributeTallyExitCode, fmt.Sprintf("%02x", dataResults[i].ExitCode)),
 				sdk.NewAttribute(types.AttributeProxyPubKeys, strings.Join(tallyResults[i].proxyPubKeys, "\n")),
 			),
 		)

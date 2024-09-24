@@ -3,8 +3,6 @@ package types
 import (
 	"encoding/base64"
 	"encoding/json"
-
-	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
 type Request struct {
@@ -61,8 +59,8 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 	})
 }
 
-type Sudo struct {
-	ID       string                   `json:"dr_id"`
-	Result   batchingtypes.DataResult `json:"result"`
-	ExitCode byte                     `json:"exit_code"`
+// SudoPostDataResult is the message type used to post data result
+// to the Core Contract.
+type SudoPostDataResult struct {
+	ID string `json:"dr_id"`
 }
