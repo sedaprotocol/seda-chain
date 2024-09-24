@@ -43,7 +43,7 @@ func AddKey(ac address.Codec) *cobra.Command {
 		Use:   "add-seda-keys",
 		Short: "Generate the SEDA keys and upload their public keys.",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err

@@ -13,5 +13,8 @@ func DefaultParams() Params {
 
 // Validate validates the batching module parameters.
 func (p *Params) Validate() error {
+	if p.ValidatorSetTrimPercent > 100 {
+		return ErrInvalidValidatorSetTrimPercent
+	}
 	return nil
 }

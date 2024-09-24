@@ -11,7 +11,7 @@ import (
 // RootFromEntries computes the root of the Merkle Hash Tree whose
 // leaves are the entries given in byte slices in the provided order.
 // It largely follows RFC-6962 with some modifications:
-//   - It uses SHA3-256 hashing algorithm.
+//   - It uses Keccak-256 hashing algorithm.
 //   - Leaves are double-hashed for second preimage resistance. No hashing
 //     prefixes are used.
 //   - Each hash pair is sorted to make proofs more succinct.
