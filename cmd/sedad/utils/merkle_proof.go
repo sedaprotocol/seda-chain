@@ -44,6 +44,7 @@ func GetProof(entries [][]byte, index int) ([][]byte, error) {
 		return nil, fmt.Errorf("entry not found in tree")
 	}
 
+	// Construct the proof.
 	var proof [][]byte
 	for treeIndex > 0 {
 		siblingIndex, err := siblingIndex(treeIndex)

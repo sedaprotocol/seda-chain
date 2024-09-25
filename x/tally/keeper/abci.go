@@ -105,6 +105,10 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			"tally_result", result,
 		)
 
+		dataResults[i].Id, err = dataResults[i].TryHash()
+		if err != nil {
+			return err
+		}
 		sudoMsgs[i] = types.SudoPostDataResult{ID: req.ID}
 		tallyResults[i] = result
 	}
@@ -131,7 +135,10 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 
 	// Store the data results for batching.
 	for i := range dataResults {
-		k.batchingKeeper.SetDataResultForBatching(ctx, dataResults[i])
+		err := k.batchingKeeper.SetDataResultForBatching(ctx, dataResults[i])
+		if err != nil {
+			return err
+		}
 	}
 
 	for i := range sudoMsgs {

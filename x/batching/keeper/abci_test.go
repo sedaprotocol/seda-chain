@@ -1,12 +1,16 @@
 package keeper_test
 
 import (
+	cryptorand "crypto/rand"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/math"
 
@@ -17,7 +21,45 @@ import (
 	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
+	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
+
+func Test_ConstructDataResultTree(t *testing.T) {
+	f := initFixture(t)
+
+	dataResults := generateDataResults(t, 25)
+	for _, dr := range dataResults {
+		err := f.batchingKeeper.SetDataResultForBatching(f.Context(), dr)
+		require.NoError(t, err)
+	}
+
+	entries, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context())
+	require.NoError(t, err)
+
+	var entryHexes, drIds []string
+	for i, entry := range entries {
+		entryHexes = append(entryHexes, hex.EncodeToString(entry))
+		drIds = append(drIds, dataResults[i].Id)
+	}
+	require.ElementsMatch(t, drIds, entryHexes)
+
+	// Generate proof for each entry and verify.
+	rootBytes, err := hex.DecodeString(root)
+	require.NoError(t, err)
+	for i := range entries {
+		proof, err := utils.GetProof(entries, i)
+		require.NoError(t, err)
+
+		// TODO: Generalize and provide a utils function
+		sha := sha3.NewLegacyKeccak256()
+		sha.Write([]byte{})
+		emptyLeaf := sha.Sum(nil)
+		proof = append(proof, emptyLeaf)
+
+		ret := utils.VerifyProof(proof, rootBytes, entries[i])
+		require.True(t, ret)
+	}
+}
 
 func Test_ConstructValidatorTree(t *testing.T) {
 	f := initFixture(t)
@@ -95,4 +137,57 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 		require.NoError(t, err)
 	}
 	return addrs, pubKeys, powers
+}
+
+// generateDataResults returns a given number of randomly-generated
+// data results.
+func generateDataResults(t *testing.T, num int) []types.DataResult {
+	dataResults := make([]types.DataResult, num)
+	for i := range dataResults {
+		sample := types.DataResult{
+			DrId:           generateRandomHexString(64),
+			Version:        fmt.Sprintf("%d.%d.%d", rand.Intn(10), rand.Intn(10), rand.Intn(10)),
+			BlockHeight:    rand.Uint64(),
+			ExitCode:       rand.Uint32(),
+			GasUsed:        generateRandomNumberString(10),
+			Result:         generateRandomBytes(50),
+			PaybackAddress: generateRandomBase64String(10),
+			SedaPayload:    generateRandomBase64String(10),
+			Consensus:      rand.Intn(2) == 1,
+		}
+
+		var err error
+		sample.Id, err = sample.TryHash()
+		require.NoError(t, err)
+
+		dataResults[i] = sample
+	}
+	return dataResults
+}
+
+func generateRandomHexString(length int) string {
+	bytes := make([]byte, length/2)
+	cryptorand.Read(bytes)
+	return hex.EncodeToString(bytes)
+}
+
+func generateRandomBase64String(length int) string {
+	bytes := make([]byte, length)
+	cryptorand.Read(bytes)
+	return base64.StdEncoding.EncodeToString(bytes)
+}
+
+func generateRandomBytes(length int) []byte {
+	bytes := make([]byte, length)
+	cryptorand.Read(bytes)
+	return bytes
+}
+
+func generateRandomNumberString(maxDigits int) string {
+	digits := rand.Intn(maxDigits) + 1
+	number := rand.Intn(9) + 1
+	for i := 1; i < digits; i++ {
+		number = number*10 + rand.Intn(10)
+	}
+	return fmt.Sprintf("%d", number)
 }

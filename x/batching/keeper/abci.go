@@ -51,23 +51,23 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
 	if err != nil {
 		return types.Batch{}, err
 	}
-	dataLeaves, dataRootHex, err := k.ConstructDataResultTree(ctx)
+	dataEntries, dataRootHex, err := k.ConstructDataResultTree(ctx)
 	if err != nil {
 		return types.Batch{}, err
 	}
-	valLeaves, valRootHex, err := k.ConstructValidatorTree(ctx)
+	valEntries, valRootHex, err := k.ConstructValidatorTree(ctx)
 	if err != nil {
 		return types.Batch{}, err
 	}
 
 	return types.Batch{
-		BatchNumber:      curBatchNum,
-		BlockHeight:      ctx.BlockHeight(),
-		DataResultRoot:   dataRootHex,
-		ValidatorRoot:    valRootHex,
-		DataResultLeaves: dataLeaves,
-		ValidatorLeaves:  valLeaves,
-		BlockTime:        ctx.BlockTime(),
+		BatchNumber:       curBatchNum,
+		BlockHeight:       ctx.BlockHeight(),
+		DataResultRoot:    dataRootHex,
+		ValidatorRoot:     valRootHex,
+		DataResultEntries: dataEntries,
+		ValidatorEntries:  valEntries,
+		BlockTime:         ctx.BlockTime(),
 	}, nil
 }
 
@@ -80,25 +80,28 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, string, erro
 		return nil, "", err
 	}
 
-	leaves := make([][]byte, len(dataResults))
-	for _, res := range dataResults {
-		resHash, err := hex.DecodeString(res.DrId)
+	entries := make([][]byte, len(dataResults))
+	for i, res := range dataResults {
+		resHash, err := hex.DecodeString(res.Id)
 		if err != nil {
 			return nil, "", err
 		}
-		leaves = append(leaves, resHash)
+		entries[i] = resHash
 
-		k.setDataResultAfterBatching(ctx, res)
+		err = k.setDataResultAfterBatching(ctx, res)
+		if err != nil {
+			return nil, "", err
+		}
 	}
 
-	curRoot := utils.RootFromEntries(leaves)
+	curRoot := utils.RootFromEntries(entries)
 	prevRoot, err := k.GetPreviousDataResultRoot(ctx)
 	if err != nil {
 		return nil, "", err
 	}
 	root := utils.RootFromLeaves([][]byte{prevRoot, curRoot})
 
-	return leaves, hex.EncodeToString(root), nil
+	return entries, hex.EncodeToString(root), nil
 }
 
 // ConstructValidatorTree constructs a validator tree based on the
