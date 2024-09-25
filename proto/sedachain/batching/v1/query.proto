@@ -9,12 +9,14 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/batching/types";
 
 // Query defines the gRPC querier service.
 service Query {
+  // Batch returns a batch given the batch number.
   rpc Batch(QueryBatchRequest)
       returns (QueryBatchResponse) {
     option (google.api.http).get =
         "/seda-chain/batching/batch/{batch_number}";
   }
 
+  // Batch returns all batches in the store.
   rpc Batches(QueryBatchesRequest)
       returns (QueryBatchesResponse) {
     option (google.api.http).get =
