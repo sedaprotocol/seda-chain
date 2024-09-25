@@ -42,7 +42,7 @@ func TestRootFromEntries(t *testing.T) {
 				"3940ae8fd7928039a8d630301e25d9ede15bd94700f4b73c5543b3089bc47efcfdaa0a4104418dd6",
 				"67b17cf31449cf9c738738b4382afa789d8bb794eab3a42ac0c6990d67d23c8f7e785b2d3d317fda",
 			},
-			expected: "5784dd7a32bb4df072e7f1053d3ae4eb5d8833ecb52062e95f4a26ec9b2d244b",
+			expected: "bccb08ea97abfa6350c70db4207620796408060f72e5019c3acbe855c59568b2",
 		},
 	}
 

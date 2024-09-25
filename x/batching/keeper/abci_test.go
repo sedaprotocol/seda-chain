@@ -40,7 +40,7 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	rootBytes, err := hex.DecodeString(root)
 	require.NoError(t, err)
 	for i := range entries {
-		pf, err := utils.GenerateProof(entries, i)
+		pf, err := utils.GetProof(entries, i)
 		require.NoError(t, err)
 		ret := utils.VerifyProof(pf, rootBytes, entries[i])
 		require.True(t, ret)
