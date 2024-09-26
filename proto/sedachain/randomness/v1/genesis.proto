@@ -1,7 +1,0 @@
-syntax = "proto3";
-package sedachain.randomness.v1;
-
-option go_package = "github.com/sedaprotocol/seda-chain/x/randomness/types";
-
-// GenesisState defines the randomness module's genesis state with a seed.
-message GenesisState { string seed = 1; }
