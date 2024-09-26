@@ -16,17 +16,27 @@ import (
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
+// SEDAKeyFileName defines the SEDA key file name.
 const SEDAKeyFileName = "seda_keys.json"
 
-var sedaKeyGenerators = []privKeyGenerator{
-	func() cmtcrypto.PrivKey { return secp256k1.GenPrivKey() }, // index 0 - secp256k1
+// SEDAKeyIndex enumerates the SEDA key indices.
+type SEDAKeyIndex uint32
+
+const (
+	Secp256k1 SEDAKeyIndex = iota
+)
+
+// sedaKeyGenerators maps the key index to the corresponding private
+// key generator.
+var sedaKeyGenerators = map[SEDAKeyIndex]privKeyGenerator{
+	Secp256k1: func() cmtcrypto.PrivKey { return secp256k1.GenPrivKey() },
 }
 
 type (
 	privKeyGenerator func() cmtcrypto.PrivKey
 
 	indexedPrivKey struct {
-		Index   uint32            `json:"index"`
+		Index   SEDAKeyIndex      `json:"index"`
 		PrivKey cmtcrypto.PrivKey `json:"priv_key"`
 	}
 )
@@ -41,7 +51,7 @@ func GenerateSEDAKeys(dirPath string) ([]pubkeytypes.IndexedPubKey, error) {
 	result := make([]pubkeytypes.IndexedPubKey, len(sedaKeyGenerators))
 	for i, generator := range sedaKeyGenerators {
 		keys[i] = indexedPrivKey{
-			Index:   uint32(i),
+			Index:   i,
 			PrivKey: generator(),
 		}
 
@@ -93,7 +103,7 @@ func LoadSEDAPubKeys(loadPath string) ([]pubkeytypes.IndexedPubKey, error) {
 			return nil, err
 		}
 		result[i] = pubkeytypes.IndexedPubKey{
-			Index:  key.Index,
+			Index:  uint32(key.Index),
 			PubKey: pkAny,
 		}
 	}
@@ -123,7 +133,7 @@ func saveSEDAKeys(keys []indexedPrivKey, dirPath string) error {
 }
 
 type SEDASigner interface {
-	Sign(input []byte, index uint32) (signature []byte, err error)
+	Sign(input []byte, index SEDAKeyIndex) (signature []byte, err error)
 }
 
 var _ SEDASigner = &sedaKeys{}
@@ -147,7 +157,7 @@ func LoadSEDASigner(loadPath string) (SEDASigner, error) {
 	return &sedaKeys{keys: keys}, nil
 }
 
-func (s *sedaKeys) Sign(input []byte, index uint32) ([]byte, error) {
+func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
 	signature, err := s.keys[index].PrivKey.Sign(input)
 	if err != nil {
 		return nil, err

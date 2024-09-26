@@ -30,7 +30,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// QueryValidatorKeysRequest is request type for the Query/ValidatorKeys RPC method.
+// QueryValidatorKeysRequest is request type for the Query/ValidatorKeys RPC
+// method.
 type QueryValidatorKeysRequest struct {
 	ValidatorAddr string `protobuf:"bytes,1,opt,name=validator_addr,json=validatorAddr,proto3" json:"validator_addr,omitempty"`
 }
@@ -75,7 +76,8 @@ func (m *QueryValidatorKeysRequest) GetValidatorAddr() string {
 	return ""
 }
 
-// QueryValidatorKeysResponse is response type for the Query/ValidatorKeys RPC method.
+// QueryValidatorKeysResponse is response type for the Query/ValidatorKeys RPC
+// method.
 type QueryValidatorKeysResponse struct {
 	ValidatorPubKeys ValidatorPubKeys `protobuf:"bytes,1,opt,name=validator_pub_keys,json=validatorPubKeys,proto3" json:"validator_pub_keys"`
 }
