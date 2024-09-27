@@ -109,7 +109,7 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, string, erro
 	if err != nil {
 		return nil, "", err
 	}
-	root := utils.SuperRootWithEntry(curRoot, prevRoot)
+	root := utils.RootFromLeaves([][]byte{prevRoot, curRoot})
 
 	// TODO update data result status on contract
 
@@ -131,11 +131,14 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, string, error
 			panic(err)
 		}
 
+		// An entry is (domain_separator || pubkey || voting_power).
+		separator := []byte("SECP256K1")
 		pkBytes := pubKey.Bytes()
-		entry := make([]byte, len(pkBytes)+8)
 
-		copy(entry[:len(pkBytes)], pkBytes)
-		binary.BigEndian.PutUint64(entry[len(pkBytes):], uint64(power))
+		entry := make([]byte, len(separator)+len(pkBytes)+8)
+		copy(entry[:len(separator)], separator)
+		copy(entry[len(separator):len(separator)+len(pkBytes)], pkBytes)
+		binary.BigEndian.PutUint64(entry[len(separator)+len(pkBytes):], uint64(power))
 
 		entries = append(entries, entry)
 		return false

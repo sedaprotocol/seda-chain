@@ -30,8 +30,9 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	parsedPKs := make([][]byte, len(entries))
 	parsedPowers := make([]int64, len(entries))
 	for i, entry := range entries {
-		parsedPKs[i] = entry[:32]
-		parsedPowers[i] = int64(binary.BigEndian.Uint64(entry[32:]))
+		require.Equal(t, []byte("SECP256K1"), entry[:9])
+		parsedPKs[i] = entry[9:41]
+		parsedPowers[i] = int64(binary.BigEndian.Uint64(entry[41:]))
 	}
 	require.ElementsMatch(t, pks, parsedPKs)
 	require.ElementsMatch(t, powers, parsedPowers)

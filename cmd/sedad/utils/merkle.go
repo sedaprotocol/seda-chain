@@ -14,12 +14,30 @@ import (
 //   - The leaves are sorted.
 //   - Each hash pair is sorted to make proofs more succinct.
 func RootFromEntries(entries [][]byte) []byte {
-	// Hash and sort the leaves.
+	// Hash the entries and sort the leaves.
 	sha := sha3.NewLegacyKeccak256()
 	leaves := make([][]byte, len(entries))
 	for i, entry := range entries {
 		leaves[i] = leafHash(sha, entry)
 	}
+	sort.Slice(leaves, func(i, j int) bool {
+		return bytes.Compare(leaves[i], leaves[j]) == -1
+	})
+
+	return buildTree(sha, leaves)[0]
+}
+
+// RootFromLeaves computes the root of a merkle tree with the given
+// leaves.
+func RootFromLeaves(leaves [][]byte) []byte {
+	// Use an empty hash if a provided leaf is empty.
+	sha := sha3.NewLegacyKeccak256()
+	for i := range leaves {
+		if len(leaves[i]) == 0 {
+			leaves[i] = emptyHash(sha)
+		}
+	}
+	// Sort the leaves.
 	sort.Slice(leaves, func(i, j int) bool {
 		return bytes.Compare(leaves[i], leaves[j]) == -1
 	})
@@ -43,24 +61,6 @@ func buildTree(sha hash.Hash, leaves [][]byte) [][]byte {
 		tree[i] = parentHash(sha, tree[2*i+1], tree[2*i+2])
 	}
 	return tree
-}
-
-// SuperRoot computes the merkle parent of two existing merkle roots.
-func SuperRoot(root1, root2 []byte) []byte {
-	return parentHash(sha3.NewLegacyKeccak256(), root1, root2)
-}
-
-// SuperRootWithLeaf computes the merkle parent of an existing root
-// and a new (unhashed) entry in a byte slice.
-func SuperRootWithEntry(root, entry []byte) []byte {
-	sha := sha3.NewLegacyKeccak256()
-	var hashedLeaf []byte
-	if len(entry) == 0 {
-		hashedLeaf = emptyHash(sha)
-	} else {
-		hashedLeaf = leafHash(sha, entry)
-	}
-	return parentHash(sha, hashedLeaf, root)
 }
 
 // parentHash computes the parent's hash given its two children a and b
