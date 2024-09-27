@@ -26,7 +26,7 @@ type Request struct {
 type RevealBody struct {
 	Salt         []byte   `json:"salt"`
 	ExitCode     byte     `json:"exit_code"`
-	GasUsed      string   `json:"gas_used"`
+	GasUsed      uint64   `json:"gas_used"`
 	Reveal       string   `json:"reveal"` // base64-encoded string
 	ProxyPubKeys []string `json:"proxy_public_keys"`
 }

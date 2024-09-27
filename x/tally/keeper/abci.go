@@ -75,12 +75,11 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	dataResults := make([]batchingtypes.DataResult, len(tallyList))
 	for i, req := range tallyList {
 		dataResults[i] = batchingtypes.DataResult{
-			Id:      "replacewithhash",
 			DrId:    req.ID,
 			Version: req.Version,
 			//nolint:gosec // G115: We shouldn't get negative block heights anwyay.
 			BlockHeight:    uint64(ctx.BlockHeight()),
-			GasUsed:        "0", // TODO
+			GasUsed:        0, // TODO (#367)
 			PaybackAddress: req.PaybackAddress,
 			SedaPayload:    req.SedaPayload,
 		}

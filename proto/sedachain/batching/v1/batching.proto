@@ -78,7 +78,7 @@ message DataResult {
   // exit_code is the exit code of the tally wasm binary execution.
   uint32 exit_code = 5;
   // gas_used is the gas used by the data request execution.
-  string gas_used = 6;
+  uint64 gas_used = 6;
   // result is the result of the tally wasm binary execution.
   bytes result = 7;
   // payback_address is the payback address set by the relayer.

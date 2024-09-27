@@ -149,7 +149,7 @@ func generateDataResults(t *testing.T, num int) []types.DataResult {
 			Version:        fmt.Sprintf("%d.%d.%d", rand.Intn(10), rand.Intn(10), rand.Intn(10)),
 			BlockHeight:    rand.Uint64(),
 			ExitCode:       rand.Uint32(),
-			GasUsed:        generateRandomNumberString(10),
+			GasUsed:        rand.Uint64(),
 			Result:         generateRandomBytes(50),
 			PaybackAddress: generateRandomBase64String(10),
 			SedaPayload:    generateRandomBase64String(10),
@@ -181,13 +181,4 @@ func generateRandomBytes(length int) []byte {
 	bytes := make([]byte, length)
 	cryptorand.Read(bytes)
 	return bytes
-}
-
-func generateRandomNumberString(maxDigits int) string {
-	digits := rand.Intn(maxDigits) + 1
-	number := rand.Intn(9) + 1
-	for i := 1; i < digits; i++ {
-		number = number*10 + rand.Intn(10)
-	}
-	return fmt.Sprintf("%d", number)
 }

@@ -250,7 +250,9 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
+	// Batch returns a batch given the batch number.
 	Batch(ctx context.Context, in *QueryBatchRequest, opts ...grpc.CallOption) (*QueryBatchResponse, error)
+	// Batch returns all batches in the store.
 	Batches(ctx context.Context, in *QueryBatchesRequest, opts ...grpc.CallOption) (*QueryBatchesResponse, error)
 }
 
@@ -282,7 +284,9 @@ func (c *queryClient) Batches(ctx context.Context, in *QueryBatchesRequest, opts
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
+	// Batch returns a batch given the batch number.
 	Batch(context.Context, *QueryBatchRequest) (*QueryBatchResponse, error)
+	// Batch returns all batches in the store.
 	Batches(context.Context, *QueryBatchesRequest) (*QueryBatchesResponse, error)
 }
 

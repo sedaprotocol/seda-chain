@@ -4,8 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
-	fmt "fmt"
-	"math/big"
 
 	"golang.org/x/crypto/sha3"
 )
@@ -36,13 +34,8 @@ func (dr *DataResult) TryHash() (string, error) {
 	blockHeightBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(blockHeightBytes, dr.BlockHeight)
 
-	gasUsed := new(big.Int)
-	_, ok := gasUsed.SetString(dr.GasUsed, 10)
-	if !ok {
-		return "", fmt.Errorf("invalid GasUsed value: %s", dr.GasUsed)
-	}
-	gasUsedBytes := make([]byte, 16)
-	gasUsed.FillBytes(gasUsedBytes) // TODO: may panic
+	gasUsedBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(gasUsedBytes, dr.GasUsed)
 
 	paybackAddrBytes, err := base64.StdEncoding.DecodeString(dr.PaybackAddress)
 	if err != nil {
