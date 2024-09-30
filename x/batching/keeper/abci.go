@@ -7,6 +7,7 @@ import (
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
+	"golang.org/x/crypto/sha3"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -51,20 +52,47 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
 	if err != nil {
 		return types.Batch{}, err
 	}
-	dataEntries, dataRootHex, err := k.ConstructDataResultTree(ctx)
+	dataEntries, dataRoot, err := k.ConstructDataResultTree(ctx)
 	if err != nil {
 		return types.Batch{}, err
 	}
-	valEntries, valRootHex, err := k.ConstructValidatorTree(ctx)
+	valEntries, valRoot, err := k.ConstructValidatorTree(ctx)
 	if err != nil {
 		return types.Batch{}, err
 	}
 
+	prevBatch, err := k.GetCurrentBatch(ctx)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			k.Logger(ctx).Info("previous batch not found")
+
+			hash := sha3.NewLegacyKeccak256()
+			hash.Write([]byte{})
+			prevBatch.BatchId = hash.Sum(nil)
+		} else {
+			return types.Batch{}, err
+		}
+	}
+
+	// Compute the batch ID, which is defined as
+	// keccak256(previous_batch_id, batch_number, block_height, validator_root, results_root).
+	var hashContent []byte
+	hashContent = append(hashContent, prevBatch.BatchId...)
+	hashContent = binary.BigEndian.AppendUint64(hashContent, uint64(curBatchNum))
+	hashContent = binary.BigEndian.AppendUint64(hashContent, uint64(ctx.BlockHeight()))
+	hashContent = append(hashContent, valRoot...)
+	hashContent = append(hashContent, dataRoot...)
+
+	hash := sha3.NewLegacyKeccak256()
+	hash.Write(hashContent)
+	batchID := hash.Sum(nil)
+
 	return types.Batch{
 		BatchNumber:       curBatchNum,
 		BlockHeight:       ctx.BlockHeight(),
-		DataResultRoot:    dataRootHex,
-		ValidatorRoot:     valRootHex,
+		DataResultRoot:    hex.EncodeToString(dataRoot),
+		ValidatorRoot:     hex.EncodeToString(valRoot),
+		BatchId:           batchID,
 		DataResultEntries: dataEntries,
 		ValidatorEntries:  valEntries,
 		BlockTime:         ctx.BlockTime(),
@@ -74,44 +102,44 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
 // ConstructDataResultTree constructs a data result tree based on the
 // data results that have not been batched yet. It returns the tree's
 // entries (unhashed leaf contents) and hex-encoded root.
-func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, string, error) {
+func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, []byte, error) {
 	dataResults, err := k.GetDataResults(ctx, false)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
 	entries := make([][]byte, len(dataResults))
 	for i, res := range dataResults {
 		resHash, err := hex.DecodeString(res.Id)
 		if err != nil {
-			return nil, "", err
+			return nil, nil, err
 		}
 		entries[i] = resHash
 
 		err = k.markDataResultAsBatched(ctx, res)
 		if err != nil {
-			return nil, "", err
+			return nil, nil, err
 		}
 	}
 
 	curRoot := utils.RootFromEntries(entries)
 	prevRoot, err := k.GetPreviousDataResultRoot(ctx)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 	root := utils.RootFromLeaves([][]byte{prevRoot, curRoot})
 
-	return entries, hex.EncodeToString(root), nil
+	return entries, root, nil
 }
 
 // ConstructValidatorTree constructs a validator tree based on the
 // validators in the active set and their registered public keys.
 // It returns the tree's entries (unhashed leaf contents) and hex-encoded
 // root.
-func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, string, error) {
+func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error) {
 	totalPower, err := k.stakingKeeper.GetLastTotalPower(ctx)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
 	var entries [][]byte
@@ -142,9 +170,9 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, string, error
 		return false
 	})
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
 	secp256k1Root := utils.RootFromEntries(entries)
-	return entries, hex.EncodeToString(secp256k1Root), nil
+	return entries, secp256k1Root, nil
 }

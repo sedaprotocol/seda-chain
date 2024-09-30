@@ -140,6 +140,18 @@ func (k Keeper) GetBatch(ctx context.Context, batchNum uint64) (types.Batch, err
 	return batch, nil
 }
 
+func (k Keeper) GetCurrentBatch(ctx context.Context) (types.Batch, error) {
+	currentBatchNum, err := k.currentBatchNumber.Peek(ctx)
+	if err != nil {
+		return types.Batch{}, err
+	}
+	batch, err := k.batches.Get(ctx, currentBatchNum-1)
+	if err != nil {
+		return types.Batch{}, err
+	}
+	return batch, nil
+}
+
 // GetPreviousDataResultRoot returns the previous batch's data result
 // tree root in byte slice. If there is no previous batch, it returns
 // an empty byte slice.

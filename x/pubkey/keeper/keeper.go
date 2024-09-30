@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
@@ -44,16 +45,16 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, sk
 	return &k
 }
 
-func (k Keeper) SetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index uint32, pubKey cryptotypes.PubKey) error {
-	err := k.pubKeys.Set(ctx, collections.Join(validatorAddr.Bytes(), index), pubKey)
+func (k Keeper) SetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex, pubKey cryptotypes.PubKey) error {
+	err := k.pubKeys.Set(ctx, collections.Join(validatorAddr.Bytes(), uint32(index)), pubKey)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (k Keeper) GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index uint32) (cryptotypes.PubKey, error) {
-	pubKey, err := k.pubKeys.Get(ctx, collections.Join(validatorAddr.Bytes(), index))
+func (k Keeper) GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex) (cryptotypes.PubKey, error) {
+	pubKey, err := k.pubKeys.Get(ctx, collections.Join(validatorAddr.Bytes(), uint32(index)))
 	if err != nil {
 		return nil, err
 	}

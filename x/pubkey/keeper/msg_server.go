@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
@@ -43,8 +44,7 @@ func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.M
 		if !ok {
 			return nil, sdkerrors.ErrInvalidType.Wrapf("%T is not a cryptotypes.PubKey", pubKey)
 		}
-
-		if err := m.SetValidatorKeyAtIndex(ctx, valAddr, indPubKey.Index, pubKey); err != nil {
+		if err := m.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndex(indPubKey.Index), pubKey); err != nil {
 			return nil, err
 		}
 

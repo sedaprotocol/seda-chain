@@ -130,7 +130,10 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
+	"github.com/sedaprotocol/seda-chain/app/utils"
+
 	// Used in cosmos-sdk when registering the route for swagger docs.
+	appabci "github.com/sedaprotocol/seda-chain/app/abci"
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/x/batching"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
@@ -975,6 +978,23 @@ func NewApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(anteHandler)
+
+	// Create vote extension for signing batches.
+	// pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
+	loadPath := filepath.Join(homePath, "config", "seda_keys.json")
+	signer, err := utils.LoadSEDASigner(loadPath)
+	if err != nil {
+		// panic(err)
+	} else {
+		voteExtensionsHandler := appabci.NewVoteExtensionHandler(
+			app.BatchingKeeper,
+			app.PubKeyKeeper,
+			signer,
+			app.Logger(),
+		)
+		app.SetExtendVoteHandler(voteExtensionsHandler.ExtendVoteHandler())
+		app.SetVerifyVoteExtensionHandler(voteExtensionsHandler.VerifyVoteExtensionHandler())
+	}
 
 	if manager := app.SnapshotManager(); manager != nil {
 		err = manager.RegisterExtensions(

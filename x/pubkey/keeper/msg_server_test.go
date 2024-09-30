@@ -12,6 +12,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
@@ -126,7 +127,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 
 			// Check each index.
 			for _, indPubKey := range tt.msg.IndexedPubKeys {
-				pkActual, err := s.keeper.GetValidatorKeyAtIndex(s.ctx, tt.valAddr, indPubKey.Index)
+				pkActual, err := s.keeper.GetValidatorKeyAtIndex(s.ctx, tt.valAddr, utils.SEDAKeyIndex(indPubKey.Index))
 				s.Require().NoError(err)
 				pkExpected, ok := indPubKey.PubKey.GetCachedValue().(cryptotypes.PubKey)
 				s.Require().True(ok)

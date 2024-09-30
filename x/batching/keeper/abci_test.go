@@ -44,7 +44,6 @@ func Test_ConstructDataResultTree(t *testing.T) {
 	require.ElementsMatch(t, drIds, entryHexes)
 
 	// Generate proof for each entry and verify.
-	rootBytes, err := hex.DecodeString(root)
 	require.NoError(t, err)
 	for i := range entries {
 		proof, err := utils.GetProof(entries, i)
@@ -56,7 +55,7 @@ func Test_ConstructDataResultTree(t *testing.T) {
 		emptyLeaf := sha.Sum(nil)
 		proof = append(proof, emptyLeaf)
 
-		ret := utils.VerifyProof(proof, rootBytes, entries[i])
+		ret := utils.VerifyProof(proof, root, entries[i])
 		require.True(t, ret)
 	}
 }
@@ -89,12 +88,11 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	require.ElementsMatch(t, powerPercents, parsedPowers)
 
 	// Generate proof for each entry and verify.
-	rootBytes, err := hex.DecodeString(root)
 	require.NoError(t, err)
 	for i := range entries {
 		pf, err := utils.GetProof(entries, i)
 		require.NoError(t, err)
-		ret := utils.VerifyProof(pf, rootBytes, entries[i])
+		ret := utils.VerifyProof(pf, root, entries[i])
 		require.True(t, ret)
 	}
 }

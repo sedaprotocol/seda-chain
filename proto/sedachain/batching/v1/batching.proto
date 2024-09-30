@@ -21,14 +21,17 @@ message Batch {
   // validator_root is the hex-encoded root of the validator merkle
   // tree.
   string validator_root = 4;
+  // batch_id is the Keccack-256 hash of the batch concatenated with
+  // the previous batch ID.
+  bytes batch_id = 5;
   // data_result_entries are the entries (unhashed leaf contents) of
   // the data result tree.
-  repeated bytes data_result_entries = 5;
+  repeated bytes data_result_entries = 6;
   // validator_entries are the entries (unhashed leaf contents) of
   // the validator tree.
-  repeated bytes validator_entries = 6;
+  repeated bytes validator_entries = 7;
   // block_time is the time at which the batch was created.
-  google.protobuf.Timestamp block_time = 7
+  google.protobuf.Timestamp block_time = 8
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 
