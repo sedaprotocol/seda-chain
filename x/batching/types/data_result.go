@@ -54,7 +54,9 @@ func (dr *DataResult) TryHash() (string, error) {
 	sedaPayloadHash := hasher.Sum(nil)
 
 	hasher.Reset()
-	allBytes := append(versionHash, drIDBytes...)
+	var allBytes []byte
+	allBytes = append(allBytes, versionHash...)
+	allBytes = append(allBytes, drIDBytes...)
 	allBytes = append(allBytes, consensusByte)
 	allBytes = append(allBytes, exitCodeBytes...)
 	allBytes = append(allBytes, resultHash...)

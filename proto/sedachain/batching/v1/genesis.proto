@@ -11,8 +11,6 @@ message GenesisState {
   // current_batch_number is the batch number of the most recently-
   // created batch.
   uint64 current_batch_number = 1;
-  repeated Batch batches = 2
-      [ (gogoproto.nullable) = false ];
-  Params params = 3
-      [ (gogoproto.nullable) = false ];
+  repeated Batch batches = 2 [ (gogoproto.nullable) = false ];
+  Params params = 3 [ (gogoproto.nullable) = false ];
 }

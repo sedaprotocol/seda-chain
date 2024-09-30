@@ -7,24 +7,24 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/batching/types";
 
-// Batch is an aggregation of data request results along with validator 
+// Batch is an aggregation of data request results along with validator
 // signatures used to prove these results on destination chains.
 message Batch {
-  // batch_number is a unique identifier of the batch incremented 
+  // batch_number is a unique identifier of the batch incremented
   // every time a batch is created.
   uint64 batch_number = 1;
   // block_height is the height at which the batch was created.
   int64 block_height = 2;
-  // data_result_root is the hex-encoded root of the data result 
+  // data_result_root is the hex-encoded root of the data result
   // merkle tree.
   string data_result_root = 3;
-  // validator_root is the hex-encoded root of the validator merkle 
+  // validator_root is the hex-encoded root of the validator merkle
   // tree.
   string validator_root = 4;
-  // data_result_entries are the entries (unhashed leaf contents) of 
+  // data_result_entries are the entries (unhashed leaf contents) of
   // the data result tree.
   repeated bytes data_result_entries = 5;
-  // validator_entries are the entries (unhashed leaf contents) of 
+  // validator_entries are the entries (unhashed leaf contents) of
   // the validator tree.
   repeated bytes validator_entries = 6;
   // block_time is the time at which the batch was created.
@@ -35,7 +35,8 @@ message Batch {
 // Vote contains basic validator data and its batch signatures under various
 // cryptographic schemes.
 message Vote {
-  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  string validator_addr = 1
+      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
   int64 voting_power = 2;
   repeated Signature signatures = 3;
 }
@@ -48,11 +49,11 @@ message Signature {
   uint32 scheme = 1;
   // signature is the signature of the batch.
   string signature = 2;
-  // public_key is the public key corresponding to the signature that 
+  // public_key is the public key corresponding to the signature that
   // should have been registered in x/pubkey
   string public_key = 3;
   // merkle_proof is the proof of inclusion of the signer in the validator
-  // tree. 
+  // tree.
   string merkle_proof = 4;
 }
 
@@ -65,7 +66,7 @@ message Params {
   uint32 validator_set_trim_percent = 1;
 }
 
-// DataResult represents the result of a resolved data request. 
+// DataResult represents the result of a resolved data request.
 message DataResult {
   // id is the Keccack-256 hash of the data result.
   string id = 1;
@@ -86,7 +87,7 @@ message DataResult {
   // seda_payload is the payload set by SEDA Protocol (e.g. OEC-enabled
   // data requests)
   string seda_payload = 9;
-  // consensus indicates whether consensus was reached in the tally 
+  // consensus indicates whether consensus was reached in the tally
   // process.
   bool consensus = 10;
 }

@@ -75,7 +75,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
 // data results that have not been batched yet. It returns the tree's
 // entries (unhashed leaf contents) and hex-encoded root.
 func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, string, error) {
-	dataResults, err := k.getDataResults(ctx, false)
+	dataResults, err := k.GetDataResults(ctx, false)
 	if err != nil {
 		return nil, "", err
 	}
