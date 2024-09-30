@@ -27,9 +27,9 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/base"
 	dataproxy "github.com/sedaprotocol/seda-chain/plugins/indexing/data-proxy"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
+	oracleprogram "github.com/sedaprotocol/seda-chain/plugins/indexing/oracle-program"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pluginaws"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
-	// "github.com/sedaprotocol/seda-chain/plugins/indexing/staking"
 )
 
 var _ storetypes.ABCIListener = &IndexerPlugin{}
@@ -94,6 +94,8 @@ func (p *IndexerPlugin) extractUpdate(change *storetypes.StoreKVPair) (*types.Me
 	// 	return staking.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	case dataproxy.StoreKey:
 		return dataproxy.ExtractUpdate(p.block, p.cdc, p.logger, change)
+	case oracleprogram.StoreKey:
+		return oracleprogram.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	default:
 		return nil, nil
 	}
