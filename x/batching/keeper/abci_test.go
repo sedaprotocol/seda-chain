@@ -26,16 +26,25 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	entries, root, err := f.batchingKeeper.ConstructValidatorTree(f.Context())
 	require.NoError(t, err)
 
+	var totalPower int64
+	for _, power := range powers {
+		totalPower += power
+	}
+	var powerPercents []uint32
+	for i := range powers {
+		powerPercents = append(powerPercents, uint32(powers[i]*1e8/totalPower))
+	}
+
 	// Parse entries to check contents.
 	parsedPKs := make([][]byte, len(entries))
-	parsedPowers := make([]int64, len(entries))
+	parsedPowers := make([]uint32, len(entries))
 	for i, entry := range entries {
 		require.Equal(t, []byte("SECP256K1"), entry[:9])
 		parsedPKs[i] = entry[9:41]
-		parsedPowers[i] = int64(binary.BigEndian.Uint64(entry[41:]))
+		parsedPowers[i] = binary.BigEndian.Uint32(entry[41:])
 	}
 	require.ElementsMatch(t, pks, parsedPKs)
-	require.ElementsMatch(t, powers, parsedPowers)
+	require.ElementsMatch(t, powerPercents, parsedPowers)
 
 	// Generate proof for each entry and verify.
 	rootBytes, err := hex.DecodeString(root)
