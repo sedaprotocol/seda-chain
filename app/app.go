@@ -984,8 +984,18 @@ func NewApp(
 	loadPath := filepath.Join(homePath, "config", "seda_keys.json")
 	signer, err := utils.LoadSEDASigner(loadPath)
 	if err != nil {
-		// panic(err)
+		app.Logger().Error("error loading SEDA signer - ExtendVoteHandler will not run", "path", loadPath)
+
+		voteExtensionsHandler := appabci.NewVoteExtensionHandler(
+			app.BatchingKeeper,
+			app.PubKeyKeeper,
+			nil,
+			app.Logger(),
+		)
+		app.SetVerifyVoteExtensionHandler(voteExtensionsHandler.VerifyVoteExtensionHandler())
 	} else {
+		app.Logger().Info("SEDA signer successfully loaded")
+
 		voteExtensionsHandler := appabci.NewVoteExtensionHandler(
 			app.BatchingKeeper,
 			app.PubKeyKeeper,

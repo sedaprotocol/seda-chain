@@ -37,6 +37,7 @@ func (h *VoteExtensionHandler) ExtendVoteHandler() sdk.ExtendVoteHandler {
 			// TODO error and panic handling
 		}()
 
+		h.logger.Debug("start extend vote handler")
 		batch, err := h.batchingKeeper.GetCurrentBatch(ctx)
 		if err != nil {
 			return nil, err
@@ -49,6 +50,9 @@ func (h *VoteExtensionHandler) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		if err != nil {
 			return nil, err
 		}
+
+		h.logger.Debug("signature", "signature", signature)
+
 		return &cometabci.ResponseExtendVote{VoteExtension: signature}, nil
 	}
 }
@@ -58,6 +62,8 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() sdk.VerifyVoteExtens
 		defer func() {
 			// TODO error and panic handling
 		}()
+
+		h.logger.Debug("start verify vote extension handler")
 
 		// Verify signature.
 		batch, err := h.batchingKeeper.GetCurrentBatch(ctx)
