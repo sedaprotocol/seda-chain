@@ -9,7 +9,6 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
@@ -118,52 +117,45 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, string, erro
 	return leaves, hex.EncodeToString(root), nil
 }
 
-type validatorData struct {
-	secp256k1PubKey cryptotypes.PubKey
-	power           math.Int // Validator power multiplied by 10^8.
-}
-
 // ConstructValidatorTree constructs a validator tree based on the
 // validators in the active set and their registered public keys.
 // It returns the tree's entries (unhashed leaf contents) and hex-encoded
 // root.
 func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, string, error) {
-	var validators []validatorData
-	totalPower := math.ZeroInt()
-	err := k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
-		pubKey, err := k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeysIndexSecp256k1)
+	totalPower, err := k.stakingKeeper.GetLastTotalPower(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+
+	var entries [][]byte
+	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
+		secp256k1PubKey, err := k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeysIndexSecp256k1)
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
 				return false
 			}
 			panic(err)
 		}
-		validators = append(validators, validatorData{
-			secp256k1PubKey: pubKey,
-			power:           math.NewInt(power).MulRaw(1e8),
-		})
-		totalPower = totalPower.AddRaw(power)
-		return false
-	})
-	if err != nil {
-		return nil, "", err
-	}
 
-	entries := make([][]byte, len(validators))
-	for i := range validators {
 		// Compute validator voting power percentage.
-		powerPercent := validators[i].power.Quo(totalPower).Uint64()
+		powerPercent := math.NewInt(power).MulRaw(1e8).Quo(totalPower).Uint64()
+
+		// TODO Validator set trimming
 
 		// An entry is (domain_separator || pubkey || voting_power_percentage).
 		separator := []byte("SECP256K1")
-		pkBytes := validators[i].secp256k1PubKey.Bytes()
+		pkBytes := secp256k1PubKey.Bytes()
 
 		entry := make([]byte, len(separator)+len(pkBytes)+4)
 		copy(entry[:len(separator)], separator)
 		copy(entry[len(separator):len(separator)+len(pkBytes)], pkBytes)
 		binary.BigEndian.PutUint32(entry[len(separator)+len(pkBytes):], uint32(powerPercent))
 
-		entries[i] = entry
+		entries = append(entries, entry)
+		return false
+	})
+	if err != nil {
+		return nil, "", err
 	}
 
 	secp256k1Root := utils.RootFromEntries(entries)

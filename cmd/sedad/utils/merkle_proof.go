@@ -35,7 +35,7 @@ func GetProof(entries [][]byte, index int) ([][]byte, error) {
 	treeIndex := -1
 	want := leafHash(sha, entries[index])
 	for i := range tree {
-		if bytes.Equal(want, tree[i]) == true {
+		if bytes.Equal(want, tree[i]) {
 			treeIndex = i
 			break
 		}

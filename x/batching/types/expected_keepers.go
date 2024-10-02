@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 
+	"cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -14,6 +15,7 @@ type StakingKeeper interface {
 	GetBondedValidatorsByPower(ctx context.Context) ([]stakingtypes.Validator, error)
 	GetValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpdate, error)
 	IterateLastValidatorPowers(ctx context.Context, handler func(operator sdk.ValAddress, power int64) (stop bool)) error
+	GetLastTotalPower(ctx context.Context) (math.Int, error)
 }
 
 type WasmStorageKeeper interface {
