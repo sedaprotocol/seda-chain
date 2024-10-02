@@ -80,9 +80,13 @@ func (k Keeper) SetDataResultForBatching(ctx context.Context, result types.DataR
 	return k.dataResults.Set(ctx, collections.Join(false, result.DrId), result)
 }
 
-// setDataResultAfterBatching stores a data result after batching
-// under the status "batched."
-func (k Keeper) setDataResultAfterBatching(ctx context.Context, result types.DataResult) error {
+// markDataResultAsBatched removes the "unbatched" variant of the given
+// data result and stores a "batched" variant.
+func (k Keeper) markDataResultAsBatched(ctx context.Context, result types.DataResult) error {
+	err := k.dataResults.Remove(ctx, collections.Join(false, result.DrId))
+	if err != nil {
+		return err
+	}
 	return k.dataResults.Set(ctx, collections.Join(true, result.DrId), result)
 }
 

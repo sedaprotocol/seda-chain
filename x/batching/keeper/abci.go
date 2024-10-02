@@ -88,7 +88,7 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, string, erro
 		}
 		entries[i] = resHash
 
-		err = k.setDataResultAfterBatching(ctx, res)
+		err = k.markDataResultAsBatched(ctx, res)
 		if err != nil {
 			return nil, "", err
 		}
