@@ -270,8 +270,8 @@ github.com/aryann/difflib v0.0.0-20170710044230-e206f873d14a/go.mod h1:DAHtR1m6l
 github.com/aws/aws-lambda-go v1.13.3/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
 github.com/aws/aws-sdk-go v1.27.0/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aws/aws-sdk-go v1.44.122/go.mod h1:y4AeaBuwd2Lk+GepC1E9v0qOiTws0MIWAX4oIKwKHZo=
-github.com/aws/aws-sdk-go v1.44.224 h1:09CiaaF35nRmxrzWZ2uRq5v6Ghg/d2RiPjZnSgtt+RQ=
-github.com/aws/aws-sdk-go v1.44.224/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
+github.com/aws/aws-sdk-go v1.55.5 h1:KKUZBfBoyqy5d3swXyiC7Q76ic40rYcbqH7qjh59kzU=
+github.com/aws/aws-sdk-go v1.55.5/go.mod h1:eRwEWoyTWFMVYVQzKMNHWP5/RV4xIUGMQfXQHfHkpNU=
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
@@ -1017,8 +1017,6 @@ github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529 h1:VbJcd
 github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529/go.mod h1:GdlDqGJN2g55PHiwYJs2bQMlL0rdlQQbauK4dcrOI6w=
 github.com/sedaprotocol/seda-wasm-vm/tallyvm v1.2.0 h1:Hv7Ox1F2bhdZYDjjRGgAwXDy4/U80PolpWR8YolA2g4=
 github.com/sedaprotocol/seda-wasm-vm/tallyvm v1.2.0/go.mod h1:AaX9uRy6qD2q+o1SapTRnGUe9HHZWTmBN2BVNAptq3U=
-github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c h1:PbSn7HpWeox6lqBu6Ba6YZS3On3euwn1BPz/egsnEgA=
-github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c/go.mod h1:DEIXHk41VUzOMVbZnIApssPXtZ+2zrETDP7kJjGc1RM=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
