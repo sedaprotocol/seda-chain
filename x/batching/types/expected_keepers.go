@@ -3,8 +3,9 @@ package types
 import (
 	"context"
 
-	"cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
+
+	"cosmossdk.io/math"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

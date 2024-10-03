@@ -5,8 +5,9 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
 )
 
 func TestRootFromEntries(t *testing.T) {

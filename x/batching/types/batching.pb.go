@@ -336,7 +336,7 @@ type DataResult struct {
 	Result []byte `protobuf:"bytes,7,opt,name=result,proto3" json:"result,omitempty"`
 	// payback_address is the payback address set by the relayer.
 	PaybackAddress string `protobuf:"bytes,8,opt,name=payback_address,json=paybackAddress,proto3" json:"payback_address,omitempty"`
-	// seda_payload is the payload set by SEDA Protocol (e.g. OEC-enabled
+	// seda_payload is the payload set by SEDA Protocol (e.g. OEV-enabled
 	// data requests)
 	SedaPayload string `protobuf:"bytes,9,opt,name=seda_payload,json=sedaPayload,proto3" json:"seda_payload,omitempty"`
 	// consensus indicates whether consensus was reached in the tally

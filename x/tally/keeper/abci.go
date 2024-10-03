@@ -77,7 +77,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 		dataResults[i] = batchingtypes.DataResult{
 			DrId:    req.ID,
 			Version: req.Version,
-			//nolint:gosec // G115: We shouldn't get negative block heights anwyay.
+			//nolint:gosec // G115: We shouldn't get negative block heights anyway.
 			BlockHeight:    uint64(ctx.BlockHeight()),
 			GasUsed:        0, // TODO (#367)
 			PaybackAddress: req.PaybackAddress,
@@ -114,14 +114,14 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 
 	// Notify the Core Contract of tally completion.
 	msg, err := json.Marshal(struct {
-		PostDataResults struct {
-			Results []types.SudoRemoveDataRequest `json:"results"`
-		} `json:"post_data_results"`
+		SudoRemoveDataRequests struct {
+			Requests []types.SudoRemoveDataRequest `json:"requests"`
+		} `json:"remove_data_requests"`
 	}{
-		PostDataResults: struct {
-			Results []types.SudoRemoveDataRequest `json:"results"`
+		SudoRemoveDataRequests: struct {
+			Requests []types.SudoRemoveDataRequest `json:"requests"`
 		}{
-			Results: sudoMsgs,
+			Requests: sudoMsgs,
 		},
 	})
 	if err != nil {

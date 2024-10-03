@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"slices"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"slices"
 
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"

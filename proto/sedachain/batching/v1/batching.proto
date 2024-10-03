@@ -84,7 +84,7 @@ message DataResult {
   bytes result = 7;
   // payback_address is the payback address set by the relayer.
   string payback_address = 8;
-  // seda_payload is the payload set by SEDA Protocol (e.g. OEC-enabled
+  // seda_payload is the payload set by SEDA Protocol (e.g. OEV-enabled
   // data requests)
   string seda_payload = 9;
   // consensus indicates whether consensus was reached in the tally
