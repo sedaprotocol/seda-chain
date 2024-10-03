@@ -12,4 +12,5 @@ var (
 	ErrNoBasicConsensus    = errors.Register("tally", 8, "> 1/3 of reveals do not agree on (exit_code, proxy_pub_keys)")
 	ErrInvalidNumberType   = errors.Register("tally", 9, "invalid number type specified")
 	ErrFilterUnexpected    = errors.Register("tally", 10, "unexpected error occurred in filter")
+	ErrInvalidSaltLength   = errors.Register("tally", 11, "salt should be 32-byte long")
 )

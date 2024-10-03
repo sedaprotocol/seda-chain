@@ -2,13 +2,16 @@ package types
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
+
+	errorsmod "cosmossdk.io/errors"
 )
 
 type Request struct {
 	DrBinaryID        string                `json:"dr_binary_id"`
 	DrInputs          string                `json:"dr_inputs"`
-	GasLimit          string                `json:"gas_limit"`
+	GasLimit          uint64                `json:"gas_limit"`
 	GasPrice          string                `json:"gas_price"`
 	Height            uint64                `json:"height"`
 	ID                string                `json:"id"`
@@ -58,6 +61,31 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 		Salt:   saltIntSlice,
 		Alias:  (*Alias)(u),
 	})
+}
+
+func (u *RevealBody) UnmarshalJSON(data []byte) error {
+	type Alias RevealBody
+	aux := &struct {
+		Salt string `json:"salt"`
+		*Alias
+	}{
+		Alias: (*Alias)(u),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	salt, err := hex.DecodeString(aux.Salt)
+	if err != nil {
+		return err
+	}
+	if len(salt) != 32 {
+		return errorsmod.Wrapf(ErrInvalidSaltLength, "got %d", len(salt))
+	}
+	for i, v := range salt {
+		u.Salt[i] = byte(v)
+	}
+	return nil
 }
 
 // SudoRemoveDataRequest is the message type used to remove a given
