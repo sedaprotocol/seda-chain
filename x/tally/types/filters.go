@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	"golang.org/x/exp/constraints"
-	"slices"
 )
 
 type Filter interface {
