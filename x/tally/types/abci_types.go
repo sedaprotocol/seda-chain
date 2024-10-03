@@ -59,8 +59,8 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// SudoPostDataResult is the message type used to post data result
-// to the Core Contract.
-type SudoPostDataResult struct {
+// SudoRemoveDataRequest is the message type used to remove a given
+// data request from the Core Contract.
+type SudoRemoveDataRequest struct {
 	ID string `json:"dr_id"`
 }

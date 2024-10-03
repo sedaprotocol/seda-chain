@@ -71,7 +71,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
 	tallyResults := make([]TallyResult, len(tallyList))
-	sudoMsgs := make([]types.SudoPostDataResult, len(tallyList))
+	sudoMsgs := make([]types.SudoRemoveDataRequest, len(tallyList))
 	dataResults := make([]batchingtypes.DataResult, len(tallyList))
 	for i, req := range tallyList {
 		dataResults[i] = batchingtypes.DataResult{
@@ -108,18 +108,18 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 		if err != nil {
 			return err
 		}
-		sudoMsgs[i] = types.SudoPostDataResult{ID: req.ID}
+		sudoMsgs[i] = types.SudoRemoveDataRequest{ID: req.ID}
 		tallyResults[i] = result
 	}
 
 	// Notify the Core Contract of tally completion.
 	msg, err := json.Marshal(struct {
 		PostDataResults struct {
-			Results []types.SudoPostDataResult `json:"results"`
+			Results []types.SudoRemoveDataRequest `json:"results"`
 		} `json:"post_data_results"`
 	}{
 		PostDataResults: struct {
-			Results []types.SudoPostDataResult `json:"results"`
+			Results []types.SudoRemoveDataRequest `json:"results"`
 		}{
 			Results: sudoMsgs,
 		},
