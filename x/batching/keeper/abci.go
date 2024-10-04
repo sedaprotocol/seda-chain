@@ -5,9 +5,10 @@ import (
 	"encoding/hex"
 	"errors"
 
+	"golang.org/x/crypto/sha3"
+
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
-	"golang.org/x/crypto/sha3"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -78,7 +79,8 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
 	// keccak256(previous_batch_id, batch_number, block_height, validator_root, results_root).
 	var hashContent []byte
 	hashContent = append(hashContent, prevBatch.BatchId...)
-	hashContent = binary.BigEndian.AppendUint64(hashContent, uint64(curBatchNum))
+	hashContent = binary.BigEndian.AppendUint64(hashContent, curBatchNum)
+	//nolint:gosec // G115: We shouldn't get negative block heights anyway.
 	hashContent = binary.BigEndian.AppendUint64(hashContent, uint64(ctx.BlockHeight()))
 	hashContent = append(hashContent, valRoot...)
 	hashContent = append(hashContent, dataRoot...)
@@ -164,6 +166,7 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 		entry := make([]byte, len(separator)+len(pkBytes)+4)
 		copy(entry[:len(separator)], separator)
 		copy(entry[len(separator):len(separator)+len(pkBytes)], pkBytes)
+		//nolint:gosec // G115: Max of powerPercent should be 1e8 < 2^64.
 		binary.BigEndian.PutUint32(entry[len(separator)+len(pkBytes):], uint32(powerPercent))
 
 		entries = append(entries, entry)

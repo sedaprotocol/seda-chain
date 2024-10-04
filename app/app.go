@@ -128,12 +128,12 @@ import (
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	appabci "github.com/sedaprotocol/seda-chain/app/abci"
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
 
 	// Used in cosmos-sdk when registering the route for swagger docs.
-	appabci "github.com/sedaprotocol/seda-chain/app/abci"
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/x/batching"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
@@ -980,8 +980,8 @@ func NewApp(
 	app.SetAnteHandler(anteHandler)
 
 	// Create vote extension for signing batches.
-	// pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
-	loadPath := filepath.Join(homePath, "config", "seda_keys.json")
+	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
+	loadPath := filepath.Join(filepath.Dir(pvKeyFile), utils.SEDAKeyFileName)
 	signer, err := utils.LoadSEDASigner(loadPath)
 	if err != nil {
 		app.Logger().Error("error loading SEDA signer - ExtendVoteHandler will not run", "path", loadPath)

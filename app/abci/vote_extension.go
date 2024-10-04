@@ -1,28 +1,23 @@
 package abci
 
 import (
-	"cosmossdk.io/log"
 	cometabci "github.com/cometbft/cometbft/abci/types"
+
+	"cosmossdk.io/log"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
-	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
-	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 )
 
 type VoteExtensionHandler struct {
-	batchingKeeper batchingkeeper.Keeper // TODO Use expected keeper?
-	pubKeyKeeper   pubkeykeeper.Keeper   // TODO Use expected keeper?
+	batchingKeeper BatchingKeeper
+	pubKeyKeeper   PubKeyKeeper
 	signer         utils.SEDASigner
 	logger         log.Logger
 }
 
-func NewVoteExtensionHandler(
-	bk batchingkeeper.Keeper,
-	pkk pubkeykeeper.Keeper,
-	signer utils.SEDASigner,
-	logger log.Logger,
-) *VoteExtensionHandler {
+func NewVoteExtensionHandler(bk BatchingKeeper, pkk PubKeyKeeper, signer utils.SEDASigner, logger log.Logger) *VoteExtensionHandler {
 	return &VoteExtensionHandler{
 		batchingKeeper: bk,
 		pubKeyKeeper:   pkk,
@@ -32,11 +27,7 @@ func NewVoteExtensionHandler(
 }
 
 func (h *VoteExtensionHandler) ExtendVoteHandler() sdk.ExtendVoteHandler {
-	return func(ctx sdk.Context, req *cometabci.RequestExtendVote) (resp *cometabci.ResponseExtendVote, err error) {
-		defer func() {
-			// TODO error and panic handling
-		}()
-
+	return func(ctx sdk.Context, _ *cometabci.RequestExtendVote) (*cometabci.ResponseExtendVote, error) {
 		h.logger.Debug("start extend vote handler")
 		batch, err := h.batchingKeeper.GetCurrentBatch(ctx)
 		if err != nil {
@@ -51,19 +42,14 @@ func (h *VoteExtensionHandler) ExtendVoteHandler() sdk.ExtendVoteHandler {
 			return nil, err
 		}
 
-		h.logger.Debug("signature", "signature", signature)
-
+		h.logger.Debug("submitting batch signature", "signature", signature)
 		return &cometabci.ResponseExtendVote{VoteExtension: signature}, nil
 	}
 }
 
 func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
-	return func(ctx sdk.Context, req *cometabci.RequestVerifyVoteExtension) (_ *cometabci.ResponseVerifyVoteExtension, err error) {
-		defer func() {
-			// TODO error and panic handling
-		}()
-
-		h.logger.Debug("start verify vote extension handler")
+	return func(ctx sdk.Context, req *cometabci.RequestVerifyVoteExtension) (*cometabci.ResponseVerifyVoteExtension, error) {
+		h.logger.Debug("start verify vote extension handler", "request", req)
 
 		// Verify signature.
 		batch, err := h.batchingKeeper.GetCurrentBatch(ctx)
