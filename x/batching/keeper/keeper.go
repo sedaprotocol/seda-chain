@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -115,9 +116,11 @@ func (k Keeper) SetCurrentBatchNum(ctx context.Context, batchNum uint64) error {
 	return k.currentBatchNumber.Set(ctx, batchNum)
 }
 
-func (k Keeper) IncrementCurrentBatchNum(ctx context.Context) error {
-	_, err := k.currentBatchNumber.Next(ctx)
-	return err
+// IncrementCurrentBatchNum increments the batch number sequence and
+// returns the new number.
+func (k Keeper) IncrementCurrentBatchNum(ctx context.Context) (uint64, error) {
+	next, err := k.currentBatchNumber.Next(ctx)
+	return next + 1, err
 }
 
 func (k Keeper) GetCurrentBatchNum(ctx context.Context) (uint64, error) {
@@ -132,6 +135,20 @@ func (k Keeper) SetBatch(ctx context.Context, batch types.Batch) error {
 	return k.batches.Set(ctx, batch.BatchNumber, batch)
 }
 
+// SetNewBatch increments the current batch number and stores a given
+// batch at that index. It returns an error if the given batch's batch
+// number does not match the next batch number.
+func (k Keeper) SetNewBatch(ctx context.Context, batch types.Batch) error {
+	newBatchNum, err := k.IncrementCurrentBatchNum(ctx)
+	if err != nil {
+		return err
+	}
+	if batch.BatchNumber != newBatchNum {
+		return types.ErrInvalidBatchNumber.Wrapf("got %d; expected %d", batch.BatchNumber, newBatchNum)
+	}
+	return k.batches.Set(ctx, batch.BatchNumber, batch)
+}
+
 func (k Keeper) GetBatch(ctx context.Context, batchNum uint64) (types.Batch, error) {
 	batch, err := k.batches.Get(ctx, batchNum)
 	if err != nil {
@@ -140,31 +157,32 @@ func (k Keeper) GetBatch(ctx context.Context, batchNum uint64) (types.Batch, err
 	return batch, nil
 }
 
+// GetCurrentBatch returns the most recently created batch. If batching
+// has not begun, it returns an error ErrBatchingHasNotStarted.
 func (k Keeper) GetCurrentBatch(ctx context.Context) (types.Batch, error) {
 	currentBatchNum, err := k.currentBatchNumber.Peek(ctx)
 	if err != nil {
 		return types.Batch{}, err
 	}
-	batch, err := k.batches.Get(ctx, currentBatchNum-1)
+	if currentBatchNum == collections.DefaultSequenceStart {
+		return types.Batch{}, types.ErrBatchingHasNotStarted
+	}
+	batch, err := k.batches.Get(ctx, currentBatchNum)
 	if err != nil {
 		return types.Batch{}, err
 	}
 	return batch, nil
 }
 
-// GetPreviousDataResultRoot returns the previous batch's data result
-// tree root in byte slice. If there is no previous batch, it returns
-// an empty byte slice.
-func (k Keeper) GetPreviousDataResultRoot(ctx context.Context) ([]byte, error) {
-	curBatchNum, err := k.GetCurrentBatchNum(ctx)
+// GetCurrentDataResultRoot returns the current batch's data result
+// tree root in byte slice. If batching has not started, it returns
+// an empty byte slice without an error.
+func (k Keeper) GetCurrentDataResultRoot(ctx context.Context) ([]byte, error) {
+	batch, err := k.GetCurrentBatch(ctx)
 	if err != nil {
-		return nil, err
-	}
-	if curBatchNum == 0 {
-		return []byte{}, err
-	}
-	batch, err := k.batches.Get(ctx, curBatchNum-1)
-	if err != nil {
+		if errors.Is(err, types.ErrBatchingHasNotStarted) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	root, err := hex.DecodeString(batch.DataResultRoot)

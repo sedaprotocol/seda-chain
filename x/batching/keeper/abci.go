@@ -22,11 +22,11 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 	defer func() {
 		// Handle a panic.
 		if r := recover(); r != nil {
-			k.Logger(ctx).Error("recovered from panic in batching EndBlock", "err", r)
+			k.Logger(ctx).Error("recovered from panic in batching end blocker", "err", r)
 		}
 		// Handle an error.
 		if err != nil {
-			k.Logger(ctx).Error("error in batching EndBlock", "err", err)
+			k.Logger(ctx).Error("error in batching end blocker", "err", err)
 		}
 		err = nil
 	}()
@@ -36,23 +36,21 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		return err
 	}
 
-	err = k.SetBatch(ctx, batch)
+	err = k.SetNewBatch(ctx, batch)
 	if err != nil {
 		return err
 	}
-	err = k.IncrementCurrentBatchNum(ctx)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
-	curBatchNum, err := k.GetCurrentBatchNum(ctx)
+	// Note current will be "old" for this new batch.
+	oldBatchNum, err := k.GetCurrentBatchNum(ctx)
 	if err != nil {
 		return types.Batch{}, err
 	}
+	newBatchNum := oldBatchNum + 1
+
 	dataEntries, dataRoot, err := k.ConstructDataResultTree(ctx)
 	if err != nil {
 		return types.Batch{}, err
@@ -62,24 +60,25 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
 		return types.Batch{}, err
 	}
 
-	prevBatch, err := k.GetCurrentBatch(ctx)
+	var oldBatchID []byte
+	oldBatch, err := k.GetCurrentBatch(ctx)
 	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Info("previous batch not found")
-
+		if errors.Is(err, types.ErrBatchingHasNotStarted) {
 			hash := sha3.NewLegacyKeccak256()
 			hash.Write([]byte{})
-			prevBatch.BatchId = hash.Sum(nil)
+			oldBatchID = hash.Sum(nil)
 		} else {
 			return types.Batch{}, err
 		}
+	} else {
+		oldBatchID = oldBatch.BatchId
 	}
 
 	// Compute the batch ID, which is defined as
-	// keccak256(previous_batch_id, batch_number, block_height, validator_root, results_root).
+	// keccak256(old_batch_id, batch_number, block_height, validator_root, results_root).
 	var hashContent []byte
-	hashContent = append(hashContent, prevBatch.BatchId...)
-	hashContent = binary.BigEndian.AppendUint64(hashContent, curBatchNum)
+	hashContent = append(hashContent, oldBatchID...)
+	hashContent = binary.BigEndian.AppendUint64(hashContent, newBatchNum)
 	//nolint:gosec // G115: We shouldn't get negative block heights anyway.
 	hashContent = binary.BigEndian.AppendUint64(hashContent, uint64(ctx.BlockHeight()))
 	hashContent = append(hashContent, valRoot...)
@@ -90,7 +89,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
 	batchID := hash.Sum(nil)
 
 	return types.Batch{
-		BatchNumber:       curBatchNum,
+		BatchNumber:       newBatchNum,
 		BlockHeight:       ctx.BlockHeight(),
 		DataResultRoot:    hex.EncodeToString(dataRoot),
 		ValidatorRoot:     hex.EncodeToString(valRoot),
@@ -124,12 +123,12 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, []byte, erro
 		}
 	}
 
-	curRoot := utils.RootFromEntries(entries)
-	prevRoot, err := k.GetPreviousDataResultRoot(ctx)
+	newRoot := utils.RootFromEntries(entries)
+	curRoot, err := k.GetCurrentDataResultRoot(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	root := utils.RootFromLeaves([][]byte{prevRoot, curRoot})
+	root := utils.RootFromLeaves([][]byte{curRoot, newRoot})
 
 	return entries, root, nil
 }
