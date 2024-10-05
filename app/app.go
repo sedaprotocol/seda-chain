@@ -989,6 +989,8 @@ func NewApp(
 		voteExtensionsHandler := appabci.NewVoteExtensionHandler(
 			app.BatchingKeeper,
 			app.PubKeyKeeper,
+			app.StakingKeeper,
+			authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 			nil,
 			app.Logger(),
 		)
@@ -999,6 +1001,8 @@ func NewApp(
 		voteExtensionsHandler := appabci.NewVoteExtensionHandler(
 			app.BatchingKeeper,
 			app.PubKeyKeeper,
+			app.StakingKeeper,
+			authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 			signer,
 			app.Logger(),
 		)

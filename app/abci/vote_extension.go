@@ -3,6 +3,7 @@ package abci
 import (
 	cometabci "github.com/cometbft/cometbft/abci/types"
 
+	addresscodec "cosmossdk.io/core/address"
 	"cosmossdk.io/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,18 +12,29 @@ import (
 )
 
 type VoteExtensionHandler struct {
-	batchingKeeper BatchingKeeper
-	pubKeyKeeper   PubKeyKeeper
-	signer         utils.SEDASigner
-	logger         log.Logger
+	batchingKeeper        BatchingKeeper
+	pubKeyKeeper          PubKeyKeeper
+	stakingKeeper         StakingKeeper
+	validatorAddressCodec addresscodec.Codec
+	signer                utils.SEDASigner
+	logger                log.Logger
 }
 
-func NewVoteExtensionHandler(bk BatchingKeeper, pkk PubKeyKeeper, signer utils.SEDASigner, logger log.Logger) *VoteExtensionHandler {
+func NewVoteExtensionHandler(
+	bk BatchingKeeper,
+	pkk PubKeyKeeper,
+	sk StakingKeeper,
+	vac addresscodec.Codec,
+	signer utils.SEDASigner,
+	logger log.Logger,
+) *VoteExtensionHandler {
 	return &VoteExtensionHandler{
-		batchingKeeper: bk,
-		pubKeyKeeper:   pkk,
-		signer:         signer,
-		logger:         logger,
+		batchingKeeper:        bk,
+		pubKeyKeeper:          pkk,
+		stakingKeeper:         sk,
+		validatorAddressCodec: vac,
+		signer:                signer,
+		logger:                logger,
 	}
 }
 
@@ -60,7 +72,15 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() sdk.VerifyVoteExtens
 			return nil, ErrNoBatchForCurrentHeight
 		}
 
-		pubkey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, req.ValidatorAddress, utils.Secp256k1)
+		validator, err := h.stakingKeeper.GetValidatorByConsAddr(ctx, req.ValidatorAddress)
+		if err != nil {
+			return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_REJECT}, err
+		}
+		valOper, err := h.validatorAddressCodec.StringToBytes(validator.OperatorAddress)
+		if err != nil {
+			return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_REJECT}, err
+		}
+		pubkey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.Secp256k1)
 		if err != nil {
 			return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_REJECT}, err
 		}
