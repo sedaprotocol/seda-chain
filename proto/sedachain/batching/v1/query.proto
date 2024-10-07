@@ -14,6 +14,11 @@ service Query {
     option (google.api.http).get = "/seda-chain/batching/batch/{batch_number}";
   }
 
+  // BatchForHeight returns a batch created at a given block height.
+  rpc BatchForHeight(QueryBatchForHeightRequest) returns (QueryBatchForHeightResponse) {
+    option (google.api.http).get = "/seda-chain/batching/batch_for_height/{block_height}";
+  }
+
   // Batch returns all batches in the store.
   rpc Batches(QueryBatchesRequest) returns (QueryBatchesResponse) {
     option (google.api.http).get = "/seda-chain/batching/batches";
@@ -25,6 +30,12 @@ message QueryBatchRequest { uint64 batch_number = 1; }
 
 // The response message for QueryBatch RPC.
 message QueryBatchResponse { Batch batch = 1 [ (gogoproto.nullable) = false ]; }
+
+// The request message for BatchForHeight RPC.
+message QueryBatchForHeightRequest { int64 block_height = 1; }
+
+// The response message for BatchForHeight RPC.
+message QueryBatchForHeightResponse { Batch batch = 1 [ (gogoproto.nullable) = false ]; }
 
 // The request message for QueryBatches RPC.
 message QueryBatchesRequest {}

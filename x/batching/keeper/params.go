@@ -6,7 +6,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+func (k Keeper) setParams(ctx sdk.Context, params types.Params) error {
 	return k.params.Set(ctx, params)
 }
 

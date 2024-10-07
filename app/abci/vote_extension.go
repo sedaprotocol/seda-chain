@@ -41,14 +41,12 @@ func NewVoteExtensionHandler(
 func (h *VoteExtensionHandler) ExtendVoteHandler() sdk.ExtendVoteHandler {
 	return func(ctx sdk.Context, _ *cometabci.RequestExtendVote) (*cometabci.ResponseExtendVote, error) {
 		h.logger.Debug("start extend vote handler")
-		batch, err := h.batchingKeeper.GetCurrentBatch(ctx)
+
+		// Sign the batch created from the last block's end blocker.
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-1)
 		if err != nil {
 			return nil, err
 		}
-		if batch.BlockHeight != ctx.BlockHeight()-1 {
-			return nil, ErrNoBatchForCurrentHeight
-		}
-
 		signature, err := h.signer.Sign(batch.BatchId, utils.Secp256k1)
 		if err != nil {
 			return nil, err
@@ -64,31 +62,29 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() sdk.VerifyVoteExtens
 		h.logger.Debug("start verify vote extension handler", "request", req)
 
 		// Verify signature.
-		batch, err := h.batchingKeeper.GetCurrentBatch(ctx)
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-1)
 		if err != nil {
 			return nil, err
-		}
-		if batch.BlockHeight != ctx.BlockHeight()-1 {
-			return nil, ErrNoBatchForCurrentHeight
 		}
 
 		validator, err := h.stakingKeeper.GetValidatorByConsAddr(ctx, req.ValidatorAddress)
 		if err != nil {
-			return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_REJECT}, err
+			return nil, err
 		}
 		valOper, err := h.validatorAddressCodec.StringToBytes(validator.OperatorAddress)
 		if err != nil {
-			return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_REJECT}, err
+			return nil, err
 		}
 		pubkey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.Secp256k1)
 		if err != nil {
-			return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_REJECT}, err
+			return nil, err
 		}
 		ok := pubkey.VerifySignature(batch.BatchId, req.VoteExtension)
 		if !ok {
-			return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_REJECT}, err
+			return nil, err
 		}
 
+		h.logger.Debug("successfully verified signature", "request", req.ValidatorAddress, "height", req.Height)
 		return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_ACCEPT}, nil
 	}
 }

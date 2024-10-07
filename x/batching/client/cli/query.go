@@ -24,12 +24,14 @@ func GetQueryCmd(_ string) *cobra.Command {
 
 	cmd.AddCommand(
 		GetCmdQueryBatch(),
+		GetCmdQueryBatchByHeight(),
 		GetCmdQueryBatches(),
 	)
 	return cmd
 }
 
-// GetCmdQueryBatch returns the command for querying a batch.
+// GetCmdQueryBatch returns the command for querying a batch using a
+// batch number.
 func GetCmdQueryBatch() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "batch <batch_number>",
@@ -50,6 +52,39 @@ func GetCmdQueryBatch() *cobra.Command {
 				BatchNumber: batchNum,
 			}
 			res, err := queryClient.Batch(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryBatchByHeight returns the command for querying a
+// batch using a block height.
+func GetCmdQueryBatchByHeight() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "batch-by <block_height>",
+		Short: "Get a batch given its creation block height",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			blockHeight, err := strconv.ParseInt(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			req := &types.QueryBatchForHeightRequest{
+				BlockHeight: blockHeight,
+			}
+			res, err := queryClient.BatchForHeight(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

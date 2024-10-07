@@ -61,7 +61,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
 	}
 
 	var oldBatchID []byte
-	oldBatch, err := k.GetCurrentBatch(ctx)
+	oldBatch, err := k.GetLatestBatch(ctx)
 	if err != nil {
 		if errors.Is(err, types.ErrBatchingHasNotStarted) {
 			hash := sha3.NewLegacyKeccak256()
@@ -124,7 +124,7 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, []byte, erro
 	}
 
 	newRoot := utils.RootFromEntries(entries)
-	curRoot, err := k.GetCurrentDataResultRoot(ctx)
+	curRoot, err := k.GetLatestDataResultRoot(ctx)
 	if err != nil {
 		return nil, nil, err
 	}

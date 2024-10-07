@@ -8,15 +8,15 @@ import (
 
 // InitGenesis puts all data from genesis state into store.
 func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
-	if err := k.SetCurrentBatchNum(ctx, data.CurrentBatchNumber); err != nil {
+	if err := k.setCurrentBatchNum(ctx, data.CurrentBatchNumber); err != nil {
 		panic(err)
 	}
 	for _, batch := range data.Batches {
-		if err := k.SetBatch(ctx, batch); err != nil {
+		if err := k.setBatch(ctx, batch); err != nil {
 			panic(err)
 		}
 	}
-	if err := k.SetParams(ctx, data.Params); err != nil {
+	if err := k.setParams(ctx, data.Params); err != nil {
 		panic(err)
 	}
 }

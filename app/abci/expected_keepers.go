@@ -12,7 +12,7 @@ import (
 )
 
 type BatchingKeeper interface {
-	GetCurrentBatch(ctx context.Context) (types.Batch, error)
+	GetBatchForHeight(ctx context.Context, height int64) (types.Batch, error)
 }
 
 type PubKeyKeeper interface {

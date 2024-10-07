@@ -22,11 +22,22 @@ func NewQuerierImpl(keeper Keeper) types.QueryServer {
 
 func (q Querier) Batch(c context.Context, req *types.QueryBatchRequest) (*types.QueryBatchResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	batch, err := q.Keeper.GetBatch(ctx, req.BatchNumber)
+	batch, err := q.Keeper.GetBatchByBatchNumber(ctx, req.BatchNumber)
 	if err != nil {
 		return nil, err
 	}
 	return &types.QueryBatchResponse{
+		Batch: batch,
+	}, nil
+}
+
+func (q Querier) BatchForHeight(c context.Context, req *types.QueryBatchForHeightRequest) (*types.QueryBatchForHeightResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	batch, err := q.Keeper.GetBatchForHeight(ctx, req.BlockHeight)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryBatchForHeightResponse{
 		Batch: batch,
 	}, nil
 }
