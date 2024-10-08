@@ -24,12 +24,12 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 		}
 
 		data := struct {
-			Id               string    `json:"id"`
+			ID               string    `json:"id"`
 			Bytecode         []byte    `json:"bytecode"`
 			AddedAt          time.Time `json:"addedAt"`
 			ExpirationHeight int64     `json:"expirationHeight"`
 		}{
-			Id:               hex.EncodeToString(val.Hash),
+			ID:               hex.EncodeToString(val.Hash),
 			Bytecode:         val.Bytecode,
 			AddedAt:          val.AddedAt,
 			ExpirationHeight: val.ExpirationHeight,

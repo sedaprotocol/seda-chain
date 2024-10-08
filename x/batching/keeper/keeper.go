@@ -129,10 +129,7 @@ func (k Keeper) GetDataResults(ctx context.Context, batched bool) ([]types.DataR
 // status (batched or not) and performs a given callback function.
 func (k Keeper) IterateDataResults(ctx context.Context, batched bool, cb func(key collections.Pair[bool, string], value types.DataResult) (bool, error)) error {
 	rng := collections.NewPrefixedPairRange[bool, string](batched)
-	if err := k.dataResults.Walk(ctx, rng, cb); err != nil {
-		return err
-	}
-	return nil
+	return k.dataResults.Walk(ctx, rng, cb)
 }
 
 func (k Keeper) setCurrentBatchNum(ctx context.Context, batchNum uint64) error {

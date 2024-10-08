@@ -39,7 +39,7 @@ func NewVoteExtensionHandler(
 }
 
 func (h *VoteExtensionHandler) ExtendVoteHandler() sdk.ExtendVoteHandler {
-	return func(ctx sdk.Context, req *cometabci.RequestExtendVote) (*cometabci.ResponseExtendVote, error) {
+	return func(ctx sdk.Context, _ *cometabci.RequestExtendVote) (*cometabci.ResponseExtendVote, error) {
 		h.logger.Debug("start extend vote handler")
 
 		// Sign the batch created from the last block's end blocker.
@@ -61,7 +61,6 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() sdk.VerifyVoteExtens
 	return func(ctx sdk.Context, req *cometabci.RequestVerifyVoteExtension) (*cometabci.ResponseVerifyVoteExtension, error) {
 		h.logger.Debug("start verify vote extension handler", "request", req)
 
-		// Verify signature.
 		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-1)
 		if err != nil {
 			return nil, err
@@ -75,11 +74,13 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() sdk.VerifyVoteExtens
 		if err != nil {
 			return nil, err
 		}
+
+		// Verify secp256k1 signature.
 		pubkey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.Secp256k1)
 		if err != nil {
 			return nil, err
 		}
-		ok := pubkey.VerifySignature(batch.BatchId, req.VoteExtension)
+		ok := pubkey.VerifySignature(batch.BatchId, req.VoteExtension[:64])
 		if !ok {
 			return nil, err
 		}

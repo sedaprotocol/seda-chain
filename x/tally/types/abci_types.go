@@ -82,9 +82,7 @@ func (u *RevealBody) UnmarshalJSON(data []byte) error {
 	if len(salt) != 32 {
 		return errorsmod.Wrapf(ErrInvalidSaltLength, "got %d", len(salt))
 	}
-	for i, v := range salt {
-		u.Salt[i] = byte(v)
-	}
+	copy(u.Salt[:], salt)
 	return nil
 }
 
