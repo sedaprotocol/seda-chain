@@ -42,8 +42,7 @@ type Batch struct {
 	// validator_root is the hex-encoded root of the validator merkle
 	// tree.
 	ValidatorRoot string `protobuf:"bytes,4,opt,name=validator_root,json=validatorRoot,proto3" json:"validator_root,omitempty"`
-	// batch_id is the Keccack-256 hash of the batch concatenated with
-	// the previous batch ID.
+	// batch_id is the Keccack-256 hash of the batch content.
 	BatchId []byte `protobuf:"bytes,5,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	// data_result_entries are the entries (unhashed leaf contents) of
 	// the data result tree.

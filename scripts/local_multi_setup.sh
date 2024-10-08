@@ -1,6 +1,11 @@
 #!/bin/bash
-set -e
-set -x
+set -ex
+
+# The script requires tmux.
+if ! command -v tmux &> /dev/null; then
+    echo "Error: tmux is not installed. Please install tmux and try again."
+    exit 1
+fi
 
 make build
 BIN=./build/sedad

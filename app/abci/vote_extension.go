@@ -39,7 +39,7 @@ func NewVoteExtensionHandler(
 }
 
 func (h *VoteExtensionHandler) ExtendVoteHandler() sdk.ExtendVoteHandler {
-	return func(ctx sdk.Context, _ *cometabci.RequestExtendVote) (*cometabci.ResponseExtendVote, error) {
+	return func(ctx sdk.Context, req *cometabci.RequestExtendVote) (*cometabci.ResponseExtendVote, error) {
 		h.logger.Debug("start extend vote handler")
 
 		// Sign the batch created from the last block's end blocker.

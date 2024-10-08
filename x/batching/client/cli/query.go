@@ -67,7 +67,7 @@ func GetCmdQueryBatch() *cobra.Command {
 // batch using a block height.
 func GetCmdQueryBatchByHeight() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "batch-by <block_height>",
+		Use:   "batch-by-height <block_height>",
 		Short: "Get a batch given its creation block height",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

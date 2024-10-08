@@ -21,8 +21,7 @@ message Batch {
   // validator_root is the hex-encoded root of the validator merkle
   // tree.
   string validator_root = 4;
-  // batch_id is the Keccack-256 hash of the batch concatenated with
-  // the previous batch ID.
+  // batch_id is the Keccack-256 hash of the batch content.
   bytes batch_id = 5;
   // data_result_entries are the entries (unhashed leaf contents) of
   // the data result tree.

@@ -75,7 +75,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
 	}
 
 	// Compute the batch ID, which is defined as
-	// keccak256(old_batch_id, batch_number, block_height, validator_root, results_root).
+	// keccak256(batch_number, block_height, validator_root, results_root).
 	var hashContent []byte
 	hashContent = append(hashContent, oldBatchID...)
 	hashContent = binary.BigEndian.AppendUint64(hashContent, newBatchNum)
