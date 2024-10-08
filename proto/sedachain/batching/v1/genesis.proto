@@ -12,5 +12,6 @@ message GenesisState {
   // created batch.
   uint64 current_batch_number = 1;
   repeated Batch batches = 2 [ (gogoproto.nullable) = false ];
-  Params params = 3 [ (gogoproto.nullable) = false ];
+  repeated TreeEntries tree_entries = 3 [ (gogoproto.nullable) = false ];
+  Params params = 4 [ (gogoproto.nullable) = false ];
 }

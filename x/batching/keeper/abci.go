@@ -31,33 +31,37 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		err = nil
 	}()
 
-	batch, err := k.ConstructBatch(ctx)
+	batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = k.SetNewBatch(ctx, batch)
+	err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
+// ConstructBatch constructs a data result tree from unbatched data
+// results and a validator tree from the current active validator set.
+// It returns a resulting batch, data result tree entries, and validator
+// tree entries in that order.
+func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte, error) {
 	// Note current will be "old" for this new batch.
 	oldBatchNum, err := k.GetCurrentBatchNum(ctx)
 	if err != nil {
-		return types.Batch{}, err
+		return types.Batch{}, nil, nil, err
 	}
 	newBatchNum := oldBatchNum + 1
 
 	dataEntries, dataRoot, err := k.ConstructDataResultTree(ctx)
 	if err != nil {
-		return types.Batch{}, err
+		return types.Batch{}, nil, nil, err
 	}
 	valEntries, valRoot, err := k.ConstructValidatorTree(ctx)
 	if err != nil {
-		return types.Batch{}, err
+		return types.Batch{}, nil, nil, err
 	}
 
 	// Compute the batch ID, which is defined as
@@ -74,15 +78,13 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, error) {
 	batchID := hash.Sum(nil)
 
 	return types.Batch{
-		BatchNumber:       newBatchNum,
-		BlockHeight:       ctx.BlockHeight(),
-		DataResultRoot:    hex.EncodeToString(dataRoot),
-		ValidatorRoot:     hex.EncodeToString(valRoot),
-		BatchId:           batchID,
-		DataResultEntries: dataEntries,
-		ValidatorEntries:  valEntries,
-		BlockTime:         ctx.BlockTime(),
-	}, nil
+		BatchNumber:     newBatchNum,
+		BlockHeight:     ctx.BlockHeight(),
+		DataResultRoot:  hex.EncodeToString(dataRoot),
+		ValidatorRoot:   hex.EncodeToString(valRoot),
+		BatchId:         batchID,
+		ProvingMedatada: nil,
+	}, dataEntries, valEntries, nil
 }
 
 // ConstructDataResultTree constructs a data result tree based on the

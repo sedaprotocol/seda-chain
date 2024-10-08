@@ -2,7 +2,6 @@ syntax = "proto3";
 package sedachain.batching.v1;
 
 import "gogoproto/gogo.proto";
-import "google/protobuf/timestamp.proto";
 import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/batching/types";
@@ -23,15 +22,19 @@ message Batch {
   string validator_root = 4;
   // batch_id is the Keccack-256 hash of the batch content.
   bytes batch_id = 5;
+  // proving_medatada is a field for additional proving data.
+  bytes proving_medatada = 6;
+}
+
+message TreeEntries {
+  // batch_number is the identifier of the batch the tree entries from.
+  uint64 batch_number = 1;
   // data_result_entries are the entries (unhashed leaf contents) of
   // the data result tree.
-  repeated bytes data_result_entries = 6;
+  repeated bytes data_result_entries = 2;
   // validator_entries are the entries (unhashed leaf contents) of
   // the validator tree.
-  repeated bytes validator_entries = 7;
-  // block_time is the time at which the batch was created.
-  google.protobuf.Timestamp block_time = 8
-      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+  repeated bytes validator_entries = 3;
 }
 
 // Vote contains basic validator data and its batch signatures under various
