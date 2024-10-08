@@ -52,3 +52,14 @@ func (q Querier) Batches(c context.Context, _ *types.QueryBatchesRequest) (*type
 		Batches: batches,
 	}, nil
 }
+
+func (q Querier) TreeEntries(c context.Context, req *types.QueryTreeEntriesRequest) (*types.QueryTreeEntriesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	entries, err := q.Keeper.GetTreeEntries(ctx, req.BatchNumber)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryTreeEntriesResponse{
+		Entries: entries,
+	}, nil
+}

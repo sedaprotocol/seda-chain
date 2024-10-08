@@ -25,6 +25,11 @@ service Query {
   rpc Batches(QueryBatchesRequest) returns (QueryBatchesResponse) {
     option (google.api.http).get = "/seda-chain/batching/batches";
   }
+
+  // TreeEntries returns the tree entries from the given batch number.
+  rpc TreeEntries(QueryTreeEntriesRequest) returns (QueryTreeEntriesResponse) {
+    option (google.api.http).get = "/seda-chain/batching/tree_entries/{batch_number}";
+  }
 }
 
 // The request message for QueryBatch RPC.
@@ -48,3 +53,9 @@ message QueryBatchesRequest {}
 message QueryBatchesResponse {
   repeated Batch batches = 1 [ (gogoproto.nullable) = false ];
 }
+
+// The request message for QueryTreeEntries RPC.
+message QueryTreeEntriesRequest { uint64 batch_number = 1; }
+
+// The response message for QueryTreeEntries RPC.
+message QueryTreeEntriesResponse { TreeEntries entries = 1 [ (gogoproto.nullable) = false ]; }

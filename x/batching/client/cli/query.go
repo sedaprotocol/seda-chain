@@ -26,6 +26,7 @@ func GetQueryCmd(_ string) *cobra.Command {
 		GetCmdQueryBatch(),
 		GetCmdQueryBatchByHeight(),
 		GetCmdQueryBatches(),
+		GetCmdQueryTreeEntries(),
 	)
 	return cmd
 }
@@ -110,6 +111,39 @@ func GetCmdQueryBatches() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			res, err := queryClient.Batches(cmd.Context(), &types.QueryBatchesRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryTreeEntries returns the command for querying tree entries
+// corresponding to the given batch number.
+func GetCmdQueryTreeEntries() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tree-entries <batch_number>",
+		Short: "Get tree entries given its batch number",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			batchNum, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			req := &types.QueryTreeEntriesRequest{
+				BatchNumber: batchNum,
+			}
+			res, err := queryClient.TreeEntries(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

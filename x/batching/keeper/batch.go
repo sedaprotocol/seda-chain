@@ -161,6 +161,16 @@ func (k Keeper) setTreeEntries(ctx context.Context, batchNum uint64, dataEntries
 	)
 }
 
+// GetTreeEntries returns the tree entries corresponding to the given
+// batch number.
+func (k Keeper) GetTreeEntries(ctx context.Context, batchNum uint64) (types.TreeEntries, error) {
+	entries, err := k.treeEntries.Get(ctx, batchNum)
+	if err != nil {
+		return types.TreeEntries{}, err
+	}
+	return entries, nil
+}
+
 // IterateBatches iterates over the tree entries and performs a given
 // callback function.
 func (k Keeper) IterateTreeEntries(ctx sdk.Context, callback func(types.TreeEntries) (stop bool)) error {
