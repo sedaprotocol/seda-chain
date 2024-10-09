@@ -34,7 +34,7 @@ type Keeper struct {
 	currentBatchNumber collections.Sequence
 	batches            *collections.IndexedMap[int64, types.Batch, BatchIndexes]
 	treeEntries        collections.Map[uint64, types.TreeEntries]
-	votes              collections.Map[collections.Pair[uint64, []byte], types.Vote]
+	batchSignatures    collections.Map[collections.Pair[uint64, []byte], types.BatchSignatures]
 	params             collections.Item[types.Params]
 }
 
@@ -63,7 +63,7 @@ func NewKeeper(
 		currentBatchNumber:    collections.NewSequence(sb, types.CurrentBatchNumberKey, "current_batch_number"),
 		batches:               collections.NewIndexedMap(sb, types.BatchesKeyPrefix, "batches", collections.Int64Key, codec.CollValue[types.Batch](cdc), NewBatchIndexes(sb)),
 		treeEntries:           collections.NewMap(sb, types.TreeEntriesKeyPrefix, "tree_entries", collections.Uint64Key, codec.CollValue[types.TreeEntries](cdc)),
-		votes:                 collections.NewMap(sb, types.VotesKeyPrefix, "votes", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.Vote](cdc)),
+		batchSignatures:       collections.NewMap(sb, types.BatchSignaturesKeyPrefix, "batch_signatures", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.BatchSignatures](cdc)),
 		params:                collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
 

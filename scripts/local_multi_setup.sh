@@ -67,7 +67,7 @@ sed -i '' -E 's|prometheus = false|prometheus = true|g' $VALIDATOR2_CONFIG
 sed -i '' -E 's|prometheus_listen_addr = ":26660"|prometheus_listen_addr = ":26630"|g' $VALIDATOR2_CONFIG
 
 # modify validator1 genesis file to validator2
-jq '.consensus.params.abci.vote_extensions_enable_height = "15"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
+jq '.consensus.params.abci.vote_extensions_enable_height = "10"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
 
 cp $HOME/.sedad/validator1/config/genesis.json $HOME/.sedad/validator2/config/genesis.json
 
