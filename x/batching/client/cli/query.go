@@ -27,6 +27,7 @@ func GetQueryCmd(_ string) *cobra.Command {
 		GetCmdQueryBatchByHeight(),
 		GetCmdQueryBatches(),
 		GetCmdQueryTreeEntries(),
+		GetCmdQueryBatchSignatures(),
 	)
 	return cmd
 }

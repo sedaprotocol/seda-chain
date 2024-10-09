@@ -974,50 +974,35 @@ func NewApp(
 	}
 
 	app.SetInitChainer(app.InitChainer)
-	// app.SetPreBlocker(app.PreBlocker)
+	// app.SetPreBlocker(app.PreBlocker) // TODO Revive this
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(anteHandler)
 
-	// Create vote extension for signing batches.
+	// Register ABCI handlers for batch signing.
+	abciHandler := appabci.NewABCIHandlers(
+		app.BatchingKeeper,
+		app.PubKeyKeeper,
+		app.StakingKeeper,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		app.Logger(),
+	)
+	app.SetVerifyVoteExtensionHandler(abciHandler.VerifyVoteExtensionHandler())
+	app.SetPrepareProposal(abciHandler.PrepareProposalHandler())
+	app.SetProcessProposal(abciHandler.ProcessProposalHandler())
+	app.SetPreBlocker(abciHandler.PreBlocker())
+
+	// Register SEDA signer and ExtendVote handler.
 	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
 	loadPath := filepath.Join(filepath.Dir(pvKeyFile), utils.SEDAKeyFileName)
 	signer, err := utils.LoadSEDASigner(loadPath)
 	if err != nil {
-		app.Logger().Error("error loading SEDA signer - ExtendVoteHandler will not run", "path", loadPath)
-
-		voteExtensionsHandler := appabci.NewVoteExtensionHandler(
-			app.BatchingKeeper,
-			app.PubKeyKeeper,
-			app.StakingKeeper,
-			authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
-			nil,
-			app.Logger(),
-		)
-		app.SetVerifyVoteExtensionHandler(voteExtensionsHandler.VerifyVoteExtensionHandler())
+		app.Logger().Error("error loading SEDA signer - ExtendVote handler will not run", "path", loadPath)
 	} else {
 		app.Logger().Info("SEDA signer successfully loaded")
-
-		voteExtensionsHandler := appabci.NewVoteExtensionHandler(
-			app.BatchingKeeper,
-			app.PubKeyKeeper,
-			app.StakingKeeper,
-			authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
-			signer,
-			app.Logger(),
-		)
-		app.SetExtendVoteHandler(voteExtensionsHandler.ExtendVoteHandler())
-		app.SetVerifyVoteExtensionHandler(voteExtensionsHandler.VerifyVoteExtensionHandler())
+		abciHandler.SetSEDASigner(signer)
+		app.SetExtendVoteHandler(abciHandler.ExtendVoteHandler())
 	}
-
-	proposalHandler := appabci.NewProposalHandler(
-		app.BatchingKeeper,
-		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
-		app.Logger(),
-	)
-	app.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
-	app.SetProcessProposal(proposalHandler.ProcessProposalHandler())
-	app.SetPreBlocker(proposalHandler.PreBlocker())
 
 	if manager := app.SnapshotManager(); manager != nil {
 		err = manager.RegisterExtensions(
