@@ -132,6 +132,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
+
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/x/batching"
@@ -973,7 +974,7 @@ func NewApp(
 	}
 
 	app.SetInitChainer(app.InitChainer)
-	app.SetPreBlocker(app.PreBlocker)
+	// app.SetPreBlocker(app.PreBlocker)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(anteHandler)
@@ -1008,6 +1009,15 @@ func NewApp(
 		app.SetExtendVoteHandler(voteExtensionsHandler.ExtendVoteHandler())
 		app.SetVerifyVoteExtensionHandler(voteExtensionsHandler.VerifyVoteExtensionHandler())
 	}
+
+	proposalHandler := appabci.NewProposalHandler(
+		app.BatchingKeeper,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		app.Logger(),
+	)
+	app.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
+	app.SetProcessProposal(proposalHandler.ProcessProposalHandler())
+	app.SetPreBlocker(proposalHandler.PreBlocker())
 
 	if manager := app.SnapshotManager(); manager != nil {
 		err = manager.RegisterExtensions(

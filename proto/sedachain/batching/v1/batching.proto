@@ -26,6 +26,8 @@ message Batch {
   bytes proving_medatada = 6;
 }
 
+// TreeEntries are the given batch's data result tree entries and
+// validator tree entries.
 message TreeEntries {
   // batch_number is the identifier of the batch the tree entries from.
   uint64 batch_number = 1;
@@ -37,29 +39,13 @@ message TreeEntries {
   repeated bytes validator_entries = 3;
 }
 
-// Vote contains basic validator data and its batch signatures under various
-// cryptographic schemes.
-message Vote {
+// BatchSignatures contains basic validator data and its batch signatures
+// under various cryptographic schemes.
+message BatchSignatures {
   string validator_addr = 1
       [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
   int64 voting_power = 2;
-  repeated Signature signatures = 3;
-}
-
-// Signature is a batch signature under a given scheme.
-message Signature {
-  option (gogoproto.equal) = true;
-
-  // scheme is the signature scheme that corresponds to index in x/pubkey.
-  uint32 scheme = 1;
-  // signature is the signature of the batch.
-  string signature = 2;
-  // public_key is the public key corresponding to the signature that
-  // should have been registered in x/pubkey
-  string public_key = 3;
-  // merkle_proof is the proof of inclusion of the signer in the validator
-  // tree.
-  string merkle_proof = 4;
+  bytes signatures = 3;
 }
 
 // Params is a list of parameters which can be changed through governance.

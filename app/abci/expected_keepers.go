@@ -11,8 +11,12 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
-type BatchingKeeper interface {
+type BatchingViewKeeper interface {
 	GetBatchForHeight(ctx context.Context, height int64) (types.Batch, error)
+}
+
+type BatchingKeeper interface {
+	SetBatchSignatures(ctx context.Context, batchNum uint64, sigs types.BatchSignatures) error
 }
 
 type PubKeyKeeper interface {

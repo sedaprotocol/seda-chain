@@ -1,7 +1,7 @@
 package abci
 
 import (
-	cometabci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	addresscodec "cosmossdk.io/core/address"
 	"cosmossdk.io/log"
@@ -12,7 +12,7 @@ import (
 )
 
 type VoteExtensionHandler struct {
-	batchingKeeper        BatchingKeeper
+	batchingKeeper        BatchingViewKeeper
 	pubKeyKeeper          PubKeyKeeper
 	stakingKeeper         StakingKeeper
 	validatorAddressCodec addresscodec.Codec
@@ -21,7 +21,7 @@ type VoteExtensionHandler struct {
 }
 
 func NewVoteExtensionHandler(
-	bk BatchingKeeper,
+	bk BatchingViewKeeper,
 	pkk PubKeyKeeper,
 	sk StakingKeeper,
 	vac addresscodec.Codec,
@@ -39,7 +39,7 @@ func NewVoteExtensionHandler(
 }
 
 func (h *VoteExtensionHandler) ExtendVoteHandler() sdk.ExtendVoteHandler {
-	return func(ctx sdk.Context, _ *cometabci.RequestExtendVote) (*cometabci.ResponseExtendVote, error) {
+	return func(ctx sdk.Context, _ *abci.RequestExtendVote) (*abci.ResponseExtendVote, error) {
 		h.logger.Debug("start extend vote handler")
 
 		// Sign the batch created from the last block's end blocker.
@@ -53,12 +53,12 @@ func (h *VoteExtensionHandler) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		}
 
 		h.logger.Debug("submitting batch signature", "signature", signature)
-		return &cometabci.ResponseExtendVote{VoteExtension: signature}, nil
+		return &abci.ResponseExtendVote{VoteExtension: signature}, nil
 	}
 }
 
 func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
-	return func(ctx sdk.Context, req *cometabci.RequestVerifyVoteExtension) (*cometabci.ResponseVerifyVoteExtension, error) {
+	return func(ctx sdk.Context, req *abci.RequestVerifyVoteExtension) (*abci.ResponseVerifyVoteExtension, error) {
 		h.logger.Debug("start verify vote extension handler", "request", req)
 
 		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-1)
@@ -86,6 +86,6 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() sdk.VerifyVoteExtens
 		}
 
 		h.logger.Debug("successfully verified signature", "request", req.ValidatorAddress, "height", req.Height)
-		return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_ACCEPT}, nil
+		return &abci.ResponseVerifyVoteExtension{Status: abci.ResponseVerifyVoteExtension_ACCEPT}, nil
 	}
 }

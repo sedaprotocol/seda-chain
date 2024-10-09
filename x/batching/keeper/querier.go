@@ -63,3 +63,14 @@ func (q Querier) TreeEntries(c context.Context, req *types.QueryTreeEntriesReque
 		Entries: entries,
 	}, nil
 }
+
+func (q Querier) BatchSignatures(c context.Context, req *types.QueryBatchSignaturesRequest) (*types.QueryBatchSignaturesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	sigs, err := q.Keeper.GetBatchSigsForBatch(ctx, req.BatchNumber)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryBatchSignaturesResponse{
+		BatchSigs: sigs,
+	}, nil
+}
