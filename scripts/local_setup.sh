@@ -39,6 +39,7 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["voting_params"]["v
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["voting_period"]="30s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["gov"]["params"]["expedited_voting_period"]="15s"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 cat $HOME/.sedad/config/genesis.json | jq '.consensus_params["block"]["max_gas"]="100000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.consensus.params.abci.vote_extensions_enable_height = "10"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     sed -i '' 's/swagger = false/swagger = true/' $HOME/.sedad/config/app.toml
