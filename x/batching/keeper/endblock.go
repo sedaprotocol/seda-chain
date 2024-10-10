@@ -55,7 +55,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 	}
 	newBatchNum := oldBatchNum + 1
 
-	dataEntries, dataRoot, err := k.ConstructDataResultTree(ctx)
+	dataEntries, dataRoot, err := k.ConstructDataResultTree(ctx, newBatchNum)
 	if err != nil {
 		return types.Batch{}, nil, nil, err
 	}
@@ -90,7 +90,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 // ConstructDataResultTree constructs a data result tree based on the
 // data results that have not been batched yet. It returns the tree's
 // entries (unhashed leaf contents) and hex-encoded root.
-func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, []byte, error) {
+func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) ([][]byte, []byte, error) {
 	dataResults, err := k.GetDataResults(ctx, false)
 	if err != nil {
 		return nil, nil, err
@@ -104,7 +104,7 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context) ([][]byte, []byte, erro
 		}
 		entries[i] = resHash
 
-		err = k.markDataResultAsBatched(ctx, res)
+		err = k.markDataResultAsBatched(ctx, res, newBatchNum)
 		if err != nil {
 			return nil, nil, err
 		}

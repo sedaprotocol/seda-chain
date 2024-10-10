@@ -28,6 +28,8 @@ func GetQueryCmd(_ string) *cobra.Command {
 		GetCmdQueryBatches(),
 		GetCmdQueryTreeEntries(),
 		GetCmdQueryBatchSignatures(),
+		GetCmdQueryDataResult(),
+		GetCmdQueryBatchAssignment(),
 	)
 	return cmd
 }
@@ -179,6 +181,64 @@ func GetCmdQueryBatchSignatures() *cobra.Command {
 				BatchNumber: batchNum,
 			}
 			res, err := queryClient.BatchSignatures(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryBatch returns the command for querying a data result
+// associated with a given data request.
+func GetCmdQueryDataResult() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "data-result <data_request_id>",
+		Short: "Get the data result associated with a given data request",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.QueryDataResultRequest{
+				DataRequestId: args[0],
+			}
+			res, err := queryClient.DataResult(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryBatchAssignment returns the command for querying the
+// batch number assigned to the given data request.
+func GetCmdQueryBatchAssignment() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "batch-assignment <data_request_id>",
+		Short: "Get the batch number assigned to a given data request",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.QueryBatchAssignmentRequest{
+				DataRequestId: args[0],
+			}
+			res, err := queryClient.BatchAssignment(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

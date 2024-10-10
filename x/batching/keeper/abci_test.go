@@ -33,7 +33,7 @@ func Test_ConstructDataResultTree(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	entries, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context())
+	entries, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context(), rand.Uint64())
 	require.NoError(t, err)
 
 	var entryHexes, drIds []string
