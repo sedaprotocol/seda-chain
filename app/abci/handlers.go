@@ -15,7 +15,7 @@ import (
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
-type ABCIHandlers struct {
+type Handlers struct {
 	batchingKeeper        BatchingKeeper
 	pubKeyKeeper          PubKeyKeeper
 	stakingKeeper         StakingKeeper
@@ -24,14 +24,14 @@ type ABCIHandlers struct {
 	logger                log.Logger
 }
 
-func NewABCIHandlers(
+func NewHandlers(
 	bk BatchingKeeper,
 	pkk PubKeyKeeper,
 	sk StakingKeeper,
 	vac addresscodec.Codec,
 	logger log.Logger,
-) *ABCIHandlers {
-	return &ABCIHandlers{
+) *Handlers {
+	return &Handlers{
 		batchingKeeper:        bk,
 		pubKeyKeeper:          pkk,
 		stakingKeeper:         sk,
@@ -40,11 +40,13 @@ func NewABCIHandlers(
 	}
 }
 
-func (h *ABCIHandlers) SetSEDASigner(signer utils.SEDASigner) {
+func (h *Handlers) SetSEDASigner(signer utils.SEDASigner) {
 	h.signer = signer
 }
 
-func (h *ABCIHandlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
+// ExtendVoteHandler handles the ExtendVote ABCI to sign a batch created
+// from the previous block.
+func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 	return func(ctx sdk.Context, _ *abci.RequestExtendVote) (*abci.ResponseExtendVote, error) {
 		h.logger.Debug("start extend vote handler")
 
@@ -63,7 +65,10 @@ func (h *ABCIHandlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 	}
 }
 
-func (h *ABCIHandlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
+// VerifyVoteExtensionHandler handles the VerifyVoteExtension ABCI to
+// verify the batch signature included in the pre-commit vote against
+// the public key registered in the pubkey module.
+func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 	return func(ctx sdk.Context, req *abci.RequestVerifyVoteExtension) (*abci.ResponseVerifyVoteExtension, error) {
 		h.logger.Debug("start verify vote extension handler", "request", req)
 
@@ -81,7 +86,9 @@ func (h *ABCIHandlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandl
 	}
 }
 
-func (h *ABCIHandlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
+// PrepareProposalHandler handles the PrepareProposal ABCI to inject
+// a canonical set of vote extensions in the proposal.
+func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (*abci.ResponsePrepareProposal, error) {
 		h.logger.Debug("start prepare proposal handler")
 
@@ -105,7 +112,9 @@ func (h *ABCIHandlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 	}
 }
 
-func (h *ABCIHandlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
+// ProcessProposalHandler handles the ProcessProposal ABCI to validate
+// the canonical set of vote extensions injected by the proposer.
+func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
 		if req.Height > ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight {
 			var extendedVotes abci.ExtendedCommitInfo
@@ -131,14 +140,16 @@ func (h *ABCIHandlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 					return nil, err
 				}
 			}
-
 		}
 
 		return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
 	}
 }
 
-func (h *ABCIHandlers) PreBlocker() sdk.PreBlocker {
+// PreBlocker runs before BeginBlocker to extract the batch signatures
+// from the canonical set of vote extensions injected by the proposer
+// and store them.
+func (h *Handlers) PreBlocker() sdk.PreBlocker {
 	return func(ctx sdk.Context, req *abci.RequestFinalizeBlock) (res *sdk.ResponsePreBlock, err error) {
 		// Use defer to prevent returning an error, which would cause
 		// the chain to halt.
@@ -194,7 +205,7 @@ func (h *ABCIHandlers) PreBlocker() sdk.PreBlocker {
 	}
 }
 
-func (h *ABCIHandlers) verifyBatchSignature(ctx sdk.Context, batchID, signature, consAddr []byte, keyIndex utils.SEDAKeyIndex) (bool, error) {
+func (h *Handlers) verifyBatchSignature(ctx sdk.Context, batchID, signature, consAddr []byte, keyIndex utils.SEDAKeyIndex) (bool, error) {
 	validator, err := h.stakingKeeper.GetValidatorByConsAddr(ctx, consAddr)
 	if err != nil {
 		return false, err

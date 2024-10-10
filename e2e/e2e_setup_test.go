@@ -228,6 +228,8 @@ func (s *IntegrationTestSuite) initGenesis(c *chain) {
 	appGenesis.AppState, err = json.MarshalIndent(appGenState, "", "  ")
 	s.Require().NoError(err)
 
+	appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = 10000
+
 	err = genutil.ExportGenesisFile(appGenesis, genFilePath)
 	s.Require().NoError(err)
 
