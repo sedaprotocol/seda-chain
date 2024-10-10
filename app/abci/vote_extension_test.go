@@ -85,14 +85,14 @@ func TestExtendVoteHandler(t *testing.T) {
 	).Return(privKey.PubKey(), nil)
 
 	// Construct the handler and execute it.
-	handler := NewVoteExtensionHandler(
+	handler := NewHandlers(
 		mockBatchingKeeper,
 		mockPubKeyKeeper,
 		mockStakingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
-		&signer,
 		logger,
 	)
+	handler.SetSEDASigner(&signer)
 	extendVoteHandler := handler.ExtendVoteHandler()
 	verifyVoteHandler := handler.VerifyVoteExtensionHandler()
 

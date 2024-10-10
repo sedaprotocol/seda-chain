@@ -205,3 +205,50 @@ func (k Keeper) GetAllTreeEntries(ctx sdk.Context) ([]types.TreeEntries, error) 
 	}
 	return entries, nil
 }
+
+// SetBatchSignatures stores a validator's signatures of a batch.
+func (k Keeper) SetBatchSignatures(ctx context.Context, batchNum uint64, sigs types.BatchSignatures) error {
+	valAddr, err := k.validatorAddressCodec.StringToBytes(sigs.ValidatorAddr)
+	if err != nil {
+		return err
+	}
+	return k.batchSignatures.Set(ctx, collections.Join(batchNum, valAddr), sigs)
+}
+
+// GetBatchSignatures retrieves the batch signatures by a given
+// validator at a given batch number.
+func (k Keeper) GetBatchSignatures(ctx context.Context, batchNum uint64, validatorAddr string) (types.BatchSignatures, error) {
+	valAddr, err := k.validatorAddressCodec.StringToBytes(validatorAddr)
+	if err != nil {
+		return types.BatchSignatures{}, err
+	}
+	sigs, err := k.batchSignatures.Get(ctx, collections.Join(batchNum, valAddr))
+	if err != nil {
+		return types.BatchSignatures{}, err
+	}
+	return sigs, err
+}
+
+// GetBatchSigsForBatch returns all signatures of a given batch.
+func (k Keeper) GetBatchSigsForBatch(ctx context.Context, batchNum uint64) ([]types.BatchSignatures, error) {
+	rng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
+	itr, err := k.batchSignatures.Iterate(ctx, rng)
+	if err != nil {
+		return nil, err
+	}
+	defer itr.Close()
+
+	kvs, err := itr.KeyValues()
+	if err != nil {
+		return nil, err
+	}
+	if len(kvs) == 0 {
+		return nil, collections.ErrNotFound
+	}
+
+	sigs := make([]types.BatchSignatures, len(kvs))
+	for i, kv := range kvs {
+		sigs[i] = kv.Value
+	}
+	return sigs, err
+}

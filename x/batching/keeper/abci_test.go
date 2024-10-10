@@ -140,6 +140,7 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 // generateDataResults returns a given number of randomly-generated
 // data results.
 func generateDataResults(t *testing.T, num int) []types.DataResult {
+	t.Helper()
 	dataResults := make([]types.DataResult, num)
 	for i := range dataResults {
 		sample := types.DataResult{

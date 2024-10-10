@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	types "github.com/cosmos/cosmos-sdk/crypto/types"
 	types0 "github.com/cosmos/cosmos-sdk/types"
 	types1 "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -57,6 +58,20 @@ func (m *MockBatchingKeeper) GetBatchForHeight(ctx context.Context, height int64
 func (mr *MockBatchingKeeperMockRecorder) GetBatchForHeight(ctx, height any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBatchForHeight", reflect.TypeOf((*MockBatchingKeeper)(nil).GetBatchForHeight), ctx, height)
+}
+
+// SetBatchSignatures mocks base method.
+func (m *MockBatchingKeeper) SetBatchSignatures(ctx context.Context, batchNum uint64, sigs types2.BatchSignatures) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetBatchSignatures", ctx, batchNum, sigs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetBatchSignatures indicates an expected call of SetBatchSignatures.
+func (mr *MockBatchingKeeperMockRecorder) SetBatchSignatures(ctx, batchNum, sigs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBatchSignatures", reflect.TypeOf((*MockBatchingKeeper)(nil).SetBatchSignatures), ctx, batchNum, sigs)
 }
 
 // MockPubKeyKeeper is a mock of PubKeyKeeper interface.
@@ -118,6 +133,21 @@ func NewMockStakingKeeper(ctrl *gomock.Controller) *MockStakingKeeper {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStakingKeeper) EXPECT() *MockStakingKeeperMockRecorder {
 	return m.recorder
+}
+
+// GetPubKeyByConsAddr mocks base method.
+func (m *MockStakingKeeper) GetPubKeyByConsAddr(arg0 context.Context, arg1 types0.ConsAddress) (crypto.PublicKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPubKeyByConsAddr", arg0, arg1)
+	ret0, _ := ret[0].(crypto.PublicKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPubKeyByConsAddr indicates an expected call of GetPubKeyByConsAddr.
+func (mr *MockStakingKeeperMockRecorder) GetPubKeyByConsAddr(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPubKeyByConsAddr", reflect.TypeOf((*MockStakingKeeper)(nil).GetPubKeyByConsAddr), arg0, arg1)
 }
 
 // GetValidatorByConsAddr mocks base method.

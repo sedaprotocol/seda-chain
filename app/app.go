@@ -132,6 +132,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
+
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/x/batching"
@@ -257,6 +258,9 @@ type App struct {
 	DataProxyKeeper   dataproxykeeper.Keeper
 	PubKeyKeeper      pubkeykeeper.Keeper
 	BatchingKeeper    batchingkeeper.Keeper
+
+	// App-level pre-blocker (Note this cannot change consensus parameters)
+	preBlocker sdk.PreBlocker
 
 	mm  *module.Manager
 	bmm module.BasicManager
@@ -971,42 +975,35 @@ func NewApp(
 	if err != nil {
 		panic(fmt.Errorf("failed to create AnteHandler: %w", err))
 	}
-
+	app.SetAnteHandler(anteHandler)
 	app.SetInitChainer(app.InitChainer)
-	app.SetPreBlocker(app.PreBlocker)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.SetAnteHandler(anteHandler)
 
-	// Create vote extension for signing batches.
+	// Register ABCI handlers for batch signing.
+	abciHandler := appabci.NewHandlers(
+		app.BatchingKeeper,
+		app.PubKeyKeeper,
+		app.StakingKeeper,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		app.Logger(),
+	)
+	app.SetVerifyVoteExtensionHandler(abciHandler.VerifyVoteExtensionHandler())
+	app.SetPrepareProposal(abciHandler.PrepareProposalHandler())
+	app.SetProcessProposal(abciHandler.ProcessProposalHandler())
+	app.setAppPreBlocker(abciHandler.PreBlocker())
+	app.SetPreBlocker(app.PreBlocker)
+
+	// Register SEDA signer and ExtendVote handler.
 	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
 	loadPath := filepath.Join(filepath.Dir(pvKeyFile), utils.SEDAKeyFileName)
 	signer, err := utils.LoadSEDASigner(loadPath)
 	if err != nil {
-		app.Logger().Error("error loading SEDA signer - ExtendVoteHandler will not run", "path", loadPath)
-
-		voteExtensionsHandler := appabci.NewVoteExtensionHandler(
-			app.BatchingKeeper,
-			app.PubKeyKeeper,
-			app.StakingKeeper,
-			authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
-			nil,
-			app.Logger(),
-		)
-		app.SetVerifyVoteExtensionHandler(voteExtensionsHandler.VerifyVoteExtensionHandler())
+		app.Logger().Error("error loading SEDA signer - ExtendVote handler will not run", "path", loadPath)
 	} else {
 		app.Logger().Info("SEDA signer successfully loaded")
-
-		voteExtensionsHandler := appabci.NewVoteExtensionHandler(
-			app.BatchingKeeper,
-			app.PubKeyKeeper,
-			app.StakingKeeper,
-			authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
-			signer,
-			app.Logger(),
-		)
-		app.SetExtendVoteHandler(voteExtensionsHandler.ExtendVoteHandler())
-		app.SetVerifyVoteExtensionHandler(voteExtensionsHandler.VerifyVoteExtensionHandler())
+		abciHandler.SetSEDASigner(signer)
+		app.SetExtendVoteHandler(abciHandler.ExtendVoteHandler())
 	}
 
 	if manager := app.SnapshotManager(); manager != nil {
@@ -1042,8 +1039,20 @@ func NewApp(
 // Name returns the name of the App
 func (app *App) Name() string { return app.BaseApp.Name() }
 
+// setAppPreBlocker registers an application-level pre-blocker.
+func (app *App) setAppPreBlocker(preBlocker sdk.PreBlocker) {
+	app.preBlocker = preBlocker
+}
+
 // PreBlocker application updates every pre block
-func (app *App) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+func (app *App) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+	if app.preBlocker == nil {
+		panic("app-level pre-blocker has not been configured")
+	}
+	_, err := app.preBlocker(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 	return app.mm.PreBlock(ctx)
 }
 
