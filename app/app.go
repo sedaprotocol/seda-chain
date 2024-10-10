@@ -982,10 +982,14 @@ func NewApp(
 	app.SetEndBlocker(app.EndBlocker)
 
 	// Register ABCI handlers for batch signing.
+<<<<<<< HEAD
 	defaultProposalHandler := baseapp.NewDefaultProposalHandler(mempool.NoOpMempool{}, bApp)
 
 	abciHandler := appabci.NewHandlers(
 		defaultProposalHandler,
+=======
+	abciHandler := appabci.NewHandlers(
+>>>>>>> 844ae12 (chore: register app-level preblocker on top of module-level preblockers)
 		app.BatchingKeeper,
 		app.PubKeyKeeper,
 		app.StakingKeeper,
