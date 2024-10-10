@@ -39,6 +39,21 @@ service Query {
     option (google.api.http).get =
         "/seda-chain/batching/batch_signatures/{batch_number}";
   }
+
+  // DataResult returns a data result given its associated data request's
+  // ID.
+  rpc DataResult(QueryDataResultRequest) returns (QueryDataResultResponse) {
+    option (google.api.http).get =
+        "/seda-chain/batching/data_result/{data_request_id}";
+  }
+
+  // BatchAssignment returns the batch number that a given data request
+  // has been assigned to.
+  rpc BatchAssignment(QueryBatchAssignmentRequest)
+      returns (QueryBatchAssignmentResponse) {
+    option (google.api.http).get =
+        "/seda-chain/batching/batch_assignment/{data_request_id}";
+  }
 }
 
 // The request message for QueryBatch RPC.
@@ -78,3 +93,17 @@ message QueryBatchSignaturesRequest { uint64 batch_number = 1; }
 message QueryBatchSignaturesResponse {
   repeated BatchSignatures batch_sigs = 1 [ (gogoproto.nullable) = false ];
 }
+
+// The request message for QueryDataResult RPC.
+message QueryDataResultRequest { string data_request_id = 1; }
+
+// The response message for QueryDataResult RPC.
+message QueryDataResultResponse {
+  DataResult data_result = 1 [ (gogoproto.nullable) = false ];
+}
+
+// The request message for QueryBatchAssignment RPC.
+message QueryBatchAssignmentRequest { string data_request_id = 1; }
+
+// The response message for QueryBatchAssignment RPC.
+message QueryBatchAssignmentResponse { uint64 batch_number = 1; }

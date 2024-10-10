@@ -31,6 +31,7 @@ type Keeper struct {
 
 	Schema             collections.Schema
 	dataResults        collections.Map[collections.Pair[bool, string], types.DataResult]
+	batchAssignments   collections.Map[string, uint64]
 	currentBatchNumber collections.Sequence
 	batches            *collections.IndexedMap[int64, types.Batch, BatchIndexes]
 	treeEntries        collections.Map[uint64, types.TreeEntries]
@@ -60,6 +61,7 @@ func NewKeeper(
 		validatorAddressCodec: validatorAddressCodec,
 		authority:             authority,
 		dataResults:           collections.NewMap(sb, types.DataResultsPrefix, "data_results", collections.PairKeyCodec(collections.BoolKey, collections.StringKey), codec.CollValue[types.DataResult](cdc)),
+		batchAssignments:      collections.NewMap(sb, types.BatchAssignmentsPrefix, "batch_assignments", collections.StringKey, collections.Uint64Value),
 		currentBatchNumber:    collections.NewSequence(sb, types.CurrentBatchNumberKey, "current_batch_number"),
 		batches:               collections.NewIndexedMap(sb, types.BatchesKeyPrefix, "batches", collections.Int64Key, codec.CollValue[types.Batch](cdc), NewBatchIndexes(sb)),
 		treeEntries:           collections.NewMap(sb, types.TreeEntriesKeyPrefix, "tree_entries", collections.Uint64Key, codec.CollValue[types.TreeEntries](cdc)),
@@ -91,9 +93,9 @@ type BatchIndexes struct {
 	Number *indexes.Unique[uint64, int64, types.Batch]
 }
 
-func (a BatchIndexes) IndexesList() []collections.Index[int64, types.Batch] {
+func (i BatchIndexes) IndexesList() []collections.Index[int64, types.Batch] {
 	return []collections.Index[int64, types.Batch]{
-		a.Number,
+		i.Number,
 	}
 }
 

@@ -28,6 +28,14 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 
 // ExportGenesis extracts all data from store to genesis state.
 func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
+	dataResults, err := k.getAllDataResults(ctx)
+	if err != nil {
+		panic(err)
+	}
+	batchAssignments, err := k.getAllBatchAssignments(ctx)
+	if err != nil {
+		panic(err)
+	}
 	curBatchNum, err := k.GetCurrentBatchNum(ctx)
 	if err != nil {
 		panic(err)
@@ -44,5 +52,5 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
-	return types.NewGenesisState(curBatchNum, batches, entries, params)
+	return types.NewGenesisState(curBatchNum, batches, entries, dataResults, batchAssignments, params)
 }
