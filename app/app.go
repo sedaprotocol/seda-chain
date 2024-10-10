@@ -259,6 +259,9 @@ type App struct {
 	PubKeyKeeper      pubkeykeeper.Keeper
 	BatchingKeeper    batchingkeeper.Keeper
 
+	// App-level pre-blocker (Note this cannot change consensus parameters)
+	preBlocker sdk.PreBlocker
+
 	mm  *module.Manager
 	bmm module.BasicManager
 
@@ -972,15 +975,13 @@ func NewApp(
 	if err != nil {
 		panic(fmt.Errorf("failed to create AnteHandler: %w", err))
 	}
-
+	app.SetAnteHandler(anteHandler)
 	app.SetInitChainer(app.InitChainer)
-	// app.SetPreBlocker(app.PreBlocker) // TODO Revive this
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.SetAnteHandler(anteHandler)
 
 	// Register ABCI handlers for batch signing.
-	abciHandler := appabci.NewABCIHandlers(
+	abciHandler := appabci.NewHandlers(
 		app.BatchingKeeper,
 		app.PubKeyKeeper,
 		app.StakingKeeper,
@@ -990,7 +991,8 @@ func NewApp(
 	app.SetVerifyVoteExtensionHandler(abciHandler.VerifyVoteExtensionHandler())
 	app.SetPrepareProposal(abciHandler.PrepareProposalHandler())
 	app.SetProcessProposal(abciHandler.ProcessProposalHandler())
-	app.SetPreBlocker(abciHandler.PreBlocker())
+	app.setAppPreBlocker(abciHandler.PreBlocker())
+	app.SetPreBlocker(app.PreBlocker)
 
 	// Register SEDA signer and ExtendVote handler.
 	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
@@ -1037,8 +1039,20 @@ func NewApp(
 // Name returns the name of the App
 func (app *App) Name() string { return app.BaseApp.Name() }
 
+// setAppPreBlocker registers an application-level pre-blocker.
+func (app *App) setAppPreBlocker(preBlocker sdk.PreBlocker) {
+	app.preBlocker = preBlocker
+}
+
 // PreBlocker application updates every pre block
-func (app *App) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+func (app *App) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+	if app.preBlocker == nil {
+		panic("app-level pre-blocker has not been configured")
+	}
+	_, err := app.preBlocker(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 	return app.mm.PreBlock(ctx)
 }
 
