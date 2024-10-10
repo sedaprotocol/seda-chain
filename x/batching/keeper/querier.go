@@ -74,3 +74,25 @@ func (q Querier) BatchSignatures(c context.Context, req *types.QueryBatchSignatu
 		BatchSigs: sigs,
 	}, nil
 }
+
+func (q Querier) DataResult(c context.Context, req *types.QueryDataResultRequest) (*types.QueryDataResultResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	dataResult, err := q.Keeper.GetDataResult(ctx, req.DataRequestId)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryDataResultResponse{
+		DataResult: dataResult,
+	}, nil
+}
+
+func (q Querier) BatchAssignment(c context.Context, req *types.QueryBatchAssignmentRequest) (*types.QueryBatchAssignmentResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	batchNum, err := q.Keeper.GetBatchAssignment(ctx, req.DataRequestId)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryBatchAssignmentResponse{
+		BatchNumber: batchNum,
+	}, nil
+}
