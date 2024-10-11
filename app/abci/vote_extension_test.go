@@ -38,7 +38,7 @@ func (m *mockSigner) Sign(input []byte, _ utils.SEDAKeyIndex) ([]byte, error) {
 	return signature, nil
 }
 
-func TestExtendVoteHandler(t *testing.T) {
+func TestExtendVerifyVoteHandlers(t *testing.T) {
 	// Configure address prefixes.
 	cfg := sdk.GetConfig()
 	cfg.SetBech32PrefixForAccount(params.Bech32PrefixAccAddr, params.Bech32PrefixAccPub)
@@ -86,6 +86,7 @@ func TestExtendVoteHandler(t *testing.T) {
 
 	// Construct the handler and execute it.
 	handler := NewHandlers(
+		nil,
 		mockBatchingKeeper,
 		mockPubKeyKeeper,
 		mockStakingKeeper,

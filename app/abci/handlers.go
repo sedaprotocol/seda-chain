@@ -15,16 +15,28 @@ import (
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
+const (
+	// The block height difference from ExtendVote and VerifyVote to the
+	// corresponding batch's creation height.
+	voteExtensionOffset = -1
+	// The block height difference from PrepareProposal, ProcessProposal,
+	// and PreBlock to the corresponding batch's creation height.
+	proposalOffset = -2
+)
+
 type Handlers struct {
-	batchingKeeper        BatchingKeeper
-	pubKeyKeeper          PubKeyKeeper
-	stakingKeeper         StakingKeeper
-	validatorAddressCodec addresscodec.Codec
-	signer                utils.SEDASigner
-	logger                log.Logger
+	defaultPrepareProposal sdk.PrepareProposalHandler
+	defaultProcessProposal sdk.ProcessProposalHandler
+	batchingKeeper         BatchingKeeper
+	pubKeyKeeper           PubKeyKeeper
+	stakingKeeper          StakingKeeper
+	validatorAddressCodec  addresscodec.Codec
+	signer                 utils.SEDASigner
+	logger                 log.Logger
 }
 
 func NewHandlers(
+	dph *baseapp.DefaultProposalHandler,
 	bk BatchingKeeper,
 	pkk PubKeyKeeper,
 	sk StakingKeeper,
@@ -32,11 +44,13 @@ func NewHandlers(
 	logger log.Logger,
 ) *Handlers {
 	return &Handlers{
-		batchingKeeper:        bk,
-		pubKeyKeeper:          pkk,
-		stakingKeeper:         sk,
-		validatorAddressCodec: vac,
-		logger:                logger,
+		defaultPrepareProposal: dph.PrepareProposalHandler(),
+		defaultProcessProposal: dph.ProcessProposalHandler(),
+		batchingKeeper:         bk,
+		pubKeyKeeper:           pkk,
+		stakingKeeper:          sk,
+		validatorAddressCodec:  vac,
+		logger:                 logger,
 	}
 }
 
@@ -51,7 +65,7 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		h.logger.Debug("start extend vote handler")
 
 		// Sign the batch created from the last block's end blocker.
-		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-1)
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-voteExtensionOffset)
 		if err != nil {
 			return nil, err
 		}
@@ -71,6 +85,11 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 	return func(ctx sdk.Context, req *abci.RequestVerifyVoteExtension) (*abci.ResponseVerifyVoteExtension, error) {
 		h.logger.Debug("start verify vote extension handler", "request", req)
+
+		if len(req.VoteExtension) != 64 {
+			h.logger.Error("invalid vote extension length", "len", len(req.VoteExtension))
+			return nil, ErrInvalidVoteExtensionLength
+		}
 
 		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-1)
 		if err != nil {
@@ -92,20 +111,41 @@ func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (*abci.ResponsePrepareProposal, error) {
 		h.logger.Debug("start prepare proposal handler")
 
-		err := baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), req.LocalLastCommit)
-		if err != nil {
-			return nil, err
-		}
-
-		proposalTxs := req.Txs
+		var injection []byte
 		if req.Height > ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight {
-			bz, err := json.Marshal(req.LocalLastCommit)
+			err := baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), req.LocalLastCommit)
+			if err != nil {
+				return nil, err
+			}
+
+			injection, err := json.Marshal(req.LocalLastCommit)
 			if err != nil {
 				h.logger.Error("failed to marshal extended votes", "err", err)
 			}
-			proposalTxs = append([][]byte{bz}, proposalTxs...)
+
+			injectionSize := int64(len(injection))
+			if injectionSize <= req.MaxTxBytes {
+				req.MaxTxBytes -= injectionSize
+			} else {
+				h.logger.Error(
+					"vote extension size exceeds block size limit",
+					"injection_size", injectionSize,
+					"MaxTxBytes", req.MaxTxBytes,
+				)
+				return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, ErrVoteExtensionInjectionTooBig
+			}
 		}
 
+		defaultRes, err := h.defaultPrepareProposal(ctx, req)
+		if err != nil {
+			h.logger.Error("failed to run default prepare proposal handler", "err", err)
+
+		}
+
+		proposalTxs := defaultRes.Txs
+		if injection != nil {
+			proposalTxs = append([][]byte{injection}, proposalTxs...)
+		}
 		return &abci.ResponsePrepareProposal{
 			Txs: proposalTxs,
 		}, nil
@@ -130,19 +170,26 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			}
 
 			// Verify every batch signature.
-			batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-2)
+			batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-proposalOffset)
 			if err != nil {
 				return nil, err
 			}
 			for _, vote := range extendedVotes.Votes {
+				if len(vote.VoteExtension) != 64 {
+					h.logger.Error("invalid length vote extension in proposal", "vote", vote)
+					return nil, ErrInvalidVoteExtensionLength
+				}
+
 				ok, err := h.verifyBatchSignature(ctx, batch.BatchId, vote.VoteExtension[:64], vote.Validator.Address, utils.Secp256k1)
 				if !ok || err != nil {
 					return nil, err
 				}
 			}
+
+			req.Txs = req.Txs[1:]
 		}
 
-		return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
+		return h.defaultProcessProposal(ctx, req)
 	}
 }
 
@@ -166,39 +213,41 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 		}()
 
 		res = new(sdk.ResponsePreBlock)
-		if req.Height > ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight {
-			h.logger.Debug("begin pre-block logic for batch signature persistence")
+		if req.Height <= ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight {
+			return res, nil
+		}
 
-			var extendedVotes abci.ExtendedCommitInfo
-			if err := json.Unmarshal(req.Txs[0], &extendedVotes); err != nil {
-				h.logger.Error("failed to decode injected extended votes tx", "err", err)
-				return nil, err
-			}
+		h.logger.Debug("begin pre-block logic for batch signature persistence")
 
-			// Get batch number of the batch from two blocks ago.
-			batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-2)
+		var extendedVotes abci.ExtendedCommitInfo
+		if err := json.Unmarshal(req.Txs[0], &extendedVotes); err != nil {
+			h.logger.Error("failed to decode injected extended votes tx", "err", err)
+			return nil, err
+		}
+
+		// Get batch number of the batch from two blocks ago.
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-proposalOffset)
+		if err != nil {
+			return nil, err
+		}
+		batchNum := batch.BatchNumber
+
+		for _, vote := range extendedVotes.Votes {
+			valAddr, err := h.validatorAddressCodec.BytesToString(vote.Validator.Address)
 			if err != nil {
 				return nil, err
 			}
-			batchNum := batch.BatchNumber
-
-			for _, vote := range extendedVotes.Votes {
-				valAddr, err := h.validatorAddressCodec.BytesToString(vote.Validator.Address)
-				if err != nil {
-					return nil, err
-				}
-				batchSigs := batchingtypes.BatchSignatures{
-					ValidatorAddr: valAddr,
-					VotingPower:   vote.Validator.Power,
-					Signatures:    vote.VoteExtension,
-				}
-
-				err = h.batchingKeeper.SetBatchSignatures(ctx, batchNum, batchSigs)
-				if err != nil {
-					return nil, err
-				}
-				h.logger.Debug("stored batch signature", "batch_number", batchNum, "validator", valAddr)
+			batchSigs := batchingtypes.BatchSignatures{
+				ValidatorAddr: valAddr,
+				VotingPower:   vote.Validator.Power,
+				Signatures:    vote.VoteExtension,
 			}
+
+			err = h.batchingKeeper.SetBatchSignatures(ctx, batchNum, batchSigs)
+			if err != nil {
+				return nil, err
+			}
+			h.logger.Debug("stored batch signature", "batch_number", batchNum, "validator", valAddr)
 		}
 
 		return res, nil

@@ -228,6 +228,7 @@ func (s *IntegrationTestSuite) initGenesis(c *chain) {
 	appGenesis.AppState, err = json.MarshalIndent(appGenState, "", "  ")
 	s.Require().NoError(err)
 
+	// Disable vote extensions in e2e testing.
 	appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = 10000
 
 	err = genutil.ExportGenesisFile(appGenesis, genFilePath)
