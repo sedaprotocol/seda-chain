@@ -133,6 +133,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
+
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/x/batching"
@@ -981,7 +982,6 @@ func NewApp(
 	app.SetEndBlocker(app.EndBlocker)
 
 	// Register ABCI handlers for batch signing.
-	// nonceMempool := mempool.NewSenderNonceMempool()
 	defaultProposalHandler := baseapp.NewDefaultProposalHandler(mempool.NoOpMempool{}, bApp)
 
 	abciHandler := appabci.NewHandlers(

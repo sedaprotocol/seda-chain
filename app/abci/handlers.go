@@ -65,7 +65,7 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		h.logger.Debug("start extend vote handler")
 
 		// Sign the batch created from the last block's end blocker.
-		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-voteExtensionOffset)
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+voteExtensionOffset)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +91,7 @@ func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 			return nil, ErrInvalidVoteExtensionLength
 		}
 
-		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-1)
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+voteExtensionOffset)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +118,7 @@ func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 				return nil, err
 			}
 
-			injection, err := json.Marshal(req.LocalLastCommit)
+			injection, err = json.Marshal(req.LocalLastCommit)
 			if err != nil {
 				h.logger.Error("failed to marshal extended votes", "err", err)
 			}
@@ -139,7 +139,6 @@ func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		defaultRes, err := h.defaultPrepareProposal(ctx, req)
 		if err != nil {
 			h.logger.Error("failed to run default prepare proposal handler", "err", err)
-
 		}
 
 		proposalTxs := defaultRes.Txs
@@ -170,7 +169,7 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			}
 
 			// Verify every batch signature.
-			batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-proposalOffset)
+			batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+proposalOffset)
 			if err != nil {
 				return nil, err
 			}
@@ -226,7 +225,7 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 		}
 
 		// Get batch number of the batch from two blocks ago.
-		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()-proposalOffset)
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+proposalOffset)
 		if err != nil {
 			return nil, err
 		}

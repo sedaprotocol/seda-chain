@@ -13,8 +13,10 @@ import (
 
 	"cosmossdk.io/log"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/mempool"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -71,22 +73,9 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 
 	mockBatchingKeeper.EXPECT().GetBatchForHeight(gomock.Any(), int64(100)).Return(mockBatch, nil).AnyTimes()
 
-	testVal := sdk.ConsAddress([]byte("testval"))
-	mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), testVal).Return(
-		stakingtypes.Validator{
-			OperatorAddress: "sedavaloper1ucv5709wlf9jn84ynyjzyzeavwvurmdydtn3px",
-		}, nil,
-	)
-
-	mockPubKeyKeeper.EXPECT().GetValidatorKeyAtIndex(
-		gomock.Any(),
-		[]byte{230, 25, 79, 60, 174, 250, 75, 41, 158, 164, 153, 36, 34, 11, 61, 99, 153, 193, 237, 164},
-		utils.Secp256k1,
-	).Return(privKey.PubKey(), nil)
-
 	// Construct the handler and execute it.
 	handler := NewHandlers(
-		nil,
+		baseapp.NewDefaultProposalHandler(mempool.NoOpMempool{}, nil),
 		mockBatchingKeeper,
 		mockPubKeyKeeper,
 		mockStakingKeeper,
@@ -102,6 +91,18 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, expSig, evRes.VoteExtension)
+
+	testVal := sdk.ConsAddress([]byte("testval"))
+	mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), testVal).Return(
+		stakingtypes.Validator{
+			OperatorAddress: "sedavaloper1ucv5709wlf9jn84ynyjzyzeavwvurmdydtn3px",
+		}, nil,
+	)
+	mockPubKeyKeeper.EXPECT().GetValidatorKeyAtIndex(
+		gomock.Any(),
+		[]byte{230, 25, 79, 60, 174, 250, 75, 41, 158, 164, 153, 36, 34, 11, 61, 99, 153, 193, 237, 164},
+		utils.Secp256k1,
+	).Return(privKey.PubKey(), nil)
 
 	vvRes, err := verifyVoteHandler(ctx, &cometabci.RequestVerifyVoteExtension{
 		Height:           101,
