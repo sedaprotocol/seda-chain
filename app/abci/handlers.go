@@ -19,9 +19,13 @@ const (
 	// The block height difference from ExtendVote and VerifyVote to the
 	// corresponding batch's creation height.
 	voteExtensionOffset = -1
-	// The block height difference from PrepareProposal, ProcessProposal,
-	// and PreBlock to the corresponding batch's creation height.
+	// proposalOffset is the block height difference from PrepareProposal,
+	// ProcessProposal, and PreBlock to the corresponding batch's creation
+	// height.
 	proposalOffset = -2
+	// maxVoteExtensionLength is the maximum size of vote extension in
+	// bytes.
+	maxVoteExtensionLength = 64 * 5
 )
 
 type Handlers struct {
@@ -86,17 +90,12 @@ func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 	return func(ctx sdk.Context, req *abci.RequestVerifyVoteExtension) (*abci.ResponseVerifyVoteExtension, error) {
 		h.logger.Debug("start verify vote extension handler", "request", req)
 
-		if len(req.VoteExtension) != 64 {
-			h.logger.Error("invalid vote extension length", "len", len(req.VoteExtension))
-			return nil, ErrInvalidVoteExtensionLength
-		}
-
 		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+voteExtensionOffset)
 		if err != nil {
 			return nil, err
 		}
-		ok, err := h.verifyBatchSignature(ctx, batch.BatchId, req.VoteExtension[:64], req.ValidatorAddress, utils.Secp256k1)
-		if !ok || err != nil {
+		err = h.verifyBatchSignatures(ctx, batch.BatchId, req.VoteExtension, req.ValidatorAddress, utils.Secp256k1)
+		if err != nil {
 			return nil, err
 		}
 
@@ -121,24 +120,25 @@ func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			injection, err = json.Marshal(req.LocalLastCommit)
 			if err != nil {
 				h.logger.Error("failed to marshal extended votes", "err", err)
+				return nil, err
 			}
 
 			injectionSize := int64(len(injection))
-			if injectionSize <= req.MaxTxBytes {
-				req.MaxTxBytes -= injectionSize
-			} else {
+			if injectionSize > req.MaxTxBytes {
 				h.logger.Error(
 					"vote extension size exceeds block size limit",
 					"injection_size", injectionSize,
 					"MaxTxBytes", req.MaxTxBytes,
 				)
-				return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, ErrVoteExtensionInjectionTooBig
+				return nil, ErrVoteExtensionInjectionTooBig
 			}
+			req.MaxTxBytes -= injectionSize
 		}
 
 		defaultRes, err := h.defaultPrepareProposal(ctx, req)
 		if err != nil {
 			h.logger.Error("failed to run default prepare proposal handler", "err", err)
+			return nil, err
 		}
 
 		proposalTxs := defaultRes.Txs
@@ -155,39 +155,36 @@ func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 // the canonical set of vote extensions injected by the proposer.
 func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
-		if req.Height > ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight {
-			var extendedVotes abci.ExtendedCommitInfo
-			if err := json.Unmarshal(req.Txs[0], &extendedVotes); err != nil {
-				h.logger.Error("failed to decode injected extended votes tx", "err", err)
-				return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, nil
-			}
-
-			// Validate signatures and perform 2/3 voting power check.
-			err := baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), extendedVotes)
-			if err != nil {
-				return nil, err
-			}
-
-			// Verify every batch signature.
-			batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+proposalOffset)
-			if err != nil {
-				return nil, err
-			}
-			for _, vote := range extendedVotes.Votes {
-				if len(vote.VoteExtension) != 64 {
-					h.logger.Error("invalid length vote extension in proposal", "vote", vote)
-					return nil, ErrInvalidVoteExtensionLength
-				}
-
-				ok, err := h.verifyBatchSignature(ctx, batch.BatchId, vote.VoteExtension[:64], vote.Validator.Address, utils.Secp256k1)
-				if !ok || err != nil {
-					return nil, err
-				}
-			}
-
-			req.Txs = req.Txs[1:]
+		if req.Height <= ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight {
+			return h.defaultProcessProposal(ctx, req)
 		}
 
+		var extendedVotes abci.ExtendedCommitInfo
+		if err := json.Unmarshal(req.Txs[0], &extendedVotes); err != nil {
+			h.logger.Error("failed to decode injected extended votes tx", "err", err)
+			return nil, err
+		}
+
+		// Validate signatures and perform 2/3 voting power check.
+		err := baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), extendedVotes)
+		if err != nil {
+			return nil, err
+		}
+
+		// Verify every batch signature.
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+proposalOffset)
+		if err != nil {
+			return nil, err
+		}
+		for _, vote := range extendedVotes.Votes {
+			err = h.verifyBatchSignatures(ctx, batch.BatchId, vote.VoteExtension, vote.Validator.Address, utils.Secp256k1)
+			if err != nil {
+				h.logger.Error("proposal contains an invalid vote extension", "vote", vote)
+				return nil, err
+			}
+		}
+
+		req.Txs = req.Txs[1:]
 		return h.defaultProcessProposal(ctx, req)
 	}
 }
@@ -253,18 +250,31 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 	}
 }
 
-func (h *Handlers) verifyBatchSignature(ctx sdk.Context, batchID, signature, consAddr []byte, keyIndex utils.SEDAKeyIndex) (bool, error) {
+// verifyBatchSignature verifies the given signature of the batch ID
+// against the validator's public key registered at the key index
+// in the pubkey module. It returns an error unless the verification
+// succeeds.
+func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchID, voteExtension, consAddr []byte, keyIndex utils.SEDAKeyIndex) error {
+	if len(voteExtension) > maxVoteExtensionLength {
+		h.logger.Error("invalid vote extension length", "len", len(voteExtension))
+		return ErrInvalidVoteExtensionLength
+	}
+
 	validator, err := h.stakingKeeper.GetValidatorByConsAddr(ctx, consAddr)
 	if err != nil {
-		return false, err
+		return err
 	}
 	valOper, err := h.validatorAddressCodec.StringToBytes(validator.OperatorAddress)
 	if err != nil {
-		return false, err
+		return err
 	}
 	pubkey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, keyIndex)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return pubkey.VerifySignature(batchID, signature), nil
+	ok := pubkey.VerifySignature(batchID, voteExtension[:64])
+	if !ok {
+		return ErrInvalidBatchSignature
+	}
+	return nil
 }
