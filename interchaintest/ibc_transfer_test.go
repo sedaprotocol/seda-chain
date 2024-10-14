@@ -52,7 +52,7 @@ func runIBCTransferTest(t *testing.T, counterpartyChainSpec *interchaintest.Chai
 		[]*interchaintest.ChainSpec{
 			{
 				Name:          SedaChainName,
-				ChainConfig:   SedaCfg,
+				ChainConfig:   GetSEDAConfig(),
 				NumValidators: &numVals,
 				NumFullNodes:  &numFullNodes,
 			},

@@ -33,12 +33,14 @@ var (
 	SedaChainName = "seda"
 
 	dockerImage = ibc.DockerImage{
-		Repository: "sedad-e2e", // FOR LOCAL IMAGE USE: Docker Image Name
-		Version:    "latest",    // FOR LOCAL IMAGE USE: Docker Image Tag
+		Repository: "sedaprotocol/sedad-e2e", // FOR LOCAL IMAGE USE: Docker Image Name
+		Version:    "latest",                 // FOR LOCAL IMAGE USE: Docker Image Tag
 		UidGid:     "1025:1025",
 	}
 
 	SedaRepo = "ghcr.io/sedaprotocol/seda-chain"
+
+	coinDecimals int64 = 18
 
 	SedaCfg = ibc.ChainConfig{
 		Type:                "cosmos",
@@ -49,6 +51,7 @@ var (
 		Bech32Prefix:        "seda",
 		Denom:               SedaDenom,
 		CoinType:            coinType,
+		CoinDecimals:        &coinDecimals,
 		GasPrices:           fmt.Sprintf("0%s", SedaDenom),
 		GasAdjustment:       2.0,
 		TrustingPeriod:      "112h",
@@ -73,8 +76,9 @@ var (
 	/* =================================================== */
 	/*                     GOV CONFIG                      */
 	/* =================================================== */
-	VotingPeriod     = "15s"
-	MaxDepositPeriod = "10s"
+	VotingPeriod               = "15s"
+	MaxDepositPeriod           = "10s"
+	VoteExtensionsEnableHeight = "100000" // essentially disabled
 
 	/* =================================================== */
 	/*                    WALLET CONFIG                    */
@@ -94,10 +98,38 @@ func sedaEncoding() *testutil.TestEncodingConfig {
 	return &cfg
 }
 
+func GetTestGenesis() []cosmos.GenesisKV {
+	return []cosmos.GenesisKV{
+		{
+			Key:   "app_state.gov.params.voting_period",
+			Value: VotingPeriod,
+		},
+		{
+			Key:   "app_state.gov.params.max_deposit_period",
+			Value: MaxDepositPeriod,
+		},
+		{
+			Key:   "app_state.gov.params.min_deposit.0.denom",
+			Value: SedaDenom,
+		},
+		{
+			Key:   "consensus.params.abci.vote_extensions_enable_height",
+			Value: VoteExtensionsEnableHeight,
+		},
+	}
+}
+
+func GetSEDAConfig() ibc.ChainConfig {
+	cfg := SedaCfg
+	cfg.ModifyGenesis = cosmos.ModifyGenesis(GetTestGenesis())
+	return cfg
+}
+
 // CreateChains generates this branch's chain (ex: from the commit)
 func CreateChains(t *testing.T, numVals, numFullNodes int) []ibc.Chain {
 	t.Helper()
 	cfg := SedaCfg
+	cfg.ModifyGenesis = cosmos.ModifyGenesis(GetTestGenesis())
 	cfg.Images = []ibc.DockerImage{dockerImage}
 	return CreateChainsWithCustomConfig(t, numVals, numFullNodes, cfg)
 }

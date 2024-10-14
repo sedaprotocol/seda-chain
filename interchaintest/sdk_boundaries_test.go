@@ -39,7 +39,7 @@ func TestSDKBoundaries(t *testing.T) {
 				},
 				{
 					Name:          SedaChainName,
-					ChainConfig:   SedaCfg,
+					ChainConfig:   GetSEDAConfig(),
 					NumValidators: &numVals,
 					NumFullNodes:  &numFullNodes,
 				},

@@ -52,8 +52,7 @@ func TestPacketForwardMiddleware(t *testing.T) {
 		chainA, chainB, chainC, chainD         *cosmos.CosmosChain
 	)
 
-	baseCfg := SedaCfg
-	baseCfg.ModifyGenesis = cosmos.ModifyGenesis(getTestGenesis())
+	baseCfg := GetSEDAConfig()
 
 	baseCfg.ChainID = chainIDA
 	configA := baseCfg

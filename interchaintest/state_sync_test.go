@@ -63,7 +63,6 @@ func TestStateSync(t *testing.T) {
 
 // snapshot settings & overrides in config.toml
 func modifyConfigToml(configFileOverrides map[string]any, trustHash string, trustHeight int64, hostName string) map[string]any {
-	// configFileOverrides := make(map[string]any)
 	configTomlOverrides := make(testutil.Toml)
 
 	stateSync := make(testutil.Toml)

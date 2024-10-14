@@ -40,8 +40,7 @@ func TestCoreSDKCommands(t *testing.T) {
 
 	cosmos.SetSDKConfig(SedaCfg.Bech32Prefix)
 
-	cfg := SedaCfg
-	cfg.ModifyGenesis = cosmos.ModifyGenesis(getTestGenesis())
+	cfg := GetSEDAConfig()
 
 	chains := CreateChainsWithCustomConfig(t, numVals, numFullNodes, cfg)
 	chain := chains[0].(*cosmos.CosmosChain)

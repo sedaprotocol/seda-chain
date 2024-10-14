@@ -54,8 +54,7 @@ func BasicUpgradeTest(t *testing.T, upgradeVersion, upgradeRepo, upgradeName str
 
 	t.Log(SedaChainName, upgradeVersion, upgradeRepo, upgradeName)
 
-	cfg := SedaCfg
-	cfg.ModifyGenesis = cosmos.ModifyGenesis(getTestGenesis())
+	cfg := GetSEDAConfig()
 	cfg.Images = []ibc.DockerImage{baseChain}
 
 	chains := CreateChainsWithCustomConfig(t, numVals, numFullNodes, cfg)
@@ -108,23 +107,6 @@ func fundChainUser(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain)
 	userFunds := math.NewInt(10_000_000_000)
 	users := interchaintest.GetAndFundTestUsers(t, ctx, t.Name(), userFunds, chain)
 	return users[0]
-}
-
-func getTestGenesis() []cosmos.GenesisKV {
-	return []cosmos.GenesisKV{
-		{
-			Key:   "app_state.gov.params.voting_period",
-			Value: VotingPeriod,
-		},
-		{
-			Key:   "app_state.gov.params.max_deposit_period",
-			Value: MaxDepositPeriod,
-		},
-		{
-			Key:   "app_state.gov.params.min_deposit.0.denom",
-			Value: SedaDenom,
-		},
-	}
 }
 
 //revive:disable-next-line:context-as-argument

@@ -46,7 +46,7 @@ func TestInterchainAccounts(t *testing.T) {
 		},
 		{
 			Name:        "seda",
-			ChainConfig: SedaCfg,
+			ChainConfig: GetSEDAConfig(),
 		},
 	})
 

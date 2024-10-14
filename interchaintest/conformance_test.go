@@ -26,7 +26,7 @@ func TestConformance(t *testing.T) {
 	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
 		{
 			Name:          "seda",
-			ChainConfig:   SedaCfg,
+			ChainConfig:   GetSEDAConfig(),
 			NumValidators: &numOfValidators, // defaults to 2 when unspecified
 			NumFullNodes:  &numOfFullNodes,  // defaults to 1 when unspecified
 		},
