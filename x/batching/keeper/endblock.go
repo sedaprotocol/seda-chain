@@ -12,7 +12,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
@@ -132,7 +132,7 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 
 	var entries [][]byte
 	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
-		secp256k1PubKey, err := k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeysIndexSecp256k1)
+		secp256k1PubKey, err := k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
 				return false
@@ -146,7 +146,7 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 		// TODO Validator set trimming
 
 		// An entry is (domain_separator || pubkey || voting_power_percentage).
-		separator := []byte("SECP256K1")
+		separator := []byte{utils.SEDASeparatorSecp256k1}
 		pkBytes := secp256k1PubKey.Bytes()
 
 		entry := make([]byte, len(separator)+len(pkBytes)+4)

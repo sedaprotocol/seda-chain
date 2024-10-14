@@ -73,7 +73,7 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		if err != nil {
 			return nil, err
 		}
-		signature, err := h.signer.Sign(batch.BatchId, utils.Secp256k1)
+		signature, err := h.signer.Sign(batch.BatchId, utils.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +94,7 @@ func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 		if err != nil {
 			return nil, err
 		}
-		err = h.verifyBatchSignatures(ctx, batch.BatchId, req.VoteExtension, req.ValidatorAddress, utils.Secp256k1)
+		err = h.verifyBatchSignatures(ctx, batch.BatchId, req.VoteExtension, req.ValidatorAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -177,7 +177,7 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			return nil, err
 		}
 		for _, vote := range extendedVotes.Votes {
-			err = h.verifyBatchSignatures(ctx, batch.BatchId, vote.VoteExtension, vote.Validator.Address, utils.Secp256k1)
+			err = h.verifyBatchSignatures(ctx, batch.BatchId, vote.VoteExtension, vote.Validator.Address)
 			if err != nil {
 				h.logger.Error("proposal contains an invalid vote extension", "vote", vote)
 				return nil, err
@@ -254,7 +254,7 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 // against the validator's public key registered at the key index
 // in the pubkey module. It returns an error unless the verification
 // succeeds.
-func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchID, voteExtension, consAddr []byte, keyIndex utils.SEDAKeyIndex) error {
+func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchID, voteExtension, consAddr []byte) error {
 	if len(voteExtension) > maxVoteExtensionLength {
 		h.logger.Error("invalid vote extension length", "len", len(voteExtension))
 		return ErrInvalidVoteExtensionLength
@@ -268,7 +268,9 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchID, voteExtension
 	if err != nil {
 		return err
 	}
-	pubkey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, keyIndex)
+
+	// Verify secp256k1 public key
+	pubkey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return err
 	}

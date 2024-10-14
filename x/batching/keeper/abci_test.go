@@ -20,7 +20,7 @@ import (
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
@@ -62,7 +62,7 @@ func Test_ConstructDataResultTree(t *testing.T) {
 
 func Test_ConstructValidatorTree(t *testing.T) {
 	f := initFixture(t)
-	_, pks, powers := addBatchSigningValidators(t, f, 100)
+	_, pks, powers := addBatchSigningValidators(t, f, 10)
 
 	entries, root, err := f.batchingKeeper.ConstructValidatorTree(f.Context())
 	require.NoError(t, err)

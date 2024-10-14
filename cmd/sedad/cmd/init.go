@@ -18,8 +18,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
-
-	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
 )
 
 func readInMnemonic(cmd *cobra.Command) (string, error) {
@@ -71,7 +69,7 @@ func downloadAndApplyNetworkConfig(network, moniker string, config *cfg.Config) 
 	}
 
 	// download files from seda-networks repo
-	err = utils.DownloadGitFiles(network, configDir)
+	err = DownloadGitFiles(network, configDir)
 	if err != nil {
 		return "", "", errors.Wrapf(err, "failed to download files for network `%s`", network)
 	}

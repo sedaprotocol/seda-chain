@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/sedaprotocol/seda-chain/cmd/sedad/utils"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 )
 
 func TestRootFromEntries(t *testing.T) {
@@ -59,6 +59,47 @@ func TestRootFromEntries(t *testing.T) {
 			got := utils.RootFromEntries(entries)
 			if !bytes.Equal(got, expected) {
 				t.Errorf("RootFromEntries() = %x, want %x", got, expected)
+			}
+		})
+	}
+}
+
+func TestRootFromLeaves(t *testing.T) {
+	tests := []struct {
+		name     string
+		entries  []string // hex-encoded leaves
+		expected string
+	}{
+		{
+			name: "ten leaves",
+			entries: []string{
+				"38519bc19a6c21b2e4d5c07f5c317a04907d74428e84ce53d7e31660363697e3",
+				"efaaa7508118895a0d04b782da3824d32e8068bc149eb9cb64d5035bfdc23d75",
+				"08acd70e8df30e046db9b1f428e801b98426493443630c1a10ed41ca831b59dc",
+				"b83b5ecaf184b6525c995e98885c3c26105981d368fba6a32f118d963a8b2f0e",
+				"5ea122e40dd0c50ea173ed35af483f3391d910051d0b81b5764962bc7259c75a",
+				"1b36b415df57e691bc923f10a6dc481caf1b31a77f3514c443e78e07a9692e70",
+				"15c3bea022ed633d5aeabfeba41955d19f23ad533c95d50b121b1cb0c585c2f7",
+				"e2f6ad28acf622aad072b4af09ff3e4588c312461fd9f34f87a30398c4874c6f",
+				"66931389acd9b85bf84eb1b4b391e0100affed572a4b5695bcbb07c1655fbfe7",
+				"49f4e02c70dc0cff353603c5af12911e3fe408e8263005cbe2877e2677789469",
+			},
+			expected: "2c5073e9c4308e65eb22152f62611c6f604d6b427c6514bbd1effaf282d9614a",
+		},
+	}
+
+	for _, tt := range tests {
+		expected, err := hex.DecodeString(tt.expected)
+		require.NoError(t, err)
+		entries := make([][]byte, len(tt.entries))
+		for i := range tt.entries {
+			entries[i], err = hex.DecodeString(tt.entries[i])
+			require.NoError(t, err)
+		}
+		t.Run(tt.name, func(t *testing.T) {
+			got := utils.RootFromLeaves(entries)
+			if !bytes.Equal(got, expected) {
+				t.Errorf("RootFromLeaves() = %x, want %x", got, expected)
 			}
 		})
 	}

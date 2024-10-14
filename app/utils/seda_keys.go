@@ -23,13 +23,19 @@ const SEDAKeyFileName = "seda_keys.json"
 type SEDAKeyIndex uint32
 
 const (
-	Secp256k1 SEDAKeyIndex = iota
+	SEDAKeyIndexSecp256k1 SEDAKeyIndex = iota
+)
+
+// SEDA domain separators
+const (
+	SEDASeparatorDataRequest byte = iota
+	SEDASeparatorSecp256k1
 )
 
 // sedaKeyGenerators maps the key index to the corresponding private
 // key generator.
 var sedaKeyGenerators = map[SEDAKeyIndex]privKeyGenerator{
-	Secp256k1: func() cmtcrypto.PrivKey { return secp256k1.GenPrivKey() },
+	SEDAKeyIndexSecp256k1: func() cmtcrypto.PrivKey { return secp256k1.GenPrivKey() },
 }
 
 type (

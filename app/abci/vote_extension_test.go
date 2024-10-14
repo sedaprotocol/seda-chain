@@ -101,7 +101,7 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	mockPubKeyKeeper.EXPECT().GetValidatorKeyAtIndex(
 		gomock.Any(),
 		[]byte{230, 25, 79, 60, 174, 250, 75, 41, 158, 164, 153, 36, 34, 11, 61, 99, 153, 193, 237, 164},
-		utils.Secp256k1,
+		utils.SEDAKeyIndexSecp256k1,
 	).Return(privKey.PubKey(), nil)
 
 	vvRes, err := verifyVoteHandler(ctx, &cometabci.RequestVerifyVoteExtension{
