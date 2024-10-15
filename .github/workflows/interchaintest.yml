@@ -12,7 +12,6 @@ env:
   GITHUB_TOKEN: ${{ secrets.PAT }}
   TAR_PATH: /tmp/seda-docker-image.tar
   IMAGE_NAME: sedad-e2e
-  SEDA_EXPONENT: ${{ secrets.SEDA_EXPONENT_ICT || 18 }}
 
 permissions:
   contents: read
@@ -45,7 +44,6 @@ jobs:
           context: .
           file: ./dockerfiles/Dockerfile.e2e
           tags: sedad-e2e
-          build-args: SEDA_EXPONENT=${{ env.SEDA_EXPONENT }}
           outputs: type=docker,dest=${{ env.TAR_PATH }}
 
       - name: Upload artifact

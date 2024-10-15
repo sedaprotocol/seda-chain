@@ -415,7 +415,7 @@ func Test_ConstructDataResultTreeWithTestData(t *testing.T) {
 		err := f.batchingKeeper.SetDataResultForBatching(f.Context(), dr)
 		require.NoError(t, err)
 	}
-	_, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context())
+	_, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context(), rand.Uint64())
 	require.NoError(t, err)
 
 	// Check the tree root (Expected root is computed assuming empty
