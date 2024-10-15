@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/collections"
@@ -132,6 +133,8 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 
 	var entries [][]byte
 	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
+		// Retrieve corresponding public key and convert it to
+		// uncompressed form.
 		secp256k1PubKey, err := k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
@@ -139,16 +142,18 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 			}
 			panic(err)
 		}
+		pkBytes, err := decompressPubKey(secp256k1PubKey.Bytes())
+		if err != nil {
+			k.Logger(ctx).Error("failed to decompress public key", "pubkey", secp256k1PubKey)
+			panic(err)
+		}
 
-		// Compute validator voting power percentage.
+		separator := []byte{utils.SEDASeparatorSecp256k1}
 		powerPercent := math.NewInt(power).MulRaw(1e8).Quo(totalPower).Uint64()
 
 		// TODO Validator set trimming
 
 		// An entry is (domain_separator || pubkey || voting_power_percentage).
-		separator := []byte{utils.SEDASeparatorSecp256k1}
-		pkBytes := secp256k1PubKey.Bytes()
-
 		entry := make([]byte, len(separator)+len(pkBytes)+4)
 		copy(entry[:len(separator)], separator)
 		copy(entry[len(separator):len(separator)+len(pkBytes)], pkBytes)
@@ -164,4 +169,15 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 
 	secp256k1Root := utils.RootFromEntries(entries)
 	return entries, secp256k1Root, nil
+}
+
+// decompressPubKey decompresses a public key in 33-byte compressed
+// format into the one in 65-byte uncompressed format.
+func decompressPubKey(pubKey []byte) ([]byte, error) {
+	x, y := secp256k1.DecompressPubkey(pubKey)
+	if x == nil || y == nil {
+		return nil, types.ErrInvalidPublicKey
+	}
+	// 65-byte format: 0x04 | x-coordinate | y-coordinate
+	return append([]byte{0x04}, append(x.Bytes(), y.Bytes()...)...), nil
 }

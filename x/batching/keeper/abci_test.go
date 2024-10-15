@@ -11,12 +11,13 @@ import (
 	"math/rand"
 	"testing"
 
+	dcrdsecp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -40,7 +41,7 @@ func Test_ConstructDataResultTree(t *testing.T) {
 
 	var entryHexes, drIds []string
 	for i, entry := range entries {
-		entryHexes = append(entryHexes, hex.EncodeToString(entry))
+		entryHexes = append(entryHexes, hex.EncodeToString(entry[1:]))
 		drIds = append(drIds, dataResults[i].Id)
 	}
 	require.ElementsMatch(t, drIds, entryHexes)
@@ -79,14 +80,17 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	}
 
 	// Parse entries to check contents.
+	uncompressedPKs := make([][]byte, len(entries))
 	parsedPKs := make([][]byte, len(entries))
 	parsedPowers := make([]uint32, len(entries))
 	for i, entry := range entries {
 		require.Equal(t, []byte{utils.SEDASeparatorSecp256k1}, entry[:1])
-		parsedPKs[i] = entry[1:33]
-		parsedPowers[i] = binary.BigEndian.Uint32(entry[33:])
+		parsedPKs[i] = entry[1:66]
+		parsedPowers[i] = binary.BigEndian.Uint32(entry[66:])
+
+		uncompressedPKs[i] = decompressPubKey(t, pks[i])
 	}
-	require.ElementsMatch(t, pks, parsedPKs)
+	require.ElementsMatch(t, uncompressedPKs, parsedPKs)
 	require.ElementsMatch(t, powerPercents, parsedPowers)
 
 	// Generate proof for each entry and verify.
@@ -112,7 +116,7 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 	powers := make([]int64, len(addrs))
 	for i, addr := range addrs {
 		valAddr := sdk.ValAddress(addr)
-		pubKey := ed25519.GenPrivKey().PubKey()
+		pubKey := secp256k1.GenPrivKey().PubKey()
 		pubKeys[i] = pubKey.Bytes()
 		powers[i] = int64(rand.Intn(10) + 1)
 
@@ -133,10 +137,21 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 		_, err = f.stakingKeeper.Keeper.EndBlocker(ctx)
 		require.NoError(t, err)
 
-		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, 0, pubKey)
+		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1, pubKey)
 		require.NoError(t, err)
 	}
 	return addrs, pubKeys, powers
+}
+
+// decompressPubKey decompresses a 33-byte long compressed public key
+// into a 65-byte long uncompressed format.
+func decompressPubKey(t *testing.T, pubKey []byte) []byte {
+	t.Helper()
+	pk, err := dcrdsecp256k1.ParsePubKey(pubKey)
+	if err != nil {
+		panic(err)
+	}
+	return pk.SerializeUncompressed()
 }
 
 // generateDataResults returns a given number of randomly-generated
