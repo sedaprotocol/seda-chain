@@ -102,7 +102,7 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) ([]
 		if err != nil {
 			return nil, nil, err
 		}
-		entries[i] = resHash
+		entries[i] = append([]byte{utils.SEDASeparatorDataRequest}, resHash...)
 
 		err = k.markDataResultAsBatched(ctx, res, newBatchNum)
 		if err != nil {

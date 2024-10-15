@@ -13,6 +13,8 @@ func (dr *DataResult) TryHash() (string, error) {
 	hasher := sha3.NewLegacyKeccak256()
 
 	versionBytes := []byte(dr.Version)
+	hasher.Write(versionBytes)
+	versionHash := hasher.Sum(nil)
 
 	drIDBytes, err := hex.DecodeString(dr.DrId)
 	if err != nil {
@@ -29,6 +31,7 @@ func (dr *DataResult) TryHash() (string, error) {
 
 	exitCodeByte := byte(dr.ExitCode)
 
+	hasher.Reset()
 	hasher.Write(dr.Result)
 	resultHash := hasher.Sum(nil)
 
@@ -53,7 +56,7 @@ func (dr *DataResult) TryHash() (string, error) {
 
 	hasher.Reset()
 	var allBytes []byte
-	allBytes = append(allBytes, versionBytes...)
+	allBytes = append(allBytes, versionHash...)
 	allBytes = append(allBytes, drIDBytes...)
 	allBytes = append(allBytes, consensusByte)
 	allBytes = append(allBytes, exitCodeByte)

@@ -71,7 +71,7 @@ func TestRootFromLeaves(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "ten leaves",
+			name: "ten leaves (1)",
 			entries: []string{
 				"38519bc19a6c21b2e4d5c07f5c317a04907d74428e84ce53d7e31660363697e3",
 				"efaaa7508118895a0d04b782da3824d32e8068bc149eb9cb64d5035bfdc23d75",
@@ -85,6 +85,22 @@ func TestRootFromLeaves(t *testing.T) {
 				"49f4e02c70dc0cff353603c5af12911e3fe408e8263005cbe2877e2677789469",
 			},
 			expected: "2c5073e9c4308e65eb22152f62611c6f604d6b427c6514bbd1effaf282d9614a",
+		},
+		{
+			name: "ten leaves (2)",
+			entries: []string{
+				"ae813aa6da400689d42228fb2f352734d0f66114bd1755446f1217456e22b4ad",
+				"32047ba1e49f5435144d16d581c11851989a357cdf2924f53cb4322c5c92f680",
+				"b5a860ffc8a0fd3dda9f736e5c228feb3317e9f59b0b9f9b66e461350c75bba6",
+				"abfddf56212342693b4bbf31722ff5a32c62dc93c86b0fe01ec160b5b5cb956b",
+				"1a91091772674b4744bd1b8ca4e6f2762bac3420c79aff1d2a9453bd845f129f",
+				"9e941204d1b40251dcd6a75cd11a3933ceaadff951fd8e6759dabfc6ee29f43b",
+				"ee611fd0dcc2bb8389b422e37760be10d8ce2be07257bc2ef8e9d9fed576754b",
+				"a3910064ede9ae1079e1130aba5dfcde557f062b852d03d378a48d322cc2603d",
+				"664e15863e445b687fdbacea8e7d663c8ae5b8d0ad1eeb1d6da1ec167a1ceb17",
+				"f1dd3335b8b85f183b19168e31f46b92860cd8e922522379286a2844fc80c31d",
+			},
+			expected: "f0fd6bcebfba525736179ce169ae7a219bf994857bc51546fb83661be3a61744",
 		},
 	}
 
