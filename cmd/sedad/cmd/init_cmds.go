@@ -56,7 +56,7 @@ $ %s join moniker --network devnet
 			network, _ := cmd.Flags().GetString(FlagNetwork)
 			var seeds, chainID string
 			switch network {
-			case "mainnet", "devnet", "testnet", "localnet":
+			case "mainnet", "devnet", "testnet", "planet", "localnet":
 				chainID, seeds, err = downloadAndApplyNetworkConfig(network, args[0], config)
 				if err != nil {
 					return err
@@ -83,7 +83,7 @@ $ %s join moniker --network devnet
 	}
 
 	cmd.Flags().Bool(FlagRecover, false, "provide seed phrase to recover existing key instead of creating")
-	cmd.Flags().StringP(FlagNetwork, "n", "devnet", "specify the name of network to initialize (e.g., 'mainnet', 'testnet', 'devnet', 'localnet')")
+	cmd.Flags().StringP(FlagNetwork, "n", "devnet", "specify the name of network to initialize (e.g., 'mainnet', 'testnet', 'devnet', 'planet', 'localnet')")
 	err := cmd.MarkFlagRequired(FlagNetwork)
 	if err != nil {
 		panic(err)
