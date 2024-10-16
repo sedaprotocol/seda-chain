@@ -85,8 +85,8 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	parsedPowers := make([]uint32, len(entries))
 	for i, entry := range entries {
 		require.Equal(t, []byte{utils.SEDASeparatorSecp256k1}, entry[:1])
-		parsedPKs[i] = entry[1:66]
-		parsedPowers[i] = binary.BigEndian.Uint32(entry[66:])
+		parsedPKs[i] = entry[1:65]
+		parsedPowers[i] = binary.BigEndian.Uint32(entry[65:])
 
 		uncompressedPKs[i] = decompressPubKey(t, pks[i])
 	}
@@ -144,14 +144,14 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 }
 
 // decompressPubKey decompresses a 33-byte long compressed public key
-// into a 65-byte long uncompressed format.
+// into a 64-byte long uncompressed format.
 func decompressPubKey(t *testing.T, pubKey []byte) []byte {
 	t.Helper()
 	pk, err := dcrdsecp256k1.ParsePubKey(pubKey)
 	if err != nil {
 		panic(err)
 	}
-	return pk.SerializeUncompressed()
+	return pk.SerializeUncompressed()[1:]
 }
 
 // generateDataResults returns a given number of randomly-generated

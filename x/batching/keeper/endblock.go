@@ -172,12 +172,12 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 }
 
 // decompressPubKey decompresses a public key in 33-byte compressed
-// format into the one in 65-byte uncompressed format.
+// format into the one in 64-byte uncompressed format.
 func decompressPubKey(pubKey []byte) ([]byte, error) {
 	x, y := secp256k1.DecompressPubkey(pubKey)
 	if x == nil || y == nil {
 		return nil, types.ErrInvalidPublicKey
 	}
-	// 65-byte format: 0x04 | x-coordinate | y-coordinate
-	return append([]byte{0x04}, append(x.Bytes(), y.Bytes()...)...), nil
+	// 64-byte format: x-coordinate | y-coordinate
+	return append(x.Bytes(), y.Bytes()...), nil
 }
