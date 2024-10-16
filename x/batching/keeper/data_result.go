@@ -38,6 +38,9 @@ func (k Keeper) GetDataResult(ctx context.Context, dataReqID string) (types.Data
 			// Look among batched data requests.
 			dataResult, err := k.dataResults.Get(ctx, collections.Join(true, dataReqID))
 			if err != nil {
+				if errors.Is(err, collections.ErrNotFound) {
+					return types.DataResult{}, nil
+				}
 				return types.DataResult{}, err
 			}
 			return dataResult, nil
