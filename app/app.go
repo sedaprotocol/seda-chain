@@ -129,11 +129,12 @@ import (
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
+
 	appabci "github.com/sedaprotocol/seda-chain/app/abci"
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
-
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/x/batching"
@@ -231,6 +232,7 @@ func init() {
 	sdk.DefaultPowerReduction = sdkmath.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(appparams.SedaExponent), nil))
 
 	DefaultNodeHome = filepath.Join(userHomeDir, ".sedad")
+	tallyvm.LogDir = filepath.Join(DefaultNodeHome, "tally-logs")
 }
 
 // App extends an ABCI application, but with most of its parameters exported.
