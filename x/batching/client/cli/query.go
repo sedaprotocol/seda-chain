@@ -34,13 +34,13 @@ func GetQueryCmd(_ string) *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryBatch returns the command for querying a batch using a
-// batch number.
+// GetCmdQueryBatch returns the command for querying a specific batch.
 func GetCmdQueryBatch() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "batch <batch_number>",
-		Short: "Get a batch given its batch number",
-		Args:  cobra.ExactArgs(1),
+		Use:   "batch <optional_batch_number>",
+		Short: "Query a batch",
+		Long:  "Query the latest batch whose signatures have been collected or, by providing its batch number, a specific batch.",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -48,9 +48,12 @@ func GetCmdQueryBatch() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			batchNum, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
+			var batchNum uint64
+			if len(args) != 0 {
+				batchNum, err = strconv.ParseUint(args[0], 10, 64)
+				if err != nil {
+					return err
+				}
 			}
 			req := &types.QueryBatchRequest{
 				BatchNumber: batchNum,
@@ -113,7 +116,11 @@ func GetCmdQueryBatches() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.Batches(cmd.Context(), &types.QueryBatchesRequest{})
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+			res, err := queryClient.Batches(cmd.Context(), &types.QueryBatchesRequest{Pagination: pageReq})
 			if err != nil {
 				return err
 			}
@@ -122,6 +129,7 @@ func GetCmdQueryBatches() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "all batches")
 	return cmd
 }
 
