@@ -68,7 +68,7 @@ func (p *IndexerPlugin) ListenFinalizeBlock(_ context.Context, req abci.RequestF
 	}
 	messages = append(messages, blockMessage)
 
-	txMessages, err := base.ExtractTransactionUpdates(p.block, p.cdc, req, res)
+	txMessages, err := base.ExtractTransactionUpdates(p.block, p.cdc, p.logger, req, res)
 	if err != nil {
 		p.logger.Error("Failed to extract Tx updates", "error", err)
 		return err

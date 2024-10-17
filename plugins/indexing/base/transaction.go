@@ -2,6 +2,7 @@ package base
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
 
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
@@ -24,7 +26,7 @@ func (s wrappedTx) MarshalJSON() ([]byte, error) {
 	return s.cdc.MarshalJSON(s.Tx)
 }
 
-func ExtractTransactionUpdates(ctx *types.BlockContext, cdc codec.Codec, req abci.RequestFinalizeBlock, res abci.ResponseFinalizeBlock) ([]*types.Message, error) {
+func ExtractTransactionUpdates(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger, req abci.RequestFinalizeBlock, res abci.ResponseFinalizeBlock) ([]*types.Message, error) {
 	messages := make([]*types.Message, 0, len(req.Txs))
 
 	timestamp := req.Time
@@ -36,7 +38,12 @@ func ExtractTransactionUpdates(ctx *types.BlockContext, cdc codec.Codec, req abc
 
 		var tx tx.Tx
 		if err := cdc.Unmarshal(txBytes, &tx); err != nil {
-			return nil, err
+			var extendedVotes abci.ExtendedCommitInfo
+			if err := json.Unmarshal(txBytes, &extendedVotes); err != nil {
+				return nil, err
+			}
+			logger.Trace("Skipping extended votes bytes")
+			continue
 		}
 
 		signersBytes, _, err := tx.GetSigners(cdc)

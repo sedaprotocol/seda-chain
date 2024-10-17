@@ -2,6 +2,7 @@ package base
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -15,6 +16,13 @@ import (
 func ExtractBlockUpdate(ctx *types.BlockContext, req abci.RequestFinalizeBlock, res abci.ResponseFinalizeBlock) (*types.Message, error) {
 	hash := strings.ToUpper(hex.EncodeToString(req.Hash))
 	txCount := len(req.Txs)
+	if txCount > 0 {
+		// Don't count extended votes as transactions
+		var extendedVotes abci.ExtendedCommitInfo
+		if err := json.Unmarshal(req.Txs[0], &extendedVotes); err == nil {
+			txCount--
+		}
+	}
 	proposerAddress, err := sdk.ConsAddressFromHex(hex.EncodeToString(req.ProposerAddress))
 	if err != nil {
 		return nil, err
