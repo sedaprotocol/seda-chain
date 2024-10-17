@@ -4,7 +4,9 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
+	"github.com/sedaprotocol/seda-chain/app/abci"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
@@ -22,10 +24,18 @@ func NewQuerierImpl(keeper Keeper) types.QueryServer {
 
 func (q Querier) Batch(c context.Context, req *types.QueryBatchRequest) (*types.QueryBatchResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	batch, err := q.Keeper.GetBatchByBatchNumber(ctx, req.BatchNumber)
+
+	var batch types.Batch
+	var err error
+	if req.BatchNumber == 0 {
+		batch, err = q.Keeper.GetBatchForHeight(ctx, ctx.BlockHeight()+abci.BlockOffsetCollectPhase)
+	} else {
+		batch, err = q.Keeper.GetBatchByBatchNumber(ctx, req.BatchNumber)
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	return &types.QueryBatchResponse{
 		Batch: batch,
 	}, nil
@@ -42,14 +52,23 @@ func (q Querier) BatchForHeight(c context.Context, req *types.QueryBatchForHeigh
 	}, nil
 }
 
-func (q Querier) Batches(c context.Context, _ *types.QueryBatchesRequest) (*types.QueryBatchesResponse, error) {
+func (q Querier) Batches(c context.Context, req *types.QueryBatchesRequest) (*types.QueryBatchesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	batches, err := q.GetAllBatches(ctx)
+	batches, pageRes, err := query.CollectionPaginate(
+		ctx,
+		q.batches,
+		req.Pagination,
+		func(_ int64, value types.Batch) (types.Batch, error) {
+			return value, nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	return &types.QueryBatchesResponse{
-		Batches: batches,
+		Batches:    batches,
+		Pagination: pageRes,
 	}, nil
 }
 

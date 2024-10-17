@@ -3,6 +3,7 @@ package sedachain.batching.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "sedachain/batching/v1/batching.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/batching/types";
@@ -71,11 +72,15 @@ message QueryBatchForHeightResponse {
 }
 
 // The request message for QueryBatches RPC.
-message QueryBatchesRequest {}
+message QueryBatchesRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
 
 // The response message for QueryBatches RPC.
 message QueryBatchesResponse {
   repeated Batch batches = 1 [ (gogoproto.nullable) = false ];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // The request message for QueryTreeEntries RPC.
