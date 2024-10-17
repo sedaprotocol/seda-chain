@@ -16,16 +16,21 @@ import (
 )
 
 const (
-	// The block height difference from ExtendVote and VerifyVote to the
-	// corresponding batch's creation height.
-	voteExtensionOffset = -1
-	// proposalOffset is the block height difference from PrepareProposal,
-	// ProcessProposal, and PreBlock to the corresponding batch's creation
-	// height.
-	proposalOffset = -2
-	// maxVoteExtensionLength is the maximum size of vote extension in
+	// BlockOffsetSign is the block height difference between the batch
+	// signing phase and the corresponding batch's creation height.
+	// The signing phase consists of ExtendVote and VerifyVoteExtension.
+	BlockOffsetSignPhase = -1
+
+	// BlockOffsetCollectPhase is the block height difference between the
+	// batch signature collection phase and the corresponding batch's
+	// creation height. The collection phase spans PrepareProposal,
+	// ProcessProposal, and PreBlock to store a canonical set of batch
+	// signatures.
+	BlockOffsetCollectPhase = -2
+
+	// MaxVoteExtensionLength is the maximum size of vote extension in
 	// bytes.
-	maxVoteExtensionLength = 64 * 5
+	MaxVoteExtensionLength = 64 * 5
 )
 
 type Handlers struct {
@@ -69,7 +74,7 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		h.logger.Debug("start extend vote handler")
 
 		// Sign the batch created from the last block's end blocker.
-		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+voteExtensionOffset)
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetSignPhase)
 		if err != nil {
 			return nil, err
 		}
@@ -90,7 +95,7 @@ func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 	return func(ctx sdk.Context, req *abci.RequestVerifyVoteExtension) (*abci.ResponseVerifyVoteExtension, error) {
 		h.logger.Debug("start verify vote extension handler", "request", req)
 
-		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+voteExtensionOffset)
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetSignPhase)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +177,7 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 		}
 
 		// Verify every batch signature.
-		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+proposalOffset)
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetCollectPhase)
 		if err != nil {
 			return nil, err
 		}
@@ -222,7 +227,7 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 		}
 
 		// Get batch number of the batch from two blocks ago.
-		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+proposalOffset)
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetCollectPhase)
 		if err != nil {
 			return nil, err
 		}
@@ -255,7 +260,7 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 // in the pubkey module. It returns an error unless the verification
 // succeeds.
 func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchID, voteExtension, consAddr []byte) error {
-	if len(voteExtension) > maxVoteExtensionLength {
+	if len(voteExtension) > MaxVoteExtensionLength {
 		h.logger.Error("invalid vote extension length", "len", len(voteExtension))
 		return ErrInvalidVoteExtensionLength
 	}
