@@ -2,6 +2,7 @@ package batching
 
 import (
 	"bytes"
+	"strconv"
 
 	// "cosmossdk.io/collections"
 	storetypes "cosmossdk.io/store/types"
@@ -31,9 +32,9 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 			ID             string `json:"result_id"`
 			DrID           string `json:"dr_id"`
 			Version        string `json:"version"`
-			BlockHeight    uint64 `json:"block_height"`
+			BlockHeight    string `json:"block_height"`
 			ExitCode       uint32 `json:"exit_code"`
-			GasUsed        uint64 `json:"gas_used"`
+			GasUsed        string `json:"gas_used"`
 			Result         []byte `json:"result"`
 			PaybackAddress string `json:"payback_address"`
 			SedaPayload    string `json:"seda_payload"`
@@ -42,9 +43,9 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 			ID:             val.Id,
 			DrID:           val.DrId,
 			Version:        val.Version,
-			BlockHeight:    val.BlockHeight,
+			BlockHeight:    strconv.FormatUint(val.BlockHeight, 10),
 			ExitCode:       val.ExitCode,
-			GasUsed:        val.GasUsed,
+			GasUsed:        strconv.FormatUint(val.GasUsed, 10),
 			Result:         val.Result,
 			PaybackAddress: val.PaybackAddress,
 			SedaPayload:    val.SedaPayload,
