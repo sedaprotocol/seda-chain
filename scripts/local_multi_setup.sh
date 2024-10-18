@@ -13,6 +13,10 @@ BIN=./build/sedad
 # always returns true so set -e doesn't exit if it is not running.
 killall sedad || true
 rm -rf $HOME/.sedad/
+rm -f val1_multi_local.log
+rm -f val2_multi_local.log
+rm -f val3_multi_local.log
+rm -f val4_multi_local.log
 
 # make four chain directories
 mkdir $HOME/.sedad
@@ -97,7 +101,7 @@ sed -i '' -E 's|prometheus = false|prometheus = true|g' $VALIDATOR4_CONFIG
 sed -i '' -E 's|prometheus_listen_addr = ":26660"|prometheus_listen_addr = ":26610"|g' $VALIDATOR4_CONFIG
 
 # modify genesis file
-jq '.consensus.params.abci.vote_extensions_enable_height = "20"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
+jq '.consensus.params.abci.vote_extensions_enable_height = "15"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
 
 cp $HOME/.sedad/validator1/config/genesis.json $HOME/.sedad/validator2/config/genesis.json
 cp $HOME/.sedad/validator1/config/genesis.json $HOME/.sedad/validator3/config/genesis.json
@@ -201,13 +205,13 @@ $BIN tx pubkey add-seda-keys --from validator4 --keyring-backend test --home $HO
 # restart to use SEDA keys
 sleep 10
 tmux send -t validator1 'C-c'
-tmux send -t validator1 '$BIN start --home=$HOME/.sedad/validator1' ENTER
+tmux send -t validator1 '$BIN start --home=$HOME/.sedad/validator1 --log_level debug > val1_multi_local.log 2>&1 &' ENTER
 
 tmux send -t validator2 'C-c'
-tmux send -t validator2 '$BIN start --home=$HOME/.sedad/validator2' ENTER
+tmux send -t validator2 '$BIN start --home=$HOME/.sedad/validator2 --log_level debug > val2_multi_local.log 2>&1 &' ENTER
 
 tmux send -t validator3 'C-c'
-tmux send -t validator3 '$BIN start --home=$HOME/.sedad/validator3' ENTER
+tmux send -t validator3 '$BIN start --home=$HOME/.sedad/validator3 --log_level debug > val3_multi_local.log 2>&1 &' ENTER
 
 tmux send -t validator4 'C-c'
-tmux send -t validator4 '$BIN start --home=$HOME/.sedad/validator4' ENTER
+tmux send -t validator4 '$BIN start --home=$HOME/.sedad/validator4 --log_level debug > val4_multi_local.log 2>&1 &' ENTER

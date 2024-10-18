@@ -3,7 +3,8 @@ package abci
 import (
 	"encoding/json"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abcitypes "github.com/cometbft/cometbft/abci/types"
+	comettypes "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	addresscodec "cosmossdk.io/core/address"
 	"cosmossdk.io/log"
@@ -70,7 +71,7 @@ func (h *Handlers) SetSEDASigner(signer utils.SEDASigner) {
 // ExtendVoteHandler handles the ExtendVote ABCI to sign a batch created
 // from the previous block.
 func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
-	return func(ctx sdk.Context, _ *abci.RequestExtendVote) (*abci.ResponseExtendVote, error) {
+	return func(ctx sdk.Context, _ *abcitypes.RequestExtendVote) (*abcitypes.ResponseExtendVote, error) {
 		h.logger.Debug("start extend vote handler")
 
 		// Sign the batch created from the last block's end blocker.
@@ -83,8 +84,12 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 			return nil, err
 		}
 
-		h.logger.Debug("submitting batch signature", "signature", signature)
-		return &abci.ResponseExtendVote{VoteExtension: signature}, nil
+		h.logger.Debug(
+			"submitting batch signature",
+			"signature", signature,
+			"batch_number", batch.BatchNumber,
+		)
+		return &abcitypes.ResponseExtendVote{VoteExtension: signature}, nil
 	}
 }
 
@@ -92,7 +97,7 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 // verify the batch signature included in the pre-commit vote against
 // the public key registered in the pubkey module.
 func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
-	return func(ctx sdk.Context, req *abci.RequestVerifyVoteExtension) (*abci.ResponseVerifyVoteExtension, error) {
+	return func(ctx sdk.Context, req *abcitypes.RequestVerifyVoteExtension) (*abcitypes.ResponseVerifyVoteExtension, error) {
 		h.logger.Debug("start verify vote extension handler", "request", req)
 
 		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetSignPhase)
@@ -104,17 +109,20 @@ func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 			return nil, err
 		}
 
-		h.logger.Debug("successfully verified signature", "request", req.ValidatorAddress, "height", req.Height)
-		return &abci.ResponseVerifyVoteExtension{Status: abci.ResponseVerifyVoteExtension_ACCEPT}, nil
+		h.logger.Debug(
+			"successfully verified signature",
+			"request", req.ValidatorAddress,
+			"height", req.Height,
+			"batch_number", batch.BatchNumber,
+		)
+		return &abcitypes.ResponseVerifyVoteExtension{Status: abcitypes.ResponseVerifyVoteExtension_ACCEPT}, nil
 	}
 }
 
 // PrepareProposalHandler handles the PrepareProposal ABCI to inject
 // a canonical set of vote extensions in the proposal.
 func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
-	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (*abci.ResponsePrepareProposal, error) {
-		h.logger.Debug("start prepare proposal handler")
-
+	return func(ctx sdk.Context, req *abcitypes.RequestPrepareProposal) (*abcitypes.ResponsePrepareProposal, error) {
 		var injection []byte
 		if req.Height > ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight {
 			err := baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), req.LocalLastCommit)
@@ -149,8 +157,9 @@ func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		proposalTxs := defaultRes.Txs
 		if injection != nil {
 			proposalTxs = append([][]byte{injection}, proposalTxs...)
+			h.logger.Debug("injected local last commit", "height", req.Height)
 		}
-		return &abci.ResponsePrepareProposal{
+		return &abcitypes.ResponsePrepareProposal{
 			Txs: proposalTxs,
 		}, nil
 	}
@@ -159,12 +168,12 @@ func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 // ProcessProposalHandler handles the ProcessProposal ABCI to validate
 // the canonical set of vote extensions injected by the proposer.
 func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
-	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
+	return func(ctx sdk.Context, req *abcitypes.RequestProcessProposal) (*abcitypes.ResponseProcessProposal, error) {
 		if req.Height <= ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight {
 			return h.defaultProcessProposal(ctx, req)
 		}
 
-		var extendedVotes abci.ExtendedCommitInfo
+		var extendedVotes abcitypes.ExtendedCommitInfo
 		if err := json.Unmarshal(req.Txs[0], &extendedVotes); err != nil {
 			h.logger.Error("failed to decode injected extended votes tx", "err", err)
 			return nil, err
@@ -182,10 +191,13 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			return nil, err
 		}
 		for _, vote := range extendedVotes.Votes {
-			err = h.verifyBatchSignatures(ctx, batch.BatchId, vote.VoteExtension, vote.Validator.Address)
-			if err != nil {
-				h.logger.Error("proposal contains an invalid vote extension", "vote", vote)
-				return nil, err
+			// Only consider extensions with pre-commit votes.
+			if vote.BlockIdFlag == comettypes.BlockIDFlagCommit {
+				err = h.verifyBatchSignatures(ctx, batch.BatchId, vote.VoteExtension, vote.Validator.Address)
+				if err != nil {
+					h.logger.Error("proposal contains an invalid vote extension", "vote", vote)
+					return nil, err
+				}
 			}
 		}
 
@@ -198,7 +210,7 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 // from the canonical set of vote extensions injected by the proposer
 // and store them.
 func (h *Handlers) PreBlocker() sdk.PreBlocker {
-	return func(ctx sdk.Context, req *abci.RequestFinalizeBlock) (res *sdk.ResponsePreBlock, err error) {
+	return func(ctx sdk.Context, req *abcitypes.RequestFinalizeBlock) (res *sdk.ResponsePreBlock, err error) {
 		// Use defer to prevent returning an error, which would cause
 		// the chain to halt.
 		defer func() {
@@ -220,7 +232,7 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 
 		h.logger.Debug("begin pre-block logic for batch signature persistence")
 
-		var extendedVotes abci.ExtendedCommitInfo
+		var extendedVotes abcitypes.ExtendedCommitInfo
 		if err := json.Unmarshal(req.Txs[0], &extendedVotes); err != nil {
 			h.logger.Error("failed to decode injected extended votes tx", "err", err)
 			return nil, err
@@ -260,7 +272,7 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 // in the pubkey module. It returns an error unless the verification
 // succeeds.
 func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchID, voteExtension, consAddr []byte) error {
-	if len(voteExtension) > MaxVoteExtensionLength {
+	if len(voteExtension) == 0 || len(voteExtension) > MaxVoteExtensionLength {
 		h.logger.Error("invalid vote extension length", "len", len(voteExtension))
 		return ErrInvalidVoteExtensionLength
 	}
