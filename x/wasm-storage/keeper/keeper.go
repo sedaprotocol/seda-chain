@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -77,11 +76,11 @@ func (k Keeper) GetAuthority() string {
 // GetCoreContractAddr retrieves the core contract address.
 func (k Keeper) GetCoreContractAddr(ctx context.Context) (sdk.AccAddress, error) {
 	contractAddrBech32, err := k.CoreContractRegistry.Get(ctx)
-	if contractAddrBech32 == "" || errors.Is(err, collections.ErrNotFound) {
-		return nil, collections.ErrNotFound
-	}
 	if err != nil {
 		return nil, err
+	}
+	if contractAddrBech32 == "" {
+		return nil, nil
 	}
 	contractAddr, err := sdk.AccAddressFromBech32(contractAddrBech32)
 	if err != nil {
