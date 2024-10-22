@@ -49,6 +49,10 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	if err != nil {
 		return err
 	}
+	if coreContract == nil {
+		k.Logger(ctx).Info("skipping tally end block - core contract has not been registered")
+		return nil
+	}
 
 	// Fetch tally-ready data requests.
 	// TODO: Deal with offset and limits. (#313)

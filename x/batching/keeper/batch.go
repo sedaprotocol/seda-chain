@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/hex"
-	"errors"
 
 	"cosmossdk.io/collections"
 
@@ -92,24 +90,6 @@ func (k Keeper) GetBatchByBatchNumber(ctx context.Context, batchNumber uint64) (
 		return types.Batch{}, err
 	}
 	return k.batches.Get(ctx, blockHeight)
-}
-
-// GetLatestDataResultRoot returns the latest batch's data result
-// tree root in byte slice. If batching has not started, it returns
-// an empty byte slice without an error.
-func (k Keeper) GetLatestDataResultRoot(ctx context.Context) ([]byte, error) {
-	batch, err := k.GetLatestBatch(ctx)
-	if err != nil {
-		if errors.Is(err, types.ErrBatchingHasNotStarted) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	root, err := hex.DecodeString(batch.DataResultRoot)
-	if err != nil {
-		return nil, err
-	}
-	return root, nil
 }
 
 // IterateBatches iterates over the batches and performs a given
