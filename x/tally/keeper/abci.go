@@ -63,7 +63,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	if string(queryRes) == "[]" {
 		return nil
 	}
-
 	k.Logger(ctx).Info("non-empty tally list - starting tally process")
 
 	var tallyList []types.Request
