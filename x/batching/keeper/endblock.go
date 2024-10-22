@@ -34,6 +34,10 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 
 	batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
 	if err != nil {
+		if errors.Is(err, types.ErrNoBatchingUpdate) {
+			k.Logger(ctx).Info("skip batch creation", "height", ctx.BlockHeight())
+			return nil
+		}
 		return err
 	}
 
@@ -49,20 +53,43 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 // It returns a resulting batch, data result tree entries, and validator
 // tree entries in that order.
 func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte, error) {
-	// Note current will be "old" for this new batch.
-	oldBatchNum, err := k.GetCurrentBatchNum(ctx)
+	var newBatchNum uint64
+	var latestDataRoot, latestValRoot string
+	latestBatch, err := k.GetLatestBatch(ctx)
 	if err != nil {
-		return types.Batch{}, nil, nil, err
+		if !errors.Is(err, types.ErrBatchingHasNotStarted) {
+			return types.Batch{}, nil, nil, err
+		}
+		newBatchNum = collections.DefaultSequenceStart + 1
+	} else {
+		newBatchNum = latestBatch.BatchNumber + 1
+		latestDataRoot = latestBatch.DataResultRoot
+		latestValRoot = latestBatch.ValidatorRoot
 	}
-	newBatchNum := oldBatchNum + 1
 
-	dataEntries, dataRoot, err := k.ConstructDataResultTree(ctx, newBatchNum)
+	// Compute current data result tree root and the "super root"
+	// of current and previous data result trees' roots.
+	dataEntries, dataRoot, err := k.ConstructDataResultTree(ctx, latestDataRoot, newBatchNum)
 	if err != nil {
 		return types.Batch{}, nil, nil, err
 	}
+	latestDataRootHex, err := hex.DecodeString(latestDataRoot)
+	if err != nil {
+		return types.Batch{}, nil, nil, err
+	}
+	superRoot := utils.RootFromLeaves([][]byte{latestDataRootHex, dataRoot})
+
+	// Compute validator tree root.
 	valEntries, valRoot, err := k.ConstructValidatorTree(ctx)
 	if err != nil {
 		return types.Batch{}, nil, nil, err
+	}
+	valRootHex := hex.EncodeToString(valRoot)
+
+	// Skip batching if there is no update in data result root nor
+	// validator root.
+	if len(dataEntries) == 0 && valRootHex == latestValRoot {
+		return types.Batch{}, nil, nil, types.ErrNoBatchingUpdate
 	}
 
 	// Compute the batch ID, which is defined as
@@ -79,19 +106,20 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 	batchID := hash.Sum(nil)
 
 	return types.Batch{
-		BatchNumber:     newBatchNum,
-		BlockHeight:     ctx.BlockHeight(),
-		DataResultRoot:  hex.EncodeToString(dataRoot),
-		ValidatorRoot:   hex.EncodeToString(valRoot),
-		BatchId:         batchID,
-		ProvingMedatada: nil,
+		BatchNumber:           newBatchNum,
+		BlockHeight:           ctx.BlockHeight(),
+		CurrentDataResultRoot: hex.EncodeToString(dataRoot),
+		DataResultRoot:        hex.EncodeToString(superRoot),
+		ValidatorRoot:         valRootHex,
+		BatchId:               batchID,
+		ProvingMedatada:       nil,
 	}, dataEntries, valEntries, nil
 }
 
 // ConstructDataResultTree constructs a data result tree based on the
 // data results that have not been batched yet. It returns the tree's
 // entries (unhashed leaf contents) and hex-encoded root.
-func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) ([][]byte, []byte, error) {
+func (k Keeper) ConstructDataResultTree(ctx sdk.Context, latestDataRoot string, newBatchNum uint64) ([][]byte, []byte, error) {
 	dataResults, err := k.GetDataResults(ctx, false)
 	if err != nil {
 		return nil, nil, err
@@ -111,14 +139,7 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) ([]
 		}
 	}
 
-	newRoot := utils.RootFromEntries(entries)
-	curRoot, err := k.GetLatestDataResultRoot(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-	root := utils.RootFromLeaves([][]byte{curRoot, newRoot})
-
-	return entries, root, nil
+	return entries, utils.RootFromEntries(entries), nil
 }
 
 // ConstructValidatorTree constructs a validator tree based on the

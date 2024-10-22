@@ -2,10 +2,12 @@ package abci
 
 import (
 	"encoding/json"
+	"errors"
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	comettypes "github.com/cometbft/cometbft/proto/tendermint/types"
 
+	"cosmossdk.io/collections"
 	addresscodec "cosmossdk.io/core/address"
 	"cosmossdk.io/log"
 
@@ -77,6 +79,10 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		// Sign the batch created from the last block's end blocker.
 		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetSignPhase)
 		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				h.logger.Debug("no batch to sign", "height", ctx.BlockHeight())
+				return &abcitypes.ResponseExtendVote{}, nil
+			}
 			return nil, err
 		}
 		signature, err := h.signer.Sign(batch.BatchId, utils.SEDAKeyIndexSecp256k1)
@@ -102,10 +108,24 @@ func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 
 		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetSignPhase)
 		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				if req.VoteExtension == nil {
+					return &abcitypes.ResponseVerifyVoteExtension{Status: abcitypes.ResponseVerifyVoteExtension_ACCEPT}, nil
+				}
+				h.logger.Error(
+					"received vote extension even though we're skipping batching",
+					"request", req.ValidatorAddress,
+					"height", req.Height,
+					"vote_extension", req.VoteExtension,
+				)
+				return &abcitypes.ResponseVerifyVoteExtension{Status: abcitypes.ResponseVerifyVoteExtension_REJECT}, nil
+			}
 			return nil, err
 		}
+
 		err = h.verifyBatchSignatures(ctx, batch.BatchId, req.VoteExtension, req.ValidatorAddress)
 		if err != nil {
+			h.logger.Error("failed to verify batch signature", "req", req, "err", err)
 			return nil, err
 		}
 
@@ -123,8 +143,20 @@ func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 // a canonical set of vote extensions in the proposal.
 func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abcitypes.RequestPrepareProposal) (*abcitypes.ResponsePrepareProposal, error) {
+		// Check if there is a batch whose signatures must be collected
+		// at this block height.
+		var collectSigs bool
+		_, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetCollectPhase)
+		if err != nil {
+			if !errors.Is(err, collections.ErrNotFound) {
+				return nil, err
+			}
+		} else {
+			collectSigs = true
+		}
+
 		var injection []byte
-		if req.Height > ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight {
+		if req.Height > ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight && collectSigs {
 			err := baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), req.LocalLastCommit)
 			if err != nil {
 				return nil, err
@@ -173,23 +205,26 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			return h.defaultProcessProposal(ctx, req)
 		}
 
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetCollectPhase)
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				return h.defaultProcessProposal(ctx, req)
+			}
+			return nil, err
+		}
+
 		var extendedVotes abcitypes.ExtendedCommitInfo
 		if err := json.Unmarshal(req.Txs[0], &extendedVotes); err != nil {
 			h.logger.Error("failed to decode injected extended votes tx", "err", err)
 			return nil, err
 		}
 
-		// Validate signatures and perform 2/3 voting power check.
-		err := baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), extendedVotes)
+		// Validate vote extensions and batch signatures.
+		err = baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), extendedVotes)
 		if err != nil {
 			return nil, err
 		}
 
-		// Verify every batch signature.
-		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetCollectPhase)
-		if err != nil {
-			return nil, err
-		}
 		for _, vote := range extendedVotes.Votes {
 			// Only consider extensions with pre-commit votes.
 			if vote.BlockIdFlag == comettypes.BlockIDFlagCommit {
@@ -230,20 +265,23 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 			return res, nil
 		}
 
-		h.logger.Debug("begin pre-block logic for batch signature persistence")
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetCollectPhase)
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				h.logger.Debug("no batch to collect signatures for", "height", ctx.BlockHeight())
+				return nil, nil
+			}
+			return nil, err
+		}
+		batchNum := batch.BatchNumber
+
+		h.logger.Debug("begin pre-block logic for storing batch signatures", "batch_number", batchNum)
 
 		var extendedVotes abcitypes.ExtendedCommitInfo
 		if err := json.Unmarshal(req.Txs[0], &extendedVotes); err != nil {
 			h.logger.Error("failed to decode injected extended votes tx", "err", err)
 			return nil, err
 		}
-
-		// Get batch number of the batch from two blocks ago.
-		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetCollectPhase)
-		if err != nil {
-			return nil, err
-		}
-		batchNum := batch.BatchNumber
 
 		for _, vote := range extendedVotes.Votes {
 			valAddr, err := h.validatorAddressCodec.BytesToString(vote.Validator.Address)

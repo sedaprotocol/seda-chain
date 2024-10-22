@@ -13,7 +13,6 @@ import (
 
 	dcrdsecp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/math"
 
@@ -36,7 +35,7 @@ func Test_ConstructDataResultTree(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	entries, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context(), rand.Uint64())
+	entries, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context(), "", rand.Uint64())
 	require.NoError(t, err)
 
 	var entryHexes, drIds []string
@@ -51,12 +50,6 @@ func Test_ConstructDataResultTree(t *testing.T) {
 	for i := range entries {
 		proof, err := utils.GetProof(entries, i)
 		require.NoError(t, err)
-
-		// TODO: Generalize and provide a utils function
-		sha := sha3.NewLegacyKeccak256()
-		sha.Write([]byte{})
-		emptyLeaf := sha.Sum(nil)
-		proof = append(proof, emptyLeaf)
 
 		ret := utils.VerifyProof(proof, root, entries[i])
 		require.True(t, ret)
@@ -415,7 +408,7 @@ func Test_ConstructDataResultTreeWithTestData(t *testing.T) {
 		err := f.batchingKeeper.SetDataResultForBatching(f.Context(), dr)
 		require.NoError(t, err)
 	}
-	_, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context(), rand.Uint64())
+	_, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context(), "", rand.Uint64())
 	require.NoError(t, err)
 
 	// Check the tree root (Expected root is computed assuming empty
