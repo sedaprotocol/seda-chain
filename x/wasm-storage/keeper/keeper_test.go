@@ -14,35 +14,35 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-func (s *KeeperTestSuite) TestSetDataRequestWasm() {
+func (s *KeeperTestSuite) TestSetOracleProgram() {
 	s.SetupTest()
 	wasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)
 
-	mockWasm := types.NewDataRequestWasm(compWasm, time.Now().UTC(), 1000, 100)
-	s.Require().NoError(s.keeper.DataRequestWasm.Set(s.ctx, mockWasm.Hash, mockWasm))
+	mockWasm := types.NewOracleProgram(compWasm, time.Now().UTC(), 1000, 100)
+	s.Require().NoError(s.keeper.OracleProgram.Set(s.ctx, mockWasm.Hash, mockWasm))
 }
 
-func (s *KeeperTestSuite) TestGetDataRequestWasm() {
+func (s *KeeperTestSuite) TestGetOracleProgram() {
 	s.SetupTest()
-	mockWasm := types.NewDataRequestWasm(mockedByteArray, time.Now().UTC(), 1000, 100)
-	err := s.keeper.DataRequestWasm.Set(s.ctx, mockWasm.Hash, mockWasm)
+	mockWasm := types.NewOracleProgram(mockedByteArray, time.Now().UTC(), 1000, 100)
+	err := s.keeper.OracleProgram.Set(s.ctx, mockWasm.Hash, mockWasm)
 	s.Require().NoError(err)
-	value, _ := s.keeper.DataRequestWasm.Get(s.ctx, mockWasm.Hash)
+	value, _ := s.keeper.OracleProgram.Get(s.ctx, mockWasm.Hash)
 	s.Assert().NotNil(value)
 	s.Assert().Equal(mockWasm, value)
 }
 
-func (s *KeeperTestSuite) TestHasDataRequestWasm() {
+func (s *KeeperTestSuite) TestHasOracleProgram() {
 	s.SetupTest()
-	mockWasm := types.NewDataRequestWasm(mockedByteArray, time.Now().UTC(), 1000, 100)
-	has, _ := s.keeper.DataRequestWasm.Has(s.ctx, mockWasm.Hash)
+	mockWasm := types.NewOracleProgram(mockedByteArray, time.Now().UTC(), 1000, 100)
+	has, _ := s.keeper.OracleProgram.Has(s.ctx, mockWasm.Hash)
 	s.Assert().False(has)
-	err := s.keeper.DataRequestWasm.Set(s.ctx, mockWasm.Hash, mockWasm)
+	err := s.keeper.OracleProgram.Set(s.ctx, mockWasm.Hash, mockWasm)
 	s.Require().NoError(err)
-	has, _ = s.keeper.DataRequestWasm.Has(s.ctx, mockWasm.Hash)
+	has, _ = s.keeper.OracleProgram.Has(s.ctx, mockWasm.Hash)
 	s.Assert().True(has)
 }
 
@@ -73,21 +73,21 @@ func (s *KeeperTestSuite) TestHasExecutorWasm() {
 	s.Assert().True(has)
 }
 
-func (s *KeeperTestSuite) TestIterateDataRequestWasm() {
+func (s *KeeperTestSuite) TestIterateOracleProgram() {
 	s.SetupTest()
-	mockWasm1 := types.NewDataRequestWasm(mockedByteArray, time.Now().UTC(), 1000, 100)
-	mockWasm2 := types.NewDataRequestWasm(append(mockedByteArray, 2), time.Now().UTC(), 1000, 100)
-	err := s.keeper.DataRequestWasm.Set(s.ctx, mockWasm1.Hash, mockWasm1)
+	mockWasm1 := types.NewOracleProgram(mockedByteArray, time.Now().UTC(), 1000, 100)
+	mockWasm2 := types.NewOracleProgram(append(mockedByteArray, 2), time.Now().UTC(), 1000, 100)
+	err := s.keeper.OracleProgram.Set(s.ctx, mockWasm1.Hash, mockWasm1)
 	s.Require().NoError(err)
-	err = s.keeper.DataRequestWasm.Set(s.ctx, mockWasm2.Hash, mockWasm2)
+	err = s.keeper.OracleProgram.Set(s.ctx, mockWasm2.Hash, mockWasm2)
 	s.Require().NoError(err)
 
-	var results []types.DataRequestWasm
-	err = s.keeper.IterateDataRequestWasms(s.ctx, func(wasm types.DataRequestWasm) (stop bool) {
+	var results []types.OracleProgram
+	err = s.keeper.IterateOraclePrograms(s.ctx, func(wasm types.OracleProgram) (stop bool) {
 		results = append(results, wasm)
 		return false
 	})
-	s.Assert().ElementsMatch([]types.DataRequestWasm{mockWasm1, mockWasm2}, results)
+	s.Assert().ElementsMatch([]types.OracleProgram{mockWasm1, mockWasm2}, results)
 	s.Require().NoError(err)
 }
 
@@ -111,14 +111,14 @@ func (s *KeeperTestSuite) TestIterateExecutorWasm() {
 
 func (s *KeeperTestSuite) TestListDateRequestWasm() {
 	s.SetupTest()
-	mockWasm1 := types.NewDataRequestWasm(mockedByteArray, time.Now().UTC(), 1000, 100)
-	mockWasm2 := types.NewDataRequestWasm(append(mockedByteArray, 2), time.Now().UTC(), 1000, 100)
+	mockWasm1 := types.NewOracleProgram(mockedByteArray, time.Now().UTC(), 1000, 100)
+	mockWasm2 := types.NewOracleProgram(append(mockedByteArray, 2), time.Now().UTC(), 1000, 100)
 
-	err := s.keeper.DataRequestWasm.Set(s.ctx, mockWasm1.Hash, mockWasm1)
+	err := s.keeper.OracleProgram.Set(s.ctx, mockWasm1.Hash, mockWasm1)
 	s.Require().NoError(err)
-	err = s.keeper.DataRequestWasm.Set(s.ctx, mockWasm2.Hash, mockWasm2)
+	err = s.keeper.OracleProgram.Set(s.ctx, mockWasm2.Hash, mockWasm2)
 	s.Require().NoError(err)
-	result := s.keeper.ListDataRequestWasms(s.ctx)
+	result := s.keeper.ListOraclePrograms(s.ctx)
 	s.Assert().Equal(2, len(result))
 	s.Assert().Contains(result, hex.EncodeToString(mockWasm1.Hash)+","+strconv.FormatInt(mockWasm1.ExpirationHeight, 10))
 	s.Assert().Contains(result, hex.EncodeToString(mockWasm2.Hash)+","+strconv.FormatInt(mockWasm2.ExpirationHeight, 10))
@@ -141,12 +141,12 @@ func (s *KeeperTestSuite) TestListExecutorWasm() {
 
 func (s *KeeperTestSuite) TestGetAllWasms() {
 	s.SetupTest()
-	mockWasm1 := types.NewDataRequestWasm(mockedByteArray, time.Now().UTC(), 1000, 100)
-	mockWasm2 := types.NewDataRequestWasm(append(mockedByteArray, 2), time.Now().UTC(), 1000, 100)
+	mockWasm1 := types.NewOracleProgram(mockedByteArray, time.Now().UTC(), 1000, 100)
+	mockWasm2 := types.NewOracleProgram(append(mockedByteArray, 2), time.Now().UTC(), 1000, 100)
 
-	err := s.keeper.DataRequestWasm.Set(s.ctx, mockWasm1.Hash, mockWasm1)
+	err := s.keeper.OracleProgram.Set(s.ctx, mockWasm1.Hash, mockWasm1)
 	s.Require().NoError(err)
-	err = s.keeper.DataRequestWasm.Set(s.ctx, mockWasm2.Hash, mockWasm2)
+	err = s.keeper.OracleProgram.Set(s.ctx, mockWasm2.Hash, mockWasm2)
 	s.Require().NoError(err)
 
 	mockWasm3 := types.NewExecutorWasm(mockedByteArray, time.Now().UTC())
@@ -157,7 +157,7 @@ func (s *KeeperTestSuite) TestGetAllWasms() {
 	err = s.keeper.ExecutorWasm.Set(s.ctx, mockWasm4.Hash, mockWasm4)
 	s.Require().NoError(err)
 
-	res1 := s.keeper.GetAllDataRequestWasms(s.ctx)
+	res1 := s.keeper.GetAllOraclePrograms(s.ctx)
 	s.Assert().Equal(2, len(res1))
 	s.Assert().Contains(res1, mockWasm1)
 	s.Assert().Contains(res1, mockWasm2)
@@ -178,9 +178,9 @@ func (s *KeeperTestSuite) TestKeeper_WasmKeyByExpBlock() {
 	wasmKeys := make([][]byte, 0, N)
 	for i := 0; i < N; i++ {
 		byteCode := append(mockedByteArray, byte(i)) //nolint: gocritic
-		mockWasm := types.NewDataRequestWasm(byteCode, tm, bh, ttl)
+		mockWasm := types.NewOracleProgram(byteCode, tm, bh, ttl)
 
-		err := s.keeper.DataRequestWasm.Set(s.ctx, mockWasm.Hash, mockWasm)
+		err := s.keeper.OracleProgram.Set(s.ctx, mockWasm.Hash, mockWasm)
 		s.Require().NoError(err)
 
 		expKey := collections.Join(expHeight, mockWasm.Hash)

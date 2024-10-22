@@ -21,21 +21,21 @@ func NewQuerierImpl(keeper Keeper) types.QueryServer {
 	}
 }
 
-func (q Querier) DataRequestWasm(c context.Context, req *types.QueryDataRequestWasmRequest) (*types.QueryDataRequestWasmResponse, error) {
+func (q Querier) OracleProgram(c context.Context, req *types.QueryOracleProgramRequest) (*types.QueryOracleProgramResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	wasm, err := q.Keeper.GetDataRequestWasm(ctx, req.Hash)
+	wasm, err := q.Keeper.GetOracleProgram(ctx, req.Hash)
 	if err != nil {
 		return nil, err
 	}
-	return &types.QueryDataRequestWasmResponse{
+	return &types.QueryOracleProgramResponse{
 		Wasm: &wasm,
 	}, nil
 }
 
-func (q Querier) DataRequestWasms(c context.Context, _ *types.QueryDataRequestWasmsRequest) (*types.QueryDataRequestWasmsResponse, error) {
+func (q Querier) OraclePrograms(c context.Context, _ *types.QueryOracleProgramsRequest) (*types.QueryOracleProgramsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	return &types.QueryDataRequestWasmsResponse{
-		List: q.ListDataRequestWasms(ctx),
+	return &types.QueryOracleProgramsResponse{
+		List: q.ListOraclePrograms(ctx),
 	}, nil
 }
 

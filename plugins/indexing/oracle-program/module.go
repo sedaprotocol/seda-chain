@@ -17,8 +17,8 @@ import (
 const StoreKey = oracleprogramtypes.StoreKey
 
 func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger, change *storetypes.StoreKVPair) (*types.Message, error) {
-	if _, found := bytes.CutPrefix(change.Key, oracleprogramtypes.DataRequestPrefix); found {
-		val, err := codec.CollValue[oracleprogramtypes.DataRequestWasm](cdc).Decode(change.Value)
+	if _, found := bytes.CutPrefix(change.Key, oracleprogramtypes.OracleProgramPrefix); found {
+		val, err := codec.CollValue[oracleprogramtypes.OracleProgram](cdc).Decode(change.Value)
 		if err != nil {
 			return nil, err
 		}

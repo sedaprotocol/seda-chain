@@ -23,9 +23,9 @@ func validateWasmSize(s []byte) error {
 	return nil
 }
 
-// NewDataRequestWasm constructs a new DataRequestWasm object given
+// NewOracleProgram constructs a new OracleProgram object given
 // bytecode. It panics if it fails to compute hash of bytecode.
-func NewDataRequestWasm(bytecode []byte, addedAt time.Time, _, _ int64) DataRequestWasm {
+func NewOracleProgram(bytecode []byte, addedAt time.Time, _, _ int64) OracleProgram {
 	hash := crypto.Keccak256(bytecode)
 	if hash == nil {
 		panic("failed to compute hash")
@@ -35,7 +35,7 @@ func NewDataRequestWasm(bytecode []byte, addedAt time.Time, _, _ int64) DataRequ
 	// if ttl > 0 {
 	// 	expHeight = curBlock + ttl
 	// }
-	return DataRequestWasm{
+	return OracleProgram{
 		Hash:             hash,
 		Bytecode:         bytecode,
 		AddedAt:          addedAt,

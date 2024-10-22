@@ -22,20 +22,20 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		GetCmdQueryDataRequestWasm(),
+		GetCmdQueryOracleProgram(),
 		GetCmdQueryExecutorWasm(),
-		GetCmdQueryDataRequestWasms(),
+		GetCmdQueryOraclePrograms(),
 		GetCmdQueryExecutorWasms(),
 		GetCmdQueryCoreContractRegistry(),
 	)
 	return cmd
 }
 
-// GetCmdQueryDataRequestWasm returns the command for querying data request wasm..
-func GetCmdQueryDataRequestWasm() *cobra.Command {
+// GetCmdQueryOracleProgram returns the command for querying oracle program.
+func GetCmdQueryOracleProgram() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "data-request-wasm <hash>",
-		Short: "Get data request wasm given its hash",
+		Use:   "oracle-program <hash>",
+		Short: "Get oracle program given its hash",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -44,10 +44,10 @@ func GetCmdQueryDataRequestWasm() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryDataRequestWasmRequest{
+			req := &types.QueryOracleProgramRequest{
 				Hash: args[0],
 			}
-			res, err := queryClient.DataRequestWasm(cmd.Context(), req)
+			res, err := queryClient.OracleProgram(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
@@ -87,12 +87,12 @@ func GetCmdQueryExecutorWasm() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryDataRequestWasms returns the command for querying
-// data request wasms in the store.
-func GetCmdQueryDataRequestWasms() *cobra.Command {
+// GetCmdQueryOraclePrograms returns the command for querying
+// oracle programs in the store.
+func GetCmdQueryOraclePrograms() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list-data-request-wasms",
-		Short: "List hashes and expiration heights of all data request wasms",
+		Use:   "list-oracle-programs",
+		Short: "List hashes and expiration heights of all oracle programs",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -101,7 +101,7 @@ func GetCmdQueryDataRequestWasms() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.DataRequestWasms(cmd.Context(), &types.QueryDataRequestWasmsRequest{})
+			res, err := queryClient.OraclePrograms(cmd.Context(), &types.QueryOracleProgramsRequest{})
 			if err != nil {
 				return err
 			}

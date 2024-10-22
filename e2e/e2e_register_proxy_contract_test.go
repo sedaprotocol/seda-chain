@@ -142,7 +142,7 @@ func (s *IntegrationTestSuite) execWasmStore(
 		command = append(command, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
-	s.T().Logf("storing data request Wasm %s on chain %s", wasmFilePath, c.id)
+	s.T().Logf("storing a wasm file %s on chain %s", wasmFilePath, c.id)
 
 	s.executeTx(ctx, c, command, valIdx, s.expectErrExecValidation(c, valIdx, expectErr))
 }

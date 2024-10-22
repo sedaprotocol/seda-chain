@@ -30,7 +30,7 @@ type Keeper struct {
 	authority string
 
 	Schema               collections.Schema
-	DataRequestWasm      collections.Map[[]byte, types.DataRequestWasm]
+	OracleProgram        collections.Map[[]byte, types.OracleProgram]
 	ExecutorWasm         collections.Map[[]byte, types.ExecutorWasm]
 	WasmExpiration       collections.KeySet[collections.Pair[int64, []byte]]
 	CoreContractRegistry collections.Item[string]
@@ -54,7 +54,7 @@ func NewKeeper(
 		bankKeeper:           bk,
 		wasmKeeper:           wk,
 		wasmViewKeeper:       wvk,
-		DataRequestWasm:      collections.NewMap(sb, types.DataRequestPrefix, "data_request_wasm", collections.BytesKey, codec.CollValue[types.DataRequestWasm](cdc)),
+		OracleProgram:        collections.NewMap(sb, types.OracleProgramPrefix, "oracle_program", collections.BytesKey, codec.CollValue[types.OracleProgram](cdc)),
 		ExecutorWasm:         collections.NewMap(sb, types.ExecutorPrefix, "executor_wasm", collections.BytesKey, codec.CollValue[types.ExecutorWasm](cdc)),
 		WasmExpiration:       collections.NewKeySet(sb, types.WasmExpPrefix, "wasm_expiration", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
 		CoreContractRegistry: collections.NewItem(sb, types.CoreContractRegistryPrefix, "core_contract_registry", collections.StringValue),
@@ -90,24 +90,24 @@ func (k Keeper) GetCoreContractAddr(ctx context.Context) (sdk.AccAddress, error)
 	return contractAddr, nil
 }
 
-// GetDataRequestWasm retrieves the data request wasm from the store
+// GetOracleProgram retrieves the oracle program from the store
 // given its hex-encoded hash.
-func (k Keeper) GetDataRequestWasm(ctx context.Context, hash string) (types.DataRequestWasm, error) {
+func (k Keeper) GetOracleProgram(ctx context.Context, hash string) (types.OracleProgram, error) {
 	hexHash, err := hex.DecodeString(hash)
 	if err != nil {
-		return types.DataRequestWasm{}, types.ErrInvalidHexWasmHash
+		return types.OracleProgram{}, types.ErrInvalidHexWasmHash
 	}
-	wasm, err := k.DataRequestWasm.Get(ctx, hexHash)
+	wasm, err := k.OracleProgram.Get(ctx, hexHash)
 	if err != nil {
-		return types.DataRequestWasm{}, err
+		return types.OracleProgram{}, err
 	}
 	return wasm, nil
 }
 
-// IterateDataRequestWasms iterates over the data request wasms and
+// IterateOraclePrograms iterates over the oracle programs and
 // performs a given callback function.
-func (k Keeper) IterateDataRequestWasms(ctx sdk.Context, callback func(wasm types.DataRequestWasm) (stop bool)) error {
-	iter, err := k.DataRequestWasm.Iterate(ctx, nil)
+func (k Keeper) IterateOraclePrograms(ctx sdk.Context, callback func(wasm types.OracleProgram) (stop bool)) error {
+	iter, err := k.OracleProgram.Iterate(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -148,11 +148,11 @@ func (k Keeper) IterateExecutorWasms(ctx sdk.Context, callback func(wasm types.E
 	return nil
 }
 
-// ListDataRequestWasms returns hashes and expiration block heights
-// of all data request wasms in the store.
-func (k Keeper) ListDataRequestWasms(ctx sdk.Context) []string {
+// ListOraclePrograms returns hashes and expiration block heights
+// of all oracle programs in the store.
+func (k Keeper) ListOraclePrograms(ctx sdk.Context) []string {
 	var results []string
-	err := k.IterateDataRequestWasms(ctx, func(w types.DataRequestWasm) bool {
+	err := k.IterateOraclePrograms(ctx, func(w types.OracleProgram) bool {
 		results = append(results, fmt.Sprintf("%s,%d", hex.EncodeToString(w.Hash), w.ExpirationHeight))
 		return false
 	})
@@ -175,9 +175,9 @@ func (k Keeper) ListExecutorWasms(ctx sdk.Context) []string {
 	return hashes
 }
 
-func (k Keeper) GetAllDataRequestWasms(ctx sdk.Context) []types.DataRequestWasm {
-	var wasms []types.DataRequestWasm
-	err := k.IterateDataRequestWasms(ctx, func(wasm types.DataRequestWasm) bool {
+func (k Keeper) GetAllOraclePrograms(ctx sdk.Context) []types.OracleProgram {
+	var wasms []types.OracleProgram
+	err := k.IterateOraclePrograms(ctx, func(wasm types.OracleProgram) bool {
 		wasms = append(wasms, wasm)
 		return false
 	})
@@ -199,7 +199,7 @@ func (k Keeper) GetAllExecutorWasms(ctx sdk.Context) []types.ExecutorWasm {
 	return wasms
 }
 
-// GetExpiredWasmKeys retrieves the keys of the data request wasms that
+// GetExpiredWasmKeys retrieves the keys of the oracle programs that
 // will expire at the given block height.
 func (k Keeper) GetExpiredWasmKeys(ctx sdk.Context, expirationHeight int64) ([][]byte, error) {
 	ret := make([][]byte, 0)

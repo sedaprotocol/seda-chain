@@ -22,15 +22,15 @@ const (
 	coreWasm     = "core_contract.wasm"
 )
 
-func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {
-	s.Run("store_a_data_request_wasm", func() {
+func (s *IntegrationTestSuite) testWasmStorageStoreOracleProgram() {
+	s.Run("store_an_oracle_program", func() {
 		senderAddress, err := s.chain.validators[0].keyInfo.GetAddress()
 		s.Require().NoError(err)
 		sender := senderAddress.String()
 
 		bytecode, err := os.ReadFile(filepath.Join(localWasmDirPath, drWasm))
 		if err != nil {
-			panic("failed to read data request Wasm file")
+			panic("failed to read a wasm file")
 		}
 		drHashBytes := crypto.Keccak256(bytecode)
 		if drHashBytes == nil {
@@ -55,15 +55,15 @@ func (s *IntegrationTestSuite) testWasmStorageStoreDataRequestWasm() {
 		s.Require().Eventually(
 			func() bool {
 				// Query wasms individually.
-				drWasmRes, err := queryDataRequestWasm(s.endpoint, drHashStr)
+				drWasmRes, err := queryOracleProgram(s.endpoint, drHashStr)
 				s.Require().NoError(err)
 				s.Require().True(bytes.Equal(drHashBytes, drWasmRes.Wasm.Hash))
-				tallyWasmRes, err := queryDataRequestWasm(s.endpoint, tallyHashStr)
+				tallyWasmRes, err := queryOracleProgram(s.endpoint, tallyHashStr)
 				s.Require().NoError(err)
 				s.Require().True(bytes.Equal(tallyHashBytes, tallyWasmRes.Wasm.Hash))
 
 				// Query wasms at once.
-				res, err := queryDataRequestWasms(s.endpoint)
+				res, err := queryOraclePrograms(s.endpoint)
 				s.Require().NoError(err)
 				if len(res.List) == 2 {
 					concat := strings.Join(res.List, "\n")
@@ -103,7 +103,7 @@ func (s *IntegrationTestSuite) execWasmStorageStoreDataRequest(
 		binary,
 		txCommand,
 		types.ModuleName,
-		"store-data-request-wasm",
+		"store-oracle-program",
 		wasmFilePath,
 		"-y",
 	}
@@ -111,7 +111,7 @@ func (s *IntegrationTestSuite) execWasmStorageStoreDataRequest(
 		command = append(command, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
-	s.T().Logf("storing data request wasm %s on chain %s", wasmFilePath, c.id)
+	s.T().Logf("storing a wasm file %s on chain %s", wasmFilePath, c.id)
 
 	s.executeTx(ctx, c, command, valIdx, s.expectErrExecValidation(c, valIdx, expectErr))
 }

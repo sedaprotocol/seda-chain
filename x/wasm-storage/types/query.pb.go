@@ -28,23 +28,23 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// The request message for QueryDataRequestWasm RPC.
-type QueryDataRequestWasmRequest struct {
+// The request message for QueryOracleProgram RPC.
+type QueryOracleProgramRequest struct {
 	Hash string `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
 }
 
-func (m *QueryDataRequestWasmRequest) Reset()         { *m = QueryDataRequestWasmRequest{} }
-func (m *QueryDataRequestWasmRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryDataRequestWasmRequest) ProtoMessage()    {}
-func (*QueryDataRequestWasmRequest) Descriptor() ([]byte, []int) {
+func (m *QueryOracleProgramRequest) Reset()         { *m = QueryOracleProgramRequest{} }
+func (m *QueryOracleProgramRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryOracleProgramRequest) ProtoMessage()    {}
+func (*QueryOracleProgramRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0e3a991a3b0319b3, []int{0}
 }
-func (m *QueryDataRequestWasmRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryOracleProgramRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryDataRequestWasmRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryOracleProgramRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryDataRequestWasmRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryOracleProgramRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -54,42 +54,42 @@ func (m *QueryDataRequestWasmRequest) XXX_Marshal(b []byte, deterministic bool) 
 		return b[:n], nil
 	}
 }
-func (m *QueryDataRequestWasmRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryDataRequestWasmRequest.Merge(m, src)
+func (m *QueryOracleProgramRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOracleProgramRequest.Merge(m, src)
 }
-func (m *QueryDataRequestWasmRequest) XXX_Size() int {
+func (m *QueryOracleProgramRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryDataRequestWasmRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryDataRequestWasmRequest.DiscardUnknown(m)
+func (m *QueryOracleProgramRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOracleProgramRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryDataRequestWasmRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryOracleProgramRequest proto.InternalMessageInfo
 
-func (m *QueryDataRequestWasmRequest) GetHash() string {
+func (m *QueryOracleProgramRequest) GetHash() string {
 	if m != nil {
 		return m.Hash
 	}
 	return ""
 }
 
-// The response message for QueryDataRequestWasm RPC.
-type QueryDataRequestWasmResponse struct {
-	Wasm *DataRequestWasm `protobuf:"bytes,1,opt,name=wasm,proto3" json:"wasm,omitempty"`
+// The response message for QueryOracleProgram RPC.
+type QueryOracleProgramResponse struct {
+	Wasm *OracleProgram `protobuf:"bytes,1,opt,name=wasm,proto3" json:"wasm,omitempty"`
 }
 
-func (m *QueryDataRequestWasmResponse) Reset()         { *m = QueryDataRequestWasmResponse{} }
-func (m *QueryDataRequestWasmResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryDataRequestWasmResponse) ProtoMessage()    {}
-func (*QueryDataRequestWasmResponse) Descriptor() ([]byte, []int) {
+func (m *QueryOracleProgramResponse) Reset()         { *m = QueryOracleProgramResponse{} }
+func (m *QueryOracleProgramResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryOracleProgramResponse) ProtoMessage()    {}
+func (*QueryOracleProgramResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0e3a991a3b0319b3, []int{1}
 }
-func (m *QueryDataRequestWasmResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryOracleProgramResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryDataRequestWasmResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryOracleProgramResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryDataRequestWasmResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryOracleProgramResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -99,41 +99,41 @@ func (m *QueryDataRequestWasmResponse) XXX_Marshal(b []byte, deterministic bool)
 		return b[:n], nil
 	}
 }
-func (m *QueryDataRequestWasmResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryDataRequestWasmResponse.Merge(m, src)
+func (m *QueryOracleProgramResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOracleProgramResponse.Merge(m, src)
 }
-func (m *QueryDataRequestWasmResponse) XXX_Size() int {
+func (m *QueryOracleProgramResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryDataRequestWasmResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryDataRequestWasmResponse.DiscardUnknown(m)
+func (m *QueryOracleProgramResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOracleProgramResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryDataRequestWasmResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryOracleProgramResponse proto.InternalMessageInfo
 
-func (m *QueryDataRequestWasmResponse) GetWasm() *DataRequestWasm {
+func (m *QueryOracleProgramResponse) GetWasm() *OracleProgram {
 	if m != nil {
 		return m.Wasm
 	}
 	return nil
 }
 
-// The request message for QueryDataRequestWasms RPC.
-type QueryDataRequestWasmsRequest struct {
+// The request message for QueryOraclePrograms RPC.
+type QueryOracleProgramsRequest struct {
 }
 
-func (m *QueryDataRequestWasmsRequest) Reset()         { *m = QueryDataRequestWasmsRequest{} }
-func (m *QueryDataRequestWasmsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryDataRequestWasmsRequest) ProtoMessage()    {}
-func (*QueryDataRequestWasmsRequest) Descriptor() ([]byte, []int) {
+func (m *QueryOracleProgramsRequest) Reset()         { *m = QueryOracleProgramsRequest{} }
+func (m *QueryOracleProgramsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryOracleProgramsRequest) ProtoMessage()    {}
+func (*QueryOracleProgramsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0e3a991a3b0319b3, []int{2}
 }
-func (m *QueryDataRequestWasmsRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryOracleProgramsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryDataRequestWasmsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryOracleProgramsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryDataRequestWasmsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryOracleProgramsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -143,35 +143,35 @@ func (m *QueryDataRequestWasmsRequest) XXX_Marshal(b []byte, deterministic bool)
 		return b[:n], nil
 	}
 }
-func (m *QueryDataRequestWasmsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryDataRequestWasmsRequest.Merge(m, src)
+func (m *QueryOracleProgramsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOracleProgramsRequest.Merge(m, src)
 }
-func (m *QueryDataRequestWasmsRequest) XXX_Size() int {
+func (m *QueryOracleProgramsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryDataRequestWasmsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryDataRequestWasmsRequest.DiscardUnknown(m)
+func (m *QueryOracleProgramsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOracleProgramsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryDataRequestWasmsRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryOracleProgramsRequest proto.InternalMessageInfo
 
-// The response message for QueryDataRequestWasms RPC.
-type QueryDataRequestWasmsResponse struct {
+// The response message for QueryOraclePrograms RPC.
+type QueryOracleProgramsResponse struct {
 	List []string `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
 }
 
-func (m *QueryDataRequestWasmsResponse) Reset()         { *m = QueryDataRequestWasmsResponse{} }
-func (m *QueryDataRequestWasmsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryDataRequestWasmsResponse) ProtoMessage()    {}
-func (*QueryDataRequestWasmsResponse) Descriptor() ([]byte, []int) {
+func (m *QueryOracleProgramsResponse) Reset()         { *m = QueryOracleProgramsResponse{} }
+func (m *QueryOracleProgramsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryOracleProgramsResponse) ProtoMessage()    {}
+func (*QueryOracleProgramsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0e3a991a3b0319b3, []int{3}
 }
-func (m *QueryDataRequestWasmsResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryOracleProgramsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryDataRequestWasmsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryOracleProgramsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryDataRequestWasmsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryOracleProgramsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -181,19 +181,19 @@ func (m *QueryDataRequestWasmsResponse) XXX_Marshal(b []byte, deterministic bool
 		return b[:n], nil
 	}
 }
-func (m *QueryDataRequestWasmsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryDataRequestWasmsResponse.Merge(m, src)
+func (m *QueryOracleProgramsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOracleProgramsResponse.Merge(m, src)
 }
-func (m *QueryDataRequestWasmsResponse) XXX_Size() int {
+func (m *QueryOracleProgramsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryDataRequestWasmsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryDataRequestWasmsResponse.DiscardUnknown(m)
+func (m *QueryOracleProgramsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOracleProgramsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryDataRequestWasmsResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryOracleProgramsResponse proto.InternalMessageInfo
 
-func (m *QueryDataRequestWasmsResponse) GetList() []string {
+func (m *QueryOracleProgramsResponse) GetList() []string {
 	if m != nil {
 		return m.List
 	}
@@ -455,10 +455,10 @@ func (m *QueryCoreContractRegistryResponse) GetAddress() string {
 }
 
 func init() {
-	proto.RegisterType((*QueryDataRequestWasmRequest)(nil), "sedachain.wasm_storage.v1.QueryDataRequestWasmRequest")
-	proto.RegisterType((*QueryDataRequestWasmResponse)(nil), "sedachain.wasm_storage.v1.QueryDataRequestWasmResponse")
-	proto.RegisterType((*QueryDataRequestWasmsRequest)(nil), "sedachain.wasm_storage.v1.QueryDataRequestWasmsRequest")
-	proto.RegisterType((*QueryDataRequestWasmsResponse)(nil), "sedachain.wasm_storage.v1.QueryDataRequestWasmsResponse")
+	proto.RegisterType((*QueryOracleProgramRequest)(nil), "sedachain.wasm_storage.v1.QueryOracleProgramRequest")
+	proto.RegisterType((*QueryOracleProgramResponse)(nil), "sedachain.wasm_storage.v1.QueryOracleProgramResponse")
+	proto.RegisterType((*QueryOracleProgramsRequest)(nil), "sedachain.wasm_storage.v1.QueryOracleProgramsRequest")
+	proto.RegisterType((*QueryOracleProgramsResponse)(nil), "sedachain.wasm_storage.v1.QueryOracleProgramsResponse")
 	proto.RegisterType((*QueryExecutorWasmRequest)(nil), "sedachain.wasm_storage.v1.QueryExecutorWasmRequest")
 	proto.RegisterType((*QueryExecutorWasmResponse)(nil), "sedachain.wasm_storage.v1.QueryExecutorWasmResponse")
 	proto.RegisterType((*QueryExecutorWasmsRequest)(nil), "sedachain.wasm_storage.v1.QueryExecutorWasmsRequest")
@@ -472,42 +472,42 @@ func init() {
 }
 
 var fileDescriptor_0e3a991a3b0319b3 = []byte{
-	// 554 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x95, 0x4f, 0x6f, 0xd3, 0x30,
-	0x18, 0xc6, 0x67, 0x28, 0x4c, 0x18, 0x10, 0xe8, 0x15, 0x87, 0x2e, 0x1b, 0x51, 0x89, 0x84, 0xc6,
-	0xbf, 0xc6, 0x74, 0x61, 0x14, 0x34, 0xe0, 0xc0, 0xe0, 0x03, 0xac, 0x17, 0x10, 0x07, 0x22, 0x2f,
-	0xb5, 0xd2, 0x48, 0x6d, 0xdc, 0xd9, 0xee, 0x58, 0x85, 0xb8, 0xf0, 0x09, 0x90, 0xf8, 0x1c, 0x48,
-	0x1c, 0x38, 0x21, 0x71, 0x47, 0x9c, 0x26, 0x71, 0xe1, 0x88, 0x5a, 0x3e, 0x08, 0x8a, 0xeb, 0x96,
-	0xa6, 0x4a, 0xd2, 0x85, 0x9b, 0x2b, 0xbf, 0xbf, 0xe7, 0x7d, 0x9e, 0x37, 0xaf, 0x55, 0x7c, 0x5d,
-	0xb2, 0x36, 0x0d, 0x3a, 0x34, 0x8a, 0xc9, 0x1b, 0x2a, 0x7b, 0xbe, 0x54, 0x5c, 0xd0, 0x90, 0x91,
-	0xc3, 0x06, 0x39, 0x18, 0x30, 0x31, 0x74, 0xfb, 0x82, 0x2b, 0x0e, 0x6b, 0xb3, 0x32, 0x77, 0xbe,
-	0xcc, 0x3d, 0x6c, 0x58, 0x1b, 0x21, 0xe7, 0x61, 0x97, 0x11, 0xda, 0x8f, 0x08, 0x8d, 0x63, 0xae,
-	0xa8, 0x8a, 0x78, 0x2c, 0x27, 0xa0, 0x75, 0x27, 0x5f, 0x3f, 0x25, 0xa4, 0xab, 0x9d, 0x06, 0x5e,
-	0xdf, 0x4b, 0xba, 0x3e, 0xa3, 0x8a, 0xb6, 0xd8, 0xc1, 0x80, 0x49, 0xf5, 0x82, 0xca, 0x9e, 0x39,
-	0x02, 0xe0, 0x4a, 0x87, 0xca, 0x4e, 0x15, 0xd5, 0xd0, 0x8d, 0x73, 0x2d, 0x7d, 0x76, 0x5e, 0xe3,
-	0x8d, 0x6c, 0x44, 0xf6, 0x79, 0x2c, 0x19, 0x3c, 0xc1, 0x95, 0xa4, 0x91, 0x66, 0xce, 0x6f, 0xdd,
-	0x72, 0x73, 0x83, 0xb8, 0x8b, 0x0a, 0x9a, 0x73, 0xec, 0x6c, 0x7d, 0x69, 0xce, 0x8e, 0x87, 0xaf,
-	0xe6, 0xdc, 0x1b, 0x03, 0x80, 0x2b, 0xdd, 0x48, 0xaa, 0x2a, 0xaa, 0x9d, 0x4e, 0x4c, 0x27, 0x67,
-	0xc7, 0xc5, 0x55, 0x0d, 0x3d, 0x3f, 0x62, 0xc1, 0x40, 0x71, 0xb1, 0x2c, 0xe4, 0x4b, 0xbc, 0x96,
-	0x51, 0x6f, 0x1a, 0xec, 0xa4, 0x12, 0x6e, 0x16, 0x24, 0x4c, 0xe1, 0x93, 0x78, 0xeb, 0x19, 0xca,
-	0xb3, 0x6c, 0x77, 0xb1, 0x95, 0x75, 0x59, 0x10, 0xcc, 0xc1, 0x35, 0x4d, 0xec, 0x72, 0xc1, 0x76,
-	0x79, 0xac, 0x04, 0x0d, 0x54, 0x8b, 0x85, 0x91, 0x54, 0x62, 0x38, 0x55, 0x7d, 0x8c, 0xaf, 0x15,
-	0xd4, 0x18, 0xf1, 0x2a, 0x5e, 0xa5, 0xed, 0xb6, 0x60, 0x52, 0x9a, 0x41, 0x4c, 0x7f, 0x6e, 0x7d,
-	0x59, 0xc5, 0x67, 0x34, 0x0f, 0xdf, 0x10, 0xbe, 0xb4, 0x30, 0x76, 0xb8, 0x5f, 0x10, 0xbf, 0x60,
-	0xb5, 0xac, 0x66, 0x69, 0x6e, 0x62, 0xd4, 0x79, 0xf8, 0xfe, 0xe7, 0x9f, 0x8f, 0xa7, 0x3c, 0x68,
-	0x90, 0x44, 0xa0, 0xfe, 0x6f, 0xd5, 0xeb, 0xd3, 0x55, 0x6f, 0x53, 0x45, 0x7d, 0x31, 0x41, 0xfd,
-	0xe4, 0x86, 0xbc, 0x4d, 0x3e, 0xea, 0x3b, 0xf8, 0x8a, 0xf0, 0xe5, 0xc5, 0xb5, 0x81, 0xb2, 0x46,
-	0xa6, 0x1f, 0xcb, 0x7a, 0x50, 0x1e, 0x34, 0x11, 0x3c, 0x1d, 0xa1, 0x0e, 0xb7, 0x4f, 0x1e, 0x41,
-	0xc2, 0x67, 0x84, 0x2f, 0xcc, 0xef, 0x05, 0x78, 0xcb, 0xfa, 0x67, 0x2c, 0xbb, 0x75, 0xaf, 0x1c,
-	0x64, 0x0c, 0x6f, 0x6b, 0xc3, 0x04, 0xea, 0xb9, 0x86, 0x99, 0xc1, 0x52, 0xf3, 0xfe, 0x84, 0xf0,
-	0xc5, 0xd4, 0x2a, 0x43, 0xa9, 0xf6, 0xb3, 0x49, 0x6f, 0x97, 0xa4, 0x8c, 0x6b, 0xa2, 0x5d, 0xdf,
-	0x84, 0xcd, 0x93, 0xb9, 0x96, 0xf0, 0x03, 0xe1, 0x2b, 0x59, 0x8f, 0x04, 0x76, 0x96, 0x19, 0x28,
-	0x78, 0x7e, 0xd6, 0xa3, 0xff, 0x83, 0x4d, 0x88, 0xa6, 0x0e, 0xd1, 0x00, 0x92, 0x1b, 0x22, 0xe0,
-	0x82, 0xf9, 0x81, 0xe1, 0x7d, 0x61, 0x04, 0x9e, 0xee, 0x7d, 0x1f, 0xd9, 0xe8, 0x78, 0x64, 0xa3,
-	0xdf, 0x23, 0x1b, 0x7d, 0x18, 0xdb, 0x2b, 0xc7, 0x63, 0x7b, 0xe5, 0xd7, 0xd8, 0x5e, 0x79, 0xd5,
-	0x0c, 0x23, 0xd5, 0x19, 0xec, 0xbb, 0x01, 0xef, 0x69, 0x51, 0xfd, 0x57, 0x10, 0xf0, 0xee, 0x7c,
-	0x87, 0xa3, 0x74, 0x0f, 0x35, 0xec, 0x33, 0xb9, 0x7f, 0x56, 0x57, 0x7a, 0x7f, 0x03, 0x00, 0x00,
-	0xff, 0xff, 0x50, 0x88, 0x92, 0x96, 0xc4, 0x06, 0x00, 0x00,
+	// 555 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0xcf, 0x6e, 0xd3, 0x40,
+	0x10, 0xc6, 0xbb, 0x10, 0xa8, 0x58, 0x28, 0x87, 0x11, 0x87, 0xd4, 0xad, 0xac, 0x60, 0x09, 0x35,
+	0x20, 0xe2, 0x4d, 0xfa, 0xf7, 0xd0, 0x72, 0xa1, 0xe2, 0x0c, 0xcd, 0x05, 0xd4, 0x8b, 0xb5, 0x75,
+	0x56, 0x8e, 0xa5, 0xc4, 0xeb, 0xee, 0x6e, 0x4a, 0x23, 0xc4, 0x85, 0x27, 0x40, 0xe2, 0x0d, 0xb8,
+	0x23, 0x81, 0xc4, 0x43, 0x20, 0x4e, 0x95, 0xb8, 0x70, 0x44, 0x09, 0x0f, 0x82, 0xbc, 0x59, 0x97,
+	0x18, 0xd9, 0x6e, 0xcc, 0xcd, 0x89, 0xe7, 0x37, 0xf3, 0x7d, 0xb3, 0xdf, 0x1a, 0x3f, 0x90, 0xac,
+	0x47, 0xfd, 0x3e, 0x0d, 0x23, 0xf2, 0x9a, 0xca, 0xa1, 0x27, 0x15, 0x17, 0x34, 0x60, 0xe4, 0xac,
+	0x43, 0x4e, 0x47, 0x4c, 0x8c, 0xdd, 0x58, 0x70, 0xc5, 0x61, 0xf5, 0xb2, 0xcc, 0x9d, 0x2f, 0x73,
+	0xcf, 0x3a, 0xd6, 0x7a, 0xc0, 0x79, 0x30, 0x60, 0x84, 0xc6, 0x21, 0xa1, 0x51, 0xc4, 0x15, 0x55,
+	0x21, 0x8f, 0xe4, 0x0c, 0xb4, 0x1e, 0x17, 0xf7, 0xcf, 0x34, 0xd2, 0xd5, 0x0e, 0xc1, 0xab, 0x47,
+	0xc9, 0xd4, 0xe7, 0x82, 0xfa, 0x03, 0xf6, 0x42, 0xf0, 0x40, 0xd0, 0x61, 0x97, 0x9d, 0x8e, 0x98,
+	0x54, 0x00, 0xb8, 0xd6, 0xa7, 0xb2, 0x5f, 0x47, 0x0d, 0xd4, 0xbc, 0xd5, 0xd5, 0xcf, 0xce, 0x31,
+	0xb6, 0xf2, 0x00, 0x19, 0xf3, 0x48, 0x32, 0x38, 0xc0, 0xb5, 0x64, 0x88, 0x26, 0x6e, 0x6f, 0x36,
+	0xdd, 0x42, 0x13, 0x6e, 0x96, 0xd7, 0x94, 0xb3, 0x9e, 0xd7, 0x5b, 0x1a, 0x35, 0x4e, 0x07, 0xaf,
+	0xe5, 0xbe, 0x35, 0xa3, 0x01, 0xd7, 0x06, 0xa1, 0x54, 0x75, 0xd4, 0xb8, 0x9e, 0x88, 0x4d, 0x9e,
+	0x1d, 0x17, 0xd7, 0x35, 0xf2, 0xec, 0x9c, 0xf9, 0x23, 0xc5, 0xc5, 0x4b, 0x2a, 0x4b, 0xcd, 0xbd,
+	0x32, 0xdb, 0xc8, 0xd6, 0x9b, 0x01, 0xfb, 0x19, 0x6f, 0x1b, 0x25, 0xde, 0x32, 0xf8, 0xcc, 0xda,
+	0x5a, 0x4e, 0xe7, 0x4b, 0x67, 0x6d, 0xe3, 0xfb, 0x9f, 0x97, 0x25, 0xc6, 0x1c, 0xdc, 0xd0, 0xc4,
+	0x21, 0x17, 0xec, 0x90, 0x47, 0x4a, 0x50, 0x5f, 0x75, 0x59, 0x10, 0x4a, 0x25, 0xc6, 0x69, 0xd7,
+	0x27, 0xf8, 0x7e, 0x49, 0x8d, 0x69, 0x5e, 0xc7, 0xcb, 0xb4, 0xd7, 0x13, 0x4c, 0x4a, 0xb3, 0x88,
+	0xf4, 0xe7, 0xe6, 0xc7, 0x65, 0x7c, 0x43, 0xf3, 0xf0, 0x15, 0xe1, 0x95, 0xcc, 0xd2, 0x61, 0xbb,
+	0xc4, 0x7c, 0x61, 0x9c, 0xac, 0x9d, 0x8a, 0xd4, 0x4c, 0xa2, 0xb3, 0xfb, 0xee, 0xc7, 0xef, 0x0f,
+	0xd7, 0xda, 0xe0, 0x92, 0x04, 0x6f, 0xfd, 0x8d, 0x76, 0x2b, 0x8d, 0x36, 0xd7, 0x9c, 0x17, 0xcf,
+	0x40, 0xf2, 0x26, 0x39, 0xcb, 0xb7, 0xf0, 0x05, 0xe1, 0xbb, 0xd9, 0xac, 0x40, 0x35, 0x05, 0xe9,
+	0xf9, 0x58, 0xbb, 0x55, 0x31, 0xa3, 0xbc, 0xad, 0x95, 0x3f, 0x82, 0xe6, 0x82, 0xca, 0x25, 0x7c,
+	0x46, 0xf8, 0xce, 0x7c, 0x0a, 0x60, 0xeb, 0xaa, 0xd1, 0x39, 0xd1, 0xb6, 0xb6, 0xab, 0x41, 0x46,
+	0xed, 0x8e, 0x56, 0x4b, 0xa0, 0x55, 0xa8, 0x96, 0x19, 0xcc, 0x4b, 0xfe, 0x4d, 0xd7, 0xfc, 0x09,
+	0xe1, 0x95, 0x4c, 0x70, 0xa1, 0xd2, 0x78, 0xb9, 0x70, 0x3a, 0x72, 0x6f, 0x87, 0x43, 0xb4, 0xea,
+	0x87, 0xb0, 0xb1, 0x98, 0x6a, 0x09, 0xdf, 0x11, 0xbe, 0x97, 0x77, 0x25, 0x60, 0xff, 0x2a, 0x01,
+	0x25, 0x97, 0xcd, 0x3a, 0xf8, 0x3f, 0xd8, 0x98, 0xd8, 0xd3, 0x26, 0x3a, 0x40, 0x0a, 0x4d, 0xf8,
+	0x5c, 0x30, 0xcf, 0x37, 0xbc, 0x27, 0x4c, 0x83, 0xa7, 0x47, 0xdf, 0x26, 0x36, 0xba, 0x98, 0xd8,
+	0xe8, 0xd7, 0xc4, 0x46, 0xef, 0xa7, 0xf6, 0xd2, 0xc5, 0xd4, 0x5e, 0xfa, 0x39, 0xb5, 0x97, 0x8e,
+	0xf7, 0x82, 0x50, 0xf5, 0x47, 0x27, 0xae, 0xcf, 0x87, 0xba, 0xa9, 0xfe, 0xdc, 0xfb, 0x7c, 0x30,
+	0x3f, 0xe1, 0x3c, 0x3b, 0x43, 0x8d, 0x63, 0x26, 0x4f, 0x6e, 0xea, 0xca, 0xad, 0x3f, 0x01, 0x00,
+	0x00, 0xff, 0xff, 0xee, 0x4a, 0x63, 0xf8, 0xa8, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -522,10 +522,10 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// DataRequestWasm returns a data request wasm given its hash.
-	DataRequestWasm(ctx context.Context, in *QueryDataRequestWasmRequest, opts ...grpc.CallOption) (*QueryDataRequestWasmResponse, error)
-	// DataRequestWasms returns all data request wasms.
-	DataRequestWasms(ctx context.Context, in *QueryDataRequestWasmsRequest, opts ...grpc.CallOption) (*QueryDataRequestWasmsResponse, error)
+	// OracleProgram returns an oracle program given its hash.
+	OracleProgram(ctx context.Context, in *QueryOracleProgramRequest, opts ...grpc.CallOption) (*QueryOracleProgramResponse, error)
+	// OraclePrograms returns all oracle programs.
+	OraclePrograms(ctx context.Context, in *QueryOracleProgramsRequest, opts ...grpc.CallOption) (*QueryOracleProgramsResponse, error)
 	// ExecutorWasm returns an executor wasm given its hash.
 	ExecutorWasm(ctx context.Context, in *QueryExecutorWasmRequest, opts ...grpc.CallOption) (*QueryExecutorWasmResponse, error)
 	// ExecutorWasms returns all executor wasms.
@@ -542,18 +542,18 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
-func (c *queryClient) DataRequestWasm(ctx context.Context, in *QueryDataRequestWasmRequest, opts ...grpc.CallOption) (*QueryDataRequestWasmResponse, error) {
-	out := new(QueryDataRequestWasmResponse)
-	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/DataRequestWasm", in, out, opts...)
+func (c *queryClient) OracleProgram(ctx context.Context, in *QueryOracleProgramRequest, opts ...grpc.CallOption) (*QueryOracleProgramResponse, error) {
+	out := new(QueryOracleProgramResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/OracleProgram", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) DataRequestWasms(ctx context.Context, in *QueryDataRequestWasmsRequest, opts ...grpc.CallOption) (*QueryDataRequestWasmsResponse, error) {
-	out := new(QueryDataRequestWasmsResponse)
-	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/DataRequestWasms", in, out, opts...)
+func (c *queryClient) OraclePrograms(ctx context.Context, in *QueryOracleProgramsRequest, opts ...grpc.CallOption) (*QueryOracleProgramsResponse, error) {
+	out := new(QueryOracleProgramsResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/OraclePrograms", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -589,10 +589,10 @@ func (c *queryClient) CoreContractRegistry(ctx context.Context, in *QueryCoreCon
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// DataRequestWasm returns a data request wasm given its hash.
-	DataRequestWasm(context.Context, *QueryDataRequestWasmRequest) (*QueryDataRequestWasmResponse, error)
-	// DataRequestWasms returns all data request wasms.
-	DataRequestWasms(context.Context, *QueryDataRequestWasmsRequest) (*QueryDataRequestWasmsResponse, error)
+	// OracleProgram returns an oracle program given its hash.
+	OracleProgram(context.Context, *QueryOracleProgramRequest) (*QueryOracleProgramResponse, error)
+	// OraclePrograms returns all oracle programs.
+	OraclePrograms(context.Context, *QueryOracleProgramsRequest) (*QueryOracleProgramsResponse, error)
 	// ExecutorWasm returns an executor wasm given its hash.
 	ExecutorWasm(context.Context, *QueryExecutorWasmRequest) (*QueryExecutorWasmResponse, error)
 	// ExecutorWasms returns all executor wasms.
@@ -605,11 +605,11 @@ type QueryServer interface {
 type UnimplementedQueryServer struct {
 }
 
-func (*UnimplementedQueryServer) DataRequestWasm(ctx context.Context, req *QueryDataRequestWasmRequest) (*QueryDataRequestWasmResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DataRequestWasm not implemented")
+func (*UnimplementedQueryServer) OracleProgram(ctx context.Context, req *QueryOracleProgramRequest) (*QueryOracleProgramResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OracleProgram not implemented")
 }
-func (*UnimplementedQueryServer) DataRequestWasms(ctx context.Context, req *QueryDataRequestWasmsRequest) (*QueryDataRequestWasmsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DataRequestWasms not implemented")
+func (*UnimplementedQueryServer) OraclePrograms(ctx context.Context, req *QueryOracleProgramsRequest) (*QueryOracleProgramsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OraclePrograms not implemented")
 }
 func (*UnimplementedQueryServer) ExecutorWasm(ctx context.Context, req *QueryExecutorWasmRequest) (*QueryExecutorWasmResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExecutorWasm not implemented")
@@ -625,38 +625,38 @@ func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
 }
 
-func _Query_DataRequestWasm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryDataRequestWasmRequest)
+func _Query_OracleProgram_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryOracleProgramRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).DataRequestWasm(ctx, in)
+		return srv.(QueryServer).OracleProgram(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/sedachain.wasm_storage.v1.Query/DataRequestWasm",
+		FullMethod: "/sedachain.wasm_storage.v1.Query/OracleProgram",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).DataRequestWasm(ctx, req.(*QueryDataRequestWasmRequest))
+		return srv.(QueryServer).OracleProgram(ctx, req.(*QueryOracleProgramRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_DataRequestWasms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryDataRequestWasmsRequest)
+func _Query_OraclePrograms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryOracleProgramsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).DataRequestWasms(ctx, in)
+		return srv.(QueryServer).OraclePrograms(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/sedachain.wasm_storage.v1.Query/DataRequestWasms",
+		FullMethod: "/sedachain.wasm_storage.v1.Query/OraclePrograms",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).DataRequestWasms(ctx, req.(*QueryDataRequestWasmsRequest))
+		return srv.(QueryServer).OraclePrograms(ctx, req.(*QueryOracleProgramsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -720,12 +720,12 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*QueryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "DataRequestWasm",
-			Handler:    _Query_DataRequestWasm_Handler,
+			MethodName: "OracleProgram",
+			Handler:    _Query_OracleProgram_Handler,
 		},
 		{
-			MethodName: "DataRequestWasms",
-			Handler:    _Query_DataRequestWasms_Handler,
+			MethodName: "OraclePrograms",
+			Handler:    _Query_OraclePrograms_Handler,
 		},
 		{
 			MethodName: "ExecutorWasm",
@@ -744,7 +744,7 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	Metadata: "sedachain/wasm_storage/v1/query.proto",
 }
 
-func (m *QueryDataRequestWasmRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryOracleProgramRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -754,12 +754,12 @@ func (m *QueryDataRequestWasmRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryDataRequestWasmRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryOracleProgramRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryDataRequestWasmRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryOracleProgramRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -774,7 +774,7 @@ func (m *QueryDataRequestWasmRequest) MarshalToSizedBuffer(dAtA []byte) (int, er
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryDataRequestWasmResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryOracleProgramResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -784,12 +784,12 @@ func (m *QueryDataRequestWasmResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryDataRequestWasmResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryOracleProgramResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryDataRequestWasmResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryOracleProgramResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -809,7 +809,7 @@ func (m *QueryDataRequestWasmResponse) MarshalToSizedBuffer(dAtA []byte) (int, e
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryDataRequestWasmsRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryOracleProgramsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -819,12 +819,12 @@ func (m *QueryDataRequestWasmsRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryDataRequestWasmsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryOracleProgramsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryDataRequestWasmsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryOracleProgramsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -832,7 +832,7 @@ func (m *QueryDataRequestWasmsRequest) MarshalToSizedBuffer(dAtA []byte) (int, e
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryDataRequestWasmsResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryOracleProgramsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -842,12 +842,12 @@ func (m *QueryDataRequestWasmsResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryDataRequestWasmsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryOracleProgramsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryDataRequestWasmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryOracleProgramsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1048,7 +1048,7 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *QueryDataRequestWasmRequest) Size() (n int) {
+func (m *QueryOracleProgramRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1061,7 +1061,7 @@ func (m *QueryDataRequestWasmRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryDataRequestWasmResponse) Size() (n int) {
+func (m *QueryOracleProgramResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1074,7 +1074,7 @@ func (m *QueryDataRequestWasmResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryDataRequestWasmsRequest) Size() (n int) {
+func (m *QueryOracleProgramsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1083,7 +1083,7 @@ func (m *QueryDataRequestWasmsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryDataRequestWasmsResponse) Size() (n int) {
+func (m *QueryOracleProgramsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1176,7 +1176,7 @@ func sovQuery(x uint64) (n int) {
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *QueryDataRequestWasmRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryOracleProgramRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1199,10 +1199,10 @@ func (m *QueryDataRequestWasmRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryDataRequestWasmRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryOracleProgramRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryDataRequestWasmRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryOracleProgramRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1258,7 +1258,7 @@ func (m *QueryDataRequestWasmRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryDataRequestWasmResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryOracleProgramResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1281,10 +1281,10 @@ func (m *QueryDataRequestWasmResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryDataRequestWasmResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryOracleProgramResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryDataRequestWasmResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryOracleProgramResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1317,7 +1317,7 @@ func (m *QueryDataRequestWasmResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Wasm == nil {
-				m.Wasm = &DataRequestWasm{}
+				m.Wasm = &OracleProgram{}
 			}
 			if err := m.Wasm.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1344,7 +1344,7 @@ func (m *QueryDataRequestWasmResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryDataRequestWasmsRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryOracleProgramsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1367,10 +1367,10 @@ func (m *QueryDataRequestWasmsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryDataRequestWasmsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryOracleProgramsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryDataRequestWasmsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryOracleProgramsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -1394,7 +1394,7 @@ func (m *QueryDataRequestWasmsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryDataRequestWasmsResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryOracleProgramsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1417,10 +1417,10 @@ func (m *QueryDataRequestWasmsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryDataRequestWasmsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryOracleProgramsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryDataRequestWasmsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryOracleProgramsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

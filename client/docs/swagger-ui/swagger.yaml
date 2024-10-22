@@ -41,107 +41,6 @@ paths:
                       format: byte
       tags:
         - Query
-  /seda-chain/wasm-storage/data_request_wasm/{hash}:
-    get:
-      summary: DataRequestWasm returns a data request wasm given its hash.
-      operationId: DataRequestWasm
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              wasm:
-                type: object
-                properties:
-                  hash:
-                    type: string
-                    format: byte
-                  bytecode:
-                    type: string
-                    format: byte
-                  added_at:
-                    type: string
-                    format: date-time
-                  expiration_height:
-                    type: string
-                    format: int64
-                    description: >-
-                      ExpirationHeight represents the block height at which the
-                      data request
-
-                      wasm will be pruned. The value of zero means no
-                      expiration.
-                description: DataRequestWasm represents a wasm used for data requests.
-            description: The response message for QueryDataRequestWasm RPC.
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                    value:
-                      type: string
-                      format: byte
-      parameters:
-        - name: hash
-          in: path
-          required: true
-          type: string
-      tags:
-        - Query
-  /seda-chain/wasm-storage/data_request_wasms:
-    get:
-      summary: DataRequestWasms returns all data request wasms.
-      operationId: DataRequestWasms
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              list:
-                type: array
-                items:
-                  type: string
-            description: The response message for QueryDataRequestWasms RPC.
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                    value:
-                      type: string
-                      format: byte
-      tags:
-        - Query
   /seda-chain/wasm-storage/executor_wasm/{hash}:
     get:
       summary: ExecutorWasm returns an executor wasm given its hash.
@@ -212,6 +111,107 @@ paths:
                 items:
                   type: string
             description: The response message for QueryExecutorWasms RPC.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /seda-chain/wasm-storage/oracle_program/{hash}:
+    get:
+      summary: OracleProgram returns an oracle program given its hash.
+      operationId: OracleProgram
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              wasm:
+                type: object
+                properties:
+                  hash:
+                    type: string
+                    format: byte
+                  bytecode:
+                    type: string
+                    format: byte
+                  added_at:
+                    type: string
+                    format: date-time
+                  expiration_height:
+                    type: string
+                    format: int64
+                    description: >-
+                      ExpirationHeight represents the block height at which the
+                      oracle
+
+                      program will be pruned. The value of zero means no
+                      expiration.
+                description: OracleProgram is a wasm used for data request.
+            description: The response message for QueryOracleProgram RPC.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /seda-chain/wasm-storage/oracle_programs:
+    get:
+      summary: OraclePrograms returns all oracle programs.
+      operationId: OraclePrograms
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              list:
+                type: array
+                items:
+                  type: string
+            description: The response message for QueryOraclePrograms RPC.
         default:
           description: An unexpected error response.
           schema:
@@ -31903,7 +31903,20 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
-  sedachain.wasm_storage.v1.DataRequestWasm:
+  sedachain.wasm_storage.v1.ExecutorWasm:
+    type: object
+    properties:
+      hash:
+        type: string
+        format: byte
+      bytecode:
+        type: string
+        format: byte
+      added_at:
+        type: string
+        format: date-time
+    description: ExecutorWasm represents a wasm used for some execution in the protocol.
+  sedachain.wasm_storage.v1.OracleProgram:
     type: object
     properties:
       hash:
@@ -31919,61 +31932,15 @@ definitions:
         type: string
         format: int64
         description: |-
-          ExpirationHeight represents the block height at which the data request
-          wasm will be pruned. The value of zero means no expiration.
-    description: DataRequestWasm represents a wasm used for data requests.
-  sedachain.wasm_storage.v1.ExecutorWasm:
-    type: object
-    properties:
-      hash:
-        type: string
-        format: byte
-      bytecode:
-        type: string
-        format: byte
-      added_at:
-        type: string
-        format: date-time
-    description: ExecutorWasm represents a wasm used for some execution in the protocol.
+          ExpirationHeight represents the block height at which the oracle
+          program will be pruned. The value of zero means no expiration.
+    description: OracleProgram is a wasm used for data request.
   sedachain.wasm_storage.v1.QueryCoreContractRegistryResponse:
     type: object
     properties:
       address:
         type: string
     description: The response message for QueryCoreContractRegistry RPC.
-  sedachain.wasm_storage.v1.QueryDataRequestWasmResponse:
-    type: object
-    properties:
-      wasm:
-        type: object
-        properties:
-          hash:
-            type: string
-            format: byte
-          bytecode:
-            type: string
-            format: byte
-          added_at:
-            type: string
-            format: date-time
-          expiration_height:
-            type: string
-            format: int64
-            description: >-
-              ExpirationHeight represents the block height at which the data
-              request
-
-              wasm will be pruned. The value of zero means no expiration.
-        description: DataRequestWasm represents a wasm used for data requests.
-    description: The response message for QueryDataRequestWasm RPC.
-  sedachain.wasm_storage.v1.QueryDataRequestWasmsResponse:
-    type: object
-    properties:
-      list:
-        type: array
-        items:
-          type: string
-    description: The response message for QueryDataRequestWasms RPC.
   sedachain.wasm_storage.v1.QueryExecutorWasmResponse:
     type: object
     properties:
@@ -32001,6 +31968,37 @@ definitions:
         items:
           type: string
     description: The response message for QueryExecutorWasms RPC.
+  sedachain.wasm_storage.v1.QueryOracleProgramResponse:
+    type: object
+    properties:
+      wasm:
+        type: object
+        properties:
+          hash:
+            type: string
+            format: byte
+          bytecode:
+            type: string
+            format: byte
+          added_at:
+            type: string
+            format: date-time
+          expiration_height:
+            type: string
+            format: int64
+            description: |-
+              ExpirationHeight represents the block height at which the oracle
+              program will be pruned. The value of zero means no expiration.
+        description: OracleProgram is a wasm used for data request.
+    description: The response message for QueryOracleProgram RPC.
+  sedachain.wasm_storage.v1.QueryOracleProgramsResponse:
+    type: object
+    properties:
+      list:
+        type: array
+        items:
+          type: string
+    description: The response message for QueryOraclePrograms RPC.
   cosmos.app.v1alpha1.Config:
     type: object
     properties:

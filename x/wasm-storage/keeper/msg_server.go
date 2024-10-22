@@ -25,10 +25,10 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-// StoreDataRequestWasm stores a data request wasm. It unzips a gzip-
+// StoreOracleProgram stores an oracle program. It unzips a gzip-
 // compressed wasm and stores it using its hash as the key. If a
 // duplicate wasm already exists, an error is returned.
-func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgStoreDataRequestWasm) (*types.MsgStoreDataRequestWasmResponse, error) {
+func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStoreOracleProgram) (*types.MsgStoreOracleProgramResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if err := msg.ValidateBasic(); err != nil {
@@ -43,11 +43,11 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 		return nil, err
 	}
 
-	wasm := types.NewDataRequestWasm(unzipped, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
-	if exists, _ := m.DataRequestWasm.Has(ctx, wasm.Hash); exists {
+	wasm := types.NewOracleProgram(unzipped, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
+	if exists, _ := m.OracleProgram.Has(ctx, wasm.Hash); exists {
 		return nil, types.ErrWasmAlreadyExists
 	}
-	if err := m.DataRequestWasm.Set(ctx, wasm.Hash, wasm); err != nil {
+	if err := m.OracleProgram.Set(ctx, wasm.Hash, wasm); err != nil {
 		return nil, err
 	}
 
@@ -58,7 +58,7 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 	hashString := hex.EncodeToString(wasm.Hash)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeStoreDataRequestWasm,
+			types.EventTypeStoreOracleProgram,
 			sdk.NewAttribute(types.AttributeSender, msg.Sender),
 			sdk.NewAttribute(types.AttributeWasmHash, hashString),
 		),
@@ -67,12 +67,12 @@ func (m msgServer) StoreDataRequestWasm(goCtx context.Context, msg *types.MsgSto
 		return nil, err
 	}
 
-	return &types.MsgStoreDataRequestWasmResponse{
+	return &types.MsgStoreOracleProgramResponse{
 		Hash: hashString,
 	}, nil
 }
 
-// StoreDataRequestWasm stores an executor wasm used in the SEDA protocol.
+// StoreOracleProgram stores an executor wasm used in the SEDA protocol.
 // It unzips a gzip-compressed wasm and stores it using its hash as the key.
 // If a duplicate wasm already exists, an error is returned.
 func (m msgServer) StoreExecutorWasm(goCtx context.Context, msg *types.MsgStoreExecutorWasm) (*types.MsgStoreExecutorWasmResponse, error) {

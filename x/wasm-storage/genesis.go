@@ -20,8 +20,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		panic(err)
 	}
 
-	for _, wasm := range data.DataRequestWasms {
-		if err := k.DataRequestWasm.Set(ctx, wasm.Hash, wasm); err != nil {
+	for _, wasm := range data.OraclePrograms {
+		if err := k.OracleProgram.Set(ctx, wasm.Hash, wasm); err != nil {
 			panic(err)
 		}
 	}
@@ -38,7 +38,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
-	drWasms := k.GetAllDataRequestWasms(ctx)
+	drWasms := k.GetAllOraclePrograms(ctx)
 	execWasms := k.GetAllExecutorWasms(ctx)
 	core, err := k.GetCoreContractAddr(ctx)
 	if err != nil {

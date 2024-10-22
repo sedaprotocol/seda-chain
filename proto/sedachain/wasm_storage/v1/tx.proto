@@ -11,9 +11,9 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
 // Msg service defines the wasm-storage tx gRPC methods.
 service Msg {
-  // StoreDataRequestWasm stores a data request wasm.
-  rpc StoreDataRequestWasm(MsgStoreDataRequestWasm)
-      returns (MsgStoreDataRequestWasmResponse);
+  // StoreOracleProgram stores an oracle program.
+  rpc StoreOracleProgram(MsgStoreOracleProgram)
+      returns (MsgStoreOracleProgramResponse);
   // StoreExecutorWasm stores an executor wasm.
   rpc StoreExecutorWasm(MsgStoreExecutorWasm)
       returns (MsgStoreExecutorWasmResponse);
@@ -25,16 +25,16 @@ service Msg {
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
-// The request message for the StoreDataRequestWasm method.
-message MsgStoreDataRequestWasm {
+// The request message for the StoreOracleProgram method.
+message MsgStoreOracleProgram {
   option (cosmos.msg.v1.signer) = "sender";
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   bytes wasm = 2;
 }
 
-// The response message for the StoreDataRequestWasm method.
-message MsgStoreDataRequestWasmResponse { string hash = 1; }
+// The response message for the StoreOracleProgram method.
+message MsgStoreOracleProgramResponse { string hash = 1; }
 
 // The request message for the StoreExecutorWasm method.
 message MsgStoreExecutorWasm {

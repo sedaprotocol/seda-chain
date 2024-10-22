@@ -50,4 +50,5 @@ Ref: https://keepachangelog.com/en/1.0.0/
 * (x/wasm-storage) [#311](https://github.com/sedaprotocol/seda-chain/pull/311) "Overlay" renamed to "executor" and a few other API changes
 
 ### State Machine Breaking
+* (x/wasm-storage) [#393](https://github.com/sedaprotocol/seda-chain/pull/393) Rename data request wasm to oracle program
 * (x/tally) [#323](https://github.com/sedaprotocol/seda-chain/pull/323) Post data results in batches

@@ -14,8 +14,8 @@ const (
 )
 
 var (
-	// DataRequestPrefix defines prefix to store data request wasms.
-	DataRequestPrefix = collections.NewPrefix(0)
+	// OracleProgramPrefix defines prefix to store oracle programs.
+	OracleProgramPrefix = collections.NewPrefix(0)
 	// ExecutorPrefix defines prefix to store executor wasms.
 	ExecutorPrefix = collections.NewPrefix(1)
 	// WasmExpPrefix defines prefix to track wasm expiration.

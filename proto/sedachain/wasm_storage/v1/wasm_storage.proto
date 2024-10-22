@@ -6,14 +6,14 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
-// DataRequestWasm represents a wasm used for data requests.
-message DataRequestWasm {
+// OracleProgram is a wasm used for data request.
+message OracleProgram {
   bytes hash = 1;
   bytes bytecode = 2;
   google.protobuf.Timestamp added_at = 3
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
-  // ExpirationHeight represents the block height at which the data request
-  // wasm will be pruned. The value of zero means no expiration.
+  // ExpirationHeight represents the block height at which the oracle
+  // program will be pruned. The value of zero means no expiration.
   int64 expiration_height = 4;
 }
 

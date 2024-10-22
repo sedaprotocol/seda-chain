@@ -39,7 +39,7 @@ func (k Keeper) ProcessExpiredWasms(ctx sdk.Context) error {
 		return err
 	}
 	for _, wasmHash := range keys {
-		if err := k.DataRequestWasm.Remove(ctx, wasmHash); err != nil {
+		if err := k.OracleProgram.Remove(ctx, wasmHash); err != nil {
 			return err
 		}
 		if err := k.WasmExpiration.Remove(ctx, collections.Join(blockHeight, wasmHash)); err != nil {

@@ -12,7 +12,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
+func (s *KeeperTestSuite) TestStoreOracleProgram() {
 	regWasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
 	regWasmZipped, err := ioutils.GzipIt(regWasm)
@@ -26,35 +26,35 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 	cases := []struct {
 		name      string
 		preRun    func()
-		input     types.MsgStoreDataRequestWasm
+		input     types.MsgStoreOracleProgram
 		expErr    bool
 		expErrMsg string
-		expOutput types.MsgStoreDataRequestWasmResponse
+		expOutput types.MsgStoreOracleProgramResponse
 	}{
 		{
 			name:   "happy path",
 			preRun: func() {},
-			input: types.MsgStoreDataRequestWasm{
+			input: types.MsgStoreOracleProgram{
 				Sender: s.authority,
 				Wasm:   regWasmZipped,
 			},
 			expErr: false,
-			expOutput: types.MsgStoreDataRequestWasmResponse{
+			expOutput: types.MsgStoreOracleProgramResponse{
 				Hash: hex.EncodeToString(crypto.Keccak256(regWasm)),
 			},
 		},
 		{
-			name: "data request wasm already exist",
-			input: types.MsgStoreDataRequestWasm{
+			name: "oracle program already exist",
+			input: types.MsgStoreOracleProgram{
 				Sender: s.authority,
 				Wasm:   regWasmZipped,
 			},
 			preRun: func() {
-				input := types.MsgStoreDataRequestWasm{
+				input := types.MsgStoreOracleProgram{
 					Sender: s.authority,
 					Wasm:   regWasmZipped,
 				}
-				_, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &input)
+				_, err := s.msgSrvr.StoreOracleProgram(s.ctx, &input)
 				s.Require().Nil(err)
 			},
 			expErr:    true,
@@ -62,7 +62,7 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 		},
 		{
 			name: "unzipped Wasm",
-			input: types.MsgStoreDataRequestWasm{
+			input: types.MsgStoreOracleProgram{
 				Sender: s.authority,
 				Wasm:   regWasm,
 			},
@@ -72,7 +72,7 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 		},
 		{
 			name: "oversized Wasm",
-			input: types.MsgStoreDataRequestWasm{
+			input: types.MsgStoreOracleProgram{
 				Sender: s.authority,
 				Wasm:   oversizedWasmZipped,
 			},
@@ -86,7 +86,7 @@ func (s *KeeperTestSuite) TestStoreDataRequestWasm() {
 			s.SetupTest()
 			tc.preRun()
 			input := tc.input
-			res, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &input)
+			res, err := s.msgSrvr.StoreOracleProgram(s.ctx, &input)
 			if tc.expErr {
 				s.Require().ErrorContains(err, tc.expErrMsg)
 				return
@@ -271,9 +271,9 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	s.Require().NoError(err)
 	wasmTTL := params.WasmTTL
 
-	// Get the list of all data request wasms.
-	dataRequestWasms := s.keeper.ListDataRequestWasms(s.ctx)
-	s.Require().Empty(dataRequestWasms)
+	// Get the list of all oracle programs.
+	oraclePrograms := s.keeper.ListOraclePrograms(s.ctx)
+	s.Require().Empty(oraclePrograms)
 
 	// Save 1 DR Wasm with default exp [params.WasmTTL]
 	drWasm1, err := os.ReadFile("testutil/hello-world.wasm")
@@ -281,7 +281,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	drWasmZipped1, err := ioutils.GzipIt(drWasm1)
 	s.Require().NoError(err)
 
-	resp1, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &types.MsgStoreDataRequestWasm{
+	resp1, err := s.msgSrvr.StoreOracleProgram(s.ctx, &types.MsgStoreOracleProgram{
 		Sender: s.authority,
 		Wasm:   drWasmZipped1,
 	})
@@ -297,7 +297,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	drWasmZipped2, err := ioutils.GzipIt(drWasm2)
 	s.Require().NoError(err)
 
-	resp2, err := s.msgSrvr.StoreDataRequestWasm(s.ctx, &types.MsgStoreDataRequestWasm{
+	resp2, err := s.msgSrvr.StoreOracleProgram(s.ctx, &types.MsgStoreOracleProgram{
 		Sender: s.authority,
 		Wasm:   drWasmZipped2,
 	})
@@ -315,7 +315,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 
 	// H = params.WasmTTL. || firstWasmPruneHeight => 0 + params.WasmTTL
 	// We still have 2 wasms.
-	list := s.keeper.ListDataRequestWasms(s.ctx)
+	list := s.keeper.ListOraclePrograms(s.ctx)
 
 	s.Require().ElementsMatch(list, []string{fmt.Sprintf("%s,%d", resp1.Hash, firstWasmPruneHeight), fmt.Sprintf("%s,%d", resp2.Hash, secondWasmPruneHeight)})
 	// Check WsmExp is in sync
@@ -330,14 +330,14 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	// Simulate EndBlocker Call. This EndBlocker call will have no effect. As at this height no wasm to prune.
 	s.Require().NoError(s.keeper.EndBlock(s.ctx))
 	// Check: 1 wasm was pruned, 1 remained.
-	list = s.keeper.ListDataRequestWasms(s.ctx)
+	list = s.keeper.ListOraclePrograms(s.ctx)
 	s.Require().ElementsMatch(list, []string{fmt.Sprintf("%s,%d", resp2.Hash, secondWasmPruneHeight)})
 	// Check WsmExp is in sync
 	s.Require().Len(getAllWasmExpEntry(s.T(), s.ctx, s.keeper), 1)
 
 	// H = 2 * params.WasmTTL.
 	s.ctx = s.ctx.WithBlockHeight(secondWasmPruneHeight)
-	list = s.keeper.ListDataRequestWasms(s.ctx)
+	list = s.keeper.ListOraclePrograms(s.ctx)
 	s.Require().ElementsMatch(list, []string{fmt.Sprintf("%s,%d", resp2.Hash, secondWasmPruneHeight)})
 	// Simulate EndBlocker Call
 	s.Require().NoError(s.keeper.EndBlock(s.ctx))
@@ -346,7 +346,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 	s.ctx = s.ctx.WithBlockHeight(secondWasmPruneHeight + 1)
 
 	// Both wasm must be pruned.
-	list = s.keeper.ListDataRequestWasms(s.ctx)
+	list = s.keeper.ListOraclePrograms(s.ctx)
 	s.Require().Empty(list) // Check WsmExp is in sync
 	s.Require().Empty(getAllWasmExpEntry(s.T(), s.ctx, s.keeper))
 }

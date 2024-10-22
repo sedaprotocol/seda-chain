@@ -50,10 +50,10 @@ func queryGovProposal(endpoint string, proposalID int) (govtypes.QueryProposalRe
 	return govProposalResp, nil
 }
 
-func queryDataRequestWasm(endpoint, drHash string) (wasmstoragetypes.QueryDataRequestWasmResponse, error) {
-	var res wasmstoragetypes.QueryDataRequestWasmResponse
+func queryOracleProgram(endpoint, drHash string) (wasmstoragetypes.QueryOracleProgramResponse, error) {
+	var res wasmstoragetypes.QueryOracleProgramResponse
 
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/data_request_wasm/%s", endpoint, drHash))
+	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/oracle_program/%s", endpoint, drHash))
 	if err != nil {
 		return res, err
 	}
@@ -78,10 +78,10 @@ func queryExecutorWasm(endpoint, hash string) (wasmstoragetypes.QueryExecutorWas
 	return res, nil
 }
 
-func queryDataRequestWasms(endpoint string) (wasmstoragetypes.QueryDataRequestWasmsResponse, error) {
-	var res wasmstoragetypes.QueryDataRequestWasmsResponse
+func queryOraclePrograms(endpoint string) (wasmstoragetypes.QueryOracleProgramsResponse, error) {
+	var res wasmstoragetypes.QueryOracleProgramsResponse
 
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/data_request_wasms", endpoint))
+	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/oracle_programs", endpoint))
 	if err != nil {
 		return res, err
 	}

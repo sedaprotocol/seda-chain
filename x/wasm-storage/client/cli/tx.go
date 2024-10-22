@@ -26,18 +26,18 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		GetCmdStoreDataRequestWasm(),
+		GetCmdStoreOracleProgram(),
 		SubmitProposalCmd(),
 	)
 	return cmd
 }
 
-// GetCmdStoreDataRequestWasm returns the command for storing a
-// data request wasm file.
-func GetCmdStoreDataRequestWasm() *cobra.Command {
+// GetCmdStoreOracleProgram returns the command for storing a
+// oracle program file.
+func GetCmdStoreOracleProgram() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store-data-request-wasm [wasm file]",
-		Short: "Store data request wasm file",
+		Use:   "store-oracle-program [wasm file]",
+		Short: "Store oracle program file",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -50,7 +50,7 @@ func GetCmdStoreDataRequestWasm() *cobra.Command {
 				return err
 			}
 
-			msg := &types.MsgStoreDataRequestWasm{
+			msg := &types.MsgStoreOracleProgram{
 				Sender: clientCtx.GetFromAddress().String(),
 				Wasm:   wasm,
 			}

@@ -387,12 +387,12 @@ func TestExecuteTally(t *testing.T) {
 			f.mockViewKeeper.EXPECT().QuerySmart(gomock.Any(), gomock.Any(), gomock.Any()).Return(tt.resp, nil)
 
 			// Store the tally wasms.
-			tallyWasm := wasmstoragetypes.NewDataRequestWasm(testdata.SampleTallyWasm(), ctx.BlockTime(), ctx.BlockHeight(), 100)
-			err := f.wasmStorageKeeper.DataRequestWasm.Set(ctx, tallyWasm.Hash, tallyWasm)
+			tallyWasm := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm(), ctx.BlockTime(), ctx.BlockHeight(), 100)
+			err := f.wasmStorageKeeper.OracleProgram.Set(ctx, tallyWasm.Hash, tallyWasm)
 			require.NoError(t, err)
 
-			tallyWasm = wasmstoragetypes.NewDataRequestWasm(testdata.SampleTallyWasm2(), ctx.BlockTime(), ctx.BlockHeight(), 100)
-			err = f.wasmStorageKeeper.DataRequestWasm.Set(ctx, tallyWasm.Hash, tallyWasm)
+			tallyWasm = wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm2(), ctx.BlockTime(), ctx.BlockHeight(), 100)
+			err = f.wasmStorageKeeper.OracleProgram.Set(ctx, tallyWasm.Hash, tallyWasm)
 			require.NoError(t, err)
 
 			// Contract should return not found in response to post data result

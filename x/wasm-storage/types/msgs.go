@@ -8,12 +8,12 @@ import (
 )
 
 var (
-	_ sdk.Msg = &MsgStoreDataRequestWasm{}
+	_ sdk.Msg = &MsgStoreOracleProgram{}
 	_ sdk.Msg = &MsgStoreExecutorWasm{}
 	_ sdk.Msg = &MsgInstantiateCoreContract{}
 )
 
-func (msg *MsgStoreDataRequestWasm) ValidateBasic() error {
+func (msg *MsgStoreOracleProgram) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}

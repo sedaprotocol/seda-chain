@@ -5,10 +5,10 @@ import (
 )
 
 // NewGenesisState constructs a GenesisState object.
-func NewGenesisState(params Params, drWasms []DataRequestWasm, execWasms []ExecutorWasm, coreAddr string) GenesisState {
+func NewGenesisState(params Params, drWasms []OracleProgram, execWasms []ExecutorWasm, coreAddr string) GenesisState {
 	return GenesisState{
 		Params:               params,
-		DataRequestWasms:     drWasms,
+		OraclePrograms:       drWasms,
 		ExecutorWasms:        execWasms,
 		CoreContractRegistry: coreAddr,
 	}

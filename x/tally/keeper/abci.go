@@ -208,7 +208,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 		return result, errorsmod.Wrap(err, "error while applying filter")
 	}
 
-	tallyWasm, err := k.wasmStorageKeeper.GetDataRequestWasm(ctx, req.TallyBinaryID)
+	tallyWasm, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyBinaryID)
 	if err != nil {
 		return result, err
 	}

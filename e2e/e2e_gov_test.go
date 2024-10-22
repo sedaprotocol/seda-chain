@@ -32,7 +32,7 @@ func (s *IntegrationTestSuite) testWasmStorageStoreExecutorWasm() {
 
 	bytecode, err := os.ReadFile(filepath.Join(localWasmDirPath, executorWasm))
 	if err != nil {
-		panic("failed to read data request Wasm file")
+		panic("failed to read a wasm file")
 	}
 	executorHashBytes := crypto.Keccak256(bytecode)
 	if executorHashBytes == nil {

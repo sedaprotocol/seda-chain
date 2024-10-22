@@ -8,18 +8,17 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // DataRequestWasm returns a data request wasm given its hash.
-  rpc DataRequestWasm(QueryDataRequestWasmRequest)
-      returns (QueryDataRequestWasmResponse) {
+  // OracleProgram returns an oracle program given its hash.
+  rpc OracleProgram(QueryOracleProgramRequest)
+      returns (QueryOracleProgramResponse) {
     option (google.api.http).get =
-        "/seda-chain/wasm-storage/data_request_wasm/{hash}";
+        "/seda-chain/wasm-storage/oracle_program/{hash}";
   }
 
-  // DataRequestWasms returns all data request wasms.
-  rpc DataRequestWasms(QueryDataRequestWasmsRequest)
-      returns (QueryDataRequestWasmsResponse) {
-    option (google.api.http).get =
-        "/seda-chain/wasm-storage/data_request_wasms";
+  // OraclePrograms returns all oracle programs.
+  rpc OraclePrograms(QueryOracleProgramsRequest)
+      returns (QueryOracleProgramsResponse) {
+    option (google.api.http).get = "/seda-chain/wasm-storage/oracle_programs";
   }
 
   // ExecutorWasm returns an executor wasm given its hash.
@@ -43,17 +42,17 @@ service Query {
   }
 }
 
-// The request message for QueryDataRequestWasm RPC.
-message QueryDataRequestWasmRequest { string hash = 1; }
+// The request message for QueryOracleProgram RPC.
+message QueryOracleProgramRequest { string hash = 1; }
 
-// The response message for QueryDataRequestWasm RPC.
-message QueryDataRequestWasmResponse { DataRequestWasm wasm = 1; }
+// The response message for QueryOracleProgram RPC.
+message QueryOracleProgramResponse { OracleProgram wasm = 1; }
 
-// The request message for QueryDataRequestWasms RPC.
-message QueryDataRequestWasmsRequest {}
+// The request message for QueryOraclePrograms RPC.
+message QueryOracleProgramsRequest {}
 
-// The response message for QueryDataRequestWasms RPC.
-message QueryDataRequestWasmsResponse { repeated string list = 1; }
+// The response message for QueryOraclePrograms RPC.
+message QueryOracleProgramsResponse { repeated string list = 1; }
 
 // The request message for QueryExecutorWasm RPC.
 message QueryExecutorWasmRequest { string hash = 1; }
