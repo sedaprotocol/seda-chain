@@ -2,6 +2,7 @@ syntax = "proto3";
 package sedachain.wasm_storage.v1;
 
 import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "sedachain/wasm_storage/v1/wasm_storage.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
@@ -49,10 +50,16 @@ message QueryOracleProgramRequest { string hash = 1; }
 message QueryOracleProgramResponse { OracleProgram oracle_program = 1; }
 
 // The request message for QueryOraclePrograms RPC.
-message QueryOracleProgramsRequest {}
+message QueryOracleProgramsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
 
 // The response message for QueryOraclePrograms RPC.
-message QueryOracleProgramsResponse { repeated string list = 1; }
+message QueryOracleProgramsResponse {
+  repeated string list = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
 
 // The request message for QueryExecutorWasm RPC.
 message QueryExecutorWasmRequest { string hash = 1; }

@@ -17,7 +17,7 @@ message OracleProgram {
   int64 expiration_height = 4;
 }
 
-// ExecutorWasm represents a wasm used for some execution in the protocol.
+// ExecutorWasm is a wasm used by some component in the protocol.
 message ExecutorWasm {
   bytes hash = 1;
   bytes bytecode = 2;

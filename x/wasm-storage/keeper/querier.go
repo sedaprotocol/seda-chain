@@ -3,8 +3,10 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -32,10 +34,21 @@ func (q Querier) OracleProgram(c context.Context, req *types.QueryOracleProgramR
 	}, nil
 }
 
-func (q Querier) OraclePrograms(c context.Context, _ *types.QueryOracleProgramsRequest) (*types.QueryOracleProgramsResponse, error) {
+func (q Querier) OraclePrograms(c context.Context, req *types.QueryOracleProgramsRequest) (*types.QueryOracleProgramsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	results, pageRes, err := query.CollectionPaginate(
+		ctx, q.Keeper.OracleProgram, req.Pagination,
+		func(_ []byte, v types.OracleProgram) (string, error) {
+			return fmt.Sprintf("%s,%d", hex.EncodeToString(v.Hash), v.ExpirationHeight), nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.QueryOracleProgramsResponse{
-		List: q.ListOraclePrograms(ctx),
+		List:       results,
+		Pagination: pageRes,
 	}, nil
 }
 
