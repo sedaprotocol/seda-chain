@@ -50,10 +50,10 @@ func queryGovProposal(endpoint string, proposalID int) (govtypes.QueryProposalRe
 	return govProposalResp, nil
 }
 
-func queryOracleProgram(endpoint, drHash string) (wasmstoragetypes.QueryOracleProgramResponse, error) {
+func queryOracleProgram(endpoint, hash string) (wasmstoragetypes.QueryOracleProgramResponse, error) {
 	var res wasmstoragetypes.QueryOracleProgramResponse
 
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/oracle_program/%s", endpoint, drHash))
+	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/oracle_program/%s", endpoint, hash))
 	if err != nil {
 		return res, err
 	}

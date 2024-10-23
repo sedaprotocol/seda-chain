@@ -18,7 +18,7 @@ type Request struct {
 	ConsensusFilter   string                `json:"consensus_filter"`
 	Reveals           map[string]RevealBody `json:"reveals"`
 	SedaPayload       string                `json:"seda_payload"`
-	TallyBinaryID     string                `json:"tally_binary_id"`
+	TallyProgramID    string                `json:"tally_program_id"`
 	TallyInputs       string                `json:"tally_inputs"`
 	Version           string                `json:"version"`
 }

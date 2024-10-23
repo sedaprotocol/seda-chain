@@ -43,24 +43,24 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 		return nil, err
 	}
 
-	wasm := types.NewOracleProgram(unzipped, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
-	if exists, _ := m.OracleProgram.Has(ctx, wasm.Hash); exists {
+	program := types.NewOracleProgram(unzipped, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
+	if exists, _ := m.OracleProgram.Has(ctx, program.Hash); exists {
 		return nil, types.ErrWasmAlreadyExists
 	}
-	if err := m.OracleProgram.Set(ctx, wasm.Hash, wasm); err != nil {
+	if err := m.OracleProgram.Set(ctx, program.Hash, program); err != nil {
 		return nil, err
 	}
 
-	if err := m.WasmExpiration.Set(ctx, collections.Join(wasm.ExpirationHeight, wasm.Hash)); err != nil {
+	if err := m.OracleProgramExpiration.Set(ctx, collections.Join(program.ExpirationHeight, program.Hash)); err != nil {
 		return nil, err
 	}
 
-	hashString := hex.EncodeToString(wasm.Hash)
+	hashHex := hex.EncodeToString(program.Hash)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeStoreOracleProgram,
 			sdk.NewAttribute(types.AttributeSender, msg.Sender),
-			sdk.NewAttribute(types.AttributeWasmHash, hashString),
+			sdk.NewAttribute(types.AttributeOracleProgramHash, hashHex),
 		),
 	)
 	if err != nil {
@@ -68,7 +68,7 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 	}
 
 	return &types.MsgStoreOracleProgramResponse{
-		Hash: hashString,
+		Hash: hashHex,
 	}, nil
 }
 
@@ -108,7 +108,7 @@ func (m msgServer) StoreExecutorWasm(goCtx context.Context, msg *types.MsgStoreE
 		sdk.NewEvent(
 			types.EventTypeExecutorWasm,
 			sdk.NewAttribute(types.AttributeSender, msg.Sender),
-			sdk.NewAttribute(types.AttributeWasmHash, hashString),
+			sdk.NewAttribute(types.AttributeExecutorWasmHash, hashString),
 		),
 	)
 	if err != nil {

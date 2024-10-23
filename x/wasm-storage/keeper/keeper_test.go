@@ -184,13 +184,13 @@ func (s *KeeperTestSuite) TestKeeper_WasmKeyByExpBlock() {
 		s.Require().NoError(err)
 
 		expKey := collections.Join(expHeight, mockWasm.Hash)
-		err = s.keeper.WasmExpiration.Set(s.ctx, expKey)
+		err = s.keeper.OracleProgramExpiration.Set(s.ctx, expKey)
 		s.Require().NoError(err)
 
 		wasmKeys = append(wasmKeys, mockWasm.Hash)
 	}
 
-	result, err := s.keeper.GetExpiredWasmKeys(s.ctx, expHeight)
+	result, err := s.keeper.GetExpiredOracleProgamKeys(s.ctx, expHeight)
 	s.Require().NoError(err)
 	s.Require().ElementsMatch(wasmKeys, result)
 }

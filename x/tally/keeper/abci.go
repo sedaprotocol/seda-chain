@@ -208,7 +208,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 		return result, errorsmod.Wrap(err, "error while applying filter")
 	}
 
-	tallyWasm, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyBinaryID)
+	tallyProgram, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyProgramID)
 	if err != nil {
 		return result, err
 	}
@@ -225,12 +225,12 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 	k.Logger(ctx).Info(
 		"executing tally VM",
 		"request_id", req.ID,
-		"tally_wasm_hash", req.TallyBinaryID,
+		"tally_program_id", req.TallyProgramID,
 		"consensus", result.consensus,
 		"arguments", args,
 	)
 
-	vmRes := tallyvm.ExecuteTallyVm(tallyWasm.Bytecode, args, map[string]string{
+	vmRes := tallyvm.ExecuteTallyVm(tallyProgram.Bytecode, args, map[string]string{
 		"VM_MODE":               "tally",
 		"CONSENSUS":             fmt.Sprintf("%v", result.consensus),
 		"DR_ID":                 req.ID,

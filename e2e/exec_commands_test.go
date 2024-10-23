@@ -27,14 +27,13 @@ const (
 	flagAllowedMessages = "allowed-messages"
 
 	// wasm-storage flags
-	flagWasmType  = "wasm-type"
 	flagTitle     = "title"
 	flagSummary   = "summary"
 	flagAuthority = "authority"
 	flagDeposit   = "deposit"
 	flagLabel     = "label"
 	flagFixMsg    = "fix-msg"
-	flagNoAdmin   = "no-admin"
+	flagAdmin     = "admin"
 )
 
 type flagOption func(map[string]interface{})

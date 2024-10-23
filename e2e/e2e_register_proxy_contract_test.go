@@ -28,7 +28,7 @@ func (s *IntegrationTestSuite) testInstantiateCoreContract() {
 	s.Require().NoError(err)
 
 	s.execWasmStore(s.chain, 0, coreWasm, sender, standardFees.String(), false)
-	s.execInstantiateCoreContract(s.chain, 0, "clean_title", "sustainable_summary", "data-request-executor", sender, standardFees.String(), false, proposalID)
+	s.execInstantiateCoreContract(s.chain, 0, "clean_title", "sustainable_summary", sender, standardFees.String(), false, proposalID)
 	s.execGovVoteYes(s.chain, 0, sender, standardFees.String(), false, proposalID)
 
 	s.Require().Eventually(
@@ -40,8 +40,9 @@ func (s *IntegrationTestSuite) testInstantiateCoreContract() {
 			s.Require().NoError(err)
 			s.Require().NotEmpty(res.Address)
 
-			s.execGetSeedQuery(s.chain, 0, res.Address, false)
-			s.Require().NoError(err)
+			// TODO Seed query is deactivated for now.
+			// s.execGetSeedQuery(s.chain, 0, res.Address, false)
+			// s.Require().NoError(err)
 
 			return true
 		},
@@ -55,7 +56,6 @@ func (s *IntegrationTestSuite) execInstantiateCoreContract(
 	valIdx int,
 	title,
 	summary,
-	_,
 	from,
 	fees string,
 	expectErr bool,
@@ -65,8 +65,8 @@ func (s *IntegrationTestSuite) execInstantiateCoreContract(
 	opt = append(opt, withKeyValue(flagFees, fees))
 	opt = append(opt, withKeyValue(flagFrom, from))
 
-	opt = append(opt, withKeyValue(flagNoAdmin, "true"))
-	opt = append(opt, withKeyValue(flagFixMsg, "true"))
+	opt = append(opt, withKeyValue(flagAdmin, from))
+	// opt = append(opt, withKeyValue(flagFixMsg, "true"))
 
 	opt = append(opt, withKeyValue(flagDeposit, "10000000aseda"))
 	opt = append(opt, withKeyValue(flagTitle, title))
@@ -88,7 +88,7 @@ func (s *IntegrationTestSuite) execInstantiateCoreContract(
 		"submit-proposal",
 		"instantiate-core-contract",
 		codeID,
-		"{\"token\":\"aseda\"}",
+		fmt.Sprintf("{\"token\":\"aseda\",\"owner\":\"%s\",\"chain_id\":\"seda-1-devnet\"}", from),
 		"74657374696e67", // salt
 		"-y",
 	}

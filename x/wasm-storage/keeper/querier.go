@@ -23,12 +23,12 @@ func NewQuerierImpl(keeper Keeper) types.QueryServer {
 
 func (q Querier) OracleProgram(c context.Context, req *types.QueryOracleProgramRequest) (*types.QueryOracleProgramResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	wasm, err := q.Keeper.GetOracleProgram(ctx, req.Hash)
+	program, err := q.Keeper.GetOracleProgram(ctx, req.Hash)
 	if err != nil {
 		return nil, err
 	}
 	return &types.QueryOracleProgramResponse{
-		Wasm: &wasm,
+		OracleProgram: &program,
 	}, nil
 }
 

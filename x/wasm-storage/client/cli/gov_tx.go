@@ -49,7 +49,7 @@ func SubmitProposalCmd() *cobra.Command {
 
 func ProposalStoreExecutorCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store-executor-wasm [wasm file] --wasm-type [wasm_type] --title [text] --summary [text] --authority [address]",
+		Use:   "store-executor-wasm [wasm file] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a proposal to store an executor wasm",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

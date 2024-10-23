@@ -63,7 +63,7 @@ const (
 )
 
 var (
-	standardFees    = sdk.NewCoin(asedaDenom, math.NewInt(330000))
+	standardFees    = sdk.NewCoin(asedaDenom, math.NewInt(1e10))
 	proposalCounter = 0
 )
 

@@ -32,7 +32,7 @@ func (s *IntegrationTestSuite) testWasmStorageStoreExecutorWasm() {
 
 	bytecode, err := os.ReadFile(filepath.Join(localWasmDirPath, executorWasm))
 	if err != nil {
-		panic("failed to read a wasm file")
+		panic("failed to read an executor wasm file")
 	}
 	executorHashBytes := crypto.Keccak256(bytecode)
 	if executorHashBytes == nil {
@@ -40,7 +40,7 @@ func (s *IntegrationTestSuite) testWasmStorageStoreExecutorWasm() {
 	}
 	executorHashStr := hex.EncodeToString(executorHashBytes)
 
-	s.execWasmStorageStoreExecutor(s.chain, 0, executorWasm, "clean_title", "sustainable_summary", "data-request-executor", sender, standardFees.String(), false, proposalID)
+	s.execWasmStorageStoreExecutor(s.chain, 0, executorWasm, "clean_title", "sustainable_summary", sender, standardFees.String(), false, proposalID)
 	s.execGovVoteYes(s.chain, 0, sender, standardFees.String(), false, proposalID)
 
 	s.Require().Eventually(
@@ -65,7 +65,6 @@ func (s *IntegrationTestSuite) execWasmStorageStoreExecutor(
 	executorWasm,
 	title,
 	summary,
-	wasmType,
 	from,
 	fees string,
 	expectErr bool,
@@ -74,7 +73,6 @@ func (s *IntegrationTestSuite) execWasmStorageStoreExecutor(
 ) {
 	opt = append(opt, withKeyValue(flagFees, fees))
 	opt = append(opt, withKeyValue(flagFrom, from))
-	opt = append(opt, withKeyValue(flagWasmType, wasmType))
 	opt = append(opt, withKeyValue(flagTitle, title))
 	opt = append(opt, withKeyValue(flagSummary, summary))
 	opt = append(opt, withKeyValue(flagDeposit, "10000000aseda"))

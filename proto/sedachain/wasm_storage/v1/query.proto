@@ -46,7 +46,7 @@ service Query {
 message QueryOracleProgramRequest { string hash = 1; }
 
 // The response message for QueryOracleProgram RPC.
-message QueryOracleProgramResponse { OracleProgram wasm = 1; }
+message QueryOracleProgramResponse { OracleProgram oracle_program = 1; }
 
 // The request message for QueryOraclePrograms RPC.
 message QueryOracleProgramsRequest {}

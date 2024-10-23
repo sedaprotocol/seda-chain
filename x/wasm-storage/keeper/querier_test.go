@@ -26,7 +26,7 @@ func (s *KeeperTestSuite) TestOracleProgram() {
 	res, err := s.queryClient.OracleProgram(s.ctx, &req)
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
-	s.Require().Equal(storedWasm.Hash, hex.EncodeToString(res.Wasm.Hash))
+	s.Require().Equal(storedWasm.Hash, hex.EncodeToString(res.OracleProgram.Hash))
 }
 
 func (s *KeeperTestSuite) TestExecutorWasm() {

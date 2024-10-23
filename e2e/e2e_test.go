@@ -1,6 +1,6 @@
 package e2e
 
-var runWasmStorageTest = false
+var runWasmStorageTest = true
 
 func (s *IntegrationTestSuite) TestWasmStorage() {
 	if !runWasmStorageTest {

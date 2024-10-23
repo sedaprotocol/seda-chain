@@ -25,31 +25,31 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		err = nil
 	}()
 
-	err = k.ProcessExpiredWasms(ctx)
+	err = k.ExpireOraclePrograms(ctx)
 	if err != nil {
 		return
 	}
 	return
 }
 
-func (k Keeper) ProcessExpiredWasms(ctx sdk.Context) error {
+func (k Keeper) ExpireOraclePrograms(ctx sdk.Context) error {
 	blockHeight := ctx.BlockHeight()
-	keys, err := k.GetExpiredWasmKeys(ctx, blockHeight)
+	keys, err := k.GetExpiredOracleProgamKeys(ctx, blockHeight)
 	if err != nil {
 		return err
 	}
-	for _, wasmHash := range keys {
-		if err := k.OracleProgram.Remove(ctx, wasmHash); err != nil {
+	for _, hash := range keys {
+		if err := k.OracleProgram.Remove(ctx, hash); err != nil {
 			return err
 		}
-		if err := k.WasmExpiration.Remove(ctx, collections.Join(blockHeight, wasmHash)); err != nil {
+		if err := k.OracleProgramExpiration.Remove(ctx, collections.Join(blockHeight, hash)); err != nil {
 			return err
 		}
 
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
-				types.EventTypeWasmExpiration,
-				sdk.NewAttribute(types.AttributeWasmHash, hex.EncodeToString(wasmHash)),
+				types.EventTypeOracleProgramExpiration,
+				sdk.NewAttribute(types.AttributeOracleProgramHash, hex.EncodeToString(hash)),
 			),
 		)
 	}

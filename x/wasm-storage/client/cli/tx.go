@@ -36,8 +36,8 @@ func GetTxCmd() *cobra.Command {
 // oracle program file.
 func GetCmdStoreOracleProgram() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store-oracle-program [wasm file]",
-		Short: "Store oracle program file",
+		Use:   "store-oracle-program [wasm_file]",
+		Short: "Store an oracle program",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)

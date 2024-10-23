@@ -20,8 +20,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 		panic(err)
 	}
 
-	for _, wasm := range data.OraclePrograms {
-		if err := k.OracleProgram.Set(ctx, wasm.Hash, wasm); err != nil {
+	for _, program := range data.OraclePrograms {
+		if err := k.OracleProgram.Set(ctx, program.Hash, program); err != nil {
 			panic(err)
 		}
 	}
@@ -38,14 +38,14 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
-	drWasms := k.GetAllOraclePrograms(ctx)
+	programs := k.GetAllOraclePrograms(ctx)
 	execWasms := k.GetAllExecutorWasms(ctx)
 	core, err := k.GetCoreContractAddr(ctx)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			return types.NewGenesisState(params, drWasms, execWasms, "")
+			return types.NewGenesisState(params, programs, execWasms, "")
 		}
 		panic(err)
 	}
-	return types.NewGenesisState(params, drWasms, execWasms, core.String())
+	return types.NewGenesisState(params, programs, execWasms, core.String())
 }

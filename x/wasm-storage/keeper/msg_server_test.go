@@ -353,7 +353,7 @@ func (s *KeeperTestSuite) TestDRWasmPruning() {
 
 func getAllWasmExpEntry(t *testing.T, c sdk.Context, k *keeper.Keeper) []string {
 	t.Helper()
-	it, err := k.WasmExpiration.Iterate(c, nil)
+	it, err := k.OracleProgramExpiration.Iterate(c, nil)
 	require.NoError(t, err)
 	keys, err := it.Keys()
 	require.NoError(t, err)
