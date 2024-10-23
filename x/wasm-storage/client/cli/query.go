@@ -101,7 +101,16 @@ func GetCmdQueryOraclePrograms() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.OraclePrograms(cmd.Context(), &types.QueryOracleProgramsRequest{})
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+			res, err := queryClient.OraclePrograms(
+				cmd.Context(),
+				&types.QueryOracleProgramsRequest{
+					Pagination: pageReq,
+				},
+			)
 			if err != nil {
 				return err
 			}
@@ -110,6 +119,7 @@ func GetCmdQueryOraclePrograms() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "oracle programs")
 	return cmd
 }
 
