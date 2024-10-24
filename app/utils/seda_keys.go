@@ -5,6 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/btcsuite/btcd/btcec/v2"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
@@ -169,4 +172,20 @@ func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
 		return nil, err
 	}
 	return signature, nil
+}
+
+// PubKeyToAddress converts a public key in the 33-byte compressed
+// format into the Ethereum address format, which is defined as the
+// rightmost 160 bits of a Keccak hash of an ECDSA public key.
+func PubKeyToAddress(pubkey []byte) ([]byte, error) {
+	if len(pubkey) != 33 {
+		return nil, fmt.Errorf("invalid compressed public key %x", pubkey)
+	}
+	key, err := btcec.ParsePubKey(pubkey)
+	if err != nil {
+		return nil, err
+	}
+	// 64-byte format: x-coordinate | y-coordinate
+	uncompressed := append(key.X().Bytes(), key.Y().Bytes()...)
+	return ethcrypto.Keccak256(uncompressed)[12:], nil
 }

@@ -129,7 +129,7 @@ func GetCmdQueryBatches() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
-	flags.AddPaginationFlagsToCmd(cmd, "all batches")
+	flags.AddPaginationFlagsToCmd(cmd, "batches")
 	return cmd
 }
 

@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/collections"
@@ -34,6 +33,10 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 
 	batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
 	if err != nil {
+		if errors.Is(err, types.ErrNoBatchingUpdate) {
+			k.Logger(ctx).Info("skip batch creation", "height", ctx.BlockHeight())
+			return nil
+		}
 		return err
 	}
 
@@ -49,20 +52,43 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 // It returns a resulting batch, data result tree entries, and validator
 // tree entries in that order.
 func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte, error) {
-	// Note current will be "old" for this new batch.
-	oldBatchNum, err := k.GetCurrentBatchNum(ctx)
+	var newBatchNum uint64
+	var latestDataRoot, latestValRoot string
+	latestBatch, err := k.GetLatestBatch(ctx)
 	if err != nil {
-		return types.Batch{}, nil, nil, err
+		if !errors.Is(err, types.ErrBatchingHasNotStarted) {
+			return types.Batch{}, nil, nil, err
+		}
+		newBatchNum = collections.DefaultSequenceStart + 1
+	} else {
+		newBatchNum = latestBatch.BatchNumber + 1
+		latestDataRoot = latestBatch.DataResultRoot
+		latestValRoot = latestBatch.ValidatorRoot
 	}
-	newBatchNum := oldBatchNum + 1
 
+	// Compute current data result tree root and the "super root"
+	// of current and previous data result trees' roots.
 	dataEntries, dataRoot, err := k.ConstructDataResultTree(ctx, newBatchNum)
 	if err != nil {
 		return types.Batch{}, nil, nil, err
 	}
+	latestDataRootHex, err := hex.DecodeString(latestDataRoot)
+	if err != nil {
+		return types.Batch{}, nil, nil, err
+	}
+	superRoot := utils.RootFromLeaves([][]byte{latestDataRootHex, dataRoot})
+
+	// Compute validator tree root.
 	valEntries, valRoot, err := k.ConstructValidatorTree(ctx)
 	if err != nil {
 		return types.Batch{}, nil, nil, err
+	}
+	valRootHex := hex.EncodeToString(valRoot)
+
+	// Skip batching if there is no update in data result root nor
+	// validator root.
+	if len(dataEntries) == 0 && valRootHex == latestValRoot {
+		return types.Batch{}, nil, nil, types.ErrNoBatchingUpdate
 	}
 
 	// Compute the batch ID, which is defined as
@@ -79,18 +105,19 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 	batchID := hash.Sum(nil)
 
 	return types.Batch{
-		BatchNumber:     newBatchNum,
-		BlockHeight:     ctx.BlockHeight(),
-		DataResultRoot:  hex.EncodeToString(dataRoot),
-		ValidatorRoot:   hex.EncodeToString(valRoot),
-		BatchId:         batchID,
-		ProvingMedatada: nil,
+		BatchNumber:           newBatchNum,
+		BlockHeight:           ctx.BlockHeight(),
+		CurrentDataResultRoot: hex.EncodeToString(dataRoot),
+		DataResultRoot:        hex.EncodeToString(superRoot),
+		ValidatorRoot:         valRootHex,
+		BatchId:               batchID,
+		ProvingMedatada:       nil,
 	}, dataEntries, valEntries, nil
 }
 
 // ConstructDataResultTree constructs a data result tree based on the
 // data results that have not been batched yet. It returns the tree's
-// entries (unhashed leaf contents) and hex-encoded root.
+// entries without the domain separators and the tree root.
 func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) ([][]byte, []byte, error) {
 	dataResults, err := k.GetDataResults(ctx, false)
 	if err != nil {
@@ -98,12 +125,14 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) ([]
 	}
 
 	entries := make([][]byte, len(dataResults))
+	treeEntries := make([][]byte, len(dataResults))
 	for i, res := range dataResults {
 		resHash, err := hex.DecodeString(res.Id)
 		if err != nil {
 			return nil, nil, err
 		}
-		entries[i] = append([]byte{utils.SEDASeparatorDataRequest}, resHash...)
+		entries[i] = resHash
+		treeEntries[i] = append([]byte{utils.SEDASeparatorDataRequest}, resHash...)
 
 		err = k.markDataResultAsBatched(ctx, res, newBatchNum)
 		if err != nil {
@@ -111,20 +140,13 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) ([]
 		}
 	}
 
-	newRoot := utils.RootFromEntries(entries)
-	curRoot, err := k.GetLatestDataResultRoot(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-	root := utils.RootFromLeaves([][]byte{curRoot, newRoot})
-
-	return entries, root, nil
+	return entries, utils.RootFromEntries(treeEntries), nil
 }
 
 // ConstructValidatorTree constructs a validator tree based on the
 // validators in the active set and their registered public keys.
-// It returns the tree's entries (unhashed leaf contents) and hex-encoded
-// root.
+// It returns the tree's entries without the domain separators and
+// the tree root.
 func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error) {
 	totalPower, err := k.stakingKeeper.GetLastTotalPower(ctx)
 	if err != nil {
@@ -132,6 +154,7 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 	}
 
 	var entries [][]byte
+	var treeEntries [][]byte
 	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
 		// Retrieve corresponding public key and convert it to
 		// uncompressed form.
@@ -142,7 +165,7 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 			}
 			panic(err)
 		}
-		pkBytes, err := decompressPubKey(secp256k1PubKey.Bytes())
+		addr, err := utils.PubKeyToAddress(secp256k1PubKey.Bytes())
 		if err != nil {
 			k.Logger(ctx).Error("failed to decompress public key", "pubkey", secp256k1PubKey)
 			panic(err)
@@ -153,31 +176,20 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 
 		// TODO Validator set trimming
 
-		// An entry is (domain_separator || pubkey || voting_power_percentage).
-		entry := make([]byte, len(separator)+len(pkBytes)+4)
-		copy(entry[:len(separator)], separator)
-		copy(entry[len(separator):len(separator)+len(pkBytes)], pkBytes)
+		// An entry is (domain_separator | address | voting_power_percentage).
+		treeEntry := make([]byte, len(separator)+len(addr)+4)
+		copy(treeEntry[:len(separator)], separator)
+		copy(treeEntry[len(separator):len(separator)+len(addr)], addr)
 		//nolint:gosec // G115: Max of powerPercent should be 1e8 < 2^64.
-		binary.BigEndian.PutUint32(entry[len(separator)+len(pkBytes):], uint32(powerPercent))
+		binary.BigEndian.PutUint32(treeEntry[len(separator)+len(addr):], uint32(powerPercent))
 
-		entries = append(entries, entry)
+		entries = append(entries, treeEntry[len(separator):])
+		treeEntries = append(treeEntries, treeEntry)
 		return false
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	secp256k1Root := utils.RootFromEntries(entries)
-	return entries, secp256k1Root, nil
-}
-
-// decompressPubKey decompresses a public key in 33-byte compressed
-// format into the one in 64-byte uncompressed format.
-func decompressPubKey(pubKey []byte) ([]byte, error) {
-	x, y := secp256k1.DecompressPubkey(pubKey)
-	if x == nil || y == nil {
-		return nil, types.ErrInvalidPublicKey
-	}
-	// 64-byte format: x-coordinate | y-coordinate
-	return append(x.Bytes(), y.Bytes()...), nil
+	return entries, utils.RootFromEntries(treeEntries), nil
 }
