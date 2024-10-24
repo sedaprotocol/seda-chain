@@ -83,6 +83,7 @@ func BenchmarkSimulation(b *testing.B) {
 		app.DefaultNodeHome,
 		0,
 		appOptions,
+		os.TempDir(),
 		baseapp.SetChainID(config.ChainID),
 	)
 	require.Equal(b, app.Name, bApp.Name())
@@ -158,6 +159,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				app.DefaultNodeHome,
 				simcli.FlagPeriodValue,
 				appOptions,
+				os.TempDir(),
 				fauxMerkleModeOpt,
 				baseapp.SetChainID(chainID),
 			)
@@ -235,6 +237,7 @@ func TestAppExportImport(t *testing.T) {
 		app.DefaultNodeHome,
 		0,
 		appOptions,
+		os.TempDir(),
 		baseapp.SetChainID(config.ChainID),
 	)
 	require.Equal(t, app.Name, bApp.Name())
@@ -295,6 +298,7 @@ func TestAppExportImport(t *testing.T) {
 		app.DefaultNodeHome,
 		0,
 		appOptions,
+		os.TempDir(),
 		baseapp.SetChainID(config.ChainID),
 	)
 	require.Equal(t, app.Name, bApp.Name())
@@ -388,6 +392,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		app.DefaultNodeHome,
 		0,
 		appOptions,
+		os.TempDir(),
 		fauxMerkleModeOpt,
 		baseapp.SetChainID(config.ChainID),
 	)
@@ -454,6 +459,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		app.DefaultNodeHome,
 		0,
 		appOptions,
+		os.TempDir(),
 		fauxMerkleModeOpt,
 		baseapp.SetChainID(config.ChainID),
 	)
