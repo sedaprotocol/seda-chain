@@ -310,8 +310,8 @@ cover-html: test-unit-cover
 
 ifdef GITHUB_TOKEN
 docker-build-e2e:
-	@docker build \
-		--build-arg GITHUB_TOKEN=$(GITHUB_TOKEN) \
+	@echo "${{ secrets.GITHUB_TOKEN }}" | docker build \
+		--secret id=GITHUB_TOKEN,src=/dev/stdin \
 		-t sedaprotocol/sedad-e2e \
 		-f dockerfiles/Dockerfile.e2e .
 else
@@ -389,7 +389,7 @@ rm-testcache:
 
 GO_VERSION=1.21
 GORELEASER_IMAGE := ghcr.io/goreleaser/goreleaser-cross:v$(GO_VERSION)
-COSMWASM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm | sed 's/.* //')
+COSMWASM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //')
 ifdef GITHUB_TOKEN
 release:
 	docker run \
