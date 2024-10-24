@@ -185,5 +185,5 @@ make cover-html
 To run end-to-end tests:
 
 ```bash
-GITHUB_TOKEN=<your_github_pat> make test-e2e
+make test-e2e
 ```

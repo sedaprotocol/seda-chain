@@ -57,7 +57,7 @@ jobs:
 
       - name: 🐳 Build and Push
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./dockerfiles/Dockerfile.release
@@ -68,10 +68,10 @@ jobs:
           platforms: linux/amd64,linux/arm64
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},name-canonical=true,push=true
           tags: ${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}, ${{ env.REGISTRY_IMAGE }}:latest
-  
+
       - name: 🪵 Conventional Changelog
         id: changelog
-        uses: TriPSs/conventional-changelog-action@v3
+        uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.github_token }}
           output-file: "false"

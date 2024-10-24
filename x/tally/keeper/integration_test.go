@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"bytes"
 	"encoding/json"
-	"strings"
 	"testing"
 	"time"
 
@@ -160,7 +159,7 @@ func initFixture(tb testing.TB) *fixture {
 		nil,
 		tempDir,
 		wasmtypes.DefaultWasmConfig(),
-		strings.Join(wasmCapabilities, ","),
+		wasmCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		[]wasmkeeper.Option{}...,
 	)
