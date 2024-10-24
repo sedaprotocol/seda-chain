@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 	"time"
 
@@ -64,6 +63,9 @@ var wasmCapabilities = []string{
 	"cosmwasm_1_2",
 	"cosmwasm_1_3",
 	"cosmwasm_1_4",
+	"cosmwasm_1_5",
+	"cosmwasm_2_0",
+	"cosmwasm_2_1",
 }
 
 const (
@@ -163,7 +165,7 @@ func initFixture(tb testing.TB) *fixture {
 		nil, nil, nil, nil,
 		tempDir,
 		wasmtypes.DefaultWasmConfig(),
-		strings.Join(wasmCapabilities, ","),
+		wasmCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		[]wasmkeeper.Option{}...,
 	)

@@ -77,6 +77,7 @@ func NewRootCmd() *cobra.Command {
 		app.DefaultNodeHome,
 		0,
 		simtestutil.NewAppOptionsWithFlagHome(tempDir()),
+		tempDir(),
 		baseapp.SetChainID("tempchainid"),
 	)
 	encodingConfig := app.EncodingConfig{
@@ -347,6 +348,7 @@ func newApp(
 		cast.ToString(appOpts.Get(sdkflags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		appOpts,
+		"wasm",
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
@@ -387,6 +389,7 @@ func appExport(
 		homePath,
 		uint(1),
 		appOpts,
+		tempDir(),
 	)
 
 	if height != -1 {
