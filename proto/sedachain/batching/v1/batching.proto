@@ -47,8 +47,7 @@ message TreeEntries {
 message BatchSignatures {
   string validator_addr = 1
       [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
-  int64 voting_power = 2;
-  bytes signatures = 3;
+  bytes signatures = 2;
 }
 
 // Params is a list of parameters which can be changed through governance.

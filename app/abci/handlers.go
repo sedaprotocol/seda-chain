@@ -290,7 +290,6 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 			}
 			batchSigs := batchingtypes.BatchSignatures{
 				ValidatorAddr: valAddr,
-				VotingPower:   vote.Validator.Power,
 				Signatures:    vote.VoteExtension,
 			}
 
