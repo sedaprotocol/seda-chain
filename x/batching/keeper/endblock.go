@@ -69,7 +69,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 
 	// Compute current data result tree root and the "super root"
 	// of current and previous data result trees' roots.
-	dataEntries, dataRoot, err := k.ConstructDataResultTree(ctx, latestDataRoot, newBatchNum)
+	dataEntries, dataRoot, err := k.ConstructDataResultTree(ctx, newBatchNum)
 	if err != nil {
 		return types.Batch{}, nil, nil, err
 	}
@@ -118,20 +118,22 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 
 // ConstructDataResultTree constructs a data result tree based on the
 // data results that have not been batched yet. It returns the tree's
-// entries (unhashed leaf contents) and hex-encoded root.
-func (k Keeper) ConstructDataResultTree(ctx sdk.Context, latestDataRoot string, newBatchNum uint64) ([][]byte, []byte, error) {
+// entries without the domain separators and the tree root.
+func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) ([][]byte, []byte, error) {
 	dataResults, err := k.GetDataResults(ctx, false)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	entries := make([][]byte, len(dataResults))
+	treeEntries := make([][]byte, len(dataResults))
 	for i, res := range dataResults {
 		resHash, err := hex.DecodeString(res.Id)
 		if err != nil {
 			return nil, nil, err
 		}
-		entries[i] = append([]byte{utils.SEDASeparatorDataRequest}, resHash...)
+		entries[i] = resHash
+		treeEntries[i] = append([]byte{utils.SEDASeparatorDataRequest}, resHash...)
 
 		err = k.markDataResultAsBatched(ctx, res, newBatchNum)
 		if err != nil {
@@ -139,13 +141,13 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, latestDataRoot string, 
 		}
 	}
 
-	return entries, utils.RootFromEntries(entries), nil
+	return entries, utils.RootFromEntries(treeEntries), nil
 }
 
 // ConstructValidatorTree constructs a validator tree based on the
 // validators in the active set and their registered public keys.
-// It returns the tree's entries (unhashed leaf contents) and hex-encoded
-// root.
+// It returns the tree's entries without the domain separators and
+// the tree root.
 func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error) {
 	totalPower, err := k.stakingKeeper.GetLastTotalPower(ctx)
 	if err != nil {
@@ -153,6 +155,7 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 	}
 
 	var entries [][]byte
+	var treeEntries [][]byte
 	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
 		// Retrieve corresponding public key and convert it to
 		// uncompressed form.
@@ -175,21 +178,21 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 		// TODO Validator set trimming
 
 		// An entry is (domain_separator || pubkey || voting_power_percentage).
-		entry := make([]byte, len(separator)+len(pkBytes)+4)
-		copy(entry[:len(separator)], separator)
-		copy(entry[len(separator):len(separator)+len(pkBytes)], pkBytes)
+		treeEntry := make([]byte, len(separator)+len(pkBytes)+4)
+		copy(treeEntry[:len(separator)], separator)
+		copy(treeEntry[len(separator):len(separator)+len(pkBytes)], pkBytes)
 		//nolint:gosec // G115: Max of powerPercent should be 1e8 < 2^64.
-		binary.BigEndian.PutUint32(entry[len(separator)+len(pkBytes):], uint32(powerPercent))
+		binary.BigEndian.PutUint32(treeEntry[len(separator)+len(pkBytes):], uint32(powerPercent))
 
-		entries = append(entries, entry)
+		entries = append(entries, treeEntry[len(separator):])
+		treeEntries = append(treeEntries, treeEntry)
 		return false
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	secp256k1Root := utils.RootFromEntries(entries)
-	return entries, secp256k1Root, nil
+	return entries, utils.RootFromEntries(treeEntries), nil
 }
 
 // decompressPubKey decompresses a public key in 33-byte compressed
