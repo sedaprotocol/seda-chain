@@ -2,9 +2,9 @@ name: Lint
 
 on:
   pull_request:
-    push:
-      branches:
-        - main
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -33,9 +33,6 @@ jobs:
 
   protobuf:
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/sedaprotocol/vrf-go
-      GITHUB_TOKEN: ${{ secrets.PAT }}
     steps:
       - uses: actions/checkout@v4
       - name: Install Buf

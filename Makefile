@@ -308,16 +308,10 @@ cover-html: test-unit-cover
 	@echo "--> Opening in the browser"
 	@go tool cover -html=$(TEST_COVERAGE_PROFILE)
 
-ifdef GITHUB_TOKEN
 docker-build-e2e:
-	@echo "${{ secrets.GITHUB_TOKEN }}" | docker build \
-		--secret id=GITHUB_TOKEN,src=/dev/stdin \
+	docker build \
 		-t sedaprotocol/sedad-e2e \
 		-f dockerfiles/Dockerfile.e2e .
-else
-docker-build-e2e:
-	@echo "Error: GITHUB_TOKEN variable required to build e2e image"
-endif
 
 .PHONY: cover-html run-tests $(TEST_TARGETS) test test-race docker-build-e2e
 

@@ -2,14 +2,12 @@ name: Interchaintest
 
 on:
   pull_request:
-    push:
-      branches:
-        - main
+  push:
+    branches:
+      - main
 
 env:
   GO_VERSION: "1.21.0"
-  GOPRIVATE: github.com/sedaprotocol/vrf-go
-  GITHUB_TOKEN: ${{ secrets.PAT }}
   TAR_PATH: /tmp/seda-docker-image.tar
   IMAGE_NAME: sedad-e2e
 

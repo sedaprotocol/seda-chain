@@ -3,14 +3,12 @@ name: Build
 
 on:
   pull_request:
-    push:
-      branches:
-        - main
+  push:
+    branches:
+      - main
 
 env:
   GO_VERSION: "1.21.0"
-  GOPRIVATE: github.com/sedaprotocol/vrf-go
-  GITHUB_TOKEN: ${{ secrets.PAT }}
 
 permissions:
   contents: read
@@ -47,9 +45,6 @@ jobs:
         env:
           GOOS: ${{ matrix.targetos }}
           GOARCH: ${{ matrix.arch }}
-      - name: Configure private token
-        run: |
-          git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
       - name: Compile
         run: |
           go mod download
