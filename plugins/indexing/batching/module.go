@@ -2,9 +2,11 @@ package batching
 
 import (
 	"bytes"
+	"encoding/hex"
 	"strconv"
 
 	// "cosmossdk.io/collections"
+	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -17,12 +19,12 @@ import (
 const StoreKey = batchingtypes.StoreKey
 
 func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger, change *storetypes.StoreKVPair) (*types.Message, error) {
-	if _, found := bytes.CutPrefix(change.Key, batchingtypes.DataResultsPrefix); found {
-		if change.Delete {
-			logger.Trace("skipping delete", "change", change)
-			return nil, nil
-		}
+	if change.Delete {
+		logger.Trace("skipping delete", "change", change)
+		return nil, nil
+	}
 
+	if _, found := bytes.CutPrefix(change.Key, batchingtypes.DataResultsPrefix); found {
 		val, err := codec.CollValue[batchingtypes.DataResult](cdc).Decode(change.Value)
 		if err != nil {
 			return nil, err
@@ -53,6 +55,86 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 		}
 
 		return types.NewMessage("data-result", data, ctx), nil
+	} else if _, found := bytes.CutPrefix(change.Key, batchingtypes.BatchesKeyPrefix); found {
+		val, err := codec.CollValue[batchingtypes.Batch](cdc).Decode(change.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		data := struct {
+			BatchNumber     string `json:"batch_number"`
+			BlockHeight     string `json:"block_height"`
+			DataResultRoot  string `json:"data_result_root"`
+			ValidatorRoot   string `json:"validator_root"`
+			BatchID         string `json:"batch_id"`
+			ProvingMedatada string `json:"proving_medatada"`
+		}{
+			BatchNumber:     strconv.FormatUint(val.BatchNumber, 10),
+			BlockHeight:     strconv.FormatInt(val.BlockHeight, 10),
+			DataResultRoot:  val.DataResultRoot,
+			ValidatorRoot:   val.ValidatorRoot,
+			BatchID:         hex.EncodeToString(val.BatchId),
+			ProvingMedatada: hex.EncodeToString(val.ProvingMedatada),
+		}
+
+		return types.NewMessage("batch", data, ctx), nil
+	} else if keyBytes, found := bytes.CutPrefix(change.Key, batchingtypes.BatchAssignmentsPrefix); found {
+		_, key, err := collections.StringKey.Decode(keyBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		val, err := collections.Uint64Value.Decode(change.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		data := struct {
+			DrID        string `json:"dr_id"`
+			BatchNumber string `json:"batch_number"`
+		}{
+			DrID:        key,
+			BatchNumber: strconv.FormatUint(val, 10),
+		}
+
+		return types.NewMessage("dr-batch-assignment", data, ctx), nil
+	} else if keyBytes, found := bytes.CutPrefix(change.Key, batchingtypes.BatchSignaturesKeyPrefix); found {
+		_, key, err := collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey).Decode(keyBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		val, err := codec.CollValue[batchingtypes.BatchSignatures](cdc).Decode(change.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		data := struct {
+			BatchNumber      string `json:"batch_number"`
+			ValidatorAddress string `json:"validator_address"`
+			Signatures       string `json:"signatures"`
+		}{
+			BatchNumber:      strconv.FormatUint(key.K1(), 10),
+			ValidatorAddress: val.ValidatorAddr,
+			Signatures:       hex.EncodeToString(val.Signatures),
+		}
+
+		return types.NewMessage("batch-signatures", data, ctx), nil
+	} else if _, found := bytes.CutPrefix(change.Key, batchingtypes.ParamsKey); found {
+		val, err := codec.CollValue[batchingtypes.Params](cdc).Decode(change.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		data := struct {
+			ModuleName string               `json:"moduleName"`
+			Params     batchingtypes.Params `json:"params"`
+		}{
+			ModuleName: "batching",
+			Params:     val,
+		}
+
+		return types.NewMessage("module-params", data, ctx), nil
 	}
 
 	logger.Trace("skipping change", "change", change)
