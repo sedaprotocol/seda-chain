@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	dcrdsecp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/sha3"
 
@@ -210,14 +211,23 @@ type Result struct {
 	SedaPayload    string `json:"sedaPayload"`
 }
 
+type Validator struct {
+	Identity    string `json:"identity"`
+	VotingPower uint32 `json:"votingPower"`
+	PrivateKey  string `json:"privateKey"`
+	PublicKey   string `json:"publicKey"`
+}
+
 type Tree struct {
 	Root   string   `json:"root"`
 	Leaves []string `json:"leaves"`
 }
 
 type TestData struct {
-	Results []Result `json:"results"`
-	Tree    Tree     `json:"tree"`
+	Results        []Result    `json:"results"`
+	DataResultTree Tree        `json:"tree"`
+	Validators     []Validator `json:"validators"`
+	ValidatorTree  Tree        `json:"validatorsTree"`
 }
 
 const testDataJSON = `{
@@ -357,6 +367,83 @@ const testDataJSON = `{
       "0x664e15863e445b687fdbacea8e7d663c8ae5b8d0ad1eeb1d6da1ec167a1ceb17",
       "0xf1dd3335b8b85f183b19168e31f46b92860cd8e922522379286a2844fc80c31d"
     ]
+  },
+  "validators": [
+    {
+      "identity": "0xCc082f1F022BEA35aC8e1b24F854B36202a3028f",
+      "votingPower": 10000000,
+	  "privateKey": "0x2ad00ff91daf0aaea27c4f476dd4df41facab3b8387a70950850db39cf1c0426",
+      "publicKey": "0x040b070bdea3df39dc6dfc2d79217318c840ef82acce1c944fa890c5ea5f22093c1d57ed4827c1d1a8c2d3bcf80a675f81b13cbf053d60f0b890d18e728ef4aaa5"
+    },
+    {
+      "identity": "0x79492bD49B1F7B86B23C8c6405Bf1474BEd33CF9",
+      "votingPower": 10000000,
+	  "privateKey": "0x97b4fc537164adfe7ef340f333f4617bda558375776b7ed32c3ae403c284c669",
+      "publicKey": "0x044e22b6d78452187ace54a2534dcfd7f7b057872cfcf925e4f6ccd43f328477d78f1ba4f18c3b81097402ebe09a5cb434d433489e57e0607a28f7274eee91af94"
+    },
+    {
+      "identity": "0x1991F8B5b0cCc1B24B0C07884bEC90188f9FC07C",
+      "votingPower": 10000000,
+	  "privateKey": "0x813143a6e5521a0fc08d18306e47d832b55cc50cc38ae6da1adb95357adba421",
+      "publicKey": "0x0474cb50c6c91ed08f6ca08e290a35a4ab1a6aaa7f04d0d3119c5732f9f72238c5743a06b32912332b48eb8471d4afcbdd61cf9b5e413d2a38571c370ffc1e67ef"
+    },
+    {
+      "identity": "0xe0eD1759b6b7356474E310e02FD3dC8eF8c1878f",
+      "votingPower": 10000000,
+	  "privateKey": "0x8f329d64c288c9abef0e611c9a5808f9e524b3173c59e5641dd856c19a862dc4",
+      "publicKey": "0x04fd000dacddf11c28b19825cc93f49002c51e7906027b1b489c835995dd512015e14bc4b61601d25b076c54554bf4954d4891179eceb342b24aa0e1e226c9c254"
+    },
+    {
+      "identity": "0xD39f01574623DB56131de6C2709Ce7a8dfFAa702",
+      "votingPower": 10000000,
+	  "privateKey": "0x44bbdc4f0362f7349bd49d78c650c9314e9ddfc601d63b981858f195371be010",
+      "publicKey": "0x045f5722e04c79ea140fe1059aee438c389047542f1f50ed4a091e632f17bb2dcc1356a0b1d74f4933c41af831ba341b9aabf81a98ad2d476879115ea8ee1a42e0"
+    },
+    {
+      "identity": "0x6C819ddA21706b96639f39F1C930d3b74464c2e8",
+      "votingPower": 10000000,
+	  "privateKey": "0x5cfc4f47231ad65cfb80608d21966af3145699b766fa17bb4718a73dd3eb318f",
+      "publicKey": "0x04d433d87102a16299fe3e6a1eed0aedc06062ff0a379e72190e67d76254f9991f4e40819470712d98cb2bd5df889830023bc3dcd40c80eac02b5249f4d14b1490"
+    },
+    {
+      "identity": "0xF144e8ddE082dB431B24BdB442Cf38Cf365E256C",
+      "votingPower": 10000000,
+	  "privateKey": "0x9eafdf194ea0e55fe4fda6666f75d16825154c65ebde0d755a951a5e4ec10577",
+      "publicKey": "0x04b1be49abfe20e6f556a53e0222a55e8901961ecc2ee28e4c5338c149d130395a2fd1684067c29b620a802fae8d5e4cc935cdc59da9b3b32e84c124841cde37a2"
+    },
+    {
+      "identity": "0x1Dc65448F3Feb1BdA46267BCB6b87dA4ac601217",
+      "votingPower": 10000000,
+	  "privateKey": "0x946b352930a304d8af904739adbbd91ba750d76d8c80c5d0d349b03cede5f5cb",
+      "publicKey": "0x04df13483dd120b1dc572d5d02579d8d3a529fb01efdb7e5863088fdcd5b081787d67bccc01d8902075173b6ab845f327b90a04dd7f82cd95b9b6d81c8ad9d3fce"
+    },
+    {
+      "identity": "0x0dE605f6e31d27F4Ca75a5ac2A396237791A394B",
+      "votingPower": 10000000,
+	  "privateKey": "0x9dac23b2a961fc86b7d8a1f1c0d20634b5b9af9d212a3b3895f3331afad1fefd",
+      "publicKey": "0x046ac264122705205bf5db9f5d2e15d929ba97d3efd1917b37bdc4e046c3b433080a1d69e2a8ae266f98123784a503a6aeabe3fe71645d75cf86bd52e6e8426b51"
+    },
+    {
+      "identity": "0x90599B1969C5CF8A34240a2C8A7a823E8eb1f395",
+      "votingPower": 10000000,
+	  "privateKey": "0xc3ff80fc4a3f3c0941aad43ee71675536481e6d04338f5356ed644bb99c5df80",
+      "publicKey": "0x04f4bb0dd9b3d60988aa8e983be59f3b04ad55925ca357deb882b970177cd22d82e3b12c0adce5c86aa4833f8ae477dfbaeba4b1312a3c2beefbb1ace48f0b43aa"
+    }
+  ],
+  "validatorsTree": {
+    "root": "0x2c5073e9c4308e65eb22152f62611c6f604d6b427c6514bbd1effaf282d9614a",
+    "leaves": [
+      "0x38519bc19a6c21b2e4d5c07f5c317a04907d74428e84ce53d7e31660363697e3",
+      "0xefaaa7508118895a0d04b782da3824d32e8068bc149eb9cb64d5035bfdc23d75",
+      "0x08acd70e8df30e046db9b1f428e801b98426493443630c1a10ed41ca831b59dc",
+      "0xb83b5ecaf184b6525c995e98885c3c26105981d368fba6a32f118d963a8b2f0e",
+      "0x5ea122e40dd0c50ea173ed35af483f3391d910051d0b81b5764962bc7259c75a",
+      "0x1b36b415df57e691bc923f10a6dc481caf1b31a77f3514c443e78e07a9692e70",
+      "0x15c3bea022ed633d5aeabfeba41955d19f23ad533c95d50b121b1cb0c585c2f7",
+      "0xe2f6ad28acf622aad072b4af09ff3e4588c312461fd9f34f87a30398c4874c6f",
+      "0x66931389acd9b85bf84eb1b4b391e0100affed572a4b5695bcbb07c1655fbfe7",
+      "0x49f4e02c70dc0cff353603c5af12911e3fe408e8263005cbe2877e2677789469"
+    ]
   }
 }`
 
@@ -418,5 +505,91 @@ func Test_ConstructDataResultTreeWithTestData(t *testing.T) {
 
 	// Check the tree root (Expected root is computed assuming empty
 	// previous data result root).
-	require.Equal(t, mustHexToBytes(data.Tree.Root), root)
+	require.Equal(t, mustHexToBytes(data.DataResultTree.Root), root)
+}
+
+func Test_ConstructValidatorTreeWithTestData(t *testing.T) {
+	f := initFixture(t)
+
+	var data TestData
+	err := json.Unmarshal([]byte(testDataJSON), &data)
+	if err != nil {
+		log.Fatalf("Error unmarshalling JSON: %v", err)
+	}
+
+	_, _, powers := addBatchSigningValidatorsFromTestData(t, f, data.Validators)
+
+	entries, root, err := f.batchingKeeper.ConstructValidatorTree(f.Context())
+	require.NoError(t, err)
+
+	var totalPower int64
+	for _, power := range powers {
+		totalPower += power
+	}
+	var powerPercents []uint32
+	for i := range powers {
+		powerPercents = append(powerPercents, uint32(powers[i]*1e8/totalPower))
+	}
+
+	// Parse entries to check contents.
+	expectedAddrs := make([][]byte, len(entries))
+	parsedAddrs := make([][]byte, len(entries))
+	parsedPowers := make([]uint32, len(entries))
+	for i, entry := range entries {
+		parsedAddrs[i] = entry[:20]
+		parsedPowers[i] = binary.BigEndian.Uint32(entry[20:])
+		expectedAddr, err := hex.DecodeString(data.Validators[i].Identity[2:])
+		require.NoError(t, err)
+		expectedAddrs[i] = expectedAddr
+	}
+	require.ElementsMatch(t, expectedAddrs, parsedAddrs)
+	require.ElementsMatch(t, powerPercents, parsedPowers)
+
+	// Check the tree root (Expected root is computed assuming empty
+	// previous data result root).
+	require.Equal(t, mustHexToBytes(data.ValidatorTree.Root), root)
+}
+
+func addBatchSigningValidatorsFromTestData(t *testing.T, f *fixture, testData []Validator) ([]sdk.AccAddress, [][]byte, []int64) {
+	t.Helper()
+
+	ctx := f.Context()
+	stakingMsgSvr := sdkstakingkeeper.NewMsgServerImpl(f.stakingKeeper.Keeper)
+
+	num := len(testData)
+	accAmt, ok := math.NewIntFromString("10000000000000000000000000")
+	require.True(t, ok)
+	addrs := simtestutil.AddTestAddrs(f.bankKeeper, f.stakingKeeper, ctx, num, accAmt)
+	secp256k1PubKeys := make([][]byte, len(addrs))
+	powers := make([]int64, len(addrs))
+	for i, addr := range addrs {
+		valAddr := sdk.ValAddress(addr)
+		valPubKey := secp256k1.GenPrivKey().PubKey()
+		powers[i] = int64(testData[i].VotingPower)
+
+		valTokens := sdk.TokensFromConsensusPower(powers[i], sdk.DefaultPowerReduction)
+		valCreateMsg, err := sdkstakingtypes.NewMsgCreateValidator(
+			valAddr.String(),
+			valPubKey,
+			sdk.NewCoin(bondDenom, valTokens),
+			sdkstakingtypes.NewDescription("T", "E", "S", "T", "Z"),
+			sdkstakingtypes.NewCommissionRates(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
+			math.OneInt(),
+		)
+		require.NoError(t, err)
+		res, err := stakingMsgSvr.CreateValidator(ctx, valCreateMsg)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+
+		_, err = f.stakingKeeper.Keeper.EndBlocker(ctx)
+		require.NoError(t, err)
+
+		pvtKey, err := ethcrypto.HexToECDSA(testData[i].PrivateKey[2:])
+		require.NoError(t, err)
+		pk := &secp256k1.PubKey{Key: ethcrypto.CompressPubkey(&pvtKey.PublicKey)}
+
+		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1, pk)
+		require.NoError(t, err)
+	}
+	return addrs, secp256k1PubKeys, powers
 }
