@@ -24,8 +24,8 @@ CORE_CODE_ID=$(echo "$OUTPUT" | jq -r '.events[] | select(.type=="store_code") |
 echo "Instantiating core contract on code id $CORE_CODE_ID"
 
 OUTPUT=$($BIN tx wasm-storage submit-proposal instantiate-core-contract $CORE_CODE_ID \
-    '{"token":"aseda", "owner": "'$DEV_ACCOUNT'", "chain_id":"seda-1-local" }' \
-    74657374696e67 \
+    '{"token":"aseda", "owner": "'$DEV_ACCOUNT'", "chain_id":"'$CHAIN_ID'" }' \
+    $(printf '%x' $CORE_CODE_ID) \
     --admin $DEV_ACCOUNT \
     --label core$CORE_CODE_ID \
     --title 'Core Contract' --summary 'Instantiates and registers core contract' --deposit 10000000aseda \
