@@ -35,23 +35,25 @@ func Test_ConstructDataResultTree(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	entries, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context(), "", rand.Uint64())
+	entries, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context(), rand.Uint64())
 	require.NoError(t, err)
 
 	var entryHexes, drIds []string
+	entriesWithSep := make([][]byte, len(entries)) // add domain separators for tree re-construction
 	for i, entry := range entries {
-		entryHexes = append(entryHexes, hex.EncodeToString(entry[1:]))
+		entryHexes = append(entryHexes, hex.EncodeToString(entry))
 		drIds = append(drIds, dataResults[i].Id)
+		entriesWithSep[i] = append([]byte{utils.SEDASeparatorDataRequest}, entry...)
 	}
 	require.ElementsMatch(t, drIds, entryHexes)
 
 	// Generate proof for each entry and verify.
 	require.NoError(t, err)
-	for i := range entries {
-		proof, err := utils.GetProof(entries, i)
+	for i := range entriesWithSep {
+		proof, err := utils.GetProof(entriesWithSep, i)
 		require.NoError(t, err)
 
-		ret := utils.VerifyProof(proof, root, entries[i])
+		ret := utils.VerifyProof(proof, root, entriesWithSep[i])
 		require.True(t, ret)
 	}
 }
@@ -76,22 +78,23 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	uncompressedPKs := make([][]byte, len(entries))
 	parsedPKs := make([][]byte, len(entries))
 	parsedPowers := make([]uint32, len(entries))
+	entriesWithSep := make([][]byte, len(entries))
 	for i, entry := range entries {
-		require.Equal(t, []byte{utils.SEDASeparatorSecp256k1}, entry[:1])
-		parsedPKs[i] = entry[1:65]
-		parsedPowers[i] = binary.BigEndian.Uint32(entry[65:])
-
+		parsedPKs[i] = entry[:64]
+		parsedPowers[i] = binary.BigEndian.Uint32(entry[64:])
 		uncompressedPKs[i] = decompressPubKey(t, pks[i])
+
+		entriesWithSep[i] = append([]byte{utils.SEDASeparatorSecp256k1}, entry...)
 	}
 	require.ElementsMatch(t, uncompressedPKs, parsedPKs)
 	require.ElementsMatch(t, powerPercents, parsedPowers)
 
 	// Generate proof for each entry and verify.
 	require.NoError(t, err)
-	for i := range entries {
-		pf, err := utils.GetProof(entries, i)
+	for i := range entriesWithSep {
+		pf, err := utils.GetProof(entriesWithSep, i)
 		require.NoError(t, err)
-		ret := utils.VerifyProof(pf, root, entries[i])
+		ret := utils.VerifyProof(pf, root, entriesWithSep[i])
 		require.True(t, ret)
 	}
 }
@@ -408,11 +411,10 @@ func Test_ConstructDataResultTreeWithTestData(t *testing.T) {
 		err := f.batchingKeeper.SetDataResultForBatching(f.Context(), dr)
 		require.NoError(t, err)
 	}
-	_, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context(), "", rand.Uint64())
+	_, root, err := f.batchingKeeper.ConstructDataResultTree(f.Context(), rand.Uint64())
 	require.NoError(t, err)
 
 	// Check the tree root (Expected root is computed assuming empty
 	// previous data result root).
-	expRoot := utils.RootFromLeaves([][]byte{nil, mustHexToBytes(data.Tree.Root)})
-	require.Equal(t, expRoot, root)
+	require.Equal(t, mustHexToBytes(data.Tree.Root), root)
 }
