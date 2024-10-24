@@ -13,6 +13,7 @@ import (
 
 	dcrdsecp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/math"
 
@@ -75,18 +76,17 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	}
 
 	// Parse entries to check contents.
-	uncompressedPKs := make([][]byte, len(entries))
-	parsedPKs := make([][]byte, len(entries))
+	expectedAddrs := make([][]byte, len(entries))
+	parsedAddrs := make([][]byte, len(entries))
 	parsedPowers := make([]uint32, len(entries))
 	entriesWithSep := make([][]byte, len(entries))
 	for i, entry := range entries {
-		parsedPKs[i] = entry[:64]
-		parsedPowers[i] = binary.BigEndian.Uint32(entry[64:])
-		uncompressedPKs[i] = decompressPubKey(t, pks[i])
-
+		parsedAddrs[i] = entry[:20]
+		parsedPowers[i] = binary.BigEndian.Uint32(entry[20:])
+		expectedAddrs[i] = compressedPubKeyToAddress(t, pks[i])
 		entriesWithSep[i] = append([]byte{utils.SEDASeparatorSecp256k1}, entry...)
 	}
-	require.ElementsMatch(t, uncompressedPKs, parsedPKs)
+	require.ElementsMatch(t, expectedAddrs, parsedAddrs)
 	require.ElementsMatch(t, powerPercents, parsedPowers)
 
 	// Generate proof for each entry and verify.
@@ -139,15 +139,17 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 	return addrs, pubKeys, powers
 }
 
-// decompressPubKey decompresses a 33-byte long compressed public key
-// into a 64-byte long uncompressed format.
-func decompressPubKey(t *testing.T, pubKey []byte) []byte {
+// compressedPubKeyToAddress converts a compressed public key to an
+// Ethereum-style address.
+func compressedPubKeyToAddress(t *testing.T, pubKey []byte) []byte {
 	t.Helper()
 	pk, err := dcrdsecp256k1.ParsePubKey(pubKey)
 	if err != nil {
 		panic(err)
 	}
-	return pk.SerializeUncompressed()[1:]
+	s := sha3.NewLegacyKeccak256()
+	s.Write(pk.SerializeUncompressed()[1:])
+	return s.Sum(nil)[12:]
 }
 
 // generateDataResults returns a given number of randomly-generated

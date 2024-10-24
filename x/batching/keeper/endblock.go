@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/collections"
@@ -166,7 +165,7 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 			}
 			panic(err)
 		}
-		pkBytes, err := decompressPubKey(secp256k1PubKey.Bytes())
+		addr, err := utils.PubKeyToAddress(secp256k1PubKey.Bytes())
 		if err != nil {
 			k.Logger(ctx).Error("failed to decompress public key", "pubkey", secp256k1PubKey)
 			panic(err)
@@ -177,12 +176,12 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 
 		// TODO Validator set trimming
 
-		// An entry is (domain_separator || pubkey || voting_power_percentage).
-		treeEntry := make([]byte, len(separator)+len(pkBytes)+4)
+		// An entry is (domain_separator | address | voting_power_percentage).
+		treeEntry := make([]byte, len(separator)+len(addr)+4)
 		copy(treeEntry[:len(separator)], separator)
-		copy(treeEntry[len(separator):len(separator)+len(pkBytes)], pkBytes)
+		copy(treeEntry[len(separator):len(separator)+len(addr)], addr)
 		//nolint:gosec // G115: Max of powerPercent should be 1e8 < 2^64.
-		binary.BigEndian.PutUint32(treeEntry[len(separator)+len(pkBytes):], uint32(powerPercent))
+		binary.BigEndian.PutUint32(treeEntry[len(separator)+len(addr):], uint32(powerPercent))
 
 		entries = append(entries, treeEntry[len(separator):])
 		treeEntries = append(treeEntries, treeEntry)
@@ -193,15 +192,4 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 	}
 
 	return entries, utils.RootFromEntries(treeEntries), nil
-}
-
-// decompressPubKey decompresses a public key in 33-byte compressed
-// format into the one in 64-byte uncompressed format.
-func decompressPubKey(pubKey []byte) ([]byte, error) {
-	x, y := secp256k1.DecompressPubkey(pubKey)
-	if x == nil || y == nil {
-		return nil, types.ErrInvalidPublicKey
-	}
-	// 64-byte format: x-coordinate | y-coordinate
-	return append(x.Bytes(), y.Bytes()...), nil
 }
