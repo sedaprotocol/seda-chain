@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	types "github.com/CosmWasm/wasmd/x/wasm/types"
-	types0 "github.com/CosmWasm/wasmvm/types"
+	types0 "github.com/CosmWasm/wasmvm/v2/types"
 	types1 "github.com/cosmos/cosmos-sdk/types"
 	types2 "github.com/cosmos/ibc-go/modules/capability/types"
 	exported "github.com/cosmos/ibc-go/v8/modules/core/exported"

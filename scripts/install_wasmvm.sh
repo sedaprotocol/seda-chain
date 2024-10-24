@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ARCH=$(uname -m)
-WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | sed 's/.* //')
+WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //')
 
 wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm.$ARCH.so -O /lib/libwasmvm.$ARCH.so && \
   # verify checksum
