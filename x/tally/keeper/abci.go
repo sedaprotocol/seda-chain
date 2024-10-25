@@ -34,7 +34,22 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		err = nil
 	}()
 
-	err = k.ProcessTallies(ctx)
+	coreContract, err := k.wasmStorageKeeper.GetCoreContractAddr(ctx)
+	if err != nil {
+		return
+	}
+	if coreContract == nil {
+		k.Logger(ctx).Info("skipping tally end block - core contract has not been registered")
+		return
+	}
+
+	postRes, err := k.wasmKeeper.Sudo(ctx, coreContract, []byte(`{"expire_data_requests":{}}`))
+	if err != nil {
+		return
+	}
+	k.Logger(ctx).Debug("sudo expire_data_requests", "res", postRes)
+
+	err = k.ProcessTallies(ctx, coreContract)
 	if err != nil {
 		return
 	}
@@ -43,17 +58,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 
 // ProcessTallies fetches from the core contract the list of requests
 // to be tallied and then goes through it to filter and tally.
-func (k Keeper) ProcessTallies(ctx sdk.Context) error {
-	// Get the Core Contract address.
-	coreContract, err := k.wasmStorageKeeper.GetCoreContractAddr(ctx)
-	if err != nil {
-		return err
-	}
-	if coreContract == nil {
-		k.Logger(ctx).Info("skipping tally end block - core contract has not been registered")
-		return nil
-	}
-
+func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) error {
 	// Fetch tally-ready data requests.
 	// TODO: Deal with offset and limits. (#313)
 	queryRes, err := k.wasmViewKeeper.QuerySmart(ctx, coreContract, []byte(`{"get_data_requests_by_status":{"status": "tallying", "offset": 0, "limit": 100}}`))
@@ -85,6 +90,18 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			GasUsed:        0, // TODO (#367)
 			PaybackAddress: req.PaybackAddress,
 			SedaPayload:    req.SedaPayload,
+		}
+
+		// Check for expiration.
+		if len(req.Commits) < int(req.ReplicationFactor) {
+			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
+			dataResults[i].ExitCode = 200
+			continue
+		}
+		if len(req.Reveals) < int(req.ReplicationFactor) {
+			dataResults[i].Result = []byte(fmt.Sprintf("need %d reveals; received %d", req.ReplicationFactor, len(req.Commits)))
+			dataResults[i].ExitCode = 201
+			continue
 		}
 
 		result, err := k.FilterAndTally(ctx, req)

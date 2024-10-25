@@ -249,7 +249,6 @@ func TestExecuteTally(t *testing.T) {
 			resp: []byte(`[
 				{
 				   "consensus_filter":"AAEBAQE=",
-				   "commits":{},
 				   "dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf",
 				   "dr_inputs":"",
 				   "gas_limit":5000000000,
@@ -259,6 +258,11 @@ func TestExecuteTally(t *testing.T) {
 				   "memo":"",
 				   "payback_address":"",
 				   "replication_factor":3,
+				   "commits":{
+					  "1b85dfb9420e6757630a0db2280fa1787ec8c1e419a6aca76dbbfe8ef6e17521":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f",
+					  "1dae290cd880b79d21079d89aee3460cf8a7d445fb35cade70cf8aa96924441c":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f",
+					  "421e735518ef77fc1209a9d3585cdf096669b52ea68549e2ce048d4919b4c8c0":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"
+				   },
 				   "reveals":{
 					  "1b85dfb9420e6757630a0db2280fa1787ec8c1e419a6aca76dbbfe8ef6e17521":{
 						 "exit_code":0,
@@ -286,7 +290,6 @@ func TestExecuteTally(t *testing.T) {
 				},
 				{
 				   "consensus_filter":"AAEBAQE=",
-				   "commits":{},
 				   "dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf",
 				   "dr_inputs":"",
 				   "gas_limit":5000000000,
@@ -296,6 +299,9 @@ func TestExecuteTally(t *testing.T) {
 				   "memo":"",
 				   "payback_address":"",
 				   "replication_factor":1,
+				   "commits":{
+				      "c9a4c8f1e70a0059a88b4768a920e41c95c587b8387ea3286d8fa4ee3b68b038":"f837455a930a66464f1c50586dc745a6b14ea807727c6069acac24c9558b6dbf"
+				   },
 				   "reveals":{
 					  "c9a4c8f1e70a0059a88b4768a920e41c95c587b8387ea3286d8fa4ee3b68b038":{
 						 "exit_code":0,
@@ -316,7 +322,6 @@ func TestExecuteTally(t *testing.T) {
 			name: "Mode filter",
 			resp: []byte(`[
 				{
-				   "commits":{},
 				   "dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf",
 				   "dr_inputs":"",
 				   "gas_limit":5000000000,
@@ -327,6 +332,11 @@ func TestExecuteTally(t *testing.T) {
 				   "payback_address":"YrzimoSJXwpA7ju71AkhkirkDCU=",
 				   "consensus_filter":"AQAAAAAAAAALcmVzdWx0LnRleHQ=",
 				   "replication_factor":3,
+				   "commits":{
+				   	  "1b85dfb9420e6757630a0db2280fa1787ec8c1e419a6aca76dbbfe8ef6e17521":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f",
+				   	  "1dae290cd880b79d21079d89aee3460cf8a7d445fb35cade70cf8aa96924441c":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f",
+				   	  "421e735518ef77fc1209a9d3585cdf096669b52ea68549e2ce048d4919b4c8c0":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"
+				   },
 				   "reveals":{
 					  "1b85dfb9420e6757630a0db2280fa1787ec8c1e419a6aca76dbbfe8ef6e17521":{
 						 "exit_code":0,
@@ -353,7 +363,6 @@ func TestExecuteTally(t *testing.T) {
 				   "version":"1.0.0"
 				},
 				{
-				   "commits":{},
 				   "dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf",
 				   "dr_inputs":"",
 				   "gas_limit":5000000000,
@@ -364,6 +373,9 @@ func TestExecuteTally(t *testing.T) {
 				   "payback_address":"YrzimoSJXwpA7ju71AkhkirkDCU=",
 				   "consensus_filter":"AQAAAAAAAAALcmVzdWx0LnRleHQ=",
 				   "replication_factor":1,
+				   "commits":{
+				   	  "c9a4c8f1e70a0059a88b4768a920e41c95c587b8387ea3286d8fa4ee3b68b038":"f837455a930a66464f1c50586dc745a6b14ea807727c6069acac24c9558b6dbf"
+				   },
 				   "reveals":{
 					  "c9a4c8f1e70a0059a88b4768a920e41c95c587b8387ea3286d8fa4ee3b68b038":{
 						 "exit_code":0,
@@ -397,7 +409,7 @@ func TestExecuteTally(t *testing.T) {
 
 			// Contract should return not found in response to post data result
 			// since the fetch data was mocked.
-			err = f.tallyKeeper.ProcessTallies(ctx)
+			err = f.tallyKeeper.ProcessTallies(ctx, f.coreContractAddr)
 			if len(tt.wantErrStr) != 0 {
 				for _, errStr := range tt.wantErrStr {
 					require.Contains(t, err.Error(), errStr)
@@ -419,12 +431,12 @@ func TestEndBlock(t *testing.T) {
 	}{
 		{
 			name:      "Invalid gas_limit and gas_used",
-			resp:      []byte(`[{"commits":{},"dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf","dr_inputs":"","gas_limit":"10","gas_price":"10","height":1661661742461173200,"id":"fba5314c57e52da7d1a2245d18c670fde1cb8c237062d2a1be83f449ace0932e","memo":"","payback_address":"","consensus_filter":"A","replication_factor":3,"reveals":{"1b85dfb9420e6757630a0db2280fa1787ec8c1e419a6aca76dbbfe8ef6e17521":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQSIsICJudW1iZXIiOiAxMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"1dae290cd880b79d21079d89aee3460cf8a7d445fb35cade70cf8aa96924441c":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQSIsICJudW1iZXIiOiAyMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"421e735518ef77fc1209a9d3585cdf096669b52ea68549e2ce048d4919b4c8c0":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQiIsICJudW1iZXIiOiAxMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"}},"seda_payload":"","tally_binary_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b","tally_inputs":"AAEBAQE=","version":"1.0.0"},{"commits":{},"dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf","dr_inputs":"","gas_limit":5000000000,"gas_price":"10","height":9859593541233596000,"id":"d4e40f45fbf529134926acf529baeb6d4f37b5c380d7ab6b934833e7c00d725f","memo":"","payback_address":"","consensus_filter":"AQAAAAAAAAALcmVzdWx0LnRleHQ=","replication_factor":1,"reveals":{"c9a4c8f1e70a0059a88b4768a920e41c95c587b8387ea3286d8fa4ee3b68b038":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQiIsICJudW1iZXIiOiAxMH19","salt":"f837455a930a66464f1c50586dc745a6b14ea807727c6069acac24c9558b6dbf"}},"seda_payload":"","tally_binary_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b","tally_inputs":"AAEBAQE=","version":"1.0.0"}]`),
+			resp:      []byte(`[{"commits":{"1b85dfb9420e6757630a0db2280fa1787ec8c1e419a6aca76dbbfe8ef6e17521":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f","1dae290cd880b79d21079d89aee3460cf8a7d445fb35cade70cf8aa96924441c":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f","421e735518ef77fc1209a9d3585cdf096669b52ea68549e2ce048d4919b4c8c0":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf","dr_inputs":"","gas_limit":"10","gas_price":"10","height":1661661742461173200,"id":"fba5314c57e52da7d1a2245d18c670fde1cb8c237062d2a1be83f449ace0932e","memo":"","payback_address":"","consensus_filter":"A","replication_factor":3,"reveals":{"1b85dfb9420e6757630a0db2280fa1787ec8c1e419a6aca76dbbfe8ef6e17521":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQSIsICJudW1iZXIiOiAxMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"1dae290cd880b79d21079d89aee3460cf8a7d445fb35cade70cf8aa96924441c":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQSIsICJudW1iZXIiOiAyMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"421e735518ef77fc1209a9d3585cdf096669b52ea68549e2ce048d4919b4c8c0":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQiIsICJudW1iZXIiOiAxMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"}},"seda_payload":"","tally_binary_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b","tally_inputs":"AAEBAQE=","version":"1.0.0"},{"commits":{"c9a4c8f1e70a0059a88b4768a920e41c95c587b8387ea3286d8fa4ee3b68b038":"f837455a930a66464f1c50586dc745a6b14ea807727c6069acac24c9558b6dbf"},"dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf","dr_inputs":"","gas_limit":5000000000,"gas_price":"10","height":9859593541233596000,"id":"d4e40f45fbf529134926acf529baeb6d4f37b5c380d7ab6b934833e7c00d725f","memo":"","payback_address":"","consensus_filter":"AQAAAAAAAAALcmVzdWx0LnRleHQ=","replication_factor":1,"reveals":{"c9a4c8f1e70a0059a88b4768a920e41c95c587b8387ea3286d8fa4ee3b68b038":{"exit_code":0,"gas_used":"10","reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQiIsICJudW1iZXIiOiAxMH19","salt":"f837455a930a66464f1c50586dc745a6b14ea807727c6069acac24c9558b6dbf"}},"seda_payload":"","tally_binary_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b","tally_inputs":"AAEBAQE=","version":"1.0.0"}]`),
 			expErrLog: []string{"ERR", "json: cannot unmarshal string into Go struct field Request.gas_limit of type uint64"},
 		},
 		{
 			name:      "Valid fetch format",
-			resp:      []byte(`[{"commits":{},"dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf","dr_inputs":"","gas_limit":10,"gas_price":"10","height":1661661742461173200,"id":"fba5314c57e52da7d1a2245d18c670fde1cb8c237062d2a1be83f449ace0932e","memo":"","payback_address":"","consensus_filter":"A","replication_factor":3,"reveals":{"1b85dfb9420e6757630a0db2280fa1787ec8c1e419a6aca76dbbfe8ef6e17521":{"exit_code":0,"gas_used":10,"reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQSIsICJudW1iZXIiOiAxMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"1dae290cd880b79d21079d89aee3460cf8a7d445fb35cade70cf8aa96924441c":{"exit_code":0,"gas_used":10,"reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQSIsICJudW1iZXIiOiAyMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"421e735518ef77fc1209a9d3585cdf096669b52ea68549e2ce048d4919b4c8c0":{"exit_code":0,"gas_used":10,"reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQiIsICJudW1iZXIiOiAxMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"}},"seda_payload":"","tally_binary_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b","tally_inputs":"AAEBAQE=","version":"1.0.0"},{"commits":{},"dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf","dr_inputs":"","gas_limit":5000000000,"gas_price":"10","height":9859593541233596000,"id":"d4e40f45fbf529134926acf529baeb6d4f37b5c380d7ab6b934833e7c00d725f","memo":"","payback_address":"","consensus_filter":"AQAAAAAAAAALcmVzdWx0LnRleHQ=","replication_factor":1,"reveals":{"c9a4c8f1e70a0059a88b4768a920e41c95c587b8387ea3286d8fa4ee3b68b038":{"exit_code":0,"gas_used":10,"reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQiIsICJudW1iZXIiOiAxMH19","salt":"f837455a930a66464f1c50586dc745a6b14ea807727c6069acac24c9558b6dbf"}},"seda_payload":"","tally_binary_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b","tally_inputs":"AAEBAQE=","version":"1.0.0"}]`),
+			resp:      []byte(`[{"commits":{"1b85dfb9420e6757630a0db2280fa1787ec8c1e419a6aca76dbbfe8ef6e17521":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f","1dae290cd880b79d21079d89aee3460cf8a7d445fb35cade70cf8aa96924441c":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f","421e735518ef77fc1209a9d3585cdf096669b52ea68549e2ce048d4919b4c8c0":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf","dr_inputs":"","gas_limit":10,"gas_price":"10","height":1661661742461173200,"id":"fba5314c57e52da7d1a2245d18c670fde1cb8c237062d2a1be83f449ace0932e","memo":"","payback_address":"","consensus_filter":"A","replication_factor":3,"reveals":{"1b85dfb9420e6757630a0db2280fa1787ec8c1e419a6aca76dbbfe8ef6e17521":{"exit_code":0,"gas_used":10,"reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQSIsICJudW1iZXIiOiAxMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"1dae290cd880b79d21079d89aee3460cf8a7d445fb35cade70cf8aa96924441c":{"exit_code":0,"gas_used":10,"reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQSIsICJudW1iZXIiOiAyMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"},"421e735518ef77fc1209a9d3585cdf096669b52ea68549e2ce048d4919b4c8c0":{"exit_code":0,"gas_used":10,"reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQiIsICJudW1iZXIiOiAxMH19","salt":"05952214b2ba3549a8d627c57d2d0dd1b0a2ce65c46e3b2f25c273464be8ba5f"}},"seda_payload":"","tally_binary_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b","tally_inputs":"AAEBAQE=","version":"1.0.0"},{"commits":{"c9a4c8f1e70a0059a88b4768a920e41c95c587b8387ea3286d8fa4ee3b68b038":"f837455a930a66464f1c50586dc745a6b14ea807727c6069acac24c9558b6dbf"},"dr_binary_id":"9471d36add157cd7eaa32a42b5ddd091d5d5d396bf9ad67938a4fc40209df6cf","dr_inputs":"","gas_limit":5000000000,"gas_price":"10","height":9859593541233596000,"id":"d4e40f45fbf529134926acf529baeb6d4f37b5c380d7ab6b934833e7c00d725f","memo":"","payback_address":"","consensus_filter":"AQAAAAAAAAALcmVzdWx0LnRleHQ=","replication_factor":1,"reveals":{"c9a4c8f1e70a0059a88b4768a920e41c95c587b8387ea3286d8fa4ee3b68b038":{"exit_code":0,"gas_used":10,"reveal":"eyJyZXN1bHQiOiB7InRleHQiOiAiQiIsICJudW1iZXIiOiAxMH19","salt":"f837455a930a66464f1c50586dc745a6b14ea807727c6069acac24c9558b6dbf"}},"seda_payload":"","tally_binary_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b","tally_inputs":"AAEBAQE=","version":"1.0.0"}]`),
 			expErrLog: []string{"type: seda_common::msgs::data_requests::types::DataRequest; key: [00, 16, 64, 61, 74, 61, 5F, 72, 65, 71, 75, 65, 73, 74, 5F, 70, 6F, 6F, 6C, 5F, 72, 65, 71, 73, FB, A5, 31, 4C, 57, E5, 2D, A7, D1, A2, 24, 5D, 18, C6, 70, FD, E1, CB, 8C, 23, 70, 62, D2, A1, BE, 83, F4, 49, AC, E0, 93, 2E] not found: execute wasm contract failed"},
 		},
 	}

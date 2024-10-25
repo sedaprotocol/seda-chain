@@ -74,6 +74,7 @@ const (
 type fixture struct {
 	*integration.IntegationApp
 	cdc               codec.Codec
+	coreContractAddr  sdk.AccAddress
 	accountKeeper     authkeeper.AccountKeeper
 	bankKeeper        bankkeeper.Keeper
 	stakingKeeper     stakingkeeper.Keeper
@@ -246,6 +247,7 @@ func initFixture(tb testing.TB) *fixture {
 	return &fixture{
 		IntegationApp:     integrationApp,
 		cdc:               cdc,
+		coreContractAddr:  contractAddr,
 		accountKeeper:     accountKeeper,
 		bankKeeper:        bankKeeper,
 		stakingKeeper:     *stakingKeeper,

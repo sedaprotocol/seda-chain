@@ -16,6 +16,7 @@ type Request struct {
 	PaybackAddress    string                `json:"payback_address"`
 	ReplicationFactor int64                 `json:"replication_factor"`
 	ConsensusFilter   string                `json:"consensus_filter"`
+	Commits           map[string][]byte     `json:"commits"`
 	Reveals           map[string]RevealBody `json:"reveals"`
 	SedaPayload       string                `json:"seda_payload"`
 	TallyProgramID    string                `json:"tally_program_id"`
