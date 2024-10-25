@@ -31,7 +31,7 @@ func (k Keeper) markDataResultAsBatched(ctx context.Context, result types.DataRe
 
 // GetDataResult returns a data result given the associated data request's
 // ID.
-func (k Keeper) GetDataResult(ctx context.Context, dataReqID string) (types.DataResult, error) {
+func (k Keeper) GetDataResult(ctx context.Context, dataReqID string) (*types.DataResult, error) {
 	dataResult, err := k.dataResults.Get(ctx, collections.Join(false, dataReqID))
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
@@ -39,15 +39,15 @@ func (k Keeper) GetDataResult(ctx context.Context, dataReqID string) (types.Data
 			dataResult, err := k.dataResults.Get(ctx, collections.Join(true, dataReqID))
 			if err != nil {
 				if errors.Is(err, collections.ErrNotFound) {
-					return types.DataResult{}, nil
+					return nil, nil
 				}
-				return types.DataResult{}, err
+				return nil, err
 			}
-			return dataResult, nil
+			return &dataResult, nil
 		}
-		return types.DataResult{}, err
+		return nil, err
 	}
-	return dataResult, err
+	return &dataResult, err
 }
 
 // GetDataResults returns a list of data results under a given status

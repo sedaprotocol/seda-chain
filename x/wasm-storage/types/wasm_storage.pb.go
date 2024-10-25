@@ -98,7 +98,7 @@ func (m *OracleProgram) GetExpirationHeight() int64 {
 	return 0
 }
 
-// ExecutorWasm represents a wasm used for some execution in the protocol.
+// ExecutorWasm is a wasm used by some component in the protocol.
 type ExecutorWasm struct {
 	Hash     []byte    `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
 	Bytecode []byte    `protobuf:"bytes,2,opt,name=bytecode,proto3" json:"bytecode,omitempty"`

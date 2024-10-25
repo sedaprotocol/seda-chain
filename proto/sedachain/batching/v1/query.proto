@@ -104,7 +104,7 @@ message QueryDataResultRequest { string data_request_id = 1; }
 
 // The response message for QueryDataResult RPC.
 message QueryDataResultResponse {
-  DataResult data_result = 1 [ (gogoproto.nullable) = false ];
+  DataResult data_result = 1 [ (gogoproto.nullable) = true ];
 }
 
 // The request message for QueryBatchAssignment RPC.

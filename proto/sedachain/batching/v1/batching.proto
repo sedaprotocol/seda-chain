@@ -60,25 +60,25 @@ message Params {
 // DataResult represents the result of a resolved data request.
 message DataResult {
   // id is the Keccack-256 hash of the data result.
-  string id = 1;
+  string id = 1 [ (gogoproto.jsontag) = "id" ];
   // dr_id is the data request identifier.
-  string dr_id = 2;
+  string dr_id = 2 [ (gogoproto.jsontag) = "dr_id" ];
   // version is a semantic version string.
-  string version = 3;
+  string version = 3 [ (gogoproto.jsontag) = "version" ];
   // block_height is the height at which the data request was tallied.
-  uint64 block_height = 4;
+  uint64 block_height = 4 [ (gogoproto.jsontag) = "block_height" ];
   // exit_code is the exit code of the tally wasm binary execution.
-  uint32 exit_code = 5;
+  uint32 exit_code = 5 [ (gogoproto.jsontag) = "exit_code" ];
   // gas_used is the gas used by the data request execution.
-  uint64 gas_used = 6;
+  uint64 gas_used = 6 [ (gogoproto.jsontag) = "gas_used" ];
   // result is the result of the tally wasm binary execution.
-  bytes result = 7;
+  bytes result = 7 [ (gogoproto.jsontag) = "result" ];
   // payback_address is the payback address set by the relayer.
-  string payback_address = 8;
+  string payback_address = 8 [ (gogoproto.jsontag) = "payback_address" ];
   // seda_payload is the payload set by SEDA Protocol (e.g. OEV-enabled
   // data requests)
-  string seda_payload = 9;
+  string seda_payload = 9 [ (gogoproto.jsontag) = "seda_payload" ];
   // consensus indicates whether consensus was reached in the tally
   // process.
-  bool consensus = 10;
+  bool consensus = 10 [ (gogoproto.jsontag) = "consensus" ];
 }
