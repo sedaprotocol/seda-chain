@@ -53,7 +53,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 // tree entries in that order.
 func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte, error) {
 	var newBatchNum uint64
-	var latestDataRoot, latestValRoot string
+	var latestDataRootHex, latestValRootHex string
 	latestBatch, err := k.GetLatestBatch(ctx)
 	if err != nil {
 		if !errors.Is(err, types.ErrBatchingHasNotStarted) {
@@ -62,8 +62,8 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 		newBatchNum = collections.DefaultSequenceStart + 1
 	} else {
 		newBatchNum = latestBatch.BatchNumber + 1
-		latestDataRoot = latestBatch.DataResultRoot
-		latestValRoot = latestBatch.ValidatorRoot
+		latestDataRootHex = latestBatch.DataResultRoot
+		latestValRootHex = latestBatch.ValidatorRoot
 	}
 
 	// Compute current data result tree root and the "super root"
@@ -72,11 +72,11 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 	if err != nil {
 		return types.Batch{}, nil, nil, err
 	}
-	latestDataRootHex, err := hex.DecodeString(latestDataRoot)
+	latestDataRoot, err := hex.DecodeString(latestDataRootHex)
 	if err != nil {
 		return types.Batch{}, nil, nil, err
 	}
-	superRoot := utils.RootFromLeaves([][]byte{latestDataRootHex, dataRoot})
+	superRoot := utils.RootFromLeaves([][]byte{latestDataRoot, dataRoot})
 
 	// Compute validator tree root.
 	valEntries, valRoot, err := k.ConstructValidatorTree(ctx)
@@ -87,7 +87,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 
 	// Skip batching if there is no update in data result root nor
 	// validator root.
-	if len(dataEntries) == 0 && valRootHex == latestValRoot {
+	if len(dataEntries) == 0 && valRootHex == latestValRootHex {
 		return types.Batch{}, nil, nil, types.ErrNoBatchingUpdate
 	}
 
@@ -127,12 +127,12 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) ([]
 	entries := make([][]byte, len(dataResults))
 	treeEntries := make([][]byte, len(dataResults))
 	for i, res := range dataResults {
-		resHash, err := hex.DecodeString(res.Id)
+		resID, err := hex.DecodeString(res.Id)
 		if err != nil {
 			return nil, nil, err
 		}
-		entries[i] = resHash
-		treeEntries[i] = append([]byte{utils.SEDASeparatorDataRequest}, resHash...)
+		entries[i] = resID
+		treeEntries[i] = append([]byte{utils.SEDASeparatorDataRequest}, resID...)
 
 		err = k.markDataResultAsBatched(ctx, res, newBatchNum)
 		if err != nil {
@@ -165,7 +165,7 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 			}
 			panic(err)
 		}
-		addr, err := utils.PubKeyToAddress(secp256k1PubKey.Bytes())
+		ethAddr, err := utils.PubKeyToEthAddress(secp256k1PubKey.Bytes())
 		if err != nil {
 			k.Logger(ctx).Error("failed to decompress public key", "pubkey", secp256k1PubKey)
 			panic(err)
@@ -176,12 +176,12 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 
 		// TODO Validator set trimming
 
-		// An entry is (domain_separator | address | voting_power_percentage).
-		treeEntry := make([]byte, len(separator)+len(addr)+4)
+		// A tree entry is (domain_separator | address | voting_power_percentage).
+		treeEntry := make([]byte, len(separator)+len(ethAddr)+4)
 		copy(treeEntry[:len(separator)], separator)
-		copy(treeEntry[len(separator):len(separator)+len(addr)], addr)
+		copy(treeEntry[len(separator):len(separator)+len(ethAddr)], ethAddr)
 		//nolint:gosec // G115: Max of powerPercent should be 1e8 < 2^64.
-		binary.BigEndian.PutUint32(treeEntry[len(separator)+len(addr):], uint32(powerPercent))
+		binary.BigEndian.PutUint32(treeEntry[len(separator)+len(ethAddr):], uint32(powerPercent))
 
 		entries = append(entries, treeEntry[len(separator):])
 		treeEntries = append(treeEntries, treeEntry)

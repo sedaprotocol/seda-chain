@@ -269,7 +269,7 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
 				h.logger.Debug("no batch to collect signatures for", "height", ctx.BlockHeight())
-				return nil, nil
+				return res, nil
 			}
 			return nil, err
 		}

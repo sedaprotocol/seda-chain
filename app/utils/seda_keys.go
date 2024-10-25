@@ -177,7 +177,7 @@ func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
 // PubKeyToAddress converts a public key in the 33-byte compressed
 // format into the Ethereum address format, which is defined as the
 // rightmost 160 bits of a Keccak hash of an ECDSA public key.
-func PubKeyToAddress(pubkey []byte) ([]byte, error) {
+func PubKeyToEthAddress(pubkey []byte) ([]byte, error) {
 	if len(pubkey) != 33 {
 		return nil, fmt.Errorf("invalid compressed public key %x", pubkey)
 	}
