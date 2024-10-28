@@ -120,6 +120,31 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 		}
 
 		return types.NewMessage("batch-signatures", data, ctx), nil
+	} else if keyBytes, found := bytes.CutPrefix(change.Key, batchingtypes.TreeEntriesKeyPrefix); found {
+		_, key, err := collections.Uint64Key.Decode(keyBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		val, err := codec.CollValue[batchingtypes.TreeEntries](cdc).Decode(change.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		validatorTreeEntries := make([]string, len(val.ValidatorEntries))
+		for i, entry := range val.ValidatorEntries {
+			validatorTreeEntries[i] = hex.EncodeToString(entry)
+		}
+
+		data := struct {
+			BatchNumber          string   `json:"batch_number"`
+			ValidatorTreeEntries []string `json:"validator_tree_entries"`
+		}{
+			BatchNumber:          strconv.FormatUint(key, 10),
+			ValidatorTreeEntries: validatorTreeEntries,
+		}
+
+		return types.NewMessage("batch-validator-entries", data, ctx), nil
 	} else if _, found := bytes.CutPrefix(change.Key, batchingtypes.ParamsKey); found {
 		val, err := codec.CollValue[batchingtypes.Params](cdc).Decode(change.Value)
 		if err != nil {
