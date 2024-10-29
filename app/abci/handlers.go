@@ -284,12 +284,12 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 		}
 
 		for _, vote := range extendedVotes.Votes {
-			valAddr, err := h.validatorAddressCodec.BytesToString(vote.Validator.Address)
+			validator, err := h.stakingKeeper.GetValidatorByConsAddr(ctx, vote.Validator.Address)
 			if err != nil {
 				return nil, err
 			}
 			batchSigs := batchingtypes.BatchSignatures{
-				ValidatorAddr: valAddr,
+				ValidatorAddr: validator.OperatorAddress,
 				Signatures:    vote.VoteExtension,
 			}
 
@@ -297,7 +297,7 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 			if err != nil {
 				return nil, err
 			}
-			h.logger.Debug("stored batch signature", "batch_number", batchNum, "validator", valAddr)
+			h.logger.Debug("stored batch signature", "batch_number", batchNum, "validator", validator.OperatorAddress)
 		}
 
 		return res, nil
