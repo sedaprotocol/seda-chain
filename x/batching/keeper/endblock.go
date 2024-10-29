@@ -16,7 +16,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
-const ZeroHash = "0x0000000000000000000000000000000000000000000000000000000000000000"
+const ZeroHash = "0000000000000000000000000000000000000000000000000000000000000000"
 
 func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 	// Use defer to prevent returning an error, which would cause
