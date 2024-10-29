@@ -336,7 +336,6 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchID, voteExtension
 		return err
 	}
 	pubKeyBytes := crypto.FromECDSAPub(pubKeyECDSA)
-
 	hash := crypto.Keccak256Hash(batchID)
 	sigPubKey, err := crypto.Ecrecover(hash.Bytes(), voteExtension[:65])
 	if err != nil {

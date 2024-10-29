@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/ethereum/go-ethereum/crypto"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
@@ -168,13 +167,13 @@ func LoadSEDASigner(loadPath string) (SEDASigner, error) {
 }
 
 func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
-	privKey, err := crypto.ToECDSA(s.keys[index].PrivKey.Bytes())
+	privKey, err := ethcrypto.ToECDSA(s.keys[index].PrivKey.Bytes())
 	if err != nil {
 		return nil, err
 	}
 
-	hash := crypto.Keccak256Hash(input)
-	signature, err := crypto.Sign(hash.Bytes(), privKey)
+	hash := ethcrypto.Keccak256Hash(input)
+	signature, err := ethcrypto.Sign(hash.Bytes(), privKey)
 	if err != nil {
 		return nil, err
 	}

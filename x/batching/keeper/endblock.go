@@ -16,6 +16,8 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
+const ZeroHash = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
 func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 	// Use defer to prevent returning an error, which would cause
 	// the chain to halt.
@@ -91,18 +93,31 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 		return types.Batch{}, nil, nil, types.ErrNoBatchingUpdate
 	}
 
+	var provingMetaData, provingMetaDataHash []byte
+	if len(provingMetaData) == 0 {
+		provingMetaDataHash, err = hex.DecodeString(ZeroHash)
+		if err != nil {
+			return types.Batch{}, nil, nil, err
+		}
+	} else {
+		hasher := sha3.NewLegacyKeccak256()
+		hasher.Write(provingMetaData)
+		provingMetaDataHash = hasher.Sum(nil)
+	}
+
 	// Compute the batch ID, which is defined as
-	// keccak256(batch_number, block_height, validator_root, results_root).
+	// keccak256(batch_number, block_height, validator_root, results_root, proving_metadata_hash)
 	var hashContent []byte
 	hashContent = binary.BigEndian.AppendUint64(hashContent, newBatchNum)
 	//nolint:gosec // G115: We shouldn't get negative block heights anyway.
 	hashContent = binary.BigEndian.AppendUint64(hashContent, uint64(ctx.BlockHeight()))
 	hashContent = append(hashContent, valRoot...)
 	hashContent = append(hashContent, dataRoot...)
+	hashContent = append(hashContent, provingMetaDataHash...)
 
-	hash := sha3.NewLegacyKeccak256()
-	hash.Write(hashContent)
-	batchID := hash.Sum(nil)
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(hashContent)
+	batchID := hasher.Sum(nil)
 
 	return types.Batch{
 		BatchNumber:           newBatchNum,
@@ -111,7 +126,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 		DataResultRoot:        hex.EncodeToString(superRoot),
 		ValidatorRoot:         valRootHex,
 		BatchId:               batchID,
-		ProvingMedatada:       nil,
+		ProvingMedatada:       provingMetaData,
 	}, dataEntries, valEntries, nil
 }
 
