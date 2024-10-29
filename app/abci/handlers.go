@@ -1,8 +1,11 @@
 package abci
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+
+	"github.com/ethereum/go-ethereum/crypto"
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	comettypes "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -33,7 +36,7 @@ const (
 
 	// MaxVoteExtensionLength is the maximum size of vote extension in
 	// bytes.
-	MaxVoteExtensionLength = 64 * 5
+	MaxVoteExtensionLength = 65 * 5
 )
 
 type Handlers struct {
@@ -323,13 +326,23 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchID, voteExtension
 		return err
 	}
 
-	// Verify secp256k1 public key
+	// Recover and verify secp256k1 public key.
 	pubkey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return err
 	}
-	ok := pubkey.VerifySignature(batchID, voteExtension[:64])
-	if !ok {
+	pubKeyECDSA, err := crypto.DecompressPubkey(pubkey.Bytes())
+	if err != nil {
+		return err
+	}
+	pubKeyBytes := crypto.FromECDSAPub(pubKeyECDSA)
+
+	hash := crypto.Keccak256Hash(batchID)
+	sigPubKey, err := crypto.Ecrecover(hash.Bytes(), voteExtension[:65])
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(pubKeyBytes, sigPubKey) {
 		return ErrInvalidBatchSignature
 	}
 	return nil

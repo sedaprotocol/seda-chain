@@ -95,20 +95,17 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		var result TallyResult
 		switch {
 		case len(req.Commits) < int(req.ReplicationFactor):
-			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
-			dataResults[i].ExitCode = 200
+			dataResults[i].ExitCode = batchingtypes.TallyExitCodeNotEnoughCommits
+			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
 		case len(req.Reveals) < int(req.ReplicationFactor):
-			k.Logger(ctx).Info("data request's number of reveals did not meet replication factor", "request_id", req.ID)
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d reveals; received %d", req.ReplicationFactor, len(req.Reveals)))
-			dataResults[i].ExitCode = 201
+			dataResults[i].ExitCode = batchingtypes.TallyExitCodeNotEnoughReveals
+			k.Logger(ctx).Info("data request's number of reveals did not meet replication factor", "request_id", req.ID)
 		default:
 			result, err := k.FilterAndTally(ctx, req)
 			if err != nil {
-				// Return with exit code 255 to signify that the tally VM
-				// was not executed due to the error specified in the result
-				// field.
-				dataResults[i].ExitCode = 0xff
+				dataResults[i].ExitCode = batchingtypes.TallyExitCodeFailedToExecute
 				dataResults[i].Result = []byte(err.Error())
 				dataResults[i].Consensus = result.consensus
 			} else {
@@ -117,11 +114,8 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 				dataResults[i].Result = result.result
 				dataResults[i].Consensus = result.consensus
 			}
-			k.Logger(ctx).Info(
-				"completed tally execution",
-				"request_id", req.ID,
-				"tally_result", result,
-			)
+			k.Logger(ctx).Info("completed tally execution", "request_id", req.ID)
+			k.Logger(ctx).Debug("tally execution result", "request_id", req.ID, "tally_result", result)
 		}
 
 		dataResults[i].Id, err = dataResults[i].TryHash()

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/ethereum/go-ethereum/crypto"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
@@ -167,7 +168,13 @@ func LoadSEDASigner(loadPath string) (SEDASigner, error) {
 }
 
 func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
-	signature, err := s.keys[index].PrivKey.Sign(input)
+	privKey, err := crypto.ToECDSA(s.keys[index].PrivKey.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	hash := crypto.Keccak256Hash(input)
+	signature, err := crypto.Sign(hash.Bytes(), privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -177,11 +184,11 @@ func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
 // PubKeyToAddress converts a public key in the 33-byte compressed
 // format into the Ethereum address format, which is defined as the
 // rightmost 160 bits of a Keccak hash of an ECDSA public key.
-func PubKeyToEthAddress(pubkey []byte) ([]byte, error) {
-	if len(pubkey) != 33 {
-		return nil, fmt.Errorf("invalid compressed public key %x", pubkey)
+func PubKeyToEthAddress(pubKey []byte) ([]byte, error) {
+	if len(pubKey) != 33 {
+		return nil, fmt.Errorf("invalid compressed public key %x", pubKey)
 	}
-	key, err := btcec.ParsePubKey(pubkey)
+	key, err := btcec.ParsePubKey(pubKey)
 	if err != nil {
 		return nil, err
 	}

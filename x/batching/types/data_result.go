@@ -8,6 +8,12 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+const (
+	TallyExitCodeNotEnoughCommits uint32 = 200
+	TallyExitCodeNotEnoughReveals uint32 = 201
+	TallyExitCodeFailedToExecute  uint32 = 255
+)
+
 // TryHash returns a hex-encoded hash of the DataResult.
 func (dr *DataResult) TryHash() (string, error) {
 	hasher := sha3.NewLegacyKeccak256()

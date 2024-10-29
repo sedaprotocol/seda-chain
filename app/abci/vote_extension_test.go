@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -33,7 +34,12 @@ type mockSigner struct {
 }
 
 func (m *mockSigner) Sign(input []byte, _ utils.SEDAKeyIndex) ([]byte, error) {
-	signature, err := m.PrivKey.Sign(input)
+	privKey, err := crypto.ToECDSA(m.PrivKey.Bytes())
+	if err != nil {
+		return nil, err
+	}
+	hash := crypto.Keccak256Hash(input)
+	signature, err := crypto.Sign(hash.Bytes(), privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +74,11 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	require.NoError(t, err)
 	privKey := secp256k1.PrivKey{Key: privKeyBytes}
 	signer := mockSigner{privKey}
-	expSig, err := privKey.Sign(mockBatch.BatchId)
+
+	// Get expected public key to be recovered (uncompressed format)
+	privKeyECDSA, err := crypto.ToECDSA(privKeyBytes)
 	require.NoError(t, err)
+	expPubKey := crypto.FromECDSAPub(&privKeyECDSA.PublicKey)
 
 	mockBatchingKeeper.EXPECT().GetBatchForHeight(gomock.Any(), int64(100)).Return(mockBatch, nil).AnyTimes()
 
@@ -90,7 +99,12 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 		Height: 101,
 	})
 	require.NoError(t, err)
-	require.Equal(t, expSig, evRes.VoteExtension)
+
+	// Recover and verify public key
+	hash := crypto.Keccak256Hash(mockBatch.BatchId)
+	sigPubKey, err := crypto.Ecrecover(hash.Bytes(), evRes.VoteExtension)
+	require.NoError(t, err)
+	require.Equal(t, expPubKey, sigPubKey)
 
 	testVal := sdk.ConsAddress([]byte("testval"))
 	mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), testVal).Return(
