@@ -112,7 +112,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 	//nolint:gosec // G115: We shouldn't get negative block heights anyway.
 	hashContent = binary.BigEndian.AppendUint64(hashContent, uint64(ctx.BlockHeight()))
 	hashContent = append(hashContent, valRoot...)
-	hashContent = append(hashContent, dataRoot...)
+	hashContent = append(hashContent, superRoot...)
 	hashContent = append(hashContent, provingMetaDataHash...)
 
 	hasher := sha3.NewLegacyKeccak256()
