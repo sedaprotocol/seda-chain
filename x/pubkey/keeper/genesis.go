@@ -3,7 +3,6 @@ package keeper
 import (
 	"bytes"
 
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
@@ -18,11 +17,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 			panic(err)
 		}
 		for _, pk := range val.IndexedPubKeys {
-			pubKey, ok := pk.PubKey.GetCachedValue().(cryptotypes.PubKey)
-			if !ok {
-				panic("failed to unpack public key")
-			}
-			err = k.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndex(pk.Index), pubKey)
+			err = k.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndex(pk.Index), pk.PubKey)
 			if err != nil {
 				panic(err)
 			}

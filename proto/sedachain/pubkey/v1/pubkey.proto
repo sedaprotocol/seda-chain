@@ -9,6 +9,6 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/pubkey/types";
 // IndexPubKeyPair defines an index - public key pair.
 message IndexedPubKey {
   uint32 index = 1;
-  google.protobuf.Any pub_key = 2
+  bytes pub_key = 2
       [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
 }

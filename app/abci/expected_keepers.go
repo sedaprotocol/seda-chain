@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -18,7 +17,7 @@ type BatchingKeeper interface {
 }
 
 type PubKeyKeeper interface {
-	GetValidatorKeyAtIndex(ctx context.Context, valAddr sdk.ValAddress, index utils.SEDAKeyIndex) (cryptotypes.PubKey, error)
+	GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex) ([]byte, error)
 }
 
 type StakingKeeper interface {

@@ -327,20 +327,15 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchID, voteExtension
 	}
 
 	// Recover and verify secp256k1 public key.
-	pubkey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.SEDAKeyIndexSecp256k1)
+	pubKey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return err
 	}
-	pubKeyECDSA, err := crypto.DecompressPubkey(pubkey.Bytes())
-	if err != nil {
-		return err
-	}
-	pubKeyBytes := crypto.FromECDSAPub(pubKeyECDSA)
 	sigPubKey, err := crypto.Ecrecover(batchID, voteExtension[:65])
 	if err != nil {
 		return err
 	}
-	if !bytes.Equal(pubKeyBytes, sigPubKey) {
+	if !bytes.Equal(pubKey, sigPubKey) {
 		return ErrInvalidBatchSignature
 	}
 	return nil

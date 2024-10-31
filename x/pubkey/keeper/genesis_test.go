@@ -1,33 +1,35 @@
 package keeper_test
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"fmt"
+
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 // generatePubKeysAndValAddrs randomly generates a given number of
-// public keys encoded in codectypes.Any type and their validator
-// addresses.
-func (s *KeeperTestSuite) generatePubKeysAndValAddrs(num int) ([]*codectypes.Any, []sdk.ValAddress) {
-	var pkAnys []*codectypes.Any
+// public keys encoded in uncompressed format and validator addresses.
+func (s *KeeperTestSuite) generatePubKeysAndValAddrs(num int) ([][]byte, []sdk.ValAddress) {
+	var pubKeys [][]byte
 	var valAddrs []sdk.ValAddress
 	for i := 0; i < num; i++ {
-		privKey := secp256k1.GenPrivKey()
-		pubKey, err := cryptocodec.FromCmtPubKeyInterface(privKey.PubKey())
-		s.Require().NoError(err)
+		privKey, err := ecdsa.GenerateKey(ethcrypto.S256(), rand.Reader)
+		if err != nil {
+			panic(fmt.Sprintf("failed to generate secp256k1 private key: %v", err))
+		}
+		pubKeys = append(pubKeys, elliptic.Marshal(privKey.PublicKey, privKey.PublicKey.X, privKey.PublicKey.Y))
 
-		pkAny, err := codectypes.NewAnyWithValue(pubKey)
-		s.Require().NoError(err)
-		pkAnys = append(pkAnys, pkAny)
-
-		valAddrs = append(valAddrs, sdk.ValAddress(privKey.PubKey().Address()))
+		valAddrs = append(valAddrs, sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()))
 	}
-	return pkAnys, valAddrs
+	return pubKeys, valAddrs
 }
 
 func (s *KeeperTestSuite) TestImportExportGenesis() {

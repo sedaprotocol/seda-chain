@@ -2,7 +2,8 @@ package abci
 
 import (
 	"bytes"
-	"encoding/hex"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -16,7 +17,6 @@ import (
 	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
@@ -31,15 +31,11 @@ import (
 var _ utils.SEDASigner = &mockSigner{}
 
 type mockSigner struct {
-	PrivKey secp256k1.PrivKey
+	PrivKey *ecdsa.PrivateKey
 }
 
 func (m *mockSigner) Sign(input []byte, _ utils.SEDAKeyIndex) ([]byte, error) {
-	privKey, err := crypto.ToECDSA(m.PrivKey.Bytes())
-	if err != nil {
-		return nil, err
-	}
-	signature, err := crypto.Sign(input, privKey)
+	signature, err := crypto.Sign(input, m.PrivKey)
 	if err != nil {
 		return nil, err
 	}
@@ -73,15 +69,11 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 		BlockHeight: 100, // created from the previous block
 	}
 
-	privKeyBytes, err := hex.DecodeString("79afbf7147841fca72b45a1978dd7669470ba67abbe5c220062924380c9c364b")
+	privKey, err := crypto.HexToECDSA("79afbf7147841fca72b45a1978dd7669470ba67abbe5c220062924380c9c364b")
 	require.NoError(t, err)
-	privKey := secp256k1.PrivKey{Key: privKeyBytes}
-	signer := mockSigner{privKey}
+	pubKey := elliptic.Marshal(privKey.PublicKey, privKey.PublicKey.X, privKey.PublicKey.Y)
 
-	// Get expected public key to be recovered (uncompressed format)
-	privKeyECDSA, err := crypto.ToECDSA(privKeyBytes)
-	require.NoError(t, err)
-	expPubKey := crypto.FromECDSAPub(&privKeyECDSA.PublicKey)
+	signer := mockSigner{privKey}
 
 	mockBatchingKeeper.EXPECT().GetBatchForHeight(gomock.Any(), int64(100)).Return(mockBatch, nil).AnyTimes()
 
@@ -106,7 +98,7 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	// Recover and verify public key
 	sigPubKey, err := crypto.Ecrecover(mockBatch.BatchId, evRes.VoteExtension)
 	require.NoError(t, err)
-	require.Equal(t, expPubKey, sigPubKey)
+	require.Equal(t, pubKey, sigPubKey)
 
 	testVal := sdk.ConsAddress([]byte("testval"))
 	mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), testVal).Return(
@@ -118,7 +110,7 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 		gomock.Any(),
 		[]byte{230, 25, 79, 60, 174, 250, 75, 41, 158, 164, 153, 36, 34, 11, 61, 99, 153, 193, 237, 164},
 		utils.SEDAKeyIndexSecp256k1,
-	).Return(privKey.PubKey(), nil)
+	).Return(pubKey, nil)
 
 	vvRes, err := verifyVoteHandler(ctx, &cometabci.RequestVerifyVoteExtension{
 		Height:           101,

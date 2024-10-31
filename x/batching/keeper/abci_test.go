@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	cryptorand "crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
@@ -11,10 +13,8 @@ import (
 	"math/rand"
 	"testing"
 
-	dcrdsecp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/math"
 
@@ -84,7 +84,8 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	for i, entry := range entries {
 		parsedAddrs[i] = entry[:20]
 		parsedPowers[i] = binary.BigEndian.Uint32(entry[20:])
-		expectedAddrs[i] = compressedPubKeyToAddress(t, pks[i])
+		expectedAddrs[i], err = utils.PubKeyToEthAddress(pks[i])
+		require.NoError(t, err)
 		entriesWithSep[i] = append([]byte{utils.SEDASeparatorSecp256k1}, entry...)
 	}
 	require.ElementsMatch(t, expectedAddrs, parsedAddrs)
@@ -113,14 +114,19 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 	powers := make([]int64, len(addrs))
 	for i, addr := range addrs {
 		valAddr := sdk.ValAddress(addr)
-		pubKey := secp256k1.GenPrivKey().PubKey()
-		pubKeys[i] = pubKey.Bytes()
+		valPubKey := secp256k1.GenPrivKey().PubKey()
 		powers[i] = int64(rand.Intn(10) + 1)
+
+		privKey, err := ecdsa.GenerateKey(ethcrypto.S256(), cryptorand.Reader)
+		if err != nil {
+			panic(fmt.Sprintf("failed to generate secp256k1 private key: %v", err))
+		}
+		pubKeys[i] = elliptic.Marshal(privKey.PublicKey, privKey.PublicKey.X, privKey.PublicKey.Y)
 
 		valTokens := sdk.TokensFromConsensusPower(powers[i], sdk.DefaultPowerReduction)
 		valCreateMsg, err := sdkstakingtypes.NewMsgCreateValidator(
 			valAddr.String(),
-			pubKey,
+			valPubKey,
 			sdk.NewCoin(bondDenom, valTokens),
 			sdkstakingtypes.NewDescription("T", "E", "S", "T", "Z"),
 			sdkstakingtypes.NewCommissionRates(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
@@ -134,23 +140,10 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 		_, err = f.stakingKeeper.Keeper.EndBlocker(ctx)
 		require.NoError(t, err)
 
-		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1, pubKey)
+		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1, pubKeys[i])
 		require.NoError(t, err)
 	}
 	return addrs, pubKeys, powers
-}
-
-// compressedPubKeyToAddress converts a compressed public key to an
-// Ethereum-style address.
-func compressedPubKeyToAddress(t *testing.T, pubKey []byte) []byte {
-	t.Helper()
-	pk, err := dcrdsecp256k1.ParsePubKey(pubKey)
-	if err != nil {
-		panic(err)
-	}
-	s := sha3.NewLegacyKeccak256()
-	s.Write(pk.SerializeUncompressed()[1:])
-	return s.Sum(nil)[12:]
 }
 
 // generateDataResults returns a given number of randomly-generated
@@ -584,9 +577,9 @@ func addBatchSigningValidatorsFromTestData(t *testing.T, f *fixture, testData []
 		_, err = f.stakingKeeper.Keeper.EndBlocker(ctx)
 		require.NoError(t, err)
 
-		pvtKey, err := ethcrypto.HexToECDSA(testData[i].PrivateKey[2:])
+		privKey, err := ethcrypto.HexToECDSA(testData[i].PrivateKey[2:])
 		require.NoError(t, err)
-		pk := &secp256k1.PubKey{Key: ethcrypto.CompressPubkey(&pvtKey.PublicKey)}
+		pk := elliptic.Marshal(privKey.PublicKey, privKey.PublicKey.X, privKey.PublicKey.Y)
 
 		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1, pk)
 		require.NoError(t, err)

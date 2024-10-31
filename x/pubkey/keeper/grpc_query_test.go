@@ -17,7 +17,7 @@ func (s *KeeperTestSuite) TestQuerier_ValidatorKeys() {
 			ValidatorAddr: valAddrs[i].String(),
 			IndexedPubKeys: []types.IndexedPubKey{
 				{
-					Index:  uint32(i),
+					Index:  0,
 					PubKey: pubKeys[i],
 				},
 			},
@@ -37,7 +37,7 @@ func (s *KeeperTestSuite) TestQuerier_ValidatorKeys() {
 
 		s.Require().Equal(1, len(resp.ValidatorPubKeys.IndexedPubKeys))
 		pk := resp.ValidatorPubKeys.IndexedPubKeys[0]
-		s.Require().Equal(uint32(j), pk.Index)
-		s.Require().Equal(pubKeys[j].Value, pk.PubKey.Value)
+		s.Require().Equal(uint32(0), pk.Index)
+		s.Require().Equal(pubKeys[j], pk.PubKey)
 	}
 }

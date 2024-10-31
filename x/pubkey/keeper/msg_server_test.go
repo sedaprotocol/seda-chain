@@ -6,8 +6,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -35,21 +34,28 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 						Index:  0,
 						PubKey: pubKeys[0],
 					},
-					{
-						Index:  3,
-						PubKey: pubKeys[1],
-					},
-					{
-						Index:  57,
-						PubKey: pubKeys[2],
-					},
 				},
 			},
 			valAddr: valAddrs[0],
 			wantErr: nil,
 		},
 		{
-			name: "Duplicate index",
+			name: "Empty validator address",
+			msg: &types.MsgAddKey{
+				ValidatorAddr: "",
+				IndexedPubKeys: []types.IndexedPubKey{
+					{
+						Index:  0,
+						PubKey: pubKeys[0],
+					},
+				},
+			},
+			valAddr:    valAddrs[0],
+			wantErr:    sdkerrors.ErrInvalidRequest,
+			wantErrMsg: "empty validator address",
+		},
+		{
+			name: "Too many",
 			msg: &types.MsgAddKey{
 				ValidatorAddr: valAddrs[1].String(),
 				IndexedPubKeys: []types.IndexedPubKey{
@@ -61,41 +67,43 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 						Index:  48,
 						PubKey: pubKeys[1],
 					},
+				},
+			},
+			valAddr:    valAddrs[1],
+			wantErr:    sdkerrors.ErrInvalidRequest,
+			wantErrMsg: "invalid number of SEDA keys",
+		},
+		{
+			name: "Incorrect index",
+			msg: &types.MsgAddKey{
+				ValidatorAddr: valAddrs[1].String(),
+				IndexedPubKeys: []types.IndexedPubKey{
 					{
-						Index:  5,
-						PubKey: pubKeys[2],
-					},
-					{
-						Index:  12,
-						PubKey: pubKeys[3],
-					},
-					{
-						Index:  50,
-						PubKey: pubKeys[4],
+						Index:  3,
+						PubKey: pubKeys[0],
 					},
 				},
 			},
 			valAddr:    valAddrs[1],
 			wantErr:    sdkerrors.ErrInvalidRequest,
-			wantErrMsg: "duplicate index at 12",
+			wantErrMsg: "invalid SEDA key index",
 		},
 		{
-			name: "Invalid Any",
+			name: "Incorrect pubkey format",
 			msg: &types.MsgAddKey{
 				ValidatorAddr: valAddrs[2].String(),
 				IndexedPubKeys: []types.IndexedPubKey{
 					{
 						Index: 0,
-						PubKey: func() *codectypes.Any {
-							wrongAny, err := codectypes.NewAnyWithValue(&stakingtypes.Commission{})
-							s.Require().NoError(err)
-							return wrongAny
+						PubKey: func() []byte {
+							return secp256k1.GenPrivKey().PubKey().Bytes()
 						}(),
 					},
 				},
 			},
-			valAddr: valAddrs[2],
-			wantErr: sdkerrors.ErrInvalidType,
+			valAddr:    valAddrs[2],
+			wantErr:    sdkerrors.ErrInvalidRequest,
+			wantErrMsg: "invalid public key at SEDA key index",
 		},
 	}
 	for _, tt := range tests {
@@ -129,9 +137,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 			for _, indPubKey := range tt.msg.IndexedPubKeys {
 				pkActual, err := s.keeper.GetValidatorKeyAtIndex(s.ctx, tt.valAddr, utils.SEDAKeyIndex(indPubKey.Index))
 				s.Require().NoError(err)
-				pkExpected, ok := indPubKey.PubKey.GetCachedValue().(cryptotypes.PubKey)
-				s.Require().True(ok)
-				s.Require().Equal(pkExpected, pkActual)
+				s.Require().Equal(indPubKey.PubKey, pkActual)
 			}
 		})
 	}

@@ -14,11 +14,10 @@ import (
 	reflect "reflect"
 
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	types "github.com/cosmos/cosmos-sdk/crypto/types"
-	types0 "github.com/cosmos/cosmos-sdk/types"
-	types1 "github.com/cosmos/cosmos-sdk/x/staking/types"
+	types "github.com/cosmos/cosmos-sdk/types"
+	types0 "github.com/cosmos/cosmos-sdk/x/staking/types"
 	utils "github.com/sedaprotocol/seda-chain/app/utils"
-	types2 "github.com/sedaprotocol/seda-chain/x/batching/types"
+	types1 "github.com/sedaprotocol/seda-chain/x/batching/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -46,10 +45,10 @@ func (m *MockBatchingKeeper) EXPECT() *MockBatchingKeeperMockRecorder {
 }
 
 // GetBatchForHeight mocks base method.
-func (m *MockBatchingKeeper) GetBatchForHeight(ctx context.Context, height int64) (types2.Batch, error) {
+func (m *MockBatchingKeeper) GetBatchForHeight(ctx context.Context, height int64) (types1.Batch, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBatchForHeight", ctx, height)
-	ret0, _ := ret[0].(types2.Batch)
+	ret0, _ := ret[0].(types1.Batch)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -61,7 +60,7 @@ func (mr *MockBatchingKeeperMockRecorder) GetBatchForHeight(ctx, height any) *go
 }
 
 // SetBatchSignatures mocks base method.
-func (m *MockBatchingKeeper) SetBatchSignatures(ctx context.Context, batchNum uint64, sigs types2.BatchSignatures) error {
+func (m *MockBatchingKeeper) SetBatchSignatures(ctx context.Context, batchNum uint64, sigs types1.BatchSignatures) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetBatchSignatures", ctx, batchNum, sigs)
 	ret0, _ := ret[0].(error)
@@ -98,18 +97,18 @@ func (m *MockPubKeyKeeper) EXPECT() *MockPubKeyKeeperMockRecorder {
 }
 
 // GetValidatorKeyAtIndex mocks base method.
-func (m *MockPubKeyKeeper) GetValidatorKeyAtIndex(ctx context.Context, valAddr types0.ValAddress, index utils.SEDAKeyIndex) (types.PubKey, error) {
+func (m *MockPubKeyKeeper) GetValidatorKeyAtIndex(ctx context.Context, validatorAddr types.ValAddress, index utils.SEDAKeyIndex) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetValidatorKeyAtIndex", ctx, valAddr, index)
-	ret0, _ := ret[0].(types.PubKey)
+	ret := m.ctrl.Call(m, "GetValidatorKeyAtIndex", ctx, validatorAddr, index)
+	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetValidatorKeyAtIndex indicates an expected call of GetValidatorKeyAtIndex.
-func (mr *MockPubKeyKeeperMockRecorder) GetValidatorKeyAtIndex(ctx, valAddr, index any) *gomock.Call {
+func (mr *MockPubKeyKeeperMockRecorder) GetValidatorKeyAtIndex(ctx, validatorAddr, index any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorKeyAtIndex", reflect.TypeOf((*MockPubKeyKeeper)(nil).GetValidatorKeyAtIndex), ctx, valAddr, index)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorKeyAtIndex", reflect.TypeOf((*MockPubKeyKeeper)(nil).GetValidatorKeyAtIndex), ctx, validatorAddr, index)
 }
 
 // MockStakingKeeper is a mock of StakingKeeper interface.
@@ -136,7 +135,7 @@ func (m *MockStakingKeeper) EXPECT() *MockStakingKeeperMockRecorder {
 }
 
 // GetPubKeyByConsAddr mocks base method.
-func (m *MockStakingKeeper) GetPubKeyByConsAddr(arg0 context.Context, arg1 types0.ConsAddress) (crypto.PublicKey, error) {
+func (m *MockStakingKeeper) GetPubKeyByConsAddr(arg0 context.Context, arg1 types.ConsAddress) (crypto.PublicKey, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPubKeyByConsAddr", arg0, arg1)
 	ret0, _ := ret[0].(crypto.PublicKey)
@@ -151,10 +150,10 @@ func (mr *MockStakingKeeperMockRecorder) GetPubKeyByConsAddr(arg0, arg1 any) *go
 }
 
 // GetValidatorByConsAddr mocks base method.
-func (m *MockStakingKeeper) GetValidatorByConsAddr(ctx context.Context, consAddr types0.ConsAddress) (types1.Validator, error) {
+func (m *MockStakingKeeper) GetValidatorByConsAddr(ctx context.Context, consAddr types.ConsAddress) (types0.Validator, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetValidatorByConsAddr", ctx, consAddr)
-	ret0, _ := ret[0].(types1.Validator)
+	ret0, _ := ret[0].(types0.Validator)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -16,8 +16,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
-const ZeroHash = "0000000000000000000000000000000000000000000000000000000000000000"
-
 func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 	// Use defer to prevent returning an error, which would cause
 	// the chain to halt.
@@ -95,10 +93,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte
 
 	var provingMetaData, provingMetaDataHash []byte
 	if len(provingMetaData) == 0 {
-		provingMetaDataHash, err = hex.DecodeString(ZeroHash)
-		if err != nil {
-			return types.Batch{}, nil, nil, err
-		}
+		provingMetaDataHash = make([]byte, 32) // zero hash
 	} else {
 		hasher := sha3.NewLegacyKeccak256()
 		hasher.Write(provingMetaData)
@@ -180,7 +175,7 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 			}
 			panic(err)
 		}
-		ethAddr, err := utils.PubKeyToEthAddress(secp256k1PubKey.Bytes())
+		ethAddr, err := utils.PubKeyToEthAddress(secp256k1PubKey)
 		if err != nil {
 			k.Logger(ctx).Error("failed to decompress public key", "pubkey", secp256k1PubKey)
 			panic(err)

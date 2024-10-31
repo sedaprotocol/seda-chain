@@ -1,20 +1,19 @@
 package utils
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
-	"github.com/btcsuite/btcd/btcec/v2"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 
-	cmtcrypto "github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/secp256k1"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cmtos "github.com/cometbft/cometbft/libs/os"
-
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
@@ -38,17 +37,66 @@ const (
 // sedaKeyGenerators maps the key index to the corresponding private
 // key generator.
 var sedaKeyGenerators = map[SEDAKeyIndex]privKeyGenerator{
-	SEDAKeyIndexSecp256k1: func() cmtcrypto.PrivKey { return secp256k1.GenPrivKey() },
+	SEDAKeyIndexSecp256k1: func() *ecdsa.PrivateKey {
+		privKey, err := ecdsa.GenerateKey(ethcrypto.S256(), rand.Reader)
+		if err != nil {
+			panic(fmt.Sprintf("failed to generate secp256k1 private key: %v", err))
+		}
+		return privKey
+	},
 }
 
-type (
-	privKeyGenerator func() cmtcrypto.PrivKey
+var sedaKeyValidators = map[SEDAKeyIndex]pubKeyValidator{
+	SEDAKeyIndexSecp256k1: func(pubKey []byte) bool {
+		x, _ := elliptic.Unmarshal(ethcrypto.S256(), pubKey)
+		if x == nil {
+			return false
+		}
+		return true
+	},
+}
 
-	indexedPrivKey struct {
-		Index   SEDAKeyIndex      `json:"index"`
-		PrivKey cmtcrypto.PrivKey `json:"priv_key"`
+type privKeyGenerator func() *ecdsa.PrivateKey
+
+type pubKeyValidator func([]byte) bool
+
+type indexedPrivKey struct {
+	Index   SEDAKeyIndex      `json:"index"`
+	PrivKey *ecdsa.PrivateKey `json:"priv_key"`
+}
+
+func (k *indexedPrivKey) MarshalJSON() ([]byte, error) {
+	type Alias indexedPrivKey
+	return json.Marshal(&struct {
+		*Alias
+		PrivKey string `json:"priv_key"`
+	}{
+		Alias:   (*Alias)(k),
+		PrivKey: fmt.Sprintf("%x", ethcrypto.FromECDSA(k.PrivKey)),
+	})
+}
+
+func (k *indexedPrivKey) UnmarshalJSON(data []byte) error {
+	type Alias indexedPrivKey
+	aux := &struct {
+		*Alias
+		PrivKey string `json:"priv_key"`
+	}{
+		Alias: (*Alias)(k),
 	}
-)
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	privBytes, err := hex.DecodeString(aux.PrivKey)
+	if err != nil {
+		return fmt.Errorf("failed to decode private key hex: %v", err)
+	}
+	k.PrivKey, err = ethcrypto.ToECDSA(privBytes)
+	if err != nil {
+		return fmt.Errorf("failed to parse private key: %v", err)
+	}
+	return nil
+}
 
 // GenerateSEDAKeys generates SEDA keys given a list of private key
 // generators, saves them to the SEDA key file, and returns the resulting
@@ -63,19 +111,11 @@ func GenerateSEDAKeys(dirPath string) ([]pubkeytypes.IndexedPubKey, error) {
 			Index:   i,
 			PrivKey: generator(),
 		}
-
-		// Convert to SDK type for app-level use.
-		pubKey, err := cryptocodec.FromCmtPubKeyInterface(keys[i].PrivKey.PubKey())
-		if err != nil {
-			return nil, err
-		}
-		pkAny, err := codectypes.NewAnyWithValue(pubKey)
-		if err != nil {
-			return nil, err
-		}
+		pubKey := keys[i].PrivKey.PublicKey
+		pubKeyBytes := elliptic.Marshal(pubKey, pubKey.X, pubKey.Y)
 		result[i] = pubkeytypes.IndexedPubKey{
 			Index:  uint32(i),
-			PubKey: pkAny,
+			PubKey: pubKeyBytes,
 		}
 	}
 
@@ -87,6 +127,30 @@ func GenerateSEDAKeys(dirPath string) ([]pubkeytypes.IndexedPubKey, error) {
 	return result, nil
 }
 
+// ValidateSEDAKeys ensures that the provided indexed public keys
+// conform to SEDA keys specifications. It first sorts the provided
+// slice for deterministic results.
+func ValidateSEDAKeys(indPubKeys []pubkeytypes.IndexedPubKey) error {
+	if len(sedaKeyValidators) != len(indPubKeys) {
+		return fmt.Errorf("invalid number of SEDA keys")
+	}
+	sort.Slice(indPubKeys, func(i, j int) bool {
+		return indPubKeys[i].Index < indPubKeys[j].Index
+	})
+	for _, indPubKey := range indPubKeys {
+		index := SEDAKeyIndex(indPubKey.Index)
+		keyValidator, exists := sedaKeyValidators[index]
+		if !exists {
+			return fmt.Errorf("invalid SEDA key index %d", indPubKey.Index)
+		}
+		ok := keyValidator(indPubKey.PubKey)
+		if !ok {
+			return fmt.Errorf("invalid public key at SEDA key index %d", indPubKey.Index)
+		}
+	}
+	return nil
+}
+
 // LoadSEDAPubKeys loads the SEDA key file from the given path and
 // returns a list of index-public key pairs.
 func LoadSEDAPubKeys(loadPath string) ([]pubkeytypes.IndexedPubKey, error) {
@@ -95,25 +159,18 @@ func LoadSEDAPubKeys(loadPath string) ([]pubkeytypes.IndexedPubKey, error) {
 		return nil, fmt.Errorf("failed to read SEDA keys from %v: %v", loadPath, err)
 	}
 	var keys []indexedPrivKey
-	err = cmtjson.Unmarshal(keysJSONBytes, &keys)
+	err = json.Unmarshal(keysJSONBytes, &keys)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal SEDA keys from %v: %v", loadPath, err)
 	}
 
 	result := make([]pubkeytypes.IndexedPubKey, len(keys))
 	for i, key := range keys {
-		// Convert to SDK type for app-level use.
-		pubKey, err := cryptocodec.FromCmtPubKeyInterface(key.PrivKey.PubKey())
-		if err != nil {
-			return nil, err
-		}
-		pkAny, err := codectypes.NewAnyWithValue(pubKey)
-		if err != nil {
-			return nil, err
-		}
+		pubKey := key.PrivKey.PublicKey
+		pubKeyBytes := elliptic.Marshal(pubKey, pubKey.X, pubKey.Y)
 		result[i] = pubkeytypes.IndexedPubKey{
 			Index:  uint32(key.Index),
-			PubKey: pkAny,
+			PubKey: pubKeyBytes,
 		}
 	}
 	return result, nil
@@ -130,7 +187,7 @@ func saveSEDAKeys(keys []indexedPrivKey, dirPath string) error {
 	if err != nil {
 		return err
 	}
-	jsonBytes, err := cmtjson.MarshalIndent(keys, "", "  ")
+	jsonBytes, err := json.MarshalIndent(keys, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal SEDA keys: %v", err)
 	}
@@ -159,41 +216,37 @@ func LoadSEDASigner(loadPath string) (SEDASigner, error) {
 		return nil, fmt.Errorf("failed to read SEDA keys from %v: %v", loadPath, err)
 	}
 	var keys []indexedPrivKey
-	err = cmtjson.Unmarshal(keysJSONBytes, &keys)
+	err = json.Unmarshal(keysJSONBytes, &keys)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal SEDA keys from %v: %v", loadPath, err)
 	}
 	return &sedaKeys{keys: keys}, nil
 }
 
-// Sign returns the signature for the a given hashed input using the
-// key at the given index.
+// Sign hashes the given input using Keccak-256 and signs the resulting
+// hash with the key at the given index.
 func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
-	privKey, err := ethcrypto.ToECDSA(s.keys[index].PrivKey.Bytes())
-	if err != nil {
-		return nil, err
+	var signature []byte
+	var err error
+	switch index {
+	case SEDAKeyIndexSecp256k1:
+		signature, err = ethcrypto.Sign(input, s.keys[index].PrivKey)
+	default:
+		err = fmt.Errorf("invalid SEDA key index %d", index)
 	}
-
-	// ethcrypto library already checks if input is 32 bytes (digest length)
-	signature, err := ethcrypto.Sign(input, privKey)
 	if err != nil {
 		return nil, err
 	}
 	return signature, nil
 }
 
-// PubKeyToAddress converts a public key in the 33-byte compressed
+// PubKeyToAddress converts a public key in the 65-byte uncompressed
 // format into the Ethereum address format, which is defined as the
-// rightmost 160 bits of a Keccak hash of an ECDSA public key.
-func PubKeyToEthAddress(pubKey []byte) ([]byte, error) {
-	if len(pubKey) != 33 {
-		return nil, fmt.Errorf("invalid compressed public key %x", pubKey)
+// rightmost 160 bits of Keccak hash of an ECDSA public key without
+// the 0x04 prefix.
+func PubKeyToEthAddress(uncompressed []byte) ([]byte, error) {
+	if len(uncompressed) != 65 {
+		return nil, fmt.Errorf("invalid public key length: %d", len(uncompressed))
 	}
-	key, err := btcec.ParsePubKey(pubKey)
-	if err != nil {
-		return nil, err
-	}
-	// 64-byte format: x-coordinate | y-coordinate
-	uncompressed := append(key.X().Bytes(), key.Y().Bytes()...)
-	return ethcrypto.Keccak256(uncompressed)[12:], nil
+	return ethcrypto.Keccak256(uncompressed[1:])[12:], nil
 }
