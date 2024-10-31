@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"golang.org/x/crypto/sha3"
 
 	cometabci "github.com/cometbft/cometbft/abci/types"
 
@@ -64,8 +65,11 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	mockPubKeyKeeper := testutil.NewMockPubKeyKeeper(ctrl)
 	mockStakingKeeper := testutil.NewMockStakingKeeper(ctrl)
 
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write([]byte("Message for ECDSA signing"))
+	batchID := hasher.Sum(nil)
 	mockBatch := batchingtypes.Batch{
-		BatchId:     []byte("Message for ECDSA signing"),
+		BatchId:     batchID,
 		BlockHeight: 100, // created from the previous block
 	}
 
