@@ -166,14 +166,16 @@ func LoadSEDASigner(loadPath string) (SEDASigner, error) {
 	return &sedaKeys{keys: keys}, nil
 }
 
+// Sign returns the signature for the a given hashed input using the
+// key at the given index.
 func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
 	privKey, err := ethcrypto.ToECDSA(s.keys[index].PrivKey.Bytes())
 	if err != nil {
 		return nil, err
 	}
 
-	hash := ethcrypto.Keccak256Hash(input)
-	signature, err := ethcrypto.Sign(hash.Bytes(), privKey)
+	// ethcrypto library already checks if input is 32 bytes (digest length)
+	signature, err := ethcrypto.Sign(input, privKey)
 	if err != nil {
 		return nil, err
 	}

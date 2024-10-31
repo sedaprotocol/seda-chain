@@ -38,8 +38,7 @@ func (m *mockSigner) Sign(input []byte, _ utils.SEDAKeyIndex) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	hash := crypto.Keccak256Hash(input)
-	signature, err := crypto.Sign(hash.Bytes(), privKey)
+	signature, err := crypto.Sign(input, privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -101,8 +100,7 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	require.NoError(t, err)
 
 	// Recover and verify public key
-	hash := crypto.Keccak256Hash(mockBatch.BatchId)
-	sigPubKey, err := crypto.Ecrecover(hash.Bytes(), evRes.VoteExtension)
+	sigPubKey, err := crypto.Ecrecover(mockBatch.BatchId, evRes.VoteExtension)
 	require.NoError(t, err)
 	require.Equal(t, expPubKey, sigPubKey)
 
