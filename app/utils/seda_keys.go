@@ -2,7 +2,6 @@ package utils
 
 import (
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -47,9 +46,9 @@ var sedaKeyGenerators = map[SEDAKeyIndex]privKeyGenerator{
 }
 
 var sedaKeyValidators = map[SEDAKeyIndex]pubKeyValidator{
-	SEDAKeyIndexSecp256k1: func(pubKey []byte) bool {
-		x, _ := elliptic.Unmarshal(ethcrypto.S256(), pubKey)
-		return x != nil
+	SEDAKeyIndexSecp256k1: func(pub []byte) bool {
+		_, err := ethcrypto.UnmarshalPubkey(pub)
+		return err == nil
 	},
 }
 
@@ -109,7 +108,7 @@ func GenerateSEDAKeys(dirPath string) ([]pubkeytypes.IndexedPubKey, error) {
 			PrivKey: generator(),
 		}
 		pubKey := keys[i].PrivKey.PublicKey
-		pubKeyBytes := elliptic.Marshal(pubKey, pubKey.X, pubKey.Y)
+		pubKeyBytes := ethcrypto.FromECDSAPub(&pubKey)
 		result[i] = pubkeytypes.IndexedPubKey{
 			Index:  uint32(i),
 			PubKey: pubKeyBytes,
@@ -164,7 +163,7 @@ func LoadSEDAPubKeys(loadPath string) ([]pubkeytypes.IndexedPubKey, error) {
 	result := make([]pubkeytypes.IndexedPubKey, len(keys))
 	for i, key := range keys {
 		pubKey := key.PrivKey.PublicKey
-		pubKeyBytes := elliptic.Marshal(pubKey, pubKey.X, pubKey.Y)
+		pubKeyBytes := ethcrypto.FromECDSAPub(&pubKey)
 		result[i] = pubkeytypes.IndexedPubKey{
 			Index:  uint32(key.Index),
 			PubKey: pubKeyBytes,

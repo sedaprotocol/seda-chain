@@ -53,7 +53,6 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.mockStakingKeeper = testutil.NewMockStakingKeeper(ctrl)
 	s.valCdc = addresscodec.NewBech32Codec(params.Bech32PrefixValAddr)
 	s.keeper = keeper.NewKeeper(
-		encCfg.Codec,
 		runtime.NewKVStoreService(key),
 		s.mockStakingKeeper,
 		s.valCdc,

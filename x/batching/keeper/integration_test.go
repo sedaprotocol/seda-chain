@@ -187,7 +187,6 @@ func initFixture(tb testing.TB) *fixture {
 	)
 
 	pubKeyKeeper := pubkeykeeper.NewKeeper(
-		cdc,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		stakingKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
