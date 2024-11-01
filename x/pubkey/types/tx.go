@@ -5,9 +5,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-var (
-	_ sdk.Msg = &MsgAddKey{}
-)
+var _ sdk.Msg = &MsgAddKey{}
 
 func (m *MsgAddKey) Validate() error {
 	if m.ValidatorAddr == "" {

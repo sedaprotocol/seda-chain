@@ -7,6 +7,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	"github.com/cometbft/cometbft/crypto/secp256k1"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"

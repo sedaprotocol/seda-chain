@@ -49,10 +49,7 @@ var sedaKeyGenerators = map[SEDAKeyIndex]privKeyGenerator{
 var sedaKeyValidators = map[SEDAKeyIndex]pubKeyValidator{
 	SEDAKeyIndexSecp256k1: func(pubKey []byte) bool {
 		x, _ := elliptic.Unmarshal(ethcrypto.S256(), pubKey)
-		if x == nil {
-			return false
-		}
-		return true
+		return x != nil
 	},
 }
 
@@ -223,8 +220,7 @@ func LoadSEDASigner(loadPath string) (SEDASigner, error) {
 	return &sedaKeys{keys: keys}, nil
 }
 
-// Sign hashes the given input using Keccak-256 and signs the resulting
-// hash with the key at the given index.
+// Sign signs a 32-byte digest with the key at the given index.
 func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
 	var signature []byte
 	var err error
