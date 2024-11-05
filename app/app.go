@@ -1002,11 +1002,12 @@ func NewApp(
 	app.SetPreBlocker(app.PreBlocker)
 
 	// Register SEDA signer and ExtendVote handler.
+	fmt.Println(cast.ToString(appOpts.Get("priv_validator_key_file")))
 	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
-	loadPath := filepath.Join(filepath.Dir(pvKeyFile), utils.SEDAKeyFileName)
-	signer, err := utils.LoadSEDASigner(loadPath)
+	// loadPath := filepath.Join(filepath.Dir(pvKeyFile), utils.SEDAKeyFileName)
+	signer, err := utils.LoadSEDASigner(pvKeyFile)
 	if err != nil {
-		app.Logger().Error("error loading SEDA signer - ExtendVote handler will not run", "path", loadPath)
+		// app.Logger().Error("error loading SEDA signer - ExtendVote handler will not run", "path", loadPath) // TODO
 	} else {
 		app.Logger().Info("SEDA signer successfully loaded")
 		abciHandler.SetSEDASigner(signer)

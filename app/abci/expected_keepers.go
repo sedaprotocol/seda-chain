@@ -8,15 +8,17 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
-	"github.com/sedaprotocol/seda-chain/x/batching/types"
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 type BatchingKeeper interface {
-	GetBatchForHeight(ctx context.Context, height int64) (types.Batch, error)
-	SetBatchSignatures(ctx context.Context, batchNum uint64, sigs types.BatchSignatures) error
+	GetBatchForHeight(ctx context.Context, height int64) (batchingtypes.Batch, error)
+	SetBatchSignatures(ctx context.Context, batchNum uint64, sigs batchingtypes.BatchSignatures) error
 }
 
 type PubKeyKeeper interface {
+	GetValidatorKeys(ctx context.Context, validatorAddr string) (result pubkeytypes.ValidatorPubKeys, err error)
 	GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex) ([]byte, error)
 }
 

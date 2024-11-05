@@ -108,9 +108,13 @@ cp $HOME/.sedad/validator1/config/genesis.json $HOME/.sedad/validator3/config/ge
 cp $HOME/.sedad/validator1/config/genesis.json $HOME/.sedad/validator4/config/genesis.json
 
 # copy tendermint node id of validator1 to persistent peers of validator2-4
-sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"$($BIN tendermint show-node-id --home=$HOME/.sedad/validator1)@localhost:26656\"|g" $HOME/.sedad/validator2/config/config.toml
-sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"$($BIN tendermint show-node-id --home=$HOME/.sedad/validator1)@localhost:26656\"|g" $HOME/.sedad/validator3/config/config.toml
-sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"$($BIN tendermint show-node-id --home=$HOME/.sedad/validator1)@localhost:26656\"|g" $HOME/.sedad/validator4/config/config.toml
+NODE1_ID=$($BIN tendermint show-node-id --home=$HOME/.sedad/validator1 | tail -1)
+sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"${NODE1_ID}@localhost:26656\"|g" $HOME/.sedad/validator2/config/config.toml
+sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"${NODE1_ID}@localhost:26656\"|g" $HOME/.sedad/validator3/config/config.toml
+sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"${NODE1_ID}@localhost:26656\"|g" $HOME/.sedad/validator4/config/config.toml
+# sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"$($BIN tendermint show-node-id --home=$HOME/.sedad/validator1)@localhost:26656\"|g" $HOME/.sedad/validator2/config/config.toml
+# sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"$($BIN tendermint show-node-id --home=$HOME/.sedad/validator1)@localhost:26656\"|g" $HOME/.sedad/validator3/config/config.toml
+# sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"$($BIN tendermint show-node-id --home=$HOME/.sedad/validator1)@localhost:26656\"|g" $HOME/.sedad/validator4/config/config.toml
 
 # start all four validators
 tmux new-session -s validator1 -d 

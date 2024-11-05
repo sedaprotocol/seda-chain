@@ -8,12 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
-	comettypes "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmttypes "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"cosmossdk.io/collections"
 	addresscodec "cosmossdk.io/core/address"
 	"cosmossdk.io/log"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -76,10 +75,10 @@ func (h *Handlers) SetSEDASigner(signer utils.SEDASigner) {
 // ExtendVoteHandler handles the ExtendVote ABCI to sign a batch created
 // from the previous block.
 func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
-	return func(ctx sdk.Context, _ *abcitypes.RequestExtendVote) (*abcitypes.ResponseExtendVote, error) {
+	return func(ctx sdk.Context, req *abcitypes.RequestExtendVote) (*abcitypes.ResponseExtendVote, error) {
 		h.logger.Debug("start extend vote handler")
 
-		// Sign the batch created from the last block's end blocker.
+		// Check if there is a batch to sign at this block height.
 		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetSignPhase)
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
@@ -88,7 +87,22 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 			}
 			return nil, err
 		}
+
+		val, err := h.stakingKeeper.GetValidatorByConsAddr(ctx, h.signer.GetConsAddress())
+		if err != nil {
+			return nil, err
+		}
+		valKeys, err := h.pubKeyKeeper.GetValidatorKeys(ctx, val.OperatorAddress)
+		if err != nil {
+			return nil, err
+		}
+
+		// Sign and reload the signer if the public key has changed.
 		signature, err := h.signer.Sign(batch.BatchId, utils.SEDAKeyIndexSecp256k1)
+		if err != nil {
+			return nil, err
+		}
+		err = h.signer.ReloadIfMismatch(valKeys.IndexedPubKeys)
 		if err != nil {
 			return nil, err
 		}
@@ -230,7 +244,7 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 
 		for _, vote := range extendedVotes.Votes {
 			// Only consider extensions with pre-commit votes.
-			if vote.BlockIdFlag == comettypes.BlockIDFlagCommit {
+			if vote.BlockIdFlag == cmttypes.BlockIDFlagCommit {
 				err = h.verifyBatchSignatures(ctx, batch.BatchId, vote.VoteExtension, vote.Validator.Address)
 				if err != nil {
 					h.logger.Error("proposal contains an invalid vote extension", "vote", vote)

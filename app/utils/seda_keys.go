@@ -17,9 +17,6 @@ import (
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
-// SEDAKeyFileName defines the SEDA key file name.
-const SEDAKeyFileName = "seda_keys.json"
-
 // SEDAKeyIndex enumerates the SEDA key indices.
 type SEDAKeyIndex uint32
 
@@ -33,8 +30,10 @@ const (
 	SEDASeparatorSecp256k1
 )
 
-// sedaKeyGenerators maps the key index to the corresponding private
-// key generator.
+type privKeyGenerator func() *ecdsa.PrivateKey
+
+// sedaKeyGenerators maps the SEDA key index to the corresponding
+// private key generator.
 var sedaKeyGenerators = map[SEDAKeyIndex]privKeyGenerator{
 	SEDAKeyIndexSecp256k1: func() *ecdsa.PrivateKey {
 		privKey, err := ecdsa.GenerateKey(ethcrypto.S256(), rand.Reader)
@@ -45,20 +44,25 @@ var sedaKeyGenerators = map[SEDAKeyIndex]privKeyGenerator{
 	},
 }
 
-var sedaKeyValidators = map[SEDAKeyIndex]pubKeyValidator{
+type pubKeyValidator func([]byte) bool
+
+// sedaPubKeyValidators maps the SEDA key index to the corresponding
+// public key validator.
+var sedaPubKeyValidators = map[SEDAKeyIndex]pubKeyValidator{
 	SEDAKeyIndexSecp256k1: func(pub []byte) bool {
 		_, err := ethcrypto.UnmarshalPubkey(pub)
 		return err == nil
 	},
 }
 
-type privKeyGenerator func() *ecdsa.PrivateKey
+// SEDAKeyFileName defines the SEDA key file name.
+const SEDAKeyFileName = "seda_keys.json"
 
-type pubKeyValidator func([]byte) bool
-
+// indexedPrivKey is used for persisting the SEDA keys in a file.
 type indexedPrivKey struct {
 	Index   SEDAKeyIndex      `json:"index"`
 	PrivKey *ecdsa.PrivateKey `json:"priv_key"`
+	PubKey  []byte            `json:"pub_key"`
 }
 
 func (k *indexedPrivKey) MarshalJSON() ([]byte, error) {
@@ -94,55 +98,24 @@ func (k *indexedPrivKey) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// GenerateSEDAKeys generates SEDA keys given a list of private key
-// generators, saves them to the SEDA key file, and returns the resulting
-// index-public key pairs. Index is assigned incrementally in the order
-// of the given private key generators. The key file is stored in the
-// directory given by dirPath.
-func GenerateSEDAKeys(dirPath string) ([]pubkeytypes.IndexedPubKey, error) {
-	keys := make([]indexedPrivKey, len(sedaKeyGenerators))
-	result := make([]pubkeytypes.IndexedPubKey, len(sedaKeyGenerators))
-	for i, generator := range sedaKeyGenerators {
-		keys[i] = indexedPrivKey{
-			Index:   i,
-			PrivKey: generator(),
-		}
-		pubKey := keys[i].PrivKey.PublicKey
-		pubKeyBytes := ethcrypto.FromECDSAPub(&pubKey)
-		result[i] = pubkeytypes.IndexedPubKey{
-			Index:  uint32(i),
-			PubKey: pubKeyBytes,
-		}
+// saveSEDAKeys saves a given list of indexedPrivKey in the directory
+// at dirPath.
+func saveSEDAKeys(keys []indexedPrivKey, dirPath string) error {
+	savePath := filepath.Join(dirPath, SEDAKeyFileName)
+	if cmtos.FileExists(savePath) {
+		return fmt.Errorf("SEDA key file already exists at %s", savePath)
 	}
-
-	// The key file is placed in the same directory as the validator key file.
-	err := saveSEDAKeys(keys, dirPath)
+	err := cmtos.EnsureDir(filepath.Dir(savePath), 0o700)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return result, nil
-}
-
-// ValidateSEDAKeys ensures that the provided indexed public keys
-// conform to SEDA keys specifications. It first sorts the provided
-// slice for deterministic results.
-func ValidateSEDAKeys(indPubKeys []pubkeytypes.IndexedPubKey) error {
-	if len(sedaKeyValidators) != len(indPubKeys) {
-		return fmt.Errorf("invalid number of SEDA keys")
+	jsonBytes, err := json.MarshalIndent(keys, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal SEDA keys: %v", err)
 	}
-	sort.Slice(indPubKeys, func(i, j int) bool {
-		return indPubKeys[i].Index < indPubKeys[j].Index
-	})
-	for _, indPubKey := range indPubKeys {
-		index := SEDAKeyIndex(indPubKey.Index)
-		keyValidator, exists := sedaKeyValidators[index]
-		if !exists {
-			return fmt.Errorf("invalid SEDA key index %d", indPubKey.Index)
-		}
-		ok := keyValidator(indPubKey.PubKey)
-		if !ok {
-			return fmt.Errorf("invalid public key at SEDA key index %d", indPubKey.Index)
-		}
+	err = os.WriteFile(savePath, jsonBytes, 0o600)
+	if err != nil {
+		return fmt.Errorf("failed to write SEDA key file: %v", err)
 	}
 	return nil
 }
@@ -172,67 +145,58 @@ func LoadSEDAPubKeys(loadPath string) ([]pubkeytypes.IndexedPubKey, error) {
 	return result, nil
 }
 
-// saveSEDAKeys saves a given list of IndexedPrivKey in the directory
-// at dirPath.
-func saveSEDAKeys(keys []indexedPrivKey, dirPath string) error {
-	savePath := filepath.Join(dirPath, SEDAKeyFileName)
-	if cmtos.FileExists(savePath) {
-		return fmt.Errorf("SEDA key file already exists at %s", savePath)
+// GenerateSEDAKeys generates SEDA keys given a list of private key
+// generators, saves them to the SEDA key file, and returns the resulting
+// index-public key pairs. Index is assigned incrementally in the order
+// of the given private key generators. The key file is stored in the
+// directory given by dirPath.
+func GenerateSEDAKeys(dirPath string) ([]pubkeytypes.IndexedPubKey, error) {
+	privKeys := make([]indexedPrivKey, len(sedaKeyGenerators))
+	pubKeys := make([]pubkeytypes.IndexedPubKey, len(sedaKeyGenerators))
+	for i, generator := range sedaKeyGenerators {
+		privKey := generator()
+		pubKey := ethcrypto.FromECDSAPub(&privKey.PublicKey)
+		privKeys[i] = indexedPrivKey{
+			Index:   i,
+			PrivKey: privKey,
+			PubKey:  pubKey,
+		}
+		pubKeys[i] = pubkeytypes.IndexedPubKey{
+			Index:  uint32(i),
+			PubKey: pubKey,
+		}
 	}
-	err := cmtos.EnsureDir(filepath.Dir(savePath), 0o700)
-	if err != nil {
-		return err
-	}
-	jsonBytes, err := json.MarshalIndent(keys, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal SEDA keys: %v", err)
-	}
-	err = os.WriteFile(savePath, jsonBytes, 0o600)
-	if err != nil {
-		return fmt.Errorf("failed to write SEDA key file: %v", err)
-	}
-	return nil
-}
 
-type SEDASigner interface {
-	Sign(input []byte, index SEDAKeyIndex) (signature []byte, err error)
-}
-
-var _ SEDASigner = &sedaKeys{}
-
-type sedaKeys struct {
-	keys []indexedPrivKey
-}
-
-// LoadSEDASigner loads the SEDA keys from a given file and returns
-// a SEDASigner interface.
-func LoadSEDASigner(loadPath string) (SEDASigner, error) {
-	keysJSONBytes, err := os.ReadFile(loadPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read SEDA keys from %v: %v", loadPath, err)
-	}
-	var keys []indexedPrivKey
-	err = json.Unmarshal(keysJSONBytes, &keys)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal SEDA keys from %v: %v", loadPath, err)
-	}
-	return &sedaKeys{keys: keys}, nil
-}
-
-// Sign signs a 32-byte digest with the key at the given index.
-func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
-	var signature []byte
-	var err error
-	switch index {
-	case SEDAKeyIndexSecp256k1:
-		signature, err = ethcrypto.Sign(input, s.keys[index].PrivKey)
-	default:
-		err = fmt.Errorf("invalid SEDA key index %d", index)
-	}
+	// The key file is placed in the same directory as the validator key file.
+	err := saveSEDAKeys(privKeys, dirPath)
 	if err != nil {
 		return nil, err
 	}
-	return signature, nil
+	return pubKeys, nil
+}
+
+// ValidateSEDAPubKeys ensures that the provided indexed public keys
+// conform to SEDA keys specifications. It first sorts the provided
+// slice for deterministic results.
+func ValidateSEDAPubKeys(indPubKeys []pubkeytypes.IndexedPubKey) error {
+	if len(sedaPubKeyValidators) != len(indPubKeys) {
+		return fmt.Errorf("invalid number of SEDA keys")
+	}
+	sort.Slice(indPubKeys, func(i, j int) bool {
+		return indPubKeys[i].Index < indPubKeys[j].Index
+	})
+	for _, indPubKey := range indPubKeys {
+		index := SEDAKeyIndex(indPubKey.Index)
+		keyValidator, exists := sedaPubKeyValidators[index]
+		if !exists {
+			return fmt.Errorf("invalid SEDA key index %d", indPubKey.Index)
+		}
+		ok := keyValidator(indPubKey.PubKey)
+		if !ok {
+			return fmt.Errorf("invalid public key at SEDA key index %d", indPubKey.Index)
+		}
+	}
+	return nil
 }
 
 // PubKeyToAddress converts a public key in the 65-byte uncompressed

@@ -31,7 +31,7 @@ func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.M
 	if err != nil {
 		return nil, err
 	}
-	err = utils.ValidateSEDAKeys(msg.IndexedPubKeys)
+	err = utils.ValidateSEDAPubKeys(msg.IndexedPubKeys)
 	if err != nil {
 		return nil, sdkerrors.ErrInvalidRequest.Wrapf("invalid SEDA keys: %s", err)
 	}
