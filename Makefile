@@ -313,7 +313,13 @@ docker-build-e2e:
 		-t sedaprotocol/sedad-e2e \
 		-f dockerfiles/Dockerfile.e2e .
 
-.PHONY: cover-html run-tests $(TEST_TARGETS) test test-race docker-build-e2e
+fuzz:
+	go test ${CURRENT_DIR}/fuzz -mod=readonly -fuzz Fuzz -fuzztime 1h
+
+fuzz-failed-test:
+	go test ${CURRENT_DIR}/fuzz -mod=readonly -run ${TEST_NAME}/${TEST_ID}
+
+.PHONY: cover-html run-tests $(TEST_TARGETS) test test-race docker-build-e2e fuzz
 
 ###############################################################################
 ###                             Simulation Tests                            ###
