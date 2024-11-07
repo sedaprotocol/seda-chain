@@ -35,8 +35,6 @@ type sedaKeys struct {
 // LoadSEDASigner loads the SEDA keys from a given file and returns
 // a SEDASigner interface.
 func LoadSEDASigner(pvKeyFilePath string) (SEDASigner, error) {
-	// TODO What if there is a rotation?
-	// TODO Can we safely assume that the file will be loaded?
 	_, err := os.ReadFile(pvKeyFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private validator key from %v: %v", pvKeyFilePath, err)
@@ -120,7 +118,6 @@ func (s *sedaKeys) ReloadIfMismatch(pubKeys []pubkeytypes.IndexedPubKey) error {
 
 // Reload reloads the signer from the key file.
 func (s *sedaKeys) reload() error {
-	// TODO merge with LoadSEDASigner??
 	keysJSONBytes, err := os.ReadFile(s.keyPath)
 	if err != nil {
 		return fmt.Errorf("failed to read SEDA keys from %v: %v", s.keyPath, err)

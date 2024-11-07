@@ -18,6 +18,7 @@ import (
 	types0 "github.com/cosmos/cosmos-sdk/x/staking/types"
 	utils "github.com/sedaprotocol/seda-chain/app/utils"
 	types1 "github.com/sedaprotocol/seda-chain/x/batching/types"
+	types2 "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -59,18 +60,33 @@ func (mr *MockBatchingKeeperMockRecorder) GetBatchForHeight(ctx, height any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBatchForHeight", reflect.TypeOf((*MockBatchingKeeper)(nil).GetBatchForHeight), ctx, height)
 }
 
-// SetBatchSignatures mocks base method.
-func (m *MockBatchingKeeper) SetBatchSignatures(ctx context.Context, batchNum uint64, sigs types1.BatchSignatures) error {
+// GetValidatorTreeEntry mocks base method.
+func (m *MockBatchingKeeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddress types.ValAddress) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetBatchSignatures", ctx, batchNum, sigs)
+	ret := m.ctrl.Call(m, "GetValidatorTreeEntry", ctx, batchNum, valAddress)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetValidatorTreeEntry indicates an expected call of GetValidatorTreeEntry.
+func (mr *MockBatchingKeeperMockRecorder) GetValidatorTreeEntry(ctx, batchNum, valAddress any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorTreeEntry", reflect.TypeOf((*MockBatchingKeeper)(nil).GetValidatorTreeEntry), ctx, batchNum, valAddress)
+}
+
+// SetBatchSignatures mocks base method.
+func (m *MockBatchingKeeper) SetBatchSignatures(ctx context.Context, sigs types1.BatchSignatures) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetBatchSignatures", ctx, sigs)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetBatchSignatures indicates an expected call of SetBatchSignatures.
-func (mr *MockBatchingKeeperMockRecorder) SetBatchSignatures(ctx, batchNum, sigs any) *gomock.Call {
+func (mr *MockBatchingKeeperMockRecorder) SetBatchSignatures(ctx, sigs any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBatchSignatures", reflect.TypeOf((*MockBatchingKeeper)(nil).SetBatchSignatures), ctx, batchNum, sigs)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBatchSignatures", reflect.TypeOf((*MockBatchingKeeper)(nil).SetBatchSignatures), ctx, sigs)
 }
 
 // MockPubKeyKeeper is a mock of PubKeyKeeper interface.
@@ -109,6 +125,21 @@ func (m *MockPubKeyKeeper) GetValidatorKeyAtIndex(ctx context.Context, validator
 func (mr *MockPubKeyKeeperMockRecorder) GetValidatorKeyAtIndex(ctx, validatorAddr, index any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorKeyAtIndex", reflect.TypeOf((*MockPubKeyKeeper)(nil).GetValidatorKeyAtIndex), ctx, validatorAddr, index)
+}
+
+// GetValidatorKeys mocks base method.
+func (m *MockPubKeyKeeper) GetValidatorKeys(ctx context.Context, validatorAddr string) (types2.ValidatorPubKeys, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetValidatorKeys", ctx, validatorAddr)
+	ret0, _ := ret[0].(types2.ValidatorPubKeys)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetValidatorKeys indicates an expected call of GetValidatorKeys.
+func (mr *MockPubKeyKeeperMockRecorder) GetValidatorKeys(ctx, validatorAddr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorKeys", reflect.TypeOf((*MockPubKeyKeeper)(nil).GetValidatorKeys), ctx, validatorAddr)
 }
 
 // MockStakingKeeper is a mock of StakingKeeper interface.

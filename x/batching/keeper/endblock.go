@@ -51,7 +51,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 // results and a validator tree from the current active validator set.
 // It returns a resulting batch, data result tree entries, and validator
 // tree entries in that order.
-func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, [][]byte, error) {
+func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, []ValidatorTreeEntry, error) {
 	var newBatchNum uint64
 	var latestDataRootHex, latestValRootHex string
 	latestBatch, err := k.GetLatestBatch(ctx)
@@ -157,13 +157,13 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) ([]
 // validators in the active set and their registered public keys.
 // It returns the tree's entries without the domain separators and
 // the tree root.
-func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error) {
+func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([]ValidatorTreeEntry, []byte, error) {
 	totalPower, err := k.stakingKeeper.GetLastTotalPower(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var entries [][]byte
+	var entries []ValidatorTreeEntry
 	var treeEntries [][]byte
 	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
 		// Retrieve corresponding public key and convert it to
@@ -193,7 +193,10 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([][]byte, []byte, error
 		//nolint:gosec // G115: Max of powerPercent should be 1e8 < 2^64.
 		binary.BigEndian.PutUint32(treeEntry[len(separator)+len(ethAddr):], uint32(powerPercent))
 
-		entries = append(entries, treeEntry[len(separator):])
+		entries = append(entries, ValidatorTreeEntry{
+			ValAddress: valAddr,
+			Entry:      treeEntry[len(separator):],
+		})
 		treeEntries = append(treeEntries, treeEntry)
 		return false
 	})

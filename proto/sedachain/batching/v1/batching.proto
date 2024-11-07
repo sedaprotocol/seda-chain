@@ -32,7 +32,7 @@ message Batch {
 // TreeEntries are the given batch's data result tree entries and
 // validator tree entries.
 message TreeEntries {
-  // batch_number is the identifier of the batch the tree entries from.
+  // batch_number is the identifier of the batch.
   uint64 batch_number = 1;
   // data_result_entries are the entries (unhashed leaf contents) of
   // the data result tree.
@@ -45,9 +45,11 @@ message TreeEntries {
 // BatchSignatures contains basic validator data and its batch signatures
 // under various cryptographic schemes.
 message BatchSignatures {
-  string validator_addr = 1
+  // batch_number is the identifier of the batch.
+  uint64 batch_number = 1;
+  string validator_addr = 2
       [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
-  bytes signatures = 2;
+  bytes signatures = 3;
 }
 
 // Params is a list of parameters which can be changed through governance.

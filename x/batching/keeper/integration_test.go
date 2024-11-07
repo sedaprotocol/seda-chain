@@ -39,7 +39,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/integration"
 	"github.com/sedaprotocol/seda-chain/x/batching"
-	"github.com/sedaprotocol/seda-chain/x/batching/keeper"
+	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 	"github.com/sedaprotocol/seda-chain/x/pubkey"
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
@@ -84,7 +84,7 @@ type fixture struct {
 	wasmStorageKeeper wasmstoragekeeper.Keeper
 	tallyKeeper       tallykeeper.Keeper
 	pubKeyKeeper      pubkeykeeper.Keeper
-	batchingKeeper    keeper.Keeper
+	batchingKeeper    batchingkeeper.Keeper
 	mockViewKeeper    *testutil.MockViewKeeper
 	logBuf            *bytes.Buffer
 }
@@ -191,7 +191,7 @@ func initFixture(tb testing.TB) *fixture {
 		stakingKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
-	batchingKeeper := keeper.NewKeeper(
+	batchingKeeper := batchingkeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[types.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),

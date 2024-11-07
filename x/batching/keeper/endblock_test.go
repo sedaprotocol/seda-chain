@@ -82,11 +82,11 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	parsedPowers := make([]uint32, len(entries))
 	entriesWithSep := make([][]byte, len(entries))
 	for i, entry := range entries {
-		parsedAddrs[i] = entry[:20]
-		parsedPowers[i] = binary.BigEndian.Uint32(entry[20:])
+		parsedAddrs[i] = entry.Entry[:20]
+		parsedPowers[i] = binary.BigEndian.Uint32(entry.Entry[20:])
 		expectedAddrs[i], err = utils.PubKeyToEthAddress(pks[i])
 		require.NoError(t, err)
-		entriesWithSep[i] = append([]byte{utils.SEDASeparatorSecp256k1}, entry...)
+		entriesWithSep[i] = append([]byte{utils.SEDASeparatorSecp256k1}, entry.Entry...)
 	}
 	require.ElementsMatch(t, expectedAddrs, parsedAddrs)
 	require.ElementsMatch(t, powerPercents, parsedPowers)
@@ -529,8 +529,8 @@ func Test_ConstructValidatorTreeWithTestData(t *testing.T) {
 	parsedAddrs := make([][]byte, len(entries))
 	parsedPowers := make([]uint32, len(entries))
 	for i, entry := range entries {
-		parsedAddrs[i] = entry[:20]
-		parsedPowers[i] = binary.BigEndian.Uint32(entry[20:])
+		parsedAddrs[i] = entry.Entry[:20]
+		parsedPowers[i] = binary.BigEndian.Uint32(entry.Entry[20:])
 		expectedAddr, err := hex.DecodeString(data.Validators[i].Identity[2:])
 		require.NoError(t, err)
 		expectedAddrs[i] = expectedAddr

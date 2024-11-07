@@ -2,8 +2,7 @@ package abci
 
 import (
 	"bytes"
-	"crypto/ecdsa"
-	"crypto/elliptic"
+	"path/filepath"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -13,6 +12,8 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	cometabci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/config"
+	"github.com/cometbft/cometbft/privval"
 
 	"cosmossdk.io/log"
 
@@ -26,23 +27,24 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
-var _ utils.SEDASigner = &mockSigner{}
-
-type mockSigner struct {
-	PrivKey *ecdsa.PrivateKey
-}
-
-func (m *mockSigner) Sign(input []byte, _ utils.SEDAKeyIndex) ([]byte, error) {
-	signature, err := crypto.Sign(input, m.PrivKey)
-	if err != nil {
-		return nil, err
-	}
-	return signature, nil
-}
-
 func TestExtendVerifyVoteHandlers(t *testing.T) {
+	// Set up SEDA signer.
+	tmpDir := t.TempDir()
+
+	privValKeyPath := filepath.Join(tmpDir, config.DefaultPrivValKeyName)
+	filePV := privval.GenFilePV(privValKeyPath, "")
+	filePV.Key.Save()
+
+	pubKeys, err := utils.GenerateSEDAKeys(tmpDir)
+	require.NoError(t, err)
+	signer, err := utils.LoadSEDASigner(privValKeyPath)
+	require.NoError(t, err)
+
+	secp256k1PubKey := pubKeys[utils.SEDAKeyIndexSecp256k1].PubKey
+
 	// Configure address prefixes.
 	cfg := sdk.GetConfig()
 	cfg.SetBech32PrefixForAccount(params.Bech32PrefixAccAddr, params.Bech32PrefixAccPub)
@@ -69,13 +71,13 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 		BlockHeight: 100, // created from the previous block
 	}
 
-	privKey, err := crypto.HexToECDSA("79afbf7147841fca72b45a1978dd7669470ba67abbe5c220062924380c9c364b")
-	require.NoError(t, err)
-	pubKey := elliptic.Marshal(privKey.PublicKey, privKey.PublicKey.X, privKey.PublicKey.Y)
-
-	signer := mockSigner{privKey}
-
 	mockBatchingKeeper.EXPECT().GetBatchForHeight(gomock.Any(), int64(100)).Return(mockBatch, nil).AnyTimes()
+	mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), gomock.Any()).Return(
+		stakingtypes.Validator{
+			OperatorAddress: "sedavaloper1ucv5709wlf9jn84ynyjzyzeavwvurmdydtn3px",
+		}, nil,
+	)
+	mockPubKeyKeeper.EXPECT().GetValidatorKeys(gomock.Any(), gomock.Any()).Return(pubkeytypes.ValidatorPubKeys{}, nil)
 
 	// Construct the handler and execute it.
 	handler := NewHandlers(
@@ -86,7 +88,7 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		logger,
 	)
-	handler.SetSEDASigner(&signer)
+	handler.SetSEDASigner(signer)
 	extendVoteHandler := handler.ExtendVoteHandler()
 	verifyVoteHandler := handler.VerifyVoteExtensionHandler()
 
@@ -98,7 +100,7 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	// Recover and verify public key
 	sigPubKey, err := crypto.Ecrecover(mockBatch.BatchId, evRes.VoteExtension)
 	require.NoError(t, err)
-	require.Equal(t, pubKey, sigPubKey)
+	require.Equal(t, secp256k1PubKey, sigPubKey)
 
 	testVal := sdk.ConsAddress([]byte("testval"))
 	mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), testVal).Return(
@@ -110,7 +112,7 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 		gomock.Any(),
 		[]byte{230, 25, 79, 60, 174, 250, 75, 41, 158, 164, 153, 36, 34, 11, 61, 99, 153, 193, 237, 164},
 		utils.SEDAKeyIndexSecp256k1,
-	).Return(pubKey, nil)
+	).Return(secp256k1PubKey, nil)
 
 	vvRes, err := verifyVoteHandler(ctx, &cometabci.RequestVerifyVoteExtension{
 		Height:           101,

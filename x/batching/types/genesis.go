@@ -6,9 +6,10 @@ import "cosmossdk.io/collections"
 func NewGenesisState(
 	curBatchNum uint64,
 	batches []Batch,
-	entries []TreeEntries,
+	entries []TreeEntry,
 	dataResults []DataResult,
 	batchAssignments []BatchAssignment,
+	signatures []BatchSignatures,
 	params Params,
 ) GenesisState {
 	return GenesisState{
@@ -17,13 +18,14 @@ func NewGenesisState(
 		TreeEntries:        entries,
 		DataResults:        dataResults,
 		BatchAssignments:   batchAssignments,
+		BatchSignatures:    signatures,
 		Params:             params,
 	}
 }
 
 // DefaultGenesisState creates a default GenesisState object.
 func DefaultGenesisState() *GenesisState {
-	state := NewGenesisState(collections.DefaultSequenceStart, nil, nil, nil, nil, DefaultParams())
+	state := NewGenesisState(collections.DefaultSequenceStart, nil, nil, nil, nil, nil, DefaultParams())
 	return &state
 }
 

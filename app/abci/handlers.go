@@ -13,6 +13,7 @@ import (
 	"cosmossdk.io/collections"
 	addresscodec "cosmossdk.io/core/address"
 	"cosmossdk.io/log"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -75,7 +76,7 @@ func (h *Handlers) SetSEDASigner(signer utils.SEDASigner) {
 // ExtendVoteHandler handles the ExtendVote ABCI to sign a batch created
 // from the previous block.
 func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
-	return func(ctx sdk.Context, req *abcitypes.RequestExtendVote) (*abcitypes.ResponseExtendVote, error) {
+	return func(ctx sdk.Context, _ *abcitypes.RequestExtendVote) (*abcitypes.ResponseExtendVote, error) {
 		h.logger.Debug("start extend vote handler")
 
 		// Check if there is a batch to sign at this block height.
@@ -140,7 +141,7 @@ func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 			return nil, err
 		}
 
-		err = h.verifyBatchSignatures(ctx, batch.BatchId, req.VoteExtension, req.ValidatorAddress)
+		err = h.verifyBatchSignatures(ctx, batch.BatchNumber, batch.BatchId, req.VoteExtension, req.ValidatorAddress)
 		if err != nil {
 			h.logger.Error("failed to verify batch signature", "req", req, "err", err)
 			return nil, err
@@ -245,7 +246,7 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 		for _, vote := range extendedVotes.Votes {
 			// Only consider extensions with pre-commit votes.
 			if vote.BlockIdFlag == cmttypes.BlockIDFlagCommit {
-				err = h.verifyBatchSignatures(ctx, batch.BatchId, vote.VoteExtension, vote.Validator.Address)
+				err = h.verifyBatchSignatures(ctx, batch.BatchNumber, batch.BatchId, vote.VoteExtension, vote.Validator.Address)
 				if err != nil {
 					h.logger.Error("proposal contains an invalid vote extension", "vote", vote)
 					return nil, err
@@ -306,11 +307,12 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 				return nil, err
 			}
 			batchSigs := batchingtypes.BatchSignatures{
+				BatchNumber:   batchNum,
 				ValidatorAddr: validator.OperatorAddress,
 				Signatures:    vote.VoteExtension,
 			}
 
-			err = h.batchingKeeper.SetBatchSignatures(ctx, batchNum, batchSigs)
+			err = h.batchingKeeper.SetBatchSignatures(ctx, batchSigs)
 			if err != nil {
 				return nil, err
 			}
@@ -325,7 +327,7 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 // against the validator's public key registered at the key index
 // in the pubkey module. It returns an error unless the verification
 // succeeds.
-func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchID, voteExtension, consAddr []byte) error {
+func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batchID, voteExtension, consAddr []byte) error {
 	if len(voteExtension) == 0 || len(voteExtension) > MaxVoteExtensionLength {
 		h.logger.Error("invalid vote extension length", "len", len(voteExtension))
 		return ErrInvalidVoteExtensionLength
@@ -341,15 +343,46 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchID, voteExtension
 	}
 
 	// Recover and verify secp256k1 public key.
-	pubKey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.SEDAKeyIndexSecp256k1)
-	if err != nil {
-		return err
+	var expAddr []byte
+	if batchNum == collections.DefaultSequenceStart {
+		pubKey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.SEDAKeyIndexSecp256k1)
+		if err != nil {
+			return err
+		}
+		expAddr, err = utils.PubKeyToEthAddress(pubKey)
+		if err != nil {
+			return err
+		}
+	} else {
+		entry, err := h.batchingKeeper.GetValidatorTreeEntry(ctx, batchNum-1, valOper)
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				pubKey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.SEDAKeyIndexSecp256k1)
+				if err != nil {
+					return err
+				}
+				expAddr, err = utils.PubKeyToEthAddress(pubKey)
+				if err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
+		} else {
+			expAddr = entry[:20]
+		}
 	}
+
 	sigPubKey, err := crypto.Ecrecover(batchID, voteExtension[:65])
 	if err != nil {
 		return err
 	}
-	if !bytes.Equal(pubKey, sigPubKey) {
+	sigAddr, err := utils.PubKeyToEthAddress(sigPubKey)
+	if err != nil {
+		return err
+	}
+
+	if !bytes.Equal(expAddr, sigAddr) {
 		return ErrInvalidBatchSignature
 	}
 	return nil
