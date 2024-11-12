@@ -54,10 +54,14 @@ func (q Querier) BatchForHeight(c context.Context, req *types.QueryBatchForHeigh
 
 func (q Querier) Batches(c context.Context, req *types.QueryBatchesRequest) (*types.QueryBatchesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	batches, pageRes, err := query.CollectionPaginate(
-		ctx,
-		q.batches,
-		req.Pagination,
+	batches, pageRes, err := query.CollectionFilteredPaginate(
+		ctx, q.batches, req.Pagination,
+		func(_ int64, value types.Batch) (bool, error) {
+			if value.BlockHeight > ctx.BlockHeight()+abci.BlockOffsetCollectPhase {
+				return false, nil
+			}
+			return true, nil
+		},
 		func(_ int64, value types.Batch) (types.Batch, error) {
 			return value, nil
 		},
