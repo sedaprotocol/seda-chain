@@ -61,18 +61,18 @@ func (mr *MockBatchingKeeperMockRecorder) GetBatchForHeight(ctx, height any) *go
 }
 
 // GetValidatorTreeEntry mocks base method.
-func (m *MockBatchingKeeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddress types.ValAddress) ([]byte, error) {
+func (m *MockBatchingKeeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, index utils.SEDAKeyIndex, valAddress types.ValAddress) (types1.ValidatorTreeEntry, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetValidatorTreeEntry", ctx, batchNum, valAddress)
-	ret0, _ := ret[0].([]byte)
+	ret := m.ctrl.Call(m, "GetValidatorTreeEntry", ctx, batchNum, index, valAddress)
+	ret0, _ := ret[0].(types1.ValidatorTreeEntry)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetValidatorTreeEntry indicates an expected call of GetValidatorTreeEntry.
-func (mr *MockBatchingKeeperMockRecorder) GetValidatorTreeEntry(ctx, batchNum, valAddress any) *gomock.Call {
+func (mr *MockBatchingKeeperMockRecorder) GetValidatorTreeEntry(ctx, batchNum, index, valAddress any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorTreeEntry", reflect.TypeOf((*MockBatchingKeeper)(nil).GetValidatorTreeEntry), ctx, batchNum, valAddress)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorTreeEntry", reflect.TypeOf((*MockBatchingKeeper)(nil).GetValidatorTreeEntry), ctx, batchNum, index, valAddress)
 }
 
 // SetBatchSignatures mocks base method.

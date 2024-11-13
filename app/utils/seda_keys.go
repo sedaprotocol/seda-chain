@@ -20,7 +20,7 @@ import (
 )
 
 // SEDAKeyIndex enumerates the SEDA key indices.
-type SEDAKeyIndex uint32
+type SEDAKeyIndex uint8
 
 const (
 	SEDAKeyIndexSecp256k1 SEDAKeyIndex = iota

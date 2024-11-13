@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "sedachain/batching/v1/batching.proto";
+import "sedachain/batching/v1/genesis.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/batching/types";
 
@@ -88,7 +89,7 @@ message QueryTreeEntriesRequest { uint64 batch_number = 1; }
 
 // The response message for QueryTreeEntries RPC.
 message QueryTreeEntriesResponse {
-  TreeEntries entries = 1 [ (gogoproto.nullable) = false ];
+  BatchTreeEntries entries = 1 [ (gogoproto.nullable) = false ];
 }
 
 // The request message for QueryBatchSignaturesRequest RPC.

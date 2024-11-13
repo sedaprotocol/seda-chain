@@ -29,14 +29,15 @@ type Keeper struct {
 	// Typically, this should be the gov module address.
 	authority string
 
-	Schema             collections.Schema
-	dataResults        collections.Map[collections.Pair[bool, string], types.DataResult]
-	batchAssignments   collections.Map[string, uint64]
-	currentBatchNumber collections.Sequence
-	batches            *collections.IndexedMap[int64, types.Batch, BatchIndexes]
-	treeEntries        collections.Map[collections.Pair[uint64, []byte], []byte]
-	batchSignatures    collections.Map[collections.Pair[uint64, []byte], types.BatchSignatures]
-	params             collections.Item[types.Params]
+	Schema                collections.Schema
+	dataResults           collections.Map[collections.Pair[bool, string], types.DataResult]
+	batchAssignments      collections.Map[string, uint64]
+	currentBatchNumber    collections.Sequence
+	batches               *collections.IndexedMap[int64, types.Batch, BatchIndexes]
+	validatorTreeEntries  collections.Map[collections.Pair[uint64, []byte], types.ValidatorTreeEntry]
+	dataResultTreeEntries collections.Map[uint64, types.DataResultTreeEntries]
+	batchSignatures       collections.Map[collections.Pair[uint64, []byte], types.BatchSignatures]
+	params                collections.Item[types.Params]
 }
 
 func NewKeeper(
@@ -64,7 +65,8 @@ func NewKeeper(
 		batchAssignments:      collections.NewMap(sb, types.BatchAssignmentsPrefix, "batch_assignments", collections.StringKey, collections.Uint64Value),
 		currentBatchNumber:    collections.NewSequence(sb, types.CurrentBatchNumberKey, "current_batch_number"),
 		batches:               collections.NewIndexedMap(sb, types.BatchesKeyPrefix, "batches", collections.Int64Key, codec.CollValue[types.Batch](cdc), NewBatchIndexes(sb)),
-		treeEntries:           collections.NewMap(sb, types.TreeEntriesKeyPrefix, "tree_entries", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), collections.BytesValue),
+		validatorTreeEntries:  collections.NewMap(sb, types.ValidatorTreeEntriesKeyPrefix, "validator_tree_entries", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.ValidatorTreeEntry](cdc)),
+		dataResultTreeEntries: collections.NewMap(sb, types.DataResultTreeEntriesKeyPrefix, "data_result_tree_entries", collections.Uint64Key, codec.CollValue[types.DataResultTreeEntries](cdc)),
 		batchSignatures:       collections.NewMap(sb, types.BatchSignaturesKeyPrefix, "batch_signatures", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.BatchSignatures](cdc)),
 		params:                collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}

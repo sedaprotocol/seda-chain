@@ -72,7 +72,12 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	}
 
 	mockBatchingKeeper.EXPECT().GetBatchForHeight(gomock.Any(), int64(100)).Return(mockBatch, nil).AnyTimes()
-	mockBatchingKeeper.EXPECT().GetValidatorTreeEntry(gomock.Any(), uint64(99), valAddr).Return(ethAddr, nil).AnyTimes()
+	mockBatchingKeeper.EXPECT().GetValidatorTreeEntry(gomock.Any(), uint64(99), utils.SEDAKeyIndexSecp256k1, valAddr).Return(
+		batchingtypes.ValidatorTreeEntry{
+			Secp256K1: batchingtypes.Secp256K1Entry{
+				EthAddress: ethAddr,
+			},
+		}, nil).AnyTimes()
 	mockPubKeyKeeper.EXPECT().GetValidatorKeys(gomock.Any(), valAddr.String()).Return(pubkeytypes.ValidatorPubKeys{}, nil)
 
 	// Construct the handler and execute it.

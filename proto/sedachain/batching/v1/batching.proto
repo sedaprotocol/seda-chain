@@ -29,17 +29,24 @@ message Batch {
   bytes proving_metadata = 7;
 }
 
-// TreeEntries are the given batch's data result tree entries and
-// validator tree entries.
-message TreeEntries {
-  // batch_number is the identifier of the batch.
-  uint64 batch_number = 1;
-  // data_result_entries are the entries (unhashed leaf contents) of
-  // the data result tree.
-  repeated bytes data_result_entries = 2;
-  // validator_entries are the entries (unhashed leaf contents) of
-  // the validator tree.
-  repeated bytes validator_entries = 3;
+// DataResultTreeEntries is a list of data result tree entries for a 
+// given batch.
+message DataResultTreeEntries {
+  repeated bytes entries = 1;
+}
+
+// ValidatorTreeEntry is an entry in the validator tree.
+message ValidatorTreeEntry {
+  bytes validator_address = 1;
+  uint32 voting_power_percent = 2;
+  Secp256k1Entry secp256k1 = 3 [ (gogoproto.nullable) = false ];
+}
+
+// Secp256k1Entry is the secp256k1 signature component of a validator
+// tree entry.
+message Secp256k1Entry {
+  bytes eth_address = 1;
+  bytes signature = 2;
 }
 
 // BatchSignatures contains basic validator data and its batch signatures

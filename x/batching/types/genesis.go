@@ -6,7 +6,7 @@ import "cosmossdk.io/collections"
 func NewGenesisState(
 	curBatchNum uint64,
 	batches []Batch,
-	entries []TreeEntry,
+	entries []BatchTreeEntries,
 	dataResults []DataResult,
 	batchAssignments []BatchAssignment,
 	signatures []BatchSignatures,

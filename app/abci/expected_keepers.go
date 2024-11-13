@@ -15,7 +15,7 @@ import (
 type BatchingKeeper interface {
 	GetBatchForHeight(ctx context.Context, height int64) (batchingtypes.Batch, error)
 	SetBatchSignatures(ctx context.Context, sigs batchingtypes.BatchSignatures) error
-	GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddress sdk.ValAddress) ([]byte, error)
+	GetValidatorTreeEntry(ctx context.Context, batchNum uint64, index utils.SEDAKeyIndex, valAddress sdk.ValAddress) (batchingtypes.ValidatorTreeEntry, error)
 }
 
 type PubKeyKeeper interface {

@@ -99,7 +99,7 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		// Check if the validator was in the previous validator tree.
 		// If not, it means the validator just joined the active set,
 		// so it should start signing from the next batch.
-		_, err = h.batchingKeeper.GetValidatorTreeEntry(ctx, batch.BatchNumber-1, h.signer.GetValAddress())
+		_, err = h.batchingKeeper.GetValidatorTreeEntry(ctx, batch.BatchNumber-1, utils.SEDAKeyIndexSecp256k1, h.signer.GetValAddress())
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
 				h.logger.Info("validator was not in the previous validator tree - not signing the batch")
@@ -370,7 +370,7 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 			return err
 		}
 	} else {
-		entry, err := h.batchingKeeper.GetValidatorTreeEntry(ctx, batchNum-1, valOper)
+		entry, err := h.batchingKeeper.GetValidatorTreeEntry(ctx, batchNum-1, utils.SEDAKeyIndexSecp256k1, valOper)
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
 				if len(voteExtension) == 0 {
@@ -379,9 +379,8 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 				return ErrUnexpectedBatchSignature
 			}
 			return err
-		} else {
-			expectedAddr = entry[:20]
 		}
+		expectedAddr = entry.Secp256K1.EthAddress
 	}
 
 	sigPubKey, err := crypto.Ecrecover(batchID, voteExtension[:65])
