@@ -89,7 +89,7 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 			return nil, err
 		}
 
-		val, err := h.stakingKeeper.GetValidatorByConsAddr(ctx, h.signer.GetConsAddress())
+		val, err := h.stakingKeeper.GetValidator(ctx, h.signer.GetValAddress())
 		if err != nil {
 			return nil, err
 		}

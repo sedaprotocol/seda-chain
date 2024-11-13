@@ -180,6 +180,21 @@ func (mr *MockStakingKeeperMockRecorder) GetPubKeyByConsAddr(arg0, arg1 any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPubKeyByConsAddr", reflect.TypeOf((*MockStakingKeeper)(nil).GetPubKeyByConsAddr), arg0, arg1)
 }
 
+// GetValidator mocks base method.
+func (m *MockStakingKeeper) GetValidator(ctx context.Context, addr types.ValAddress) (types0.Validator, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetValidator", ctx, addr)
+	ret0, _ := ret[0].(types0.Validator)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetValidator indicates an expected call of GetValidator.
+func (mr *MockStakingKeeperMockRecorder) GetValidator(ctx, addr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidator", reflect.TypeOf((*MockStakingKeeper)(nil).GetValidator), ctx, addr)
+}
+
 // GetValidatorByConsAddr mocks base method.
 func (m *MockStakingKeeper) GetValidatorByConsAddr(ctx context.Context, consAddr types.ConsAddress) (types0.Validator, error) {
 	m.ctrl.T.Helper()

@@ -2,15 +2,11 @@ package utils
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
-
-	pvm "github.com/cometbft/cometbft/privval"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -18,7 +14,7 @@ import (
 )
 
 type SEDASigner interface {
-	GetConsAddress() sdk.ConsAddress
+	GetValAddress() sdk.ValAddress
 	Sign(input []byte, index SEDAKeyIndex) (signature []byte, err error)
 	ReloadIfMismatch(pubKeys []pubkeytypes.IndexedPubKey) error
 }
@@ -26,36 +22,24 @@ type SEDASigner interface {
 var _ SEDASigner = &sedaKeys{}
 
 type sedaKeys struct {
-	consAddr sdk.ConsAddress
-	keys     map[SEDAKeyIndex]indexedPrivKey
-	pubKeys  []pubkeytypes.IndexedPubKey // sorted by index
-	keyPath  string
+	valAddr sdk.ValAddress
+	keys    map[SEDAKeyIndex]indexedPrivKey
+	pubKeys []pubkeytypes.IndexedPubKey // sorted by index
+	keyPath string
 }
 
 // LoadSEDASigner loads the SEDA keys from a given file and returns
 // a SEDASigner interface.
 func LoadSEDASigner(pvKeyFilePath string) (SEDASigner, error) {
-	_, err := os.ReadFile(pvKeyFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read private validator key from %v: %v", pvKeyFilePath, err)
-	}
-	privValidator := pvm.LoadFilePVEmptyState(pvKeyFilePath, "")
-	consAddr := (sdk.ConsAddress)(privValidator.GetAddress())
-
 	loadPath := filepath.Join(filepath.Dir(pvKeyFilePath), SEDAKeyFileName)
-	keysJSONBytes, err := os.ReadFile(loadPath)
+	keyFile, err := loadSEDAKeys(loadPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read SEDA keys from %v: %v", loadPath, err)
-	}
-	var keys []indexedPrivKey
-	err = json.Unmarshal(keysJSONBytes, &keys)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal SEDA keys from %v: %v", loadPath, err)
+		return nil, err
 	}
 
 	keysMap := make(map[SEDAKeyIndex]indexedPrivKey)
-	indPubKeys := make([]pubkeytypes.IndexedPubKey, len(keys))
-	for _, key := range keys {
+	indPubKeys := make([]pubkeytypes.IndexedPubKey, len(keyFile.Keys))
+	for _, key := range keyFile.Keys {
 		keysMap[key.Index] = key
 		indPubKeys[key.Index] = pubkeytypes.IndexedPubKey{
 			Index:  uint32(key.Index),
@@ -67,16 +51,16 @@ func LoadSEDASigner(pvKeyFilePath string) (SEDASigner, error) {
 	})
 
 	return &sedaKeys{
-		consAddr: consAddr,
-		keys:     keysMap,
-		pubKeys:  indPubKeys,
-		keyPath:  loadPath,
+		valAddr: keyFile.ValidatorAddr,
+		keys:    keysMap,
+		pubKeys: indPubKeys,
+		keyPath: loadPath,
 	}, nil
 }
 
-// GetConsAddress returns the signer's consensus address.
-func (s *sedaKeys) GetConsAddress() sdk.ConsAddress {
-	return s.consAddr
+// GetConsAddress returns the signer's validator address.
+func (s *sedaKeys) GetValAddress() sdk.ValAddress {
+	return s.valAddr
 }
 
 // Sign signs a 32-byte digest with the key at the given index.
@@ -118,17 +102,12 @@ func (s *sedaKeys) ReloadIfMismatch(pubKeys []pubkeytypes.IndexedPubKey) error {
 
 // Reload reloads the signer from the key file.
 func (s *sedaKeys) reload() error {
-	keysJSONBytes, err := os.ReadFile(s.keyPath)
+	keyFile, err := loadSEDAKeys(s.keyPath)
 	if err != nil {
-		return fmt.Errorf("failed to read SEDA keys from %v: %v", s.keyPath, err)
-	}
-	var keys []indexedPrivKey
-	err = json.Unmarshal(keysJSONBytes, &keys)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal SEDA keys from %v: %v", s.keyPath, err)
+		return err
 	}
 	keysMap := make(map[SEDAKeyIndex]indexedPrivKey)
-	for _, key := range keys {
+	for _, key := range keyFile.Keys {
 		keysMap[key.Index] = key
 	}
 	s.keys = keysMap

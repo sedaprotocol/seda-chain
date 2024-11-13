@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
@@ -50,11 +51,11 @@ func AddKey(ac address.Codec) *cobra.Command {
 			}
 			serverCfg := server.GetServerContextFromCmd(cmd).Config
 
-			fromAddr := clientCtx.GetFromAddress()
-			if fromAddr.Empty() {
+			valAddr := sdk.ValAddress(clientCtx.GetFromAddress())
+			if valAddr.Empty() {
 				return fmt.Errorf("set the from address using --from flag")
 			}
-			valAddr, err := ac.BytesToString(fromAddr)
+			valStr, err := ac.BytesToString(valAddr)
 			if err != nil {
 				return err
 			}
@@ -67,14 +68,14 @@ func AddKey(ac address.Codec) *cobra.Command {
 					return err
 				}
 			} else {
-				pks, err = utils.GenerateSEDAKeys(filepath.Dir(serverCfg.PrivValidatorKeyFile()))
+				pks, err = utils.GenerateSEDAKeys(valAddr, filepath.Dir(serverCfg.PrivValidatorKeyFile()))
 				if err != nil {
 					return err
 				}
 			}
 
 			msg := &types.MsgAddKey{
-				ValidatorAddr:  valAddr,
+				ValidatorAddr:  valStr,
 				IndexedPubKeys: pks,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

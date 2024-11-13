@@ -18,6 +18,7 @@ import (
 	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
@@ -38,7 +39,8 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	filePV := privval.GenFilePV(privValKeyPath, "")
 	filePV.Key.Save()
 
-	pubKeys, err := utils.GenerateSEDAKeys(tmpDir)
+	valAddr := sdk.ValAddress(simtestutil.CreateRandomAccounts(1)[0])
+	pubKeys, err := utils.GenerateSEDAKeys(valAddr, tmpDir)
 	require.NoError(t, err)
 	signer, err := utils.LoadSEDASigner(privValKeyPath)
 	require.NoError(t, err)
@@ -72,12 +74,12 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	}
 
 	mockBatchingKeeper.EXPECT().GetBatchForHeight(gomock.Any(), int64(100)).Return(mockBatch, nil).AnyTimes()
-	mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), gomock.Any()).Return(
+	mockStakingKeeper.EXPECT().GetValidator(gomock.Any(), valAddr).Return(
 		stakingtypes.Validator{
-			OperatorAddress: "sedavaloper1ucv5709wlf9jn84ynyjzyzeavwvurmdydtn3px",
+			OperatorAddress: valAddr.String(),
 		}, nil,
 	)
-	mockPubKeyKeeper.EXPECT().GetValidatorKeys(gomock.Any(), gomock.Any()).Return(pubkeytypes.ValidatorPubKeys{}, nil)
+	mockPubKeyKeeper.EXPECT().GetValidatorKeys(gomock.Any(), valAddr.String()).Return(pubkeytypes.ValidatorPubKeys{}, nil)
 
 	// Construct the handler and execute it.
 	handler := NewHandlers(
@@ -105,12 +107,12 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	testVal := sdk.ConsAddress([]byte("testval"))
 	mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), testVal).Return(
 		stakingtypes.Validator{
-			OperatorAddress: "sedavaloper1ucv5709wlf9jn84ynyjzyzeavwvurmdydtn3px",
+			OperatorAddress: valAddr.String(),
 		}, nil,
 	)
 	mockPubKeyKeeper.EXPECT().GetValidatorKeyAtIndex(
 		gomock.Any(),
-		[]byte{230, 25, 79, 60, 174, 250, 75, 41, 158, 164, 153, 36, 34, 11, 61, 99, 153, 193, 237, 164},
+		valAddr.Bytes(),
 		utils.SEDAKeyIndexSecp256k1,
 	).Return(secp256k1PubKey, nil)
 

@@ -25,5 +25,6 @@ type PubKeyKeeper interface {
 
 type StakingKeeper interface {
 	baseapp.ValidatorStore
+	GetValidator(ctx context.Context, addr sdk.ValAddress) (stakingtypes.Validator, error)
 	GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, error)
 }
