@@ -17,8 +17,13 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 		}
 	}
 	for _, entry := range data.TreeEntries {
-		if err := k.setTreeEntry(ctx, entry); err != nil {
+		if err := k.setDataResultTreeEntry(ctx, entry.BatchNumber, entry.DataResultEntries); err != nil {
 			panic(err)
+		}
+		for _, valEntry := range entry.ValidatorEntries {
+			if err := k.setValidatorTreeEntry(ctx, entry.BatchNumber, valEntry.ValidatorAddress, valEntry); err != nil {
+				panic(err)
+			}
 		}
 	}
 	if err := k.setParams(ctx, data.Params); err != nil {
@@ -44,9 +49,13 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
-	entries, err := k.GetAllTreeEntries(ctx)
-	if err != nil {
-		panic(err)
+	var entries []types.BatchTreeEntries
+	for _, batch := range batches {
+		batchEntries, err := k.GetTreeEntriesForBatch(ctx, batch.BatchNumber)
+		if err != nil {
+			panic(err)
+		}
+		entries = append(entries, batchEntries)
 	}
 	signatures, err := k.GetAllBatchSignatures(ctx)
 	if err != nil {

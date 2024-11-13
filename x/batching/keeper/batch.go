@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
@@ -38,7 +39,7 @@ func (k Keeper) setBatch(ctx context.Context, batch types.Batch) error {
 // and validator tree entries. It returns an error if a batch already
 // exists at the given batch's block height or if the given batch's
 // batch number does not match the next batch number.
-func (k Keeper) SetNewBatch(ctx context.Context, batch types.Batch, dataEntries [][]byte, valEntries []ValidatorTreeEntry) error {
+func (k Keeper) SetNewBatch(ctx context.Context, batch types.Batch, dataEntries types.DataResultTreeEntries, valEntries []types.ValidatorTreeEntry) error {
 	found, err := k.batches.Has(ctx, batch.BlockHeight)
 	if err != nil {
 		return err
@@ -56,10 +57,18 @@ func (k Keeper) SetNewBatch(ctx context.Context, batch types.Batch, dataEntries 
 	}
 	batch.BatchNumber = newBatchNum
 
-	err = k.setTreeEntriesForBatch(ctx, newBatchNum, dataEntries, valEntries)
+	err = k.setDataResultTreeEntry(ctx, newBatchNum, dataEntries)
 	if err != nil {
 		return err
 	}
+
+	for _, valEntry := range valEntries {
+		err = k.setValidatorTreeEntry(ctx, newBatchNum, valEntry.ValidatorAddress, valEntry)
+		if err != nil {
+			return err
+		}
+	}
+
 	return k.batches.Set(ctx, batch.BlockHeight, batch)
 }
 
@@ -127,110 +136,62 @@ func (k Keeper) GetAllBatches(ctx sdk.Context) ([]types.Batch, error) {
 	return batches, nil
 }
 
-type ValidatorTreeEntry struct {
-	ValAddress sdk.ValAddress
-	Entry      []byte
-}
-
-// setTreeEntry stores a tree entry.
-func (k Keeper) setTreeEntry(ctx context.Context, entry types.TreeEntry) error {
-	return k.treeEntries.Set(ctx, collections.Join(entry.K1, entry.K2), entry.Entry)
-}
-
-// setTreeEntriesForBatch stores the data result entries and validator
-// entries for a given batch.
-func (k Keeper) setTreeEntriesForBatch(ctx context.Context, batchNum uint64, dataEntries [][]byte, valEntries []ValidatorTreeEntry) error {
-	for _, entry := range dataEntries {
-		err := k.treeEntries.Set(ctx, collections.Join(batchNum, []byte{}), entry)
-		if err != nil {
-			return err
-		}
-	}
-	for _, entry := range valEntries {
-		err := k.treeEntries.Set(ctx, collections.Join(batchNum, entry.ValAddress.Bytes()), entry.Entry)
-		if err != nil {
-			return err
-		}
+func (k Keeper) setValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddr sdk.ValAddress, entry types.ValidatorTreeEntry) error {
+	err := k.validatorTreeEntries.Set(ctx, collections.Join(batchNum, valAddr.Bytes()), entry)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
 // GetValidatorTreeEntry returns the tree entry of a given validator
 // for a specified batch
-func (k Keeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddress sdk.ValAddress) ([]byte, error) {
-	return k.treeEntries.Get(ctx, collections.Join(batchNum, valAddress.Bytes()))
+func (k Keeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, index utils.SEDAKeyIndex, valAddress sdk.ValAddress) (types.ValidatorTreeEntry, error) {
+	valEntry, err := k.validatorTreeEntries.Get(ctx, collections.Join(batchNum, valAddress.Bytes()))
+	if err != nil {
+		return types.ValidatorTreeEntry{}, err
+	}
+	return valEntry, nil
 }
 
-// GetTreeEntriesForBatch returns the tree entries corresponding to
-// the givenbatch number.
-func (k Keeper) GetTreeEntriesForBatch(ctx context.Context, batchNum uint64) (types.TreeEntries, error) {
-	rng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
-	itr, err := k.treeEntries.Iterate(ctx, rng)
-	if err != nil {
-		return types.TreeEntries{}, err
-	}
-	defer itr.Close()
-
-	kvs, err := itr.KeyValues()
-	if err != nil {
-		return types.TreeEntries{}, err
-	}
-	if len(kvs) == 0 {
-		return types.TreeEntries{}, collections.ErrNotFound
-	}
-
-	var dataEntries, valEntries [][]byte
-	for _, kv := range kvs {
-		if len(kv.Key.K2()) == 0 {
-			dataEntries = append(dataEntries, kv.Value)
-		} else {
-			valEntries = append(valEntries, kv.Value)
-		}
-	}
-	return types.TreeEntries{
-		BatchNumber:       batchNum,
-		DataResultEntries: dataEntries,
-		ValidatorEntries:  valEntries,
-	}, nil
-}
-
-// IterateBatches iterates over the tree entries and performs a given
-// callback function.
-func (k Keeper) IterateTreeEntries(ctx sdk.Context, callback func(types.TreeEntry) (stop bool)) error {
-	iter, err := k.treeEntries.Iterate(ctx, nil)
+func (k Keeper) setDataResultTreeEntry(ctx context.Context, batchNum uint64, dataEntries types.DataResultTreeEntries) error {
+	err := k.dataResultTreeEntries.Set(ctx, batchNum, dataEntries)
 	if err != nil {
 		return err
-	}
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		kv, err := iter.KeyValue()
-		if err != nil {
-			return err
-		}
-
-		if callback(types.TreeEntry{
-			K1:    kv.Key.K1(),
-			K2:    kv.Key.K2(),
-			Entry: kv.Value,
-		}) {
-			break
-		}
 	}
 	return nil
 }
 
-// GetAllTreeEntries retrieves all tree entries from the store.
-func (k Keeper) GetAllTreeEntries(ctx sdk.Context) ([]types.TreeEntry, error) {
-	var entries []types.TreeEntry
-	err := k.IterateTreeEntries(ctx, func(entry types.TreeEntry) bool {
-		entries = append(entries, entry)
-		return false
-	})
+// GetTreeEntriesForBatch returns the tree entries of a given batch.
+func (k Keeper) GetTreeEntriesForBatch(ctx context.Context, batchNum uint64) (types.BatchTreeEntries, error) {
+	// Get data result tree entries.
+	dataEntries, err := k.dataResultTreeEntries.Get(ctx, batchNum)
 	if err != nil {
-		return nil, err
+		return types.BatchTreeEntries{}, err
 	}
-	return entries, nil
+
+	// Get validator tree entries.
+	valRng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
+	valItr, err := k.validatorTreeEntries.Iterate(ctx, valRng)
+	if err != nil {
+		return types.BatchTreeEntries{}, err
+	}
+	defer valItr.Close()
+
+	valKvs, err := valItr.KeyValues()
+	if err != nil {
+		return types.BatchTreeEntries{}, err
+	}
+	var valEntries []types.ValidatorTreeEntry
+	for _, kv := range valKvs {
+		valEntries = append(valEntries, kv.Value)
+	}
+
+	return types.BatchTreeEntries{
+		BatchNumber:       batchNum,
+		DataResultEntries: dataEntries,
+		ValidatorEntries:  valEntries,
+	}, nil
 }
 
 // SetBatchSignatures stores a validator's signatures of a batch.

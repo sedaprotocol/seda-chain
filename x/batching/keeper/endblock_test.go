@@ -41,8 +41,8 @@ func Test_ConstructDataResultTree(t *testing.T) {
 	require.NoError(t, err)
 
 	var entryHexes, drIds []string
-	entriesWithSep := make([][]byte, len(entries)) // add domain separators for tree re-construction
-	for i, entry := range entries {
+	entriesWithSep := make([][]byte, len(entries.Entries)) // add domain separators for tree re-construction
+	for i, entry := range entries.Entries {
 		entryHexes = append(entryHexes, hex.EncodeToString(entry))
 		drIds = append(drIds, dataResults[i].Id)
 		entriesWithSep[i] = append([]byte{utils.SEDASeparatorDataRequest}, entry...)
@@ -82,11 +82,14 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	parsedPowers := make([]uint32, len(entries))
 	entriesWithSep := make([][]byte, len(entries))
 	for i, entry := range entries {
-		parsedAddrs[i] = entry.Entry[:20]
-		parsedPowers[i] = binary.BigEndian.Uint32(entry.Entry[20:])
+		parsedAddrs[i] = entry.Secp256K1.EthAddress
+		parsedPowers[i] = entry.VotingPowerPercent
 		expectedAddrs[i], err = utils.PubKeyToEthAddress(pks[i])
 		require.NoError(t, err)
-		entriesWithSep[i] = append([]byte{utils.SEDASeparatorSecp256k1}, entry.Entry...)
+
+		// Reconstruct the validator tree entry.
+		entriesWithSep[i] = append([]byte{utils.SEDASeparatorSecp256k1}, entry.Secp256K1.EthAddress...)
+		entriesWithSep[i] = binary.BigEndian.AppendUint32(entriesWithSep[i], entry.VotingPowerPercent)
 	}
 	require.ElementsMatch(t, expectedAddrs, parsedAddrs)
 	require.ElementsMatch(t, powerPercents, parsedPowers)
@@ -539,8 +542,8 @@ func Test_ConstructValidatorTreeWithTestData(t *testing.T) {
 	parsedAddrs := make([][]byte, len(entries))
 	parsedPowers := make([]uint32, len(entries))
 	for i, entry := range entries {
-		parsedAddrs[i] = entry.Entry[:20]
-		parsedPowers[i] = binary.BigEndian.Uint32(entry.Entry[20:])
+		parsedAddrs[i] = entry.Secp256K1.EthAddress
+		parsedPowers[i] = entry.VotingPowerPercent
 		expectedAddr, err := hex.DecodeString(data.Validators[i].Identity[2:])
 		require.NoError(t, err)
 		expectedAddrs[i] = expectedAddr
