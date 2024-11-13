@@ -1003,7 +1003,7 @@ func NewApp(
 
 	// Register SEDA signer and ExtendVote handler.
 	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
-	signer, err := utils.LoadSEDASigner(pvKeyFile)
+	signer, err := utils.LoadSEDASigner(filepath.Join(filepath.Dir(pvKeyFile), utils.SEDAKeyFileName))
 	if err != nil {
 		app.Logger().Error("error loading SEDA signer - ExtendVote handler will not run", "err", err)
 	} else {

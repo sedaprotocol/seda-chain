@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	"path/filepath"
 	"sort"
 
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -28,11 +27,18 @@ type sedaKeys struct {
 	keyPath string
 }
 
-// LoadSEDASigner loads the SEDA keys from a given file and returns
-// a SEDASigner interface.
-func LoadSEDASigner(pvKeyFilePath string) (SEDASigner, error) {
-	loadPath := filepath.Join(filepath.Dir(pvKeyFilePath), SEDAKeyFileName)
-	keyFile, err := loadSEDAKeys(loadPath)
+// LoadSEDASigner loads the SEDA keys from a given file path and
+// returns a SEDASigner interface.
+func LoadSEDASigner(keyFilePath string) (SEDASigner, error) {
+	sedaKeys, err := loadSEDAKeys(keyFilePath)
+	if err != nil {
+		return nil, err
+	}
+	return sedaKeys, nil
+}
+
+func loadSEDAKeys(keyFilePath string) (*sedaKeys, error) {
+	keyFile, err := loadSEDAKeyFile(keyFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +60,7 @@ func LoadSEDASigner(pvKeyFilePath string) (SEDASigner, error) {
 		valAddr: keyFile.ValidatorAddr,
 		keys:    keysMap,
 		pubKeys: indPubKeys,
-		keyPath: loadPath,
+		keyPath: keyFilePath,
 	}, nil
 }
 
@@ -102,14 +108,26 @@ func (s *sedaKeys) ReloadIfMismatch(pubKeys []pubkeytypes.IndexedPubKey) error {
 
 // Reload reloads the signer from the key file.
 func (s *sedaKeys) reload() error {
-	keyFile, err := loadSEDAKeys(s.keyPath)
+	keyFile, err := loadSEDAKeyFile(s.keyPath)
 	if err != nil {
 		return err
 	}
+
 	keysMap := make(map[SEDAKeyIndex]indexedPrivKey)
+	indPubKeys := make([]pubkeytypes.IndexedPubKey, len(keyFile.Keys))
 	for _, key := range keyFile.Keys {
 		keysMap[key.Index] = key
+		indPubKeys[key.Index] = pubkeytypes.IndexedPubKey{
+			Index:  uint32(key.Index),
+			PubKey: key.PubKey,
+		}
 	}
+	sort.Slice(indPubKeys, func(i, j int) bool {
+		return indPubKeys[i].Index < indPubKeys[j].Index
+	})
+
 	s.keys = keysMap
+	s.valAddr = keyFile.ValidatorAddr
+	s.pubKeys = indPubKeys
 	return nil
 }

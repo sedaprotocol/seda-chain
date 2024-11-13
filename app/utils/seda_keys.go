@@ -105,9 +105,9 @@ func (k *indexedPrivKey) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// saveSEDAKeys saves a given list of indexedPrivKey in the directory
+// saveSEDAKeyFile saves a given list of indexedPrivKey in the directory
 // at dirPath.
-func saveSEDAKeys(keys []indexedPrivKey, valAddr sdk.ValAddress, dirPath string) error {
+func saveSEDAKeyFile(keys []indexedPrivKey, valAddr sdk.ValAddress, dirPath string) error {
 	savePath := filepath.Join(dirPath, SEDAKeyFileName)
 	if cmtos.FileExists(savePath) {
 		return fmt.Errorf("SEDA key file already exists at %s", savePath)
@@ -132,8 +132,8 @@ func saveSEDAKeys(keys []indexedPrivKey, valAddr sdk.ValAddress, dirPath string)
 	return nil
 }
 
-// loadSEDAKeys loads the SEDA key file from the given path.
-func loadSEDAKeys(loadPath string) (sedaKeyFile, error) {
+// loadSEDAKeyFile loads the SEDA key file from the given path.
+func loadSEDAKeyFile(loadPath string) (sedaKeyFile, error) {
 	keysJSONBytes, err := os.ReadFile(loadPath)
 	if err != nil {
 		return sedaKeyFile{}, fmt.Errorf("failed to read SEDA keys from %v: %v", loadPath, err)
@@ -194,7 +194,7 @@ func GenerateSEDAKeys(valAddr sdk.ValAddress, dirPath string) ([]pubkeytypes.Ind
 	}
 
 	// The key file is placed in the same directory as the validator key file.
-	err := saveSEDAKeys(privKeys, valAddr, dirPath)
+	err := saveSEDAKeyFile(privKeys, valAddr, dirPath)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package abci
 
 import (
 	"bytes"
-	"path/filepath"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -12,8 +11,6 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	cometabci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/privval"
 
 	"cosmossdk.io/log"
 
@@ -35,14 +32,10 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	// Set up SEDA signer.
 	tmpDir := t.TempDir()
 
-	privValKeyPath := filepath.Join(tmpDir, config.DefaultPrivValKeyName)
-	filePV := privval.GenFilePV(privValKeyPath, "")
-	filePV.Key.Save()
-
 	valAddr := sdk.ValAddress(simtestutil.CreateRandomAccounts(1)[0])
 	pubKeys, err := utils.GenerateSEDAKeys(valAddr, tmpDir)
 	require.NoError(t, err)
-	signer, err := utils.LoadSEDASigner(privValKeyPath)
+	signer, err := utils.LoadSEDASigner(tmpDir)
 	require.NoError(t, err)
 
 	secp256k1PubKey := pubKeys[utils.SEDAKeyIndexSecp256k1].PubKey
