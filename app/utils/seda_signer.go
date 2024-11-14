@@ -16,31 +16,35 @@ type SEDASigner interface {
 	GetValAddress() sdk.ValAddress
 	Sign(input []byte, index SEDAKeyIndex) (signature []byte, err error)
 	ReloadIfMismatch(pubKeys []pubkeytypes.IndexedPubKey) error
+	IsLoaded() bool
 }
 
 var _ SEDASigner = &sedaKeys{}
 
 type sedaKeys struct {
-	valAddr sdk.ValAddress
-	keys    map[SEDAKeyIndex]indexedPrivKey
-	pubKeys []pubkeytypes.IndexedPubKey // sorted by index
-	keyPath string
+	valAddr  sdk.ValAddress
+	keys     map[SEDAKeyIndex]indexedPrivKey
+	pubKeys  []pubkeytypes.IndexedPubKey // sorted by index
+	keyPath  string
+	isLoaded bool
 }
 
 // LoadSEDASigner loads the SEDA keys from a given file path and
 // returns a SEDASigner interface.
 func LoadSEDASigner(keyFilePath string) (SEDASigner, error) {
-	sedaKeys, err := loadSEDAKeys(keyFilePath)
+	keys, err := loadSEDAKeys(keyFilePath)
 	if err != nil {
-		return nil, err
+		keys.keyPath = keyFilePath
+		keys.isLoaded = false
+		return &keys, err
 	}
-	return sedaKeys, nil
+	return &keys, nil
 }
 
-func loadSEDAKeys(keyFilePath string) (*sedaKeys, error) {
+func loadSEDAKeys(keyFilePath string) (keys sedaKeys, err error) {
 	keyFile, err := loadSEDAKeyFile(keyFilePath)
 	if err != nil {
-		return nil, err
+		return keys, err
 	}
 
 	keysMap := make(map[SEDAKeyIndex]indexedPrivKey)
@@ -56,12 +60,12 @@ func loadSEDAKeys(keyFilePath string) (*sedaKeys, error) {
 		return indPubKeys[i].Index < indPubKeys[j].Index
 	})
 
-	return &sedaKeys{
-		valAddr: keyFile.ValidatorAddr,
-		keys:    keysMap,
-		pubKeys: indPubKeys,
-		keyPath: keyFilePath,
-	}, nil
+	keys.valAddr = keyFile.ValidatorAddr
+	keys.keys = keysMap
+	keys.pubKeys = indPubKeys
+	keys.keyPath = keyFilePath
+	keys.isLoaded = true
+	return keys, nil
 }
 
 // GetConsAddress returns the signer's validator address.
@@ -85,10 +89,13 @@ func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
 	return signature, nil
 }
 
-// ReloadIfMismatch compares the given indexed public keys to the
-// currently loaded public keys. If there is any mismatch, the signer
-// is reloaded.
+// ReloadIfMismatch reloads the signer if the given indexed public keys
+// do not match the currently loaded ones. If no indexed public keys are
+// given, the signer is reloaded.
 func (s *sedaKeys) ReloadIfMismatch(pubKeys []pubkeytypes.IndexedPubKey) error {
+	if len(pubKeys) == 0 {
+		return s.reload()
+	}
 	for _, pubKey := range s.pubKeys {
 		found := false
 		for _, pk := range pubKeys {
@@ -106,28 +113,21 @@ func (s *sedaKeys) ReloadIfMismatch(pubKeys []pubkeytypes.IndexedPubKey) error {
 	return nil
 }
 
+// IsLoaded returns true if the signer is loaded.
+func (s *sedaKeys) IsLoaded() bool {
+	return s.isLoaded
+}
+
 // Reload reloads the signer from the key file.
 func (s *sedaKeys) reload() error {
-	keyFile, err := loadSEDAKeyFile(s.keyPath)
+	keys, err := loadSEDAKeys(s.keyPath)
 	if err != nil {
 		return err
 	}
 
-	keysMap := make(map[SEDAKeyIndex]indexedPrivKey)
-	indPubKeys := make([]pubkeytypes.IndexedPubKey, len(keyFile.Keys))
-	for _, key := range keyFile.Keys {
-		keysMap[key.Index] = key
-		indPubKeys[key.Index] = pubkeytypes.IndexedPubKey{
-			Index:  uint32(key.Index),
-			PubKey: key.PubKey,
-		}
-	}
-	sort.Slice(indPubKeys, func(i, j int) bool {
-		return indPubKeys[i].Index < indPubKeys[j].Index
-	})
-
-	s.keys = keysMap
-	s.valAddr = keyFile.ValidatorAddr
-	s.pubKeys = indPubKeys
+	s.valAddr = keys.valAddr
+	s.keys = keys.keys
+	s.pubKeys = keys.pubKeys
+	s.isLoaded = true
 	return nil
 }

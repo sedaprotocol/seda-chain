@@ -56,6 +56,7 @@ func NewHandlers(
 	pkk PubKeyKeeper,
 	sk StakingKeeper,
 	vac addresscodec.Codec,
+	signer utils.SEDASigner,
 	logger log.Logger,
 ) *Handlers {
 	return &Handlers{
@@ -65,19 +66,16 @@ func NewHandlers(
 		pubKeyKeeper:           pkk,
 		stakingKeeper:          sk,
 		validatorAddressCodec:  vac,
+		signer:                 signer,
 		logger:                 logger,
 	}
-}
-
-func (h *Handlers) SetSEDASigner(signer utils.SEDASigner) {
-	h.signer = signer
 }
 
 // ExtendVoteHandler handles the ExtendVote ABCI to sign a batch created
 // from the previous block.
 func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 	return func(ctx sdk.Context, _ *abcitypes.RequestExtendVote) (*abcitypes.ResponseExtendVote, error) {
-		h.logger.Debug("start extend vote handler")
+		h.logger.Debug("start extend vote handler", "height", ctx.BlockHeight())
 
 		// Check if there is a batch to sign at this block height.
 		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetSignPhase)
@@ -87,6 +85,15 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 				return &abcitypes.ResponseExtendVote{}, nil
 			}
 			return nil, err
+		}
+
+		if !h.signer.IsLoaded() {
+			h.logger.Debug("signer is not loaded, try reloading")
+			err := h.signer.ReloadIfMismatch(nil)
+			if err != nil {
+				h.logger.Error("failed to load signer to sign batch", "err", err)
+				return nil, err
+			}
 		}
 
 		val, err := h.stakingKeeper.GetValidator(ctx, h.signer.GetValAddress())
@@ -328,7 +335,7 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 // in the pubkey module. It returns an error unless the verification
 // succeeds.
 func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batchID, voteExtension, consAddr []byte) error {
-	if len(voteExtension) == 0 || len(voteExtension) > MaxVoteExtensionLength {
+	if len(voteExtension) > MaxVoteExtensionLength {
 		h.logger.Error("invalid vote extension length", "len", len(voteExtension))
 		return ErrInvalidVoteExtensionLength
 	}
@@ -343,13 +350,13 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 	}
 
 	// Recover and verify secp256k1 public key.
-	var expAddr []byte
+	var expectedAddr []byte
 	if batchNum == collections.DefaultSequenceStart {
 		pubKey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			return err
 		}
-		expAddr, err = utils.PubKeyToEthAddress(pubKey)
+		expectedAddr, err = utils.PubKeyToEthAddress(pubKey)
 		if err != nil {
 			return err
 		}
@@ -361,7 +368,7 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 				if err != nil {
 					return err
 				}
-				expAddr, err = utils.PubKeyToEthAddress(pubKey)
+				expectedAddr, err = utils.PubKeyToEthAddress(pubKey)
 				if err != nil {
 					return err
 				}
@@ -369,7 +376,7 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 				return err
 			}
 		} else {
-			expAddr = entry[:20]
+			expectedAddr = entry[:20]
 		}
 	}
 
@@ -382,7 +389,7 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 		return err
 	}
 
-	if !bytes.Equal(expAddr, sigAddr) {
+	if !bytes.Equal(expectedAddr, sigAddr) {
 		return ErrInvalidBatchSignature
 	}
 	return nil

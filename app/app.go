@@ -985,6 +985,12 @@ func NewApp(
 	app.SetEndBlocker(app.EndBlocker)
 
 	// Register ABCI handlers for batch signing.
+	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
+	signer, err := utils.LoadSEDASigner(filepath.Join(filepath.Dir(pvKeyFile), utils.SEDAKeyFileName))
+	if err != nil {
+		app.Logger().Error("error loading SEDA signer", "err", err)
+	}
+
 	defaultProposalHandler := baseapp.NewDefaultProposalHandler(mempool.NoOpMempool{}, bApp)
 
 	abciHandler := appabci.NewHandlers(
@@ -993,24 +999,15 @@ func NewApp(
 		app.PubKeyKeeper,
 		app.StakingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		signer,
 		app.Logger(),
 	)
+	app.SetExtendVoteHandler(abciHandler.ExtendVoteHandler())
 	app.SetVerifyVoteExtensionHandler(abciHandler.VerifyVoteExtensionHandler())
 	app.SetPrepareProposal(abciHandler.PrepareProposalHandler())
 	app.SetProcessProposal(abciHandler.ProcessProposalHandler())
 	app.setAppPreBlocker(abciHandler.PreBlocker())
 	app.SetPreBlocker(app.PreBlocker)
-
-	// Register SEDA signer and ExtendVote handler.
-	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
-	signer, err := utils.LoadSEDASigner(filepath.Join(filepath.Dir(pvKeyFile), utils.SEDAKeyFileName))
-	if err != nil {
-		app.Logger().Error("error loading SEDA signer - ExtendVote handler will not run", "err", err)
-	} else {
-		app.Logger().Info("SEDA signer successfully loaded")
-		abciHandler.SetSEDASigner(signer)
-		app.SetExtendVoteHandler(abciHandler.ExtendVoteHandler())
-	}
 
 	if manager := app.SnapshotManager(); manager != nil {
 		err = manager.RegisterExtensions(
