@@ -30,6 +30,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 	oracleprogram "github.com/sedaprotocol/seda-chain/plugins/indexing/oracle-program"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pluginaws"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/pubkey"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
@@ -93,6 +94,8 @@ func (p *IndexerPlugin) extractUpdate(change *storetypes.StoreKVPair) (*types.Me
 	// Enable when indexer supports these messages
 	// case staking.StoreKey:
 	// 	return staking.ExtractUpdate(p.block, p.cdc, p.logger, change)
+	case pubkey.StoreKey:
+		return pubkey.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	case dataproxy.StoreKey:
 		return dataproxy.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	case batching.StoreKey:
