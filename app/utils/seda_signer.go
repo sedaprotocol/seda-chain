@@ -113,7 +113,7 @@ func (s *sedaKeys) ReloadIfMismatch(pubKeys []pubkeytypes.IndexedPubKey) error {
 	return nil
 }
 
-// IsLoaded returns true if the signer is loaded.
+// IsLoaded returns true if the signer is loaded and ready for signing.
 func (s *sedaKeys) IsLoaded() bool {
 	return s.isLoaded
 }

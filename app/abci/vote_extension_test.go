@@ -2,6 +2,7 @@ package abci
 
 import (
 	"bytes"
+	"path/filepath"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -35,10 +36,13 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	valAddr := sdk.ValAddress(simtestutil.CreateRandomAccounts(1)[0])
 	pubKeys, err := utils.GenerateSEDAKeys(valAddr, tmpDir)
 	require.NoError(t, err)
-	signer, err := utils.LoadSEDASigner(tmpDir)
+	signer, err := utils.LoadSEDASigner(filepath.Join(tmpDir, utils.SEDAKeyFileName))
 	require.NoError(t, err)
 
 	secp256k1PubKey := pubKeys[utils.SEDAKeyIndexSecp256k1].PubKey
+
+	ethAddr, err := utils.PubKeyToEthAddress(secp256k1PubKey)
+	require.NoError(t, err)
 
 	// Configure address prefixes.
 	cfg := sdk.GetConfig()
@@ -62,11 +66,13 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	hasher.Write([]byte("Message for ECDSA signing"))
 	batchID := hasher.Sum(nil)
 	mockBatch := batchingtypes.Batch{
+		BatchNumber: 100,
 		BatchId:     batchID,
 		BlockHeight: 100, // created from the previous block
 	}
 
 	mockBatchingKeeper.EXPECT().GetBatchForHeight(gomock.Any(), int64(100)).Return(mockBatch, nil).AnyTimes()
+	mockBatchingKeeper.EXPECT().GetValidatorTreeEntry(gomock.Any(), uint64(99), valAddr).Return(ethAddr, nil).AnyTimes()
 	mockStakingKeeper.EXPECT().GetValidator(gomock.Any(), valAddr).Return(
 		stakingtypes.Validator{
 			OperatorAddress: valAddr.String(),
@@ -81,9 +87,9 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 		mockPubKeyKeeper,
 		mockStakingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		signer,
 		logger,
 	)
-	handler.SetSEDASigner(signer)
 	extendVoteHandler := handler.ExtendVoteHandler()
 	verifyVoteHandler := handler.VerifyVoteExtensionHandler()
 
@@ -103,11 +109,6 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 			OperatorAddress: valAddr.String(),
 		}, nil,
 	)
-	mockPubKeyKeeper.EXPECT().GetValidatorKeyAtIndex(
-		gomock.Any(),
-		valAddr.Bytes(),
-		utils.SEDAKeyIndexSecp256k1,
-	).Return(secp256k1PubKey, nil)
 
 	vvRes, err := verifyVoteHandler(ctx, &cometabci.RequestVerifyVoteExtension{
 		Height:           101,

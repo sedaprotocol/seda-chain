@@ -9,4 +9,5 @@ var (
 	ErrInvalidVoteExtensionLength   = errors.Register(ModuleName, 3, "invalid vote extension length")
 	ErrVoteExtensionInjectionTooBig = errors.Register(ModuleName, 4, "injected vote extensions are too big")
 	ErrInvalidBatchSignature        = errors.Register(ModuleName, 5, "batch signature is invalid")
+	ErrUnexpectedBatchSignature     = errors.Register(ModuleName, 6, "batch signature should be empty")
 )

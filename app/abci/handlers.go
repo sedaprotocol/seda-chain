@@ -88,12 +88,25 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		}
 
 		if !h.signer.IsLoaded() {
-			h.logger.Debug("signer is not loaded, try reloading")
+			h.logger.Info("signer is not loaded, try reloading")
 			err := h.signer.ReloadIfMismatch(nil)
 			if err != nil {
 				h.logger.Error("failed to load signer to sign batch", "err", err)
 				return nil, err
 			}
+		}
+
+		// Check if the validator was in the previous validator tree.
+		// If not, it means the validator just joined the active set,
+		// so it should start signing from the next batch.
+		_, err = h.batchingKeeper.GetValidatorTreeEntry(ctx, batch.BatchNumber-1, h.signer.GetValAddress())
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				h.logger.Info("validator was not in the previous validator tree - not signing the batch")
+			} else {
+				h.logger.Error("unexpected error while checking previous validator tree entry", "err", err)
+			}
+			return nil, err
 		}
 
 		val, err := h.stakingKeeper.GetValidator(ctx, h.signer.GetValAddress())
@@ -364,17 +377,12 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 		entry, err := h.batchingKeeper.GetValidatorTreeEntry(ctx, batchNum-1, valOper)
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
-				pubKey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.SEDAKeyIndexSecp256k1)
-				if err != nil {
-					return err
+				if len(voteExtension) == 0 {
+					return nil
 				}
-				expectedAddr, err = utils.PubKeyToEthAddress(pubKey)
-				if err != nil {
-					return err
-				}
-			} else {
-				return err
+				return ErrUnexpectedBatchSignature
 			}
+			return err
 		} else {
 			expectedAddr = entry[:20]
 		}
