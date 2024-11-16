@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"time"
 
+	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -36,6 +37,19 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 		}
 
 		return types.NewMessage("oracle-program", data, ctx), nil
+	} else if _, found := bytes.CutPrefix(change.Key, oracleprogramtypes.CoreContractRegistryPrefix); found {
+		val, err := collections.StringValue.Decode(change.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		data := struct {
+			ContractAddr string `json:"contractAddress"`
+		}{
+			ContractAddr: val,
+		}
+
+		return types.NewMessage("core-contract", data, ctx), nil
 	} else if _, found := bytes.CutPrefix(change.Key, oracleprogramtypes.ParamsPrefix); found {
 		val, err := codec.CollValue[oracleprogramtypes.Params](cdc).Decode(change.Value)
 		if err != nil {

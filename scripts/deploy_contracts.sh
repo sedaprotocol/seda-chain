@@ -25,7 +25,7 @@ echo "Instantiating core contract on code id $CORE_CODE_ID"
 
 OUTPUT=$($BIN tx wasm-storage submit-proposal instantiate-core-contract $CORE_CODE_ID \
     '{"token":"aseda", "owner": "'$DEV_ACCOUNT'", "chain_id":"'$CHAIN_ID'" }' \
-    $(printf '%x' $CORE_CODE_ID) \
+    $(printf '%02x' $CORE_CODE_ID) \
     --admin $DEV_ACCOUNT \
     --label core$CORE_CODE_ID \
     --title 'Core Contract' --summary 'Instantiates and registers core contract' --deposit 10000000aseda \
@@ -37,7 +37,7 @@ TXHASH=$(echo "$OUTPUT" | jq -r '.txhash')
 
 sleep 10
 
-PROPOSAL_ID=$($BIN query tx $TXHASH --output json | jq '.events[] | select(.type == "submit_proposal") | .attributes[] | select(.key == "proposal_id") | .value' | sed 's/^"\(.*\)"$/\1/')  
+PROPOSAL_ID="$($BIN query tx $TXHASH --output json | jq '.events[] | select(.type == "submit_proposal") | .attributes[] | select(.key == "proposal_id") | .value' | sed 's/^"\(.*\)"$/\1/')"
 $BIN tx gov vote $PROPOSAL_ID yes \
     --from $VOTE_ACCOUNT --keyring-backend test \
     --gas-prices 100000000000aseda --gas auto --gas-adjustment 1.6 \
