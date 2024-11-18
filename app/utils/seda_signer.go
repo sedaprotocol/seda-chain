@@ -75,6 +75,10 @@ func (s *sedaKeys) GetValAddress() sdk.ValAddress {
 
 // Sign signs a 32-byte digest with the key at the given index.
 func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
+	if !s.isLoaded {
+		return nil, fmt.Errorf("signer is not loaded")
+	}
+
 	var signature []byte
 	var err error
 	switch index {
@@ -122,6 +126,10 @@ func (s *sedaKeys) IsLoaded() bool {
 func (s *sedaKeys) reload() error {
 	keys, err := loadSEDAKeys(s.keyPath)
 	if err != nil {
+		s.valAddr = nil
+		s.keys = nil
+		s.pubKeys = nil
+		s.isLoaded = false
 		return err
 	}
 
