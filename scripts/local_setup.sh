@@ -5,6 +5,28 @@ set -x
 BIN=./build/sedad
 CONFIG_PATH=$HOME/.sedad/config
 
+# Parse flags
+while [ ! $# -eq 0 ]
+do
+	case "$1" in
+		--plugin)
+            make build-plugin-dev
+            INDEXING_PLUGIN=true
+            # An empty string means all message types are allowed.
+            export ALLOWED_MESSAGE_TYPES=${ALLOWED_MESSAGE_TYPES:-""}
+            export PLUGIN_LOG_LEVEL=${PLUGIN_LOG_LEVEL:-"trace"}
+            export PLUGIN_LOG_FILE=$(realpath "./")/plugin.log
+            export COSMOS_SDK_ABCI=$(realpath "./build/plugin")
+            # These are the default ports and names used by the local indexer.
+            export SQS_QUEUE_URL=${SQS_QUEUE_URL:-"http://localhost/4100/local-updates"}
+            export SQS_ENDPOINT=${SQS_ENDPOINT:-"http://localhost:4100"}
+            export S3_ENDPOINT=${S3_ENDPOINT:-"http://localhost:9444"}
+            export S3_LARGE_MSG_BUCKET_NAME=${S3_LARGE_MSG_BUCKET_NAME:-"indexer-localnet-large-messages"}
+			;;
+	esac
+	shift
+done
+
 function add_key_and_account() {
     local name=$1
     local amount=$2
@@ -31,6 +53,11 @@ rm -rf ~/.sedad || true
 
 # configure sedad
 $BIN config set client chain-id seda-1-local
+
+if [[ "$INDEXING_PLUGIN" = true ]]; then
+    $BIN config set app streaming.abci.keys '["*"]'
+    $BIN config set app streaming.abci.plugin '"abci"'
+fi
 
 # initialize the chain
 $BIN init node0 --default-denom aseda
@@ -67,4 +94,11 @@ $BIN gentx satoshi 10000000000000000seda --keyring-backend test
 $BIN collect-gentxs
 
 # start the chain
-$BIN start --log_level debug 2>&1 | tee local_chain.log
+$BIN start --log_level debug 2>&1 | tee local_chain.log &
+CHAIN_PID=$!
+
+# Wait until at least one block is produced
+sleep 10
+
+$BIN tx pubkey add-seda-keys --from satoshi --keyring-backend test --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --yes
+wait $CHAIN_PID
