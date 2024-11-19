@@ -25,8 +25,8 @@ message Batch {
   string validator_root = 5;
   // batch_id is the Keccack-256 hash of the batch content.
   bytes batch_id = 6;
-  // proving_medatada is a field for additional proving data.
-  bytes proving_medatada = 7;
+  // proving_metadata is a field for additional proving data.
+  bytes proving_metadata = 7;
 }
 
 // TreeEntries are the given batch's data result tree entries and

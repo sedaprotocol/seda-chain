@@ -6,10 +6,10 @@ import (
 
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/store/types"
-	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"

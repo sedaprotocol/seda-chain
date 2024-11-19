@@ -67,14 +67,14 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 			DataResultRoot  string `json:"data_result_root"`
 			ValidatorRoot   string `json:"validator_root"`
 			BatchID         string `json:"batch_id"`
-			ProvingMedatada string `json:"proving_medatada"`
+			ProvingMetadata string `json:"proving_metadata"`
 		}{
 			BatchNumber:     strconv.FormatUint(val.BatchNumber, 10),
 			BlockHeight:     strconv.FormatInt(val.BlockHeight, 10),
 			DataResultRoot:  val.DataResultRoot,
 			ValidatorRoot:   val.ValidatorRoot,
 			BatchID:         hex.EncodeToString(val.BatchId),
-			ProvingMedatada: hex.EncodeToString(val.ProvingMedatada),
+			ProvingMetadata: hex.EncodeToString(val.ProvingMetadata),
 		}
 
 		return types.NewMessage("batch", data, ctx), nil

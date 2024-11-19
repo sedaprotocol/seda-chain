@@ -121,7 +121,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, [][]byte, []Valida
 		DataResultRoot:        hex.EncodeToString(superRoot),
 		ValidatorRoot:         valRootHex,
 		BatchId:               batchID,
-		ProvingMedatada:       provingMetaData,
+		ProvingMetadata:       provingMetaData,
 	}, dataEntries, valEntries, nil
 }
 
