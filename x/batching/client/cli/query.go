@@ -27,7 +27,6 @@ func GetQueryCmd(_ string) *cobra.Command {
 		GetCmdQueryBatchByHeight(),
 		GetCmdQueryBatches(),
 		GetCmdQueryTreeEntries(),
-		GetCmdQueryBatchSignatures(),
 		GetCmdQueryDataResult(),
 		GetCmdQueryBatchAssignment(),
 	)
@@ -155,40 +154,6 @@ func GetCmdQueryTreeEntries() *cobra.Command {
 				BatchNumber: batchNum,
 			}
 			res, err := queryClient.TreeEntries(cmd.Context(), req)
-			if err != nil {
-				return err
-			}
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-	return cmd
-}
-
-// GetCmdQueryBatchSignatures returns the command for querying batch
-// signatures of a given batch.
-func GetCmdQueryBatchSignatures() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "batch-signatures <batch_number>",
-		Aliases: []string{"batch-sigs"},
-		Short:   "Get batch signatures given its batch number",
-		Args:    cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-			queryClient := types.NewQueryClient(clientCtx)
-
-			batchNum, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-			req := &types.QueryBatchSignaturesRequest{
-				BatchNumber: batchNum,
-			}
-			res, err := queryClient.BatchSignatures(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

@@ -207,35 +207,3 @@ func (k Keeper) SetBatchSigSecp256k1(ctx context.Context, batchNum uint64, opera
 	entry.Secp256K1.Signature = signature
 	return k.setValidatorTreeEntry(ctx, batchNum, entry)
 }
-
-// GetBatchSigsForBatch returns all signatures of a given batch.
-func (k Keeper) GetBatchSigsForBatch(ctx context.Context, batchNum uint64) ([]types.BatchSignatures, error) {
-	rng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
-	itr, err := k.validatorTreeEntries.Iterate(ctx, rng)
-	if err != nil {
-		return nil, err
-	}
-	defer itr.Close()
-
-	kvs, err := itr.KeyValues()
-	if err != nil {
-		return nil, err
-	}
-	if len(kvs) == 0 {
-		return nil, collections.ErrNotFound
-	}
-
-	sigs := make([]types.BatchSignatures, len(kvs))
-	for i, kv := range kvs {
-		valAddr, err := k.validatorAddressCodec.BytesToString(kv.Key.K2())
-		if err != nil {
-			return nil, err
-		}
-		sigs[i] = types.BatchSignatures{
-			BatchNumber:   batchNum,
-			ValidatorAddr: valAddr,
-			Signatures:    kv.Value.Secp256K1.Signature,
-		}
-	}
-	return sigs, err
-}
