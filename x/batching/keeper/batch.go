@@ -7,7 +7,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
@@ -63,7 +62,7 @@ func (k Keeper) SetNewBatch(ctx context.Context, batch types.Batch, dataEntries 
 	}
 
 	for _, valEntry := range valEntries {
-		err = k.setValidatorTreeEntry(ctx, newBatchNum, valEntry.ValidatorAddress, valEntry)
+		err = k.setValidatorTreeEntry(ctx, newBatchNum, valEntry)
 		if err != nil {
 			return err
 		}
@@ -80,6 +79,14 @@ func (k Keeper) GetBatchForHeight(ctx context.Context, blockHeight int64) (types
 	return batch, nil
 }
 
+func (k Keeper) GetBatchByBatchNumber(ctx context.Context, batchNumber uint64) (types.Batch, error) {
+	blockHeight, err := k.batches.Indexes.Number.MatchExact(ctx, batchNumber)
+	if err != nil {
+		return types.Batch{}, err
+	}
+	return k.batches.Get(ctx, blockHeight)
+}
+
 // GetLatestBatch returns the most recently created batch. If batching
 // has not begun, it returns an error ErrBatchingHasNotStarted.
 func (k Keeper) GetLatestBatch(ctx context.Context) (types.Batch, error) {
@@ -91,14 +98,6 @@ func (k Keeper) GetLatestBatch(ctx context.Context) (types.Batch, error) {
 		return types.Batch{}, types.ErrBatchingHasNotStarted
 	}
 	return k.GetBatchByBatchNumber(ctx, currentBatchNum)
-}
-
-func (k Keeper) GetBatchByBatchNumber(ctx context.Context, batchNumber uint64) (types.Batch, error) {
-	blockHeight, err := k.batches.Indexes.Number.MatchExact(ctx, batchNumber)
-	if err != nil {
-		return types.Batch{}, err
-	}
-	return k.batches.Get(ctx, blockHeight)
 }
 
 // IterateBatches iterates over the batches and performs a given
@@ -136,8 +135,8 @@ func (k Keeper) GetAllBatches(ctx sdk.Context) ([]types.Batch, error) {
 	return batches, nil
 }
 
-func (k Keeper) setValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddr sdk.ValAddress, entry types.ValidatorTreeEntry) error {
-	err := k.validatorTreeEntries.Set(ctx, collections.Join(batchNum, valAddr.Bytes()), entry)
+func (k Keeper) setValidatorTreeEntry(ctx context.Context, batchNum uint64, entry types.ValidatorTreeEntry) error {
+	err := k.validatorTreeEntries.Set(ctx, collections.Join(batchNum, entry.ValidatorAddress), entry)
 	if err != nil {
 		return err
 	}
@@ -146,7 +145,7 @@ func (k Keeper) setValidatorTreeEntry(ctx context.Context, batchNum uint64, valA
 
 // GetValidatorTreeEntry returns the tree entry of a given validator
 // for a specified batch
-func (k Keeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, index utils.SEDAKeyIndex, valAddress sdk.ValAddress) (types.ValidatorTreeEntry, error) {
+func (k Keeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddress sdk.ValAddress) (types.ValidatorTreeEntry, error) {
 	valEntry, err := k.validatorTreeEntries.Get(ctx, collections.Join(batchNum, valAddress.Bytes()))
 	if err != nil {
 		return types.ValidatorTreeEntry{}, err
@@ -194,33 +193,25 @@ func (k Keeper) GetTreeEntriesForBatch(ctx context.Context, batchNum uint64) (ty
 	}, nil
 }
 
-// SetBatchSignatures stores a validator's signatures of a batch.
-func (k Keeper) SetBatchSignatures(ctx context.Context, sigs types.BatchSignatures) error {
-	valAddr, err := k.validatorAddressCodec.StringToBytes(sigs.ValidatorAddr)
+// SetBatchSigSecp256k1 stores a validator's secp256k1 signatures of
+// a batch.
+func (k Keeper) SetBatchSigSecp256k1(ctx context.Context, batchNum uint64, operatorAddress string, signature []byte) error {
+	valAddr, err := k.validatorAddressCodec.StringToBytes(operatorAddress)
 	if err != nil {
 		return err
 	}
-	return k.batchSignatures.Set(ctx, collections.Join(sigs.BatchNumber, valAddr), sigs)
-}
-
-// GetBatchSignatures retrieves the batch signatures by a given
-// validator at a given batch number.
-func (k Keeper) GetBatchSignatures(ctx context.Context, batchNum uint64, validatorAddr string) (types.BatchSignatures, error) {
-	valAddr, err := k.validatorAddressCodec.StringToBytes(validatorAddr)
+	entry, err := k.GetValidatorTreeEntry(ctx, batchNum, valAddr)
 	if err != nil {
-		return types.BatchSignatures{}, err
+		return err
 	}
-	sigs, err := k.batchSignatures.Get(ctx, collections.Join(batchNum, valAddr))
-	if err != nil {
-		return types.BatchSignatures{}, err
-	}
-	return sigs, err
+	entry.Secp256K1.Signature = signature
+	return k.setValidatorTreeEntry(ctx, batchNum, entry)
 }
 
 // GetBatchSigsForBatch returns all signatures of a given batch.
 func (k Keeper) GetBatchSigsForBatch(ctx context.Context, batchNum uint64) ([]types.BatchSignatures, error) {
 	rng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
-	itr, err := k.batchSignatures.Iterate(ctx, rng)
+	itr, err := k.validatorTreeEntries.Iterate(ctx, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -236,30 +227,15 @@ func (k Keeper) GetBatchSigsForBatch(ctx context.Context, batchNum uint64) ([]ty
 
 	sigs := make([]types.BatchSignatures, len(kvs))
 	for i, kv := range kvs {
-		sigs[i] = kv.Value
-	}
-	return sigs, err
-}
-
-// GetAllBatchSignatures returns all batch signatures in the store.
-func (k Keeper) GetAllBatchSignatures(ctx context.Context) ([]types.BatchSignatures, error) {
-	itr, err := k.batchSignatures.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer itr.Close()
-
-	kvs, err := itr.KeyValues()
-	if err != nil {
-		return nil, err
-	}
-	if len(kvs) == 0 {
-		return nil, collections.ErrNotFound
-	}
-
-	sigs := make([]types.BatchSignatures, len(kvs))
-	for i, kv := range kvs {
-		sigs[i] = kv.Value
+		valAddr, err := k.validatorAddressCodec.BytesToString(kv.Key.K2())
+		if err != nil {
+			return nil, err
+		}
+		sigs[i] = types.BatchSignatures{
+			BatchNumber:   batchNum,
+			ValidatorAddr: valAddr,
+			Signatures:    kv.Value.Secp256K1.Signature,
+		}
 	}
 	return sigs, err
 }

@@ -103,28 +103,6 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 		}
 
 		return types.NewMessage("dr-batch-assignment", data, ctx), nil
-	} else if keyBytes, found := bytes.CutPrefix(change.Key, batchingtypes.BatchSignaturesKeyPrefix); found {
-		_, key, err := collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey).Decode(keyBytes)
-		if err != nil {
-			return nil, err
-		}
-
-		val, err := codec.CollValue[batchingtypes.BatchSignatures](cdc).Decode(change.Value)
-		if err != nil {
-			return nil, err
-		}
-
-		data := struct {
-			BatchNumber      string `json:"batch_number"`
-			ValidatorAddress string `json:"validator_address"`
-			Signatures       string `json:"signatures"`
-		}{
-			BatchNumber:      strconv.FormatUint(key.K1(), 10),
-			ValidatorAddress: val.ValidatorAddr,
-			Signatures:       hex.EncodeToString(val.Signatures),
-		}
-
-		return types.NewMessage("batch-signatures", data, ctx), nil
 	} else if keyBytes, found := bytes.CutPrefix(change.Key, batchingtypes.ValidatorTreeEntriesKeyPrefix); found {
 		_, key, err := collections.Uint64Key.Decode(keyBytes)
 		if err != nil {
