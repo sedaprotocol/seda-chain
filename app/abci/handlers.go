@@ -18,7 +18,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
-	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
 const (
@@ -99,7 +98,7 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		// Check if the validator was in the previous validator tree.
 		// If not, it means the validator just joined the active set,
 		// so it should start signing from the next batch.
-		_, err = h.batchingKeeper.GetValidatorTreeEntry(ctx, batch.BatchNumber-1, utils.SEDAKeyIndexSecp256k1, h.signer.GetValAddress())
+		_, err = h.batchingKeeper.GetValidatorTreeEntry(ctx, batch.BatchNumber-1, h.signer.GetValAddress())
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
 				h.logger.Info("validator was not in the previous validator tree - not signing the batch")
@@ -322,13 +321,8 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 			if err != nil {
 				return nil, err
 			}
-			batchSigs := batchingtypes.BatchSignatures{
-				BatchNumber:   batchNum,
-				ValidatorAddr: validator.OperatorAddress,
-				Signatures:    vote.VoteExtension,
-			}
 
-			err = h.batchingKeeper.SetBatchSignatures(ctx, batchSigs)
+			err = h.batchingKeeper.SetBatchSigSecp256k1(ctx, batchNum, validator.OperatorAddress, vote.VoteExtension)
 			if err != nil {
 				return nil, err
 			}
@@ -370,7 +364,7 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 			return err
 		}
 	} else {
-		entry, err := h.batchingKeeper.GetValidatorTreeEntry(ctx, batchNum-1, utils.SEDAKeyIndexSecp256k1, valOper)
+		entry, err := h.batchingKeeper.GetValidatorTreeEntry(ctx, batchNum-1, valOper)
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
 				if len(voteExtension) == 0 {
