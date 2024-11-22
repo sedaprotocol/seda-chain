@@ -34,14 +34,6 @@ service Query {
         "/seda-chain/batching/tree_entries/{batch_number}";
   }
 
-  // BatchSignatures returns the batch signatures for the given batch
-  // and the
-  rpc BatchSignatures(QueryBatchSignaturesRequest)
-      returns (QueryBatchSignaturesResponse) {
-    option (google.api.http).get =
-        "/seda-chain/batching/batch_signatures/{batch_number}";
-  }
-
   // DataResult returns a data result given its associated data request's
   // ID.
   rpc DataResult(QueryDataResultRequest) returns (QueryDataResultResponse) {
@@ -90,14 +82,6 @@ message QueryTreeEntriesRequest { uint64 batch_number = 1; }
 // The response message for QueryTreeEntries RPC.
 message QueryTreeEntriesResponse {
   BatchTreeEntries entries = 1 [ (gogoproto.nullable) = false ];
-}
-
-// The request message for QueryBatchSignaturesRequest RPC.
-message QueryBatchSignaturesRequest { uint64 batch_number = 1; }
-
-// The response message for QueryQueryBatchSignatures RPC.
-message QueryBatchSignaturesResponse {
-  repeated BatchSignatures batch_sigs = 1 [ (gogoproto.nullable) = false ];
 }
 
 // The request message for QueryDataResult RPC.

@@ -49,16 +49,6 @@ message Secp256k1Entry {
   bytes signature = 2;
 }
 
-// BatchSignatures contains basic validator data and its batch signatures
-// under various cryptographic schemes.
-message BatchSignatures {
-  // batch_number is the identifier of the batch.
-  uint64 batch_number = 1;
-  string validator_addr = 2
-      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
-  bytes signatures = 3;
-}
-
 // Params is a list of parameters which can be changed through governance.
 message Params {
   option (gogoproto.equal) = true;
