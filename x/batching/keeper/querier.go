@@ -36,8 +36,17 @@ func (q Querier) Batch(c context.Context, req *types.QueryBatchRequest) (*types.
 		return nil, err
 	}
 
+	entries, err := q.Keeper.GetTreeEntriesForBatch(ctx, batch.BatchNumber)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.QueryBatchResponse{
-		Batch: batch,
+		Batch: types.BatchWithEntries{
+			Batch:             batch,
+			DataResultEntries: entries.DataResultEntries,
+			ValidatorEntries:  entries.ValidatorEntries,
+		},
 	}, nil
 }
 
@@ -73,17 +82,6 @@ func (q Querier) Batches(c context.Context, req *types.QueryBatchesRequest) (*ty
 	return &types.QueryBatchesResponse{
 		Batches:    batches,
 		Pagination: pageRes,
-	}, nil
-}
-
-func (q Querier) TreeEntries(c context.Context, req *types.QueryTreeEntriesRequest) (*types.QueryTreeEntriesResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-	entries, err := q.Keeper.GetTreeEntriesForBatch(ctx, req.BatchNumber)
-	if err != nil {
-		return nil, err
-	}
-	return &types.QueryTreeEntriesResponse{
-		Entries: entries,
 	}, nil
 }
 
