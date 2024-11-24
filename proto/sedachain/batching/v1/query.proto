@@ -28,12 +28,6 @@ service Query {
     option (google.api.http).get = "/seda-chain/batching/batches";
   }
 
-  // TreeEntries returns the tree entries from the given batch number.
-  rpc TreeEntries(QueryTreeEntriesRequest) returns (QueryTreeEntriesResponse) {
-    option (google.api.http).get =
-        "/seda-chain/batching/tree_entries/{batch_number}";
-  }
-
   // DataResult returns a data result given its associated data request's
   // ID.
   rpc DataResult(QueryDataResultRequest) returns (QueryDataResultResponse) {
@@ -50,11 +44,19 @@ service Query {
   }
 }
 
+message BatchWithEntries {
+  Batch batch = 1 [ (gogoproto.nullable) = false ];
+  DataResultTreeEntries data_result_entries = 2 [ (gogoproto.nullable) = false ];
+  repeated ValidatorTreeEntry validator_entries = 3 [ (gogoproto.nullable) = false ];
+}
+
 // The request message for QueryBatch RPC.
 message QueryBatchRequest { uint64 batch_number = 1; }
 
 // The response message for QueryBatch RPC.
-message QueryBatchResponse { Batch batch = 1 [ (gogoproto.nullable) = false ]; }
+message QueryBatchResponse { 
+  BatchWithEntries batch = 1 [ (gogoproto.nullable) = false ]; 
+}
 
 // The request message for BatchForHeight RPC.
 message QueryBatchForHeightRequest { int64 block_height = 1; }
@@ -74,14 +76,6 @@ message QueryBatchesRequest {
 message QueryBatchesResponse {
   repeated Batch batches = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
-}
-
-// The request message for QueryTreeEntries RPC.
-message QueryTreeEntriesRequest { uint64 batch_number = 1; }
-
-// The response message for QueryTreeEntries RPC.
-message QueryTreeEntriesResponse {
-  BatchTreeEntries entries = 1 [ (gogoproto.nullable) = false ];
 }
 
 // The request message for QueryDataResult RPC.

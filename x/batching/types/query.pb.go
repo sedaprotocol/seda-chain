@@ -30,6 +30,66 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+type BatchWithEntries struct {
+	Batch             Batch                 `protobuf:"bytes,1,opt,name=batch,proto3" json:"batch"`
+	DataResultEntries DataResultTreeEntries `protobuf:"bytes,2,opt,name=data_result_entries,json=dataResultEntries,proto3" json:"data_result_entries"`
+	ValidatorEntries  []ValidatorTreeEntry  `protobuf:"bytes,3,rep,name=validator_entries,json=validatorEntries,proto3" json:"validator_entries"`
+}
+
+func (m *BatchWithEntries) Reset()         { *m = BatchWithEntries{} }
+func (m *BatchWithEntries) String() string { return proto.CompactTextString(m) }
+func (*BatchWithEntries) ProtoMessage()    {}
+func (*BatchWithEntries) Descriptor() ([]byte, []int) {
+	return fileDescriptor_351236f6b51194e8, []int{0}
+}
+func (m *BatchWithEntries) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *BatchWithEntries) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_BatchWithEntries.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *BatchWithEntries) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BatchWithEntries.Merge(m, src)
+}
+func (m *BatchWithEntries) XXX_Size() int {
+	return m.Size()
+}
+func (m *BatchWithEntries) XXX_DiscardUnknown() {
+	xxx_messageInfo_BatchWithEntries.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BatchWithEntries proto.InternalMessageInfo
+
+func (m *BatchWithEntries) GetBatch() Batch {
+	if m != nil {
+		return m.Batch
+	}
+	return Batch{}
+}
+
+func (m *BatchWithEntries) GetDataResultEntries() DataResultTreeEntries {
+	if m != nil {
+		return m.DataResultEntries
+	}
+	return DataResultTreeEntries{}
+}
+
+func (m *BatchWithEntries) GetValidatorEntries() []ValidatorTreeEntry {
+	if m != nil {
+		return m.ValidatorEntries
+	}
+	return nil
+}
+
 // The request message for QueryBatch RPC.
 type QueryBatchRequest struct {
 	BatchNumber uint64 `protobuf:"varint,1,opt,name=batch_number,json=batchNumber,proto3" json:"batch_number,omitempty"`
@@ -39,7 +99,7 @@ func (m *QueryBatchRequest) Reset()         { *m = QueryBatchRequest{} }
 func (m *QueryBatchRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBatchRequest) ProtoMessage()    {}
 func (*QueryBatchRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{0}
+	return fileDescriptor_351236f6b51194e8, []int{1}
 }
 func (m *QueryBatchRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -77,14 +137,14 @@ func (m *QueryBatchRequest) GetBatchNumber() uint64 {
 
 // The response message for QueryBatch RPC.
 type QueryBatchResponse struct {
-	Batch Batch `protobuf:"bytes,1,opt,name=batch,proto3" json:"batch"`
+	Batch BatchWithEntries `protobuf:"bytes,1,opt,name=batch,proto3" json:"batch"`
 }
 
 func (m *QueryBatchResponse) Reset()         { *m = QueryBatchResponse{} }
 func (m *QueryBatchResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBatchResponse) ProtoMessage()    {}
 func (*QueryBatchResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{1}
+	return fileDescriptor_351236f6b51194e8, []int{2}
 }
 func (m *QueryBatchResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -113,11 +173,11 @@ func (m *QueryBatchResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryBatchResponse proto.InternalMessageInfo
 
-func (m *QueryBatchResponse) GetBatch() Batch {
+func (m *QueryBatchResponse) GetBatch() BatchWithEntries {
 	if m != nil {
 		return m.Batch
 	}
-	return Batch{}
+	return BatchWithEntries{}
 }
 
 // The request message for BatchForHeight RPC.
@@ -129,7 +189,7 @@ func (m *QueryBatchForHeightRequest) Reset()         { *m = QueryBatchForHeightR
 func (m *QueryBatchForHeightRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBatchForHeightRequest) ProtoMessage()    {}
 func (*QueryBatchForHeightRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{2}
+	return fileDescriptor_351236f6b51194e8, []int{3}
 }
 func (m *QueryBatchForHeightRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -174,7 +234,7 @@ func (m *QueryBatchForHeightResponse) Reset()         { *m = QueryBatchForHeight
 func (m *QueryBatchForHeightResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBatchForHeightResponse) ProtoMessage()    {}
 func (*QueryBatchForHeightResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{3}
+	return fileDescriptor_351236f6b51194e8, []int{4}
 }
 func (m *QueryBatchForHeightResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -220,7 +280,7 @@ func (m *QueryBatchesRequest) Reset()         { *m = QueryBatchesRequest{} }
 func (m *QueryBatchesRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBatchesRequest) ProtoMessage()    {}
 func (*QueryBatchesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{4}
+	return fileDescriptor_351236f6b51194e8, []int{5}
 }
 func (m *QueryBatchesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -266,7 +326,7 @@ func (m *QueryBatchesResponse) Reset()         { *m = QueryBatchesResponse{} }
 func (m *QueryBatchesResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBatchesResponse) ProtoMessage()    {}
 func (*QueryBatchesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{5}
+	return fileDescriptor_351236f6b51194e8, []int{6}
 }
 func (m *QueryBatchesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -309,96 +369,6 @@ func (m *QueryBatchesResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// The request message for QueryTreeEntries RPC.
-type QueryTreeEntriesRequest struct {
-	BatchNumber uint64 `protobuf:"varint,1,opt,name=batch_number,json=batchNumber,proto3" json:"batch_number,omitempty"`
-}
-
-func (m *QueryTreeEntriesRequest) Reset()         { *m = QueryTreeEntriesRequest{} }
-func (m *QueryTreeEntriesRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryTreeEntriesRequest) ProtoMessage()    {}
-func (*QueryTreeEntriesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{6}
-}
-func (m *QueryTreeEntriesRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryTreeEntriesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryTreeEntriesRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryTreeEntriesRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryTreeEntriesRequest.Merge(m, src)
-}
-func (m *QueryTreeEntriesRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryTreeEntriesRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryTreeEntriesRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryTreeEntriesRequest proto.InternalMessageInfo
-
-func (m *QueryTreeEntriesRequest) GetBatchNumber() uint64 {
-	if m != nil {
-		return m.BatchNumber
-	}
-	return 0
-}
-
-// The response message for QueryTreeEntries RPC.
-type QueryTreeEntriesResponse struct {
-	Entries BatchTreeEntries `protobuf:"bytes,1,opt,name=entries,proto3" json:"entries"`
-}
-
-func (m *QueryTreeEntriesResponse) Reset()         { *m = QueryTreeEntriesResponse{} }
-func (m *QueryTreeEntriesResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryTreeEntriesResponse) ProtoMessage()    {}
-func (*QueryTreeEntriesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{7}
-}
-func (m *QueryTreeEntriesResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryTreeEntriesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryTreeEntriesResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryTreeEntriesResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryTreeEntriesResponse.Merge(m, src)
-}
-func (m *QueryTreeEntriesResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryTreeEntriesResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryTreeEntriesResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryTreeEntriesResponse proto.InternalMessageInfo
-
-func (m *QueryTreeEntriesResponse) GetEntries() BatchTreeEntries {
-	if m != nil {
-		return m.Entries
-	}
-	return BatchTreeEntries{}
-}
-
 // The request message for QueryDataResult RPC.
 type QueryDataResultRequest struct {
 	DataRequestId string `protobuf:"bytes,1,opt,name=data_request_id,json=dataRequestId,proto3" json:"data_request_id,omitempty"`
@@ -408,7 +378,7 @@ func (m *QueryDataResultRequest) Reset()         { *m = QueryDataResultRequest{}
 func (m *QueryDataResultRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryDataResultRequest) ProtoMessage()    {}
 func (*QueryDataResultRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{8}
+	return fileDescriptor_351236f6b51194e8, []int{7}
 }
 func (m *QueryDataResultRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -453,7 +423,7 @@ func (m *QueryDataResultResponse) Reset()         { *m = QueryDataResultResponse
 func (m *QueryDataResultResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryDataResultResponse) ProtoMessage()    {}
 func (*QueryDataResultResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{9}
+	return fileDescriptor_351236f6b51194e8, []int{8}
 }
 func (m *QueryDataResultResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -498,7 +468,7 @@ func (m *QueryBatchAssignmentRequest) Reset()         { *m = QueryBatchAssignmen
 func (m *QueryBatchAssignmentRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBatchAssignmentRequest) ProtoMessage()    {}
 func (*QueryBatchAssignmentRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{10}
+	return fileDescriptor_351236f6b51194e8, []int{9}
 }
 func (m *QueryBatchAssignmentRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -543,7 +513,7 @@ func (m *QueryBatchAssignmentResponse) Reset()         { *m = QueryBatchAssignme
 func (m *QueryBatchAssignmentResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBatchAssignmentResponse) ProtoMessage()    {}
 func (*QueryBatchAssignmentResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_351236f6b51194e8, []int{11}
+	return fileDescriptor_351236f6b51194e8, []int{10}
 }
 func (m *QueryBatchAssignmentResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -580,14 +550,13 @@ func (m *QueryBatchAssignmentResponse) GetBatchNumber() uint64 {
 }
 
 func init() {
+	proto.RegisterType((*BatchWithEntries)(nil), "sedachain.batching.v1.BatchWithEntries")
 	proto.RegisterType((*QueryBatchRequest)(nil), "sedachain.batching.v1.QueryBatchRequest")
 	proto.RegisterType((*QueryBatchResponse)(nil), "sedachain.batching.v1.QueryBatchResponse")
 	proto.RegisterType((*QueryBatchForHeightRequest)(nil), "sedachain.batching.v1.QueryBatchForHeightRequest")
 	proto.RegisterType((*QueryBatchForHeightResponse)(nil), "sedachain.batching.v1.QueryBatchForHeightResponse")
 	proto.RegisterType((*QueryBatchesRequest)(nil), "sedachain.batching.v1.QueryBatchesRequest")
 	proto.RegisterType((*QueryBatchesResponse)(nil), "sedachain.batching.v1.QueryBatchesResponse")
-	proto.RegisterType((*QueryTreeEntriesRequest)(nil), "sedachain.batching.v1.QueryTreeEntriesRequest")
-	proto.RegisterType((*QueryTreeEntriesResponse)(nil), "sedachain.batching.v1.QueryTreeEntriesResponse")
 	proto.RegisterType((*QueryDataResultRequest)(nil), "sedachain.batching.v1.QueryDataResultRequest")
 	proto.RegisterType((*QueryDataResultResponse)(nil), "sedachain.batching.v1.QueryDataResultResponse")
 	proto.RegisterType((*QueryBatchAssignmentRequest)(nil), "sedachain.batching.v1.QueryBatchAssignmentRequest")
@@ -597,55 +566,57 @@ func init() {
 func init() { proto.RegisterFile("sedachain/batching/v1/query.proto", fileDescriptor_351236f6b51194e8) }
 
 var fileDescriptor_351236f6b51194e8 = []byte{
-	// 767 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x96, 0x4b, 0x6b, 0x13, 0x51,
-	0x14, 0xc7, 0x33, 0x7d, 0x18, 0x3c, 0x51, 0x8b, 0xd7, 0xaa, 0x65, 0x0c, 0xb1, 0x1d, 0x4b, 0x9f,
-	0x74, 0xc6, 0xa4, 0xa5, 0x56, 0x29, 0xd4, 0x16, 0xfb, 0x70, 0x61, 0xd1, 0x41, 0x10, 0x04, 0x09,
-	0x37, 0x93, 0xeb, 0x64, 0x30, 0x99, 0x9b, 0xce, 0x9d, 0x14, 0x4b, 0xe9, 0xc6, 0x95, 0x3b, 0x05,
-	0xd7, 0xae, 0xf5, 0x0b, 0xb8, 0xf2, 0x0b, 0x74, 0x59, 0x70, 0xe3, 0x4a, 0xa4, 0x75, 0xef, 0x57,
-	0x90, 0x9c, 0xb9, 0x49, 0x26, 0xc9, 0xe4, 0x51, 0xdc, 0x4d, 0x4f, 0xff, 0xff, 0xff, 0xf9, 0xdd,
-	0xc7, 0xb9, 0x04, 0x26, 0x04, 0xcb, 0x53, 0xab, 0x40, 0x1d, 0xd7, 0xc8, 0x51, 0xdf, 0x2a, 0x38,
-	0xae, 0x6d, 0xec, 0xa7, 0x8d, 0xbd, 0x0a, 0xf3, 0x0e, 0xf4, 0xb2, 0xc7, 0x7d, 0x4e, 0xae, 0xd7,
-	0x25, 0x7a, 0x4d, 0xa2, 0xef, 0xa7, 0xd5, 0x51, 0x9b, 0xdb, 0x1c, 0x15, 0x46, 0xf5, 0x2b, 0x10,
-	0xab, 0x49, 0x9b, 0x73, 0xbb, 0xc8, 0x0c, 0x5a, 0x76, 0x0c, 0xea, 0xba, 0xdc, 0xa7, 0xbe, 0xc3,
-	0x5d, 0x21, 0xff, 0x3b, 0x67, 0x71, 0x51, 0xe2, 0xc2, 0xc8, 0x51, 0xc1, 0x82, 0x1e, 0xc6, 0x7e,
-	0x3a, 0xc7, 0x7c, 0x9a, 0x36, 0xca, 0xd4, 0x76, 0x5c, 0x14, 0x4b, 0xed, 0x64, 0x34, 0x59, 0x1d,
-	0x21, 0x50, 0xdd, 0x89, 0x56, 0xd9, 0xcc, 0x65, 0xc2, 0x91, 0x6d, 0xb5, 0x65, 0xb8, 0xfa, 0xac,
-	0xda, 0x6c, 0xa3, 0xaa, 0x30, 0xd9, 0x5e, 0x85, 0x09, 0x9f, 0x4c, 0xc0, 0x25, 0x74, 0x64, 0xdd,
-	0x4a, 0x29, 0xc7, 0xbc, 0x31, 0x65, 0x5c, 0x99, 0x19, 0x32, 0x13, 0x58, 0xdb, 0xc5, 0x92, 0xb6,
-	0x0b, 0x24, 0xec, 0x13, 0x65, 0xee, 0x0a, 0x46, 0x56, 0x60, 0x18, 0x45, 0xe8, 0x48, 0x64, 0x92,
-	0x7a, 0xe4, 0xfe, 0xe8, 0x68, 0xda, 0x18, 0x3a, 0xfe, 0x75, 0x3b, 0x66, 0x06, 0x06, 0x6d, 0x0d,
-	0xd4, 0x46, 0xde, 0x16, 0xf7, 0x76, 0x98, 0x63, 0x17, 0xfc, 0x30, 0x50, 0x91, 0x5b, 0x6f, 0xb2,
-	0x05, 0x2c, 0x63, 0xfc, 0xa0, 0x99, 0xc0, 0x5a, 0xa0, 0xd4, 0x5e, 0xc0, 0xad, 0xc8, 0x80, 0xff,
-	0x26, 0x7b, 0x05, 0xd7, 0x1a, 0xc1, 0x4c, 0xd4, 0x90, 0xb6, 0x00, 0x1a, 0xe7, 0x22, 0x53, 0xa7,
-	0xf4, 0xe0, 0x10, 0xf5, 0xea, 0x21, 0xea, 0xc1, 0x45, 0x91, 0x87, 0xa8, 0x3f, 0xa5, 0x36, 0x93,
-	0x5e, 0x33, 0xe4, 0xd4, 0x3e, 0x2b, 0x30, 0xda, 0x9c, 0x2f, 0x89, 0x57, 0x21, 0x9e, 0x0b, 0x4a,
-	0x63, 0xca, 0xf8, 0x60, 0x9f, 0xcc, 0x35, 0x0b, 0xd9, 0x6e, 0xc2, 0x1b, 0x40, 0xbc, 0xe9, 0x9e,
-	0x78, 0x41, 0xeb, 0x26, 0xbe, 0x55, 0xb8, 0x89, 0x78, 0xcf, 0x3d, 0xc6, 0x36, 0x5d, 0xdf, 0x73,
-	0x1a, 0x5b, 0xd0, 0xc7, 0x35, 0xb1, 0x60, 0xac, 0xdd, 0x2d, 0x17, 0xb8, 0x0d, 0x71, 0x16, 0x94,
-	0xe4, 0xf6, 0x4d, 0x77, 0x5b, 0x60, 0x28, 0xa1, 0xb6, 0x56, 0xe9, 0xd6, 0x1e, 0xc2, 0x0d, 0x6c,
-	0xf2, 0x88, 0xfa, 0xd4, 0x64, 0xa2, 0x52, 0xac, 0xdf, 0x9b, 0x29, 0x18, 0xc9, 0x53, 0x9f, 0x66,
-	0xbd, 0xe0, 0xef, 0xac, 0x93, 0xc7, 0x56, 0x17, 0xcd, 0xcb, 0x79, 0xd4, 0x62, 0xf5, 0x71, 0x5e,
-	0xb3, 0xe4, 0x22, 0xc3, 0x09, 0x92, 0x72, 0x07, 0x12, 0x32, 0xa2, 0x5a, 0x96, 0xa4, 0x13, 0x1d,
-	0x48, 0x1b, 0x7e, 0x64, 0x54, 0x4c, 0xc8, 0xd7, 0x2b, 0xda, 0x66, 0xf8, 0x86, 0xae, 0x0b, 0xe1,
-	0xd8, 0x6e, 0x89, 0xb9, 0xe7, 0x66, 0x5d, 0x87, 0x64, 0x74, 0x8c, 0x04, 0xee, 0x7d, 0x2a, 0x99,
-	0xbf, 0x71, 0x18, 0xc6, 0x0c, 0xf2, 0x41, 0x81, 0x61, 0x0c, 0x22, 0x33, 0x1d, 0x96, 0xd4, 0xf6,
-	0x3a, 0xa8, 0xb3, 0x7d, 0x28, 0x03, 0x16, 0x2d, 0xfd, 0xee, 0xc7, 0x9f, 0x4f, 0x03, 0xf3, 0x64,
-	0xd6, 0xa8, 0x5a, 0x16, 0x5a, 0x1e, 0x23, 0xfc, 0x30, 0x0e, 0xc3, 0xb4, 0x47, 0xe4, 0x9b, 0x02,
-	0x57, 0x9a, 0x67, 0x98, 0xa4, 0x7b, 0x36, 0x6c, 0x7d, 0x30, 0xd4, 0xcc, 0x79, 0x2c, 0x12, 0x76,
-	0x15, 0x61, 0x97, 0xc9, 0x52, 0x67, 0xd8, 0xec, 0x6b, 0xee, 0xc9, 0x37, 0xc8, 0x38, 0x0c, 0xbf,
-	0x48, 0x47, 0xe4, 0xbd, 0x02, 0x71, 0x39, 0xc2, 0x64, 0xae, 0x67, 0xf7, 0xfa, 0x10, 0xa9, 0xf3,
-	0x7d, 0x69, 0x25, 0xe2, 0x24, 0x22, 0xa6, 0x48, 0xb2, 0x33, 0x22, 0x13, 0xe4, 0xab, 0x02, 0x89,
-	0xd0, 0xb8, 0x10, 0xbd, 0x5b, 0x8b, 0xf6, 0xb9, 0x56, 0x8d, 0xbe, 0xf5, 0x12, 0x6b, 0x05, 0xb1,
-	0x32, 0xe4, 0x6e, 0x24, 0x96, 0xef, 0x31, 0x96, 0x95, 0xb3, 0xda, 0x7a, 0xda, 0x5f, 0x14, 0x80,
-	0xc6, 0xd0, 0x90, 0x85, 0x6e, 0x9d, 0xdb, 0xc6, 0x5b, 0xd5, 0xfb, 0x95, 0x4b, 0xce, 0x07, 0xc8,
-	0xb9, 0x44, 0x32, 0x91, 0x9c, 0xa1, 0x31, 0x37, 0x0e, 0x5b, 0x46, 0xf1, 0x88, 0x7c, 0x57, 0x60,
-	0xa4, 0x65, 0xe4, 0x48, 0xef, 0x5b, 0xd6, 0x36, 0xe6, 0xea, 0xe2, 0xb9, 0x3c, 0x12, 0x7c, 0x0d,
-	0xc1, 0xef, 0x93, 0x7b, 0x5d, 0xae, 0x26, 0xad, 0xdb, 0xda, 0xe9, 0x37, 0x9e, 0x1c, 0x9f, 0xa6,
-	0x94, 0x93, 0xd3, 0x94, 0xf2, 0xfb, 0x34, 0xa5, 0x7c, 0x3c, 0x4b, 0xc5, 0x4e, 0xce, 0x52, 0xb1,
-	0x9f, 0x67, 0xa9, 0xd8, 0xcb, 0x45, 0xdb, 0xf1, 0x0b, 0x95, 0x9c, 0x6e, 0xf1, 0x12, 0x86, 0xe3,
-	0xcf, 0x02, 0x8b, 0x17, 0xc3, 0x9d, 0xde, 0x86, 0x0e, 0xf3, 0xa0, 0xcc, 0x44, 0xee, 0x02, 0xaa,
-	0x16, 0xff, 0x05, 0x00, 0x00, 0xff, 0xff, 0x69, 0x33, 0xc8, 0xc1, 0x23, 0x09, 0x00, 0x00,
+	// 791 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x95, 0x4d, 0x4f, 0x13, 0x5d,
+	0x14, 0xc7, 0x3b, 0xe5, 0x2d, 0xcf, 0xed, 0xf3, 0x3c, 0xc0, 0x05, 0x95, 0x8c, 0x4d, 0x85, 0x91,
+	0x20, 0x2f, 0x32, 0x93, 0x16, 0x82, 0x2f, 0x21, 0x41, 0x50, 0x10, 0x17, 0x1a, 0x9d, 0x18, 0x89,
+	0x46, 0xd3, 0xdc, 0x69, 0xaf, 0xd3, 0x89, 0xed, 0xdc, 0x32, 0xf7, 0xb6, 0x91, 0x10, 0x36, 0xae,
+	0x5c, 0xa9, 0x89, 0x6b, 0xd7, 0x7e, 0x02, 0x57, 0x6e, 0x5d, 0xb0, 0x24, 0x71, 0xe3, 0xca, 0x18,
+	0xf0, 0x83, 0x98, 0x9e, 0xb9, 0x9d, 0x99, 0xbe, 0xd1, 0xe2, 0x6e, 0xb8, 0xf7, 0x9c, 0xff, 0xf9,
+	0xdd, 0x73, 0xce, 0x9f, 0xa2, 0x29, 0x4e, 0xf3, 0x24, 0x57, 0x20, 0x8e, 0x6b, 0x58, 0x44, 0xe4,
+	0x0a, 0x8e, 0x6b, 0x1b, 0xd5, 0xb4, 0xb1, 0x5b, 0xa1, 0xde, 0x9e, 0x5e, 0xf6, 0x98, 0x60, 0xf8,
+	0x5c, 0x10, 0xa2, 0xd7, 0x43, 0xf4, 0x6a, 0x5a, 0x1d, 0xb7, 0x99, 0xcd, 0x20, 0xc2, 0xa8, 0x7d,
+	0xf9, 0xc1, 0x6a, 0xd2, 0x66, 0xcc, 0x2e, 0x52, 0x83, 0x94, 0x1d, 0x83, 0xb8, 0x2e, 0x13, 0x44,
+	0x38, 0xcc, 0xe5, 0xf2, 0x76, 0x3e, 0xc7, 0x78, 0x89, 0x71, 0xc3, 0x22, 0x9c, 0xfa, 0x35, 0x8c,
+	0x6a, 0xda, 0xa2, 0x82, 0xa4, 0x8d, 0x32, 0xb1, 0x1d, 0x17, 0x82, 0x65, 0xec, 0x74, 0x7b, 0xb2,
+	0x00, 0xc1, 0x8f, 0xba, 0xdc, 0x3e, 0xca, 0xa6, 0x2e, 0xe5, 0x8e, 0x2c, 0xab, 0xbd, 0x8b, 0xa3,
+	0x91, 0x8d, 0xda, 0xed, 0x8e, 0x23, 0x0a, 0x9b, 0xae, 0xf0, 0x1c, 0xca, 0xf1, 0x75, 0x34, 0x00,
+	0x19, 0x13, 0xca, 0xa4, 0x32, 0x9b, 0xc8, 0x24, 0xf5, 0xb6, 0xcf, 0xd4, 0x21, 0x6f, 0xa3, 0xff,
+	0xf0, 0xe7, 0xa5, 0x98, 0xe9, 0x27, 0x60, 0x0b, 0x8d, 0xe5, 0x89, 0x20, 0x59, 0x8f, 0xf2, 0x4a,
+	0x51, 0x64, 0xa9, 0x2f, 0x38, 0x11, 0x07, 0x9d, 0xab, 0x1d, 0x74, 0xee, 0x10, 0x41, 0x4c, 0x48,
+	0x78, 0xec, 0x51, 0x2a, 0x21, 0xa4, 0xee, 0x68, 0x3e, 0xb8, 0xac, 0xd3, 0x3d, 0x47, 0xa3, 0x55,
+	0x52, 0x74, 0xf2, 0x44, 0x30, 0x2f, 0xa8, 0xd0, 0x37, 0xd9, 0x37, 0x9b, 0xc8, 0xcc, 0x75, 0xa8,
+	0xf0, 0xa4, 0x1e, 0x5f, 0x2f, 0xb0, 0x27, 0xe5, 0x47, 0x02, 0x25, 0xa9, 0xae, 0xad, 0xa0, 0xd1,
+	0x47, 0xb5, 0xee, 0xc3, 0xe3, 0x4c, 0xba, 0x5b, 0xa1, 0x5c, 0xe0, 0x29, 0xf4, 0x2f, 0xc8, 0x65,
+	0xdd, 0x4a, 0xc9, 0xa2, 0x1e, 0xf4, 0xa5, 0xdf, 0x4c, 0xc0, 0xd9, 0x03, 0x38, 0xd2, 0x9e, 0x22,
+	0x1c, 0xcd, 0xe3, 0x65, 0xe6, 0x72, 0x8a, 0x6f, 0x37, 0x76, 0xf2, 0xca, 0x69, 0x9d, 0x8c, 0x4c,
+	0xa0, 0xa1, 0xa9, 0xda, 0x1a, 0x52, 0x43, 0xe9, 0x2d, 0xe6, 0x6d, 0x53, 0xc7, 0x2e, 0x88, 0x28,
+	0x5b, 0x91, 0xe5, 0x5e, 0x65, 0x0b, 0x70, 0x0c, 0x95, 0xfa, 0xcc, 0x04, 0x9c, 0xf9, 0x91, 0xda,
+	0x0e, 0xba, 0xd8, 0x56, 0x40, 0x42, 0xfe, 0xf5, 0xb8, 0xb5, 0x17, 0x68, 0x2c, 0x14, 0xa6, 0xbc,
+	0x8e, 0xb4, 0x85, 0x50, 0xb8, 0xb3, 0x52, 0x75, 0x46, 0xf7, 0x17, 0x5c, 0xaf, 0x2d, 0xb8, 0xee,
+	0x9b, 0x48, 0x2e, 0xb8, 0xfe, 0x90, 0xd8, 0x54, 0xe6, 0x9a, 0x91, 0x4c, 0xed, 0x93, 0x82, 0xc6,
+	0x1b, 0xf5, 0x25, 0xf1, 0x2a, 0x1a, 0xb2, 0xfc, 0xa3, 0x09, 0x05, 0x06, 0xdf, 0x0b, 0x73, 0x3d,
+	0x05, 0xdf, 0x6d, 0xc0, 0x8b, 0xcb, 0xc9, 0x74, 0xc3, 0xf3, 0x4b, 0x37, 0xf0, 0xdd, 0x42, 0xe7,
+	0x01, 0x2f, 0x5c, 0xe0, 0x7a, 0x07, 0x66, 0xd0, 0xb0, 0xf4, 0x01, 0xfc, 0x9d, 0x75, 0xf2, 0xd0,
+	0x86, 0x7f, 0xcc, 0xff, 0xfc, 0x7d, 0x86, 0xd3, 0x7b, 0x79, 0x2d, 0x87, 0x2e, 0xb4, 0x28, 0xc8,
+	0x37, 0x6e, 0xa3, 0x44, 0xc4, 0x4a, 0xb2, 0x8b, 0x53, 0x5d, 0x2d, 0x04, 0x8f, 0x55, 0x4c, 0x14,
+	0xfa, 0x46, 0xdb, 0x8c, 0x8e, 0x7f, 0x9d, 0x73, 0xc7, 0x76, 0x4b, 0xd4, 0x3d, 0x33, 0xeb, 0x3a,
+	0x4a, 0xb6, 0x97, 0x91, 0xc0, 0xdd, 0x4d, 0x92, 0xf9, 0x36, 0x88, 0x06, 0x40, 0x03, 0xbf, 0x57,
+	0xd0, 0x00, 0x08, 0xe1, 0xd9, 0x0e, 0x4f, 0x6a, 0x71, 0xa1, 0x3a, 0xd7, 0x43, 0xa4, 0xcf, 0xa2,
+	0xa5, 0xdf, 0x7c, 0xff, 0xfd, 0x31, 0xbe, 0x80, 0xe7, 0x8c, 0x5a, 0xca, 0x62, 0xd3, 0x7f, 0x41,
+	0xf8, 0x30, 0xf6, 0xa3, 0xb4, 0x07, 0xf8, 0x8b, 0x82, 0xfe, 0x6f, 0x34, 0x08, 0x4e, 0x77, 0x2d,
+	0xd8, 0xec, 0x46, 0x35, 0x73, 0x96, 0x14, 0x09, 0xbb, 0x0a, 0xb0, 0x2b, 0x78, 0xb9, 0x33, 0x6c,
+	0xf6, 0x25, 0xf3, 0xa4, 0xc1, 0x8d, 0xfd, 0xa8, 0xdd, 0x0f, 0xf0, 0x5b, 0x05, 0x0d, 0x49, 0x7f,
+	0xe0, 0xf9, 0xae, 0xd5, 0x03, 0x93, 0xaa, 0x0b, 0x3d, 0xc5, 0x4a, 0xc4, 0x69, 0x40, 0x4c, 0xe1,
+	0x64, 0x67, 0x44, 0xca, 0xf1, 0x67, 0x05, 0xa1, 0x70, 0x13, 0xf1, 0xe2, 0x69, 0x15, 0x5a, 0x3c,
+	0xa3, 0xea, 0xbd, 0x86, 0x4b, 0xa6, 0x9b, 0xc0, 0xb4, 0x8c, 0x33, 0x6d, 0x99, 0x22, 0xde, 0x31,
+	0xf6, 0x9b, 0xf6, 0xfb, 0x00, 0x7f, 0x55, 0xd0, 0x70, 0xd3, 0x1e, 0xe3, 0xee, 0xa3, 0x6b, 0xf1,
+	0x8e, 0xba, 0x74, 0xa6, 0x1c, 0x09, 0xbe, 0x06, 0xe0, 0x37, 0xf0, 0xb5, 0x53, 0xe6, 0x4d, 0x82,
+	0xb4, 0x56, 0xfa, 0x8d, 0xfb, 0x87, 0xc7, 0x29, 0xe5, 0xe8, 0x38, 0xa5, 0xfc, 0x3a, 0x4e, 0x29,
+	0x1f, 0x4e, 0x52, 0xb1, 0xa3, 0x93, 0x54, 0xec, 0xc7, 0x49, 0x2a, 0xf6, 0x6c, 0xc9, 0x76, 0x44,
+	0xa1, 0x62, 0xe9, 0x39, 0x56, 0x02, 0x71, 0xf8, 0x91, 0xcf, 0xb1, 0x62, 0xb4, 0xd2, 0xeb, 0xb0,
+	0x96, 0xd8, 0x2b, 0x53, 0x6e, 0x0d, 0x42, 0xd4, 0xd2, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xb0,
+	0x1d, 0x4b, 0x51, 0xf1, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -666,8 +637,6 @@ type QueryClient interface {
 	BatchForHeight(ctx context.Context, in *QueryBatchForHeightRequest, opts ...grpc.CallOption) (*QueryBatchForHeightResponse, error)
 	// Batch returns all batches in the store.
 	Batches(ctx context.Context, in *QueryBatchesRequest, opts ...grpc.CallOption) (*QueryBatchesResponse, error)
-	// TreeEntries returns the tree entries from the given batch number.
-	TreeEntries(ctx context.Context, in *QueryTreeEntriesRequest, opts ...grpc.CallOption) (*QueryTreeEntriesResponse, error)
 	// DataResult returns a data result given its associated data request's
 	// ID.
 	DataResult(ctx context.Context, in *QueryDataResultRequest, opts ...grpc.CallOption) (*QueryDataResultResponse, error)
@@ -711,15 +680,6 @@ func (c *queryClient) Batches(ctx context.Context, in *QueryBatchesRequest, opts
 	return out, nil
 }
 
-func (c *queryClient) TreeEntries(ctx context.Context, in *QueryTreeEntriesRequest, opts ...grpc.CallOption) (*QueryTreeEntriesResponse, error) {
-	out := new(QueryTreeEntriesResponse)
-	err := c.cc.Invoke(ctx, "/sedachain.batching.v1.Query/TreeEntries", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *queryClient) DataResult(ctx context.Context, in *QueryDataResultRequest, opts ...grpc.CallOption) (*QueryDataResultResponse, error) {
 	out := new(QueryDataResultResponse)
 	err := c.cc.Invoke(ctx, "/sedachain.batching.v1.Query/DataResult", in, out, opts...)
@@ -746,8 +706,6 @@ type QueryServer interface {
 	BatchForHeight(context.Context, *QueryBatchForHeightRequest) (*QueryBatchForHeightResponse, error)
 	// Batch returns all batches in the store.
 	Batches(context.Context, *QueryBatchesRequest) (*QueryBatchesResponse, error)
-	// TreeEntries returns the tree entries from the given batch number.
-	TreeEntries(context.Context, *QueryTreeEntriesRequest) (*QueryTreeEntriesResponse, error)
 	// DataResult returns a data result given its associated data request's
 	// ID.
 	DataResult(context.Context, *QueryDataResultRequest) (*QueryDataResultResponse, error)
@@ -768,9 +726,6 @@ func (*UnimplementedQueryServer) BatchForHeight(ctx context.Context, req *QueryB
 }
 func (*UnimplementedQueryServer) Batches(ctx context.Context, req *QueryBatchesRequest) (*QueryBatchesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Batches not implemented")
-}
-func (*UnimplementedQueryServer) TreeEntries(ctx context.Context, req *QueryTreeEntriesRequest) (*QueryTreeEntriesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method TreeEntries not implemented")
 }
 func (*UnimplementedQueryServer) DataResult(ctx context.Context, req *QueryDataResultRequest) (*QueryDataResultResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DataResult not implemented")
@@ -837,24 +792,6 @@ func _Query_Batches_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_TreeEntries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryTreeEntriesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).TreeEntries(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/sedachain.batching.v1.Query/TreeEntries",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).TreeEntries(ctx, req.(*QueryTreeEntriesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Query_DataResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryDataResultRequest)
 	if err := dec(in); err != nil {
@@ -909,10 +846,6 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Batches_Handler,
 		},
 		{
-			MethodName: "TreeEntries",
-			Handler:    _Query_TreeEntries_Handler,
-		},
-		{
 			MethodName: "DataResult",
 			Handler:    _Query_DataResult_Handler,
 		},
@@ -923,6 +856,63 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "sedachain/batching/v1/query.proto",
+}
+
+func (m *BatchWithEntries) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *BatchWithEntries) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *BatchWithEntries) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ValidatorEntries) > 0 {
+		for iNdEx := len(m.ValidatorEntries) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.ValidatorEntries[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	{
+		size, err := m.DataResultEntries.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	{
+		size, err := m.Batch.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
 }
 
 func (m *QueryBatchRequest) Marshal() (dAtA []byte, err error) {
@@ -1131,67 +1121,6 @@ func (m *QueryBatchesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryTreeEntriesRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryTreeEntriesRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryTreeEntriesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.BatchNumber != 0 {
-		i = encodeVarintQuery(dAtA, i, uint64(m.BatchNumber))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryTreeEntriesResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryTreeEntriesResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryTreeEntriesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	{
-		size, err := m.Entries.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0xa
-	return len(dAtA) - i, nil
-}
-
 func (m *QueryDataResultRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1326,6 +1255,25 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *BatchWithEntries) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Batch.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	l = m.DataResultEntries.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	if len(m.ValidatorEntries) > 0 {
+		for _, e := range m.ValidatorEntries {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
 func (m *QueryBatchRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1404,29 +1352,6 @@ func (m *QueryBatchesResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryTreeEntriesRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.BatchNumber != 0 {
-		n += 1 + sovQuery(uint64(m.BatchNumber))
-	}
-	return n
-}
-
-func (m *QueryTreeEntriesResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.Entries.Size()
-	n += 1 + l + sovQuery(uint64(l))
-	return n
-}
-
 func (m *QueryDataResultRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1483,6 +1408,156 @@ func sovQuery(x uint64) (n int) {
 }
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *BatchWithEntries) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: BatchWithEntries: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: BatchWithEntries: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Batch", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Batch.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DataResultEntries", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.DataResultEntries.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorEntries", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidatorEntries = append(m.ValidatorEntries, ValidatorTreeEntry{})
+			if err := m.ValidatorEntries[len(m.ValidatorEntries)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *QueryBatchRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -1970,158 +2045,6 @@ func (m *QueryBatchesResponse) Unmarshal(dAtA []byte) error {
 				m.Pagination = &query.PageResponse{}
 			}
 			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryTreeEntriesRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryTreeEntriesRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryTreeEntriesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BatchNumber", wireType)
-			}
-			m.BatchNumber = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.BatchNumber |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryTreeEntriesResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryTreeEntriesResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryTreeEntriesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Entries", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.Entries.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
