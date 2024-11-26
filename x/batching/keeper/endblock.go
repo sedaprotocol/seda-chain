@@ -182,18 +182,18 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([]types.ValidatorTreeEn
 		}
 
 		separator := []byte{utils.SEDASeparatorSecp256k1}
-		powerPercent := math.NewInt(power).MulRaw(1e8).Quo(totalPower).Uint64()
+		//nolint:gosec // G115: Max of powerPercent should be 1e8 < 2^64.
+		powerPercent := uint32(math.NewInt(power).MulRaw(1e8).Quo(totalPower).Uint64())
 
 		// A tree entry is (domain_separator | address | voting_power_percentage).
 		treeEntry := make([]byte, len(separator)+len(ethAddr)+4)
 		copy(treeEntry[:len(separator)], separator)
 		copy(treeEntry[len(separator):len(separator)+len(ethAddr)], ethAddr)
-		//nolint:gosec // G115: Max of powerPercent should be 1e8 < 2^64.
-		binary.BigEndian.PutUint32(treeEntry[len(separator)+len(ethAddr):], uint32(powerPercent))
+		binary.BigEndian.PutUint32(treeEntry[len(separator)+len(ethAddr):], powerPercent)
 
 		entries = append(entries, types.ValidatorTreeEntry{
 			ValidatorAddress:   valAddr.Bytes(),
-			VotingPowerPercent: uint32(powerPercent),
+			VotingPowerPercent: powerPercent,
 			Secp256K1: types.Secp256K1Entry{
 				EthAddress: ethAddr,
 				Signature:  treeEntry,

@@ -34,7 +34,9 @@ message DataResultTreeEntries { repeated bytes entries = 1; }
 
 // ValidatorTreeEntry is an entry in the validator tree.
 message ValidatorTreeEntry {
-  bytes validator_address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.ValAddress"];
+  bytes validator_address = 1
+      [ (gogoproto.casttype) =
+            "github.com/cosmos/cosmos-sdk/types.ValAddress" ];
   uint32 voting_power_percent = 2;
   Secp256k1Entry secp256k1 = 3 [ (gogoproto.nullable) = false ];
 }
