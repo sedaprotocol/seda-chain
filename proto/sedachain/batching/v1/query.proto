@@ -36,7 +36,7 @@ service Query {
   }
 }
 
-// BatchWithEntries is used by Batch Query to return a batch with its 
+// BatchWithEntries is used by Batch Query to return a batch with its
 // data result tree entries and validator tree entries.
 message BatchWithEntries {
   Batch batch = 1 [ (gogoproto.nullable) = false ];
@@ -66,7 +66,7 @@ message QueryBatchForHeightResponse {
 message QueryBatchesRequest {
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
-  // with_unsigned indicates whether to return batches without 
+  // with_unsigned indicates whether to return batches without
   // signatures or not.
   bool with_unsigned = 2;
 }
