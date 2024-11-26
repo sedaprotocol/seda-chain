@@ -215,9 +215,9 @@ func (k Keeper) GetTreeEntriesForBatch(ctx context.Context, batchNum uint64) (ty
 	if err != nil {
 		return types.BatchTreeEntries{}, err
 	}
-	var valEntries []types.ValidatorTreeEntry
-	for _, kv := range valKvs {
-		valEntries = append(valEntries, kv.Value)
+	valEntries := make([]types.ValidatorTreeEntry, len(valKvs))
+	for i, kv := range valKvs {
+		valEntries[i] = kv.Value
 	}
 
 	return types.BatchTreeEntries{

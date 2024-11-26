@@ -49,13 +49,13 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
-	var entries []types.BatchTreeEntries
-	for _, batch := range batches {
+	entries := make([]types.BatchTreeEntries, len(batches))
+	for i, batch := range batches {
 		batchEntries, err := k.GetTreeEntriesForBatch(ctx, batch.BatchNumber)
 		if err != nil {
 			panic(err)
 		}
-		entries = append(entries, batchEntries)
+		entries[i] = batchEntries
 	}
 	params, err := k.GetParams(ctx)
 	if err != nil {
