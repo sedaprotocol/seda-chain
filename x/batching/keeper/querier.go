@@ -30,7 +30,7 @@ func (q Querier) Batch(c context.Context, req *types.QueryBatchRequest) (*types.
 	var batch types.Batch
 	var err error
 	if req.BatchNumber == 0 {
-		batch, err = q.Keeper.GetBatchForHeight(ctx, ctx.BlockHeight()+abci.BlockOffsetCollectPhase)
+		batch, err = q.Keeper.GetLatestSignedBatch(ctx)
 	} else {
 		batch, err = q.Keeper.GetBatchByBatchNumber(ctx, req.BatchNumber)
 	}
