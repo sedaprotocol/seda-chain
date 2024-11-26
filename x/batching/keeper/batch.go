@@ -136,7 +136,7 @@ func (k Keeper) GetAllBatches(ctx sdk.Context) ([]types.Batch, error) {
 }
 
 func (k Keeper) setValidatorTreeEntry(ctx context.Context, batchNum uint64, entry types.ValidatorTreeEntry) error {
-	err := k.validatorTreeEntries.Set(ctx, collections.Join(batchNum, entry.ValidatorAddress), entry)
+	err := k.validatorTreeEntries.Set(ctx, collections.Join(batchNum, entry.ValidatorAddress.Bytes()), entry)
 	if err != nil {
 		return err
 	}

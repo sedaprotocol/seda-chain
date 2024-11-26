@@ -30,6 +30,8 @@ message BatchAssignment {
 // and validator tree entries.
 message BatchTreeEntries {
   uint64 batch_number = 1;
-  DataResultTreeEntries data_result_entries = 2 [ (gogoproto.nullable) = false ];
-  repeated ValidatorTreeEntry validator_entries = 3 [ (gogoproto.nullable) = false ];
+  DataResultTreeEntries data_result_entries = 2
+      [ (gogoproto.nullable) = false ];
+  repeated ValidatorTreeEntry validator_entries = 3
+      [ (gogoproto.nullable) = false ];
 }

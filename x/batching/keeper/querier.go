@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
+	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
@@ -91,18 +93,21 @@ func (q Querier) DataResult(c context.Context, req *types.QueryDataResultRequest
 	if err != nil {
 		return nil, err
 	}
-	return &types.QueryDataResultResponse{
-		DataResult: dataResult,
-	}, nil
-}
 
-func (q Querier) BatchAssignment(c context.Context, req *types.QueryBatchAssignmentRequest) (*types.QueryBatchAssignmentResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
+	result := &types.QueryDataResultResponse{
+		DataResult: dataResult,
+	}
+
 	batchNum, err := q.Keeper.GetBatchAssignment(ctx, req.DataRequestId)
 	if err != nil {
-		return nil, err
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+	} else {
+		result.BatchAssignment = &types.BatchAssignment{
+			BatchNumber:   batchNum,
+			DataRequestId: req.DataRequestId,
+		}
 	}
-	return &types.QueryBatchAssignmentResponse{
-		BatchNumber: batchNum,
-	}, nil
+	return result, nil
 }
