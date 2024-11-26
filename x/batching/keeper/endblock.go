@@ -144,7 +144,7 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) (ty
 		entries[i] = resID
 		treeEntries[i] = append([]byte{utils.SEDASeparatorDataRequest}, resID...)
 
-		err = k.markDataResultAsBatched(ctx, res, newBatchNum)
+		err = k.MarkDataResultAsBatched(ctx, res, newBatchNum)
 		if err != nil {
 			return types.DataResultTreeEntries{}, nil, err
 		}

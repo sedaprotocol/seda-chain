@@ -34,28 +34,24 @@ service Query {
     option (google.api.http).get =
         "/seda-chain/batching/data_result/{data_request_id}";
   }
-
-  // BatchAssignment returns the batch number that a given data request
-  // has been assigned to.
-  rpc BatchAssignment(QueryBatchAssignmentRequest)
-      returns (QueryBatchAssignmentResponse) {
-    option (google.api.http).get =
-        "/seda-chain/batching/batch_assignment/{data_request_id}";
-  }
 }
 
+// BatchWithEntries is used by Batch Query to return a batch with its 
+// data result tree entries and validator tree entries.
 message BatchWithEntries {
   Batch batch = 1 [ (gogoproto.nullable) = false ];
-  DataResultTreeEntries data_result_entries = 2 [ (gogoproto.nullable) = false ];
-  repeated ValidatorTreeEntry validator_entries = 3 [ (gogoproto.nullable) = false ];
+  DataResultTreeEntries data_result_entries = 2
+      [ (gogoproto.nullable) = false ];
+  repeated ValidatorTreeEntry validator_entries = 3
+      [ (gogoproto.nullable) = false ];
 }
 
 // The request message for QueryBatch RPC.
 message QueryBatchRequest { uint64 batch_number = 1; }
 
 // The response message for QueryBatch RPC.
-message QueryBatchResponse { 
-  BatchWithEntries batch = 1 [ (gogoproto.nullable) = false ]; 
+message QueryBatchResponse {
+  BatchWithEntries batch = 1 [ (gogoproto.nullable) = false ];
 }
 
 // The request message for BatchForHeight RPC.
@@ -84,10 +80,5 @@ message QueryDataResultRequest { string data_request_id = 1; }
 // The response message for QueryDataResult RPC.
 message QueryDataResultResponse {
   DataResult data_result = 1 [ (gogoproto.nullable) = true ];
+  BatchAssignment batch_assignment = 2;
 }
-
-// The request message for QueryBatchAssignment RPC.
-message QueryBatchAssignmentRequest { string data_request_id = 1; }
-
-// The response message for QueryBatchAssignment RPC.
-message QueryBatchAssignmentResponse { uint64 batch_number = 1; }

@@ -2,7 +2,6 @@ syntax = "proto3";
 package sedachain.batching.v1;
 
 import "gogoproto/gogo.proto";
-import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/batching/types";
 
@@ -29,15 +28,13 @@ message Batch {
   bytes proving_metadata = 7;
 }
 
-// DataResultTreeEntries is a list of data result tree entries for a 
+// DataResultTreeEntries is a list of data result tree entries for a
 // given batch.
-message DataResultTreeEntries {
-  repeated bytes entries = 1;
-}
+message DataResultTreeEntries { repeated bytes entries = 1; }
 
 // ValidatorTreeEntry is an entry in the validator tree.
 message ValidatorTreeEntry {
-  bytes validator_address = 1;
+  bytes validator_address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.ValAddress"];
   uint32 voting_power_percent = 2;
   Secp256k1Entry secp256k1 = 3 [ (gogoproto.nullable) = false ];
 }
