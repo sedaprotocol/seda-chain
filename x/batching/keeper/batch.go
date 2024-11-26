@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/sedaprotocol/seda-chain/app/abci"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
@@ -98,6 +99,39 @@ func (k Keeper) GetLatestBatch(ctx context.Context) (types.Batch, error) {
 		return types.Batch{}, types.ErrBatchingHasNotStarted
 	}
 	return k.GetBatchByBatchNumber(ctx, currentBatchNum)
+}
+
+// GetLatestSignedBatch returns the latest batch whose signatures have
+// been collected.
+func (k Keeper) GetLatestSignedBatch(ctx sdk.Context) (types.Batch, error) {
+	currentBatchNum, err := k.currentBatchNumber.Peek(ctx)
+	if err != nil {
+		return types.Batch{}, err
+	}
+	if currentBatchNum == collections.DefaultSequenceStart {
+		return types.Batch{}, types.ErrBatchingHasNotStarted
+	}
+	batch, err := k.GetBatchByBatchNumber(ctx, currentBatchNum)
+	if err != nil {
+		return types.Batch{}, err
+	}
+
+	if batch.BlockHeight > ctx.BlockHeight()+abci.BlockOffsetCollectPhase {
+		currentBatchNum--
+		for currentBatchNum > collections.DefaultSequenceStart {
+			batch, err = k.GetBatchByBatchNumber(ctx, currentBatchNum)
+			if err != nil {
+				return types.Batch{}, err
+			}
+			if batch.BlockHeight <= ctx.BlockHeight()+abci.BlockOffsetCollectPhase {
+				break
+			} else if currentBatchNum == collections.DefaultSequenceStart {
+				return types.Batch{}, types.ErrNoSignedBatches
+			}
+			currentBatchNum--
+		}
+	}
+	return batch, nil
 }
 
 // IterateBatches iterates over the batches and performs a given
