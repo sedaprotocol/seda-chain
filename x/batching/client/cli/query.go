@@ -12,6 +12,8 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
+const flagWithUnsigned = "with-unsigned"
+
 // GetQueryCmd returns the CLI query commands for batching module.
 func GetQueryCmd(_ string) *cobra.Command {
 	cmd := &cobra.Command{
@@ -104,7 +106,7 @@ func GetCmdQueryBatchByHeight() *cobra.Command {
 func GetCmdQueryBatches() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "batches",
-		Short: "List all batches in the store",
+		Short: "Query all batches",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -117,7 +119,17 @@ func GetCmdQueryBatches() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			res, err := queryClient.Batches(cmd.Context(), &types.QueryBatchesRequest{Pagination: pageReq})
+
+			withUnsigned, err := cmd.Flags().GetBool(flagWithUnsigned)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.Batches(cmd.Context(),
+				&types.QueryBatchesRequest{
+					Pagination:   pageReq,
+					WithUnsigned: withUnsigned,
+				})
 			if err != nil {
 				return err
 			}
@@ -125,6 +137,7 @@ func GetCmdQueryBatches() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().Bool(flagWithUnsigned, false, "include batches without signatures")
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "batches")
 	return cmd

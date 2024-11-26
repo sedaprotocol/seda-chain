@@ -66,6 +66,9 @@ message QueryBatchForHeightResponse {
 message QueryBatchesRequest {
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  // with_unsigned indicates whether to return batches without 
+  // signatures or not.
+  bool with_unsigned = 2;
 }
 
 // The response message for QueryBatches RPC.

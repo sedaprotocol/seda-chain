@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"cosmossdk.io/collections"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
@@ -68,7 +69,7 @@ func (q Querier) Batches(c context.Context, req *types.QueryBatchesRequest) (*ty
 	batches, pageRes, err := query.CollectionFilteredPaginate(
 		ctx, q.batches, req.Pagination,
 		func(_ int64, value types.Batch) (bool, error) {
-			if value.BlockHeight > ctx.BlockHeight()+abci.BlockOffsetCollectPhase {
+			if !req.WithUnsigned && value.BlockHeight > ctx.BlockHeight()+abci.BlockOffsetCollectPhase {
 				return false, nil
 			}
 			return true, nil
