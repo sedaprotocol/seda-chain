@@ -258,7 +258,7 @@ func (m msgServer) Clawback(goCtx context.Context, msg *types.MsgClawback) (*typ
 
 // coinsMin returns the minimum of its inputs for all denominations.
 func coinsMin(a, b sdk.Coins) sdk.Coins {
-	min := sdk.NewCoins()
+	minCoins := sdk.NewCoins()
 	for _, coinA := range a {
 		denom := coinA.Denom
 		bAmt := b.AmountOfNoDenomValidation(denom)
@@ -267,8 +267,8 @@ func coinsMin(a, b sdk.Coins) sdk.Coins {
 			minAmt = bAmt
 		}
 		if minAmt.IsPositive() {
-			min = min.Add(sdk.NewCoin(denom, minAmt))
+			minCoins = minCoins.Add(sdk.NewCoin(denom, minAmt))
 		}
 	}
-	return min
+	return minCoins
 }
