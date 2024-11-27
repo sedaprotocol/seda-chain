@@ -44,12 +44,16 @@ func (q Querier) Batch(c context.Context, req *types.QueryBatchRequest) (*types.
 		return nil, err
 	}
 
+	sigs, err := q.Keeper.GetBatchSignatures(ctx, batch.BatchNumber)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.QueryBatchResponse{
-		Batch: types.BatchWithEntries{
-			Batch:             batch,
-			DataResultEntries: entries.DataResultEntries,
-			ValidatorEntries:  entries.ValidatorEntries,
-		},
+		Batch:             batch,
+		DataResultEntries: entries.DataResultEntries,
+		ValidatorEntries:  entries.ValidatorEntries,
+		BatchSignatures:   sigs,
 	}, nil
 }
 

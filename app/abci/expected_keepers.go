@@ -14,8 +14,8 @@ import (
 
 type BatchingKeeper interface {
 	GetBatchForHeight(ctx context.Context, height int64) (batchingtypes.Batch, error)
-	SetBatchSigSecp256k1(ctx context.Context, batchNum uint64, operatorAddress string, signature []byte) error
-	GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddress sdk.ValAddress) (batchingtypes.ValidatorTreeEntry, error)
+	SetBatchSigSecp256k1(ctx context.Context, batchNum uint64, valAddr sdk.ValAddress, signature []byte) error
+	GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddr sdk.ValAddress) (batchingtypes.ValidatorTreeEntry, error)
 }
 
 type PubKeyKeeper interface {

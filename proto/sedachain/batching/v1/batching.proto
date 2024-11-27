@@ -38,14 +38,17 @@ message ValidatorTreeEntry {
       [ (gogoproto.casttype) =
             "github.com/cosmos/cosmos-sdk/types.ValAddress" ];
   uint32 voting_power_percent = 2;
-  Secp256k1Entry secp256k1 = 3 [ (gogoproto.nullable) = false ];
+  bytes eth_address = 3;
 }
 
-// Secp256k1Entry is the secp256k1 signature component of a validator
-// tree entry.
-message Secp256k1Entry {
-  bytes eth_address = 1;
-  bytes signature = 2;
+// BatchSignatures contains basic validator data and its batch signatures
+// under various cryptographic schemes.
+message BatchSignatures {
+  uint64 batch_number = 1;
+  bytes validator_address = 2
+      [ (gogoproto.casttype) =
+            "github.com/cosmos/cosmos-sdk/types.ValAddress" ];
+  bytes secp256k1_signature = 3;
 }
 
 // Params is a list of parameters which can be changed through governance.

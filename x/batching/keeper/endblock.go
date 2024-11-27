@@ -155,8 +155,9 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) (ty
 
 // ConstructValidatorTree constructs a validator tree based on the
 // validators in the active set and their registered public keys.
-// It returns the tree's entries without the domain separators and
-// the tree root.
+// It returns the tree's entries without the domain separators, batch
+// signature entries with validator address and public key fields
+// populated, and the tree root.
 func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([]types.ValidatorTreeEntry, []byte, error) {
 	totalPower, err := k.stakingKeeper.GetLastTotalPower(ctx)
 	if err != nil {
@@ -191,15 +192,14 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([]types.ValidatorTreeEn
 		copy(treeEntry[len(separator):len(separator)+len(ethAddr)], ethAddr)
 		binary.BigEndian.PutUint32(treeEntry[len(separator)+len(ethAddr):], powerPercent)
 
+		treeEntries = append(treeEntries, treeEntry)
+
 		entries = append(entries, types.ValidatorTreeEntry{
 			ValidatorAddress:   valAddr.Bytes(),
 			VotingPowerPercent: powerPercent,
-			Secp256K1: types.Secp256K1Entry{
-				EthAddress: ethAddr,
-				Signature:  treeEntry,
-			},
+			EthAddress:         ethAddr,
 		})
-		treeEntries = append(treeEntries, treeEntry)
+
 		return false
 	})
 	if err != nil {

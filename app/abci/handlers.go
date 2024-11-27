@@ -321,8 +321,11 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 			if err != nil {
 				return nil, err
 			}
-
-			err = h.batchingKeeper.SetBatchSigSecp256k1(ctx, batchNum, validator.OperatorAddress, vote.VoteExtension)
+			valAddr, err := h.validatorAddressCodec.StringToBytes(validator.OperatorAddress)
+			if err != nil {
+				return nil, err
+			}
+			err = h.batchingKeeper.SetBatchSigSecp256k1(ctx, batchNum, valAddr, vote.VoteExtension)
 			if err != nil {
 				return nil, err
 			}
@@ -364,7 +367,7 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 			return err
 		}
 	} else {
-		entry, err := h.batchingKeeper.GetValidatorTreeEntry(ctx, batchNum-1, valOper)
+		valEntry, err := h.batchingKeeper.GetValidatorTreeEntry(ctx, batchNum-1, valOper)
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
 				if len(voteExtension) == 0 {
@@ -374,7 +377,7 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 			}
 			return err
 		}
-		expectedAddr = entry.Secp256K1.EthAddress
+		expectedAddr = valEntry.EthAddress
 	}
 
 	sigPubKey, err := crypto.Ecrecover(batchID, voteExtension[:65])

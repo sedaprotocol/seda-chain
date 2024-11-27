@@ -61,32 +61,32 @@ func (mr *MockBatchingKeeperMockRecorder) GetBatchForHeight(ctx, height any) *go
 }
 
 // GetValidatorTreeEntry mocks base method.
-func (m *MockBatchingKeeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddress types.ValAddress) (types1.ValidatorTreeEntry, error) {
+func (m *MockBatchingKeeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddr types.ValAddress) (types1.ValidatorTreeEntry, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetValidatorTreeEntry", ctx, batchNum, valAddress)
+	ret := m.ctrl.Call(m, "GetValidatorTreeEntry", ctx, batchNum, valAddr)
 	ret0, _ := ret[0].(types1.ValidatorTreeEntry)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetValidatorTreeEntry indicates an expected call of GetValidatorTreeEntry.
-func (mr *MockBatchingKeeperMockRecorder) GetValidatorTreeEntry(ctx, batchNum, valAddress any) *gomock.Call {
+func (mr *MockBatchingKeeperMockRecorder) GetValidatorTreeEntry(ctx, batchNum, valAddr any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorTreeEntry", reflect.TypeOf((*MockBatchingKeeper)(nil).GetValidatorTreeEntry), ctx, batchNum, valAddress)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorTreeEntry", reflect.TypeOf((*MockBatchingKeeper)(nil).GetValidatorTreeEntry), ctx, batchNum, valAddr)
 }
 
 // SetBatchSigSecp256k1 mocks base method.
-func (m *MockBatchingKeeper) SetBatchSigSecp256k1(ctx context.Context, batchNum uint64, operatorAddress string, signature []byte) error {
+func (m *MockBatchingKeeper) SetBatchSigSecp256k1(ctx context.Context, batchNum uint64, valAddr types.ValAddress, signature []byte) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetBatchSigSecp256k1", ctx, batchNum, operatorAddress, signature)
+	ret := m.ctrl.Call(m, "SetBatchSigSecp256k1", ctx, batchNum, valAddr, signature)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetBatchSigSecp256k1 indicates an expected call of SetBatchSigSecp256k1.
-func (mr *MockBatchingKeeperMockRecorder) SetBatchSigSecp256k1(ctx, batchNum, operatorAddress, signature any) *gomock.Call {
+func (mr *MockBatchingKeeperMockRecorder) SetBatchSigSecp256k1(ctx, batchNum, valAddr, signature any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBatchSigSecp256k1", reflect.TypeOf((*MockBatchingKeeper)(nil).SetBatchSigSecp256k1), ctx, batchNum, operatorAddress, signature)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBatchSigSecp256k1", reflect.TypeOf((*MockBatchingKeeper)(nil).SetBatchSigSecp256k1), ctx, batchNum, valAddr, signature)
 }
 
 // MockPubKeyKeeper is a mock of PubKeyKeeper interface.
