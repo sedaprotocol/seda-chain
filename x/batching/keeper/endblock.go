@@ -31,7 +31,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		err = nil
 	}()
 
-	batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
+	batch, dataEntries, valEntries, batchSigs, err := k.ConstructBatch(ctx)
 	if err != nil {
 		if errors.Is(err, types.ErrNoBatchingUpdate) {
 			k.Logger(ctx).Info("skip batch creation", "height", ctx.BlockHeight())
@@ -40,7 +40,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		return err
 	}
 
-	err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
+	err = k.SetNewBatch(ctx, batch, dataEntries, valEntries, batchSigs)
 	if err != nil {
 		return err
 	}
@@ -51,13 +51,13 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 // results and a validator tree from the current active validator set.
 // It returns a resulting batch, data result tree entries, and validator
 // tree entries in that order.
-func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, types.DataResultTreeEntries, []types.ValidatorTreeEntry, error) {
+func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, types.DataResultTreeEntries, []types.ValidatorTreeEntry, []types.BatchSignatures, error) {
 	var newBatchNum uint64
 	var latestDataRootHex, latestValRootHex string
 	latestBatch, err := k.GetLatestBatch(ctx)
 	if err != nil {
 		if !errors.Is(err, types.ErrBatchingHasNotStarted) {
-			return types.Batch{}, types.DataResultTreeEntries{}, nil, err
+			return types.Batch{}, types.DataResultTreeEntries{}, nil, nil, err
 		}
 		newBatchNum = collections.DefaultSequenceStart + 1
 	} else {
@@ -70,25 +70,25 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, types.DataResultTr
 	// of current and previous data result trees' roots.
 	dataEntries, dataRoot, err := k.ConstructDataResultTree(ctx, newBatchNum)
 	if err != nil {
-		return types.Batch{}, types.DataResultTreeEntries{}, nil, err
+		return types.Batch{}, types.DataResultTreeEntries{}, nil, nil, err
 	}
 	latestDataRoot, err := hex.DecodeString(latestDataRootHex)
 	if err != nil {
-		return types.Batch{}, types.DataResultTreeEntries{}, nil, err
+		return types.Batch{}, types.DataResultTreeEntries{}, nil, nil, err
 	}
 	superRoot := utils.RootFromLeaves([][]byte{latestDataRoot, dataRoot})
 
 	// Compute validator tree root.
-	valEntries, valRoot, err := k.ConstructValidatorTree(ctx)
+	valEntries, batchSigs, valRoot, err := k.ConstructValidatorTree(ctx)
 	if err != nil {
-		return types.Batch{}, types.DataResultTreeEntries{}, nil, err
+		return types.Batch{}, types.DataResultTreeEntries{}, nil, nil, err
 	}
 	valRootHex := hex.EncodeToString(valRoot)
 
 	// Skip batching if there is no update in data result root nor
 	// validator root.
 	if len(dataEntries.Entries) == 0 && valRootHex == latestValRootHex {
-		return types.Batch{}, types.DataResultTreeEntries{}, nil, types.ErrNoBatchingUpdate
+		return types.Batch{}, types.DataResultTreeEntries{}, nil, nil, types.ErrNoBatchingUpdate
 	}
 
 	var provingMetaData, provingMetaDataHash []byte
@@ -122,7 +122,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, types.DataResultTr
 		ValidatorRoot:         valRootHex,
 		BatchId:               batchID,
 		ProvingMetadata:       provingMetaData,
-	}, dataEntries, valEntries, nil
+	}, dataEntries, valEntries, batchSigs, nil
 }
 
 // ConstructDataResultTree constructs a data result tree based on the
@@ -155,15 +155,17 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) (ty
 
 // ConstructValidatorTree constructs a validator tree based on the
 // validators in the active set and their registered public keys.
-// It returns the tree's entries without the domain separators and
-// the tree root.
-func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([]types.ValidatorTreeEntry, []byte, error) {
+// It returns the tree's entries without the domain separators, batch
+// signature entries with validator address and public key fields
+// populated, and the tree root.
+func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([]types.ValidatorTreeEntry, []types.BatchSignatures, []byte, error) {
 	totalPower, err := k.stakingKeeper.GetLastTotalPower(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	var entries []types.ValidatorTreeEntry
+	var batchSigs []types.BatchSignatures
 	var treeEntries [][]byte
 	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
 		// Retrieve corresponding public key and convert it to
@@ -194,17 +196,20 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([]types.ValidatorTreeEn
 		entries = append(entries, types.ValidatorTreeEntry{
 			ValidatorAddress:   valAddr.Bytes(),
 			VotingPowerPercent: powerPercent,
+		})
+		batchSigs = append(batchSigs, types.BatchSignatures{
+			ValidatorAddress: valAddr,
 			Secp256K1: types.Secp256K1Entry{
 				EthAddress: ethAddr,
-				Signature:  treeEntry,
 			},
 		})
 		treeEntries = append(treeEntries, treeEntry)
+
 		return false
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return entries, utils.RootFromEntries(treeEntries), nil
+	return entries, batchSigs, utils.RootFromEntries(treeEntries), nil
 }

@@ -64,7 +64,7 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	f := initFixture(t)
 	_, pks, powers := addBatchSigningValidators(t, f, 10)
 
-	entries, root, err := f.batchingKeeper.ConstructValidatorTree(f.Context())
+	entries, sigEntries, root, err := f.batchingKeeper.ConstructValidatorTree(f.Context())
 	require.NoError(t, err)
 
 	var totalPower int64
@@ -82,13 +82,13 @@ func Test_ConstructValidatorTree(t *testing.T) {
 	parsedPowers := make([]uint32, len(entries))
 	entriesWithSep := make([][]byte, len(entries))
 	for i, entry := range entries {
-		parsedAddrs[i] = entry.Secp256K1.EthAddress
+		parsedAddrs[i] = sigEntries[i].Secp256K1.EthAddress
 		parsedPowers[i] = entry.VotingPowerPercent
 		expectedAddrs[i], err = utils.PubKeyToEthAddress(pks[i])
 		require.NoError(t, err)
 
 		// Reconstruct the validator tree entry.
-		entriesWithSep[i] = append([]byte{utils.SEDASeparatorSecp256k1}, entry.Secp256K1.EthAddress...)
+		entriesWithSep[i] = append([]byte{utils.SEDASeparatorSecp256k1}, sigEntries[i].Secp256K1.EthAddress...)
 		entriesWithSep[i] = binary.BigEndian.AppendUint32(entriesWithSep[i], entry.VotingPowerPercent)
 	}
 	require.ElementsMatch(t, expectedAddrs, parsedAddrs)
@@ -515,7 +515,7 @@ func Test_ConstructValidatorTreeWithTestData(t *testing.T) {
 
 	_, _, powers := addBatchSigningValidatorsFromTestData(t, f, data.Validators)
 
-	entries, root, err := f.batchingKeeper.ConstructValidatorTree(f.Context())
+	entries, sigEntries, root, err := f.batchingKeeper.ConstructValidatorTree(f.Context())
 	require.NoError(t, err)
 
 	var totalPower int64
@@ -532,7 +532,7 @@ func Test_ConstructValidatorTreeWithTestData(t *testing.T) {
 	parsedAddrs := make([][]byte, len(entries))
 	parsedPowers := make([]uint32, len(entries))
 	for i, entry := range entries {
-		parsedAddrs[i] = entry.Secp256K1.EthAddress
+		parsedAddrs[i] = sigEntries[i].Secp256K1.EthAddress
 		parsedPowers[i] = entry.VotingPowerPercent
 		expectedAddr, err := hex.DecodeString(data.Validators[i].Identity[2:])
 		require.NoError(t, err)
