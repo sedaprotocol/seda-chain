@@ -7,13 +7,29 @@
     },
     "apis": [
       {
+        "url": "./tmp-swagger-gen/sedachain/batching/v1/query.swagger.json",
+        "operationIds": {
+          "rename": {
+            "Params": "BatchingParams"
+          }
+        }
+      },
+      {
+        "url": "./tmp-swagger-gen/sedachain/data_proxy/v1/query.swagger.json",
+        "operationIds": {
+          "rename": {
+            "Params": "DataProxyParams"
+          }
+        }
+      },
+      {
         "url": "./tmp-swagger-gen/sedachain/wasm_storage/v1/query.swagger.json",
         "operationIds": {
           "rename": {
             "Params": "WasmStorageParams"
           }
         }
-      },
+      },      
       {
         "url": "./tmp-swagger-gen/cosmos/app/v1alpha1/query.swagger.json"
       },

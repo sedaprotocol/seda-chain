@@ -4,6 +4,622 @@ info:
   description: A REST interface for state queries, legacy transactions
   version: 1.0.0
 paths:
+  /seda-chain/batching/batch/{batch_number}:
+    get:
+      summary: Batch returns a batch given the batch number.
+      operationId: Batch
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              batch:
+                type: object
+                properties:
+                  batch:
+                    type: object
+                    properties:
+                      batch_number:
+                        type: string
+                        format: uint64
+                        description: >-
+                          batch_number is a unique identifier of the batch
+                          incremented
+
+                          every time a batch is created.
+                      block_height:
+                        type: string
+                        format: int64
+                        description: >-
+                          block_height is the height at which the batch was
+                          created.
+                      current_data_result_root:
+                        type: string
+                        description: >-
+                          current_data_result_root is the hex-encoded root of
+                          the data result
+
+                          merkle tree.
+                      data_result_root:
+                        type: string
+                        description: >-
+                          data_result_root is the hex-encoded "super root" of
+                          the previous
+
+                          data result and current data result roots.
+                      validator_root:
+                        type: string
+                        description: >-
+                          validator_root is the hex-encoded root of the
+                          validator merkle
+
+                          tree.
+                      batch_id:
+                        type: string
+                        format: byte
+                        description: batch_id is the Keccack-256 hash of the batch content.
+                      proving_metadata:
+                        type: string
+                        format: byte
+                        description: >-
+                          proving_metadata is a field for additional proving
+                          data.
+                    description: >-
+                      Batch is an aggregation of data request results along with
+                      validator
+
+                      signatures used to prove these results on destination
+                      chains.
+                  data_result_entries:
+                    type: object
+                    properties:
+                      entries:
+                        type: array
+                        items:
+                          type: string
+                          format: byte
+                    description: >-
+                      DataResultTreeEntries is a list of data result tree
+                      entries for a
+
+                      given batch.
+                  validator_entries:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        validator_address:
+                          type: string
+                          format: byte
+                        voting_power_percent:
+                          type: integer
+                          format: int64
+                        secp256k1:
+                          type: object
+                          properties:
+                            eth_address:
+                              type: string
+                              format: byte
+                            signature:
+                              type: string
+                              format: byte
+                          description: >-
+                            Secp256k1Entry is the secp256k1 signature component
+                            of a validator
+
+                            tree entry.
+                      description: ValidatorTreeEntry is an entry in the validator tree.
+                description: >-
+                  BatchWithEntries is used by Batch Query to return a batch with
+                  its
+
+                  data result tree entries and validator tree entries.
+            description: The response message for QueryBatch RPC.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: batch_number
+          in: path
+          required: true
+          type: string
+          format: uint64
+      tags:
+        - Query
+  /seda-chain/batching/batch_for_height/{block_height}:
+    get:
+      summary: BatchForHeight returns a batch created at a given block height.
+      operationId: BatchForHeight
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              batch:
+                type: object
+                properties:
+                  batch_number:
+                    type: string
+                    format: uint64
+                    description: >-
+                      batch_number is a unique identifier of the batch
+                      incremented
+
+                      every time a batch is created.
+                  block_height:
+                    type: string
+                    format: int64
+                    description: block_height is the height at which the batch was created.
+                  current_data_result_root:
+                    type: string
+                    description: >-
+                      current_data_result_root is the hex-encoded root of the
+                      data result
+
+                      merkle tree.
+                  data_result_root:
+                    type: string
+                    description: >-
+                      data_result_root is the hex-encoded "super root" of the
+                      previous
+
+                      data result and current data result roots.
+                  validator_root:
+                    type: string
+                    description: >-
+                      validator_root is the hex-encoded root of the validator
+                      merkle
+
+                      tree.
+                  batch_id:
+                    type: string
+                    format: byte
+                    description: batch_id is the Keccack-256 hash of the batch content.
+                  proving_metadata:
+                    type: string
+                    format: byte
+                    description: proving_metadata is a field for additional proving data.
+                description: >-
+                  Batch is an aggregation of data request results along with
+                  validator
+
+                  signatures used to prove these results on destination chains.
+            description: The response message for BatchForHeight RPC.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: block_height
+          in: path
+          required: true
+          type: string
+          format: int64
+      tags:
+        - Query
+  /seda-chain/batching/batches:
+    get:
+      summary: Batch returns all batches in the store.
+      operationId: Batches
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              batches:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    batch_number:
+                      type: string
+                      format: uint64
+                      description: >-
+                        batch_number is a unique identifier of the batch
+                        incremented
+
+                        every time a batch is created.
+                    block_height:
+                      type: string
+                      format: int64
+                      description: >-
+                        block_height is the height at which the batch was
+                        created.
+                    current_data_result_root:
+                      type: string
+                      description: >-
+                        current_data_result_root is the hex-encoded root of the
+                        data result
+
+                        merkle tree.
+                    data_result_root:
+                      type: string
+                      description: >-
+                        data_result_root is the hex-encoded "super root" of the
+                        previous
+
+                        data result and current data result roots.
+                    validator_root:
+                      type: string
+                      description: >-
+                        validator_root is the hex-encoded root of the validator
+                        merkle
+
+                        tree.
+                    batch_id:
+                      type: string
+                      format: byte
+                      description: batch_id is the Keccack-256 hash of the batch content.
+                    proving_metadata:
+                      type: string
+                      format: byte
+                      description: proving_metadata is a field for additional proving data.
+                  description: >-
+                    Batch is an aggregation of data request results along with
+                    validator
+
+                    signatures used to prove these results on destination
+                    chains.
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    description: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently. It will be empty if
+                      there are no more results.
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+            description: The response message for QueryBatches RPC.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+        - name: with_unsigned
+          description: |-
+            with_unsigned indicates whether to return batches without
+            signatures or not.
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  /seda-chain/batching/data_result/{data_request_id}:
+    get:
+      summary: |-
+        DataResult returns a data result given its associated data request's
+        ID.
+      operationId: DataResult
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              data_result:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: id is the Keccack-256 hash of the data result.
+                  dr_id:
+                    type: string
+                    description: dr_id is the data request identifier.
+                  version:
+                    type: string
+                    description: version is a semantic version string.
+                  block_height:
+                    type: string
+                    format: uint64
+                    description: >-
+                      block_height is the height at which the data request was
+                      tallied.
+                  exit_code:
+                    type: integer
+                    format: int64
+                    description: >-
+                      exit_code is the exit code of the tally wasm binary
+                      execution.
+                  gas_used:
+                    type: string
+                    format: uint64
+                    description: gas_used is the gas used by the data request execution.
+                  result:
+                    type: string
+                    format: byte
+                    description: result is the result of the tally wasm binary execution.
+                  payback_address:
+                    type: string
+                    description: payback_address is the payback address set by the relayer.
+                  seda_payload:
+                    type: string
+                    title: >-
+                      seda_payload is the payload set by SEDA Protocol (e.g.
+                      OEV-enabled
+
+                      data requests)
+                  consensus:
+                    type: boolean
+                    description: >-
+                      consensus indicates whether consensus was reached in the
+                      tally
+
+                      process.
+                description: DataResult represents the result of a resolved data request.
+              batch_assignment:
+                type: object
+                properties:
+                  batch_number:
+                    type: string
+                    format: uint64
+                  data_request_id:
+                    type: string
+                description: >-
+                  BatchAssignment represents a batch assignment for genesis
+                  export
+
+                  and import.
+            description: The response message for QueryDataResult RPC.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: data_request_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /seda-chain/data-proxy/data_proxy_config/{pub_key}:
+    get:
+      summary: >-
+        DataProxyConfig returns a data proxy config when given its public key as
+        a
+
+        hex encoded string.
+      operationId: DataProxyConfig
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              config:
+                type: object
+                properties:
+                  payout_address:
+                    type: string
+                    description: >-
+                      payout_address defines the address to which the data proxy
+                      fees should be
+
+                      transferred.
+                  fee:
+                    description: >-
+                      fee defines the amount in aseda this data-proxy charges
+                      when utilised.
+                    type: object
+                    properties:
+                      denom:
+                        type: string
+                      amount:
+                        type: string
+                  memo:
+                    type: string
+                    description: >-
+                      memo defines an optional string which is not used by the
+                      protocol.
+                  admin_address:
+                    type: string
+                    description: >-
+                      only the admin address of a data proxy can submit config
+                      updates.
+                  fee_update:
+                    description: >-
+                      fee_update defines an upcoming fee change which will take
+                      effect at a
+
+                      future height.
+                    type: object
+                    properties:
+                      new_fee:
+                        description: new_fee defines the new fee for the data proxy.
+                        type: object
+                        properties:
+                          denom:
+                            type: string
+                          amount:
+                            type: string
+                      update_height:
+                        type: string
+                        format: int64
+                        description: >-
+                          update_height defines the height after which the new
+                          fee comes into effect.
+                description: ProxyConfig defines a data-proxy entry in the registry.
+            description: The response message for QueryDataProxyConfig RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pub_key
+          description: A hex encoded string of the public key of the data proxy.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /seda-chain/wasm-storage/core_contract_registry:
     get:
       summary: CoreContractRegistry returns the Core Contract Registry address.
@@ -32063,6 +32679,624 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
+  sedachain.batching.v1.Batch:
+    type: object
+    properties:
+      batch_number:
+        type: string
+        format: uint64
+        description: |-
+          batch_number is a unique identifier of the batch incremented
+          every time a batch is created.
+      block_height:
+        type: string
+        format: int64
+        description: block_height is the height at which the batch was created.
+      current_data_result_root:
+        type: string
+        description: |-
+          current_data_result_root is the hex-encoded root of the data result
+          merkle tree.
+      data_result_root:
+        type: string
+        description: |-
+          data_result_root is the hex-encoded "super root" of the previous
+          data result and current data result roots.
+      validator_root:
+        type: string
+        description: |-
+          validator_root is the hex-encoded root of the validator merkle
+          tree.
+      batch_id:
+        type: string
+        format: byte
+        description: batch_id is the Keccack-256 hash of the batch content.
+      proving_metadata:
+        type: string
+        format: byte
+        description: proving_metadata is a field for additional proving data.
+    description: |-
+      Batch is an aggregation of data request results along with validator
+      signatures used to prove these results on destination chains.
+  sedachain.batching.v1.BatchAssignment:
+    type: object
+    properties:
+      batch_number:
+        type: string
+        format: uint64
+      data_request_id:
+        type: string
+    description: |-
+      BatchAssignment represents a batch assignment for genesis export
+      and import.
+  sedachain.batching.v1.BatchWithEntries:
+    type: object
+    properties:
+      batch:
+        type: object
+        properties:
+          batch_number:
+            type: string
+            format: uint64
+            description: |-
+              batch_number is a unique identifier of the batch incremented
+              every time a batch is created.
+          block_height:
+            type: string
+            format: int64
+            description: block_height is the height at which the batch was created.
+          current_data_result_root:
+            type: string
+            description: >-
+              current_data_result_root is the hex-encoded root of the data
+              result
+
+              merkle tree.
+          data_result_root:
+            type: string
+            description: |-
+              data_result_root is the hex-encoded "super root" of the previous
+              data result and current data result roots.
+          validator_root:
+            type: string
+            description: |-
+              validator_root is the hex-encoded root of the validator merkle
+              tree.
+          batch_id:
+            type: string
+            format: byte
+            description: batch_id is the Keccack-256 hash of the batch content.
+          proving_metadata:
+            type: string
+            format: byte
+            description: proving_metadata is a field for additional proving data.
+        description: |-
+          Batch is an aggregation of data request results along with validator
+          signatures used to prove these results on destination chains.
+      data_result_entries:
+        type: object
+        properties:
+          entries:
+            type: array
+            items:
+              type: string
+              format: byte
+        description: |-
+          DataResultTreeEntries is a list of data result tree entries for a
+          given batch.
+      validator_entries:
+        type: array
+        items:
+          type: object
+          properties:
+            validator_address:
+              type: string
+              format: byte
+            voting_power_percent:
+              type: integer
+              format: int64
+            secp256k1:
+              type: object
+              properties:
+                eth_address:
+                  type: string
+                  format: byte
+                signature:
+                  type: string
+                  format: byte
+              description: >-
+                Secp256k1Entry is the secp256k1 signature component of a
+                validator
+
+                tree entry.
+          description: ValidatorTreeEntry is an entry in the validator tree.
+    description: |-
+      BatchWithEntries is used by Batch Query to return a batch with its
+      data result tree entries and validator tree entries.
+  sedachain.batching.v1.DataResult:
+    type: object
+    properties:
+      id:
+        type: string
+        description: id is the Keccack-256 hash of the data result.
+      dr_id:
+        type: string
+        description: dr_id is the data request identifier.
+      version:
+        type: string
+        description: version is a semantic version string.
+      block_height:
+        type: string
+        format: uint64
+        description: block_height is the height at which the data request was tallied.
+      exit_code:
+        type: integer
+        format: int64
+        description: exit_code is the exit code of the tally wasm binary execution.
+      gas_used:
+        type: string
+        format: uint64
+        description: gas_used is the gas used by the data request execution.
+      result:
+        type: string
+        format: byte
+        description: result is the result of the tally wasm binary execution.
+      payback_address:
+        type: string
+        description: payback_address is the payback address set by the relayer.
+      seda_payload:
+        type: string
+        title: |-
+          seda_payload is the payload set by SEDA Protocol (e.g. OEV-enabled
+          data requests)
+      consensus:
+        type: boolean
+        description: |-
+          consensus indicates whether consensus was reached in the tally
+          process.
+    description: DataResult represents the result of a resolved data request.
+  sedachain.batching.v1.DataResultTreeEntries:
+    type: object
+    properties:
+      entries:
+        type: array
+        items:
+          type: string
+          format: byte
+    description: |-
+      DataResultTreeEntries is a list of data result tree entries for a
+      given batch.
+  sedachain.batching.v1.QueryBatchForHeightResponse:
+    type: object
+    properties:
+      batch:
+        type: object
+        properties:
+          batch_number:
+            type: string
+            format: uint64
+            description: |-
+              batch_number is a unique identifier of the batch incremented
+              every time a batch is created.
+          block_height:
+            type: string
+            format: int64
+            description: block_height is the height at which the batch was created.
+          current_data_result_root:
+            type: string
+            description: >-
+              current_data_result_root is the hex-encoded root of the data
+              result
+
+              merkle tree.
+          data_result_root:
+            type: string
+            description: |-
+              data_result_root is the hex-encoded "super root" of the previous
+              data result and current data result roots.
+          validator_root:
+            type: string
+            description: |-
+              validator_root is the hex-encoded root of the validator merkle
+              tree.
+          batch_id:
+            type: string
+            format: byte
+            description: batch_id is the Keccack-256 hash of the batch content.
+          proving_metadata:
+            type: string
+            format: byte
+            description: proving_metadata is a field for additional proving data.
+        description: |-
+          Batch is an aggregation of data request results along with validator
+          signatures used to prove these results on destination chains.
+    description: The response message for BatchForHeight RPC.
+  sedachain.batching.v1.QueryBatchResponse:
+    type: object
+    properties:
+      batch:
+        type: object
+        properties:
+          batch:
+            type: object
+            properties:
+              batch_number:
+                type: string
+                format: uint64
+                description: |-
+                  batch_number is a unique identifier of the batch incremented
+                  every time a batch is created.
+              block_height:
+                type: string
+                format: int64
+                description: block_height is the height at which the batch was created.
+              current_data_result_root:
+                type: string
+                description: >-
+                  current_data_result_root is the hex-encoded root of the data
+                  result
+
+                  merkle tree.
+              data_result_root:
+                type: string
+                description: >-
+                  data_result_root is the hex-encoded "super root" of the
+                  previous
+
+                  data result and current data result roots.
+              validator_root:
+                type: string
+                description: |-
+                  validator_root is the hex-encoded root of the validator merkle
+                  tree.
+              batch_id:
+                type: string
+                format: byte
+                description: batch_id is the Keccack-256 hash of the batch content.
+              proving_metadata:
+                type: string
+                format: byte
+                description: proving_metadata is a field for additional proving data.
+            description: >-
+              Batch is an aggregation of data request results along with
+              validator
+
+              signatures used to prove these results on destination chains.
+          data_result_entries:
+            type: object
+            properties:
+              entries:
+                type: array
+                items:
+                  type: string
+                  format: byte
+            description: |-
+              DataResultTreeEntries is a list of data result tree entries for a
+              given batch.
+          validator_entries:
+            type: array
+            items:
+              type: object
+              properties:
+                validator_address:
+                  type: string
+                  format: byte
+                voting_power_percent:
+                  type: integer
+                  format: int64
+                secp256k1:
+                  type: object
+                  properties:
+                    eth_address:
+                      type: string
+                      format: byte
+                    signature:
+                      type: string
+                      format: byte
+                  description: >-
+                    Secp256k1Entry is the secp256k1 signature component of a
+                    validator
+
+                    tree entry.
+              description: ValidatorTreeEntry is an entry in the validator tree.
+        description: |-
+          BatchWithEntries is used by Batch Query to return a batch with its
+          data result tree entries and validator tree entries.
+    description: The response message for QueryBatch RPC.
+  sedachain.batching.v1.QueryBatchesResponse:
+    type: object
+    properties:
+      batches:
+        type: array
+        items:
+          type: object
+          properties:
+            batch_number:
+              type: string
+              format: uint64
+              description: |-
+                batch_number is a unique identifier of the batch incremented
+                every time a batch is created.
+            block_height:
+              type: string
+              format: int64
+              description: block_height is the height at which the batch was created.
+            current_data_result_root:
+              type: string
+              description: >-
+                current_data_result_root is the hex-encoded root of the data
+                result
+
+                merkle tree.
+            data_result_root:
+              type: string
+              description: |-
+                data_result_root is the hex-encoded "super root" of the previous
+                data result and current data result roots.
+            validator_root:
+              type: string
+              description: |-
+                validator_root is the hex-encoded root of the validator merkle
+                tree.
+            batch_id:
+              type: string
+              format: byte
+              description: batch_id is the Keccack-256 hash of the batch content.
+            proving_metadata:
+              type: string
+              format: byte
+              description: proving_metadata is a field for additional proving data.
+          description: |-
+            Batch is an aggregation of data request results along with validator
+            signatures used to prove these results on destination chains.
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            description: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently. It will be empty if
+              there are no more results.
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+    description: The response message for QueryBatches RPC.
+  sedachain.batching.v1.QueryDataResultResponse:
+    type: object
+    properties:
+      data_result:
+        type: object
+        properties:
+          id:
+            type: string
+            description: id is the Keccack-256 hash of the data result.
+          dr_id:
+            type: string
+            description: dr_id is the data request identifier.
+          version:
+            type: string
+            description: version is a semantic version string.
+          block_height:
+            type: string
+            format: uint64
+            description: block_height is the height at which the data request was tallied.
+          exit_code:
+            type: integer
+            format: int64
+            description: exit_code is the exit code of the tally wasm binary execution.
+          gas_used:
+            type: string
+            format: uint64
+            description: gas_used is the gas used by the data request execution.
+          result:
+            type: string
+            format: byte
+            description: result is the result of the tally wasm binary execution.
+          payback_address:
+            type: string
+            description: payback_address is the payback address set by the relayer.
+          seda_payload:
+            type: string
+            title: |-
+              seda_payload is the payload set by SEDA Protocol (e.g. OEV-enabled
+              data requests)
+          consensus:
+            type: boolean
+            description: |-
+              consensus indicates whether consensus was reached in the tally
+              process.
+        description: DataResult represents the result of a resolved data request.
+      batch_assignment:
+        type: object
+        properties:
+          batch_number:
+            type: string
+            format: uint64
+          data_request_id:
+            type: string
+        description: |-
+          BatchAssignment represents a batch assignment for genesis export
+          and import.
+    description: The response message for QueryDataResult RPC.
+  sedachain.batching.v1.Secp256k1Entry:
+    type: object
+    properties:
+      eth_address:
+        type: string
+        format: byte
+      signature:
+        type: string
+        format: byte
+    description: |-
+      Secp256k1Entry is the secp256k1 signature component of a validator
+      tree entry.
+  sedachain.batching.v1.ValidatorTreeEntry:
+    type: object
+    properties:
+      validator_address:
+        type: string
+        format: byte
+      voting_power_percent:
+        type: integer
+        format: int64
+      secp256k1:
+        type: object
+        properties:
+          eth_address:
+            type: string
+            format: byte
+          signature:
+            type: string
+            format: byte
+        description: |-
+          Secp256k1Entry is the secp256k1 signature component of a validator
+          tree entry.
+    description: ValidatorTreeEntry is an entry in the validator tree.
+  cosmos.base.v1beta1.Coin:
+    type: object
+    properties:
+      denom:
+        type: string
+      amount:
+        type: string
+    description: |-
+      Coin defines a token with a denomination and an amount.
+
+      NOTE: The amount field is an Int which implements the custom method
+      signatures required by gogoproto.
+  sedachain.data_proxy.v1.FeeUpdate:
+    type: object
+    properties:
+      new_fee:
+        description: new_fee defines the new fee for the data proxy.
+        type: object
+        properties:
+          denom:
+            type: string
+          amount:
+            type: string
+      update_height:
+        type: string
+        format: int64
+        description: >-
+          update_height defines the height after which the new fee comes into
+          effect.
+    description: |-
+      FeeUpdate defines a new fee amount and the height at which it will take
+      effect.
+  sedachain.data_proxy.v1.ProxyConfig:
+    type: object
+    properties:
+      payout_address:
+        type: string
+        description: >-
+          payout_address defines the address to which the data proxy fees should
+          be
+
+          transferred.
+      fee:
+        description: fee defines the amount in aseda this data-proxy charges when utilised.
+        type: object
+        properties:
+          denom:
+            type: string
+          amount:
+            type: string
+      memo:
+        type: string
+        description: memo defines an optional string which is not used by the protocol.
+      admin_address:
+        type: string
+        description: only the admin address of a data proxy can submit config updates.
+      fee_update:
+        description: |-
+          fee_update defines an upcoming fee change which will take effect at a
+          future height.
+        type: object
+        properties:
+          new_fee:
+            description: new_fee defines the new fee for the data proxy.
+            type: object
+            properties:
+              denom:
+                type: string
+              amount:
+                type: string
+          update_height:
+            type: string
+            format: int64
+            description: >-
+              update_height defines the height after which the new fee comes
+              into effect.
+    description: ProxyConfig defines a data-proxy entry in the registry.
+  sedachain.data_proxy.v1.QueryDataProxyConfigResponse:
+    type: object
+    properties:
+      config:
+        type: object
+        properties:
+          payout_address:
+            type: string
+            description: >-
+              payout_address defines the address to which the data proxy fees
+              should be
+
+              transferred.
+          fee:
+            description: >-
+              fee defines the amount in aseda this data-proxy charges when
+              utilised.
+            type: object
+            properties:
+              denom:
+                type: string
+              amount:
+                type: string
+          memo:
+            type: string
+            description: memo defines an optional string which is not used by the protocol.
+          admin_address:
+            type: string
+            description: only the admin address of a data proxy can submit config updates.
+          fee_update:
+            description: >-
+              fee_update defines an upcoming fee change which will take effect
+              at a
+
+              future height.
+            type: object
+            properties:
+              new_fee:
+                description: new_fee defines the new fee for the data proxy.
+                type: object
+                properties:
+                  denom:
+                    type: string
+                  amount:
+                    type: string
+              update_height:
+                type: string
+                format: int64
+                description: >-
+                  update_height defines the height after which the new fee comes
+                  into effect.
+        description: ProxyConfig defines a data-proxy entry in the registry.
+    description: The response message for QueryDataProxyConfig RPC method.
   sedachain.wasm_storage.v1.ExecutorWasm:
     type: object
     properties:
@@ -35726,18 +36960,6 @@ definitions:
     description: |-
       SendEnabled maps coin denom to a send_enabled status (whether a denom is
       sendable).
-  cosmos.base.v1beta1.Coin:
-    type: object
-    properties:
-      denom:
-        type: string
-      amount:
-        type: string
-    description: |-
-      Coin defines a token with a denomination and an amount.
-
-      NOTE: The amount field is an Int which implements the custom method
-      signatures required by gogoproto.
   cosmos.base.tendermint.v1beta1.ABCIQueryResponse:
     type: object
     properties:
