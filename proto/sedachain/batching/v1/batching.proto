@@ -71,7 +71,8 @@ message DataResult {
   string version = 4 [ (gogoproto.jsontag) = "version" ];
   // block_height is the height at which the data request was tallied.
   uint64 block_height = 5 [ (gogoproto.jsontag) = "block_height" ];
-  // block_timestamp is the unix timestamp in seconds of when the data request was tallied.
+  // block_timestamp is the unix timestamp in seconds of when the data request
+  // was tallied.
   uint64 block_timestamp = 6 [ (gogoproto.jsontag) = "block_timestamp" ];
   // exit_code is the exit code of the tally wasm binary execution.
   uint32 exit_code = 7 [ (gogoproto.jsontag) = "exit_code" ];

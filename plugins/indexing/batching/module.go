@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	// "cosmossdk.io/collections"
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/store/types"
 
@@ -103,10 +104,37 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 		}
 
 		return types.NewMessage("dr-batch-assignment", data, ctx), nil
-	} else if keyBytes, found := bytes.CutPrefix(change.Key, batchingtypes.ValidatorTreeEntriesKeyPrefix); found {
-		_, key, err := collections.Uint64Key.Decode(keyBytes)
+	} else if keyBytes, found := bytes.CutPrefix(change.Key, batchingtypes.BatchSignaturesKeyPrefix); found {
+		_, key, err := collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey).Decode(keyBytes)
 		if err != nil {
 			return nil, err
+		}
+
+		val, err := codec.CollValue[batchingtypes.BatchSignatures](cdc).Decode(change.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		data := struct {
+			BatchNumber        string `json:"batch_number"`
+			ValidatorAddress   string `json:"validator_address"`
+			Secp256K1Signature string `json:"secpk256k1_signature"`
+		}{
+			BatchNumber:        strconv.FormatUint(key.K1(), 10),
+			ValidatorAddress:   val.ValidatorAddress.String(),
+			Secp256K1Signature: hex.EncodeToString(val.Secp256K1Signature),
+		}
+
+		return types.NewMessage("batch-signatures", data, ctx), nil
+	} else if keyBytes, found := bytes.CutPrefix(change.Key, batchingtypes.ValidatorTreeEntriesKeyPrefix); found {
+		_, key, err := collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey).Decode(keyBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		// The second part of the key is empty for data result entries, we index those separately.
+		if len(key.K2()) == 0 {
+			return nil, nil
 		}
 
 		valEntry, err := codec.CollValue[batchingtypes.ValidatorTreeEntry](cdc).Decode(change.Value)
@@ -115,11 +143,15 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 		}
 
 		data := struct {
-			BatchNumber        string                           `json:"batch_number"`
-			ValidatorTreeEntry batchingtypes.ValidatorTreeEntry `json:"validator_tree_entry"`
+			BatchNumber        string `json:"batch_number"`
+			ValidatorAddress   string `json:"validator_address"`
+			VotingPowerPercent uint32 `json:"voting_power_percent"`
+			EthAddress         string `json:"eth_address"`
 		}{
-			BatchNumber:        strconv.FormatUint(key, 10),
-			ValidatorTreeEntry: valEntry,
+			BatchNumber:        strconv.FormatUint(key.K1(), 10),
+			ValidatorAddress:   valEntry.ValidatorAddress.String(),
+			VotingPowerPercent: valEntry.VotingPowerPercent,
+			EthAddress:         hex.EncodeToString(valEntry.EthAddress),
 		}
 
 		return types.NewMessage("batch-validator-entry", data, ctx), nil
