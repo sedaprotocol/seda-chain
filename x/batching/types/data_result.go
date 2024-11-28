@@ -34,6 +34,8 @@ func (dr *DataResult) TryHash() (string, error) {
 
 	blockHeightBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(blockHeightBytes, dr.BlockHeight)
+	blockTimestampBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(blockTimestampBytes, dr.BlockTimestamp)
 
 	exitCodeByte := byte(dr.ExitCode)
 
@@ -68,6 +70,7 @@ func (dr *DataResult) TryHash() (string, error) {
 	allBytes = append(allBytes, exitCodeByte)
 	allBytes = append(allBytes, resultHash...)
 	allBytes = append(allBytes, blockHeightBytes...)
+	allBytes = append(allBytes, blockTimestampBytes...)
 	allBytes = append(allBytes, gasUsedBytes...)
 	allBytes = append(allBytes, paybackAddrHash...)
 	allBytes = append(allBytes, sedaPayloadHash...)

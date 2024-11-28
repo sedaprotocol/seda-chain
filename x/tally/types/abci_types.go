@@ -6,12 +6,15 @@ import (
 )
 
 type Request struct {
-	DrBinaryID        string                `json:"dr_binary_id"`
-	DrInputs          string                `json:"dr_inputs"`
-	GasLimit          uint64                `json:"gas_limit"`
-	GasPrice          string                `json:"gas_price"`
-	Height            uint64                `json:"height"`
 	ID                string                `json:"id"`
+	Height            uint64                `json:"height"`
+	ExecProgramID     string                `json:"exec_program_id"`
+	ExecInputs        string                `json:"exec_inputs"`
+	ExecGasLimit      uint64                `json:"exec_gas_limit"`
+	TallyProgramID    string                `json:"tally_program_id"`
+	TallyInputs       string                `json:"tally_inputs"`
+	TallyGasLimit     uint64                `json:"tally_gas_limit"`
+	GasPrice          string                `json:"gas_price"`
 	Memo              string                `json:"memo"`
 	PaybackAddress    string                `json:"payback_address"`
 	ReplicationFactor int64                 `json:"replication_factor"`
@@ -19,8 +22,6 @@ type Request struct {
 	Commits           map[string][]byte     `json:"commits"`
 	Reveals           map[string]RevealBody `json:"reveals"`
 	SedaPayload       string                `json:"seda_payload"`
-	TallyProgramID    string                `json:"tally_program_id"`
-	TallyInputs       string                `json:"tally_inputs"`
 	Version           string                `json:"version"`
 }
 

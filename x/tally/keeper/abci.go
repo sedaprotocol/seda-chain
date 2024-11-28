@@ -83,11 +83,14 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	dataResults := make([]batchingtypes.DataResult, len(tallyList))
 	for i, req := range tallyList {
 		dataResults[i] = batchingtypes.DataResult{
-			DrId:    req.ID,
-			Version: req.Version,
+			DrId:          req.ID,
+			DrBlockHeight: req.Height,
+			Version:       req.Version,
 			//nolint:gosec // G115: We shouldn't get negative block heights anyway.
-			BlockHeight:    uint64(ctx.BlockHeight()),
-			GasUsed:        0, // TODO (#367)
+			BlockHeight: uint64(ctx.BlockHeight()),
+			//nolint:gosec // G115: We shouldn't get negative timestamps anyway.
+			BlockTimestamp: uint64(ctx.BlockTime().Unix()),
+			GasUsed:        0, // TODO (#425)
 			PaybackAddress: req.PaybackAddress,
 			SedaPayload:    req.SedaPayload,
 		}
@@ -248,11 +251,11 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 		"VM_MODE":               "tally",
 		"CONSENSUS":             fmt.Sprintf("%v", result.consensus),
 		"DR_ID":                 req.ID,
-		"DR_INPUT":              req.DrInputs,
-		"BINARY_ID":             req.DrBinaryID,
+		"DR_INPUT":              req.TallyInputs,
+		"BINARY_ID":             req.TallyProgramID,
 		"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", req.ReplicationFactor),
 		"DR_GAS_PRICE":          req.GasPrice,
-		"DR_GAS_LIMIT":          fmt.Sprintf("%v", req.GasLimit),
+		"DR_GAS_LIMIT":          fmt.Sprintf("%v", req.TallyGasLimit),
 		"DR_MEMO":               req.Memo,
 		"DR_PAYBACK_ADDRESS":    paybackAddrHex,
 		"BLOCK_HEIGHT":          fmt.Sprintf("%d", ctx.BlockHeight()),
