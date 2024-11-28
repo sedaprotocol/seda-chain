@@ -50,15 +50,6 @@ message BatchSignatures {
   bytes secp256k1_signature = 2;
 }
 
-// Params is a list of parameters which can be changed through governance.
-message Params {
-  option (gogoproto.equal) = true;
-
-  // validator_set_trim_percent is the percentage of the validator
-  // set to store in the validator merkle tree in the batch.
-  uint32 validator_set_trim_percent = 1;
-}
-
 // DataResult represents the result of a resolved data request.
 message DataResult {
   // id is the Keccack-256 hash of the data result.
