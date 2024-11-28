@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"strconv"
+	"time"
 
 	// "cosmossdk.io/collections"
 	"cosmossdk.io/collections"
@@ -31,19 +32,24 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 		}
 
 		data := struct {
-			ID             string `json:"result_id"`
-			DrID           string `json:"dr_id"`
-			Version        string `json:"version"`
-			BlockHeight    string `json:"block_height"`
-			ExitCode       uint32 `json:"exit_code"`
-			GasUsed        string `json:"gas_used"`
-			Result         []byte `json:"result"`
-			PaybackAddress string `json:"payback_address"`
-			SedaPayload    string `json:"seda_payload"`
-			Consensus      bool   `json:"consensus"`
+			ID             string    `json:"result_id"`
+			DrID           string    `json:"dr_id"`
+			DrBlockHeight  string    `json:"dr_block_height"`
+			Version        string    `json:"version"`
+			BlockHeight    string    `json:"block_height"`
+			Timestamp      time.Time `json:"timestamp"`
+			ExitCode       uint32    `json:"exit_code"`
+			GasUsed        string    `json:"gas_used"`
+			Result         []byte    `json:"result"`
+			PaybackAddress string    `json:"payback_address"`
+			SedaPayload    string    `json:"seda_payload"`
+			Consensus      bool      `json:"consensus"`
 		}{
-			ID:             val.Id,
-			DrID:           val.DrId,
+			ID:            val.Id,
+			DrID:          val.DrId,
+			DrBlockHeight: strconv.FormatUint(val.DrBlockHeight, 10),
+			//nolint:gosec // G115: When storing the timestamp we converted from int64 to uint64, so the reverse should be safe.
+			Timestamp:      time.Unix(int64(val.BlockTimestamp), 0),
 			Version:        val.Version,
 			BlockHeight:    strconv.FormatUint(val.BlockHeight, 10),
 			ExitCode:       val.ExitCode,
