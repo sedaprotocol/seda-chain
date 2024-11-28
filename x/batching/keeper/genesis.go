@@ -16,12 +16,17 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 			panic(err)
 		}
 	}
-	for _, entry := range data.TreeEntries {
-		if err := k.setDataResultTreeEntry(ctx, entry.BatchNumber, entry.DataResultEntries); err != nil {
+	for _, data := range data.BatchData {
+		if err := k.setDataResultTreeEntry(ctx, data.BatchNumber, data.DataResultEntries); err != nil {
 			panic(err)
 		}
-		for _, valEntry := range entry.ValidatorEntries {
-			if err := k.setValidatorTreeEntry(ctx, entry.BatchNumber, valEntry); err != nil {
+		for _, valEntry := range data.ValidatorEntries {
+			if err := k.setValidatorTreeEntry(ctx, data.BatchNumber, valEntry); err != nil {
+				panic(err)
+			}
+		}
+		for _, sig := range data.BatchSignatures {
+			if err := k.SetBatchSigSecp256k1(ctx, data.BatchNumber, sig.ValidatorAddress, sig.Secp256K1Signature); err != nil {
 				panic(err)
 			}
 		}
@@ -49,17 +54,17 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
-	entries := make([]types.BatchTreeEntries, len(batches))
+	batchData := make([]types.BatchData, len(batches))
 	for i, batch := range batches {
-		batchEntries, err := k.GetTreeEntriesForBatch(ctx, batch.BatchNumber)
+		data, err := k.GetBatchData(ctx, batch.BatchNumber)
 		if err != nil {
 			panic(err)
 		}
-		entries[i] = batchEntries
+		batchData[i] = data
 	}
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return types.NewGenesisState(curBatchNum, batches, entries, dataResults, batchAssignments, params)
+	return types.NewGenesisState(curBatchNum, batches, batchData, dataResults, batchAssignments, params)
 }

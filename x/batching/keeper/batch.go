@@ -195,35 +195,41 @@ func (k Keeper) setDataResultTreeEntry(ctx context.Context, batchNum uint64, dat
 	return nil
 }
 
-// GetTreeEntriesForBatch returns the tree entries of a given batch.
-func (k Keeper) GetTreeEntriesForBatch(ctx context.Context, batchNum uint64) (types.BatchTreeEntries, error) {
+// GetBatchData returns various data for a given batch.
+func (k Keeper) GetBatchData(ctx context.Context, batchNum uint64) (types.BatchData, error) {
 	// Get data result tree entries.
 	dataEntries, err := k.dataResultTreeEntries.Get(ctx, batchNum)
 	if err != nil {
-		return types.BatchTreeEntries{}, err
+		return types.BatchData{}, err
 	}
 
 	// Get validator tree entries.
 	valRng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
 	valItr, err := k.validatorTreeEntries.Iterate(ctx, valRng)
 	if err != nil {
-		return types.BatchTreeEntries{}, err
+		return types.BatchData{}, err
 	}
 	defer valItr.Close()
 
 	valKvs, err := valItr.KeyValues()
 	if err != nil {
-		return types.BatchTreeEntries{}, err
+		return types.BatchData{}, err
 	}
 	valEntries := make([]types.ValidatorTreeEntry, len(valKvs))
 	for i, kv := range valKvs {
 		valEntries[i] = kv.Value
 	}
 
-	return types.BatchTreeEntries{
+	sigs, err := k.GetBatchSignatures(ctx, batchNum)
+	if err != nil {
+		return types.BatchData{}, err
+	}
+
+	return types.BatchData{
 		BatchNumber:       batchNum,
 		DataResultEntries: dataEntries,
 		ValidatorEntries:  valEntries,
+		BatchSignatures:   sigs,
 	}, nil
 }
 
@@ -251,10 +257,8 @@ func (k Keeper) GetBatchSignatures(ctx context.Context, batchNum uint64) ([]type
 // for a specified batch.
 func (k Keeper) SetBatchSigSecp256k1(ctx context.Context, batchNum uint64, valAddr sdk.ValAddress, signature []byte) error {
 	return k.batchSignatures.Set(
-		ctx,
-		collections.Join(batchNum, valAddr.Bytes()),
+		ctx, collections.Join(batchNum, valAddr.Bytes()),
 		types.BatchSignatures{
-			BatchNumber:        batchNum,
 			ValidatorAddress:   valAddr.Bytes(),
 			Secp256K1Signature: signature,
 		},

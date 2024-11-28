@@ -17,104 +17,96 @@ paths:
               batch:
                 type: object
                 properties:
-                  batch:
-                    type: object
-                    properties:
-                      batch_number:
-                        type: string
-                        format: uint64
-                        description: >-
-                          batch_number is a unique identifier of the batch
-                          incremented
-
-                          every time a batch is created.
-                      block_height:
-                        type: string
-                        format: int64
-                        description: >-
-                          block_height is the height at which the batch was
-                          created.
-                      current_data_result_root:
-                        type: string
-                        description: >-
-                          current_data_result_root is the hex-encoded root of
-                          the data result
-
-                          merkle tree.
-                      data_result_root:
-                        type: string
-                        description: >-
-                          data_result_root is the hex-encoded "super root" of
-                          the previous
-
-                          data result and current data result roots.
-                      validator_root:
-                        type: string
-                        description: >-
-                          validator_root is the hex-encoded root of the
-                          validator merkle
-
-                          tree.
-                      batch_id:
-                        type: string
-                        format: byte
-                        description: batch_id is the Keccack-256 hash of the batch content.
-                      proving_metadata:
-                        type: string
-                        format: byte
-                        description: >-
-                          proving_metadata is a field for additional proving
-                          data.
+                  batch_number:
+                    type: string
+                    format: uint64
                     description: >-
-                      Batch is an aggregation of data request results along with
-                      validator
+                      batch_number is a unique identifier of the batch
+                      incremented
 
-                      signatures used to prove these results on destination
-                      chains.
-                  data_result_entries:
-                    type: object
-                    properties:
-                      entries:
-                        type: array
-                        items:
-                          type: string
-                          format: byte
+                      every time a batch is created.
+                  block_height:
+                    type: string
+                    format: int64
+                    description: block_height is the height at which the batch was created.
+                  current_data_result_root:
+                    type: string
                     description: >-
-                      DataResultTreeEntries is a list of data result tree
-                      entries for a
+                      current_data_result_root is the hex-encoded root of the
+                      data result
 
-                      given batch.
-                  validator_entries:
+                      merkle tree.
+                  data_result_root:
+                    type: string
+                    description: >-
+                      data_result_root is the hex-encoded "super root" of the
+                      previous
+
+                      data result and current data result roots.
+                  validator_root:
+                    type: string
+                    description: >-
+                      validator_root is the hex-encoded root of the validator
+                      merkle
+
+                      tree.
+                  batch_id:
+                    type: string
+                    format: byte
+                    description: batch_id is the Keccack-256 hash of the batch content.
+                  proving_metadata:
+                    type: string
+                    format: byte
+                    description: proving_metadata is a field for additional proving data.
+                description: >-
+                  Batch is an aggregation of data request results along with
+                  validator
+
+                  signatures used to prove these results on destination chains.
+              data_result_entries:
+                type: object
+                properties:
+                  entries:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        validator_address:
-                          type: string
-                          format: byte
-                        voting_power_percent:
-                          type: integer
-                          format: int64
-                        secp256k1:
-                          type: object
-                          properties:
-                            eth_address:
-                              type: string
-                              format: byte
-                            signature:
-                              type: string
-                              format: byte
-                          description: >-
-                            Secp256k1Entry is the secp256k1 signature component
-                            of a validator
-
-                            tree entry.
-                      description: ValidatorTreeEntry is an entry in the validator tree.
+                      type: string
+                      format: byte
                 description: >-
-                  BatchWithEntries is used by Batch Query to return a batch with
-                  its
+                  DataResultTreeEntries is a list of data result tree entries
+                  for a
 
-                  data result tree entries and validator tree entries.
+                  given batch.
+              validator_entries:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    validator_address:
+                      type: string
+                      format: byte
+                    voting_power_percent:
+                      type: integer
+                      format: int64
+                    eth_address:
+                      type: string
+                      format: byte
+                  description: ValidatorTreeEntry is an entry in the validator tree.
+              batch_signatures:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    validator_address:
+                      type: string
+                      format: byte
+                    secp256k1_signature:
+                      type: string
+                      format: byte
+                  description: >-
+                    BatchSignatures contains basic validator data and its batch
+                    signatures
+
+                    under various cryptographic schemes.
             description: The response message for QueryBatch RPC.
         default:
           description: An unexpected error response.
@@ -32729,90 +32721,18 @@ definitions:
     description: |-
       BatchAssignment represents a batch assignment for genesis export
       and import.
-  sedachain.batching.v1.BatchWithEntries:
+  sedachain.batching.v1.BatchSignatures:
     type: object
     properties:
-      batch:
-        type: object
-        properties:
-          batch_number:
-            type: string
-            format: uint64
-            description: |-
-              batch_number is a unique identifier of the batch incremented
-              every time a batch is created.
-          block_height:
-            type: string
-            format: int64
-            description: block_height is the height at which the batch was created.
-          current_data_result_root:
-            type: string
-            description: >-
-              current_data_result_root is the hex-encoded root of the data
-              result
-
-              merkle tree.
-          data_result_root:
-            type: string
-            description: |-
-              data_result_root is the hex-encoded "super root" of the previous
-              data result and current data result roots.
-          validator_root:
-            type: string
-            description: |-
-              validator_root is the hex-encoded root of the validator merkle
-              tree.
-          batch_id:
-            type: string
-            format: byte
-            description: batch_id is the Keccack-256 hash of the batch content.
-          proving_metadata:
-            type: string
-            format: byte
-            description: proving_metadata is a field for additional proving data.
-        description: |-
-          Batch is an aggregation of data request results along with validator
-          signatures used to prove these results on destination chains.
-      data_result_entries:
-        type: object
-        properties:
-          entries:
-            type: array
-            items:
-              type: string
-              format: byte
-        description: |-
-          DataResultTreeEntries is a list of data result tree entries for a
-          given batch.
-      validator_entries:
-        type: array
-        items:
-          type: object
-          properties:
-            validator_address:
-              type: string
-              format: byte
-            voting_power_percent:
-              type: integer
-              format: int64
-            secp256k1:
-              type: object
-              properties:
-                eth_address:
-                  type: string
-                  format: byte
-                signature:
-                  type: string
-                  format: byte
-              description: >-
-                Secp256k1Entry is the secp256k1 signature component of a
-                validator
-
-                tree entry.
-          description: ValidatorTreeEntry is an entry in the validator tree.
+      validator_address:
+        type: string
+        format: byte
+      secp256k1_signature:
+        type: string
+        format: byte
     description: |-
-      BatchWithEntries is used by Batch Query to return a batch with its
-      data result tree entries and validator tree entries.
+      BatchSignatures contains basic validator data and its batch signatures
+      under various cryptographic schemes.
   sedachain.batching.v1.DataResult:
     type: object
     properties:
@@ -32917,91 +32837,86 @@ definitions:
       batch:
         type: object
         properties:
-          batch:
-            type: object
-            properties:
-              batch_number:
-                type: string
-                format: uint64
-                description: |-
-                  batch_number is a unique identifier of the batch incremented
-                  every time a batch is created.
-              block_height:
-                type: string
-                format: int64
-                description: block_height is the height at which the batch was created.
-              current_data_result_root:
-                type: string
-                description: >-
-                  current_data_result_root is the hex-encoded root of the data
-                  result
-
-                  merkle tree.
-              data_result_root:
-                type: string
-                description: >-
-                  data_result_root is the hex-encoded "super root" of the
-                  previous
-
-                  data result and current data result roots.
-              validator_root:
-                type: string
-                description: |-
-                  validator_root is the hex-encoded root of the validator merkle
-                  tree.
-              batch_id:
-                type: string
-                format: byte
-                description: batch_id is the Keccack-256 hash of the batch content.
-              proving_metadata:
-                type: string
-                format: byte
-                description: proving_metadata is a field for additional proving data.
-            description: >-
-              Batch is an aggregation of data request results along with
-              validator
-
-              signatures used to prove these results on destination chains.
-          data_result_entries:
-            type: object
-            properties:
-              entries:
-                type: array
-                items:
-                  type: string
-                  format: byte
+          batch_number:
+            type: string
+            format: uint64
             description: |-
-              DataResultTreeEntries is a list of data result tree entries for a
-              given batch.
-          validator_entries:
+              batch_number is a unique identifier of the batch incremented
+              every time a batch is created.
+          block_height:
+            type: string
+            format: int64
+            description: block_height is the height at which the batch was created.
+          current_data_result_root:
+            type: string
+            description: >-
+              current_data_result_root is the hex-encoded root of the data
+              result
+
+              merkle tree.
+          data_result_root:
+            type: string
+            description: |-
+              data_result_root is the hex-encoded "super root" of the previous
+              data result and current data result roots.
+          validator_root:
+            type: string
+            description: |-
+              validator_root is the hex-encoded root of the validator merkle
+              tree.
+          batch_id:
+            type: string
+            format: byte
+            description: batch_id is the Keccack-256 hash of the batch content.
+          proving_metadata:
+            type: string
+            format: byte
+            description: proving_metadata is a field for additional proving data.
+        description: |-
+          Batch is an aggregation of data request results along with validator
+          signatures used to prove these results on destination chains.
+      data_result_entries:
+        type: object
+        properties:
+          entries:
             type: array
             items:
-              type: object
-              properties:
-                validator_address:
-                  type: string
-                  format: byte
-                voting_power_percent:
-                  type: integer
-                  format: int64
-                secp256k1:
-                  type: object
-                  properties:
-                    eth_address:
-                      type: string
-                      format: byte
-                    signature:
-                      type: string
-                      format: byte
-                  description: >-
-                    Secp256k1Entry is the secp256k1 signature component of a
-                    validator
-
-                    tree entry.
-              description: ValidatorTreeEntry is an entry in the validator tree.
+              type: string
+              format: byte
         description: |-
-          BatchWithEntries is used by Batch Query to return a batch with its
-          data result tree entries and validator tree entries.
+          DataResultTreeEntries is a list of data result tree entries for a
+          given batch.
+      validator_entries:
+        type: array
+        items:
+          type: object
+          properties:
+            validator_address:
+              type: string
+              format: byte
+            voting_power_percent:
+              type: integer
+              format: int64
+            eth_address:
+              type: string
+              format: byte
+          description: ValidatorTreeEntry is an entry in the validator tree.
+      batch_signatures:
+        type: array
+        items:
+          type: object
+          properties:
+            validator_address:
+              type: string
+              format: byte
+            secp256k1_signature:
+              type: string
+              format: byte
+          description: >-
+            BatchSignatures contains basic validator data and its batch
+            signatures
+
+            under various cryptographic schemes.
     description: The response message for QueryBatch RPC.
   sedachain.batching.v1.QueryBatchesResponse:
     type: object
@@ -33133,18 +33048,6 @@ definitions:
           BatchAssignment represents a batch assignment for genesis export
           and import.
     description: The response message for QueryDataResult RPC.
-  sedachain.batching.v1.Secp256k1Entry:
-    type: object
-    properties:
-      eth_address:
-        type: string
-        format: byte
-      signature:
-        type: string
-        format: byte
-    description: |-
-      Secp256k1Entry is the secp256k1 signature component of a validator
-      tree entry.
   sedachain.batching.v1.ValidatorTreeEntry:
     type: object
     properties:
@@ -33154,18 +33057,9 @@ definitions:
       voting_power_percent:
         type: integer
         format: int64
-      secp256k1:
-        type: object
-        properties:
-          eth_address:
-            type: string
-            format: byte
-          signature:
-            type: string
-            format: byte
-        description: |-
-          Secp256k1Entry is the secp256k1 signature component of a validator
-          tree entry.
+      eth_address:
+        type: string
+        format: byte
     description: ValidatorTreeEntry is an entry in the validator tree.
   cosmos.base.v1beta1.Coin:
     type: object

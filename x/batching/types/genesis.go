@@ -6,7 +6,7 @@ import "cosmossdk.io/collections"
 func NewGenesisState(
 	curBatchNum uint64,
 	batches []Batch,
-	entries []BatchTreeEntries,
+	batchData []BatchData,
 	dataResults []DataResult,
 	batchAssignments []BatchAssignment,
 	params Params,
@@ -14,7 +14,7 @@ func NewGenesisState(
 	return GenesisState{
 		CurrentBatchNumber: curBatchNum,
 		Batches:            batches,
-		TreeEntries:        entries,
+		BatchData:          batchData,
 		DataResults:        dataResults,
 		BatchAssignments:   batchAssignments,
 		Params:             params,

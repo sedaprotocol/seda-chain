@@ -12,7 +12,7 @@ message GenesisState {
   // created batch.
   uint64 current_batch_number = 1;
   repeated Batch batches = 2 [ (gogoproto.nullable) = false ];
-  repeated BatchTreeEntries tree_entries = 3 [ (gogoproto.nullable) = false ];
+  repeated BatchData batch_data = 3 [ (gogoproto.nullable) = false ];
   repeated DataResult data_results = 4 [ (gogoproto.nullable) = false ];
   repeated BatchAssignment batch_assignments = 5
       [ (gogoproto.nullable) = false ];
@@ -26,12 +26,13 @@ message BatchAssignment {
   string data_request_id = 2;
 }
 
-// BatchTreeEntries represents the given batch's data result tree entries
-// and validator tree entries.
-message BatchTreeEntries {
+// BatchData represents a given batch's full data.
+message BatchData {
   uint64 batch_number = 1;
   DataResultTreeEntries data_result_entries = 2
       [ (gogoproto.nullable) = false ];
   repeated ValidatorTreeEntry validator_entries = 3
+      [ (gogoproto.nullable) = false ];
+  repeated BatchSignatures batch_signatures = 4
       [ (gogoproto.nullable) = false ];
 }

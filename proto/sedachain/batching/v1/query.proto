@@ -46,7 +46,8 @@ message QueryBatchResponse {
       [ (gogoproto.nullable) = false ];
   repeated ValidatorTreeEntry validator_entries = 3
       [ (gogoproto.nullable) = false ];
-  repeated BatchSignatures batch_signatures = 4 [ (gogoproto.nullable) = false ];
+  repeated BatchSignatures batch_signatures = 4
+      [ (gogoproto.nullable) = false ];
 }
 
 // The request message for BatchForHeight RPC.

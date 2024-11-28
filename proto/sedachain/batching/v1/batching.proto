@@ -44,11 +44,10 @@ message ValidatorTreeEntry {
 // BatchSignatures contains basic validator data and its batch signatures
 // under various cryptographic schemes.
 message BatchSignatures {
-  uint64 batch_number = 1;
-  bytes validator_address = 2
+  bytes validator_address = 1
       [ (gogoproto.casttype) =
             "github.com/cosmos/cosmos-sdk/types.ValAddress" ];
-  bytes secp256k1_signature = 3;
+  bytes secp256k1_signature = 2;
 }
 
 // Params is a list of parameters which can be changed through governance.
