@@ -22,6 +22,7 @@ func GetQueryCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		GetCmdValidatorKeys(),
+		GetProvingSchemes(),
 	)
 	return cmd
 }
@@ -44,6 +45,32 @@ func GetCmdValidatorKeys() *cobra.Command {
 				ValidatorAddr: args[0],
 			}
 			res, err := queryClient.ValidatorKeys(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetProvingSchemes returns the command for querying statuses of the
+// SEDA proving schemes.
+func GetProvingSchemes() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "proving-schemes",
+		Short: "Query statuses of the SEDA proving schemes",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.ProvingSchemes(cmd.Context(), &types.QueryProvingSchemesRequest{})
 			if err != nil {
 				return err
 			}

@@ -66,7 +66,7 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
-// ValidateGenesis performs genesis state validation for the wasm-storage module.
+// ValidateGenesis performs genesis state validation for the pubkey module.
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
 	var data types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
@@ -139,7 +139,7 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 	return nil
 }
 
-// EndBlock returns the end block logic for the wasm-storage module.
-func (am AppModule) EndBlock(_ context.Context) error {
-	return nil
+// EndBlock returns the end block logic for the pubkey module.
+func (am AppModule) EndBlock(ctx context.Context) error {
+	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
 }

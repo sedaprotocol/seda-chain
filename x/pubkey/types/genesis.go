@@ -4,15 +4,15 @@ import (
 	fmt "fmt"
 )
 
-func NewGenesisState(valPubKeys []ValidatorPubKeys) GenesisState {
-	return GenesisState{
-		ValidatorPubKeys: valPubKeys,
-	}
-}
-
 func DefaultGenesisState() *GenesisState {
-	state := NewGenesisState(nil)
-	return &state
+	return &GenesisState{
+		ProvingSchemes: []ProvingScheme{
+			{
+				Index:     0, // TODO resolve import cycle for uint32(utils.SEDAKeyIndexSecp256k1),
+				IsEnabled: false,
+			},
+		},
+	}
 }
 
 func ValidateGenesis(data GenesisState) error {

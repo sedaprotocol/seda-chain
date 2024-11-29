@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
@@ -18,4 +19,14 @@ func (q Querier) ValidatorKeys(ctx context.Context, req *types.QueryValidatorKey
 		return nil, err
 	}
 	return &types.QueryValidatorKeysResponse{ValidatorPubKeys: result}, nil
+}
+
+func (q Querier) ProvingSchemes(ctx context.Context, req *types.QueryProvingSchemesRequest) (*types.QueryProvingSchemesResponse, error) {
+	schemes, err := q.GetAllProvingSchemes(sdk.UnwrapSDKContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryProvingSchemesResponse{
+		ProvingSchemes: schemes,
+	}, nil
 }

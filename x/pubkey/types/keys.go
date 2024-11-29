@@ -7,4 +7,7 @@ const (
 	StoreKey
 )
 
-var PubKeysPrefix = collections.NewPrefix(0)
+var (
+	PubKeysPrefix        = collections.NewPrefix(0)
+	ProvingSchemesPrefix = collections.NewPrefix(1)
+)

@@ -13,8 +13,10 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/cosmos/cosmos-sdk/types"
-	types0 "github.com/cosmos/cosmos-sdk/x/staking/types"
+	math "cosmossdk.io/math"
+	types "github.com/cometbft/cometbft/abci/types"
+	types0 "github.com/cosmos/cosmos-sdk/types"
+	types1 "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,11 +43,41 @@ func (m *MockStakingKeeper) EXPECT() *MockStakingKeeperMockRecorder {
 	return m.recorder
 }
 
+// GetBondedValidatorsByPower mocks base method.
+func (m *MockStakingKeeper) GetBondedValidatorsByPower(ctx context.Context) ([]types1.Validator, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBondedValidatorsByPower", ctx)
+	ret0, _ := ret[0].([]types1.Validator)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBondedValidatorsByPower indicates an expected call of GetBondedValidatorsByPower.
+func (mr *MockStakingKeeperMockRecorder) GetBondedValidatorsByPower(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBondedValidatorsByPower", reflect.TypeOf((*MockStakingKeeper)(nil).GetBondedValidatorsByPower), ctx)
+}
+
+// GetLastTotalPower mocks base method.
+func (m *MockStakingKeeper) GetLastTotalPower(ctx context.Context) (math.Int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLastTotalPower", ctx)
+	ret0, _ := ret[0].(math.Int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLastTotalPower indicates an expected call of GetLastTotalPower.
+func (mr *MockStakingKeeperMockRecorder) GetLastTotalPower(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastTotalPower", reflect.TypeOf((*MockStakingKeeper)(nil).GetLastTotalPower), ctx)
+}
+
 // GetValidator mocks base method.
-func (m *MockStakingKeeper) GetValidator(ctx context.Context, addr types.ValAddress) (types0.Validator, error) {
+func (m *MockStakingKeeper) GetValidator(ctx context.Context, addr types0.ValAddress) (types1.Validator, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetValidator", ctx, addr)
-	ret0, _ := ret[0].(types0.Validator)
+	ret0, _ := ret[0].(types1.Validator)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -54,4 +86,33 @@ func (m *MockStakingKeeper) GetValidator(ctx context.Context, addr types.ValAddr
 func (mr *MockStakingKeeperMockRecorder) GetValidator(ctx, addr any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidator", reflect.TypeOf((*MockStakingKeeper)(nil).GetValidator), ctx, addr)
+}
+
+// GetValidatorUpdates mocks base method.
+func (m *MockStakingKeeper) GetValidatorUpdates(ctx context.Context) ([]types.ValidatorUpdate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetValidatorUpdates", ctx)
+	ret0, _ := ret[0].([]types.ValidatorUpdate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetValidatorUpdates indicates an expected call of GetValidatorUpdates.
+func (mr *MockStakingKeeperMockRecorder) GetValidatorUpdates(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorUpdates", reflect.TypeOf((*MockStakingKeeper)(nil).GetValidatorUpdates), ctx)
+}
+
+// IterateLastValidatorPowers mocks base method.
+func (m *MockStakingKeeper) IterateLastValidatorPowers(ctx context.Context, handler func(types0.ValAddress, int64) bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IterateLastValidatorPowers", ctx, handler)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IterateLastValidatorPowers indicates an expected call of IterateLastValidatorPowers.
+func (mr *MockStakingKeeperMockRecorder) IterateLastValidatorPowers(ctx, handler any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IterateLastValidatorPowers", reflect.TypeOf((*MockStakingKeeper)(nil).IterateLastValidatorPowers), ctx, handler)
 }

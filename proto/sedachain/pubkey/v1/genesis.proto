@@ -11,6 +11,8 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/pubkey/types";
 message GenesisState {
   repeated ValidatorPubKeys validator_pub_keys = 1
       [ (gogoproto.nullable) = false ];
+  repeated ProvingScheme proving_schemes = 2
+      [ (gogoproto.nullable) = false ];
 }
 
 // ValidatorPubKeys defines a validator's list of registered public keys
@@ -19,4 +21,10 @@ message ValidatorPubKeys {
   string validator_addr = 1
       [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
   repeated IndexedPubKey indexed_pub_keys = 2 [ (gogoproto.nullable) = false ];
+}
+
+// ProvingScheme defines the status of a proving scheme.
+message ProvingScheme {
+  uint32 index = 1;
+  bool is_enabled = 2;
 }
