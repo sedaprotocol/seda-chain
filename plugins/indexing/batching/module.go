@@ -155,21 +155,6 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 		}
 
 		return types.NewMessage("batch-validator-entry", data, ctx), nil
-	} else if _, found := bytes.CutPrefix(change.Key, batchingtypes.ParamsKey); found {
-		val, err := codec.CollValue[batchingtypes.Params](cdc).Decode(change.Value)
-		if err != nil {
-			return nil, err
-		}
-
-		data := struct {
-			ModuleName string               `json:"moduleName"`
-			Params     batchingtypes.Params `json:"params"`
-		}{
-			ModuleName: "batching",
-			Params:     val,
-		}
-
-		return types.NewMessage("module-params", data, ctx), nil
 	}
 
 	logger.Trace("skipping change", "change", change)
