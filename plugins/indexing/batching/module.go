@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	// "cosmossdk.io/collections"
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/store/types"
 
