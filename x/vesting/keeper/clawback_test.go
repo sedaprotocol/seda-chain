@@ -21,7 +21,6 @@ func TestClawback(t *testing.T) {
 	require.NoError(t, err)
 
 	_, valAddrs, valPks := createValidators(t, f, []int64{5, 5, 5})
-	require.NoError(t, err)
 
 	testCases := []struct {
 		testName                string

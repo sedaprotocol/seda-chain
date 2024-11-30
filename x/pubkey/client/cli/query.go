@@ -63,7 +63,7 @@ func GetProvingSchemes() *cobra.Command {
 		Use:   "proving-schemes",
 		Short: "Query statuses of the SEDA proving schemes",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err

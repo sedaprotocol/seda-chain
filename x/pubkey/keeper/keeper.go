@@ -148,6 +148,14 @@ func (k Keeper) EnableProvingScheme(ctx context.Context, index utils.SEDAKeyInde
 	return nil
 }
 
+func (k Keeper) IsProvingSchemeEnabled(ctx context.Context, index utils.SEDAKeyIndex) (bool, error) {
+	isEnabled, err := k.provingSchemes.Get(ctx, uint32(index))
+	if err != nil {
+		return false, err
+	}
+	return isEnabled, nil
+}
+
 func (k Keeper) GetAllProvingSchemes(ctx sdk.Context) ([]types.ProvingScheme, error) {
 	itr, err := k.provingSchemes.Iterate(ctx, nil)
 	if err != nil {

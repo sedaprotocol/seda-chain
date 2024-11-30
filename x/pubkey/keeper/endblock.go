@@ -25,13 +25,22 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		err = nil
 	}()
 
+	// If secp256k1 proving scheme is already enabled, do nothing.
+	isEnabled, err := k.IsProvingSchemeEnabled(ctx, utils.SEDAKeyIndexSecp256k1)
+	if err != nil {
+		return err
+	}
+	if isEnabled {
+		return
+	}
+
+	// If the sum of the voting power has reached 80%, enable secp256k1
+	// proving scheme.
 	totalPower, err := k.stakingKeeper.GetLastTotalPower(ctx)
 	if err != nil {
 		return err
 	}
 
-	// If the sum of the voting power has reached (2/3 + 1), enable
-	// secp256k1 proving scheme.
 	var powerSum uint64
 	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
 		_, err := k.GetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1)
@@ -42,6 +51,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 				panic(err)
 			}
 		} else {
+			//nolint:gosec // G115: We shouldn't get negative power anyway.
 			powerSum += uint64(power)
 		}
 		return false
@@ -50,7 +60,10 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		return err
 	}
 
-	if requiredPower := ((totalPower.Int64() * 4) / 5) + 1; powerSum >= uint64(requiredPower) {
+	gotPower := powerSum * 100
+	//nolint:gosec // G115: We shouldn't get negative power anyway.
+	requiredPower := uint64(totalPower.Int64()*100*4/5 + 1)
+	if gotPower >= requiredPower {
 		err = k.EnableProvingScheme(ctx, utils.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			return err
@@ -58,6 +71,6 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		// TODO: Jail validators (active and inactive) without required
 		// public keys.
 	}
-
+	k.Logger(ctx).Info("checked status of secp256k1 proving scheme", "required", requiredPower, "got", gotPower)
 	return
 }

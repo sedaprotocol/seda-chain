@@ -21,7 +21,7 @@ func (q Querier) ValidatorKeys(ctx context.Context, req *types.QueryValidatorKey
 	return &types.QueryValidatorKeysResponse{ValidatorPubKeys: result}, nil
 }
 
-func (q Querier) ProvingSchemes(ctx context.Context, req *types.QueryProvingSchemesRequest) (*types.QueryProvingSchemesResponse, error) {
+func (q Querier) ProvingSchemes(ctx context.Context, _ *types.QueryProvingSchemesRequest) (*types.QueryProvingSchemesResponse, error) {
 	schemes, err := q.GetAllProvingSchemes(sdk.UnwrapSDKContext(ctx))
 	if err != nil {
 		return nil, err
