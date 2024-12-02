@@ -27,14 +27,15 @@ import (
 
 type KeeperTestSuite struct {
 	suite.Suite
-	ctx               sdk.Context
-	keeper            *keeper.Keeper
-	mockStakingKeeper *testutil.MockStakingKeeper
-	cdc               codec.Codec
-	valCdc            address.Codec
-	msgSrvr           types.MsgServer
-	queryClient       types.QueryClient
-	serverCtx         *server.Context
+	ctx                sdk.Context
+	keeper             *keeper.Keeper
+	mockStakingKeeper  *testutil.MockStakingKeeper
+	mockSlashingKeeper *testutil.MockSlashingKeeper
+	cdc                codec.Codec
+	valCdc             address.Codec
+	msgSrvr            types.MsgServer
+	queryClient        types.QueryClient
+	serverCtx          *server.Context
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -51,10 +52,13 @@ func (s *KeeperTestSuite) SetupTest() {
 
 	ctrl := gomock.NewController(t)
 	s.mockStakingKeeper = testutil.NewMockStakingKeeper(ctrl)
+	s.mockSlashingKeeper = testutil.NewMockSlashingKeeper(ctrl)
 	s.valCdc = addresscodec.NewBech32Codec(params.Bech32PrefixValAddr)
 	s.keeper = keeper.NewKeeper(
+		encCfg.Codec,
 		runtime.NewKVStoreService(key),
 		s.mockStakingKeeper,
+		s.mockSlashingKeeper,
 		s.valCdc,
 	)
 	s.ctx = testCtx.Ctx

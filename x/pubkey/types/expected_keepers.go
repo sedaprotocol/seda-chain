@@ -13,8 +13,13 @@ import (
 
 type StakingKeeper interface {
 	GetValidator(ctx context.Context, addr sdk.ValAddress) (validator stakingtypes.Validator, err error)
+	GetAllValidators(ctx context.Context) (validators []stakingtypes.Validator, err error)
 	GetBondedValidatorsByPower(ctx context.Context) ([]stakingtypes.Validator, error)
 	GetValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpdate, error)
 	IterateLastValidatorPowers(ctx context.Context, handler func(operator sdk.ValAddress, power int64) (stop bool)) error
 	GetLastTotalPower(ctx context.Context) (math.Int, error)
+}
+
+type SlashingKeeper interface {
+	Jail(ctx context.Context, consAddr sdk.ConsAddress) error
 }

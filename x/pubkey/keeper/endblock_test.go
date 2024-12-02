@@ -34,6 +34,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -131,9 +133,19 @@ func initFixture(tb testing.TB) *fixture {
 	err := stakingKeeper.SetParams(newCtx, stakingParams)
 	require.NoError(tb, err)
 
+	slashingKeeper := slashingkeeper.NewKeeper(
+		cdc,
+		nil,
+		runtime.NewKVStoreService(keys[slashingtypes.StoreKey]),
+		stakingKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	pubkeyKeeper := keeper.NewKeeper(
+		cdc,
 		runtime.NewKVStoreService(keys[types.StoreKey]),
 		stakingKeeper,
+		slashingKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
 
@@ -194,7 +206,8 @@ func TestEndBlock(t *testing.T) {
 	_, valAddrs, _ := createValidators(t, f, []int64{1, 3, 5, 7, 2, 1}) // 1+3+5+7+2+1 = 19
 	pubKeys := generatePubKeys(t, 6)
 
-	expectedIsEnabled := false
+	// Check for start of activation process.
+	var expectedActivationHeight int64 = types.DefaultActivationHeight
 	for i := range valAddrs {
 		err := f.keeper.SetValidatorKeyAtIndex(ctx, valAddrs[i], utils.SEDAKeyIndexSecp256k1, pubKeys[i])
 		require.NoError(t, err)
@@ -202,12 +215,21 @@ func TestEndBlock(t *testing.T) {
 		require.NoError(t, err)
 
 		if i >= 3 {
-			expectedIsEnabled = true
+			expectedActivationHeight = ctx.BlockHeight() + keeper.ActivationLag
 		}
-		isEnabled, err := f.keeper.IsProvingSchemeEnabled(ctx, utils.SEDAKeyIndexSecp256k1)
+		scheme, err := f.keeper.GetProvingScheme(ctx, utils.SEDAKeyIndexSecp256k1)
 		require.NoError(t, err)
-		require.Equal(t, expectedIsEnabled, isEnabled)
+		require.Equal(t, expectedActivationHeight, scheme.ActivationHeight)
+		require.Equal(t, scheme.IsActivated, false)
 	}
+
+	// Check for successful activation.
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + keeper.ActivationLag)
+	err := f.keeper.EndBlock(ctx)
+	require.NoError(t, err)
+	scheme, err := f.keeper.GetProvingScheme(ctx, utils.SEDAKeyIndexSecp256k1)
+	require.NoError(t, err)
+	require.Equal(t, scheme.IsActivated, true)
 }
 
 func generatePubKeys(t *testing.T, num int) [][]byte {

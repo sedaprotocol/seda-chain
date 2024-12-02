@@ -30,7 +30,20 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	if scheme.ActivationHeight != types.DefaultActivationHeight && ctx.BlockHeight() >= scheme.ActivationHeight {
+
+	// If the proving scheme is already activated, do nothing.
+	if scheme.IsActivated {
+		return
+	}
+
+	// Process activation in progress.
+	activationInProgress := scheme.ActivationHeight != types.DefaultActivationHeight
+	if activationInProgress && ctx.BlockHeight() >= scheme.ActivationHeight {
+		err = k.JailValidators(ctx, utils.SEDAKeyIndexSecp256k1)
+		if err != nil {
+			return err
+		}
+
 		scheme.IsActivated = true
 		scheme.ActivationHeight = types.DefaultActivationHeight
 		err = k.SetProvingScheme(ctx, scheme)
@@ -38,20 +51,25 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 			return err
 		}
 
-		// TODO: Jail validators (active and inactive) without required
-		// public keys.
-	}
-	if scheme.IsActivated {
+		k.Logger(ctx).Info("proving scheme activated", "key_index", utils.SEDAKeyIndexSecp256k1)
 		return
 	}
-	activationInProgress := scheme.ActivationHeight != types.DefaultActivationHeight
 
+	// Check the public key registration rate and start the activation
+	// process if the rate has reached the threshold. If the activation
+	// process is already in progress and the threshold is not met,
+	// cancel the activation process.
 	met, err := k.CheckKeyRegistrationRate(ctx, utils.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return err
 	}
-	if (activationInProgress && !met) || (!activationInProgress && met) {
+	if !activationInProgress && met {
 		err = k.StartProvingSchemeActivation(ctx, utils.SEDAKeyIndexSecp256k1)
+		if err != nil {
+			return err
+		}
+	} else if activationInProgress && !met {
+		err = k.CancelProvingSchemeActivation(ctx, utils.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			return err
 		}
@@ -60,8 +78,8 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 }
 
 // CheckKeyRegistrationRate checks if the current registration rate of
-// public keys of the given key scheme surpasses the threshold.
-func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, index utils.SEDAKeyIndex) (bool, error) {
+// public keys of the given key scheme exceeds the threshold.
+func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, keyIndex utils.SEDAKeyIndex) (bool, error) {
 	// If the sum of the voting power has reached 80%, enable secp256k1
 	// proving scheme.
 	totalPower, err := k.stakingKeeper.GetLastTotalPower(ctx)
@@ -71,7 +89,7 @@ func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, index utils.SEDAKeyInd
 
 	var powerSum uint64
 	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
-		_, err := k.GetValidatorKeyAtIndex(ctx, valAddr, index)
+		_, err := k.GetValidatorKeyAtIndex(ctx, valAddr, keyIndex)
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
 				return false
@@ -96,4 +114,42 @@ func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, index utils.SEDAKeyInd
 		return true, nil
 	}
 	return false, nil
+}
+
+// JailValidators goes through all validators in the store and jails
+// validators without the public key corresponding to the given key
+// scheme.
+func (k Keeper) JailValidators(ctx sdk.Context, keyIndex utils.SEDAKeyIndex) error {
+	validators, err := k.stakingKeeper.GetAllValidators(ctx)
+	if err != nil {
+		return err
+	}
+	for _, val := range validators {
+		valAddr, err := k.validatorAddressCodec.StringToBytes(val.OperatorAddress)
+		if err != nil {
+			return err
+		}
+		_, err = k.GetValidatorKeyAtIndex(ctx, valAddr, keyIndex)
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				consAddr, err := val.GetConsAddr()
+				if err != nil {
+					return err
+				}
+				err = k.slashingKeeper.Jail(ctx, consAddr)
+				if err != nil {
+					return err
+				}
+				k.Logger(ctx).Info(
+					"jailed validator for not having required public key",
+					"consensus_address", consAddr,
+					"operator_address", val.OperatorAddress,
+					"key_index", keyIndex,
+				)
+			} else {
+				return err
+			}
+		}
+	}
+	return nil
 }

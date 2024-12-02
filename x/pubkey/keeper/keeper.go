@@ -25,6 +25,7 @@ const ActivationLag = 25
 
 type Keeper struct {
 	stakingKeeper         types.StakingKeeper
+	slashingKeeper        types.SlashingKeeper
 	validatorAddressCodec address.Codec
 
 	Schema         collections.Schema
@@ -32,14 +33,15 @@ type Keeper struct {
 	provingSchemes collections.Map[uint32, types.ProvingScheme]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, sk types.StakingKeeper, valAddrCdc address.Codec) *Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, stk types.StakingKeeper, slk types.SlashingKeeper, valAddrCdc address.Codec) *Keeper {
 	if valAddrCdc == nil {
 		panic("validator address codec is nil")
 	}
 
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
-		stakingKeeper:         sk,
+		stakingKeeper:         stk,
+		slashingKeeper:        slk,
 		validatorAddressCodec: valAddrCdc,
 		pubKeys:               collections.NewMap(sb, types.PubKeysPrefix, "pubkeys", collections.PairKeyCodec(collections.BytesKey, collections.Uint32Key), collections.BytesValue),
 		provingSchemes:        collections.NewMap(sb, types.ProvingSchemesPrefix, "proving_schemes", collections.Uint32Key, codec.CollValue[types.ProvingScheme](cdc)),
@@ -158,6 +160,15 @@ func (k Keeper) StartProvingSchemeActivation(ctx sdk.Context, index utils.SEDAKe
 		return err
 	}
 	scheme.ActivationHeight = ctx.BlockHeight() + ActivationLag
+	return k.SetProvingScheme(ctx, scheme)
+}
+
+func (k Keeper) CancelProvingSchemeActivation(ctx sdk.Context, index utils.SEDAKeyIndex) error {
+	scheme, err := k.provingSchemes.Get(ctx, uint32(index))
+	if err != nil {
+		return err
+	}
+	scheme.ActivationHeight = types.DefaultActivationHeight
 	return k.SetProvingScheme(ctx, scheme)
 }
 

@@ -34,6 +34,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -181,9 +183,19 @@ func initFixture(tb testing.TB) *fixture {
 		viewKeeper,
 	)
 
+	slashingKeeper := slashingkeeper.NewKeeper(
+		cdc,
+		nil,
+		runtime.NewKVStoreService(keys[slashingtypes.StoreKey]),
+		stakingKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	pubKeyKeeper := pubkeykeeper.NewKeeper(
+		cdc,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		stakingKeeper,
+		slashingKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
 	batchingKeeper := batchingkeeper.NewKeeper(

@@ -43,6 +43,21 @@ func (m *MockStakingKeeper) EXPECT() *MockStakingKeeperMockRecorder {
 	return m.recorder
 }
 
+// GetAllValidators mocks base method.
+func (m *MockStakingKeeper) GetAllValidators(ctx context.Context) ([]types1.Validator, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllValidators", ctx)
+	ret0, _ := ret[0].([]types1.Validator)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllValidators indicates an expected call of GetAllValidators.
+func (mr *MockStakingKeeperMockRecorder) GetAllValidators(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllValidators", reflect.TypeOf((*MockStakingKeeper)(nil).GetAllValidators), ctx)
+}
+
 // GetBondedValidatorsByPower mocks base method.
 func (m *MockStakingKeeper) GetBondedValidatorsByPower(ctx context.Context) ([]types1.Validator, error) {
 	m.ctrl.T.Helper()
@@ -115,4 +130,41 @@ func (m *MockStakingKeeper) IterateLastValidatorPowers(ctx context.Context, hand
 func (mr *MockStakingKeeperMockRecorder) IterateLastValidatorPowers(ctx, handler any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IterateLastValidatorPowers", reflect.TypeOf((*MockStakingKeeper)(nil).IterateLastValidatorPowers), ctx, handler)
+}
+
+// MockSlashingKeeper is a mock of SlashingKeeper interface.
+type MockSlashingKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockSlashingKeeperMockRecorder
+}
+
+// MockSlashingKeeperMockRecorder is the mock recorder for MockSlashingKeeper.
+type MockSlashingKeeperMockRecorder struct {
+	mock *MockSlashingKeeper
+}
+
+// NewMockSlashingKeeper creates a new mock instance.
+func NewMockSlashingKeeper(ctrl *gomock.Controller) *MockSlashingKeeper {
+	mock := &MockSlashingKeeper{ctrl: ctrl}
+	mock.recorder = &MockSlashingKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSlashingKeeper) EXPECT() *MockSlashingKeeperMockRecorder {
+	return m.recorder
+}
+
+// Jail mocks base method.
+func (m *MockSlashingKeeper) Jail(ctx context.Context, consAddr types0.ConsAddress) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Jail", ctx, consAddr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Jail indicates an expected call of Jail.
+func (mr *MockSlashingKeeperMockRecorder) Jail(ctx, consAddr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Jail", reflect.TypeOf((*MockSlashingKeeper)(nil).Jail), ctx, consAddr)
 }
