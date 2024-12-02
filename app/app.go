@@ -648,6 +648,7 @@ func NewApp(
 	)
 
 	app.PubKeyKeeper = *pubkeykeeper.NewKeeper(
+		appCodec,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		app.StakingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),

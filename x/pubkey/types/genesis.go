@@ -4,12 +4,18 @@ import (
 	fmt "fmt"
 )
 
+const (
+	// DefaultActivationHeight indicates that activation is not in progress.
+	DefaultActivationHeight = -1
+)
+
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
 		ProvingSchemes: []ProvingScheme{
 			{
-				Index:     0, // TODO resolve import cycle for uint32(utils.SEDAKeyIndexSecp256k1),
-				IsEnabled: false,
+				Index:            0, // TODO resolve import cycle for uint32(utils.SEDAKeyIndexSecp256k1),
+				IsActivated:      false,
+				ActivationHeight: DefaultActivationHeight,
 			},
 		},
 	}

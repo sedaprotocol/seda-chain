@@ -10,6 +10,7 @@ import (
 	storetypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -17,26 +18,31 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
+// ActivationLag is the number of blocks to wait before activating
+// a proving scheme once the threshold of public key registration rate
+// is reached.
+const ActivationLag = 25
+
 type Keeper struct {
 	stakingKeeper         types.StakingKeeper
 	validatorAddressCodec address.Codec
 
 	Schema         collections.Schema
 	pubKeys        collections.Map[collections.Pair[[]byte, uint32], []byte]
-	provingSchemes collections.Map[uint32, bool]
+	provingSchemes collections.Map[uint32, types.ProvingScheme]
 }
 
-func NewKeeper(storeService storetypes.KVStoreService, sk types.StakingKeeper, validatorAddressCodec address.Codec) *Keeper {
-	if validatorAddressCodec == nil {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, sk types.StakingKeeper, valAddrCdc address.Codec) *Keeper {
+	if valAddrCdc == nil {
 		panic("validator address codec is nil")
 	}
 
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
 		stakingKeeper:         sk,
-		validatorAddressCodec: validatorAddressCodec,
+		validatorAddressCodec: valAddrCdc,
 		pubKeys:               collections.NewMap(sb, types.PubKeysPrefix, "pubkeys", collections.PairKeyCodec(collections.BytesKey, collections.Uint32Key), collections.BytesValue),
-		provingSchemes:        collections.NewMap(sb, types.ProvingSchemesPrefix, "proving_schemes", collections.Uint32Key, collections.BoolValue),
+		provingSchemes:        collections.NewMap(sb, types.ProvingSchemesPrefix, "proving_schemes", collections.Uint32Key, codec.CollValue[types.ProvingScheme](cdc)),
 	}
 
 	schema, err := sb.Build()
@@ -132,28 +138,35 @@ func (k Keeper) GetAllValidatorPubKeys(ctx context.Context) ([]types.ValidatorPu
 	return valPubKeys, err
 }
 
-func (k Keeper) SetProvingScheme(ctx context.Context, index utils.SEDAKeyIndex, isEnabled bool) error {
-	err := k.provingSchemes.Set(ctx, uint32(index), isEnabled)
+func (k Keeper) SetProvingScheme(ctx context.Context, scheme types.ProvingScheme) error {
+	err := k.provingSchemes.Set(ctx, scheme.Index, scheme)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (k Keeper) EnableProvingScheme(ctx context.Context, index utils.SEDAKeyIndex) error {
-	err := k.provingSchemes.Set(ctx, uint32(index), true)
+func (k Keeper) GetProvingScheme(ctx context.Context, index utils.SEDAKeyIndex) (types.ProvingScheme, error) {
+	return k.provingSchemes.Get(ctx, uint32(index))
+}
+
+// StartProvingSchemeActivation starts the activation of the given
+// proving scheme.
+func (k Keeper) StartProvingSchemeActivation(ctx sdk.Context, index utils.SEDAKeyIndex) error {
+	scheme, err := k.provingSchemes.Get(ctx, uint32(index))
 	if err != nil {
 		return err
 	}
-	return nil
+	scheme.ActivationHeight = ctx.BlockHeight() + ActivationLag
+	return k.SetProvingScheme(ctx, scheme)
 }
 
-func (k Keeper) IsProvingSchemeEnabled(ctx context.Context, index utils.SEDAKeyIndex) (bool, error) {
-	isEnabled, err := k.provingSchemes.Get(ctx, uint32(index))
+func (k Keeper) IsProvingSchemeActivated(ctx context.Context, index utils.SEDAKeyIndex) (bool, error) {
+	scheme, err := k.provingSchemes.Get(ctx, uint32(index))
 	if err != nil {
 		return false, err
 	}
-	return isEnabled, nil
+	return scheme.IsActivated, nil
 }
 
 func (k Keeper) GetAllProvingSchemes(ctx sdk.Context) ([]types.ProvingScheme, error) {
@@ -170,14 +183,11 @@ func (k Keeper) GetAllProvingSchemes(ctx sdk.Context) ([]types.ProvingScheme, er
 			return nil, err
 		}
 
-		isEnabled, err := k.provingSchemes.Get(ctx, kv.Key)
+		scheme, err := k.provingSchemes.Get(ctx, kv.Key)
 		if err != nil {
 			return nil, err
 		}
-		schemes = append(schemes, types.ProvingScheme{
-			Index:     kv.Key,
-			IsEnabled: isEnabled,
-		})
+		schemes = append(schemes, scheme)
 	}
 	return schemes, nil
 }

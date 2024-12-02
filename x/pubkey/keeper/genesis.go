@@ -22,7 +22,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 		}
 	}
 	for _, scheme := range data.ProvingSchemes {
-		err := k.SetProvingScheme(ctx, utils.SEDAKeyIndex(scheme.Index), scheme.IsEnabled)
+		err := k.SetProvingScheme(ctx, scheme)
 		if err != nil {
 			panic(err)
 		}

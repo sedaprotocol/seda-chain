@@ -5,6 +5,7 @@ import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "sedachain/pubkey/v1/genesis.proto";
+import "sedachain/pubkey/v1/pubkey.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/pubkey/types";
 
@@ -19,10 +20,9 @@ service Query {
 
   // ProvingSchemes returns the statuses of the SEDA proving schemes.
   rpc ProvingSchemes(QueryProvingSchemesRequest)
-    returns (QueryProvingSchemesResponse) {
-  option (google.api.http).get =
-      "/seda-chain/pubkey/proving_schemes";
-}
+      returns (QueryProvingSchemesResponse) {
+    option (google.api.http).get = "/seda-chain/pubkey/proving_schemes";
+  }
 }
 
 // QueryValidatorKeysRequest is request type for the Query/ValidatorKeys
@@ -38,11 +38,11 @@ message QueryValidatorKeysResponse {
   ValidatorPubKeys validator_pub_keys = 1 [ (gogoproto.nullable) = false ];
 }
 
-// QueryProvingSchemesRequest is request type for the Query/ProvingSchemes 
+// QueryProvingSchemesRequest is request type for the Query/ProvingSchemes
 // RPC method.
 message QueryProvingSchemesRequest {}
 
-// QueryProvingSchemesResponse is response type for the Query/ProvingSchemes 
+// QueryProvingSchemesResponse is response type for the Query/ProvingSchemes
 // RPC method.
 message QueryProvingSchemesResponse {
   repeated ProvingScheme proving_schemes = 1 [ (gogoproto.nullable) = false ];

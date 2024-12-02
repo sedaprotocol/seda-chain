@@ -11,3 +11,17 @@ message IndexedPubKey {
   bytes pub_key = 2
       [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
 }
+
+// ProvingScheme defines a proving scheme.
+message ProvingScheme {
+  // index is the SEDA key index.
+  uint32 index = 1;
+  // is_activated indicates if the proving scheme has been activated.
+  bool is_activated = 2;
+  // activation_height is the height at which the proving scheme is to
+  // be activated. This field is set to -1 by default until the public
+  // key registration rate reaches the activation threshold and is reset
+  // if the public key registration rate goes below the threshold before
+  // the scheme is activated.
+  int64 activation_height = 3;
+}
