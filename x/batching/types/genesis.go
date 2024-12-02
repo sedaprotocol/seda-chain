@@ -7,7 +7,7 @@ func NewGenesisState(
 	curBatchNum uint64,
 	batches []Batch,
 	batchData []BatchData,
-	dataResults []DataResult,
+	dataResults []GenesisDataResult,
 	batchAssignments []BatchAssignment,
 ) GenesisState {
 	return GenesisState{

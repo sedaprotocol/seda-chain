@@ -89,8 +89,19 @@ func (q Querier) Batches(c context.Context, req *types.QueryBatchesRequest) (*ty
 
 func (q Querier) DataResult(c context.Context, req *types.QueryDataResultRequest) (*types.QueryDataResultResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	dataResult, err := q.Keeper.GetDataResult(ctx, req.DataRequestId)
+
+	var dataResult *types.DataResult
+	var err error
+	if req.DataRequestHeight == 0 {
+		dataResult, err = q.Keeper.GetLatestDataResult(ctx, req.DataRequestId)
+	} else {
+		dataResult, err = q.Keeper.GetDataResult(ctx, req.DataRequestId, req.DataRequestHeight)
+	}
+
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return &types.QueryDataResultResponse{}, nil
+		}
 		return nil, err
 	}
 
@@ -98,15 +109,16 @@ func (q Querier) DataResult(c context.Context, req *types.QueryDataResultRequest
 		DataResult: dataResult,
 	}
 
-	batchNum, err := q.Keeper.GetBatchAssignment(ctx, req.DataRequestId)
+	batchNum, err := q.Keeper.GetBatchAssignment(ctx, req.DataRequestId, dataResult.DrBlockHeight)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			return nil, err
 		}
 	} else {
 		result.BatchAssignment = &types.BatchAssignment{
-			BatchNumber:   batchNum,
-			DataRequestId: req.DataRequestId,
+			BatchNumber:       batchNum,
+			DataRequestId:     req.DataRequestId,
+			DataRequestHeight: dataResult.DrBlockHeight,
 		}
 	}
 	return result, nil

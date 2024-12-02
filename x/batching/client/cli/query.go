@@ -147,9 +147,9 @@ func GetCmdQueryBatches() *cobra.Command {
 // associated with a given data request.
 func GetCmdQueryDataResult() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "data-result <data_request_id>",
+		Use:   "data-result <data_request_id> <optional_data_request_height>",
 		Short: "Get the data result associated with a given data request",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -159,6 +159,12 @@ func GetCmdQueryDataResult() *cobra.Command {
 
 			req := &types.QueryDataResultRequest{
 				DataRequestId: args[0],
+			}
+			if len(args) == 2 {
+				req.DataRequestHeight, err = strconv.ParseUint(args[1], 10, 64)
+				if err != nil {
+					return err
+				}
 			}
 			res, err := queryClient.DataResult(cmd.Context(), req)
 			if err != nil {

@@ -13,7 +13,7 @@ message GenesisState {
   uint64 current_batch_number = 1;
   repeated Batch batches = 2 [ (gogoproto.nullable) = false ];
   repeated BatchData batch_data = 3 [ (gogoproto.nullable) = false ];
-  repeated DataResult data_results = 4 [ (gogoproto.nullable) = false ];
+  repeated GenesisDataResult data_results = 4 [ (gogoproto.nullable) = false ];
   repeated BatchAssignment batch_assignments = 5
       [ (gogoproto.nullable) = false ];
 }
@@ -23,6 +23,7 @@ message GenesisState {
 message BatchAssignment {
   uint64 batch_number = 1;
   string data_request_id = 2;
+  uint64 data_request_height = 3;
 }
 
 // BatchData represents a given batch's full data.
@@ -34,4 +35,10 @@ message BatchData {
       [ (gogoproto.nullable) = false ];
   repeated BatchSignatures batch_signatures = 4
       [ (gogoproto.nullable) = false ];
+}
+
+// GenesisDataResult includes a data result and its batching status.
+message GenesisDataResult {
+  bool batched = 1;
+  DataResult data_result = 2 [ (gogoproto.nullable) = false ];
 }

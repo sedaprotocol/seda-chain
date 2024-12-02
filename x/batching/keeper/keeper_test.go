@@ -79,6 +79,7 @@ func (s *KeeperTestSuite) TestKeeper_DataResult() {
 		ExitCode:       0,
 		Result:         []byte("Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w="),
 		BlockHeight:    12345,
+		DrBlockHeight:  12343,
 		GasUsed:        20,
 		PaybackAddress: "",
 		SedaPayload:    "",
@@ -104,7 +105,42 @@ func (s *KeeperTestSuite) TestKeeper_DataResult() {
 	s.Require().NoError(err)
 	s.Require().Equal(&mockDataResult, res.DataResult)
 	s.Require().Equal(&batchingtypes.BatchAssignment{
-		BatchNumber:   batchNum,
-		DataRequestId: mockDataResult.DrId,
+		BatchNumber:       batchNum,
+		DataRequestId:     mockDataResult.DrId,
+		DataRequestHeight: mockDataResult.DrBlockHeight,
+	}, res.BatchAssignment)
+
+	// Resolve and batch another data result for the same data request ID.
+	mockDataResult2 := mockDataResult
+	mockDataResult2.Id = "ccf12276c43cc61e0f3c6ace3e66872eda5df5ec753525a7bddab6fa3407e927"
+	mockDataResult2.DrBlockHeight = 54321
+
+	err = s.keeper.SetDataResultForBatching(s.ctx, mockDataResult2)
+	s.Require().NoError(err)
+	err = s.keeper.MarkDataResultAsBatched(s.ctx, mockDataResult2, batchNum)
+	s.Require().NoError(err)
+
+	res, err = s.queryClient.DataResult(s.ctx, &batchingtypes.QueryDataResultRequest{
+		DataRequestId: mockDataResult2.DrId,
+	})
+	s.Require().NoError(err)
+	s.Require().Equal(&batchingtypes.BatchAssignment{
+		BatchNumber:       batchNum,
+		DataRequestId:     mockDataResult2.DrId,
+		DataRequestHeight: mockDataResult2.DrBlockHeight,
+	}, res.BatchAssignment)
+	s.Require().Equal(&mockDataResult2, res.DataResult)
+
+	// We should still be able to query the first data result.
+	res, err = s.queryClient.DataResult(s.ctx, &batchingtypes.QueryDataResultRequest{
+		DataRequestId:     mockDataResult.DrId,
+		DataRequestHeight: mockDataResult.DrBlockHeight,
+	})
+	s.Require().NoError(err)
+	s.Require().Equal(&mockDataResult, res.DataResult)
+	s.Require().Equal(&batchingtypes.BatchAssignment{
+		BatchNumber:       batchNum,
+		DataRequestId:     mockDataResult.DrId,
+		DataRequestHeight: mockDataResult.DrBlockHeight,
 	}, res.BatchAssignment)
 }

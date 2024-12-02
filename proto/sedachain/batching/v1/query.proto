@@ -74,7 +74,10 @@ message QueryBatchesResponse {
 }
 
 // The request message for QueryDataResult RPC.
-message QueryDataResultRequest { string data_request_id = 1; }
+message QueryDataResultRequest {
+  string data_request_id = 1;
+  uint64 data_request_height = 2;
+}
 
 // The response message for QueryDataResult RPC.
 message QueryDataResultResponse {

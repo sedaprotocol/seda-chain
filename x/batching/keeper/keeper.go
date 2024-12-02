@@ -30,8 +30,8 @@ type Keeper struct {
 	authority string
 
 	Schema                collections.Schema
-	dataResults           collections.Map[collections.Pair[bool, string], types.DataResult]
-	batchAssignments      collections.Map[string, uint64]
+	dataResults           collections.Map[collections.Triple[bool, string, uint64], types.DataResult]
+	batchAssignments      collections.Map[collections.Pair[string, uint64], uint64]
 	currentBatchNumber    collections.Sequence
 	batches               *collections.IndexedMap[int64, types.Batch, BatchIndexes]
 	validatorTreeEntries  collections.Map[collections.Pair[uint64, []byte], types.ValidatorTreeEntry]
@@ -60,8 +60,8 @@ func NewKeeper(
 		wasmViewKeeper:        wvk,
 		validatorAddressCodec: validatorAddressCodec,
 		authority:             authority,
-		dataResults:           collections.NewMap(sb, types.DataResultsPrefix, "data_results", collections.PairKeyCodec(collections.BoolKey, collections.StringKey), codec.CollValue[types.DataResult](cdc)),
-		batchAssignments:      collections.NewMap(sb, types.BatchAssignmentsPrefix, "batch_assignments", collections.StringKey, collections.Uint64Value),
+		dataResults:           collections.NewMap(sb, types.DataResultsPrefix, "data_results", collections.TripleKeyCodec(collections.BoolKey, collections.StringKey, collections.Uint64Key), codec.CollValue[types.DataResult](cdc)),
+		batchAssignments:      collections.NewMap(sb, types.BatchAssignmentsPrefix, "batch_assignments", collections.PairKeyCodec(collections.StringKey, collections.Uint64Key), collections.Uint64Value),
 		currentBatchNumber:    collections.NewSequence(sb, types.CurrentBatchNumberKey, "current_batch_number"),
 		batches:               collections.NewIndexedMap(sb, types.BatchesKeyPrefix, "batches", collections.Int64Key, codec.CollValue[types.Batch](cdc), NewBatchIndexes(sb)),
 		validatorTreeEntries:  collections.NewMap(sb, types.ValidatorTreeEntriesKeyPrefix, "validator_tree_entries", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.ValidatorTreeEntry](cdc)),

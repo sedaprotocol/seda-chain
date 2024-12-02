@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"cosmossdk.io/collections"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
@@ -31,11 +33,21 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 			}
 		}
 	}
+	for _, dataResult := range data.DataResults {
+		if err := k.dataResults.Set(ctx, collections.Join3(false, dataResult.DataResult.DrId, dataResult.DataResult.DrBlockHeight), dataResult.DataResult); err != nil {
+			panic(err)
+		}
+	}
+	for _, batchAssignment := range data.BatchAssignments {
+		if err := k.SetBatchAssignment(ctx, batchAssignment.DataRequestId, batchAssignment.DataRequestHeight, batchAssignment.BatchNumber); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // ExportGenesis extracts all data from store to genesis state.
 func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
-	dataResults, err := k.getAllDataResults(ctx)
+	dataResults, err := k.getAllGenesisDataResults(ctx)
 	if err != nil {
 		panic(err)
 	}
