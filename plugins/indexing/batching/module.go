@@ -84,7 +84,7 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 
 		return types.NewMessage("batch", data, ctx), nil
 	} else if keyBytes, found := bytes.CutPrefix(change.Key, batchingtypes.BatchAssignmentsPrefix); found {
-		_, key, err := collections.StringKey.Decode(keyBytes)
+		_, key, err := collections.PairKeyCodec(collections.StringKey, collections.Uint64Key).Decode(keyBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -96,9 +96,11 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 
 		data := struct {
 			DrID        string `json:"dr_id"`
+			DrHeight    string `json:"dr_height"`
 			BatchNumber string `json:"batch_number"`
 		}{
-			DrID:        key,
+			DrID:        key.K1(),
+			DrHeight:    strconv.FormatUint(key.K2(), 10),
 			BatchNumber: strconv.FormatUint(val, 10),
 		}
 
