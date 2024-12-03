@@ -5,8 +5,7 @@ import (
 )
 
 const (
-	// DefaultActivationHeight indicates that activation is not in progress.
-	DefaultActivationHeight = -1
+	DefaultActivationHeight = -1 // -1 indicates that activation is not in progress.
 )
 
 func DefaultGenesisState() *GenesisState {
@@ -18,6 +17,7 @@ func DefaultGenesisState() *GenesisState {
 				ActivationHeight: DefaultActivationHeight,
 			},
 		},
+		Params: DefaultParams(),
 	}
 }
 

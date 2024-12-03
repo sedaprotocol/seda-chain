@@ -18,22 +18,19 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
-// ActivationLag is the number of blocks to wait before activating
-// a proving scheme once the threshold of public key registration rate
-// is reached.
-const ActivationLag = 25
-
 type Keeper struct {
 	stakingKeeper         types.StakingKeeper
 	slashingKeeper        types.SlashingKeeper
 	validatorAddressCodec address.Codec
+	authority             string
 
 	Schema         collections.Schema
 	pubKeys        collections.Map[collections.Pair[[]byte, uint32], []byte]
 	provingSchemes collections.Map[uint32, types.ProvingScheme]
+	params         collections.Item[types.Params]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, stk types.StakingKeeper, slk types.SlashingKeeper, valAddrCdc address.Codec) *Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, stk types.StakingKeeper, slk types.SlashingKeeper, valAddrCdc address.Codec, authority string) *Keeper {
 	if valAddrCdc == nil {
 		panic("validator address codec is nil")
 	}
@@ -45,6 +42,8 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, st
 		validatorAddressCodec: valAddrCdc,
 		pubKeys:               collections.NewMap(sb, types.PubKeysPrefix, "pubkeys", collections.PairKeyCodec(collections.BytesKey, collections.Uint32Key), collections.BytesValue),
 		provingSchemes:        collections.NewMap(sb, types.ProvingSchemesPrefix, "proving_schemes", collections.Uint32Key, codec.CollValue[types.ProvingScheme](cdc)),
+		params:                collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
+		authority:             authority,
 	}
 
 	schema, err := sb.Build()
@@ -53,6 +52,11 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, st
 	}
 	k.Schema = schema
 	return &k
+}
+
+// GetAuthority returns the module's authority.
+func (k Keeper) GetAuthority() string {
+	return k.authority
 }
 
 func (k Keeper) SetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex, pubKey []byte) error {
@@ -159,7 +163,11 @@ func (k Keeper) StartProvingSchemeActivation(ctx sdk.Context, index utils.SEDAKe
 	if err != nil {
 		return err
 	}
-	scheme.ActivationHeight = ctx.BlockHeight() + ActivationLag
+	activationLag, err := k.GetActivationLag(ctx)
+	if err != nil {
+		return err
+	}
+	scheme.ActivationHeight = ctx.BlockHeight() + activationLag
 	return k.SetProvingScheme(ctx, scheme)
 }
 
@@ -201,6 +209,18 @@ func (k Keeper) GetAllProvingSchemes(ctx sdk.Context) ([]types.ProvingScheme, er
 		schemes = append(schemes, scheme)
 	}
 	return schemes, nil
+}
+
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	return k.params.Set(ctx, params)
+}
+
+func (k Keeper) GetActivationLag(ctx sdk.Context) (int64, error) {
+	params, err := k.params.Get(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return params.ActivationLag, nil
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

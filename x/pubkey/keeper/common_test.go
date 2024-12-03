@@ -17,6 +17,7 @@ import (
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/x/pubkey"
@@ -60,6 +61,7 @@ func (s *KeeperTestSuite) SetupTest() {
 		s.mockStakingKeeper,
 		s.mockSlashingKeeper,
 		s.valCdc,
+		authtypes.NewModuleAddress("gov").String(),
 	)
 	s.ctx = testCtx.Ctx
 	s.cdc = encCfg.Codec

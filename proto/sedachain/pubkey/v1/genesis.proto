@@ -12,6 +12,7 @@ message GenesisState {
   repeated ValidatorPubKeys validator_pub_keys = 1
       [ (gogoproto.nullable) = false ];
   repeated ProvingScheme proving_schemes = 2 [ (gogoproto.nullable) = false ];
+  Params params = 3 [ (gogoproto.nullable) = false ];
 }
 
 // ValidatorPubKeys defines a validator's list of registered public keys

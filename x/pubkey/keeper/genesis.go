@@ -27,6 +27,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 			panic(err)
 		}
 	}
+	err := k.params.Set(ctx, data.Params)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis extracts all data from store to genesis state.
@@ -38,6 +42,10 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 		panic(err)
 	}
 	gs.ProvingSchemes, err = k.GetAllProvingSchemes(ctx)
+	if err != nil {
+		panic(err)
+	}
+	gs.Params, err = k.params.Get(ctx)
 	if err != nil {
 		panic(err)
 	}

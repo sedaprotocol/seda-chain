@@ -25,3 +25,10 @@ message ProvingScheme {
   // the scheme is activated.
   int64 activation_height = 3;
 }
+
+// Params defines the parameters for the pubkey module.
+message Params {
+  // activation_lag is the number of blocks to wait before activating a
+  // proving scheme.
+  int64 activation_lag = 1;
+}

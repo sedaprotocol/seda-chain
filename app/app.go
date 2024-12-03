@@ -654,6 +654,7 @@ func NewApp(
 		app.StakingKeeper,
 		app.SlashingKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	app.DataProxyKeeper = *dataproxykeeper.NewKeeper(

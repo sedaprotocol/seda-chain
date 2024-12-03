@@ -147,6 +147,7 @@ func initFixture(tb testing.TB) *fixture {
 		stakingKeeper,
 		slashingKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
+		authtypes.NewModuleAddress("gov").String(),
 	)
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
@@ -206,6 +207,9 @@ func TestEndBlock(t *testing.T) {
 	_, valAddrs, _ := createValidators(t, f, []int64{1, 3, 5, 7, 2, 1}) // 1+3+5+7+2+1 = 19
 	pubKeys := generatePubKeys(t, 6)
 
+	activationLag, err := f.keeper.GetActivationLag(ctx)
+	require.NoError(t, err)
+
 	// Check for start of activation process.
 	var expectedActivationHeight int64 = types.DefaultActivationHeight
 	for i := range valAddrs[:len(valAddrs)-1] {
@@ -215,7 +219,7 @@ func TestEndBlock(t *testing.T) {
 		require.NoError(t, err)
 
 		if i >= 3 {
-			expectedActivationHeight = ctx.BlockHeight() + keeper.ActivationLag
+			expectedActivationHeight = ctx.BlockHeight() + activationLag
 		}
 		scheme, err := f.keeper.GetProvingScheme(ctx, utils.SEDAKeyIndexSecp256k1)
 		require.NoError(t, err)
@@ -224,8 +228,8 @@ func TestEndBlock(t *testing.T) {
 	}
 
 	// Check for successful activation.
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + keeper.ActivationLag)
-	err := f.keeper.EndBlock(ctx)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + activationLag)
+	err = f.keeper.EndBlock(ctx)
 	require.NoError(t, err)
 	scheme, err := f.keeper.GetProvingScheme(ctx, utils.SEDAKeyIndexSecp256k1)
 	require.NoError(t, err)

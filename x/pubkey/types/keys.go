@@ -10,4 +10,5 @@ const (
 var (
 	PubKeysPrefix        = collections.NewPrefix(0)
 	ProvingSchemesPrefix = collections.NewPrefix(1)
+	ParamsPrefix         = collections.NewPrefix(2)
 )

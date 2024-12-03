@@ -202,6 +202,7 @@ func initFixture(tb testing.TB) *fixture {
 		stakingKeeper,
 		slashingKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	batchingKeeper := batchingkeeper.NewKeeper(
