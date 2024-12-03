@@ -40,8 +40,8 @@ func NewSqsClient(logger *log.Logger) (*SqsClient, error) {
 
 	allowedMessages := make([]string, 0)
 	messageFilterString, found := os.LookupEnv(messageFilterEnvName)
-	if found {
-		allowedMessages = parseMessageFilterString((messageFilterString))
+	if found && messageFilterString != "" {
+		allowedMessages = parseMessageFilterString(messageFilterString)
 	}
 
 	sess, err := NewSession()
