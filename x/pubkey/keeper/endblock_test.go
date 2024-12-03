@@ -208,7 +208,7 @@ func TestEndBlock(t *testing.T) {
 
 	// Check for start of activation process.
 	var expectedActivationHeight int64 = types.DefaultActivationHeight
-	for i := range valAddrs {
+	for i := range valAddrs[:len(valAddrs)-1] {
 		err := f.keeper.SetValidatorKeyAtIndex(ctx, valAddrs[i], utils.SEDAKeyIndexSecp256k1, pubKeys[i])
 		require.NoError(t, err)
 		err = f.keeper.EndBlock(ctx)
@@ -230,6 +230,16 @@ func TestEndBlock(t *testing.T) {
 	scheme, err := f.keeper.GetProvingScheme(ctx, utils.SEDAKeyIndexSecp256k1)
 	require.NoError(t, err)
 	require.Equal(t, scheme.IsActivated, true)
+
+	for i := range valAddrs {
+		val, err := f.stakingKeeper.GetValidator(ctx, valAddrs[i])
+		require.NoError(t, err)
+		if i == len(valAddrs)-1 {
+			require.Equal(t, val.Jailed, true)
+		} else {
+			require.Equal(t, val.Jailed, false)
+		}
+	}
 }
 
 func generatePubKeys(t *testing.T, num int) [][]byte {

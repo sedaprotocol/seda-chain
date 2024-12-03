@@ -199,9 +199,9 @@ echo "4 validators are up and running!"
 
 # generate and upload SEDA keys
 $BIN tx pubkey add-seda-keys --from validator1 --keyring-backend test --home $HOME/.sedad/validator1 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
-# $BIN tx pubkey add-seda-keys --from validator2 --keyring-backend test --home $HOME/.sedad/validator2 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
-# $BIN tx pubkey add-seda-keys --from validator3 --keyring-backend test --home $HOME/.sedad/validator3 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
-# $BIN tx pubkey add-seda-keys --from validator4 --keyring-backend test --home $HOME/.sedad/validator4 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
+$BIN tx pubkey add-seda-keys --from validator2 --keyring-backend test --home $HOME/.sedad/validator2 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
+$BIN tx pubkey add-seda-keys --from validator3 --keyring-backend test --home $HOME/.sedad/validator3 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
+$BIN tx pubkey add-seda-keys --from validator4 --keyring-backend test --home $HOME/.sedad/validator4 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
 
 # restart to use SEDA keys
 sleep 10
