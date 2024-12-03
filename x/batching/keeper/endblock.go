@@ -31,6 +31,14 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		err = nil
 	}()
 
+	isActivated, err := k.pubKeyKeeper.IsProvingSchemeActivated(ctx, utils.SEDAKeyIndexSecp256k1)
+	if err != nil {
+		return err
+	}
+	if !isActivated {
+		return nil
+	}
+
 	batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
 	if err != nil {
 		if errors.Is(err, types.ErrNoBatchingUpdate) {

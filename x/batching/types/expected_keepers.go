@@ -26,4 +26,5 @@ type WasmStorageKeeper interface {
 
 type PubKeyKeeper interface {
 	GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex) ([]byte, error)
+	IsProvingSchemeActivated(ctx context.Context, index utils.SEDAKeyIndex) (bool, error)
 }
