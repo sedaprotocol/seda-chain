@@ -1,20 +1,10 @@
 package types
 
 import (
-	"context"
-
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
-type AccountKeeper interface {
-	stakingtypes.AccountKeeper
-
-	NewAccountWithAddress(ctx context.Context, addr sdk.AccAddress) sdk.AccountI
-	SetAccount(ctx context.Context, acc sdk.AccountI)
-}
-
-type RandomnessKeeper interface {
-	SetValidatorVRFPubKey(ctx context.Context, consensusAddr string, vrfPubKey cryptotypes.PubKey) error
+type PubkeyKeeper interface {
+	StoreIndexedPubKeys(ctx sdk.Context, valAddr sdk.ValAddress, pubKeys []types.IndexedPubKey) error
 }

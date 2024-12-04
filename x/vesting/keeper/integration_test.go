@@ -29,12 +29,16 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/integration"
+	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
@@ -123,9 +127,26 @@ func initFixture(tb testing.TB) *fixture {
 	err := stakingKeeper.SetParams(newCtx, stakingParams)
 	require.NoError(tb, err)
 
+	slashingKeeper := slashingkeeper.NewKeeper(
+		cdc,
+		nil,
+		runtime.NewKVStoreService(keys[slashingtypes.StoreKey]),
+		stakingKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	pubKeyKeeper := pubkeykeeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
+		stakingKeeper,
+		slashingKeeper,
+		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
+		authtypes.NewModuleAddress("gov").String(),
+	)
+
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
-	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, nil)
+	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	vestingModule := vesting.NewAppModule(accountKeeper, bankKeeper, stakingKeeper)
 
 	integrationApp := integration.NewIntegrationApp(newCtx, logger, keys, cdc, map[string]appmodule.AppModule{

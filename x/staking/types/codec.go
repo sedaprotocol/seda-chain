@@ -9,7 +9,7 @@ import (
 // RegisterInterfaces registers the x/staking interfaces types with the interface registry
 func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgCreateValidatorWithVRF{},
+		&MsgCreateSEDAValidator{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
