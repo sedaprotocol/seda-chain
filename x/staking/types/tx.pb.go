@@ -16,6 +16,7 @@ import (
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
+	types3 "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -35,33 +36,34 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgCreateValidator defines a SDK message for creating a new validator.
-type MsgCreateValidatorWithVRF struct {
+// MsgCreateSEDAValidator defines a message for creating a new SEDA
+// validator.
+type MsgCreateSEDAValidator struct {
 	Description       types.Description     `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
 	Commission        types.CommissionRates `protobuf:"bytes,2,opt,name=commission,proto3" json:"commission"`
 	MinSelfDelegation cosmossdk_io_math.Int `protobuf:"bytes,3,opt,name=min_self_delegation,json=minSelfDelegation,proto3,customtype=cosmossdk.io/math.Int" json:"min_self_delegation"`
 	// Deprecated: Use of Delegator Address in MsgCreateValidator is deprecated.
 	// The validator address bytes and delegator address bytes refer to the same
 	// account while creating validator (defer only in bech32 notation).
-	DelegatorAddress string      `protobuf:"bytes,4,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"` // Deprecated: Do not use.
-	ValidatorAddress string      `protobuf:"bytes,5,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
-	Pubkey           *types1.Any `protobuf:"bytes,6,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
-	Value            types2.Coin `protobuf:"bytes,7,opt,name=value,proto3" json:"value"`
-	VrfPubkey        *types1.Any `protobuf:"bytes,8,opt,name=vrf_pubkey,json=vrfPubkey,proto3" json:"vrf_pubkey,omitempty"`
+	DelegatorAddress string                 `protobuf:"bytes,4,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"` // Deprecated: Do not use.
+	ValidatorAddress string                 `protobuf:"bytes,5,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
+	Pubkey           *types1.Any            `protobuf:"bytes,6,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
+	Value            types2.Coin            `protobuf:"bytes,7,opt,name=value,proto3" json:"value"`
+	IndexedPubKeys   []types3.IndexedPubKey `protobuf:"bytes,8,rep,name=indexed_pub_keys,json=indexedPubKeys,proto3" json:"indexed_pub_keys"`
 }
 
-func (m *MsgCreateValidatorWithVRF) Reset()         { *m = MsgCreateValidatorWithVRF{} }
-func (m *MsgCreateValidatorWithVRF) String() string { return proto.CompactTextString(m) }
-func (*MsgCreateValidatorWithVRF) ProtoMessage()    {}
-func (*MsgCreateValidatorWithVRF) Descriptor() ([]byte, []int) {
+func (m *MsgCreateSEDAValidator) Reset()         { *m = MsgCreateSEDAValidator{} }
+func (m *MsgCreateSEDAValidator) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateSEDAValidator) ProtoMessage()    {}
+func (*MsgCreateSEDAValidator) Descriptor() ([]byte, []int) {
 	return fileDescriptor_670d278351a2d088, []int{0}
 }
-func (m *MsgCreateValidatorWithVRF) XXX_Unmarshal(b []byte) error {
+func (m *MsgCreateSEDAValidator) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgCreateValidatorWithVRF) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgCreateSEDAValidator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgCreateValidatorWithVRF.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgCreateSEDAValidator.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -71,34 +73,35 @@ func (m *MsgCreateValidatorWithVRF) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-func (m *MsgCreateValidatorWithVRF) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCreateValidatorWithVRF.Merge(m, src)
+func (m *MsgCreateSEDAValidator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateSEDAValidator.Merge(m, src)
 }
-func (m *MsgCreateValidatorWithVRF) XXX_Size() int {
+func (m *MsgCreateSEDAValidator) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgCreateValidatorWithVRF) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCreateValidatorWithVRF.DiscardUnknown(m)
+func (m *MsgCreateSEDAValidator) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateSEDAValidator.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgCreateValidatorWithVRF proto.InternalMessageInfo
+var xxx_messageInfo_MsgCreateSEDAValidator proto.InternalMessageInfo
 
-// MsgCreateValidatorResponse defines the Msg/CreateValidator response type.
-type MsgCreateValidatorWithVRFResponse struct {
+// MsgCreateSEDAValidatorResponse defines the Msg/MsgCreateSEDAValidator
+// response type.
+type MsgCreateSEDAValidatorResponse struct {
 }
 
-func (m *MsgCreateValidatorWithVRFResponse) Reset()         { *m = MsgCreateValidatorWithVRFResponse{} }
-func (m *MsgCreateValidatorWithVRFResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgCreateValidatorWithVRFResponse) ProtoMessage()    {}
-func (*MsgCreateValidatorWithVRFResponse) Descriptor() ([]byte, []int) {
+func (m *MsgCreateSEDAValidatorResponse) Reset()         { *m = MsgCreateSEDAValidatorResponse{} }
+func (m *MsgCreateSEDAValidatorResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateSEDAValidatorResponse) ProtoMessage()    {}
+func (*MsgCreateSEDAValidatorResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_670d278351a2d088, []int{1}
 }
-func (m *MsgCreateValidatorWithVRFResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgCreateSEDAValidatorResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgCreateValidatorWithVRFResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgCreateSEDAValidatorResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgCreateValidatorWithVRFResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgCreateSEDAValidatorResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -108,66 +111,68 @@ func (m *MsgCreateValidatorWithVRFResponse) XXX_Marshal(b []byte, deterministic 
 		return b[:n], nil
 	}
 }
-func (m *MsgCreateValidatorWithVRFResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCreateValidatorWithVRFResponse.Merge(m, src)
+func (m *MsgCreateSEDAValidatorResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateSEDAValidatorResponse.Merge(m, src)
 }
-func (m *MsgCreateValidatorWithVRFResponse) XXX_Size() int {
+func (m *MsgCreateSEDAValidatorResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgCreateValidatorWithVRFResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCreateValidatorWithVRFResponse.DiscardUnknown(m)
+func (m *MsgCreateSEDAValidatorResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateSEDAValidatorResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgCreateValidatorWithVRFResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgCreateSEDAValidatorResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgCreateValidatorWithVRF)(nil), "sedachain.staking.v1.MsgCreateValidatorWithVRF")
-	proto.RegisterType((*MsgCreateValidatorWithVRFResponse)(nil), "sedachain.staking.v1.MsgCreateValidatorWithVRFResponse")
+	proto.RegisterType((*MsgCreateSEDAValidator)(nil), "sedachain.staking.v1.MsgCreateSEDAValidator")
+	proto.RegisterType((*MsgCreateSEDAValidatorResponse)(nil), "sedachain.staking.v1.MsgCreateSEDAValidatorResponse")
 }
 
 func init() { proto.RegisterFile("sedachain/staking/v1/tx.proto", fileDescriptor_670d278351a2d088) }
 
 var fileDescriptor_670d278351a2d088 = []byte{
-	// 618 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0xcf, 0x4f, 0x13, 0x41,
-	0x14, 0xc7, 0xbb, 0x22, 0x28, 0xc3, 0x85, 0xae, 0x55, 0xdb, 0x26, 0x6c, 0xf9, 0x61, 0x22, 0x21,
-	0xe9, 0x8c, 0xc5, 0x83, 0x09, 0x37, 0x0a, 0xc1, 0x10, 0xc5, 0x90, 0x25, 0xc1, 0xc4, 0x4b, 0x9d,
-	0xdd, 0x9d, 0x6e, 0x27, 0xec, 0xce, 0x34, 0x3b, 0xd3, 0x0d, 0xbd, 0x72, 0x32, 0x9e, 0xfc, 0x13,
-	0x38, 0x7a, 0x93, 0x03, 0x7f, 0x04, 0xf1, 0x44, 0x38, 0x19, 0x0f, 0xc4, 0xc0, 0x01, 0xff, 0x0c,
-	0xd3, 0x99, 0xd9, 0x6d, 0x51, 0x7b, 0xd0, 0xcb, 0x66, 0x66, 0xbe, 0xef, 0x7d, 0xe6, 0x9b, 0xf7,
-	0xde, 0x2c, 0x98, 0x13, 0x24, 0xc0, 0x7e, 0x07, 0x53, 0x86, 0x84, 0xc4, 0x07, 0x94, 0x85, 0x28,
-	0x6d, 0x20, 0x79, 0x08, 0xbb, 0x09, 0x97, 0xdc, 0x2e, 0xe5, 0x32, 0x34, 0x32, 0x4c, 0x1b, 0xd5,
-	0x4a, 0xc8, 0x79, 0x18, 0x11, 0xa4, 0x62, 0xbc, 0x5e, 0x1b, 0x61, 0xd6, 0xd7, 0x09, 0xd5, 0x52,
-	0xc8, 0x43, 0xae, 0x96, 0x68, 0xb0, 0x32, 0xa7, 0x15, 0x9f, 0x8b, 0x98, 0x8b, 0x96, 0x16, 0xf4,
-	0xc6, 0x48, 0x8e, 0xde, 0x21, 0x0f, 0x0b, 0x82, 0xd2, 0x86, 0x47, 0x24, 0x6e, 0x20, 0x9f, 0x53,
-	0x66, 0xf4, 0x27, 0x46, 0x1f, 0xba, 0xd3, 0x21, 0x99, 0x1d, 0x1d, 0xf5, 0xd8, 0x44, 0xc5, 0x42,
-	0xf9, 0x8f, 0x45, 0x26, 0x14, 0x71, 0x4c, 0x19, 0x47, 0xea, 0xab, 0x8f, 0x16, 0xbf, 0x4c, 0x82,
-	0xca, 0x8e, 0x08, 0x37, 0x12, 0x82, 0x25, 0xd9, 0xc7, 0x11, 0x0d, 0xb0, 0xe4, 0xc9, 0x5b, 0x2a,
-	0x3b, 0xfb, 0xee, 0x96, 0xbd, 0x0b, 0x66, 0x02, 0x22, 0xfc, 0x84, 0x76, 0x25, 0xe5, 0xac, 0x6c,
-	0xcd, 0x5b, 0xcb, 0x33, 0xab, 0x4b, 0xd0, 0x78, 0x1e, 0x16, 0x41, 0xb9, 0x80, 0x9b, 0xc3, 0xd0,
-	0xe6, 0xf4, 0xd9, 0x65, 0xad, 0xf0, 0xf9, 0xe6, 0x64, 0xc5, 0x72, 0x47, 0x11, 0xb6, 0x0b, 0x80,
-	0xcf, 0xe3, 0x98, 0x0a, 0x31, 0x00, 0xde, 0x51, 0xc0, 0xa7, 0xe3, 0x80, 0x1b, 0x79, 0xa4, 0x8b,
-	0x25, 0x11, 0xa3, 0xd0, 0x11, 0x8a, 0xfd, 0x1e, 0x3c, 0x88, 0x29, 0x6b, 0x09, 0x12, 0xb5, 0x5b,
-	0x01, 0x89, 0x48, 0x88, 0x95, 0xdb, 0x89, 0x79, 0x6b, 0x79, 0xba, 0xf9, 0x6c, 0x90, 0xf3, 0xfd,
-	0xb2, 0xf6, 0x50, 0xdf, 0x21, 0x82, 0x03, 0x48, 0x39, 0x8a, 0xb1, 0xec, 0xc0, 0x6d, 0x26, 0x2f,
-	0x4e, 0xeb, 0xc0, 0x5c, 0xbe, 0xcd, 0xa4, 0x46, 0x17, 0x63, 0xca, 0xf6, 0x48, 0xd4, 0xde, 0xcc,
-	0x51, 0xf6, 0x4b, 0x50, 0x34, 0x60, 0x9e, 0xb4, 0x70, 0x10, 0x24, 0x44, 0x88, 0xf2, 0x5d, 0xc5,
-	0xaf, 0x5e, 0x9c, 0xd6, 0x4b, 0x06, 0xb1, 0xae, 0x95, 0x3d, 0x99, 0x50, 0x16, 0x96, 0x2d, 0x77,
-	0x36, 0x4f, 0x32, 0x8a, 0xfd, 0x06, 0x14, 0xd3, 0xac, 0xc8, 0x39, 0x68, 0x52, 0x81, 0x16, 0x2e,
-	0x4e, 0xeb, 0x73, 0x06, 0x94, 0x37, 0xe2, 0x16, 0xd1, 0x9d, 0x4d, 0x7f, 0x3b, 0xb7, 0xb7, 0xc0,
-	0x54, 0xb7, 0xe7, 0x1d, 0x90, 0x7e, 0x79, 0x4a, 0x95, 0xb2, 0x04, 0xf5, 0x34, 0xc2, 0x6c, 0x1a,
-	0xe1, 0x3a, 0xeb, 0x37, 0xcb, 0x5f, 0x87, 0x1e, 0xfd, 0xa4, 0xdf, 0x95, 0x1c, 0xee, 0xf6, 0xbc,
-	0x57, 0xa4, 0xef, 0x9a, 0x6c, 0x7b, 0x0d, 0x4c, 0xa6, 0x38, 0xea, 0x91, 0xf2, 0x3d, 0x85, 0xa9,
-	0x64, 0x1d, 0x19, 0x0c, 0xe2, 0x48, 0x3b, 0xe8, 0xad, 0xc6, 0xea, 0x14, 0x7b, 0x07, 0x80, 0x34,
-	0x69, 0xb7, 0x8c, 0x8f, 0xfb, 0xff, 0xe5, 0x63, 0x3a, 0x4d, 0xda, 0xbb, 0x0a, 0xb0, 0xe6, 0x7c,
-	0x38, 0xae, 0x15, 0x7e, 0x1e, 0xd7, 0x0a, 0x47, 0x37, 0x27, 0x2b, 0x7f, 0x56, 0x6b, 0x71, 0x09,
-	0x2c, 0x8c, 0x1d, 0x58, 0x97, 0x88, 0x2e, 0x67, 0x82, 0xac, 0x7e, 0xb4, 0xc0, 0xc4, 0x8e, 0x08,
-	0xed, 0x23, 0x0b, 0x3c, 0x1a, 0x33, 0xdb, 0x08, 0xfe, 0xed, 0x39, 0xc3, 0xb1, 0xec, 0xea, 0x8b,
-	0x7f, 0x4c, 0xc8, 0xcc, 0x34, 0x5f, 0x9f, 0x5d, 0x39, 0xd6, 0xf9, 0x95, 0x63, 0xfd, 0xb8, 0x72,
-	0xac, 0x4f, 0xd7, 0x4e, 0xe1, 0xfc, 0xda, 0x29, 0x7c, 0xbb, 0x76, 0x0a, 0xef, 0x56, 0x43, 0x2a,
-	0x3b, 0x3d, 0x0f, 0xfa, 0x3c, 0x46, 0x03, 0xb8, 0xaa, 0x96, 0xcf, 0x23, 0xb5, 0xa9, 0xeb, 0x3f,
-	0xd1, 0x61, 0xfe, 0xda, 0x65, 0xbf, 0x4b, 0x84, 0x37, 0xa5, 0x82, 0x9e, 0xff, 0x0a, 0x00, 0x00,
-	0xff, 0xff, 0xd0, 0xfe, 0xfa, 0x43, 0xad, 0x04, 0x00, 0x00,
+	// 653 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x94, 0xcf, 0x6f, 0xd3, 0x3c,
+	0x18, 0xc7, 0x9b, 0x77, 0x3f, 0xde, 0x77, 0x9e, 0xf4, 0x6a, 0xcd, 0x0a, 0x64, 0x95, 0x96, 0x96,
+	0x81, 0xc4, 0x34, 0x51, 0x87, 0x16, 0x4e, 0xbb, 0xad, 0x1b, 0xa0, 0x09, 0x86, 0xa6, 0x4c, 0xe2,
+	0xc0, 0xa5, 0x38, 0x89, 0x97, 0x59, 0x4d, 0xec, 0x28, 0x76, 0xa3, 0xe5, 0x86, 0x38, 0x71, 0xe4,
+	0x4f, 0xd8, 0x91, 0xe3, 0x90, 0xf6, 0x47, 0x4c, 0x9c, 0xa6, 0x9d, 0x10, 0x87, 0x09, 0x6d, 0x87,
+	0xf1, 0x67, 0xa0, 0xd8, 0x6e, 0xda, 0x41, 0x39, 0x70, 0xa9, 0x6c, 0x7f, 0xbf, 0xcf, 0x27, 0x8f,
+	0x9f, 0xe7, 0x71, 0xc1, 0x32, 0xc7, 0x01, 0xf2, 0x0f, 0x10, 0xa1, 0x0e, 0x17, 0xa8, 0x4f, 0x68,
+	0xe8, 0x64, 0x6d, 0x47, 0x1c, 0xc2, 0x24, 0x65, 0x82, 0x99, 0xb5, 0x52, 0x86, 0x5a, 0x86, 0x59,
+	0xbb, 0xbe, 0x14, 0x32, 0x16, 0x46, 0xd8, 0x91, 0x1e, 0x6f, 0xb0, 0xef, 0x20, 0x9a, 0xab, 0x80,
+	0x7a, 0x2d, 0x64, 0x21, 0x93, 0x4b, 0xa7, 0x58, 0xe9, 0xd3, 0x25, 0x9f, 0xf1, 0x98, 0xf1, 0x9e,
+	0x12, 0xd4, 0x46, 0x4b, 0xb6, 0xda, 0x39, 0x1e, 0xe2, 0xd8, 0xc9, 0xda, 0x1e, 0x16, 0xa8, 0xed,
+	0xf8, 0x8c, 0x50, 0xad, 0xdf, 0xd7, 0xfa, 0x28, 0x3b, 0x65, 0x19, 0xa6, 0xa3, 0x5c, 0x77, 0xb4,
+	0x2b, 0xe6, 0x32, 0xff, 0x98, 0x0f, 0x85, 0x2a, 0x8a, 0x09, 0x65, 0x8e, 0xfc, 0xd5, 0x47, 0xcd,
+	0xd1, 0x95, 0x93, 0x81, 0xd7, 0xc7, 0x79, 0x11, 0xa1, 0x56, 0xca, 0xb1, 0xf2, 0x79, 0x06, 0xdc,
+	0xde, 0xe1, 0xe1, 0x66, 0x8a, 0x91, 0xc0, 0x7b, 0x4f, 0xb7, 0x36, 0x5e, 0xa3, 0x88, 0x04, 0x48,
+	0xb0, 0xd4, 0xdc, 0x05, 0xf3, 0x01, 0xe6, 0x7e, 0x4a, 0x12, 0x41, 0x18, 0xb5, 0x8c, 0xa6, 0xb1,
+	0x3a, 0xdf, 0xb9, 0x07, 0xf5, 0x95, 0x46, 0x35, 0x92, 0x49, 0xc2, 0xad, 0x91, 0xb5, 0x3b, 0x77,
+	0x7a, 0xd1, 0xa8, 0x7c, 0xba, 0x3e, 0x5e, 0x33, 0xdc, 0x71, 0x84, 0xe9, 0x02, 0xe0, 0xb3, 0x38,
+	0x26, 0x9c, 0x17, 0xc0, 0x7f, 0x24, 0xf0, 0xc1, 0x9f, 0x80, 0x9b, 0xa5, 0xd3, 0x45, 0x02, 0xf3,
+	0x71, 0xe8, 0x18, 0xc5, 0x7c, 0x0b, 0x16, 0x63, 0x42, 0x7b, 0x1c, 0x47, 0xfb, 0xbd, 0x00, 0x47,
+	0x38, 0x44, 0x32, 0xdb, 0xa9, 0xa6, 0xb1, 0x3a, 0xd7, 0x7d, 0x54, 0xc4, 0x7c, 0xbb, 0x68, 0xdc,
+	0x52, 0xdf, 0xe0, 0x41, 0x1f, 0x12, 0xe6, 0xc4, 0x48, 0x1c, 0xc0, 0x6d, 0x2a, 0xce, 0x4f, 0x5a,
+	0x40, 0x7f, 0x7c, 0x9b, 0x0a, 0x85, 0xae, 0xc6, 0x84, 0xee, 0xe1, 0x68, 0x7f, 0xab, 0x44, 0x99,
+	0xcf, 0x41, 0x55, 0x83, 0x59, 0xda, 0x43, 0x41, 0x90, 0x62, 0xce, 0xad, 0x69, 0xc9, 0xaf, 0x9f,
+	0x9f, 0xb4, 0x6a, 0x1a, 0xb1, 0xa1, 0x94, 0x3d, 0x91, 0x12, 0x1a, 0x5a, 0x86, 0xbb, 0x50, 0x06,
+	0x69, 0xc5, 0x7c, 0x05, 0xaa, 0xd9, 0xb0, 0xba, 0x25, 0x68, 0x46, 0x82, 0xee, 0x9e, 0x9f, 0xb4,
+	0x96, 0x35, 0xa8, 0xec, 0xc0, 0x0d, 0xa2, 0xbb, 0x90, 0xfd, 0x72, 0x6e, 0x3e, 0x03, 0xb3, 0xaa,
+	0x97, 0xd6, 0xac, 0x2c, 0x65, 0x0d, 0xaa, 0x61, 0x85, 0xc3, 0x61, 0x85, 0x1b, 0x34, 0xef, 0x5a,
+	0x5f, 0x46, 0x39, 0xfa, 0x69, 0x9e, 0x08, 0x06, 0x77, 0x07, 0xde, 0x0b, 0x9c, 0xbb, 0x3a, 0xda,
+	0x5c, 0x07, 0x33, 0x19, 0x8a, 0x06, 0xd8, 0xfa, 0x57, 0x62, 0x96, 0x86, 0x1d, 0x29, 0xe6, 0x74,
+	0xac, 0x1d, 0xe4, 0x46, 0x63, 0x55, 0x88, 0xe9, 0x82, 0x05, 0x42, 0x03, 0x7c, 0x88, 0x83, 0x5e,
+	0x32, 0xf0, 0x7a, 0x7d, 0x9c, 0x73, 0xeb, 0xbf, 0xe6, 0xd4, 0xea, 0x7c, 0x67, 0x05, 0x8e, 0x1e,
+	0x94, 0x1e, 0xb9, 0xac, 0x0d, 0xb7, 0x95, 0x59, 0x65, 0xd0, 0x9d, 0x2e, 0x78, 0xee, 0xff, 0x64,
+	0xfc, 0x90, 0xaf, 0xdb, 0x1f, 0x8e, 0x1a, 0x95, 0x1f, 0x47, 0x8d, 0xca, 0xfb, 0xeb, 0xe3, 0xb5,
+	0xdf, 0x4b, 0xb6, 0xd2, 0x04, 0xf6, 0xe4, 0x91, 0x75, 0x31, 0x4f, 0x18, 0xe5, 0xb8, 0xf3, 0xce,
+	0x00, 0x53, 0x3b, 0x3c, 0x34, 0x73, 0xb0, 0x38, 0x69, 0xb2, 0x1f, 0xc2, 0x49, 0x6f, 0x1d, 0x4e,
+	0x86, 0xd6, 0x9f, 0xfc, 0x8d, 0x7b, 0x98, 0x42, 0xf7, 0xe5, 0xe9, 0xa5, 0x6d, 0x9c, 0x5d, 0xda,
+	0xc6, 0xf7, 0x4b, 0xdb, 0xf8, 0x78, 0x65, 0x57, 0xce, 0xae, 0xec, 0xca, 0xd7, 0x2b, 0xbb, 0xf2,
+	0xa6, 0x13, 0x12, 0x71, 0x30, 0xf0, 0xa0, 0xcf, 0x62, 0xa7, 0x20, 0xcb, 0x6e, 0xf9, 0x2c, 0x92,
+	0x9b, 0x96, 0x7a, 0xad, 0x87, 0xe5, 0x9f, 0x80, 0xc8, 0x13, 0xcc, 0xbd, 0x59, 0x69, 0x7a, 0xfc,
+	0x33, 0x00, 0x00, 0xff, 0xff, 0x0e, 0x66, 0x03, 0xab, 0xc4, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -182,8 +187,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// CreateValidatorWithVRF defines a method for creating a new validator.
-	CreateValidatorWithVRF(ctx context.Context, in *MsgCreateValidatorWithVRF, opts ...grpc.CallOption) (*MsgCreateValidatorWithVRFResponse, error)
+	// CreateSEDAValidator defines a method for creating a new validator.
+	CreateSEDAValidator(ctx context.Context, in *MsgCreateSEDAValidator, opts ...grpc.CallOption) (*MsgCreateSEDAValidatorResponse, error)
 }
 
 type msgClient struct {
@@ -194,9 +199,9 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) CreateValidatorWithVRF(ctx context.Context, in *MsgCreateValidatorWithVRF, opts ...grpc.CallOption) (*MsgCreateValidatorWithVRFResponse, error) {
-	out := new(MsgCreateValidatorWithVRFResponse)
-	err := c.cc.Invoke(ctx, "/sedachain.staking.v1.Msg/CreateValidatorWithVRF", in, out, opts...)
+func (c *msgClient) CreateSEDAValidator(ctx context.Context, in *MsgCreateSEDAValidator, opts ...grpc.CallOption) (*MsgCreateSEDAValidatorResponse, error) {
+	out := new(MsgCreateSEDAValidatorResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.staking.v1.Msg/CreateSEDAValidator", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -205,36 +210,36 @@ func (c *msgClient) CreateValidatorWithVRF(ctx context.Context, in *MsgCreateVal
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// CreateValidatorWithVRF defines a method for creating a new validator.
-	CreateValidatorWithVRF(context.Context, *MsgCreateValidatorWithVRF) (*MsgCreateValidatorWithVRFResponse, error)
+	// CreateSEDAValidator defines a method for creating a new validator.
+	CreateSEDAValidator(context.Context, *MsgCreateSEDAValidator) (*MsgCreateSEDAValidatorResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) CreateValidatorWithVRF(ctx context.Context, req *MsgCreateValidatorWithVRF) (*MsgCreateValidatorWithVRFResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateValidatorWithVRF not implemented")
+func (*UnimplementedMsgServer) CreateSEDAValidator(ctx context.Context, req *MsgCreateSEDAValidator) (*MsgCreateSEDAValidatorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSEDAValidator not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
 }
 
-func _Msg_CreateValidatorWithVRF_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgCreateValidatorWithVRF)
+func _Msg_CreateSEDAValidator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCreateSEDAValidator)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).CreateValidatorWithVRF(ctx, in)
+		return srv.(MsgServer).CreateSEDAValidator(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/sedachain.staking.v1.Msg/CreateValidatorWithVRF",
+		FullMethod: "/sedachain.staking.v1.Msg/CreateSEDAValidator",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).CreateValidatorWithVRF(ctx, req.(*MsgCreateValidatorWithVRF))
+		return srv.(MsgServer).CreateSEDAValidator(ctx, req.(*MsgCreateSEDAValidator))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -245,15 +250,15 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateValidatorWithVRF",
-			Handler:    _Msg_CreateValidatorWithVRF_Handler,
+			MethodName: "CreateSEDAValidator",
+			Handler:    _Msg_CreateSEDAValidator_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "sedachain/staking/v1/tx.proto",
 }
 
-func (m *MsgCreateValidatorWithVRF) Marshal() (dAtA []byte, err error) {
+func (m *MsgCreateSEDAValidator) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -263,27 +268,29 @@ func (m *MsgCreateValidatorWithVRF) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgCreateValidatorWithVRF) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgCreateSEDAValidator) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgCreateValidatorWithVRF) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgCreateSEDAValidator) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.VrfPubkey != nil {
-		{
-			size, err := m.VrfPubkey.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
+	if len(m.IndexedPubKeys) > 0 {
+		for iNdEx := len(m.IndexedPubKeys) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.IndexedPubKeys[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
 			}
-			i -= size
-			i = encodeVarintTx(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x42
 		}
-		i--
-		dAtA[i] = 0x42
 	}
 	{
 		size, err := m.Value.MarshalToSizedBuffer(dAtA[:i])
@@ -354,7 +361,7 @@ func (m *MsgCreateValidatorWithVRF) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgCreateValidatorWithVRFResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgCreateSEDAValidatorResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -364,12 +371,12 @@ func (m *MsgCreateValidatorWithVRFResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgCreateValidatorWithVRFResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgCreateSEDAValidatorResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgCreateValidatorWithVRFResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgCreateSEDAValidatorResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -388,7 +395,7 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgCreateValidatorWithVRF) Size() (n int) {
+func (m *MsgCreateSEDAValidator) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -414,14 +421,16 @@ func (m *MsgCreateValidatorWithVRF) Size() (n int) {
 	}
 	l = m.Value.Size()
 	n += 1 + l + sovTx(uint64(l))
-	if m.VrfPubkey != nil {
-		l = m.VrfPubkey.Size()
-		n += 1 + l + sovTx(uint64(l))
+	if len(m.IndexedPubKeys) > 0 {
+		for _, e := range m.IndexedPubKeys {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
 	}
 	return n
 }
 
-func (m *MsgCreateValidatorWithVRFResponse) Size() (n int) {
+func (m *MsgCreateSEDAValidatorResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -436,7 +445,7 @@ func sovTx(x uint64) (n int) {
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *MsgCreateValidatorWithVRF) Unmarshal(dAtA []byte) error {
+func (m *MsgCreateSEDAValidator) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -459,10 +468,10 @@ func (m *MsgCreateValidatorWithVRF) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCreateValidatorWithVRF: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgCreateSEDAValidator: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCreateValidatorWithVRF: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgCreateSEDAValidator: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -700,7 +709,7 @@ func (m *MsgCreateValidatorWithVRF) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 8:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field VrfPubkey", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field IndexedPubKeys", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -727,10 +736,8 @@ func (m *MsgCreateValidatorWithVRF) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.VrfPubkey == nil {
-				m.VrfPubkey = &types1.Any{}
-			}
-			if err := m.VrfPubkey.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.IndexedPubKeys = append(m.IndexedPubKeys, types3.IndexedPubKey{})
+			if err := m.IndexedPubKeys[len(m.IndexedPubKeys)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -755,7 +762,7 @@ func (m *MsgCreateValidatorWithVRF) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgCreateValidatorWithVRFResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgCreateSEDAValidatorResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -778,10 +785,10 @@ func (m *MsgCreateValidatorWithVRFResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCreateValidatorWithVRFResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgCreateSEDAValidatorResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCreateValidatorWithVRFResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgCreateSEDAValidatorResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/hex"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -27,6 +25,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.MsgAddKeyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// Validate the message.
 	err := msg.Validate()
 	if err != nil {
 		return nil, err
@@ -36,6 +35,7 @@ func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.M
 		return nil, sdkerrors.ErrInvalidRequest.Wrapf("invalid SEDA keys: %s", err)
 	}
 
+	// Verify that the validator exists.
 	valAddr, err := m.validatorAddressCodec.StringToBytes(msg.ValidatorAddr)
 	if err != nil {
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
@@ -45,20 +45,10 @@ func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.M
 		return nil, sdkerrors.ErrNotFound.Wrapf("validator not found %s", msg.ValidatorAddr)
 	}
 
-	for _, indPubKey := range msg.IndexedPubKeys {
-		err := m.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndex(indPubKey.Index), indPubKey.PubKey)
-		if err != nil {
-			return nil, err
-		}
-
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				types.EventTypeAddKey,
-				sdk.NewAttribute(types.AttributeValidatorAddr, msg.ValidatorAddr),
-				sdk.NewAttribute(types.AttributePubKeyIndex, fmt.Sprintf("%d", indPubKey.Index)),
-				sdk.NewAttribute(types.AttributePublicKey, hex.EncodeToString(indPubKey.PubKey)),
-			),
-		)
+	// Store the public keys.
+	err = m.StoreIndexedPubKeys(ctx, valAddr, msg.IndexedPubKeys)
+	if err != nil {
+		return nil, err
 	}
 	return &types.MsgAddKeyResponse{}, nil
 }

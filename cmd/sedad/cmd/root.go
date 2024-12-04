@@ -54,6 +54,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik" // for swagger docs
+	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
 )
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
@@ -187,13 +188,13 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig, basi
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(basicManager, app.DefaultNodeHome),
 		JoinNetworkCommand(basicManager, app.DefaultNodeHome),
-		genutilcli.CollectGenTxsCmd(
+		gentx.CollectGenTxsCmd(
 			banktypes.GenesisBalancesIterator{},
 			app.DefaultNodeHome,
 			gentxModule.GenTxValidator,
 			encodingConfig.InterfaceRegistry.SigningContext().ValidatorAddressCodec(),
 		),
-		genutilcli.GenTxCmd(
+		gentx.GenTxCmd(
 			basicManager,
 			encodingConfig.TxConfig,
 			banktypes.GenesisBalancesIterator{},

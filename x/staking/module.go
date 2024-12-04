@@ -18,11 +18,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	sdkcli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	sdkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/cosmos/cosmos-sdk/x/staking/simulation"
 	sdktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/sedaprotocol/seda-chain/x/staking/client/cli"
 	"github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/staking/types"
 )
@@ -43,7 +43,6 @@ var (
 // AppModuleBasic defines the basic application module used by the staking module.
 type AppModuleBasic struct {
 	cdc codec.Codec
-	ak  types.AccountKeeper
 }
 
 // Name returns the staking module's name.
@@ -58,13 +57,7 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 
 // RegisterInterfaces registers the module's interface types
 func (AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-	// TODO(#208) to be activated later
-	// types.RegisterInterfaces(registry)
-	// err := registry.EnsureRegistered(&types.MsgCreateValidatorWithVRF{})
-	// if err != nil {
-	// 	fmt.Println("error")
-	// }
-
+	types.RegisterInterfaces(registry)
 	sdktypes.RegisterInterfaces(registry)
 }
 
@@ -93,10 +86,7 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *g
 
 // GetTxCmd returns the root tx command for the staking module.
 func (amb AppModuleBasic) GetTxCmd() *cobra.Command {
-	// TODO(#208) to be activated later
-	// return cli.NewTxCmd(amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(), amb.cdc.InterfaceRegistry().SigningContext().AddressCodec())
-
-	return sdkcli.NewTxCmd(amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(), amb.cdc.InterfaceRegistry().SigningContext().AddressCodec())
+	return cli.NewTxCmd(amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(), amb.cdc.InterfaceRegistry().SigningContext().AddressCodec())
 }
 
 // ----------------------------------------------------------------------------
@@ -107,36 +97,34 @@ func (amb AppModuleBasic) GetTxCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper           *keeper.Keeper
-	accountKeeper    types.AccountKeeper
-	bankKeeper       sdktypes.BankKeeper
-	randomnessKeeper types.RandomnessKeeper
+	keeper        *keeper.Keeper
+	accountKeeper sdktypes.AccountKeeper
+	bankKeeper    sdktypes.BankKeeper
+	pubKeyKeeper  types.PubkeyKeeper
 }
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(
 	cdc codec.Codec,
 	keeper *keeper.Keeper,
-	ak types.AccountKeeper,
+	ak sdktypes.AccountKeeper,
 	bk sdktypes.BankKeeper,
-	rk types.RandomnessKeeper,
+	pk types.PubkeyKeeper,
 ) AppModule {
 	return AppModule{
-		AppModuleBasic:   AppModuleBasic{cdc: cdc, ak: ak},
-		keeper:           keeper,
-		accountKeeper:    ak,
-		bankKeeper:       bk,
-		randomnessKeeper: rk,
+		AppModuleBasic: AppModuleBasic{cdc: cdc},
+		keeper:         keeper,
+		accountKeeper:  ak,
+		bankKeeper:     bk,
+		pubKeyKeeper:   pk,
 	}
 }
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	sdkMsgServer := NewMsgServerImpl(am.keeper.Keeper, am.accountKeeper)
-	sdktypes.RegisterMsgServer(cfg.MsgServer(), sdkMsgServer)
-
-	// TODO(#208) to be activated later
-	// types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(sdkMsgServer, am.keeper, am.accountKeeper, am.randomnessKeeper))
+	sdkMsgServer := sdkkeeper.NewMsgServerImpl(am.keeper.Keeper)
+	msgServer := keeper.NewMsgServerImpl(sdkMsgServer, am.pubKeyKeeper, am.keeper.ValidatorAddressCodec())
+	types.RegisterMsgServer(cfg.MsgServer(), msgServer)
 
 	querier := sdkkeeper.Querier{Keeper: am.keeper.Keeper}
 	sdktypes.RegisterQueryServer(cfg.QueryServer(), querier)

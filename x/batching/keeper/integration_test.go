@@ -215,6 +215,7 @@ func initFixture(tb testing.TB) *fixture {
 		viewKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
+
 	tallyKeeper := tallykeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[tallytypes.StoreKey]),
@@ -227,7 +228,7 @@ func initFixture(tb testing.TB) *fixture {
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
-	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, nil)
+	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
 	tallyModule := tally.NewAppModule(tallyKeeper)
 	pubKeyModule := pubkey.NewAppModule(cdc, *pubKeyKeeper)

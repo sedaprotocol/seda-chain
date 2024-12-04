@@ -9,18 +9,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 var (
-	_ sdk.Msg                            = &MsgCreateValidatorWithVRF{}
-	_ codectypes.UnpackInterfacesMessage = (*MsgCreateValidatorWithVRF)(nil)
+	_ sdk.Msg                            = &MsgCreateSEDAValidator{}
+	_ codectypes.UnpackInterfacesMessage = (*MsgCreateSEDAValidator)(nil)
 )
 
-// NewMsgCreateValidatorWithVRF creates a MsgCreateValidatorWithVRF instance.
-func NewMsgCreateValidatorWithVRF(
-	valAddr string, pubKey, vrfPubKey cryptotypes.PubKey,
-	selfDelegation sdk.Coin, description types.Description, commission types.CommissionRates, minSelfDelegation math.Int,
-) (*MsgCreateValidatorWithVRF, error) {
+// NewMsgCreateSEDAValidator creates a MsgCreateSEDAValidator instance.
+func NewMsgCreateSEDAValidator(
+	valAddr string, pubKey cryptotypes.PubKey, sedaPubKeys []pubkeytypes.IndexedPubKey,
+	selfDelegation sdk.Coin, description types.Description, commission types.CommissionRates,
+	minSelfDelegation math.Int,
+) (*MsgCreateSEDAValidator, error) {
 	var pkAny *codectypes.Any
 	if pubKey != nil {
 		var err error
@@ -29,29 +32,21 @@ func NewMsgCreateValidatorWithVRF(
 		}
 	}
 
-	var vrfPkAny *codectypes.Any
-	if vrfPubKey != nil {
-		var err error
-		if vrfPkAny, err = codectypes.NewAnyWithValue(vrfPubKey); err != nil {
-			return nil, err
-		}
-	}
-
-	return &MsgCreateValidatorWithVRF{
+	return &MsgCreateSEDAValidator{
 		Description:       description,
 		ValidatorAddress:  valAddr,
 		Pubkey:            pkAny,
-		VrfPubkey:         vrfPkAny,
+		IndexedPubKeys:    sedaPubKeys,
 		Value:             selfDelegation,
 		Commission:        commission,
 		MinSelfDelegation: minSelfDelegation,
 	}, nil
 }
 
-// Validate validates the MsgCreateValidatorWithVRF sdk msg.
-func (msg MsgCreateValidatorWithVRF) Validate(ac address.Codec) error {
-	if msg.Pubkey == nil || msg.VrfPubkey == nil {
-		return sdkerrors.ErrInvalidRequest.Wrap("empty validator public key or VRF public key")
+// Validate validates the MsgCreateSEDAValidator sdk msg.
+func (msg MsgCreateSEDAValidator) Validate(ac address.Codec) error {
+	if msg.Pubkey == nil {
+		return sdkerrors.ErrInvalidRequest.Wrap("empty validator public key")
 	}
 
 	msgCreateVal := &types.MsgCreateValidator{
@@ -66,11 +61,7 @@ func (msg MsgCreateValidatorWithVRF) Validate(ac address.Codec) error {
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
-func (msg MsgCreateValidatorWithVRF) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
-	var pubKey, vrfPubKey cryptotypes.PubKey
-	err := unpacker.UnpackAny(msg.Pubkey, &pubKey)
-	if err != nil {
-		return err
-	}
-	return unpacker.UnpackAny(msg.VrfPubkey, &vrfPubKey)
+func (msg MsgCreateSEDAValidator) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	var pubKey cryptotypes.PubKey
+	return unpacker.UnpackAny(msg.Pubkey, &pubKey)
 }

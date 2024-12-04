@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -57,6 +58,27 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, st
 // GetAuthority returns the module's authority.
 func (k Keeper) GetAuthority() string {
 	return k.authority
+}
+
+// StoreIndexedPubKeys stores the given list of indexed public keys
+// for a validator.
+func (k Keeper) StoreIndexedPubKeys(ctx sdk.Context, valAddr sdk.ValAddress, pubKeys []types.IndexedPubKey) error {
+	for _, pk := range pubKeys {
+		err := k.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndex(pk.Index), pk.PubKey)
+		if err != nil {
+			return err
+		}
+
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeAddKey,
+				sdk.NewAttribute(types.AttributeValidatorAddr, valAddr.String()),
+				sdk.NewAttribute(types.AttributePubKeyIndex, fmt.Sprintf("%d", pk.Index)),
+				sdk.NewAttribute(types.AttributePublicKey, hex.EncodeToString(pk.PubKey)),
+			),
+		)
+	}
+	return nil
 }
 
 func (k Keeper) SetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex, pubKey []byte) error {
