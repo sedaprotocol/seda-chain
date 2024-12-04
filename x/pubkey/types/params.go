@@ -22,8 +22,8 @@ func (p *Params) Validate() error {
 	if p.ActivationBlockDelay < 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("ActivationBlockDelay should not be negative: %d", p.ActivationBlockDelay)
 	}
-	if p.ActivationThresholdPercent < 66 || p.ActivationThresholdPercent > 100 {
-		return sdkerrors.ErrInvalidRequest.Wrapf("ActivationThresholdPercent should be between 66 and 100: %d", p.ActivationThresholdPercent)
+	if p.ActivationThresholdPercent < 67 || p.ActivationThresholdPercent > 100 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("ActivationThresholdPercent should be between 67 and 100: %d", p.ActivationThresholdPercent)
 	}
 	return nil
 }
