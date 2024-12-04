@@ -5,20 +5,25 @@ import (
 )
 
 const (
-	DefaultActivationLag = 25
+	DefaultActivationBlockDelay       = 25
+	DefaultActivationThresholdPercent = 80
 )
 
 // DefaultParams returns default pubkey module parameters.
 func DefaultParams() Params {
 	return Params{
-		ActivationLag: DefaultActivationLag,
+		ActivationBlockDelay:       DefaultActivationBlockDelay,
+		ActivationThresholdPercent: DefaultActivationThresholdPercent,
 	}
 }
 
 // ValidateBasic performs basic validation on pubkey module parameters.
 func (p *Params) Validate() error {
-	if p.ActivationLag < 0 {
-		return sdkerrors.ErrInvalidRequest.Wrapf("ActivationLag should not be negative: %d", p.ActivationLag)
+	if p.ActivationBlockDelay < 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("ActivationBlockDelay should not be negative: %d", p.ActivationBlockDelay)
+	}
+	if p.ActivationThresholdPercent < 66 || p.ActivationThresholdPercent > 100 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("ActivationThresholdPercent should be between 66 and 100: %d", p.ActivationThresholdPercent)
 	}
 	return nil
 }

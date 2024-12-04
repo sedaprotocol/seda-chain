@@ -31,6 +31,8 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		err = nil
 	}()
 
+	// Since we're only using the secp256k1 key for batching, we only
+	// need to check if the secp256k1 proving scheme is activated.
 	isActivated, err := k.pubKeyKeeper.IsProvingSchemeActivated(ctx, utils.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return err

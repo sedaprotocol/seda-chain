@@ -104,8 +104,12 @@ func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, keyIndex utils.SEDAKey
 		return false, err
 	}
 
-	//nolint:gosec // G115: We shouldn't get negative power anyway.
-	requiredPower := uint64(totalPower.Int64()*100*4/5 + 1)
+	activationThresholdPercent, err := k.GetActivationThresholdPercent(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	requiredPower := totalPower.Uint64()*uint64(activationThresholdPercent) + 1
 	gotPower := powerSum * 100
 
 	k.Logger(ctx).Info("checked status of secp256k1 proving scheme", "required", requiredPower, "got", gotPower)

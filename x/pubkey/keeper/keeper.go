@@ -163,11 +163,11 @@ func (k Keeper) StartProvingSchemeActivation(ctx sdk.Context, index utils.SEDAKe
 	if err != nil {
 		return err
 	}
-	activationLag, err := k.GetActivationLag(ctx)
+	activationBlockDelay, err := k.GetActivationBlockDelay(ctx)
 	if err != nil {
 		return err
 	}
-	scheme.ActivationHeight = ctx.BlockHeight() + activationLag
+	scheme.ActivationHeight = ctx.BlockHeight() + activationBlockDelay
 	return k.SetProvingScheme(ctx, scheme)
 }
 
@@ -215,12 +215,20 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 	return k.params.Set(ctx, params)
 }
 
-func (k Keeper) GetActivationLag(ctx sdk.Context) (int64, error) {
+func (k Keeper) GetActivationBlockDelay(ctx sdk.Context) (int64, error) {
 	params, err := k.params.Get(ctx)
 	if err != nil {
 		return 0, err
 	}
-	return params.ActivationLag, nil
+	return params.ActivationBlockDelay, nil
+}
+
+func (k Keeper) GetActivationThresholdPercent(ctx sdk.Context) (uint32, error) {
+	params, err := k.params.Get(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return params.ActivationThresholdPercent, nil
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

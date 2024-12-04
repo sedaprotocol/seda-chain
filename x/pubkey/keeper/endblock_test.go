@@ -207,7 +207,7 @@ func TestEndBlock(t *testing.T) {
 	_, valAddrs, _ := createValidators(t, f, []int64{1, 3, 5, 7, 2, 1}) // 1+3+5+7+2+1 = 19
 	pubKeys := generatePubKeys(t, 6)
 
-	activationLag, err := f.keeper.GetActivationLag(ctx)
+	activationBlockDelay, err := f.keeper.GetActivationBlockDelay(ctx)
 	require.NoError(t, err)
 
 	// Check for start of activation process.
@@ -219,7 +219,7 @@ func TestEndBlock(t *testing.T) {
 		require.NoError(t, err)
 
 		if i >= 3 {
-			expectedActivationHeight = ctx.BlockHeight() + activationLag
+			expectedActivationHeight = ctx.BlockHeight() + activationBlockDelay
 		}
 		scheme, err := f.keeper.GetProvingScheme(ctx, utils.SEDAKeyIndexSecp256k1)
 		require.NoError(t, err)
@@ -228,7 +228,7 @@ func TestEndBlock(t *testing.T) {
 	}
 
 	// Check for successful activation.
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + activationLag)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + activationBlockDelay)
 	err = f.keeper.EndBlock(ctx)
 	require.NoError(t, err)
 	scheme, err := f.keeper.GetProvingScheme(ctx, utils.SEDAKeyIndexSecp256k1)

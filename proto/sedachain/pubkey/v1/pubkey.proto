@@ -28,7 +28,10 @@ message ProvingScheme {
 
 // Params defines the parameters for the pubkey module.
 message Params {
-  // activation_lag is the number of blocks to wait before activating a
+  // activation_block_delay is the number of blocks to wait before activating a
   // proving scheme.
-  int64 activation_lag = 1;
+  int64 activation_block_delay = 1;
+  // activation_threshold_percent is the percentage of the total voting power
+  // that is required to activate a proving scheme.
+  uint32 activation_threshold_percent = 2;
 }
