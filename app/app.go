@@ -909,6 +909,7 @@ func NewApp(
 		govtypes.ModuleName,
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
+		pubkeytypes.ModuleName, // pubkey before genutil
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		authz.ModuleName,
@@ -925,11 +926,10 @@ func NewApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName, // wasm after ibc transfer
 		packetforwardtypes.ModuleName,
-		// custom modules
+		// custom modules (except pubkey)
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
-		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)

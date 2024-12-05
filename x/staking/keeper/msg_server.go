@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	addresscodec "cosmossdk.io/core/address"
 
@@ -31,10 +30,6 @@ func NewMsgServerImpl(sdkMsgServer stakingtypes.MsgServer, pubKeyKeeper types.Pu
 	return ms
 }
 
-func (m msgServer) CreateValidator(ctx context.Context, msg *stakingtypes.MsgCreateValidator) (*stakingtypes.MsgCreateValidatorResponse, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
 func (m msgServer) CreateSEDAValidator(ctx context.Context, msg *types.MsgCreateSEDAValidator) (*types.MsgCreateSEDAValidatorResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
@@ -48,13 +43,21 @@ func (m msgServer) CreateSEDAValidator(ctx context.Context, msg *types.MsgCreate
 	}
 
 	// Validate and store the public keys.
-	err = utils.ValidateSEDAPubKeys(msg.IndexedPubKeys)
-	if err != nil {
-		return nil, sdkerrors.ErrInvalidRequest.Wrapf("invalid SEDA keys: %s", err)
-	}
-	err = m.pubkeyKeeper.StoreIndexedPubKeys(sdkCtx, valAddr, msg.IndexedPubKeys)
+	activated, err := m.pubkeyKeeper.IsProvingSchemeActivated(ctx, utils.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return nil, err
+	}
+	if len(msg.IndexedPubKeys) > 0 {
+		err = utils.ValidateSEDAPubKeys(msg.IndexedPubKeys)
+		if err != nil {
+			return nil, sdkerrors.ErrInvalidRequest.Wrapf("invalid SEDA keys: %s", err)
+		}
+		err = m.pubkeyKeeper.StoreIndexedPubKeys(sdkCtx, valAddr, msg.IndexedPubKeys)
+		if err != nil {
+			return nil, err
+		}
+	} else if activated {
+		return nil, sdkerrors.ErrInvalidRequest.Wrap("SEDA public keys are required")
 	}
 
 	// Call the wrapped CreateValidator method.
@@ -71,4 +74,28 @@ func (m msgServer) CreateSEDAValidator(ctx context.Context, msg *types.MsgCreate
 		return nil, err
 	}
 	return &types.MsgCreateSEDAValidatorResponse{}, nil
+}
+
+func (m msgServer) EditValidator(ctx context.Context, msg *stakingtypes.MsgEditValidator) (*stakingtypes.MsgEditValidatorResponse, error) {
+	return m.MsgServer.EditValidator(ctx, msg)
+}
+
+func (m msgServer) Delegate(ctx context.Context, msg *stakingtypes.MsgDelegate) (*stakingtypes.MsgDelegateResponse, error) {
+	return m.MsgServer.Delegate(ctx, msg)
+}
+
+func (m msgServer) BeginRedelegate(ctx context.Context, msg *stakingtypes.MsgBeginRedelegate) (*stakingtypes.MsgBeginRedelegateResponse, error) {
+	return m.MsgServer.BeginRedelegate(ctx, msg)
+}
+
+func (m msgServer) Undelegate(ctx context.Context, msg *stakingtypes.MsgUndelegate) (*stakingtypes.MsgUndelegateResponse, error) {
+	return m.MsgServer.Undelegate(ctx, msg)
+}
+
+func (m msgServer) CancelUnbondingDelegation(ctx context.Context, msg *stakingtypes.MsgCancelUnbondingDelegation) (*stakingtypes.MsgCancelUnbondingDelegationResponse, error) {
+	return m.MsgServer.CancelUnbondingDelegation(ctx, msg)
+}
+
+func (m msgServer) UpdateParams(ctx context.Context, msg *stakingtypes.MsgUpdateParams) (*stakingtypes.MsgUpdateParamsResponse, error) {
+	return m.MsgServer.UpdateParams(ctx, msg)
 }

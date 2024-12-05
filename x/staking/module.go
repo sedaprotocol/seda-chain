@@ -58,7 +58,6 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 // RegisterInterfaces registers the module's interface types
 func (AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
-	sdktypes.RegisterInterfaces(registry)
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the staking
@@ -73,7 +72,6 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingCo
 	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
 		return errorsmod.Wrapf(err, "failed to unmarshal %s genesis state", sdktypes.ModuleName)
 	}
-
 	return staking.ValidateGenesis(&data)
 }
 
