@@ -45,9 +45,11 @@ import (
 	"github.com/sedaprotocol/seda-chain/integration"
 	"github.com/sedaprotocol/seda-chain/x/pubkey"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
+	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
+	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 )
 
@@ -125,8 +127,9 @@ func initFixture(tb testing.TB) *fixture {
 		log.NewNopLogger(),
 	)
 
-	sdkstakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, authority.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
-	stakingKeeper := stakingkeeper.NewKeeper(sdkstakingKeeper)
+	var pubKeyKeeper *pubkeykeeper.Keeper
+	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, authority.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
+	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper, pubKeyKeeper, addresscodec.NewBech32Codec(params.Bech32PrefixValAddr))
 
 	stakingParams := sdkstakingtypes.DefaultParams()
 	stakingParams.BondDenom = bondDenom
@@ -141,7 +144,7 @@ func initFixture(tb testing.TB) *fixture {
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	pubkeyKeeper := keeper.NewKeeper(
+	pubKeyKeeper = keeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[types.StoreKey]),
 		stakingKeeper,
@@ -152,8 +155,8 @@ func initFixture(tb testing.TB) *fixture {
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
-	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubkeyKeeper)
-	pubkeyModule := pubkey.NewAppModule(cdc, *pubkeyKeeper)
+	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
+	pubkeyModule := pubkey.NewAppModule(cdc, *pubKeyKeeper)
 
 	integrationApp := integration.NewIntegrationApp(newCtx, logger, keys, cdc, map[string]appmodule.AppModule{
 		authtypes.ModuleName:       authModule,
@@ -162,8 +165,10 @@ func initFixture(tb testing.TB) *fixture {
 		types.ModuleName:           pubkeyModule,
 	})
 
-	types.RegisterMsgServer(integrationApp.MsgServiceRouter(), keeper.NewMsgServerImpl(*pubkeyKeeper))
-	sdkstakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), sdkstakingkeeper.NewMsgServerImpl(sdkstakingKeeper))
+	types.RegisterMsgServer(integrationApp.MsgServiceRouter(), keeper.NewMsgServerImpl(*pubKeyKeeper))
+	sdkStakingMsgServer := sdkstakingkeeper.NewMsgServerImpl(sdkStakingKeeper)
+	stakingMsgServer := stakingkeeper.NewMsgServerImpl(sdkStakingMsgServer, stakingKeeper)
+	stakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), stakingMsgServer)
 
 	return &fixture{
 		IntegationApp: integrationApp,
@@ -171,7 +176,7 @@ func initFixture(tb testing.TB) *fixture {
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		stakingKeeper: *stakingKeeper,
-		keeper:        *pubkeyKeeper,
+		keeper:        *pubKeyKeeper,
 	}
 }
 

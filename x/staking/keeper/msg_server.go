@@ -3,8 +3,6 @@ package keeper
 import (
 	"context"
 
-	addresscodec "cosmossdk.io/core/address"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -17,15 +15,13 @@ var _ types.MsgServer = msgServer{}
 
 type msgServer struct {
 	stakingtypes.MsgServer
-	pubkeyKeeper          types.PubkeyKeeper
-	validatorAddressCodec addresscodec.Codec
+	*Keeper
 }
 
-func NewMsgServerImpl(sdkMsgServer stakingtypes.MsgServer, pubKeyKeeper types.PubkeyKeeper, valAddrCdc addresscodec.Codec) types.MsgServer {
+func NewMsgServerImpl(sdkMsgServer stakingtypes.MsgServer, keeper *Keeper) types.MsgServer {
 	ms := &msgServer{
-		MsgServer:             sdkMsgServer,
-		pubkeyKeeper:          pubKeyKeeper,
-		validatorAddressCodec: valAddrCdc,
+		MsgServer: sdkMsgServer,
+		Keeper:    keeper,
 	}
 	return ms
 }
@@ -43,7 +39,7 @@ func (m msgServer) CreateSEDAValidator(ctx context.Context, msg *types.MsgCreate
 	}
 
 	// Validate and store the public keys.
-	activated, err := m.pubkeyKeeper.IsProvingSchemeActivated(ctx, utils.SEDAKeyIndexSecp256k1)
+	activated, err := m.pubKeyKeeper.IsProvingSchemeActivated(ctx, utils.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +48,7 @@ func (m msgServer) CreateSEDAValidator(ctx context.Context, msg *types.MsgCreate
 		if err != nil {
 			return nil, sdkerrors.ErrInvalidRequest.Wrapf("invalid SEDA keys: %s", err)
 		}
-		err = m.pubkeyKeeper.StoreIndexedPubKeys(sdkCtx, valAddr, msg.IndexedPubKeys)
+		err = m.pubKeyKeeper.StoreIndexedPubKeys(sdkCtx, valAddr, msg.IndexedPubKeys)
 		if err != nil {
 			return nil, err
 		}
