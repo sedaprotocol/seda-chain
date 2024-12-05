@@ -5,24 +5,31 @@ import (
 	"fmt"
 	"math"
 
+	addresscodec "cosmossdk.io/core/address"
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	sdktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
 type Keeper struct {
 	*sdkkeeper.Keeper
+	pubKeyKeeper          types.PubKeyKeeper
+	validatorAddressCodec addresscodec.Codec
 }
 
-func NewKeeper(sdkStakingKeeper *sdkkeeper.Keeper) *Keeper {
+func NewKeeper(sdkStakingKeeper *sdkkeeper.Keeper, pubKeyKeeper types.PubKeyKeeper, valAddrCdc addresscodec.Codec) *Keeper {
 	return &Keeper{
-		Keeper: sdkStakingKeeper,
+		Keeper:                sdkStakingKeeper,
+		pubKeyKeeper:          pubKeyKeeper,
+		validatorAddressCodec: valAddrCdc,
 	}
 }
 
-func (k *Keeper) SetHooks(sh types.StakingHooks) {
+func (k *Keeper) SetHooks(sh sdktypes.StakingHooks) {
 	k.Keeper.SetHooks(sh)
 }
 
@@ -55,7 +62,7 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 	// Assume the worst case that we need to transfer all redelegation entries
 	mightExceedLimit := false
 	var cbErr error
-	err = k.IterateDelegatorRedelegations(ctx, fromAddr, func(toRedelegation types.Redelegation) (stop bool) {
+	err = k.IterateDelegatorRedelegations(ctx, fromAddr, func(toRedelegation sdktypes.Redelegation) (stop bool) {
 		// There's no redelegation index by delegator and dstVal or vice-versa.
 		// The minimum cardinality is to look up by delegator, so scan and skip.
 		if toRedelegation.ValidatorDstAddress != valAddr.String() {
@@ -90,7 +97,7 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 		return transferred, err
 	}
 	if mightExceedLimit {
-		// avoid types.ErrMaxRedelegationEntries
+		// avoid sdktypes.ErrMaxRedelegationEntries
 		return transferred, nil
 	}
 
@@ -104,8 +111,8 @@ func (k Keeper) TransferDelegation(ctx context.Context, fromAddr, toAddr sdk.Acc
 	// Update or create the delTo object, calling appropriate hooks
 	delTo, err := k.GetDelegation(ctx, toAddr, valAddr)
 	if err != nil {
-		if err == types.ErrNoDelegation {
-			delTo = types.NewDelegation(toAddr.String(), validator.GetOperator(), sdkmath.LegacyZeroDec())
+		if err == sdktypes.ErrNoDelegation {
+			delTo = sdktypes.NewDelegation(toAddr.String(), validator.GetOperator(), sdkmath.LegacyZeroDec())
 			err = k.Hooks().BeforeDelegationCreated(ctx, toAddr, valAddr)
 		} else {
 			return transferred, err

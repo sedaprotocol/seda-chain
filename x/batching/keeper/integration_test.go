@@ -140,6 +140,7 @@ func initFixture(tb testing.TB) *fixture {
 		log.NewNopLogger(),
 	)
 
+	var pubKeyKeeper *pubkeykeeper.Keeper
 	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]),
@@ -149,7 +150,11 @@ func initFixture(tb testing.TB) *fixture {
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 		addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr),
 	)
-	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper)
+	stakingKeeper := stakingkeeper.NewKeeper(
+		sdkStakingKeeper,
+		pubKeyKeeper,
+		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
+	)
 
 	stakingParams := sdkstakingtypes.DefaultParams()
 	stakingParams.BondDenom = bondDenom
@@ -196,7 +201,7 @@ func initFixture(tb testing.TB) *fixture {
 		viewKeeper,
 	)
 
-	pubKeyKeeper := pubkeykeeper.NewKeeper(
+	pubKeyKeeper = pubkeykeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		stakingKeeper,

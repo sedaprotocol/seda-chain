@@ -41,6 +41,7 @@ import (
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
+	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 	"github.com/sedaprotocol/seda-chain/x/vesting/keeper"
 	"github.com/sedaprotocol/seda-chain/x/vesting/types"
@@ -119,8 +120,9 @@ func initFixture(tb testing.TB) *fixture {
 		log.NewNopLogger(),
 	)
 
-	sdkstakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, authority.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
-	stakingKeeper := stakingkeeper.NewKeeper(sdkstakingKeeper)
+	var pubKeyKeeper *pubkeykeeper.Keeper
+	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, authority.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
+	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper, pubKeyKeeper, addresscodec.NewBech32Codec(params.Bech32PrefixValAddr))
 
 	stakingParams := sdkstakingtypes.DefaultParams()
 	stakingParams.BondDenom = bondDenom
@@ -135,7 +137,7 @@ func initFixture(tb testing.TB) *fixture {
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	pubKeyKeeper := pubkeykeeper.NewKeeper(
+	pubKeyKeeper = pubkeykeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		stakingKeeper,
@@ -157,7 +159,9 @@ func initFixture(tb testing.TB) *fixture {
 	})
 
 	types.RegisterMsgServer(integrationApp.MsgServiceRouter(), keeper.NewMsgServerImpl(accountKeeper, bankKeeper, stakingKeeper))
-	sdkstakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), sdkstakingkeeper.NewMsgServerImpl(sdkstakingKeeper))
+	sdkStakingMsgServer := sdkstakingkeeper.NewMsgServerImpl(sdkStakingKeeper)
+	stakingMsgServer := stakingkeeper.NewMsgServerImpl(sdkStakingMsgServer, stakingKeeper)
+	stakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), stakingMsgServer)
 
 	return &fixture{
 		IntegationApp: integrationApp,

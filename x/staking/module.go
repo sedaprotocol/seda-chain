@@ -98,7 +98,7 @@ type AppModule struct {
 	keeper        *keeper.Keeper
 	accountKeeper sdktypes.AccountKeeper
 	bankKeeper    sdktypes.BankKeeper
-	pubKeyKeeper  types.PubkeyKeeper
+	pubKeyKeeper  types.PubKeyKeeper
 }
 
 // NewAppModule creates a new AppModule object
@@ -107,7 +107,7 @@ func NewAppModule(
 	keeper *keeper.Keeper,
 	ak sdktypes.AccountKeeper,
 	bk sdktypes.BankKeeper,
-	pk types.PubkeyKeeper,
+	pk types.PubKeyKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc: cdc},
@@ -121,7 +121,7 @@ func NewAppModule(
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	sdkMsgServer := sdkkeeper.NewMsgServerImpl(am.keeper.Keeper)
-	msgServer := keeper.NewMsgServerImpl(sdkMsgServer, am.pubKeyKeeper, am.keeper.ValidatorAddressCodec())
+	msgServer := keeper.NewMsgServerImpl(sdkMsgServer, am.keeper)
 	types.RegisterMsgServer(cfg.MsgServer(), msgServer)
 
 	querier := sdkkeeper.Querier{Keeper: am.keeper.Keeper}
@@ -136,7 +136,7 @@ func (am AppModule) IsAppModule() {}
 
 // RegisterInvariants registers the staking module invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
-	sdkkeeper.RegisterInvariants(ir, am.keeper.Keeper)
+	keeper.RegisterInvariants(ir, am.keeper)
 }
 
 // InitGenesis performs genesis initialization for the staking module.
