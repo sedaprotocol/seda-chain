@@ -25,10 +25,6 @@ type Keeper struct {
 	wasmViewKeeper        wasmtypes.ViewKeeper
 	validatorAddressCodec addresscodec.Codec
 
-	// authority is the address capable of executing MsgUpdateParams.
-	// Typically, this should be the gov module address.
-	authority string
-
 	Schema                collections.Schema
 	dataResults           collections.Map[collections.Triple[bool, string, uint64], types.DataResult]
 	batchAssignments      collections.Map[collections.Pair[string, uint64], uint64]
@@ -42,7 +38,6 @@ type Keeper struct {
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService storetypes.KVStoreService,
-	authority string,
 	sk types.StakingKeeper,
 	wsk types.WasmStorageKeeper,
 	pkk types.PubKeyKeeper,
@@ -59,7 +54,6 @@ func NewKeeper(
 		wasmKeeper:            wk,
 		wasmViewKeeper:        wvk,
 		validatorAddressCodec: validatorAddressCodec,
-		authority:             authority,
 		dataResults:           collections.NewMap(sb, types.DataResultsPrefix, "data_results", collections.TripleKeyCodec(collections.BoolKey, collections.StringKey, collections.Uint64Key), codec.CollValue[types.DataResult](cdc)),
 		batchAssignments:      collections.NewMap(sb, types.BatchAssignmentsPrefix, "batch_assignments", collections.PairKeyCodec(collections.StringKey, collections.Uint64Key), collections.Uint64Value),
 		currentBatchNumber:    collections.NewSequence(sb, types.CurrentBatchNumberKey, "current_batch_number"),

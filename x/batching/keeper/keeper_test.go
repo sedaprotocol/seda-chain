@@ -14,7 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/x/batching"
@@ -28,7 +27,6 @@ type KeeperTestSuite struct {
 	keeper      *keeper.Keeper
 	cdc         codec.Codec
 	queryClient batchingtypes.QueryClient
-	authority   string
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -44,8 +42,7 @@ func (s *KeeperTestSuite) SetupSuite() {
 }
 
 func (s *KeeperTestSuite) SetupTest() {
-	s.authority = authtypes.NewModuleAddress("gov").String()
-	batchingKeeper, enCfg, ctx := setupKeeper(s.T(), s.authority)
+	batchingKeeper, enCfg, ctx := setupKeeper(s.T())
 	s.keeper = batchingKeeper
 	s.ctx = ctx
 	s.cdc = enCfg.Codec
@@ -56,14 +53,14 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.queryClient = batchingtypes.NewQueryClient(queryHelper)
 }
 
-func setupKeeper(t *testing.T, authority string) (*keeper.Keeper, moduletestutil.TestEncodingConfig, sdk.Context) {
+func setupKeeper(t *testing.T) (*keeper.Keeper, moduletestutil.TestEncodingConfig, sdk.Context) {
 	t.Helper()
 	key := storetypes.NewKVStoreKey(batchingtypes.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(t, key, storetypes.NewTransientStoreKey("transient_test"))
 	ctx := testCtx.Ctx
 	encCfg := moduletestutil.MakeTestEncodingConfig(batching.AppModuleBasic{})
 
-	keeper := keeper.NewKeeper(encCfg.Codec, runtime.NewKVStoreService(key), authority, nil, nil, nil, nil, nil, nil)
+	keeper := keeper.NewKeeper(encCfg.Codec, runtime.NewKVStoreService(key), nil, nil, nil, nil, nil, nil)
 
 	return &keeper, encCfg, ctx
 }

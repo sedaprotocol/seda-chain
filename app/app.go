@@ -665,7 +665,6 @@ func NewApp(
 	app.BatchingKeeper = batchingkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[batchingtypes.StoreKey]),
-		authtypes.NewModuleAddress(batchingtypes.ModuleName).String(),
 		app.StakingKeeper,
 		app.WasmStorageKeeper,
 		app.PubKeyKeeper,
