@@ -13,7 +13,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
 
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
@@ -107,15 +107,15 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			k.Logger(ctx).Info("data request's number of reveals did not meet replication factor", "request_id", req.ID)
 		default:
 			result, err := k.FilterAndTally(ctx, req)
+			dataResults[i].Consensus = result.consensus
+			dataResults[i].GasUsed = result.execGasUsed + result.tallyGasUsed
 			if err != nil {
 				dataResults[i].ExitCode = batchingtypes.TallyExitCodeFailedToExecute
 				dataResults[i].Result = []byte(err.Error())
-				dataResults[i].Consensus = result.consensus
 			} else {
 				//nolint:gosec // G115: We shouldn't get negative exit code anyway.
 				dataResults[i].ExitCode = uint32(result.exitInfo.ExitCode)
 				dataResults[i].Result = result.result
-				dataResults[i].Consensus = result.consensus
 			}
 			k.Logger(ctx).Info("completed tally execution", "request_id", req.ID)
 			k.Logger(ctx).Debug("tally execution result", "request_id", req.ID, "tally_result", result)
@@ -171,6 +171,8 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 				sdk.NewAttribute(types.AttributeTypeConsensus, strconv.FormatBool(dataResults[i].Consensus)),
 				sdk.NewAttribute(types.AttributeTallyVMStdOut, strings.Join(tallyResults[i].stdout, "\n")),
 				sdk.NewAttribute(types.AttributeTallyVMStdErr, strings.Join(tallyResults[i].stderr, "\n")),
+				sdk.NewAttribute(types.AttributeExecGasUsed, fmt.Sprintf("%v", tallyResults[i].execGasUsed)),
+				sdk.NewAttribute(types.AttributeTallyGasUsed, fmt.Sprintf("%v", tallyResults[i].tallyGasUsed)),
 				sdk.NewAttribute(types.AttributeTallyExitCode, fmt.Sprintf("%02x", dataResults[i].ExitCode)),
 				sdk.NewAttribute(types.AttributeProxyPubKeys, strings.Join(tallyResults[i].proxyPubKeys, "\n")),
 			),
@@ -185,6 +187,8 @@ type TallyResult struct {
 	stderr       []string
 	result       []byte
 	exitInfo     tallyvm.ExitInfo
+	execGasUsed  uint64
+	tallyGasUsed uint64
 	proxyPubKeys []string // data proxy pubkeys in basic consensus
 }
 
@@ -193,17 +197,6 @@ type TallyResult struct {
 // and error if applicable.
 func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult, error) {
 	var result TallyResult
-	filter, err := base64.StdEncoding.DecodeString(req.ConsensusFilter)
-	if err != nil {
-		return result, errorsmod.Wrap(err, "failed to decode consensus filter")
-	}
-	// Convert base64-encoded payback address to hex encoding that
-	// the tally VM expects.
-	decodedBytes, err := base64.StdEncoding.DecodeString(req.PaybackAddress)
-	if err != nil {
-		return result, errorsmod.Wrap(err, "failed to decode payback address")
-	}
-	paybackAddrHex := hex.EncodeToString(decodedBytes)
 
 	// Sort reveals and proxy public keys.
 	keys := make([]string, len(req.Reveals))
@@ -218,6 +211,20 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 		reveals[i] = req.Reveals[k]
 		sort.Strings(reveals[i].ProxyPubKeys)
 	}
+
+	result.execGasUsed = calculateExecGasUsed(reveals)
+
+	filter, err := base64.StdEncoding.DecodeString(req.ConsensusFilter)
+	if err != nil {
+		return result, errorsmod.Wrap(err, "failed to decode consensus filter")
+	}
+	// Convert base64-encoded payback address to hex encoding that
+	// the tally VM expects.
+	decodedBytes, err := base64.StdEncoding.DecodeString(req.PaybackAddress)
+	if err != nil {
+		return result, errorsmod.Wrap(err, "failed to decode payback address")
+	}
+	paybackAddrHex := hex.EncodeToString(decodedBytes)
 
 	var outliers []int
 	outliers, result.consensus, result.proxyPubKeys, err = ApplyFilter(filter, reveals)
@@ -239,6 +246,13 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 		return result, errorsmod.Wrap(err, "failed to construct tally VM arguments")
 	}
 
+	maxGasLimit, err := k.GetMaxTallyGasLimit(ctx)
+	if err != nil {
+		return result, errorsmod.Wrap(err, "failed to get max tally gas limit")
+	}
+
+	gasLimit := min(req.TallyGasLimit, maxGasLimit)
+
 	k.Logger(ctx).Info(
 		"executing tally VM",
 		"request_id", req.ID,
@@ -250,20 +264,24 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 	vmRes := tallyvm.ExecuteTallyVm(tallyProgram.Bytecode, args, map[string]string{
 		"VM_MODE":               "tally",
 		"CONSENSUS":             fmt.Sprintf("%v", result.consensus),
+		"BLOCK_HEIGHT":          fmt.Sprintf("%d", ctx.BlockHeight()),
 		"DR_ID":                 req.ID,
-		"DR_INPUT":              req.TallyInputs,
-		"BINARY_ID":             req.TallyProgramID,
 		"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", req.ReplicationFactor),
+		"EXEC_PROGRAM_ID":       req.ExecProgramID,
+		"EXEC_INPUTS":           req.ExecInputs,
+		"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", req.ExecGasLimit),
+		"TALLY_INPUTS":          req.TallyInputs,
+		"TALLY_PROGRAM_ID":      req.TallyProgramID,
+		"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", gasLimit),
 		"DR_GAS_PRICE":          req.GasPrice,
-		"DR_GAS_LIMIT":          fmt.Sprintf("%v", req.TallyGasLimit),
 		"DR_MEMO":               req.Memo,
 		"DR_PAYBACK_ADDRESS":    paybackAddrHex,
-		"BLOCK_HEIGHT":          fmt.Sprintf("%d", ctx.BlockHeight()),
 	})
 	result.stdout = vmRes.Stdout
 	result.stderr = vmRes.Stderr
 	result.result = vmRes.Result
 	result.exitInfo = vmRes.ExitInfo
+	result.tallyGasUsed = vmRes.GasUsed
 
 	return result, nil
 }
@@ -284,4 +302,13 @@ func tallyVMArg(inputArgs []byte, reveals []types.RevealBody, outliers []int) ([
 	arg = append(arg, string(o))
 
 	return arg, err
+}
+
+// TODO: This will become more complex when we introduce incentives.
+func calculateExecGasUsed(reveals []types.RevealBody) uint64 {
+	var execGasUsed uint64
+	for _, reveal := range reveals {
+		execGasUsed += reveal.GasUsed
+	}
+	return execGasUsed
 }

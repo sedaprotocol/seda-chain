@@ -95,7 +95,7 @@ func initFixture(tb testing.TB) *fixture {
 
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, wasmstoragetypes.StoreKey,
-		wasmtypes.StoreKey, pubkeytypes.StoreKey, batchingtypes.StoreKey,
+		wasmtypes.StoreKey, pubkeytypes.StoreKey, batchingtypes.StoreKey, types.StoreKey,
 	)
 	cdc := moduletestutil.MakeTestEncodingConfig(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}).Codec
 
@@ -211,10 +211,13 @@ func initFixture(tb testing.TB) *fixture {
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
 	tallyKeeper := keeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(keys[types.StoreKey]),
 		wasmStorageKeeper,
 		batchingKeeper,
 		contractKeeper,
 		viewKeeper,
+		authority.String(),
 	)
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)

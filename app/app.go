@@ -129,13 +129,12 @@ import (
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
 
 	appabci "github.com/sedaprotocol/seda-chain/app/abci"
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
-
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/x/batching"
@@ -331,7 +330,7 @@ func NewApp(
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
 		crisistypes.StoreKey, wasmstoragetypes.StoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey,
-		batchingtypes.StoreKey,
+		batchingtypes.StoreKey, tallytypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -676,10 +675,13 @@ func NewApp(
 	)
 
 	app.TallyKeeper = tallykeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[tallytypes.StoreKey]),
 		app.WasmStorageKeeper,
 		app.BatchingKeeper,
 		contractKeeper,
 		app.WasmKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	/* =================================================== */

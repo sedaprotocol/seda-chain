@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	gomock "go.uber.org/mock/gomock"
 
-	"github.com/sedaprotocol/seda-wasm-vm/tallyvm"
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
 
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper/testdata"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
@@ -61,7 +61,7 @@ func TestTallyVM(t *testing.T) {
 				"seda_payload":"",
 				"tally_program_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b",
 				"tally_inputs":"AAEBAQE=",
-				"tally_gas_limit":5000000000,
+				"tally_gas_limit":50000000000000,
 				"version":"1.0.0"
 			 }`),
 			args:   []string{"6d792d74616c6c792d696e70757473", "[{\"reveal\":[54],\"salt\":[211,159,121,219,109,120,111,102,218,223,158,61,107,199,122,219,183,57,237,221,157,209,215,117,111,70,182,113,238,185,115,142,158,221,189,159,219,151,54,239,126,58,225,183,188,109,174,95],\"exit_code\":0,\"gas_used\":\"10\"},{\"reveal\":[45],\"salt\":[211,159,121,219,109,120,111,102,218,223,158,61,107,199,122,219,183,57,237,221,157,209,215,117,111,70,182,113,238,185,115,142,158,221,189,159,219,151,54,239,126,58,225,183,188,109,174,95],\"exit_code\":0,\"gas_used\":\"10\"},{\"reveal\":[13],\"salt\":[211,159,121,219,109,120,111,102,218,223,158,61,107,199,122,219,183,57,237,221,157,209,215,117,111,70,182,113,238,185,115,142,158,221,189,159,219,151,54,239,126,58,225,183,188,109,174,95],\"exit_code\":0,\"gas_used\":\"10\"}]", "[0,0,0]"},
@@ -103,7 +103,7 @@ func TestTallyVM(t *testing.T) {
 				"seda_payload":"",
 				"tally_program_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b",
 				"tally_inputs":"AAEBAQE=",
-				"tally_gas_limit":5000000000,
+				"tally_gas_limit":50000000000000,
 				"version":"1.0.0"
 			 }`),
 			args:   []string{"6d792d74616c6c792d696e70757473", "[{\"reveal\":[54],\"salt\":[211,159,121,219,109,120,111,102,218,223,158,61,107,199,122,219,183,57,237,221,157,209,215,117,111,70,182,113,238,185,115,142,158,221,189,159,219,151,54,239,126,58,225,183,188,109,174,95],\"exit_code\":0,\"gas_used\":\"10\"},{\"reveal\":[45],\"salt\":[211,159,121,219,109,120,111,102,218,223,158,61,107,199,122,219,183,57,237,221,157,209,215,117,111,70,182,113,238,185,115,142,158,221,189,159,219,151,54,239,126,58,225,183,188,109,174,95],\"exit_code\":0,\"gas_used\":\"10\"},{\"reveal\":[13],\"salt\":[211,159,121,219,109,120,111,102,218,223,158,61,107,199,122,219,183,57,237,221,157,209,215,117,111,70,182,113,238,185,115,142,158,221,189,159,219,151,54,239,126,58,225,183,188,109,174,95],\"exit_code\":0,\"gas_used\":\"10\"}]", "[0,0]"},
@@ -133,7 +133,7 @@ func TestTallyVM(t *testing.T) {
 				"seda_payload":"",
 				"tally_program_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b",
 				"tally_inputs":"AAEBAQE=",
-				"tally_gas_limit":5000000000,
+				"tally_gas_limit":50000000000000,
 				"version":"1.0.0"
 			 }`),
 			args:   []string{"6d792d74616c6c792d696e70757473", "[{\"reveal\":[99],\"salt\":[127,205,251,227,158,90,247,125,26,235,174,58,225,253,92,231,78,124,233,215,59,227,150,186,111,94,30,107,205,59,239,110,220,235,78,189,105,198,156,219,135,61,231,159,27,233,214,223],\"exit_code\":0,\"gas_used\":\"10\"}]", "[0]"},
@@ -150,12 +150,16 @@ func TestTallyVM(t *testing.T) {
 			result := tallyvm.ExecuteTallyVm(testdata.SampleTallyWasm(), tc.args, map[string]string{
 				"VM_MODE":               "tally",
 				"CONSENSUS":             fmt.Sprintf("%v", true),
+				"BLOCK_HEIGHT":          fmt.Sprintf("%d", 1),
 				"DR_ID":                 req.ID,
-				"DR_INPUT":              req.TallyInputs,
-				"BINARY_ID":             req.TallyProgramID,
+				"EXEC_PROGRAM_ID":       req.ExecProgramID,
+				"EXEC_INPUTS":           req.ExecInputs,
+				"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", req.ExecGasLimit),
+				"TALLY_INPUTS":          req.TallyInputs,
+				"TALLY_PROGRAM_ID":      req.TallyProgramID,
 				"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", req.ReplicationFactor),
 				"DR_GAS_PRICE":          req.GasPrice,
-				"DR_GAS_LIMIT":          fmt.Sprintf("%v", req.TallyGasLimit),
+				"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", req.TallyGasLimit),
 				"DR_MEMO":               req.Memo,
 				"DR_PAYBACK_ADDRESS":    req.PaybackAddress,
 			})
@@ -200,7 +204,7 @@ func TestTallyVM_EnvVars(t *testing.T) {
 				"seda_payload":"",
 				"tally_program_id":"5f3b31bff28c64a143119ee6389d62e38767672daace9c36db54fa2d18e9f391",
 				"tally_inputs":"AAEBAQE=",
-				"tally_gas_limit":5000000000,
+				"tally_gas_limit":50000000000000,
 				"version":"1.0.0"
 			}`),
 		},
@@ -215,12 +219,16 @@ func TestTallyVM_EnvVars(t *testing.T) {
 			envs := map[string]string{
 				"VM_MODE":               "tally",
 				"CONSENSUS":             fmt.Sprintf("%v", true),
+				"BLOCK_HEIGHT":          fmt.Sprintf("%d", 1),
 				"DR_ID":                 req.ID,
-				"DR_INPUT":              req.TallyInputs,
-				"BINARY_ID":             req.TallyProgramID,
+				"EXEC_PROGRAM_ID":       req.ExecProgramID,
+				"EXEC_INPUTS":           req.ExecInputs,
+				"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", req.ExecGasLimit),
+				"TALLY_INPUTS":          req.TallyInputs,
+				"TALLY_PROGRAM_ID":      req.TallyProgramID,
 				"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", req.ReplicationFactor),
 				"DR_GAS_PRICE":          req.GasPrice,
-				"DR_GAS_LIMIT":          fmt.Sprintf("%v", req.TallyGasLimit),
+				"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", req.TallyGasLimit),
 				"DR_MEMO":               req.Memo,
 				"DR_PAYBACK_ADDRESS":    req.PaybackAddress,
 			}
@@ -290,7 +298,7 @@ func TestExecuteTally(t *testing.T) {
 				   "seda_payload":"",
 				   "tally_program_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b",
 				   "tally_inputs":"bXktdGFsbHktaW5wdXRz",
-				   "tally_gas_limit":5000000000,
+				   "tally_gas_limit":50000000000000,
 				   "version":"1.0.0"
 				},
 				{
@@ -318,7 +326,7 @@ func TestExecuteTally(t *testing.T) {
 				   "seda_payload":"",
 				   "tally_program_id":"8ade60039246740faa80bf424fc29e79fe13b32087043e213e7bc36620111f6b",
 				   "tally_inputs":"bXktdGFsbHktaW5wdXRz",
-				   "tally_gas_limit":5000000000,
+				   "tally_gas_limit":50000000000000,
 				   "version":"1.0.0"
 				}
 			 ]`),
@@ -366,7 +374,7 @@ func TestExecuteTally(t *testing.T) {
 				   "seda_payload":"",
 				   "tally_program_id":"5f3b31bff28c64a143119ee6389d62e38767672daace9c36db54fa2d18e9f391",
 				   "tally_inputs":"AAEBAQE=",
-				   "tally_gas_limit":5000000000,
+				   "tally_gas_limit":50000000000000,
 				   "version":"1.0.0"
 				},
 				{
@@ -394,7 +402,7 @@ func TestExecuteTally(t *testing.T) {
 				   "seda_payload":"",
 				   "tally_program_id":"5f3b31bff28c64a143119ee6389d62e38767672daace9c36db54fa2d18e9f391",
 				   "tally_inputs":"AAEBAQE=",
-				   "tally_gas_limit":5000000000,
+				   "tally_gas_limit":50000000000000,
 				   "version":"1.0.0"
 				}
 			 ]`),

@@ -217,10 +217,13 @@ func initFixture(tb testing.TB) *fixture {
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
 	tallyKeeper := tallykeeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(keys[tallytypes.StoreKey]),
 		wasmStorageKeeper,
 		batchingKeeper,
 		contractKeeper,
 		viewKeeper,
+		authority.String(),
 	)
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)

@@ -1,0 +1,10 @@
+syntax = "proto3";
+package sedachain.tally.v1;
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/tally/types";
+
+// Params defines the parameters for the tally module.
+message Params {
+  // max_tally_gas_limit is the maximum gas limit for a tally request.
+  uint64 max_tally_gas_limit = 1;
+}
