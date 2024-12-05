@@ -28,6 +28,12 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
+const (
+	// FlagWithoutSEDAKeys defines a flag to skip generating and
+	// uploading SEDA keys.
+	FlagWithoutSEDAKeys = "without-seda-keys"
+)
+
 // NewTxCmd returns a root CLI command handler for all x/staking transaction commands.
 func NewTxCmd(valAddrCodec, ac address.Codec) *cobra.Command {
 	stakingTxCmd := &cobra.Command{
@@ -98,17 +104,21 @@ where we can get the pubkey using "%s tendermint show-validator"
 				return fmt.Errorf("set the from address using --from flag")
 			}
 
+			// Generate SEDA keys.
 			var pks []pubkeytypes.IndexedPubKey
-			keyFile, _ := cmd.Flags().GetString(pubkeycli.FlagKeyFile)
-			if keyFile != "" {
-				pks, err = utils.LoadSEDAPubKeys(keyFile)
-				if err != nil {
-					return err
-				}
-			} else {
-				pks, err = utils.GenerateSEDAKeys(valAddr, filepath.Dir(serverCfg.PrivValidatorKeyFile()))
-				if err != nil {
-					return err
+			withoutSEDAKeys, _ := cmd.Flags().GetBool(FlagWithoutSEDAKeys)
+			if !withoutSEDAKeys {
+				keyFile, _ := cmd.Flags().GetString(pubkeycli.FlagKeyFile)
+				if keyFile != "" {
+					pks, err = utils.LoadSEDAPubKeys(keyFile)
+					if err != nil {
+						return err
+					}
+				} else {
+					pks, err = utils.GenerateSEDAKeys(valAddr, filepath.Dir(serverCfg.PrivValidatorKeyFile()))
+					if err != nil {
+						return err
+					}
 				}
 			}
 
@@ -126,6 +136,7 @@ where we can get the pubkey using "%s tendermint show-validator"
 		},
 	}
 
+	cmd.Flags().Bool(FlagWithoutSEDAKeys, false, "skip generating and uploading SEDA keys")
 	cmd.Flags().String(pubkeycli.FlagKeyFile, "", "path to an existing SEDA key file")
 	cmd.Flags().String(stakingcli.FlagIP, "", fmt.Sprintf("The node's public IP. It takes effect only when used in combination with --%s", flags.FlagGenerateOnly))
 	cmd.Flags().String(stakingcli.FlagNodeID, "", "The node's ID")
