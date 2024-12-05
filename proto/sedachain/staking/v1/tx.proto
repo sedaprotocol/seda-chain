@@ -7,6 +7,7 @@ import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/staking/v1beta1/staking.proto";
+import "cosmos/staking/v1beta1/tx.proto";
 import "cosmos/msg/v1/msg.proto";
 import "amino/amino.proto";
 import "sedachain/pubkey/v1/pubkey.proto";
@@ -18,6 +19,39 @@ service Msg {
   // CreateSEDAValidator defines a method for creating a new validator.
   rpc CreateSEDAValidator(MsgCreateSEDAValidator)
       returns (MsgCreateSEDAValidatorResponse);
+
+  // EditValidator defines a method for editing an existing validator.
+  rpc EditValidator(cosmos.staking.v1beta1.MsgEditValidator)
+      returns (cosmos.staking.v1beta1.MsgEditValidatorResponse);
+
+  // Delegate defines a method for performing a delegation of coins
+  // from a delegator to a validator.
+  rpc Delegate(cosmos.staking.v1beta1.MsgDelegate)
+      returns (cosmos.staking.v1beta1.MsgDelegateResponse);
+
+  // BeginRedelegate defines a method for performing a redelegation
+  // of coins from a delegator and source validator to a destination validator.
+  rpc BeginRedelegate(cosmos.staking.v1beta1.MsgBeginRedelegate)
+      returns (cosmos.staking.v1beta1.MsgBeginRedelegateResponse);
+
+  // Undelegate defines a method for performing an undelegation from a
+  // delegate and a validator.
+  rpc Undelegate(cosmos.staking.v1beta1.MsgUndelegate)
+      returns (cosmos.staking.v1beta1.MsgUndelegateResponse);
+
+  // CancelUnbondingDelegation defines a method for performing canceling the
+  // unbonding delegation and delegate back to previous validator.
+  //
+  // Since: cosmos-sdk 0.46
+  rpc CancelUnbondingDelegation(
+      cosmos.staking.v1beta1.MsgCancelUnbondingDelegation)
+      returns (cosmos.staking.v1beta1.MsgCancelUnbondingDelegationResponse);
+
+  // UpdateParams defines an operation for updating the x/staking module
+  // parameters.
+  // Since: cosmos-sdk 0.47
+  rpc UpdateParams(cosmos.staking.v1beta1.MsgUpdateParams)
+      returns (cosmos.staking.v1beta1.MsgUpdateParamsResponse);
 }
 
 // MsgCreateSEDAValidator defines a message for creating a new SEDA
@@ -48,7 +82,8 @@ message MsgCreateSEDAValidator {
       [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
   cosmos.base.v1beta1.Coin value = 7
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
-  repeated sedachain.pubkey.v1.IndexedPubKey indexed_pub_keys = 8 [ (gogoproto.nullable) = false ];
+  repeated sedachain.pubkey.v1.IndexedPubKey indexed_pub_keys = 8
+      [ (gogoproto.nullable) = false ];
 }
 
 // MsgCreateSEDAValidatorResponse defines the Msg/MsgCreateSEDAValidator

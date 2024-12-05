@@ -135,7 +135,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
-
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
@@ -908,6 +907,7 @@ func NewApp(
 		govtypes.ModuleName,
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
+		pubkeytypes.ModuleName, // pubkey before genutil
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		authz.ModuleName,
@@ -924,11 +924,10 @@ func NewApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName, // wasm after ibc transfer
 		packetforwardtypes.ModuleName,
-		// custom modules
+		// custom modules (except pubkey)
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
-		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
