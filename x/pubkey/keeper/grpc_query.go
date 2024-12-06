@@ -11,7 +11,7 @@ import (
 var _ types.QueryServer = Querier{}
 
 type Querier struct {
-	Keeper
+	*Keeper
 }
 
 func (q Querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {

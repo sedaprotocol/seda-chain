@@ -95,10 +95,3 @@ $BIN collect-gentxs
 
 # start the chain
 $BIN start --log_level debug 2>&1 | tee local_chain.log &
-CHAIN_PID=$!
-
-# Wait until at least one block is produced
-sleep 10
-
-$BIN tx pubkey add-seda-keys --from satoshi --keyring-backend test --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --yes
-wait $CHAIN_PID

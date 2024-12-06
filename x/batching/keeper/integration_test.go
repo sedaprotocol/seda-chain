@@ -152,7 +152,6 @@ func initFixture(tb testing.TB) *fixture {
 	)
 	stakingKeeper := stakingkeeper.NewKeeper(
 		sdkStakingKeeper,
-		pubKeyKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
 
@@ -209,6 +208,7 @@ func initFixture(tb testing.TB) *fixture {
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	stakingKeeper.SetPubKeyKeeper(pubKeyKeeper)
 
 	batchingKeeper := batchingkeeper.NewKeeper(
 		cdc,
@@ -236,7 +236,7 @@ func initFixture(tb testing.TB) *fixture {
 	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
 	tallyModule := tally.NewAppModule(tallyKeeper)
-	pubKeyModule := pubkey.NewAppModule(cdc, *pubKeyKeeper)
+	pubKeyModule := pubkey.NewAppModule(cdc, pubKeyKeeper)
 	batchingModule := batching.NewAppModule(cdc, batchingKeeper)
 
 	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, map[string]appmodule.AppModule{

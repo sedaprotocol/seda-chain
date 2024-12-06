@@ -261,7 +261,7 @@ type App struct {
 	WasmStorageKeeper wasmstoragekeeper.Keeper
 	TallyKeeper       tallykeeper.Keeper
 	DataProxyKeeper   dataproxykeeper.Keeper
-	PubKeyKeeper      pubkeykeeper.Keeper
+	PubKeyKeeper      *pubkeykeeper.Keeper
 	BatchingKeeper    batchingkeeper.Keeper
 
 	// App-level pre-blocker (Note this cannot change consensus parameters)
@@ -429,8 +429,7 @@ func NewApp(
 	)
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		sdkStakingKeeper,
-		app.PubKeyKeeper,
-		app.AccountKeeper.AddressCodec(),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 	)
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(
@@ -653,7 +652,7 @@ func NewApp(
 		app.WasmKeeper,
 	)
 
-	app.PubKeyKeeper = *pubkeykeeper.NewKeeper(
+	app.PubKeyKeeper = pubkeykeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		app.StakingKeeper,
@@ -661,6 +660,7 @@ func NewApp(
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	app.StakingKeeper.SetPubKeyKeeper(app.PubKeyKeeper)
 
 	app.DataProxyKeeper = *dataproxykeeper.NewKeeper(
 		appCodec,
@@ -913,9 +913,9 @@ func NewApp(
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
 		minttypes.ModuleName,
-		crisistypes.ModuleName,
 		pubkeytypes.ModuleName, // pubkey before genutil
 		genutiltypes.ModuleName,
+		crisistypes.ModuleName,
 		evidencetypes.ModuleName,
 		authz.ModuleName,
 		feegrant.ModuleName,

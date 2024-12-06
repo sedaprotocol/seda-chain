@@ -21,16 +21,19 @@ type Keeper struct {
 	validatorAddressCodec addresscodec.Codec
 }
 
-func NewKeeper(sdkStakingKeeper *sdkkeeper.Keeper, pubKeyKeeper types.PubKeyKeeper, valAddrCdc addresscodec.Codec) *Keeper {
+func NewKeeper(sdkStakingKeeper *sdkkeeper.Keeper, valAddrCdc addresscodec.Codec) *Keeper {
 	return &Keeper{
 		Keeper:                sdkStakingKeeper,
-		pubKeyKeeper:          pubKeyKeeper,
 		validatorAddressCodec: valAddrCdc,
 	}
 }
 
 func (k *Keeper) SetHooks(sh sdktypes.StakingHooks) {
 	k.Keeper.SetHooks(sh)
+}
+
+func (k *Keeper) SetPubKeyKeeper(pubKeyKeeper types.PubKeyKeeper) {
+	k.pubKeyKeeper = pubKeyKeeper
 }
 
 // NOTE: This code was taken from
