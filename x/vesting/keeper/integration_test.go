@@ -122,7 +122,7 @@ func initFixture(tb testing.TB) *fixture {
 
 	var pubKeyKeeper *pubkeykeeper.Keeper
 	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, authority.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
-	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper, pubKeyKeeper, addresscodec.NewBech32Codec(params.Bech32PrefixValAddr))
+	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper, addresscodec.NewBech32Codec(params.Bech32PrefixValAddr))
 
 	stakingParams := sdkstakingtypes.DefaultParams()
 	stakingParams.BondDenom = bondDenom
@@ -145,6 +145,7 @@ func initFixture(tb testing.TB) *fixture {
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 		authtypes.NewModuleAddress("gov").String(),
 	)
+	stakingKeeper.SetPubKeyKeeper(pubKeyKeeper)
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)

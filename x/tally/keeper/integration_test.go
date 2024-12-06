@@ -137,9 +137,8 @@ func initFixture(tb testing.TB) *fixture {
 		log.NewNopLogger(),
 	)
 
-	var pubKeyKeeper *pubkeykeeper.Keeper
 	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, authority.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
-	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper, pubKeyKeeper, addresscodec.NewBech32Codec(params.Bech32PrefixValAddr))
+	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper, addresscodec.NewBech32Codec(params.Bech32PrefixValAddr))
 
 	stakingParams := sdkstakingtypes.DefaultParams()
 	stakingParams.BondDenom = bondDenom
@@ -192,7 +191,7 @@ func initFixture(tb testing.TB) *fixture {
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	pubKeyKeeper = pubkeykeeper.NewKeeper(
+	pubKeyKeeper := pubkeykeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		stakingKeeper,
@@ -200,6 +199,8 @@ func initFixture(tb testing.TB) *fixture {
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 		authtypes.NewModuleAddress("gov").String(),
 	)
+	stakingKeeper.SetPubKeyKeeper(pubKeyKeeper)
+
 	batchingKeeper := batchingkeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[batchingtypes.StoreKey]),

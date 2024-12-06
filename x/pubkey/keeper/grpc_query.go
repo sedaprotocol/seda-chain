@@ -11,7 +11,7 @@ import (
 var _ types.QueryServer = Querier{}
 
 type Querier struct {
-	Keeper
+	*Keeper
 }
 
 func (q Querier) ValidatorKeys(ctx context.Context, req *types.QueryValidatorKeysRequest) (*types.QueryValidatorKeysResponse, error) {

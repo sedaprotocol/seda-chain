@@ -67,11 +67,11 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.cdc = encCfg.Codec
 	s.serverCtx = server.NewDefaultContext()
 
-	msr := keeper.NewMsgServerImpl(*s.keeper)
+	msr := keeper.NewMsgServerImpl(s.keeper)
 	s.msgSrvr = msr
 
 	queryHelper := baseapp.NewQueryServerTestHelper(s.ctx, encCfg.InterfaceRegistry)
-	querier := keeper.Querier{Keeper: *s.keeper}
+	querier := keeper.Querier{Keeper: s.keeper}
 	types.RegisterQueryServer(queryHelper, querier)
 	s.queryClient = types.NewQueryClient(queryHelper)
 }
