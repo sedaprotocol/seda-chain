@@ -20,8 +20,10 @@ type StakingMsgServer interface {
 	types.MsgServer
 }
 
-var _ types.MsgServer = msgServer{}
-var _ StakingMsgServer = msgServer{}
+var (
+	_ types.MsgServer  = msgServer{}
+	_ StakingMsgServer = msgServer{}
+)
 
 type msgServer struct {
 	stakingtypes.MsgServer
