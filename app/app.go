@@ -137,6 +137,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/utils"
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
+	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
 	"github.com/sedaprotocol/seda-chain/x/batching"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
@@ -170,7 +171,7 @@ var (
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
-		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+		genutil.NewAppModuleBasic(gentx.GenTxValidator),
 		auth.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
@@ -259,7 +260,7 @@ type App struct {
 	WasmStorageKeeper wasmstoragekeeper.Keeper
 	TallyKeeper       tallykeeper.Keeper
 	DataProxyKeeper   dataproxykeeper.Keeper
-	PubKeyKeeper      pubkeykeeper.Keeper
+	PubKeyKeeper      *pubkeykeeper.Keeper
 	BatchingKeeper    batchingkeeper.Keeper
 
 	// App-level pre-blocker (Note this cannot change consensus parameters)
@@ -425,7 +426,10 @@ func NewApp(
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
-	app.StakingKeeper = stakingkeeper.NewKeeper(sdkStakingKeeper)
+	app.StakingKeeper = stakingkeeper.NewKeeper(
+		sdkStakingKeeper,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+	)
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(
 		appCodec,
@@ -647,7 +651,7 @@ func NewApp(
 		app.WasmKeeper,
 	)
 
-	app.PubKeyKeeper = *pubkeykeeper.NewKeeper(
+	app.PubKeyKeeper = pubkeykeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		app.StakingKeeper,
@@ -655,6 +659,7 @@ func NewApp(
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	app.StakingKeeper.SetPubKeyKeeper(app.PubKeyKeeper)
 
 	app.DataProxyKeeper = *dataproxykeeper.NewKeeper(
 		appCodec,
@@ -781,7 +786,7 @@ func NewApp(
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
-		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
+		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.PubKeyKeeper),
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
@@ -809,7 +814,7 @@ func NewApp(
 	app.bmm = module.NewBasicManagerFromManager(
 		app.mm,
 		map[string]module.AppModuleBasic{
-			genutiltypes.ModuleName: genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+			genutiltypes.ModuleName: genutil.NewAppModuleBasic(gentx.GenTxValidator),
 			govtypes.ModuleName: gov.NewAppModuleBasic(
 				[]govclient.ProposalHandler{
 					// paramsclient.ProposalHandler,
@@ -907,8 +912,9 @@ func NewApp(
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
 		minttypes.ModuleName,
-		crisistypes.ModuleName,
+		pubkeytypes.ModuleName, // pubkey before genutil
 		genutiltypes.ModuleName,
+		crisistypes.ModuleName,
 		evidencetypes.ModuleName,
 		authz.ModuleName,
 		feegrant.ModuleName,
@@ -924,11 +930,10 @@ func NewApp(
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName, // wasm after ibc transfer
 		packetforwardtypes.ModuleName,
-		// custom modules
+		// custom modules (except pubkey)
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
-		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)

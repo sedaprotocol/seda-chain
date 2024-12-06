@@ -122,7 +122,7 @@ func GenAppStateFromConfig(cdc codec.JSONCodec, txEncodingConfig client.TxEncodi
 }
 
 // CollectTxs processes and validates application's genesis Txs of type
-// MsgCreateValidatorWithVRF and returns the list of appGenTxs and
+// MsgCreateSEDAValidator and returns the list of appGenTxs and
 // persistent peers required to generate genesis.json.
 func CollectTxs(cdc codec.JSONCodec, txJSONDecoder sdk.TxDecoder, moniker, genTxsDir string,
 	genesis *types.AppGenesis, genBalIterator types.GenesisBalancesIterator,
@@ -188,7 +188,7 @@ func CollectTxs(cdc codec.JSONCodec, txJSONDecoder sdk.TxDecoder, moniker, genTx
 
 		// genesis transactions must be single-message
 		msgs := genTx.GetMsgs()
-		msg := msgs[0].(*stakingtypes.MsgCreateValidatorWithVRF)
+		msg := msgs[0].(*stakingtypes.MsgCreateSEDAValidator)
 
 		// validate validator addresses and funds against the accounts in the state
 		valAddr, err := valAddrCodec.StringToBytes(msg.ValidatorAddress)

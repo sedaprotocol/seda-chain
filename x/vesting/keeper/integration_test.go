@@ -29,14 +29,19 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/integration"
+	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
+	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 	"github.com/sedaprotocol/seda-chain/x/vesting/keeper"
 	"github.com/sedaprotocol/seda-chain/x/vesting/types"
@@ -115,17 +120,36 @@ func initFixture(tb testing.TB) *fixture {
 		log.NewNopLogger(),
 	)
 
-	sdkstakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, authority.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
-	stakingKeeper := stakingkeeper.NewKeeper(sdkstakingKeeper)
+	var pubKeyKeeper *pubkeykeeper.Keeper
+	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, authority.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
+	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper, addresscodec.NewBech32Codec(params.Bech32PrefixValAddr))
 
 	stakingParams := sdkstakingtypes.DefaultParams()
 	stakingParams.BondDenom = bondDenom
 	err := stakingKeeper.SetParams(newCtx, stakingParams)
 	require.NoError(tb, err)
 
+	slashingKeeper := slashingkeeper.NewKeeper(
+		cdc,
+		nil,
+		runtime.NewKVStoreService(keys[slashingtypes.StoreKey]),
+		stakingKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	pubKeyKeeper = pubkeykeeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
+		stakingKeeper,
+		slashingKeeper,
+		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
+		authtypes.NewModuleAddress("gov").String(),
+	)
+	stakingKeeper.SetPubKeyKeeper(pubKeyKeeper)
+
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
-	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, nil)
+	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	vestingModule := vesting.NewAppModule(accountKeeper, bankKeeper, stakingKeeper)
 
 	integrationApp := integration.NewIntegrationApp(newCtx, logger, keys, cdc, map[string]appmodule.AppModule{
@@ -136,7 +160,11 @@ func initFixture(tb testing.TB) *fixture {
 	})
 
 	types.RegisterMsgServer(integrationApp.MsgServiceRouter(), keeper.NewMsgServerImpl(accountKeeper, bankKeeper, stakingKeeper))
-	sdkstakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), sdkstakingkeeper.NewMsgServerImpl(sdkstakingKeeper))
+
+	sdkStakingMsgServer := sdkstakingkeeper.NewMsgServerImpl(sdkStakingKeeper)
+	stakingMsgServer := stakingkeeper.NewMsgServerImpl(sdkStakingMsgServer, stakingKeeper)
+	sdkstakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), stakingMsgServer)
+	stakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), stakingMsgServer)
 
 	return &fixture{
 		IntegationApp: integrationApp,

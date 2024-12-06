@@ -140,6 +140,7 @@ func initFixture(tb testing.TB) *fixture {
 		log.NewNopLogger(),
 	)
 
+	var pubKeyKeeper *pubkeykeeper.Keeper
 	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]),
@@ -149,7 +150,10 @@ func initFixture(tb testing.TB) *fixture {
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 		addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr),
 	)
-	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper)
+	stakingKeeper := stakingkeeper.NewKeeper(
+		sdkStakingKeeper,
+		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
+	)
 
 	stakingParams := sdkstakingtypes.DefaultParams()
 	stakingParams.BondDenom = bondDenom
@@ -196,7 +200,7 @@ func initFixture(tb testing.TB) *fixture {
 		viewKeeper,
 	)
 
-	pubKeyKeeper := pubkeykeeper.NewKeeper(
+	pubKeyKeeper = pubkeykeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		stakingKeeper,
@@ -204,6 +208,7 @@ func initFixture(tb testing.TB) *fixture {
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	stakingKeeper.SetPubKeyKeeper(pubKeyKeeper)
 
 	batchingKeeper := batchingkeeper.NewKeeper(
 		cdc,
@@ -215,6 +220,7 @@ func initFixture(tb testing.TB) *fixture {
 		viewKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
+
 	tallyKeeper := tallykeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[tallytypes.StoreKey]),
@@ -227,10 +233,10 @@ func initFixture(tb testing.TB) *fixture {
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
-	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, nil)
+	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
 	tallyModule := tally.NewAppModule(tallyKeeper)
-	pubKeyModule := pubkey.NewAppModule(cdc, *pubKeyKeeper)
+	pubKeyModule := pubkey.NewAppModule(cdc, pubKeyKeeper)
 	batchingModule := batching.NewAppModule(cdc, batchingKeeper)
 
 	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, map[string]appmodule.AppModule{
