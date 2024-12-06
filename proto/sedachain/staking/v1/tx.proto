@@ -14,44 +14,10 @@ import "sedachain/pubkey/v1/pubkey.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/staking/types";
 
-// Msg defines the staking Msg service.
 service Msg {
   // CreateSEDAValidator defines a method for creating a new validator.
   rpc CreateSEDAValidator(MsgCreateSEDAValidator)
       returns (MsgCreateSEDAValidatorResponse);
-
-  // EditValidator defines a method for editing an existing validator.
-  rpc EditValidator(cosmos.staking.v1beta1.MsgEditValidator)
-      returns (cosmos.staking.v1beta1.MsgEditValidatorResponse);
-
-  // Delegate defines a method for performing a delegation of coins
-  // from a delegator to a validator.
-  rpc Delegate(cosmos.staking.v1beta1.MsgDelegate)
-      returns (cosmos.staking.v1beta1.MsgDelegateResponse);
-
-  // BeginRedelegate defines a method for performing a redelegation
-  // of coins from a delegator and source validator to a destination validator.
-  rpc BeginRedelegate(cosmos.staking.v1beta1.MsgBeginRedelegate)
-      returns (cosmos.staking.v1beta1.MsgBeginRedelegateResponse);
-
-  // Undelegate defines a method for performing an undelegation from a
-  // delegate and a validator.
-  rpc Undelegate(cosmos.staking.v1beta1.MsgUndelegate)
-      returns (cosmos.staking.v1beta1.MsgUndelegateResponse);
-
-  // CancelUnbondingDelegation defines a method for performing canceling the
-  // unbonding delegation and delegate back to previous validator.
-  //
-  // Since: cosmos-sdk 0.46
-  rpc CancelUnbondingDelegation(
-      cosmos.staking.v1beta1.MsgCancelUnbondingDelegation)
-      returns (cosmos.staking.v1beta1.MsgCancelUnbondingDelegationResponse);
-
-  // UpdateParams defines an operation for updating the x/staking module
-  // parameters.
-  // Since: cosmos-sdk 0.47
-  rpc UpdateParams(cosmos.staking.v1beta1.MsgUpdateParams)
-      returns (cosmos.staking.v1beta1.MsgUpdateParamsResponse);
 }
 
 // MsgCreateSEDAValidator defines a message for creating a new SEDA
