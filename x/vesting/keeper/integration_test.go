@@ -160,8 +160,10 @@ func initFixture(tb testing.TB) *fixture {
 	})
 
 	types.RegisterMsgServer(integrationApp.MsgServiceRouter(), keeper.NewMsgServerImpl(accountKeeper, bankKeeper, stakingKeeper))
+
 	sdkStakingMsgServer := sdkstakingkeeper.NewMsgServerImpl(sdkStakingKeeper)
 	stakingMsgServer := stakingkeeper.NewMsgServerImpl(sdkStakingMsgServer, stakingKeeper)
+	sdkstakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), stakingMsgServer)
 	stakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), stakingMsgServer)
 
 	return &fixture{

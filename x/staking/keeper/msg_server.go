@@ -3,6 +3,8 @@ package keeper
 import (
 	"context"
 
+	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -11,14 +13,22 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
+// StakingMsgServer is the full staking module msg server that combines
+// SDK and SEDA msg servers.
+type StakingMsgServer interface {
+	stakingtypes.MsgServer
+	types.MsgServer
+}
+
 var _ types.MsgServer = msgServer{}
+var _ StakingMsgServer = msgServer{}
 
 type msgServer struct {
 	stakingtypes.MsgServer
 	*Keeper
 }
 
-func NewMsgServerImpl(sdkMsgServer stakingtypes.MsgServer, keeper *Keeper) types.MsgServer {
+func NewMsgServerImpl(sdkMsgServer stakingtypes.MsgServer, keeper *Keeper) StakingMsgServer {
 	ms := &msgServer{
 		MsgServer: sdkMsgServer,
 		Keeper:    keeper,
@@ -26,6 +36,13 @@ func NewMsgServerImpl(sdkMsgServer stakingtypes.MsgServer, keeper *Keeper) types
 	return ms
 }
 
+// CreateValidator overrides the default CreateValidator method.
+func (m msgServer) CreateValidator(_ context.Context, _ *stakingtypes.MsgCreateValidator) (*stakingtypes.MsgCreateValidatorResponse, error) {
+	return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "not implemented")
+}
+
+// CreateSEDAValidator stores given SEDA public keys, if provided, and
+// creates a validator.
 func (m msgServer) CreateSEDAValidator(ctx context.Context, msg *types.MsgCreateSEDAValidator) (*types.MsgCreateSEDAValidatorResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
@@ -70,28 +87,4 @@ func (m msgServer) CreateSEDAValidator(ctx context.Context, msg *types.MsgCreate
 		return nil, err
 	}
 	return &types.MsgCreateSEDAValidatorResponse{}, nil
-}
-
-func (m msgServer) EditValidator(ctx context.Context, msg *stakingtypes.MsgEditValidator) (*stakingtypes.MsgEditValidatorResponse, error) {
-	return m.MsgServer.EditValidator(ctx, msg)
-}
-
-func (m msgServer) Delegate(ctx context.Context, msg *stakingtypes.MsgDelegate) (*stakingtypes.MsgDelegateResponse, error) {
-	return m.MsgServer.Delegate(ctx, msg)
-}
-
-func (m msgServer) BeginRedelegate(ctx context.Context, msg *stakingtypes.MsgBeginRedelegate) (*stakingtypes.MsgBeginRedelegateResponse, error) {
-	return m.MsgServer.BeginRedelegate(ctx, msg)
-}
-
-func (m msgServer) Undelegate(ctx context.Context, msg *stakingtypes.MsgUndelegate) (*stakingtypes.MsgUndelegateResponse, error) {
-	return m.MsgServer.Undelegate(ctx, msg)
-}
-
-func (m msgServer) CancelUnbondingDelegation(ctx context.Context, msg *stakingtypes.MsgCancelUnbondingDelegation) (*stakingtypes.MsgCancelUnbondingDelegationResponse, error) {
-	return m.MsgServer.CancelUnbondingDelegation(ctx, msg)
-}
-
-func (m msgServer) UpdateParams(ctx context.Context, msg *stakingtypes.MsgUpdateParams) (*stakingtypes.MsgUpdateParamsResponse, error) {
-	return m.MsgServer.UpdateParams(ctx, msg)
 }

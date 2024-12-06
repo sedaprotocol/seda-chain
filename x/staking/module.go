@@ -122,6 +122,8 @@ func NewAppModule(
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	sdkMsgServer := sdkkeeper.NewMsgServerImpl(am.keeper.Keeper)
 	msgServer := keeper.NewMsgServerImpl(sdkMsgServer, am.keeper)
+
+	sdktypes.RegisterMsgServer(cfg.MsgServer(), msgServer)
 	types.RegisterMsgServer(cfg.MsgServer(), msgServer)
 
 	querier := sdkkeeper.Querier{Keeper: am.keeper.Keeper}

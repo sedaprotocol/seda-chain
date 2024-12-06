@@ -13,6 +13,7 @@ import (
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgCreateSEDAValidator{},
+		&types.MsgCreateValidator{},
 		&types.MsgEditValidator{},
 		&types.MsgDelegate{},
 		&types.MsgUndelegate{},
