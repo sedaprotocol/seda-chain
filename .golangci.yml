@@ -20,7 +20,7 @@ linters:
     - misspell
     - prealloc
     - revive
-    - exportloopref
+    - copyloopvar
     - staticcheck
     - stylecheck
     - typecheck
