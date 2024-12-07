@@ -30,6 +30,89 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+type QueryParamsRequest struct {
+}
+
+func (m *QueryParamsRequest) Reset()         { *m = QueryParamsRequest{} }
+func (m *QueryParamsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryParamsRequest) ProtoMessage()    {}
+func (*QueryParamsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ab5fa3182b3fb474, []int{0}
+}
+func (m *QueryParamsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryParamsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryParamsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryParamsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryParamsRequest.Merge(m, src)
+}
+func (m *QueryParamsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryParamsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryParamsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryParamsRequest proto.InternalMessageInfo
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+type QueryParamsResponse struct {
+	// params defines the parameters of the module.
+	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+}
+
+func (m *QueryParamsResponse) Reset()         { *m = QueryParamsResponse{} }
+func (m *QueryParamsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryParamsResponse) ProtoMessage()    {}
+func (*QueryParamsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ab5fa3182b3fb474, []int{1}
+}
+func (m *QueryParamsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryParamsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryParamsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryParamsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryParamsResponse.Merge(m, src)
+}
+func (m *QueryParamsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryParamsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryParamsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryParamsResponse proto.InternalMessageInfo
+
+func (m *QueryParamsResponse) GetParams() Params {
+	if m != nil {
+		return m.Params
+	}
+	return Params{}
+}
+
 // QueryValidatorKeysRequest is request type for the Query/ValidatorKeys
 // RPC method.
 type QueryValidatorKeysRequest struct {
@@ -40,7 +123,7 @@ func (m *QueryValidatorKeysRequest) Reset()         { *m = QueryValidatorKeysReq
 func (m *QueryValidatorKeysRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryValidatorKeysRequest) ProtoMessage()    {}
 func (*QueryValidatorKeysRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ab5fa3182b3fb474, []int{0}
+	return fileDescriptor_ab5fa3182b3fb474, []int{2}
 }
 func (m *QueryValidatorKeysRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -86,7 +169,7 @@ func (m *QueryValidatorKeysResponse) Reset()         { *m = QueryValidatorKeysRe
 func (m *QueryValidatorKeysResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryValidatorKeysResponse) ProtoMessage()    {}
 func (*QueryValidatorKeysResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ab5fa3182b3fb474, []int{1}
+	return fileDescriptor_ab5fa3182b3fb474, []int{3}
 }
 func (m *QueryValidatorKeysResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -131,7 +214,7 @@ func (m *QueryProvingSchemesRequest) Reset()         { *m = QueryProvingSchemesR
 func (m *QueryProvingSchemesRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryProvingSchemesRequest) ProtoMessage()    {}
 func (*QueryProvingSchemesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ab5fa3182b3fb474, []int{2}
+	return fileDescriptor_ab5fa3182b3fb474, []int{4}
 }
 func (m *QueryProvingSchemesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -170,7 +253,7 @@ func (m *QueryProvingSchemesResponse) Reset()         { *m = QueryProvingSchemes
 func (m *QueryProvingSchemesResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryProvingSchemesResponse) ProtoMessage()    {}
 func (*QueryProvingSchemesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ab5fa3182b3fb474, []int{3}
+	return fileDescriptor_ab5fa3182b3fb474, []int{5}
 }
 func (m *QueryProvingSchemesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -207,6 +290,8 @@ func (m *QueryProvingSchemesResponse) GetProvingSchemes() []ProvingScheme {
 }
 
 func init() {
+	proto.RegisterType((*QueryParamsRequest)(nil), "sedachain.pubkey.v1.QueryParamsRequest")
+	proto.RegisterType((*QueryParamsResponse)(nil), "sedachain.pubkey.v1.QueryParamsResponse")
 	proto.RegisterType((*QueryValidatorKeysRequest)(nil), "sedachain.pubkey.v1.QueryValidatorKeysRequest")
 	proto.RegisterType((*QueryValidatorKeysResponse)(nil), "sedachain.pubkey.v1.QueryValidatorKeysResponse")
 	proto.RegisterType((*QueryProvingSchemesRequest)(nil), "sedachain.pubkey.v1.QueryProvingSchemesRequest")
@@ -216,37 +301,41 @@ func init() {
 func init() { proto.RegisterFile("sedachain/pubkey/v1/query.proto", fileDescriptor_ab5fa3182b3fb474) }
 
 var fileDescriptor_ab5fa3182b3fb474 = []byte{
-	// 467 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0xcb, 0x6e, 0xd4, 0x30,
-	0x14, 0x9d, 0x94, 0x87, 0x84, 0xab, 0x0e, 0xc8, 0xb0, 0x68, 0x43, 0x49, 0xa7, 0x11, 0x48, 0x15,
-	0x52, 0x63, 0x66, 0x60, 0xc5, 0x8e, 0x59, 0x21, 0x75, 0xd3, 0x4e, 0x25, 0x24, 0xd8, 0x8c, 0xf2,
-	0xb8, 0xca, 0x58, 0x9d, 0xb1, 0xdd, 0xd8, 0x09, 0x44, 0x88, 0x0d, 0x5f, 0x80, 0xc4, 0x07, 0xf0,
-	0x03, 0x2c, 0xf9, 0x88, 0x2e, 0x2b, 0xd8, 0x74, 0x85, 0xd0, 0x0c, 0x1f, 0x82, 0xe2, 0x38, 0xd3,
-	0xa6, 0x32, 0x55, 0x77, 0xf6, 0xbd, 0xe7, 0x9e, 0x73, 0x7c, 0xae, 0xd1, 0x96, 0x84, 0x24, 0x8c,
-	0x27, 0x21, 0x65, 0x44, 0xe4, 0xd1, 0x11, 0x94, 0xa4, 0xe8, 0x93, 0xe3, 0x1c, 0xb2, 0x32, 0x10,
-	0x19, 0x57, 0x1c, 0xdf, 0x5f, 0x02, 0x82, 0x1a, 0x10, 0x14, 0x7d, 0x77, 0x33, 0xe5, 0x3c, 0x9d,
-	0x02, 0x09, 0x05, 0x25, 0x21, 0x63, 0x5c, 0x85, 0x8a, 0x72, 0x26, 0xeb, 0x11, 0xf7, 0x41, 0xca,
-	0x53, 0xae, 0x8f, 0xa4, 0x3a, 0x99, 0xea, 0x46, 0xcc, 0xe5, 0x8c, 0xcb, 0x71, 0xdd, 0xa8, 0x2f,
-	0xa6, 0xb5, 0x6d, 0x33, 0x91, 0x02, 0x03, 0x49, 0x1b, 0x48, 0xcf, 0x06, 0x31, 0x86, 0x34, 0xc2,
-	0x07, 0xb4, 0x71, 0x50, 0xf9, 0x7e, 0x13, 0x4e, 0x69, 0x12, 0x2a, 0x9e, 0xed, 0x41, 0x29, 0x47,
-	0x70, 0x9c, 0x83, 0x54, 0xf8, 0x35, 0xea, 0x16, 0x4d, 0x7d, 0x1c, 0x26, 0x49, 0xb6, 0xee, 0xf4,
-	0x9c, 0x9d, 0x3b, 0xc3, 0xed, 0x9f, 0x3f, 0x76, 0x1f, 0x19, 0x2f, 0xcb, 0xc1, 0x57, 0x49, 0x92,
-	0x81, 0x94, 0x87, 0x2a, 0xa3, 0x2c, 0x1d, 0xad, 0x15, 0x17, 0xeb, 0xfe, 0x7b, 0xe4, 0xda, 0x64,
-	0xa4, 0xe0, 0x4c, 0x02, 0x7e, 0x8b, 0xf0, 0xb9, 0x8e, 0xc8, 0xa3, 0xf1, 0x11, 0x94, 0x52, 0x6b,
-	0xad, 0x0e, 0x9e, 0x04, 0x96, 0x28, 0xcf, 0x55, 0xf7, 0xf3, 0xa8, 0xa2, 0x1a, 0xde, 0x3c, 0xf9,
-	0xbd, 0xd5, 0x19, 0xdd, 0x2b, 0x2e, 0xd5, 0xfd, 0x4d, 0x23, 0xbc, 0x9f, 0xf1, 0x82, 0xb2, 0xf4,
-	0x30, 0x9e, 0xc0, 0x0c, 0x9a, 0x07, 0xfa, 0x02, 0x3d, 0xb4, 0x76, 0x8d, 0xaf, 0x03, 0x74, 0x57,
-	0xd4, 0x9d, 0xb1, 0xac, 0x5b, 0xeb, 0x4e, 0xef, 0xc6, 0xce, 0xea, 0xc0, 0xb7, 0x9a, 0x6a, 0xb1,
-	0x18, 0x47, 0x5d, 0xd1, 0xa2, 0x1e, 0x9c, 0xad, 0xa0, 0x5b, 0x5a, 0x12, 0x7f, 0x77, 0xd0, 0x5a,
-	0x2b, 0x0e, 0x1c, 0x58, 0x59, 0xff, 0xbb, 0x1e, 0x97, 0x5c, 0x1b, 0x5f, 0xbf, 0xc7, 0x7f, 0xf9,
-	0xf9, 0xd7, 0xdf, 0xaf, 0x2b, 0x2f, 0xf0, 0x80, 0x54, 0x83, 0xbb, 0xed, 0x8f, 0xb1, 0x5c, 0x40,
-	0x15, 0x3e, 0xf9, 0xd8, 0x5e, 0xfc, 0x27, 0xfc, 0xcd, 0x41, 0xdd, 0x76, 0x4c, 0xf8, 0x0a, 0x7d,
-	0x6b, 0xdc, 0xee, 0xb3, 0xeb, 0x0f, 0x18, 0xc7, 0x4f, 0xb5, 0xe3, 0xc7, 0xd8, 0xb7, 0x38, 0xbe,
-	0xb4, 0x9a, 0xe1, 0xde, 0xc9, 0xdc, 0x73, 0x4e, 0xe7, 0x9e, 0xf3, 0x67, 0xee, 0x39, 0x5f, 0x16,
-	0x5e, 0xe7, 0x74, 0xe1, 0x75, 0xce, 0x16, 0x5e, 0xe7, 0x5d, 0x3f, 0xa5, 0x6a, 0x92, 0x47, 0x41,
-	0xcc, 0x67, 0x9a, 0x47, 0x7f, 0xfd, 0x98, 0x4f, 0x2f, 0x92, 0x7e, 0x68, 0x68, 0x55, 0x29, 0x40,
-	0x46, 0xb7, 0x35, 0xe6, 0xf9, 0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xc8, 0xb2, 0x16, 0x8b, 0xea,
-	0x03, 0x00, 0x00,
+	// 531 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x53, 0x41, 0x6e, 0xd3, 0x40,
+	0x14, 0x8d, 0x29, 0x44, 0x62, 0xaa, 0x06, 0x34, 0x29, 0x52, 0xeb, 0x14, 0x37, 0xb5, 0x40, 0x44,
+	0x48, 0xf5, 0x90, 0xc0, 0x06, 0x76, 0x64, 0x85, 0xd4, 0x4d, 0x9a, 0x4a, 0x48, 0xb0, 0x89, 0x26,
+	0xf6, 0xc8, 0xb1, 0x1a, 0x7b, 0xa6, 0x1e, 0xdb, 0xd4, 0x42, 0x6c, 0x38, 0x01, 0x12, 0x07, 0xe0,
+	0x02, 0x2c, 0x39, 0x44, 0x97, 0x55, 0xd9, 0xb0, 0x42, 0x28, 0xe1, 0x20, 0xc8, 0x33, 0x63, 0x13,
+	0x97, 0x01, 0xba, 0x73, 0xfe, 0x7f, 0xff, 0xbd, 0xf7, 0xe7, 0xfd, 0x80, 0x5d, 0x4e, 0x3c, 0xec,
+	0xce, 0x70, 0x10, 0x21, 0x96, 0x4e, 0x8f, 0x49, 0x8e, 0xb2, 0x3e, 0x3a, 0x49, 0x49, 0x9c, 0x3b,
+	0x2c, 0xa6, 0x09, 0x85, 0xed, 0x0a, 0xe0, 0x48, 0x80, 0x93, 0xf5, 0xcd, 0x1d, 0x9f, 0x52, 0x7f,
+	0x4e, 0x10, 0x66, 0x01, 0xc2, 0x51, 0x44, 0x13, 0x9c, 0x04, 0x34, 0xe2, 0x72, 0xc4, 0xdc, 0xf4,
+	0xa9, 0x4f, 0xc5, 0x27, 0x2a, 0xbe, 0x54, 0x75, 0xdb, 0xa5, 0x3c, 0xa4, 0x7c, 0x22, 0x1b, 0xf2,
+	0x87, 0x6a, 0xed, 0xe9, 0x4c, 0xf8, 0x24, 0x22, 0x3c, 0x28, 0x21, 0x5d, 0x1d, 0x44, 0x19, 0x12,
+	0x08, 0x7b, 0x13, 0xc0, 0xc3, 0xc2, 0xf7, 0x08, 0xc7, 0x38, 0xe4, 0x63, 0x72, 0x92, 0x12, 0x9e,
+	0xd8, 0x23, 0xd0, 0xae, 0x55, 0x39, 0xa3, 0x11, 0x27, 0xf0, 0x29, 0x68, 0x32, 0x51, 0xd9, 0x32,
+	0xba, 0x46, 0x6f, 0x7d, 0xd0, 0x71, 0x34, 0x6b, 0x3a, 0x72, 0x68, 0x78, 0xfd, 0xec, 0xfb, 0x6e,
+	0x63, 0xac, 0x06, 0x6c, 0x02, 0xb6, 0x05, 0xe3, 0x4b, 0x3c, 0x0f, 0x3c, 0x9c, 0xd0, 0xf8, 0x80,
+	0xe4, 0xa5, 0x1c, 0x7c, 0x01, 0x5a, 0x59, 0x59, 0x9f, 0x60, 0xcf, 0x8b, 0x05, 0xff, 0xcd, 0xe1,
+	0xde, 0xc5, 0x97, 0xfd, 0xbb, 0x6a, 0xe7, 0x6a, 0xf0, 0xb9, 0xe7, 0xc5, 0x84, 0xf3, 0xa3, 0x24,
+	0x0e, 0x22, 0x7f, 0xbc, 0x91, 0xad, 0xd6, 0xed, 0x37, 0xc0, 0xd4, 0xc9, 0x28, 0xff, 0xaf, 0x00,
+	0xfc, 0xad, 0xc3, 0xd2, 0xe9, 0xe4, 0x98, 0xe4, 0xe5, 0x2e, 0xf7, 0xb5, 0xbb, 0x54, 0x3c, 0xa3,
+	0x74, 0x5a, 0x50, 0xa9, 0xad, 0x6e, 0x67, 0x97, 0xea, 0xf6, 0x8e, 0x12, 0x1e, 0xc5, 0x34, 0x0b,
+	0x22, 0xff, 0xc8, 0x9d, 0x91, 0x90, 0x54, 0xef, 0xc9, 0x40, 0x47, 0xdb, 0x55, 0xbe, 0x0e, 0xc1,
+	0x2d, 0x26, 0x3b, 0x13, 0x2e, 0x5b, 0x5b, 0x46, 0x77, 0xad, 0xb7, 0x3e, 0xb0, 0xf5, 0x0f, 0xbc,
+	0xca, 0xa2, 0x1c, 0xb5, 0x58, 0x8d, 0x7a, 0x70, 0xb1, 0x06, 0x6e, 0x08, 0x49, 0x78, 0x0a, 0x9a,
+	0x32, 0x11, 0xf8, 0x40, 0xcb, 0xf6, 0x67, 0xfc, 0x66, 0xef, 0xff, 0x40, 0xe9, 0xdc, 0xee, 0xbc,
+	0xff, 0xfa, 0xf3, 0xe3, 0xb5, 0x3b, 0xb0, 0xad, 0x4e, 0x13, 0x85, 0x41, 0x94, 0x20, 0x99, 0x39,
+	0xfc, 0x6c, 0x80, 0x8d, 0x5a, 0x10, 0xd0, 0xf9, 0x3b, 0xb1, 0xee, 0x30, 0x4c, 0x74, 0x65, 0xbc,
+	0xf2, 0xf3, 0x4c, 0xf8, 0x79, 0x02, 0x07, 0xa8, 0x18, 0xdc, 0xaf, 0x9f, 0x7e, 0x15, 0x7d, 0x11,
+	0x3b, 0x7a, 0x5b, 0x3f, 0xb9, 0x77, 0xf0, 0x93, 0x01, 0x5a, 0xf5, 0x80, 0xe0, 0x3f, 0xf4, 0xb5,
+	0x41, 0x9b, 0x8f, 0xae, 0x3e, 0xa0, 0x1c, 0x3f, 0x14, 0x8e, 0xef, 0x41, 0x5b, 0xe3, 0xf8, 0xd2,
+	0x51, 0x0c, 0x0f, 0xce, 0x16, 0x96, 0x71, 0xbe, 0xb0, 0x8c, 0x1f, 0x0b, 0xcb, 0xf8, 0xb0, 0xb4,
+	0x1a, 0xe7, 0x4b, 0xab, 0xf1, 0x6d, 0x69, 0x35, 0x5e, 0xf7, 0xfd, 0x20, 0x99, 0xa5, 0x53, 0xc7,
+	0xa5, 0xa1, 0xe0, 0x11, 0x7f, 0x6e, 0x97, 0xce, 0x57, 0x49, 0x4f, 0x4b, 0xda, 0x24, 0x67, 0x84,
+	0x4f, 0x9b, 0x02, 0xf3, 0xf8, 0x57, 0x00, 0x00, 0x00, 0xff, 0xff, 0x61, 0xc1, 0x4a, 0xa1, 0xcc,
+	0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -261,6 +350,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
+	// Params returns the total set of pubkey parameters.
+	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// ValidatorKeys returns a given validator's registered keys.
 	ValidatorKeys(ctx context.Context, in *QueryValidatorKeysRequest, opts ...grpc.CallOption) (*QueryValidatorKeysResponse, error)
 	// ProvingSchemes returns the statuses of the SEDA proving schemes.
@@ -273,6 +364,15 @@ type queryClient struct {
 
 func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
+}
+
+func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error) {
+	out := new(QueryParamsResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.pubkey.v1.Query/Params", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *queryClient) ValidatorKeys(ctx context.Context, in *QueryValidatorKeysRequest, opts ...grpc.CallOption) (*QueryValidatorKeysResponse, error) {
@@ -295,6 +395,8 @@ func (c *queryClient) ProvingSchemes(ctx context.Context, in *QueryProvingScheme
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
+	// Params returns the total set of pubkey parameters.
+	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// ValidatorKeys returns a given validator's registered keys.
 	ValidatorKeys(context.Context, *QueryValidatorKeysRequest) (*QueryValidatorKeysResponse, error)
 	// ProvingSchemes returns the statuses of the SEDA proving schemes.
@@ -305,6 +407,9 @@ type QueryServer interface {
 type UnimplementedQueryServer struct {
 }
 
+func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
+}
 func (*UnimplementedQueryServer) ValidatorKeys(ctx context.Context, req *QueryValidatorKeysRequest) (*QueryValidatorKeysResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidatorKeys not implemented")
 }
@@ -314,6 +419,24 @@ func (*UnimplementedQueryServer) ProvingSchemes(ctx context.Context, req *QueryP
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
+}
+
+func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryParamsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).Params(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.pubkey.v1.Query/Params",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).Params(ctx, req.(*QueryParamsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Query_ValidatorKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -352,11 +475,14 @@ func _Query_ProvingSchemes_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "sedachain.pubkey.v1.Query",
 	HandlerType: (*QueryServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Params",
+			Handler:    _Query_Params_Handler,
+		},
 		{
 			MethodName: "ValidatorKeys",
 			Handler:    _Query_ValidatorKeys_Handler,
@@ -368,6 +494,62 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "sedachain/pubkey/v1/query.proto",
+}
+
+func (m *QueryParamsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryParamsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryParamsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryParamsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryParamsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
 }
 
 func (m *QueryValidatorKeysRequest) Marshal() (dAtA []byte, err error) {
@@ -504,6 +686,26 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *QueryParamsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryParamsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Params.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
 func (m *QueryValidatorKeysRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -557,6 +759,139 @@ func sovQuery(x uint64) (n int) {
 }
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *QueryParamsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryParamsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryParamsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryParamsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Params", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *QueryValidatorKeysRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
