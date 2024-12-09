@@ -120,7 +120,6 @@ func initFixture(tb testing.TB) *fixture {
 		log.NewNopLogger(),
 	)
 
-	var pubKeyKeeper *pubkeykeeper.Keeper
 	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, authority.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
 	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper, addresscodec.NewBech32Codec(params.Bech32PrefixValAddr))
 
@@ -137,7 +136,7 @@ func initFixture(tb testing.TB) *fixture {
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	pubKeyKeeper = pubkeykeeper.NewKeeper(
+	pubKeyKeeper := pubkeykeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		stakingKeeper,

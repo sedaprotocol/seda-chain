@@ -12,5 +12,5 @@ import (
 type PubKeyKeeper interface {
 	StoreIndexedPubKeys(ctx sdk.Context, valAddr sdk.ValAddress, pubKeys []types.IndexedPubKey) error
 	IsProvingSchemeActivated(ctx context.Context, index utils.SEDAKeyIndex) (bool, error)
-	GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex) ([]byte, error)
+	HasRegisteredKey(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex) (bool, error)
 }

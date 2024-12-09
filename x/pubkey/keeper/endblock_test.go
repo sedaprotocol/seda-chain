@@ -45,7 +45,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/integration"
 	"github.com/sedaprotocol/seda-chain/x/pubkey"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
-	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
@@ -127,7 +126,6 @@ func initFixture(tb testing.TB) *fixture {
 		log.NewNopLogger(),
 	)
 
-	var pubKeyKeeper *pubkeykeeper.Keeper
 	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, authority.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
 	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper, addresscodec.NewBech32Codec(params.Bech32PrefixValAddr))
 
@@ -144,7 +142,7 @@ func initFixture(tb testing.TB) *fixture {
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	pubKeyKeeper = keeper.NewKeeper(
+	pubKeyKeeper := keeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[types.StoreKey]),
 		stakingKeeper,

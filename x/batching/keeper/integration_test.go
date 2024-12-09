@@ -140,7 +140,6 @@ func initFixture(tb testing.TB) *fixture {
 		log.NewNopLogger(),
 	)
 
-	var pubKeyKeeper *pubkeykeeper.Keeper
 	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]),
@@ -200,7 +199,7 @@ func initFixture(tb testing.TB) *fixture {
 		viewKeeper,
 	)
 
-	pubKeyKeeper = pubkeykeeper.NewKeeper(
+	pubKeyKeeper := pubkeykeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[pubkeytypes.StoreKey]),
 		stakingKeeper,
