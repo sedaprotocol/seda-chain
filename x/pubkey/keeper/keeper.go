@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -95,6 +96,19 @@ func (k Keeper) GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.Va
 		return nil, err
 	}
 	return pubKey, nil
+}
+
+// HasRegisteredKey returns true if the validator has registered a key
+// at the index.
+func (k Keeper) HasRegisteredKey(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex) (bool, error) {
+	_, err := k.pubKeys.Get(ctx, collections.Join(validatorAddr.Bytes(), uint32(index)))
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 // GetValidatorKeys returns all public keys of a given validator.

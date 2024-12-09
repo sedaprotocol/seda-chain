@@ -123,7 +123,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
+	sdkslashing "github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -147,6 +147,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/pubkey"
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
+	"github.com/sedaprotocol/seda-chain/x/slashing"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally"
@@ -180,7 +181,7 @@ var (
 		groupmodule.AppModuleBasic{},
 		gov.NewAppModuleBasic([]govclient.ProposalHandler{}),
 		mintModule{}, // custom modifications
-		slashing.AppModuleBasic{},
+		sdkslashing.AppModuleBasic{},
 		distrModule{},   // custom modifications
 		stakingModule{}, // custom modifications
 		upgrade.AppModuleBasic{},
@@ -784,7 +785,7 @@ func NewApp(
 		groupmodule.NewAppModule(appCodec, app.GroupKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
-		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
+		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry, app.PubKeyKeeper, authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix())),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.PubKeyKeeper),
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
