@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Buf
-        uses: bufbuild/buf-setup-action@v1.26.1
+        uses: bufbuild/buf-setup-action@v1.47.2
       - name: Lint Proto
         run: make proto-lint
       - name: clang-format Check
