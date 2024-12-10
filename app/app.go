@@ -801,7 +801,7 @@ func NewApp(
 		ibctm.AppModule{},
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
 		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
-		tally.NewAppModule(app.TallyKeeper),
+		tally.NewAppModule(appCodec, app.TallyKeeper),
 		dataproxy.NewAppModule(appCodec, app.DataProxyKeeper),
 		pubkey.NewAppModule(appCodec, app.PubKeyKeeper),
 		batching.NewAppModule(appCodec, app.BatchingKeeper),

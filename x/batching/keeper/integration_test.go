@@ -234,7 +234,7 @@ func initFixture(tb testing.TB) *fixture {
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
 	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
-	tallyModule := tally.NewAppModule(tallyKeeper)
+	tallyModule := tally.NewAppModule(cdc, tallyKeeper)
 	pubKeyModule := pubkey.NewAppModule(cdc, pubKeyKeeper)
 	batchingModule := batching.NewAppModule(cdc, batchingKeeper)
 
