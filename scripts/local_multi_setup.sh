@@ -38,8 +38,8 @@ $BIN keys add validator3 --keyring-backend=test --home=$HOME/.sedad/validator3
 $BIN keys add validator4 --keyring-backend=test --home=$HOME/.sedad/validator4
 
 # create validator node with tokens to transfer to the three other nodes
-$BIN add-genesis-account $($BIN keys show validator1 -a --keyring-backend=test --home=$HOME/.sedad/validator1) 10000000000000000000aseda --home=$HOME/.sedad/validator1
-$BIN gentx validator1 1000000000000000000aseda --keyring-backend=test --home=$HOME/.sedad/validator1 --chain-id=testing
+$BIN add-genesis-account $($BIN keys show validator1 -a --keyring-backend=test --home=$HOME/.sedad/validator1) 100000000000000000000aseda --home=$HOME/.sedad/validator1
+$BIN gentx validator1 10000000000000000000aseda --keyring-backend=test --home=$HOME/.sedad/validator1 --chain-id=testing
 $BIN collect-gentxs --home=$HOME/.sedad/validator1
 
 # change app.toml values
@@ -116,34 +116,34 @@ sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"${NODE1_ID}@localho
 # start all four validators
 tmux new-session -s validator1 -d 
 tmux send -t validator1 'BIN=./build/sedad' ENTER
-tmux send -t validator1 '$BIN start --home=$HOME/.sedad/validator1' ENTER
+tmux send -t validator1 '$BIN start --home=$HOME/.sedad/validator1 --log_level debug > val1_multi_local.log 2>&1 &' ENTER
 
 tmux new-session -s validator2 -d 
 tmux send -t validator2 'BIN=./build/sedad' ENTER
-tmux send -t validator2 '$BIN start --home=$HOME/.sedad/validator2' ENTER
+tmux send -t validator2 '$BIN start --home=$HOME/.sedad/validator2 --log_level debug > val2_multi_local.log 2>&1 &' ENTER
 
 tmux new-session -s validator3 -d 
 tmux send -t validator3 'BIN=./build/sedad' ENTER
-tmux send -t validator3 '$BIN start --home=$HOME/.sedad/validator3' ENTER
+tmux send -t validator3 '$BIN start --home=$HOME/.sedad/validator3 --log_level debug > val3_multi_local.log 2>&1 &' ENTER
 
 tmux new-session -s validator4 -d 
 tmux send -t validator4 'BIN=./build/sedad' ENTER
-tmux send -t validator4 '$BIN start --home=$HOME/.sedad/validator4' ENTER
+tmux send -t validator4 '$BIN start --home=$HOME/.sedad/validator4 --log_level debug > val4_multi_local.log 2>&1 &' ENTER
 
 echo "begin sending funds to validators 2, 3, & 4"
 sleep 10
-$BIN tx bank send validator1 $($BIN keys show validator2 -a --keyring-backend=test --home=$HOME/.sedad/validator2) 2000000000000000000aseda --keyring-backend=test --home=$HOME/.sedad/validator1 --chain-id=testing --node http://localhost:26657 --broadcast-mode sync --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7
+$BIN tx bank send validator1 $($BIN keys show validator2 -a --keyring-backend=test --home=$HOME/.sedad/validator2) 20000000000000000000aseda --keyring-backend=test --home=$HOME/.sedad/validator1 --chain-id=testing --node http://localhost:26657 --broadcast-mode sync --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7
 sleep 10
-$BIN tx bank send validator1 $($BIN keys show validator3 -a --keyring-backend=test --home=$HOME/.sedad/validator3) 2000000000000000000aseda --keyring-backend=test --home=$HOME/.sedad/validator1 --chain-id=testing --node http://localhost:26657 --broadcast-mode sync --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7
+$BIN tx bank send validator1 $($BIN keys show validator3 -a --keyring-backend=test --home=$HOME/.sedad/validator3) 20000000000000000000aseda --keyring-backend=test --home=$HOME/.sedad/validator1 --chain-id=testing --node http://localhost:26657 --broadcast-mode sync --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7
 sleep 10
-$BIN tx bank send validator1 $($BIN keys show validator4 -a --keyring-backend=test --home=$HOME/.sedad/validator4) 2000000000000000000aseda --keyring-backend=test --home=$HOME/.sedad/validator1 --chain-id=testing --node http://localhost:26657 --broadcast-mode sync --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7
+$BIN tx bank send validator1 $($BIN keys show validator4 -a --keyring-backend=test --home=$HOME/.sedad/validator4) 20000000000000000000aseda --keyring-backend=test --home=$HOME/.sedad/validator1 --chain-id=testing --node http://localhost:26657 --broadcast-mode sync --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7
 sleep 10
 
 echo "begin sending create validator txs"
 cat << EOF > validator2.json
 {
 	"pubkey": $($BIN tendermint show-validator --home=$HOME/.sedad/validator2),
-	"amount": "1000000000000000000aseda",
+	"amount": "10000000000000000000aseda",
 	"moniker": "validator2",
 	"identity": "val2",
 	"website": "val2.com",
@@ -161,7 +161,7 @@ rm validator2.json
 cat << EOF > validator3.json
 {
 	"pubkey": $($BIN tendermint show-validator --home=$HOME/.sedad/validator3),
-	"amount": "1000000000000000000aseda",
+	"amount": "10000000000000000000aseda",
 	"moniker": "validator3",
 	"identity": "val3",
 	"website": "val3.com",
@@ -179,7 +179,7 @@ rm validator3.json
 cat << EOF > validator4.json
 {
 	"pubkey": $($BIN tendermint show-validator --home=$HOME/.sedad/validator4),
-	"amount": "1000000000000000000aseda",
+	"amount": "5000000000000000000aseda",
 	"moniker": "validator4",
 	"identity": "val4",
 	"website": "val4.com",
@@ -191,28 +191,11 @@ cat << EOF > validator4.json
 	"min-self-delegation": "1"
 }
 EOF
-$BIN tx staking create-validator validator4.json --from=validator4 --keyring-backend=test --home=$HOME/.sedad/validator4 --broadcast-mode sync --chain-id=testing --node http://localhost:26657 --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7
+$BIN tx staking create-validator validator4.json --without-seda-keys --from=validator4 --keyring-backend=test --home=$HOME/.sedad/validator4 --broadcast-mode sync --chain-id=testing --node http://localhost:26657 --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7
 rm validator4.json
 
 sleep 10
 echo "4 validators are up and running!"
 
-# generate and upload SEDA keys
-$BIN tx pubkey add-seda-keys --from validator1 --keyring-backend test --home $HOME/.sedad/validator1 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
-$BIN tx pubkey add-seda-keys --from validator2 --keyring-backend test --home $HOME/.sedad/validator2 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
-$BIN tx pubkey add-seda-keys --from validator3 --keyring-backend test --home $HOME/.sedad/validator3 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
-$BIN tx pubkey add-seda-keys --from validator4 --keyring-backend test --home $HOME/.sedad/validator4 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
-
-# restart to use SEDA keys
-sleep 10
-tmux send -t validator1 'C-c'
-tmux send -t validator1 '$BIN start --home=$HOME/.sedad/validator1 --log_level debug > val1_multi_local.log 2>&1 &' ENTER
-
-tmux send -t validator2 'C-c'
-tmux send -t validator2 '$BIN start --home=$HOME/.sedad/validator2 --log_level debug > val2_multi_local.log 2>&1 &' ENTER
-
-tmux send -t validator3 'C-c'
-tmux send -t validator3 '$BIN start --home=$HOME/.sedad/validator3 --log_level debug > val3_multi_local.log 2>&1 &' ENTER
-
-tmux send -t validator4 'C-c'
-tmux send -t validator4 '$BIN start --home=$HOME/.sedad/validator4 --log_level debug > val4_multi_local.log 2>&1 &' ENTER
+# val4 generates and uploads SEDA keys
+# $BIN tx pubkey add-seda-keys --from validator4 --keyring-backend test --home $HOME/.sedad/validator4 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
