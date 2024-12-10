@@ -10,25 +10,9 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
-	"github.com/sedaprotocol/seda-chain/x/staking"
 )
-
-// stakingModule wraps the x/staking module to overwrite some genesis
-// parameters.
-type stakingModule struct {
-	staking.AppModuleBasic
-}
-
-// DefaultGenesis returns custom x/staking default genesis state.
-func (stakingModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	genesis := stakingtypes.DefaultGenesisState()
-	genesis.Params.BondDenom = params.DefaultBondDenom
-
-	return cdc.MustMarshalJSON(genesis)
-}
 
 // distrModule wraps the x/distribution module to overwrite some genesis
 // parameters.

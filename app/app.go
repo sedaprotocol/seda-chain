@@ -135,6 +135,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
+
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
@@ -182,8 +183,8 @@ var (
 		gov.NewAppModuleBasic([]govclient.ProposalHandler{}),
 		mintModule{}, // custom modifications
 		sdkslashing.AppModuleBasic{},
-		distrModule{},   // custom modifications
-		stakingModule{}, // custom modifications
+		distrModule{}, // custom modifications
+		staking.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		consensus.AppModuleBasic{},

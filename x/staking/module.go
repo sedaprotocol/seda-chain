@@ -7,8 +7,6 @@ import (
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -16,19 +14,15 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	sdkstaking "github.com/cosmos/cosmos-sdk/x/staking"
 	sdkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking/simulation"
 	sdktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/x/staking/client/cli"
 	"github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/staking/types"
-)
-
-const (
-	consensusVersion uint64 = 5
 )
 
 var (
@@ -63,6 +57,9 @@ func (AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 // DefaultGenesis returns default genesis state as raw bytes for the staking
 // module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
+	genesis := sdktypes.DefaultGenesisState()
+	genesis.Params.BondDenom = params.DefaultBondDenom
+
 	return cdc.MustMarshalJSON(sdktypes.DefaultGenesisState())
 }
 
@@ -84,7 +81,10 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *g
 
 // GetTxCmd returns the root tx command for the staking module.
 func (amb AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.NewTxCmd(amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(), amb.cdc.InterfaceRegistry().SigningContext().AddressCodec())
+	return cli.NewTxCmd(
+		amb.cdc.InterfaceRegistry().SigningContext().ValidatorAddressCodec(),
+		amb.cdc.InterfaceRegistry().SigningContext().AddressCodec(),
+	)
 }
 
 // ----------------------------------------------------------------------------
@@ -93,6 +93,7 @@ func (amb AppModuleBasic) GetTxCmd() *cobra.Command {
 
 // AppModule implements an application module for the staking module.
 type AppModule struct {
+	sdkstaking.AppModule
 	AppModuleBasic
 
 	keeper        *keeper.Keeper
@@ -110,6 +111,7 @@ func NewAppModule(
 	pk types.PubKeyKeeper,
 ) AppModule {
 	return AppModule{
+		AppModule:      sdkstaking.NewAppModule(cdc, keeper.Keeper, ak, bk, nil),
 		AppModuleBasic: AppModuleBasic{cdc: cdc},
 		keeper:         keeper,
 		accountKeeper:  ak,
@@ -130,65 +132,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	sdktypes.RegisterQueryServer(cfg.QueryServer(), querier)
 }
 
-// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
-func (am AppModule) IsOnePerModuleType() {}
-
-// IsAppModule implements the appmodule.AppModule interface.
-func (am AppModule) IsAppModule() {}
-
 // RegisterInvariants registers the staking module invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
 	keeper.RegisterInvariants(ir, am.keeper)
-}
-
-// InitGenesis performs genesis initialization for the staking module.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
-	var genesisState sdktypes.GenesisState
-	cdc.MustUnmarshalJSON(data, &genesisState)
-	return am.keeper.InitGenesis(ctx, &genesisState)
-}
-
-// ExportGenesis returns the exported genesis state as raw bytes for the staking
-// module.
-func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(am.keeper.ExportGenesis(ctx))
-}
-
-// ConsensusVersion implements AppModule/ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return consensusVersion }
-
-// BeginBlock returns the begin blocker for the staking module.
-func (am AppModule) BeginBlock(ctx context.Context) error {
-	return am.keeper.BeginBlocker(ctx)
-}
-
-// EndBlock returns the end blocker for the staking module. It returns no validator
-// updates.
-func (am AppModule) EndBlock(ctx context.Context) ([]abci.ValidatorUpdate, error) {
-	return am.keeper.EndBlocker(ctx)
-}
-
-// AppModuleSimulation functions
-
-// GenerateGenesisState creates a randomized GenState of the staking module.
-func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
-	simulation.RandomizedGenState(simState)
-}
-
-// ProposalMsgs returns msgs used for governance proposals for simulations.
-func (AppModule) ProposalMsgs(_ module.SimulationState) []simtypes.WeightedProposalMsg {
-	return simulation.ProposalMsgs()
-}
-
-// RegisterStoreDecoder registers a decoder for staking module's types
-func (am AppModule) RegisterStoreDecoder(sdr simtypes.StoreDecoderRegistry) {
-	sdr[sdktypes.StoreKey] = simulation.NewDecodeStore(am.cdc)
-}
-
-// WeightedOperations returns the all the staking module operations with their respective weights.
-func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
-	return simulation.WeightedOperations(
-		simState.AppParams, simState.Cdc, simState.TxConfig,
-		am.accountKeeper, am.bankKeeper, am.keeper.Keeper,
-	)
 }
