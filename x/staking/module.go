@@ -14,7 +14,6 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	sdkstaking "github.com/cosmos/cosmos-sdk/x/staking"
 	sdkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -69,7 +68,7 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingCo
 	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
 		return errorsmod.Wrapf(err, "failed to unmarshal %s genesis state", sdktypes.ModuleName)
 	}
-	return staking.ValidateGenesis(&data)
+	return sdkstaking.ValidateGenesis(&data)
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the staking module.

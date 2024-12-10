@@ -22,6 +22,7 @@ type msgServer struct {
 
 type PubKeyKeeper interface {
 	HasRegisteredKey(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex) (bool, error)
+	IsProvingSchemeActivated(ctx context.Context, index utils.SEDAKeyIndex) (bool, error)
 }
 
 func NewMsgServerImpl(sdkMsgServer types.MsgServer, pubKeyKeeper PubKeyKeeper, valAddrCdc addresscodec.Codec) types.MsgServer {
@@ -36,17 +37,22 @@ func NewMsgServerImpl(sdkMsgServer types.MsgServer, pubKeyKeeper PubKeyKeeper, v
 // Unjail overrides the default Unjail method to add an additional
 // check for registration of required public keys.
 func (m msgServer) Unjail(ctx context.Context, req *types.MsgUnjail) (*types.MsgUnjailResponse, error) {
-	valAddr, err := m.validatorAddressCodec.StringToBytes(req.ValidatorAddr)
-	if err != nil {
-		panic(err)
-	}
-	registered, err := m.pubKeyKeeper.HasRegisteredKey(ctx, valAddr, utils.SEDAKeyIndexSecp256k1)
+	isActivated, err := m.pubKeyKeeper.IsProvingSchemeActivated(ctx, utils.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return nil, err
 	}
-	if !registered {
-		return nil, sdkerrors.ErrInvalidRequest.Wrap("validator has not registered required SEDA keys")
+	if isActivated {
+		valAddr, err := m.validatorAddressCodec.StringToBytes(req.ValidatorAddr)
+		if err != nil {
+			panic(err)
+		}
+		registered, err := m.pubKeyKeeper.HasRegisteredKey(ctx, valAddr, utils.SEDAKeyIndexSecp256k1)
+		if err != nil {
+			return nil, err
+		}
+		if !registered {
+			return nil, sdkerrors.ErrInvalidRequest.Wrap("validator has not registered required SEDA keys")
+		}
 	}
-
 	return m.MsgServer.Unjail(ctx, req)
 }
