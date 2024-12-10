@@ -1,10 +1,7 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
-
-	"cosmossdk.io/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -45,14 +42,14 @@ func PubKeyRegistrationInvariant(k *Keeper) sdk.Invariant {
 				if err != nil {
 					panic(err)
 				}
-				_, err = k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1)
+				registered, err := k.pubKeyKeeper.HasRegisteredKey(ctx, valAddr, utils.SEDAKeyIndexSecp256k1)
 				if err != nil {
-					if errors.Is(err, collections.ErrNotFound) {
-						broken = true
-						violator = validator.GetOperator()
-						return true
-					}
 					panic(err)
+				}
+				if !registered {
+					broken = true
+					violator = validator.GetOperator()
+					return true
 				}
 				return false
 			})

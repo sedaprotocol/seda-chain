@@ -1,10 +1,6 @@
 package keeper
 
 import (
-	"errors"
-
-	"cosmossdk.io/collections"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
@@ -89,12 +85,12 @@ func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, keyIndex utils.SEDAKey
 
 	var powerSum uint64
 	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
-		_, err := k.GetValidatorKeyAtIndex(ctx, valAddr, keyIndex)
+		registered, err := k.HasRegisteredKey(ctx, valAddr, keyIndex)
 		if err != nil {
-			if errors.Is(err, collections.ErrNotFound) {
-				return false
-			}
 			panic(err)
+		}
+		if !registered {
+			return false
 		}
 		//nolint:gosec // G115: We shouldn't get negative power anyway.
 		powerSum += uint64(power)
@@ -133,27 +129,27 @@ func (k Keeper) JailValidators(ctx sdk.Context, keyIndex utils.SEDAKeyIndex) err
 		if err != nil {
 			return err
 		}
-		_, err = k.GetValidatorKeyAtIndex(ctx, valAddr, keyIndex)
+		registered, err := k.HasRegisteredKey(ctx, valAddr, keyIndex)
 		if err != nil {
-			if errors.Is(err, collections.ErrNotFound) {
-				consAddr, err := val.GetConsAddr()
-				if err != nil {
-					return err
-				}
-				err = k.slashingKeeper.Jail(ctx, consAddr)
-				if err != nil {
-					return err
-				}
-				k.Logger(ctx).Info(
-					"jailed validator for not having required public key",
-					"consensus_address", consAddr,
-					"operator_address", val.OperatorAddress,
-					"key_index", keyIndex,
-				)
-			} else {
+			return err
+		}
+		if !registered {
+			consAddr, err := val.GetConsAddr()
+			if err != nil {
 				return err
 			}
+			err = k.slashingKeeper.Jail(ctx, consAddr)
+			if err != nil {
+				return err
+			}
+			k.Logger(ctx).Info(
+				"jailed validator for missing required public key",
+				"consensus_address", consAddr,
+				"operator_address", val.OperatorAddress,
+				"key_index", keyIndex,
+			)
 		}
 	}
+
 	return nil
 }
