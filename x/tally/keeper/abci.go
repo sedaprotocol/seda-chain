@@ -93,7 +93,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			SedaPayload:    req.SedaPayload,
 		}
 
-		var result TallyResult
 		switch {
 		case len(req.Commits) < int(req.ReplicationFactor):
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
@@ -104,20 +103,20 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			dataResults[i].ExitCode = batchingtypes.TallyExitCodeNotEnoughReveals
 			k.Logger(ctx).Info("data request's number of reveals did not meet replication factor", "request_id", req.ID)
 		default:
-			result, err := k.FilterAndTally(ctx, req)
+			tallyResults[i], err = k.FilterAndTally(ctx, req)
 			if err != nil {
 				dataResults[i].ExitCode = batchingtypes.TallyExitCodeFailedToExecute
 				dataResults[i].Result = []byte(err.Error())
 			} else {
 				//nolint:gosec // G115: We shouldn't get negative exit code anyway.
-				dataResults[i].ExitCode = uint32(result.exitInfo.ExitCode)
-				dataResults[i].Result = result.result
+				dataResults[i].ExitCode = uint32(tallyResults[i].exitInfo.ExitCode)
+				dataResults[i].Result = tallyResults[i].result
 			}
-			dataResults[i].Consensus = result.consensus
-			dataResults[i].GasUsed = result.execGasUsed + result.tallyGasUsed
+			dataResults[i].Consensus = tallyResults[i].consensus
+			dataResults[i].GasUsed = tallyResults[i].execGasUsed + tallyResults[i].tallyGasUsed
 
 			k.Logger(ctx).Info("completed tally execution", "request_id", req.ID)
-			k.Logger(ctx).Debug("tally execution result", "request_id", req.ID, "tally_result", result)
+			k.Logger(ctx).Debug("tally execution result", "request_id", req.ID, "tally_result", tallyResults[i])
 		}
 
 		dataResults[i].Id, err = dataResults[i].TryHash()
@@ -125,7 +124,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			return err
 		}
 		sudoMsgs[i] = types.SudoRemoveDataRequest{ID: req.ID}
-		tallyResults[i] = result
 	}
 
 	// Notify the Core Contract of tally completion.
