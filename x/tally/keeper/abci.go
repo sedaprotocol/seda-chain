@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
@@ -107,8 +105,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			k.Logger(ctx).Info("data request's number of reveals did not meet replication factor", "request_id", req.ID)
 		default:
 			result, err := k.FilterAndTally(ctx, req)
-			dataResults[i].Consensus = result.consensus
-			dataResults[i].GasUsed = result.execGasUsed + result.tallyGasUsed
 			if err != nil {
 				dataResults[i].ExitCode = batchingtypes.TallyExitCodeFailedToExecute
 				dataResults[i].Result = []byte(err.Error())
@@ -117,6 +113,9 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 				dataResults[i].ExitCode = uint32(result.exitInfo.ExitCode)
 				dataResults[i].Result = result.result
 			}
+			dataResults[i].Consensus = result.consensus
+			dataResults[i].GasUsed = result.execGasUsed + result.tallyGasUsed
+
 			k.Logger(ctx).Info("completed tally execution", "request_id", req.ID)
 			k.Logger(ctx).Debug("tally execution result", "request_id", req.ID, "tally_result", result)
 		}
@@ -216,41 +215,40 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 
 	filter, err := base64.StdEncoding.DecodeString(req.ConsensusFilter)
 	if err != nil {
-		return result, errorsmod.Wrap(err, "failed to decode consensus filter")
+		return result, k.logErrAndRet(ctx, err, types.ErrDecodingConsensusFilter, req)
 	}
 	// Convert base64-encoded payback address to hex encoding that
 	// the tally VM expects.
 	decodedBytes, err := base64.StdEncoding.DecodeString(req.PaybackAddress)
 	if err != nil {
-		return result, errorsmod.Wrap(err, "failed to decode payback address")
+		return result, k.logErrAndRet(ctx, err, types.ErrDecodingPaybackAddress, req)
 	}
 	paybackAddrHex := hex.EncodeToString(decodedBytes)
 
 	var outliers []int
 	outliers, result.consensus, result.proxyPubKeys, err = ApplyFilter(filter, reveals)
 	if err != nil {
-		return result, errorsmod.Wrap(err, "error while applying filter")
+		return result, k.logErrAndRet(ctx, err, types.ErrApplyingFilter, req)
 	}
 
 	tallyProgram, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyProgramID)
 	if err != nil {
-		return result, err
+		return result, k.logErrAndRet(ctx, err, types.ErrFindingTallyProgram, req)
 	}
 	tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
 	if err != nil {
-		return result, errorsmod.Wrap(err, "failed to decode tally inputs")
+		return result, k.logErrAndRet(ctx, err, types.ErrDecodingTallyInputs, req)
 	}
 
 	args, err := tallyVMArg(tallyInputs, reveals, outliers)
 	if err != nil {
-		return result, errorsmod.Wrap(err, "failed to construct tally VM arguments")
+		return result, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, req)
 	}
 
 	maxGasLimit, err := k.GetMaxTallyGasLimit(ctx)
 	if err != nil {
-		return result, errorsmod.Wrap(err, "failed to get max tally gas limit")
+		return result, k.logErrAndRet(ctx, err, types.ErrGettingMaxTallyGasLimit, req)
 	}
-
 	gasLimit := min(req.TallyGasLimit, maxGasLimit)
 
 	k.Logger(ctx).Info(
@@ -284,6 +282,13 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 	result.tallyGasUsed = vmRes.GasUsed
 
 	return result, nil
+}
+
+// logErrAndRet logs the base error along with the request ID for
+// debugging and returns the registered error.
+func (k Keeper) logErrAndRet(ctx sdk.Context, baseErr, registeredErr error, req types.Request) error {
+	k.Logger(ctx).Debug(baseErr.Error(), "request_id", req.ID, "error", registeredErr)
+	return registeredErr
 }
 
 func tallyVMArg(inputArgs []byte, reveals []types.RevealBody, outliers []int) ([]string, error) {
