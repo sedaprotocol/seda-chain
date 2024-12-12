@@ -57,6 +57,8 @@ $BIN config set client chain-id seda-1-local
 if [[ "$INDEXING_PLUGIN" = true ]]; then
     $BIN config set app streaming.abci.keys '["*"]'
     $BIN config set app streaming.abci.plugin '"abci"'
+    # Technically this is not required for the plugin, but we'll usually want it when we're running locally.
+    sed -i '' 's/cors_allowed_origins = \[\]/cors_allowed_origins = \["*"\]/' $HOME/.sedad/config/config.toml
 fi
 
 # initialize the chain
