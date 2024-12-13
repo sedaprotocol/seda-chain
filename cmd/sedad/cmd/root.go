@@ -9,17 +9,13 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/reflect/protoregistry"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
-
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/client/v2/autocli"
-	"cosmossdk.io/client/v2/autocli/flag"
+	"cosmossdk.io/depinject"
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/snapshots"
@@ -34,10 +30,10 @@ import (
 	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -52,51 +48,106 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
-	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik" // for swagger docs
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
 )
 
-// NewRootCmd creates a new root command for a Cosmos SDK application
-func NewRootCmd() *cobra.Command {
-	cfg := sdk.GetConfig()
-	cfg.SetBech32PrefixForAccount(appparams.Bech32PrefixAccAddr, appparams.Bech32PrefixAccPub)
-	cfg.SetBech32PrefixForValidator(appparams.Bech32PrefixValAddr, appparams.Bech32PrefixValPub)
-	cfg.SetBech32PrefixForConsensusNode(appparams.Bech32PrefixConsAddr, appparams.Bech32PrefixConsPub)
-	cfg.SetAddressVerifier(wasmtypes.VerifyAddressLen())
-	cfg.Seal()
-
-	// "Pre-instantiate" the application for getting the injected/configured
-	// encoding configuration note, this is not necessary when using app wiring,
-	// as depinject can be directly used (see root_v2.go)
-	tempApp := app.NewApp(
-		log.NewNopLogger(),
-		dbm.NewMemDB(),
-		nil,
-		true,
-		map[int64]bool{},
-		app.DefaultNodeHome,
-		0,
-		simtestutil.NewAppOptionsWithFlagHome(tempDir()),
-		tempDir(),
-		baseapp.SetChainID("tempchainid"),
-	)
-	encodingConfig := app.EncodingConfig{
-		InterfaceRegistry: tempApp.InterfaceRegistry(),
-		Marshaler:         tempApp.AppCodec(),
-		TxConfig:          tempApp.TxConfig(),
-		Amino:             tempApp.LegacyAmino(),
-	}
-
-	initClientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
-		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
-		WithTxConfig(encodingConfig.TxConfig).
-		WithLegacyAmino(encodingConfig.Amino).
+func ProvideClientContext(
+	appCodec codec.Codec,
+	interfaceRegistry codectypes.InterfaceRegistry,
+	txConfigOpts tx.ConfigOptions,
+	legacyAmino *codec.LegacyAmino,
+) client.Context {
+	clientCtx := client.Context{}.
+		WithCodec(appCodec).
+		WithInterfaceRegistry(interfaceRegistry).
+		WithLegacyAmino(legacyAmino).
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithHomeDir(app.DefaultNodeHome).
-		WithViper("")
+		WithViper("") // In simapp, we don't use any prefix for env variables.
+
+	clientCtx, _ = config.ReadFromClientConfig(clientCtx)
+
+	// textual is enabled by default, we need to re-create the tx config grpc instead of bank keeper.
+	txConfigOpts.TextualCoinMetadataQueryFn = txmodule.NewGRPCCoinMetadataQueryFn(clientCtx)
+	txConfig, err := tx.NewTxConfigWithOptions(clientCtx.Codec, txConfigOpts)
+	if err != nil {
+		panic(err)
+	}
+	clientCtx = clientCtx.WithTxConfig(txConfig)
+
+	return clientCtx
+}
+
+// NewRootCmd creates a new root command for a Cosmos SDK application
+func NewRootCmd() *cobra.Command {
+	var (
+		autoCliOpts        autocli.AppOptions
+		moduleBasicManager module.BasicManager
+		initClientCtx      client.Context
+	)
+
+	if err := depinject.Inject(
+		depinject.Configs(app.AppConfig,
+			depinject.Supply(
+				log.NewNopLogger(),
+			),
+			depinject.Provide(
+				ProvideClientContext,
+			),
+		),
+		&autoCliOpts,
+		&moduleBasicManager,
+		&initClientCtx,
+	); err != nil {
+		panic(err)
+	}
+
+	/*
+		cfg := sdk.GetConfig()
+		cfg.SetBech32PrefixForAccount(appparams.Bech32PrefixAccAddr, appparams.Bech32PrefixAccPub)
+		cfg.SetBech32PrefixForValidator(appparams.Bech32PrefixValAddr, appparams.Bech32PrefixValPub)
+		cfg.SetBech32PrefixForConsensusNode(appparams.Bech32PrefixConsAddr, appparams.Bech32PrefixConsPub)
+		cfg.SetAddressVerifier(wasmtypes.VerifyAddressLen())
+		cfg.Seal()
+	*/
+
+	/*
+		// "Pre-instantiate" the application for getting the injected/configured
+		// encoding configuration note, this is not necessary when using app wiring,
+		// as depinject can be directly used (see root_v2.go)
+		tempApp := app.NewApp(
+			log.NewNopLogger(),
+			dbm.NewMemDB(),
+			nil,
+			true,
+			map[int64]bool{},
+			app.DefaultNodeHome,
+			0,
+			simtestutil.NewAppOptionsWithFlagHome(tempDir()),
+			tempDir(),
+			baseapp.SetChainID("tempchainid"),
+		)
+		encodingConfig := app.EncodingConfig{
+			InterfaceRegistry: tempApp.InterfaceRegistry(),
+			Marshaler:         tempApp.AppCodec(),
+			TxConfig:          tempApp.TxConfig(),
+			Amino:             tempApp.LegacyAmino(),
+		}
+	*/
+
+	/*
+		initClientCtx := client.Context{}.
+			WithCodec(encodingConfig.Marshaler).
+			WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
+			WithTxConfig(encodingConfig.TxConfig).
+			WithLegacyAmino(encodingConfig.Amino).
+			WithInput(os.Stdin).
+			WithAccountRetriever(types.AccountRetriever{}).
+			WithHomeDir(app.DefaultNodeHome).
+			WithViper("")
+	*/
 
 	rootCmd := &cobra.Command{
 		Use:   "sedad",
@@ -148,39 +199,43 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 
-	initRootCmd(rootCmd, encodingConfig, tempApp.BasicModuleManager())
-	addRosettaCmd(rootCmd, encodingConfig)
+	initRootCmd(rootCmd, initClientCtx.TxConfig, moduleBasicManager)
+	addRosettaCmd(rootCmd, initClientCtx.InterfaceRegistry, initClientCtx.Codec)
 
-	autoCliOpts := tempApp.AutoCliOpts()
-	initClientCtx, _ = config.ReadFromClientConfig(initClientCtx)
-	autoCliOpts.Keyring, _ = keyring.NewAutoCLIKeyring(initClientCtx.Keyring)
-	autoCliOpts.ClientCtx = initClientCtx
-
-	builder := &autocli.Builder{
-		Builder: flag.Builder{
-			TypeResolver:          protoregistry.GlobalTypes,
-			FileResolver:          autoCliOpts.ClientCtx.InterfaceRegistry,
-			AddressCodec:          autoCliOpts.AddressCodec,
-			ValidatorAddressCodec: autoCliOpts.ValidatorAddressCodec,
-			ConsensusAddressCodec: autoCliOpts.ConsensusAddressCodec,
-			Keyring:               autoCliOpts.Keyring,
-		},
-		ClientCtx:    autoCliOpts.ClientCtx,
-		TxConfigOpts: autoCliOpts.TxConfigOpts,
-		GetClientConn: func(cmd *cobra.Command) (grpc.ClientConnInterface, error) {
-			return client.GetClientQueryContext(cmd)
-		},
-		AddQueryConnFlags: sdkflags.AddQueryFlagsToCmd,
-		AddTxConnFlags:    sdkflags.AddTxFlagsToCmd,
-	}
-	if err := autoCliOpts.EnhanceRootCommandWithBuilder(rootCmd, builder); err != nil {
+	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
 		panic(err)
 	}
+	/*
+		autoCliOpts := tempApp.AutoCliOpts()
+		initClientCtx, _ = config.ReadFromClientConfig(initClientCtx)
+		autoCliOpts.Keyring, _ = keyring.NewAutoCLIKeyring(initClientCtx.Keyring)
+		autoCliOpts.ClientCtx = initClientCtx
 
+		builder := &autocli.Builder{
+			Builder: flag.Builder{
+				TypeResolver:          protoregistry.GlobalTypes,
+				FileResolver:          autoCliOpts.ClientCtx.InterfaceRegistry,
+				AddressCodec:          autoCliOpts.AddressCodec,
+				ValidatorAddressCodec: autoCliOpts.ValidatorAddressCodec,
+				ConsensusAddressCodec: autoCliOpts.ConsensusAddressCodec,
+				Keyring:               autoCliOpts.Keyring,
+			},
+			ClientCtx:    autoCliOpts.ClientCtx,
+			TxConfigOpts: autoCliOpts.TxConfigOpts,
+			GetClientConn: func(cmd *cobra.Command) (grpc.ClientConnInterface, error) {
+				return client.GetClientQueryContext(cmd)
+			},
+			AddQueryConnFlags: sdkflags.AddQueryFlagsToCmd,
+			AddTxConnFlags:    sdkflags.AddTxFlagsToCmd,
+		}
+		if err := autoCliOpts.EnhanceRootCommandWithBuilder(rootCmd, builder); err != nil {
+			panic(err)
+		}
+	*/
 	return rootCmd
 }
 
-func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig, basicManager module.BasicManager) {
+func initRootCmd(rootCmd *cobra.Command, txConfig client.TxConfig, basicManager module.BasicManager) {
 	cfg := sdk.GetConfig()
 	cfg.Seal()
 
@@ -192,14 +247,14 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig, basi
 			banktypes.GenesisBalancesIterator{},
 			app.DefaultNodeHome,
 			gentxModule.GenTxValidator,
-			encodingConfig.InterfaceRegistry.SigningContext().ValidatorAddressCodec(),
+			txConfig.SigningContext().ValidatorAddressCodec(),
 		),
 		gentx.GenTxCmd(
 			basicManager,
-			encodingConfig.TxConfig,
+			txConfig,
 			banktypes.GenesisBalancesIterator{},
 			app.DefaultNodeHome,
-			encodingConfig.InterfaceRegistry.SigningContext().ValidatorAddressCodec(),
+			txConfig.SigningContext().ValidatorAddressCodec(),
 		),
 		genutilcli.ValidateGenesisCmd(basicManager),
 		addGenesisAccountCmd(app.DefaultNodeHome),

@@ -9,12 +9,16 @@ import (
 	"github.com/spf13/cobra"
 
 	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/core/store"
+	"cosmossdk.io/depinject"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/client/cli"
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
@@ -142,4 +146,41 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 // EndBlock contains the logic that is automatically triggered at the end of each block
 func (am AppModule) EndBlock(ctx context.Context) error {
 	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
+}
+
+// ----------------------------------------------------------------------------
+// App Wiring Setup
+// ----------------------------------------------------------------------------
+
+var _ appmodule.AppModule = AppModule{}
+
+func init() {
+	appmodule.Register(&Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type ModuleInputs struct {
+	depinject.In
+
+	StoreService store.KVStoreService
+	Cdc          codec.Codec
+}
+
+type ModuleOutputs struct {
+	depinject.Out
+
+	Keeper keeper.Keeper
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in ModuleInputs) ModuleOutputs {
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+
+	k := keeper.NewKeeper(in.Cdc, in.StoreService, authority.String())
+	m := NewAppModule(in.Cdc, *k)
+	return ModuleOutputs{
+		Keeper: *k,
+		Module: m,
+	}
 }

@@ -12,6 +12,8 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/data-proxy/types";
 
 // Msg service defines the data-proxy tx gRPC methods.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // Registers a new data proxy entry in the registry.
   rpc RegisterDataProxy(MsgRegisterDataProxy)
       returns (MsgRegisterDataProxyResponse);

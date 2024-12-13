@@ -7,6 +7,10 @@ import (
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
+	addresscodec "cosmossdk.io/core/address"
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/core/store"
+	"cosmossdk.io/depinject"
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -14,6 +18,8 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	sdkstaking "github.com/cosmos/cosmos-sdk/x/staking"
 	sdkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -134,4 +140,57 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 // RegisterInvariants registers the staking module invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
 	keeper.RegisterInvariants(ir, am.keeper)
+}
+
+// ----------------------------------------------------------------------------
+// App Wiring Setup
+// ----------------------------------------------------------------------------
+
+var _ appmodule.AppModule = AppModule{}
+
+func init() {
+	appmodule.Register(&Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type ModuleInputs struct {
+	depinject.In
+
+	StoreService          store.KVStoreService
+	Cdc                   codec.Codec
+	ValidatorAddressCodec addresscodec.Codec
+	ConsensusAddressCodec addresscodec.Codec
+
+	AccountKeeper sdktypes.AccountKeeper
+	BankKeeper    sdktypes.BankKeeper
+	PubKeyKeeper  types.PubKeyKeeper
+}
+
+type ModuleOutputs struct {
+	depinject.Out
+
+	Keeper *keeper.Keeper
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in ModuleInputs) ModuleOutputs {
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+
+	sk := sdkkeeper.NewKeeper(
+		in.Cdc,
+		in.StoreService,
+		in.AccountKeeper,
+		in.BankKeeper,
+		authority.String(),
+		in.ValidatorAddressCodec,
+		in.ConsensusAddressCodec,
+	)
+	k := keeper.NewKeeper(sk, in.ValidatorAddressCodec)
+	m := NewAppModule(in.Cdc, k, in.AccountKeeper, in.BankKeeper, in.PubKeyKeeper)
+
+	return ModuleOutputs{
+		Keeper: k,
+		Module: m,
+	}
 }

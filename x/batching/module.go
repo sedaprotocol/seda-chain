@@ -9,8 +9,13 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	addresscodec "cosmossdk.io/core/address"
 	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/core/store"
+	"cosmossdk.io/depinject"
 	errorsmod "cosmossdk.io/errors"
+
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -143,4 +148,46 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 // EndBlock returns the end block logic for the batching module.
 func (am AppModule) EndBlock(ctx context.Context) error {
 	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
+}
+
+// ----------------------------------------------------------------------------
+// App Wiring Setup
+// ----------------------------------------------------------------------------
+
+var _ appmodule.AppModule = AppModule{}
+
+func init() {
+	appmodule.Register(&Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type ModuleInputs struct {
+	depinject.In
+
+	StoreService          store.KVStoreService
+	Cdc                   codec.Codec
+	ValidatorAddressCodec addresscodec.Codec
+
+	StakingKeeper         types.StakingKeeper
+	WasmStorageKeeper     types.WasmStorageKeeper
+	PubKeyKeeper          types.PubKeyKeeper
+	WasmContractOpsKeeper wasmtypes.ContractOpsKeeper
+	WasmViewKeeper        wasmtypes.ViewKeeper
+}
+
+type ModuleOutputs struct {
+	depinject.Out
+
+	Keeper keeper.Keeper
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in ModuleInputs) ModuleOutputs {
+	k := keeper.NewKeeper(in.Cdc, in.StoreService, in.StakingKeeper, in.WasmStorageKeeper, in.PubKeyKeeper, in.WasmContractOpsKeeper, in.WasmViewKeeper, in.ValidatorAddressCodec)
+	m := NewAppModule(in.Cdc, k)
+	return ModuleOutputs{
+		Keeper: k,
+		Module: m,
+	}
 }

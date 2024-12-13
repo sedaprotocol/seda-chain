@@ -1,0 +1,13 @@
+syntax = "proto3";
+package sedachain.vesting.module.v1;
+
+import "cosmos/app/v1alpha1/module.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/vesting";
+
+// Module is the config object of the vesting module.
+message Module {
+  option (cosmos.app.v1alpha1.module) = {
+    go_import : "github.com/sedaprotocol/seda-chain/x/vesting"
+  };
+}

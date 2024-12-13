@@ -5,7 +5,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sedaprotocol/seda-chain/app"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 )
 
-func addRosettaCmd(_ *cobra.Command, _ app.EncodingConfig) {}
+func addRosettaCmd(cmd *cobra.Command, _ codectypes.InterfaceRegistry, _ codec.Codec) {}

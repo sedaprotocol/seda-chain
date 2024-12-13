@@ -7,7 +7,7 @@ const (
 	ModuleName = "batching"
 
 	// StoreKey defines the primary module store key.
-	StoreKey = "batching"
+	StoreKey = ModuleName
 )
 
 var (

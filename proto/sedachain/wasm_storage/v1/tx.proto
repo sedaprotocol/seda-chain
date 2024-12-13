@@ -11,6 +11,8 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
 // Msg service defines the wasm-storage tx gRPC methods.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // StoreOracleProgram stores an oracle program.
   rpc StoreOracleProgram(MsgStoreOracleProgram)
       returns (MsgStoreOracleProgramResponse);

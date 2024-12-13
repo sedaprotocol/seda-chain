@@ -10,14 +10,19 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/core/store"
+	"cosmossdk.io/depinject"
 	errorsmod "cosmossdk.io/errors"
+
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
@@ -140,4 +145,46 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 // EndBlock returns the end block logic for the tally module.
 func (am AppModule) EndBlock(ctx context.Context) error {
 	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
+}
+
+// ----------------------------------------------------------------------------
+// App Wiring Setup
+// ----------------------------------------------------------------------------
+
+var _ appmodule.AppModule = AppModule{}
+
+func init() {
+	appmodule.Register(&Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type ModuleInputs struct {
+	depinject.In
+
+	StoreService store.KVStoreService
+	Cdc          codec.Codec
+
+	WasmStorageKeeper     types.WasmStorageKeeper
+	BatchingKeeper        types.BatchingKeeper
+	WasmContractOpsKeeper wasmtypes.ContractOpsKeeper
+	WasmViewKeeper        wasmtypes.ViewKeeper
+}
+
+type ModuleOutputs struct {
+	depinject.Out
+
+	Keeper keeper.Keeper
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in ModuleInputs) ModuleOutputs {
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+
+	k := keeper.NewKeeper(in.Cdc, in.StoreService, in.WasmStorageKeeper, in.BatchingKeeper, in.WasmContractOpsKeeper, in.WasmViewKeeper, authority.String())
+	m := NewAppModule(in.Cdc, k)
+	return ModuleOutputs{
+		Keeper: k,
+		Module: m,
+	}
 }

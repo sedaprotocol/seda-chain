@@ -1,4 +1,4 @@
-## Testnet Deployment SCripts
+## Testnet Deployment Scripts
 
 These scripts generate a genesis file and deploy chain across the nodes specified in the parameters.
 

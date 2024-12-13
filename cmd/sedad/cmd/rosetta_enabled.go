@@ -3,12 +3,14 @@
 package cmd
 
 import (
-	rosettaCmd "github.com/cosmos/rosetta/cmd"
 	"github.com/spf13/cobra"
 
-	"github.com/sedaprotocol/seda-chain/app"
+	rosettaCmd "github.com/cosmos/rosetta/cmd"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 )
 
-func addRosettaCmd(cmd *cobra.Command, encodingCfg app.EncodingConfig) {
-	cmd.AddCommand(rosettaCmd.RosettaCommand(encodingCfg.InterfaceRegistry, encodingCfg.Marshaler))
+func addRosettaCmd(cmd *cobra.Command, interfaceRegistry codectypes.InterfaceRegistry, cdc codec.Codec) {
+	cmd.AddCommand(rosettaCmd.RosettaCommand(interfaceRegistry, cdc))
 }
