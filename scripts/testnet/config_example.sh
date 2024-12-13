@@ -1,22 +1,9 @@
 CHAIN_ID=seda-1-devnet
 GENESIS_TIME="2024-04-24T16:00:00.000000Z"
-CHAIN_VERSION=v0.1.3
+CHAIN_VERSION=v0.4.0-dev.8
 
 WASM_PERMISSION_EVERYONE=true # true for everyone and false for mainnet configuration
 SHORT_VOTING_PERIOD=true # true for 180s voting period or false for mainnet configuration
-
-# If DOWNLOAD_FROM_RELEASE is set to false, specify RUN_NO and ARTIFACT_NO so the script
-# can download the artifact.
-DOWNLOAD_FROM_RELEASE=true
-# RUN_NO=0123
-# ARTIFACT_NO=0123
-
-LOCAL_BIN=$(git rev-parse --show-toplevel)/build/sedad # chain binary executable on your machine
-HOME_DIR=$HOME/.sedad # chain directory
-HOME_CONFIG_DIR=$HOME_DIR/config # chain config directory
-NODE_DIR=./$CHAIN_ID-nodes # where node directories will be created
-WASM_DIR=./artifacts # where Wasm files will be downloaded
-
 
 #######################################
 ########### VALIDATOR NODES ###########
@@ -35,8 +22,8 @@ MONIKERS=(
     "SEDA-node1"
 )
 SELF_DELEGATION_AMOUNTS=(
-    "27500seda"
-    "27500seda"
+    "27500"
+    "27500"
 )
 
 #######################################
@@ -54,11 +41,6 @@ GENESIS_ADDRESSES=(
 )
 
 #######################################
-######### COSMWASM CONTRACTS ##########
-#######################################
-CONTRACTS_VERSION=v0.0.1-rc # latest or seda-chain-contracts release version
-
-#######################################
 ############ GROUP CONFIG #############
 #######################################
 GROUP_OOA_MEMBERS=./group_ooa_members.json
@@ -72,6 +54,9 @@ GROUP_TREASURY_POLICY=./group_treasury_policy.json
 ADMIN_SEED="mushroom energy ..." # seed for one of the genesis accounts - used for creating groups
 
 #######################################
-############### GITHUB ################
+######### RARELY MODIFIED #############
 #######################################
-GITHUB_TOKEN=ghp_... # github token for accessing seda-chain-contracts repo
+LOCAL_BIN=$(git rev-parse --show-toplevel)/build/sedad # chain binary executable on your machine
+HOME_DIR=$HOME/.sedad # chain directory
+HOME_CONFIG_DIR=$HOME_DIR/config # chain config directory
+NODE_DIR=./$CHAIN_ID-nodes # where node directories will be created

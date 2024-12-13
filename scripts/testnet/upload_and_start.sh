@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euxo pipefail
 
-
 # NOTE:
 # Assuming systemctl is set up for seda-node.service
 # Assuming cosmovisor has been set up
@@ -31,24 +30,9 @@ if [ ! -f "$LOCAL_BIN" ]; then
   exit 1
 fi
 
-if [ "$DOWNLOAD_FROM_RELEASE" = "true" ]; then
-	# Download chain binaries from releases
-    curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/sedad-amd64
-	curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/sedad-arm64
-else
-	# Download chain binaries from artifacts
-	set +x
-	url=$(curl -H "Authorization: token $GITHUB_TOKEN" \
-			-H "Accept: application/vnd.github.v3+json" \
-			https://api.github.com/repos/sedaprotocol/seda-chain/actions/runs/$RUN_NO/artifacts | \
-			jq -r '.artifacts[] | select(.id=='"$ARTIFACT_NO"') | .archive_download_url')
-	curl -L -o artifact.zip \
-		-H "Authorization: token $GITHUB_TOKEN" \
-		$url
-	set -x
-
-	unzip artifact.zip
-fi
+# Download chain binaries from releases
+curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/sedad-amd64
+curl -LO https://github.com/sedaprotocol/seda-chain/releases/download/$CHAIN_VERSION/sedad-arm64
 
 mv sedad-amd64 $NODE_DIR
 mv sedad-arm64 $NODE_DIR

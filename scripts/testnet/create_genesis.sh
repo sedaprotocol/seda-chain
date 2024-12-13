@@ -143,12 +143,15 @@ if [ ${#MONIKERS[@]} -ne 0 ]; then
 
         VALIDATOR_ADDRESS=$($LOCAL_BIN keys show ${MONIKERS[$i]} --keyring-backend test --home $INDIVIDUAL_VAL_HOME_DIR -a)
 
-        # to create their gentx
-        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]} --home $INDIVIDUAL_VAL_HOME_DIR
-        # to output geneis file
-        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${SELF_DELEGATION_AMOUNTS[$i]}
+        # 1000seda allowance for the validator
+        GENESIS_AMOUNT=$((${SELF_DELEGATION_AMOUNTS[$i]} + 1000))
 
-        $LOCAL_BIN gentx ${MONIKERS[$i]} ${SELF_DELEGATION_AMOUNTS[$i]} --moniker=${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR --ip=${IPS[$i]} --chain-id $CHAIN_ID
+        # to create their gentx
+        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${GENESIS_AMOUNT}seda --home $INDIVIDUAL_VAL_HOME_DIR
+        # to output geneis file
+        $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${GENESIS_AMOUNT}seda
+
+        $LOCAL_BIN gentx ${MONIKERS[$i]} ${SELF_DELEGATION_AMOUNTS[$i]}seda --moniker=${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR --ip=${IPS[$i]} --chain-id $CHAIN_ID
 
         cp -a $INDIVIDUAL_VAL_CONFIG_DIR/gentx/. $GENTX_DIR
     done
