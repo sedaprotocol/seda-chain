@@ -8,7 +8,6 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
-	gomock "go.uber.org/mock/gomock"
 
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -54,7 +53,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper/testutil"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -76,7 +74,9 @@ const (
 type fixture struct {
 	*integration.IntegationApp
 	cdc               codec.Codec
+	chainID           string
 	coreContractAddr  sdk.AccAddress
+	deployer          sdk.AccAddress
 	accountKeeper     authkeeper.AccountKeeper
 	bankKeeper        bankkeeper.Keeper
 	stakingKeeper     stakingkeeper.Keeper
@@ -84,14 +84,17 @@ type fixture struct {
 	wasmKeeper        wasmkeeper.Keeper
 	wasmStorageKeeper wasmstoragekeeper.Keeper
 	tallyKeeper       keeper.Keeper
-	mockViewKeeper    *testutil.MockViewKeeper
+	batchingKeeper    batchingkeeper.Keeper
+	wasmViewKeeper    wasmtypes.ViewKeeper
 	logBuf            *bytes.Buffer
 }
 
-func initFixture(tb testing.TB) *fixture {
-	tb.Helper()
+func initFixture(t *testing.T) *fixture {
+	t.Helper()
 
-	tempDir := tb.TempDir()
+	tempDir := t.TempDir()
+
+	chainID := "integration-app"
 
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, wasmstoragetypes.StoreKey,
@@ -143,7 +146,7 @@ func initFixture(tb testing.TB) *fixture {
 	stakingParams := sdkstakingtypes.DefaultParams()
 	stakingParams.BondDenom = bondDenom
 	err := stakingKeeper.SetParams(ctx, stakingParams)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 
 	// x/wasm
 	wasmKeeper := wasmkeeper.NewKeeper(
@@ -152,26 +155,17 @@ func initFixture(tb testing.TB) *fixture {
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
+		nil, nil, nil, nil,
+		nil, nil, nil, nil,
 		tempDir,
 		wasmtypes.DefaultWasmConfig(),
 		wasmCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		[]wasmkeeper.Option{}...,
 	)
-	require.NoError(tb, wasmKeeper.SetParams(ctx, wasmtypes.DefaultParams()))
+	require.NoError(t, wasmKeeper.SetParams(ctx, wasmtypes.DefaultParams()))
 
 	contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&wasmKeeper)
-
-	ctrl := gomock.NewController(tb)
-	viewKeeper := testutil.NewMockViewKeeper(ctrl)
 
 	wasmStorageKeeper := wasmstoragekeeper.NewKeeper(
 		cdc,
@@ -180,7 +174,7 @@ func initFixture(tb testing.TB) *fixture {
 		accountKeeper,
 		bankKeeper,
 		contractKeeper,
-		viewKeeper,
+		wasmKeeper,
 	)
 
 	slashingKeeper := slashingkeeper.NewKeeper(
@@ -208,7 +202,7 @@ func initFixture(tb testing.TB) *fixture {
 		wasmStorageKeeper,
 		pubKeyKeeper,
 		contractKeeper,
-		viewKeeper,
+		wasmKeeper,
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
 	tallyKeeper := keeper.NewKeeper(
@@ -217,7 +211,7 @@ func initFixture(tb testing.TB) *fixture {
 		wasmStorageKeeper,
 		batchingKeeper,
 		contractKeeper,
-		viewKeeper,
+		wasmKeeper,
 		authority.String(),
 	)
 
@@ -227,11 +221,14 @@ func initFixture(tb testing.TB) *fixture {
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
 	tallyModule := tally.NewAppModule(cdc, tallyKeeper)
 
-	// Upload and instantiate the SEDA contract.
-	creator := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	codeID, _, err := contractKeeper.Create(ctx, creator, testdata.CoreContractWasm(), nil)
-	require.NoError(tb, err)
-	require.Equal(tb, uint64(1), codeID)
+	//
+	bankKeeper.SetSendEnabled(ctx, "aseda", true)
+
+	// Upload, instantiate, and configure the Core Contract.
+	deployer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	codeID, _, err := contractKeeper.Create(ctx, deployer, testdata.CoreContractWasm(), nil)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), codeID)
 
 	initMsg := struct {
 		Token   string         `json:"token"`
@@ -239,18 +236,27 @@ func initFixture(tb testing.TB) *fixture {
 		ChainID string         `json:"chain_id"`
 	}{
 		Token:   "aseda",
-		Owner:   sdk.MustAccAddressFromBech32("seda1xd04svzj6zj93g4eknhp6aq2yyptagcc2zeetj"),
-		ChainID: "integration-app",
+		Owner:   deployer,
+		ChainID: chainID,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 
-	contractAddr, _, err := contractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, "Core Contract", sdk.NewCoins())
-	require.NoError(tb, err)
-	require.NotEmpty(tb, contractAddr)
+	coreContractAddr, _, err := contractKeeper.Instantiate(ctx, codeID, deployer, nil, initMsgBz, "Core Contract", sdk.NewCoins())
+	require.NoError(t, err)
+	require.NotEmpty(t, coreContractAddr)
 
-	err = wasmStorageKeeper.CoreContractRegistry.Set(ctx, contractAddr.String())
-	require.NoError(tb, err)
+	err = wasmStorageKeeper.CoreContractRegistry.Set(ctx, coreContractAddr.String())
+	require.NoError(t, err)
+
+	_, err = contractKeeper.Execute(
+		ctx,
+		coreContractAddr,
+		deployer,
+		[]byte(setStakingConfigMsg),
+		sdk.NewCoins(),
+	)
+	require.NoError(t, err)
 
 	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, map[string]appmodule.AppModule{
 		authtypes.ModuleName:        authModule,
@@ -262,8 +268,10 @@ func initFixture(tb testing.TB) *fixture {
 
 	return &fixture{
 		IntegationApp:     integrationApp,
+		chainID:           chainID,
+		deployer:          deployer,
 		cdc:               cdc,
-		coreContractAddr:  contractAddr,
+		coreContractAddr:  coreContractAddr,
 		accountKeeper:     accountKeeper,
 		bankKeeper:        bankKeeper,
 		stakingKeeper:     *stakingKeeper,
@@ -271,7 +279,16 @@ func initFixture(tb testing.TB) *fixture {
 		wasmKeeper:        wasmKeeper,
 		wasmStorageKeeper: *wasmStorageKeeper,
 		tallyKeeper:       tallyKeeper,
-		mockViewKeeper:    viewKeeper,
+		batchingKeeper:    batchingKeeper,
+		wasmViewKeeper:    wasmKeeper,
 		logBuf:            buf,
 	}
 }
+
+var setStakingConfigMsg = `{
+	"set_staking_config": {
+	  "minimum_stake_to_register": "1",
+	  "minimum_stake_for_committee_eligibility": "1",
+	  "allowlist_enabled": true
+	}
+  }`

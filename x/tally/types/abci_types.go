@@ -2,7 +2,11 @@ package types
 
 import (
 	"encoding/base64"
+	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
+
+	"golang.org/x/crypto/sha3"
 )
 
 type Request struct {
@@ -60,6 +64,43 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 		Salt:   saltIntSlice,
 		Alias:  (*Alias)(u),
 	})
+}
+
+func (u *RevealBody) TryHash() (string, error) {
+	revealHasher := sha3.NewLegacyKeccak256()
+	revealBytes, err := base64.StdEncoding.DecodeString(u.Reveal)
+	if err != nil {
+		return "", err
+	}
+	revealHasher.Write(revealBytes)
+	revealHash := revealHasher.Sum(nil)
+
+	hasher := sha3.NewLegacyKeccak256()
+
+	idBytes, err := hex.DecodeString(u.ID)
+	if err != nil {
+		return "", err
+	}
+	hasher.Write(idBytes)
+
+	hasher.Write([]byte(u.Salt))
+	hasher.Write([]byte{u.ExitCode})
+
+	gasUsedBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(gasUsedBytes, u.GasUsed)
+	hasher.Write(gasUsedBytes)
+
+	hasher.Write(revealHash)
+
+	proxyPubKeyHasher := sha3.NewLegacyKeccak256()
+	for _, key := range u.ProxyPubKeys {
+		keyHasher := sha3.NewLegacyKeccak256()
+		keyHasher.Write([]byte(key))
+		proxyPubKeyHasher.Write(keyHasher.Sum(nil))
+	}
+	hasher.Write(proxyPubKeyHasher.Sum(nil))
+
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 // SudoRemoveDataRequest is the message type used to remove a given
