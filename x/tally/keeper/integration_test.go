@@ -221,8 +221,19 @@ func initFixture(t *testing.T) *fixture {
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
 	tallyModule := tally.NewAppModule(cdc, tallyKeeper)
 
-	//
+	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, map[string]appmodule.AppModule{
+		authtypes.ModuleName:        authModule,
+		banktypes.ModuleName:        bankModule,
+		sdkstakingtypes.ModuleName:  stakingModule,
+		wasmstoragetypes.ModuleName: wasmStorageModule,
+		types.ModuleName:            tallyModule,
+	})
+
+	// TODO: Check why IntegrationApp setup fails to initialize params.
 	bankKeeper.SetSendEnabled(ctx, "aseda", true)
+
+	err = tallyKeeper.SetParams(ctx, types.DefaultParams())
+	require.NoError(t, err)
 
 	// Upload, instantiate, and configure the Core Contract.
 	deployer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -257,14 +268,6 @@ func initFixture(t *testing.T) *fixture {
 		sdk.NewCoins(),
 	)
 	require.NoError(t, err)
-
-	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, map[string]appmodule.AppModule{
-		authtypes.ModuleName:        authModule,
-		banktypes.ModuleName:        bankModule,
-		sdkstakingtypes.ModuleName:  stakingModule,
-		wasmstoragetypes.ModuleName: wasmStorageModule,
-		types.ModuleName:            tallyModule,
-	})
 
 	return &fixture{
 		IntegationApp:     integrationApp,

@@ -83,7 +83,7 @@ func (u *RevealBody) TryHash() (string, error) {
 	}
 	hasher.Write(idBytes)
 
-	hasher.Write([]byte(u.Salt))
+	hasher.Write(u.Salt)
 	hasher.Write([]byte{u.ExitCode})
 
 	gasUsedBytes := make([]byte, 8)
