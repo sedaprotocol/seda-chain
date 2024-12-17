@@ -21,7 +21,7 @@ type Request struct {
 	GasPrice          string                `json:"gas_price"`
 	Memo              string                `json:"memo"`
 	PaybackAddress    string                `json:"payback_address"`
-	ReplicationFactor int64                 `json:"replication_factor"`
+	ReplicationFactor uint16                `json:"replication_factor"`
 	ConsensusFilter   string                `json:"consensus_filter"`
 	Commits           map[string][]byte     `json:"commits"`
 	Reveals           map[string]RevealBody `json:"reveals"`

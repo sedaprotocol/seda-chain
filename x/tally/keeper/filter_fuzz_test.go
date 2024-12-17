@@ -61,7 +61,7 @@ func FuzzStdDevFilter(f *testing.F) {
 		filter, err := hex.DecodeString(filterHex)
 		require.NoError(t, err)
 
-		result, err := fixture.tallyKeeper.ApplyFilter(fixture.Context(), filter, reveals, int64(len(reveals)))
+		result, err := fixture.tallyKeeper.ApplyFilter(fixture.Context(), filter, reveals, uint16(len(reveals)))
 		require.Equal(t, expOutliers, result.Outliers)
 		require.ErrorIs(t, err, nil)
 	})

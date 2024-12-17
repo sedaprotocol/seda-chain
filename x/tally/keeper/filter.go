@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
@@ -27,7 +28,7 @@ type FilterResult struct {
 // index i is an outlier, consensus boolean, consensus data proxy
 // public keys, and error. It assumes that the reveals and their
 // proxy public keys are sorted.
-func (k Keeper) ApplyFilter(ctx sdk.Context, input []byte, reveals []types.RevealBody, replicationFactor int64) (FilterResult, error) {
+func (k Keeper) ApplyFilter(ctx sdk.Context, input []byte, reveals []types.RevealBody, replicationFactor uint16) (FilterResult, error) {
 	var result FilterResult
 	result.Outliers = make([]int, len(reveals))
 

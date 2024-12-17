@@ -248,7 +248,12 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 	if err != nil {
 		return result, k.logErrAndRet(ctx, err, types.ErrGettingMaxTallyGasLimit, req)
 	}
-	gasLimit := min(req.TallyGasLimit, maxGasLimit) - filterResult.GasUsed
+	var gasLimit uint64
+	if min(req.TallyGasLimit, maxGasLimit) > filterResult.GasUsed {
+		gasLimit = min(req.TallyGasLimit, maxGasLimit) - filterResult.GasUsed
+	} else {
+		gasLimit = 0
+	}
 
 	k.Logger(ctx).Info(
 		"executing tally VM",
