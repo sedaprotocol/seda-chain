@@ -5,6 +5,14 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/tally/types";
 
 // Params defines the parameters for the tally module.
 message Params {
-  // max_tally_gas_limit is the maximum gas limit for a tally request.
+  // MaxTallyGasLimit is the maximum gas limit for a tally request.
   uint64 max_tally_gas_limit = 1;
+  // FilterGasCostNone is the gas cost for a filter type none.
+  uint64 filter_gas_cost_none = 2;
+  // FilterGasCostMultiplierMode is the gas cost multiplier for a filter type
+  // mode.
+  uint64 filter_gas_cost_multiplier_mode = 3;
+  // FilterGasCostMultiplierStdDev is the gas cost multiplier for a filter type
+  // stddev.
+  uint64 filter_gas_cost_multiplier_stddev = 4;
 }

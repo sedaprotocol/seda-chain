@@ -8,11 +8,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
 func TestFilter(t *testing.T) {
+	f := initFixture(t)
+
+	defaultParams := types.DefaultParams()
+	err := f.tallyKeeper.SetParams(f.Context(), defaultParams)
+	require.NoError(t, err)
+
 	tests := []struct {
 		name            string
 		tallyInputAsHex string
@@ -20,6 +25,7 @@ func TestFilter(t *testing.T) {
 		reveals         []types.RevealBody
 		consensus       bool
 		consPubKeys     []string // expected proxy public keys in basic consensus
+		gasUsed         uint64
 		wantErr         error
 	}{
 		{
@@ -35,6 +41,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostNone,
 			wantErr:     nil,
 		},
 		{
@@ -52,6 +59,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 7,
 			wantErr:     nil,
 		},
 		{
@@ -65,6 +73,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 3,
 			wantErr:     nil,
 		},
 		{
@@ -82,6 +91,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 7,
 			wantErr:     nil,
 		},
 		{
@@ -95,6 +105,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 3,
 			wantErr:     nil,
 		},
 		{
@@ -111,6 +122,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
+			gasUsed:     0,
 			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
@@ -127,6 +139,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
 			wantErr:     types.ErrCorruptReveals,
 		},
 		{
@@ -202,6 +215,7 @@ func TestFilter(t *testing.T) {
 				"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
 				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
 			},
+			gasUsed: defaultParams.FilterGasCostMultiplierMode * 6,
 			wantErr: nil,
 		},
 		{
@@ -276,6 +290,7 @@ func TestFilter(t *testing.T) {
 				"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
 				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
 			},
+			gasUsed: defaultParams.FilterGasCostMultiplierMode * 6,
 			wantErr: types.ErrCorruptReveals,
 		},
 		{
@@ -340,6 +355,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
+			gasUsed:     0,
 			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
@@ -354,6 +370,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
 			wantErr:     nil,
 		},
 		{
@@ -368,6 +385,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
 			wantErr:     nil,
 		},
 		{
@@ -382,6 +400,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
 			wantErr:     nil,
 		},
 		{
@@ -396,6 +415,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
 			wantErr:     nil,
 		},
 		{
@@ -410,6 +430,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
+			gasUsed:     0,
 			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
@@ -430,6 +451,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 7,
 			wantErr:     nil,
 		},
 		{
@@ -446,6 +468,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
 			wantErr:     nil,
 		},
 		{
@@ -462,6 +485,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
 			wantErr:     nil,
 		},
 		{
@@ -478,6 +502,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
 			wantErr:     nil,
 		},
 		{
@@ -494,6 +519,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
 			wantErr:     nil,
 		},
 		{
@@ -503,6 +529,7 @@ func TestFilter(t *testing.T) {
 			reveals:         []types.RevealBody{},
 			consensus:       false,
 			consPubKeys:     nil,
+			gasUsed:         0,
 			wantErr:         types.ErrEmptyReveals,
 		},
 		{
@@ -514,6 +541,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStddev,
 			wantErr:     nil,
 		},
 		{
@@ -530,6 +558,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
 			wantErr:     nil,
 		},
 		{
@@ -546,6 +575,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
 			wantErr:     nil,
 		},
 		{
@@ -562,6 +592,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
 			wantErr:     nil,
 		},
 		{
@@ -578,6 +609,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
 			wantErr:     nil,
 		},
 		{
@@ -592,6 +624,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 4,
 			wantErr:     nil,
 		},
 	}
@@ -610,18 +643,19 @@ func TestFilter(t *testing.T) {
 				sort.Strings(tt.reveals[i].ProxyPubKeys)
 			}
 
-			outliers, cons, pks, err := keeper.ApplyFilter(filter, tt.reveals)
+			result, err := f.tallyKeeper.ApplyFilter(f.Context(), filter, tt.reveals, int64(len(tt.reveals)))
 			require.ErrorIs(t, err, tt.wantErr)
 			if tt.consPubKeys == nil {
-				require.Nil(t, nil, pks)
+				require.Nil(t, nil, result.ProxyPubKeys)
 			} else {
 				for _, pk := range tt.consPubKeys {
-					require.Contains(t, pks, pk)
+					require.Contains(t, result.ProxyPubKeys, pk)
 				}
 			}
 
-			require.Equal(t, tt.outliers, outliers)
-			require.Equal(t, tt.consensus, cons)
+			require.Equal(t, tt.outliers, result.Outliers)
+			require.Equal(t, tt.consensus, result.Consensus)
+			require.Equal(t, tt.gasUsed, result.GasUsed)
 		})
 	}
 }

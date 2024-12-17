@@ -13,11 +13,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
 func FuzzStdDevFilter(f *testing.F) {
+	fixture := initFixture(f)
+
+	err := fixture.tallyKeeper.SetParams(fixture.Context(), types.DefaultParams())
+	require.NoError(f, err)
+
 	f.Fuzz(func(t *testing.T, n0, n1, n2, n3, n4, n5, n6, n7, n8, n9 int64) {
 		source := rand.NewSource(time.Now().UnixNano())
 		t.Log("random testing with seed", source.Int63())
@@ -57,8 +61,8 @@ func FuzzStdDevFilter(f *testing.F) {
 		filter, err := hex.DecodeString(filterHex)
 		require.NoError(t, err)
 
-		outliers, _, _, err := keeper.ApplyFilter(filter, reveals)
-		require.Equal(t, expOutliers, outliers)
+		result, err := fixture.tallyKeeper.ApplyFilter(fixture.Context(), filter, reveals, int64(len(reveals)))
+		require.Equal(t, expOutliers, result.Outliers)
 		require.ErrorIs(t, err, nil)
 	})
 }

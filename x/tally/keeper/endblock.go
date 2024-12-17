@@ -223,8 +223,9 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 	}
 	paybackAddrHex := hex.EncodeToString(decodedBytes)
 
-	var outliers []int
-	outliers, result.consensus, result.proxyPubKeys, err = ApplyFilter(filter, reveals)
+	filterResult, err := k.ApplyFilter(ctx, filter, reveals, req.ReplicationFactor)
+	result.consensus = filterResult.Consensus
+	result.proxyPubKeys = filterResult.ProxyPubKeys
 	if err != nil {
 		return result, k.logErrAndRet(ctx, err, types.ErrApplyingFilter, req)
 	}
@@ -238,7 +239,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 		return result, k.logErrAndRet(ctx, err, types.ErrDecodingTallyInputs, req)
 	}
 
-	args, err := tallyVMArg(tallyInputs, reveals, outliers)
+	args, err := tallyVMArg(tallyInputs, reveals, filterResult.Outliers)
 	if err != nil {
 		return result, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, req)
 	}
@@ -247,7 +248,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 	if err != nil {
 		return result, k.logErrAndRet(ctx, err, types.ErrGettingMaxTallyGasLimit, req)
 	}
-	gasLimit := min(req.TallyGasLimit, maxGasLimit)
+	gasLimit := min(req.TallyGasLimit, maxGasLimit) - filterResult.GasUsed
 
 	k.Logger(ctx).Info(
 		"executing tally VM",
@@ -277,7 +278,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 	result.stderr = vmRes.Stderr
 	result.result = vmRes.Result
 	result.exitInfo = vmRes.ExitInfo
-	result.tallyGasUsed = vmRes.GasUsed
+	result.tallyGasUsed = vmRes.GasUsed + filterResult.GasUsed
 
 	return result, nil
 }

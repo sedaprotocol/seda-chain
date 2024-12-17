@@ -89,7 +89,7 @@ type fixture struct {
 	logBuf            *bytes.Buffer
 }
 
-func initFixture(t *testing.T) *fixture {
+func initFixture(t testing.TB) *fixture {
 	t.Helper()
 
 	tempDir := t.TempDir()
