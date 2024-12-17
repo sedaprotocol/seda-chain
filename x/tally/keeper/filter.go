@@ -74,6 +74,7 @@ func (k Keeper) ApplyFilter(ctx sdk.Context, input []byte, reveals []types.Revea
 		return result, types.ErrInvalidFilterType
 	}
 	if err != nil {
+		result.GasUsed = 0
 		return result, err
 	}
 
