@@ -23,6 +23,11 @@ import (
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
+const (
+	salt   = "9c0257114eb9399a2985f8e75dad7600c5d89fe3824ffa99ec1c3eb8bf3b0501"
+	reveal = "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w="
+)
+
 // commitRevealDataRequest performs the following steps to prepare a
 // tally-ready data request.
 // 1. Generate staker key and add to allowlist.
@@ -42,7 +47,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string) stri
 		f.Context(),
 		f.coreContractAddr,
 		f.deployer,
-		[]byte(fmt.Sprintf(addToAllowListMsg, stakerPubKey)),
+		addToAllowListMsg(stakerPubKey),
 		sdk.NewCoins(),
 	)
 	require.NoError(t, err)
@@ -64,7 +69,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string) stri
 		f.Context(),
 		f.coreContractAddr,
 		staker,
-		[]byte(fmt.Sprintf(stakeMsg, stakerPubKey, proof)),
+		stakeMsg(stakerPubKey, proof),
 		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 	)
 	require.NoError(t, err)
@@ -74,7 +79,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string) stri
 		f.Context(),
 		f.coreContractAddr,
 		f.deployer,
-		[]byte(fmt.Sprintf(postDataRequestMsg, hex.EncodeToString(execProgram.Hash), hex.EncodeToString(tallyProgram.Hash), requestMemo)),
+		postDataRequestMsg(execProgram.Hash, tallyProgram.Hash, requestMemo),
 		sdk.NewCoins(),
 	)
 	require.NoError(t, err)
@@ -91,8 +96,8 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string) stri
 	// 5. The staker commits and reveals.
 	revealBody := types.RevealBody{
 		ID:           drID,
-		Salt:         []byte("9c0257114eb9399a2985f8e75dad7600c5d89fe3824ffa99ec1c3eb8bf3b0501"),
-		Reveal:       "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=",
+		Salt:         []byte(salt),
+		Reveal:       reveal,
 		GasUsed:      0,
 		ExitCode:     0,
 		ProxyPubKeys: []string{},
@@ -105,7 +110,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string) stri
 		f.Context(),
 		f.coreContractAddr,
 		staker,
-		[]byte(fmt.Sprintf(commitMsg, drID, commitment, stakerPubKey, proof)),
+		commitMsg(drID, commitment, stakerPubKey, proof),
 		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 	)
 	require.NoError(t, err)
@@ -115,7 +120,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string) stri
 		f.Context(),
 		f.coreContractAddr,
 		staker,
-		[]byte(fmt.Sprintf(revealMsg, drID, drID, stakerPubKey, proof)),
+		revealMsg(drID, stakerPubKey, proof),
 		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 	)
 	require.NoError(t, err)
@@ -123,66 +128,81 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string) stri
 	return res.DrID
 }
 
-var addToAllowListMsg = `{
-	"add_to_allowlist": {
-	  "public_key": "%s"
-    }
-}`
+func addToAllowListMsg(stakerPubKey string) []byte {
+	var addToAllowListMsg = `{
+		"add_to_allowlist": {
+		  "public_key": "%s"
+		}
+	}`
+	return []byte(fmt.Sprintf(addToAllowListMsg, stakerPubKey))
+}
 
-var stakeMsg = `{
-  "stake": {
-    "public_key": "%s",
-    "proof": "%s",
-    "memo": "YWRkcmVzcw=="
-  }
-}`
+func stakeMsg(stakerPubKey, proof string) []byte {
+	var stakeMsg = `{
+		"stake": {
+		  "public_key": "%s",
+		  "proof": "%s",
+		  "memo": "YWRkcmVzcw=="
+		}
+	}`
+	return []byte(fmt.Sprintf(stakeMsg, stakerPubKey, proof))
+}
 
-var postDataRequestMsg = `{
-	"post_data_request": {
-	  "posted_dr": {
-		"version": "0.0.1",
-		"exec_program_id": "%s",
-		"exec_inputs": "ZXhlY19pbnB1dHM=",
-		"exec_gas_limit": 10,
-		"tally_program_id": "%s",
-		"tally_inputs": "dGFsbHlfaW5wdXRz",
-		"tally_gas_limit": 10,
-		"replication_factor": 1,
-		"consensus_filter": "AA==",
-		"gas_price": "10",
-		"memo": "%s"
-	  },
-	  "seda_payload": "",
-	  "payback_address": "AQID"
-	}
-}`
+func postDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string) []byte {
+	var postDataRequestMsg = `{
+		"post_data_request": {
+		  "posted_dr": {
+			"version": "0.0.1",
+			"exec_program_id": "%s",
+			"exec_inputs": "ZXhlY19pbnB1dHM=",
+			"exec_gas_limit": 10,
+			"tally_program_id": "%s",
+			"tally_inputs": "dGFsbHlfaW5wdXRz",
+			"tally_gas_limit": 10,
+			"replication_factor": 1,
+			"consensus_filter": "AA==",
+			"gas_price": "10",
+			"memo": "%s"
+		  },
+		  "seda_payload": "",
+		  "payback_address": "AQID"
+		}
+	}`
+	return []byte(fmt.Sprintf(postDataRequestMsg, hex.EncodeToString(execProgHash), hex.EncodeToString(tallyProgHash), requestMemo))
+}
 
-var commitMsg = `{
-  "commit_data_result": {
-    "dr_id": "%s",
-    "commitment": "%s",
-    "public_key": "%s",
-    "proof": "%s"
-  }
-}`
+func commitMsg(drID, commitment, stakerPubKey, proof string) []byte {
+	var commitMsg = `{
+		"commit_data_result": {
+		  "dr_id": "%s",
+		  "commitment": "%s",
+		  "public_key": "%s",
+		  "proof": "%s"
+		}
+	}`
+	return []byte(fmt.Sprintf(commitMsg, drID, commitment, stakerPubKey, proof))
+}
 
-var revealMsg = `{
-  "reveal_data_result": {
-    "dr_id": "%s",
-    "reveal_body": {
-      "id": "%s",
-      "salt": "9c0257114eb9399a2985f8e75dad7600c5d89fe3824ffa99ec1c3eb8bf3b0501",
-      "exit_code": 0,
-      "gas_used": 0,
-      "reveal": "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=",
-      "proxy_public_keys": []
-    },
-    "public_key": "%s",
-    "proof": "%s",
-    "stderr": [],
-    "stdout": []
-  }
-}`
+func revealMsg(drID, stakerPubKey, proof string) []byte {
+	var revealMsg = `{
+		"reveal_data_result": {
+		  "dr_id": "%s",
+		  "reveal_body": {
+			"id": "%s",
+			"salt": "%s",
+			"exit_code": 0,
+			"gas_used": 0,
+			"reveal": "%s",
+			"proxy_public_keys": []
+		  },
+		  "public_key": "%s",
+		  "proof": "%s",
+		  "stderr": [],
+		  "stdout": []
+		}
+	}`
+	return []byte(fmt.Sprintf(revealMsg, drID, drID, salt, reveal, stakerPubKey, proof))
+}
 
 // generateStakeProof generates a proof for a stake message given a
 // base64-encoded memo.

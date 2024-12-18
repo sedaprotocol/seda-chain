@@ -14,6 +14,24 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
+func TestProcessTallies(t *testing.T) {
+	f := initFixture(t)
+
+	drID := f.commitRevealDataRequest(t, "c2VkYXByb3RvY29s")
+
+	err := f.tallyKeeper.ProcessTallies(f.Context(), f.coreContractAddr)
+	require.NoError(t, err)
+
+	// TODO check tally result & exit code
+
+	dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
+	require.NoError(t, err)
+
+	dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
+	require.NoError(t, err)
+	require.Equal(t, *dataResult, dataResults[0])
+}
+
 // TestTallyVM tests tally VM using a sample tally wasm that performs
 // preliminary checks on the given reveal data.
 func TestTallyVM(t *testing.T) {
@@ -239,26 +257,4 @@ func TestTallyVM_EnvVars(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestProcessTallies(t *testing.T) {
-	f := initFixture(t)
-
-	drID := f.commitRevealDataRequest(t, "c2VkYXByb3RvY29s")
-
-	err := f.tallyKeeper.ProcessTallies(f.Context(), f.coreContractAddr)
-	require.NoError(t, err)
-
-	// TODO check tally result & exit code
-
-	// TODO check events
-	// fmt.Println(f.logBuf.String())
-	// require.Contains(t, f.logBuf.String(), exp)
-
-	dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
-	require.NoError(t, err)
-
-	dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
-	require.NoError(t, err)
-	require.Equal(t, *dataResult, dataResults[0])
 }
