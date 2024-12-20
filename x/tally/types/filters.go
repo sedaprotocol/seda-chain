@@ -8,26 +8,36 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
+var (
+	_ Filter = &FilterNone{}
+	_ Filter = &FilterMode{}
+	_ Filter = &FilterStdDev{}
+)
+
 type Filter interface {
 	// ApplyFilter takes in a list of reveals and returns an outlier
 	// list, whose value at index i indicates whether i-th reveal is
 	// an outlier. Value of 1 indicates an outlier, and value of 0
 	// indicates a non-outlier reveal.
 	ApplyFilter(reveals []RevealBody) ([]int, error)
+	// GasCost returns the cost of the filter in terms of gas amount.
+	GasCost() uint64
 }
 
-type FilterNone struct{}
+type FilterNone struct {
+	gasCost uint64
+}
 
 // NewFilterNone constructs a new FilterNone object.
-func NewFilterNone(_ []byte) (FilterNone, error) {
-	return FilterNone{}, nil
+func NewFilterNone(gasCost uint64) FilterNone {
+	return FilterNone{gasCost: gasCost}
 }
 
 // FilterNone declares all reveals as non-outliers, unless reveals are
 // empty or corrupt.
 func (f FilterNone) ApplyFilter(reveals []RevealBody) ([]int, error) {
 	if len(reveals) == 0 {
-		return nil, ErrEmptyReveals
+		return nil, ErrEmptyReveals // TODO remove since unreachable?
 	}
 
 	var corruptCount int
@@ -44,8 +54,13 @@ func (f FilterNone) ApplyFilter(reveals []RevealBody) ([]int, error) {
 	return make([]int, len(reveals)), nil
 }
 
+func (f FilterNone) GasCost() uint64 {
+	return f.gasCost
+}
+
 type FilterMode struct {
 	dataPath string // JSON path to reveal data
+	gasCost  uint64
 }
 
 // NewFilterMode constructs a new FilerMode object given a filter
@@ -53,7 +68,7 @@ type FilterMode struct {
 // Mode filter input looks as follows:
 // 0             1                  9       9+data_path_length
 // | filter_type | data_path_length |   data_path   |
-func NewFilterMode(input []byte) (FilterMode, error) {
+func NewFilterMode(input []byte, gasCostMultiplier uint64, replicationFactor uint16) (FilterMode, error) {
 	var filter FilterMode
 	if len(input) < 9 {
 		return filter, ErrFilterInputTooShort.Wrapf("%d < %d", len(input), 9)
@@ -70,7 +85,12 @@ func NewFilterMode(input []byte) (FilterMode, error) {
 		return filter, ErrInvalidPathLen.Wrapf("expected: %d got: %d", int(pathLen), len(path)) // #nosec G115
 	}
 	filter.dataPath = string(path)
+	filter.gasCost = gasCostMultiplier * uint64(replicationFactor)
 	return filter, nil
+}
+
+func (f FilterMode) GasCost() uint64 {
+	return f.gasCost
 }
 
 // ApplyFilter applies the Mode Filter and returns an outlier list.
@@ -99,8 +119,9 @@ func (f FilterMode) ApplyFilter(reveals []RevealBody) ([]int, error) {
 
 type FilterStdDev struct {
 	maxSigma   Sigma
-	numberType byte
 	dataPath   string // JSON path to reveal data
+	filterFunc func(dataList []any, maxSigma Sigma) ([]int, error)
+	gasCost    uint64
 }
 
 // NewFilterStdDev constructs a new FilterStdDev object given a
@@ -108,7 +129,7 @@ type FilterStdDev struct {
 // Standard deviation filter input looks as follows:
 // 0             1           9             10                 18 18+json_path_length
 // | filter_type | max_sigma | number_type | json_path_length | json_path |
-func NewFilterStdDev(input []byte) (FilterStdDev, error) {
+func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor uint16) (FilterStdDev, error) {
 	var filter FilterStdDev
 	if len(input) < 18 {
 		return filter, ErrFilterInputTooShort.Wrapf("%d < %d", len(input), 18)
@@ -120,7 +141,18 @@ func NewFilterStdDev(input []byte) (FilterStdDev, error) {
 	}
 	filter.maxSigma = maxSigma
 
-	filter.numberType = input[9]
+	switch input[9] {
+	case 0x00: // Int32
+		filter.filterFunc = detectOutliersInteger[int32]
+	case 0x01: // Int64
+		filter.filterFunc = detectOutliersInteger[int64]
+	case 0x02: // Uint32
+		filter.filterFunc = detectOutliersInteger[uint32]
+	case 0x03: // Uint64
+		filter.filterFunc = detectOutliersInteger[uint64]
+	default:
+		return filter, ErrInvalidNumberType
+	}
 
 	var pathLen uint64
 	err = binary.Read(bytes.NewReader(input[10:18]), binary.BigEndian, &pathLen)
@@ -133,6 +165,7 @@ func NewFilterStdDev(input []byte) (FilterStdDev, error) {
 		return filter, ErrInvalidPathLen.Wrapf("expected: %d got: %d", int(pathLen), len(path)) // #nosec G115
 	}
 	filter.dataPath = string(path)
+	filter.gasCost = gasCostMultiplier * uint64(replicationFactor)
 	return filter, nil
 }
 
@@ -152,19 +185,11 @@ func (f FilterStdDev) ApplyFilter(reveals []RevealBody) ([]int, error) {
 	if err != nil {
 		return nil, err
 	}
+	return f.filterFunc(dataList, f.maxSigma)
+}
 
-	switch f.numberType {
-	case 0x00: // Int32
-		return detectOutliersInteger[int32](dataList, f.maxSigma)
-	case 0x01: // Int64
-		return detectOutliersInteger[int64](dataList, f.maxSigma)
-	case 0x02: // Uint32
-		return detectOutliersInteger[uint32](dataList, f.maxSigma)
-	case 0x03: // Uint64
-		return detectOutliersInteger[uint64](dataList, f.maxSigma)
-	default:
-		return nil, ErrInvalidNumberType
-	}
+func (f FilterStdDev) GasCost() uint64 {
+	return f.gasCost
 }
 
 func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma) ([]int, error) {

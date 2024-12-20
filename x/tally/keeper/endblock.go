@@ -209,44 +209,57 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 		sort.Strings(reveals[i].ProxyPubKeys)
 	}
 
-	result.execGasUsed = calculateExecGasUsed(reveals)
-
-	filter, err := base64.StdEncoding.DecodeString(req.ConsensusFilter)
+	// Phase I: Filtering
+	filter, err := k.BuildFilter(ctx, req.ConsensusFilter, req.ReplicationFactor)
 	if err != nil {
-		return result, k.logErrAndRet(ctx, err, types.ErrDecodingConsensusFilter, req)
+		return result, err
 	}
-	// Convert base64-encoded payback address to hex encoding that
-	// the tally VM expects.
-	decodedBytes, err := base64.StdEncoding.DecodeString(req.PaybackAddress)
-	if err != nil {
-		return result, k.logErrAndRet(ctx, err, types.ErrDecodingPaybackAddress, req)
-	}
-	paybackAddrHex := hex.EncodeToString(decodedBytes)
-
-	filterResult, err := k.ApplyFilter(ctx, filter, reveals, req.ReplicationFactor)
+	filterResult, err := ApplyFilter(filter, reveals)
 	result.consensus = filterResult.Consensus
 	result.proxyPubKeys = filterResult.ProxyPubKeys
 	if err != nil {
 		return result, k.logErrAndRet(ctx, err, types.ErrApplyingFilter, req)
 	}
 
+	// Phase II: Tally Program Execution
+	vmRes, err := k.ExecuteTallyProgram(ctx, req, filterResult, reveals)
+	if err != nil {
+		return TallyResult{}, err
+	}
+	result.stdout = vmRes.Stdout
+	result.stderr = vmRes.Stderr
+	result.result = vmRes.Result
+	result.exitInfo = vmRes.ExitInfo
+	result.tallyGasUsed = vmRes.GasUsed + filterResult.GasUsed
+
+	// Phase III: Calculate Payouts
+	result.execGasUsed = calculateExecGasUsed(reveals)
+
+	return result, nil
+}
+
+func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.RevealBody) (tallyvm.VmResult, error) {
 	tallyProgram, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyProgramID)
 	if err != nil {
-		return result, k.logErrAndRet(ctx, err, types.ErrFindingTallyProgram, req)
+		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrFindingTallyProgram, req)
 	}
 	tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
 	if err != nil {
-		return result, k.logErrAndRet(ctx, err, types.ErrDecodingTallyInputs, req)
+		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingTallyInputs, req)
 	}
 
-	args, err := tallyVMArg(tallyInputs, reveals, filterResult.Outliers)
+	// Convert base64-encoded payback address to hex encoding that
+	// the tally VM expects.
+	decodedBytes, err := base64.StdEncoding.DecodeString(req.PaybackAddress)
 	if err != nil {
-		return result, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, req)
+		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingPaybackAddress, req)
 	}
+	paybackAddrHex := hex.EncodeToString(decodedBytes)
 
+	// Adjust gas limit based on the gas used by the filter.
 	maxGasLimit, err := k.GetMaxTallyGasLimit(ctx)
 	if err != nil {
-		return result, k.logErrAndRet(ctx, err, types.ErrGettingMaxTallyGasLimit, req)
+		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrGettingMaxTallyGasLimit, req)
 	}
 	var gasLimit uint64
 	if min(req.TallyGasLimit, maxGasLimit) > filterResult.GasUsed {
@@ -255,17 +268,22 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 		gasLimit = 0
 	}
 
+	args, err := tallyVMArg(tallyInputs, reveals, filterResult.Outliers)
+	if err != nil {
+		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, req)
+	}
+
 	k.Logger(ctx).Info(
 		"executing tally VM",
 		"request_id", req.ID,
 		"tally_program_id", req.TallyProgramID,
-		"consensus", result.consensus,
+		"consensus", filterResult.Consensus,
 		"arguments", args,
 	)
 
-	vmRes := tallyvm.ExecuteTallyVm(tallyProgram.Bytecode, args, map[string]string{
+	return tallyvm.ExecuteTallyVm(tallyProgram.Bytecode, args, map[string]string{
 		"VM_MODE":               "tally",
-		"CONSENSUS":             fmt.Sprintf("%v", result.consensus),
+		"CONSENSUS":             fmt.Sprintf("%v", filterResult.Consensus),
 		"BLOCK_HEIGHT":          fmt.Sprintf("%d", ctx.BlockHeight()),
 		"DR_ID":                 req.ID,
 		"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", req.ReplicationFactor),
@@ -278,14 +296,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 		"DR_GAS_PRICE":          req.GasPrice,
 		"DR_MEMO":               req.Memo,
 		"DR_PAYBACK_ADDRESS":    paybackAddrHex,
-	})
-	result.stdout = vmRes.Stdout
-	result.stderr = vmRes.Stderr
-	result.result = vmRes.Result
-	result.exitInfo = vmRes.ExitInfo
-	result.tallyGasUsed = vmRes.GasUsed + filterResult.GasUsed
-
-	return result, nil
+	}), nil
 }
 
 // logErrAndRet logs the base error along with the request ID for
