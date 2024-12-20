@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -22,19 +23,48 @@ type FilterResult struct {
 	GasUsed      uint64   // gas used for filter
 }
 
+// BuildFilter builds a filter based on the requestor-provided input.
+func (k Keeper) BuildFilter(ctx sdk.Context, filterInput string, replicationFactor uint16) (types.Filter, error) {
+	input, err := base64.StdEncoding.DecodeString(filterInput)
+	if err != nil {
+		return nil, err
+	}
+	if len(input) == 0 {
+		return nil, types.ErrInvalidFilterType
+	}
+
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var filter types.Filter
+	switch input[0] {
+	case filterTypeNone:
+		filter = types.NewFilterNone(params.FilterGasCostNone)
+	case filterTypeMode:
+		filter, err = types.NewFilterMode(input, params.FilterGasCostMultiplierMode, replicationFactor)
+	case filterTypeStdDev:
+		filter, err = types.NewFilterStdDev(input, params.FilterGasCostMultiplierStddev, replicationFactor)
+	default:
+		return nil, types.ErrInvalidFilterType
+	}
+	if err != nil {
+		return nil, err
+	}
+	return filter, nil
+}
+
 // ApplyFilter processes filter of the type specified in the first
 // byte of consensus filter. It returns an outlier list, which is
 // a boolean list where true at index i means that the reveal at
 // index i is an outlier, consensus boolean, consensus data proxy
 // public keys, and error. It assumes that the reveals and their
 // proxy public keys are sorted.
-func (k Keeper) ApplyFilter(ctx sdk.Context, input []byte, reveals []types.RevealBody, replicationFactor uint16) (FilterResult, error) {
+func ApplyFilter(filter types.Filter, reveals []types.RevealBody) (FilterResult, error) {
 	var result FilterResult
 	result.Outliers = make([]int, len(reveals))
-
-	if len(input) == 0 {
-		return result, types.ErrInvalidFilterType
-	}
+	result.GasUsed = filter.GasCost()
 
 	// Determine basic consensus on tuple of (exit_code, proxy_pub_keys)
 	var maxFreq int
@@ -54,30 +84,6 @@ func (k Keeper) ApplyFilter(ctx sdk.Context, input []byte, reveals []types.Revea
 		return result, types.ErrNoBasicConsensus
 	}
 	result.ProxyPubKeys = proxyPubKeys
-
-	params, err := k.GetParams(ctx)
-	if err != nil {
-		return result, err
-	}
-
-	var filter types.Filter
-	switch input[0] {
-	case filterTypeNone:
-		filter, err = types.NewFilterNone(input)
-		result.GasUsed = params.FilterGasCostNone
-	case filterTypeMode:
-		filter, err = types.NewFilterMode(input)
-		result.GasUsed = params.FilterGasCostMultiplierMode * uint64(replicationFactor)
-	case filterTypeStdDev:
-		filter, err = types.NewFilterStdDev(input)
-		result.GasUsed = params.FilterGasCostMultiplierStddev * uint64(replicationFactor)
-	default:
-		return result, types.ErrInvalidFilterType
-	}
-	if err != nil {
-		result.GasUsed = 0
-		return result, err
-	}
 
 	outliers, err := filter.ApplyFilter(reveals)
 	switch {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
@@ -58,10 +59,12 @@ func FuzzStdDevFilter(f *testing.F) {
 		bz := make([]byte, 8)
 		binary.BigEndian.PutUint64(bz, uint64(neighborDist*1e6))
 		filterHex := fmt.Sprintf("02%s01000000000000000b726573756C742E74657874", hex.EncodeToString(bz)) // max_sigma = neighborDist, number_type = int64, json_path = result.text
-		filter, err := hex.DecodeString(filterHex)
+		filterInput, err := hex.DecodeString(filterHex)
 		require.NoError(t, err)
 
-		result, err := fixture.tallyKeeper.ApplyFilter(fixture.Context(), filter, reveals, uint16(len(reveals)))
+		filter, err := fixture.tallyKeeper.BuildFilter(fixture.Context(), base64.StdEncoding.EncodeToString(filterInput), uint16(len(reveals)))
+		require.NoError(t, err)
+		result, err := keeper.ApplyFilter(filter, reveals)
 		require.Equal(t, expOutliers, result.Outliers)
 		require.ErrorIs(t, err, nil)
 	})
