@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
@@ -122,7 +123,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
-			gasUsed:     0,
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
 			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
@@ -355,7 +356,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
-			gasUsed:     0,
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
 			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
@@ -430,7 +431,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
-			gasUsed:     0,
+			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
 			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
@@ -630,7 +631,7 @@ func TestFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filter, err := hex.DecodeString(tt.tallyInputAsHex)
+			filterInput, err := hex.DecodeString(tt.tallyInputAsHex)
 			require.NoError(t, err)
 
 			// For illustration
@@ -643,7 +644,10 @@ func TestFilter(t *testing.T) {
 				sort.Strings(tt.reveals[i].ProxyPubKeys)
 			}
 
-			result, err := f.tallyKeeper.ApplyFilter(f.Context(), filter, tt.reveals, uint16(len(tt.reveals)))
+			filter, err := f.tallyKeeper.BuildFilter(f.Context(), base64.StdEncoding.EncodeToString(filterInput), uint16(len(tt.reveals)))
+			require.NoError(t, err)
+
+			result, err := keeper.ApplyFilter(filter, tt.reveals)
 			require.ErrorIs(t, err, tt.wantErr)
 			if tt.consPubKeys == nil {
 				require.Nil(t, nil, result.ProxyPubKeys)
