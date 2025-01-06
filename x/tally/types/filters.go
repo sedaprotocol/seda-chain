@@ -177,18 +177,21 @@ func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma
 			corruptQueue = append(corruptQueue, i)
 			continue
 		}
-		num, ok := data.(T)
+		num, ok := data.(int64)
 		if !ok {
 			errors[i] = true
 			corruptQueue = append(corruptQueue, i)
 			continue
 		}
-		nums = append(nums, num)
+		nums = append(nums, T(num))
 	}
 
 	// Construct outliers list.
-	median := findMedian(nums)
 	outliers := make([]int, len(dataList))
+	if len(nums) == 0 {
+		return outliers, false
+	}
+	median := findMedian(nums)
 	var numsInd, nonOutlierCount int
 	for i := range outliers {
 		if len(corruptQueue) > 0 && i == corruptQueue[0] {
