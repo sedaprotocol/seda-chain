@@ -17,9 +17,9 @@ var (
 type Filter interface {
 	// ApplyFilter takes in a list of reveals and returns an outlier
 	// list, whose value at index i indicates whether i-th reveal is
-	// an outlier. Value of 1 indicates an outlier, and value of 0
-	// indicates a non-outlier reveal.
-	ApplyFilter(reveals []RevealBody) ([]int, error)
+	// an outlier, and a boolean indicating whether consensus in reveal
+	// data has been reached.
+	ApplyFilter(reveals []RevealBody, errors []bool) ([]int, bool)
 	// GasCost returns the cost of the filter in terms of gas amount.
 	GasCost() uint64
 }
@@ -33,25 +33,9 @@ func NewFilterNone(gasCost uint64) FilterNone {
 	return FilterNone{gasCost: gasCost}
 }
 
-// FilterNone declares all reveals as non-outliers, unless reveals are
-// empty or corrupt.
-func (f FilterNone) ApplyFilter(reveals []RevealBody) ([]int, error) {
-	if len(reveals) == 0 {
-		return nil, ErrEmptyReveals // TODO remove since unreachable?
-	}
-
-	var corruptCount int
-	for _, r := range reveals {
-		if r.ExitCode != 0 {
-			corruptCount++
-			continue
-		}
-	}
-	if corruptCount*3 > len(reveals) {
-		return nil, ErrCorruptReveals
-	}
-
-	return make([]int, len(reveals)), nil
+// FilterNone declares all reveals as non-outliers.
+func (f FilterNone) ApplyFilter(reveals []RevealBody, _ []bool) ([]int, bool) {
+	return make([]int, len(reveals)), true
 }
 
 func (f FilterNone) GasCost() uint64 {
@@ -94,16 +78,11 @@ func (f FilterMode) GasCost() uint64 {
 }
 
 // ApplyFilter applies the Mode Filter and returns an outlier list.
-// (i) If more than 1/3 of reveals are corrupted, a corrupt reveals
-// error is returned without an outlier list.
-// (ii) Otherwise, a reveal is declared an outlier if it does not
-// match the mode value. If less than 2/3 of the reveals are non-outliers,
-// "no consensus" error is returned along with an outlier list.
-func (f FilterMode) ApplyFilter(reveals []RevealBody) ([]int, error) {
-	dataList, dataAttrs, err := parseReveals(reveals, f.dataPath)
-	if err != nil {
-		return nil, err
-	}
+// A reveal is declared an outlier if it does not match the mode value.
+// If less than 2/3 of the reveals are non-outliers, "no consensus"
+// error is returned along with an outlier list.
+func (f FilterMode) ApplyFilter(reveals []RevealBody, errors []bool) ([]int, bool) {
+	dataList, dataAttrs := parseReveals(reveals, f.dataPath, errors)
 
 	outliers := make([]int, len(reveals))
 	for i, r := range dataList {
@@ -112,15 +91,15 @@ func (f FilterMode) ApplyFilter(reveals []RevealBody) ([]int, error) {
 		}
 	}
 	if dataAttrs.maxFreq*3 < len(reveals)*2 {
-		return outliers, ErrNoConsensus
+		return outliers, false
 	}
-	return outliers, nil
+	return outliers, true
 }
 
 type FilterStdDev struct {
 	maxSigma   Sigma
 	dataPath   string // JSON path to reveal data
-	filterFunc func(dataList []any, maxSigma Sigma) ([]int, error)
+	filterFunc func(dataList []any, maxSigma Sigma, errors []bool) ([]int, bool)
 	gasCost    uint64
 }
 
@@ -180,38 +159,31 @@ func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor u
 // an outlier if it deviates from the median by more than the given
 // max sigma. If less than 2/3 of the reveals are non-outliers, "no
 // consensus" error is returned as well.
-func (f FilterStdDev) ApplyFilter(reveals []RevealBody) ([]int, error) {
-	dataList, _, err := parseReveals(reveals, f.dataPath)
-	if err != nil {
-		return nil, err
-	}
-	return f.filterFunc(dataList, f.maxSigma)
+func (f FilterStdDev) ApplyFilter(reveals []RevealBody, errors []bool) ([]int, bool) {
+	dataList, _ := parseReveals(reveals, f.dataPath, errors)
+	return f.filterFunc(dataList, f.maxSigma, errors)
 }
 
 func (f FilterStdDev) GasCost() uint64 {
 	return f.gasCost
 }
 
-func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma) ([]int, error) {
+func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma, errors []bool) ([]int, bool) {
 	nums := make([]T, 0, len(dataList))
 	corruptQueue := make([]int, 0, len(dataList)) // queue of corrupt indices in dataList
 	for i, data := range dataList {
 		if data == nil {
+			errors[i] = true
 			corruptQueue = append(corruptQueue, i)
 			continue
 		}
-		num, ok := data.(int64)
+		num, ok := data.(T)
 		if !ok {
+			errors[i] = true
 			corruptQueue = append(corruptQueue, i)
 			continue
 		}
-		nums = append(nums, T(num))
-	}
-
-	// If more than 1/3 of the reveals are corrupted,
-	// return corrupt reveals error.
-	if len(corruptQueue)*3 > len(dataList) {
-		return nil, ErrCorruptReveals
+		nums = append(nums, num)
 	}
 
 	// Construct outliers list.
@@ -233,11 +205,11 @@ func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma
 	}
 
 	// If less than 2/3 of the numbers fall within max sigma range
-	// from the median, there is no consensus.
+	// from the median, there is no consensus in reveal data.
 	if nonOutlierCount*3 < len(nums)*2 {
-		return outliers, ErrNoConsensus
+		return outliers, false
 	}
-	return outliers, nil
+	return outliers, true
 }
 
 // findMedian returns the median of a given slice of integers.

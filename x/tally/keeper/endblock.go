@@ -94,11 +94,11 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		}
 
 		switch {
-		case len(req.Commits) < int(req.ReplicationFactor):
+		case len(req.Commits) == 0 || len(req.Commits) < int(req.ReplicationFactor):
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
 			dataResults[i].ExitCode = batchingtypes.TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
-		case len(req.Reveals) < int(req.ReplicationFactor):
+		case len(req.Reveals) == 0 || len(req.Reveals) < int(req.ReplicationFactor):
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d reveals; received %d", req.ReplicationFactor, len(req.Reveals)))
 			dataResults[i].ExitCode = batchingtypes.TallyExitCodeNotEnoughReveals
 			k.Logger(ctx).Info("data request's number of reveals did not meet replication factor", "request_id", req.ID)

@@ -32,7 +32,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "None filter",
 			tallyInputAsHex: "00",
-			outliers:        []int{0, 0, 0, 0, 0},
+			outliers:        make([]int, 5),
 			reveals: []types.RevealBody{
 				{},
 				{},
@@ -80,7 +80,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - Multiple modes",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []int{0, 0, 0, 0, 0, 0, 1},
+			outliers:        make([]int, 7),
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": "A"}}`},
 				{Reveal: `{"result": {"text": "A"}}`},
@@ -93,7 +93,7 @@ func TestFilter(t *testing.T) {
 			consensus:   false,
 			consPubKeys: nil,
 			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 7,
-			wantErr:     nil,
+			wantErr:     types.ErrNoConsensus,
 		},
 		{
 			name:            "Mode filter - One corrupt reveal but consensus",
@@ -112,7 +112,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - No consensus on exit code",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []int{0, 0, 0, 0, 0, 0},
+			outliers:        make([]int, 6),
 			reveals: []types.RevealBody{
 				{ExitCode: 1, Reveal: `{"high_level_prop1":"ignore this", "result": {"text": "A", "number": 0}}`},
 				{ExitCode: 1, Reveal: `{"makes_this_json":"ignore this", "result": {"text": "A", "number": 10}}`},
@@ -127,26 +127,26 @@ func TestFilter(t *testing.T) {
 			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
-			name:            "Mode filter - Corrupt due to too many bad exit codes",
+			name:            "Mode filter - >2/3 bad exit codes",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []int{0, 0, 0, 0, 0, 0},
+			outliers:        make([]int, 6),
 			reveals: []types.RevealBody{
 				{ExitCode: 1, Reveal: `{"high_level_prop1":"ignore this", "result": {"text": "A", "number": 0}}`},
 				{ExitCode: 1, Reveal: `{"makes_this_json":"ignore this", "result": {"text": "A", "number": 10}}`},
 				{ExitCode: 1, Reveal: `{"unstructured":"ignore this", "result": {"text": "B", "number": 101}}`},
 				{ExitCode: 1, Reveal: `{"but":"ignore this", "result": {"text": "B", "number": 10}}`},
 				{ExitCode: 0, Reveal: `{"it_does_not":"ignore this", "result": {"text": "C", "number": 10}}`},
-				{ExitCode: 0, Reveal: `{"matter":"ignore this", "result": {"text": "C", "number": 10}}`},
+				{ExitCode: 1, Reveal: `{"matter":"ignore this", "result": {"text": "C", "number": 10}}`},
 			},
-			consensus:   false,
+			consensus:   true,
 			consPubKeys: nil,
 			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
-			wantErr:     types.ErrCorruptReveals,
+			wantErr:     types.ErrConsensusInError,
 		},
 		{
 			name:            "Mode filter - Uniform reveals",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []int{0, 0, 0, 0, 0, 0},
+			outliers:        make([]int, 6),
 			reveals: []types.RevealBody{
 				{
 					ExitCode: 0,
@@ -220,7 +220,7 @@ func TestFilter(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:            "Mode filter - Basic consensus but corrupt due to too many bad exit codes",
+			name:            "Mode filter - >2/3 bad exit codes",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
 			outliers:        []int{0, 0, 0, 0, 0, 0},
 			reveals: []types.RevealBody{
@@ -284,7 +284,7 @@ func TestFilter(t *testing.T) {
 					Reveal: `{"result": {"text": "A"}}`,
 				},
 			},
-			consensus: false,
+			consensus: true,
 			consPubKeys: []string{
 				"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3",
 				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
@@ -292,12 +292,12 @@ func TestFilter(t *testing.T) {
 				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
 			},
 			gasUsed: defaultParams.FilterGasCostMultiplierMode * 6,
-			wantErr: types.ErrCorruptReveals,
+			wantErr: types.ErrConsensusInError,
 		},
 		{
 			name:            "Mode filter with proxy pubkeys - No basic consensus",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []int{0, 0, 0, 0, 0, 0},
+			outliers:        make([]int, 6),
 			reveals: []types.RevealBody{
 				{
 					ExitCode: 1,
@@ -377,7 +377,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - No consensus due to non-zero exit code invalidating data",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []int{0, 0, 1, 1},
+			outliers:        make([]int, 4),
 			reveals: []types.RevealBody{
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
@@ -387,12 +387,12 @@ func TestFilter(t *testing.T) {
 			consensus:   false,
 			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
 			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
-			wantErr:     nil,
+			wantErr:     types.ErrNoConsensus,
 		},
 		{
 			name:            "Mode filter - No consensus with exit code invalidating a reveal",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []int{0, 0, 0, 1},
+			outliers:        make([]int, 4),
 			reveals: []types.RevealBody{
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": ""}}`},
@@ -402,7 +402,7 @@ func TestFilter(t *testing.T) {
 			consensus:   false,
 			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
 			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
-			wantErr:     nil,
+			wantErr:     types.ErrNoConsensus,
 		},
 		{
 			name:            "Mode filter - One reports bad pubkey but is not an outlier",
@@ -458,7 +458,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - Consensus not reached due to exit code",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []int{1, 0, 0, 1, 1, 0},
+			outliers:        make([]int, 6),
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": "A", "number": 0}}`, ExitCode: 1},
 				{Reveal: `{"result": {"text": "A", "number": 0}}`},
@@ -470,12 +470,12 @@ func TestFilter(t *testing.T) {
 			consensus:   false,
 			consPubKeys: nil,
 			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
-			wantErr:     nil,
+			wantErr:     types.ErrNoConsensus,
 		},
 		{
 			name:            "Mode filter - Consensus not reached due to corrupt reveal",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []int{1, 0, 0, 1, 1, 0},
+			outliers:        make([]int, 6),
 			reveals: []types.RevealBody{
 				{Reveal: `{"resalt": {"text": "A", "number": 0}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
@@ -487,7 +487,7 @@ func TestFilter(t *testing.T) {
 			consensus:   false,
 			consPubKeys: nil,
 			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
-			wantErr:     nil,
+			wantErr:     types.ErrNoConsensus,
 		},
 		{
 			name:            "Standard deviation filter uint64",
@@ -524,16 +524,6 @@ func TestFilter(t *testing.T) {
 			wantErr:     nil,
 		},
 		{
-			name:            "Standard deviation filter - Empty reveal",
-			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = $.result.text
-			outliers:        []int{},
-			reveals:         []types.RevealBody{},
-			consensus:       false,
-			consPubKeys:     nil,
-			gasUsed:         0,
-			wantErr:         types.ErrEmptyReveals,
-		},
-		{
 			name:            "Standard deviation filter - Single reveal",
 			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = $.result.text
 			outliers:        []int{0},
@@ -548,7 +538,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Standard deviation filter - One corrupt reveal",
 			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = $.result.text
-			outliers:        []int{1, 0, 0, 0, 1, 1},
+			outliers:        make([]int, 6),
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": 4, "number": 0}}`},
 				{Reveal: `{"result": {"text": 5, "number": 10}}`},
@@ -560,7 +550,7 @@ func TestFilter(t *testing.T) {
 			consensus:   false,
 			consPubKeys: nil,
 			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
-			wantErr:     nil,
+			wantErr:     types.ErrNoConsensus,
 		},
 		{
 			name:            "Standard deviation filter - Max sigma 1.55",
@@ -582,7 +572,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Standard deviation filter - Max sigma 1.45",
 			tallyInputAsHex: "02000000000016201003000000000000000D242E726573756C742E74657874", // max_sigma = 1.45, number_type = uint64, json_path = $.result.text
-			outliers:        []int{1, 1, 0, 0, 1, 1},
+			outliers:        make([]int, 6),
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": 4, "number": 0}}`},
 				{Reveal: `{"result": {"text": 5, "number": 10}}`},
@@ -594,7 +584,7 @@ func TestFilter(t *testing.T) {
 			consensus:   false,
 			consPubKeys: nil,
 			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
-			wantErr:     nil,
+			wantErr:     types.ErrNoConsensus,
 		},
 		{
 			name:            "Standard deviation filter int64 with negative reveals",
@@ -616,7 +606,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Standard deviation filter int64 median -0.5",
 			tallyInputAsHex: "02000000000007A12001000000000000000D242E726573756C742E74657874", // max_sigma = 0.5, number_type = int64, json_path = $.result.text
-			outliers:        []int{1, 0, 0, 1},
+			outliers:        make([]int, 4),
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": 1, "number": 0}}`},
 				{Reveal: `{"result": {"text": 0, "number": 0}}`},
@@ -626,7 +616,7 @@ func TestFilter(t *testing.T) {
 			consensus:   false,
 			consPubKeys: nil,
 			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 4,
-			wantErr:     nil,
+			wantErr:     types.ErrNoConsensus,
 		},
 	}
 	for _, tt := range tests {

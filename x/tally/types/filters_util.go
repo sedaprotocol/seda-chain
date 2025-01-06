@@ -12,45 +12,39 @@ type dataAttributes struct {
 	maxFreq int         // frequency of most frequent data in data list
 }
 
-// parseReveals parses a list of RevealBody objects using a given data
-// path and returns a data list. However, if more than 1/3 of the reveals
-// are corrupted (i.e. cannot be parsed), no data list is returned and
-// ErrCorruptReveals error is returned. When there is no error, it also
-// returns dataAttributes struct since some filters require this information.
-// Note that when an i-th reveal is corrupted, the i-th item in the data
-// list is left as an empty string.
-func parseReveals(reveals []RevealBody, dataPath string) ([]any, dataAttributes, error) {
-	if len(reveals) == 0 {
-		return nil, dataAttributes{}, ErrEmptyReveals
-	}
-
-	var maxFreq, corruptCount int
+// parseReveals parses a list of RevealBody objects using the given
+// data path and returns a parsed data list along with its attributes.
+// It also updates the given errors list to indicate true for the items
+// that are corrupted. Note when an i-th reveal is corrupted, the i-th
+// item in the data list is left as nil.
+func parseReveals(reveals []RevealBody, dataPath string, errors []bool) ([]any, dataAttributes) {
+	var maxFreq int
 	freq := make(map[any]int, len(reveals))
 	dataList := make([]any, len(reveals))
 	for i, r := range reveals {
 		if r.ExitCode != 0 {
-			corruptCount++
+			errors[i] = true
 			continue
 		}
 
 		revealBytes, err := base64.StdEncoding.DecodeString(r.Reveal)
 		if err != nil {
-			corruptCount++
+			errors[i] = true
 			continue
 		}
 		obj, err := oj.Parse(revealBytes)
 		if err != nil {
-			corruptCount++
+			errors[i] = true
 			continue
 		}
 		expr, err := jp.ParseString(dataPath)
 		if err != nil {
-			corruptCount++
+			errors[i] = true
 			continue
 		}
 		elems := expr.Get(obj)
 		if len(elems) < 1 {
-			corruptCount++
+			errors[i] = true
 			continue
 		}
 		data := elems[0]
@@ -60,11 +54,8 @@ func parseReveals(reveals []RevealBody, dataPath string) ([]any, dataAttributes,
 		dataList[i] = data
 	}
 
-	if corruptCount*3 > len(reveals) {
-		return nil, dataAttributes{}, ErrCorruptReveals
-	}
 	return dataList, dataAttributes{
 		freqMap: freq,
 		maxFreq: maxFreq,
-	}, nil
+	}
 }
