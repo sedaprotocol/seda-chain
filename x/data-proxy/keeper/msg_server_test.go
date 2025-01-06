@@ -23,8 +23,8 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
 				Fee:           s.NewFeeFromString("10000000000000000000"),
 				Memo:          "",
-				PubKey:        "034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
-				Signature:     "628e5f1a2662872636c91fe2103602b2f0d5b0c3a52c5cc564171b424b902612048704f4a3349c70f0d0c618ecc65aa884c545e717d94be2272a4f2d6021fa6b",
+				PubKey:        "0235697aaf54b1e2b8dc99667742c58a293d90da91758e24bfecd197443df65881",
+				Signature:     "c458fde9f64c0a92179ec8d61fdd5f93b90c2382e2617a3b166db62e46d78d8276b3664ac668b0c485ad033566fa2947b8ed1a7a9c4a7a21197746f3595ebc3a",
 			},
 			expected: &types.ProxyConfig{
 				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
@@ -42,8 +42,8 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
 				Fee:           s.NewFeeFromString("9000000000000000000"),
 				Memo:          "This is a sweet proxy",
-				PubKey:        "034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
-				Signature:     "65b010f830dd52d54c940cec63140354e99484e4a2db9df3e0a7524a4bfaf87e146c82faddcba00df59e57dd774fb147994fbccea16be841e60e9791ccdbb4c4",
+				PubKey:        "0235697aaf54b1e2b8dc99667742c58a293d90da91758e24bfecd197443df65881",
+				Signature:     "1ae1729fdeb2d3f4074926948acf969760082fceeea3932b93cb9e74107066e92fc64b8210076417eb2982c50bf9f69b4950e2cbed21986ac1f58d9b640e070f",
 			},
 			expected: &types.ProxyConfig{
 				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
@@ -164,8 +164,8 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 			PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 			Fee:           s.NewFeeFromString("10000000000000000000"),
 
-			PubKey:    "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
-			Signature: "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
+			PubKey:    "0235697aaf54b1e2b8dc99667742c58a293d90da91758e24bfecd197443df65881",
+			Signature: "7b79c33ea37c94f28d307f50d238860f527c0333505e1d6a220556238bd0977b57400c527d847d4e36e7f27928bed3846042fb111d398bb71c12ae53298345b0",
 		}
 
 		_, err := s.msgSrvr.RegisterDataProxy(s.ctx, msg)

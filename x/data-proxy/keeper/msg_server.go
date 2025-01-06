@@ -67,9 +67,10 @@ func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegist
 	payload = append(payload, feeBytes...)
 	payload = append(payload, payoutAddressBytes...)
 	payload = append(payload, memoBytes...)
+	payload = append(payload, []byte(ctx.ChainID())...)
 
 	if valid := secp256k1.VerifySignature(pubKeyBytes, crypto.Keccak256(payload), signatureBytes); !valid {
-		return nil, types.ErrInvalidSignature
+		return nil, types.ErrInvalidSignature.Wrap("Invalid data proxy registration signature")
 	}
 
 	proxyConfig := types.ProxyConfig{
