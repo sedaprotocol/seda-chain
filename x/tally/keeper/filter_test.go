@@ -129,7 +129,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - >2/3 bad exit codes",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        make([]int, 6),
+			outliers:        []int{1, 1, 1, 1, 0, 1},
 			reveals: []types.RevealBody{
 				{ExitCode: 1, Reveal: `{"high_level_prop1":"ignore this", "result": {"text": "A", "number": 0}}`},
 				{ExitCode: 1, Reveal: `{"makes_this_json":"ignore this", "result": {"text": "A", "number": 10}}`},
@@ -222,7 +222,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - >2/3 bad exit codes",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []int{0, 0, 0, 0, 0, 0},
+			outliers:        []int{1, 0, 1, 1, 1, 1},
 			reveals: []types.RevealBody{
 				{
 					ExitCode: 1,

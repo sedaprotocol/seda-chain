@@ -91,7 +91,8 @@ func ApplyFilter(filter types.Filter, reveals []types.RevealBody) (FilterResult,
 			maxFreq = freq[tuple]
 		}
 	}
-	if maxFreq*3 < len(reveals)*2 { // TODO remove basic consensus check?
+	if maxFreq*3 < len(reveals)*2 {
+		result.Consensus = false
 		return result, types.ErrNoBasicConsensus
 	}
 
@@ -100,6 +101,7 @@ func ApplyFilter(filter types.Filter, reveals []types.RevealBody) (FilterResult,
 	switch {
 	case errorCount(result.Errors)*3 > len(reveals)*2:
 		result.Consensus = true
+		result.Outliers = outliers
 		return result, types.ErrConsensusInError
 	case !consensus:
 		result.Consensus = false

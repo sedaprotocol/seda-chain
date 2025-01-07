@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -88,7 +86,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			BlockHeight: uint64(ctx.BlockHeight()),
 			//nolint:gosec // G115: We shouldn't get negative timestamps anyway.
 			BlockTimestamp: uint64(ctx.BlockTime().Unix()),
-			GasUsed:        0, // TODO (#425)
 			PaybackAddress: req.PaybackAddress,
 			SedaPayload:    req.SedaPayload,
 		}
@@ -96,27 +93,22 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		switch {
 		case len(req.Commits) == 0 || len(req.Commits) < int(req.ReplicationFactor):
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
-			dataResults[i].ExitCode = batchingtypes.TallyExitCodeNotEnoughCommits
+			dataResults[i].ExitCode = TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
 		case len(req.Reveals) == 0 || len(req.Reveals) < int(req.ReplicationFactor):
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d reveals; received %d", req.ReplicationFactor, len(req.Reveals)))
-			dataResults[i].ExitCode = batchingtypes.TallyExitCodeNotEnoughReveals
+			dataResults[i].ExitCode = TallyExitCodeNotEnoughReveals
 			k.Logger(ctx).Info("data request's number of reveals did not meet replication factor", "request_id", req.ID)
 		default:
-			tallyResults[i], err = k.FilterAndTally(ctx, req)
-			if err != nil {
-				dataResults[i].ExitCode = batchingtypes.TallyExitCodeFailedToExecute
-				dataResults[i].Result = []byte(err.Error())
-			} else {
-				//nolint:gosec // G115: We shouldn't get negative exit code anyway.
-				dataResults[i].ExitCode = uint32(tallyResults[i].exitInfo.ExitCode)
-				dataResults[i].Result = tallyResults[i].result
-			}
+			tallyResults[i] = k.FilterAndTally(ctx, req)
+			dataResults[i].Result = tallyResults[i].result
+			//nolint:gosec // G115: We shouldn't get negative exit code anyway.
+			dataResults[i].ExitCode = uint32(tallyResults[i].exitInfo.ExitCode)
 			dataResults[i].Consensus = tallyResults[i].consensus
 			dataResults[i].GasUsed = tallyResults[i].execGasUsed + tallyResults[i].tallyGasUsed
 
-			k.Logger(ctx).Info("completed tally execution", "request_id", req.ID)
-			k.Logger(ctx).Debug("tally execution result", "request_id", req.ID, "tally_result", tallyResults[i])
+			k.Logger(ctx).Info("completed tally", "request_id", req.ID)
+			k.Logger(ctx).Debug("tally result", "request_id", req.ID, "tally_result", tallyResults[i])
 		}
 
 		dataResults[i].Id, err = dataResults[i].TryHash()
@@ -189,10 +181,9 @@ type TallyResult struct {
 	proxyPubKeys []string // data proxy pubkeys in basic consensus
 }
 
-// FilterAndTally applies filter and executes tally. It returns the
-// tally VM result, consensus boolean, consensus data proxy public keys,
-// and error if applicable.
-func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult, error) {
+// FilterAndTally builds and applies filter, executes tally program,
+// and calculates payouts.
+func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) TallyResult {
 	var result TallyResult
 
 	// Sort reveals and proxy public keys.
@@ -210,93 +201,39 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) (TallyResult,
 	}
 
 	// Phase I: Filtering
+	var filterResult FilterResult
 	filter, err := k.BuildFilter(ctx, req.ConsensusFilter, req.ReplicationFactor)
 	if err != nil {
-		return result, err
-	}
-	filterResult, err := ApplyFilter(filter, reveals)
-	result.consensus = filterResult.Consensus
-	result.proxyPubKeys = filterResult.ProxyPubKeys
-	if err != nil {
-		return result, k.logErrAndRet(ctx, err, types.ErrApplyingFilter, req)
-	}
+		result.result = []byte(err.Error())
+		result.exitInfo.ExitCode = TallyExitCodeInvalidFilterInput
+	} else {
+		filterResult, err = ApplyFilter(filter, reveals)
+		result.consensus = filterResult.Consensus
+		result.proxyPubKeys = filterResult.ProxyPubKeys
 
-	// Phase II: Tally Program Execution
-	vmRes, err := k.ExecuteTallyProgram(ctx, req, filterResult, reveals)
-	if err != nil {
-		return TallyResult{}, err
+		// Phase II: Tally Program Execution
+		if err != nil {
+			result.result = []byte(err.Error())
+			result.exitInfo.ExitCode = TallyExitCodeFilterError
+		} else {
+			vmRes, err := k.ExecuteTallyProgram(ctx, req, filterResult, reveals)
+			if err != nil {
+				result.result = []byte(err.Error())
+				result.exitInfo.ExitCode = TallyExitCodeFilterError
+			} else {
+				result.result = vmRes.Result
+				result.exitInfo = vmRes.ExitInfo
+				result.stdout = vmRes.Stdout
+				result.stderr = vmRes.Stderr
+				result.tallyGasUsed = vmRes.GasUsed + filterResult.GasUsed
+			}
+		}
 	}
-	result.stdout = vmRes.Stdout
-	result.stderr = vmRes.Stderr
-	result.result = vmRes.Result
-	result.exitInfo = vmRes.ExitInfo
-	result.tallyGasUsed = vmRes.GasUsed + filterResult.GasUsed
 
 	// Phase III: Calculate Payouts
 	result.execGasUsed = calculateExecGasUsed(reveals)
 
-	return result, nil
-}
-
-func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.RevealBody) (tallyvm.VmResult, error) {
-	tallyProgram, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyProgramID)
-	if err != nil {
-		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrFindingTallyProgram, req)
-	}
-	tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
-	if err != nil {
-		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingTallyInputs, req)
-	}
-
-	// Convert base64-encoded payback address to hex encoding that
-	// the tally VM expects.
-	decodedBytes, err := base64.StdEncoding.DecodeString(req.PaybackAddress)
-	if err != nil {
-		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingPaybackAddress, req)
-	}
-	paybackAddrHex := hex.EncodeToString(decodedBytes)
-
-	// Adjust gas limit based on the gas used by the filter.
-	maxGasLimit, err := k.GetMaxTallyGasLimit(ctx)
-	if err != nil {
-		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrGettingMaxTallyGasLimit, req)
-	}
-	var gasLimit uint64
-	if min(req.TallyGasLimit, maxGasLimit) > filterResult.GasUsed {
-		gasLimit = min(req.TallyGasLimit, maxGasLimit) - filterResult.GasUsed
-	} else {
-		gasLimit = 0
-	}
-
-	args, err := tallyVMArg(tallyInputs, reveals, filterResult.Outliers)
-	if err != nil {
-		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, req)
-	}
-
-	k.Logger(ctx).Info(
-		"executing tally VM",
-		"request_id", req.ID,
-		"tally_program_id", req.TallyProgramID,
-		"consensus", filterResult.Consensus,
-		"arguments", args,
-	)
-
-	return tallyvm.ExecuteTallyVm(tallyProgram.Bytecode, args, map[string]string{
-		"VM_MODE":               "tally",
-		"CONSENSUS":             fmt.Sprintf("%v", filterResult.Consensus),
-		"BLOCK_HEIGHT":          fmt.Sprintf("%d", ctx.BlockHeight()),
-		"DR_ID":                 req.ID,
-		"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", req.ReplicationFactor),
-		"EXEC_PROGRAM_ID":       req.ExecProgramID,
-		"EXEC_INPUTS":           req.ExecInputs,
-		"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", req.ExecGasLimit),
-		"TALLY_INPUTS":          req.TallyInputs,
-		"TALLY_PROGRAM_ID":      req.TallyProgramID,
-		"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", gasLimit),
-		"DR_GAS_PRICE":          req.GasPrice,
-		"DR_MEMO":               req.Memo,
-		"DR_PAYBACK_ADDRESS":    paybackAddrHex,
-	}), nil
+	return result
 }
 
 // logErrAndRet logs the base error along with the request ID for
@@ -304,24 +241,6 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterRe
 func (k Keeper) logErrAndRet(ctx sdk.Context, baseErr, registeredErr error, req types.Request) error {
 	k.Logger(ctx).Debug(baseErr.Error(), "request_id", req.ID, "error", registeredErr)
 	return registeredErr
-}
-
-func tallyVMArg(inputArgs []byte, reveals []types.RevealBody, outliers []int) ([]string, error) {
-	arg := []string{hex.EncodeToString(inputArgs)}
-
-	r, err := json.Marshal(reveals)
-	if err != nil {
-		return nil, err
-	}
-	arg = append(arg, string(r))
-
-	o, err := json.Marshal(outliers)
-	if err != nil {
-		return nil, err
-	}
-	arg = append(arg, string(o))
-
-	return arg, err
 }
 
 // TODO: This will become more complex when we introduce incentives.
