@@ -82,7 +82,7 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterRe
 	}), nil
 }
 
-func tallyVMArg(inputArgs []byte, reveals []types.RevealBody, outliers []int) ([]string, error) {
+func tallyVMArg(inputArgs []byte, reveals []types.RevealBody, outliers []bool) ([]string, error) {
 	arg := []string{hex.EncodeToString(inputArgs)}
 
 	r, err := json.Marshal(reveals)

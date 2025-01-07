@@ -17,7 +17,7 @@ const (
 
 type FilterResult struct {
 	Errors       []bool   // i-th item is true if i-th reveal is non-zero exit or corrupt
-	Outliers     []int    // i-th item is non-zero if i-th reveal is an outlier
+	Outliers     []bool   // i-th item is non-zero if i-th reveal is an outlier
 	Consensus    bool     // whether consensus (either in data or in error) is reached
 	ProxyPubKeys []string // data proxy public keys in consensus
 	GasUsed      uint64   // gas used by filter
@@ -74,7 +74,7 @@ func (k Keeper) BuildFilter(ctx sdk.Context, filterInput string, replicationFact
 func ApplyFilter(filter types.Filter, reveals []types.RevealBody) (FilterResult, error) {
 	var result FilterResult
 	result.Errors = make([]bool, len(reveals))
-	result.Outliers = make([]int, len(reveals))
+	result.Outliers = make([]bool, len(reveals))
 	result.GasUsed = filter.GasCost()
 
 	// Determine basic consensus on tuple of (exit_code_success, proxy_pub_keys)
