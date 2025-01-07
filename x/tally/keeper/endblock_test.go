@@ -22,10 +22,9 @@ func TestProcessTallies(t *testing.T) {
 	err := f.tallyKeeper.ProcessTallies(f.Context(), f.coreContractAddr)
 	require.NoError(t, err)
 
-	// TODO check tally result & exit code
-
 	dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
 	require.NoError(t, err)
+	require.Equal(t, uint32(0), dataResult.ExitCode)
 
 	dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
 	require.NoError(t, err)

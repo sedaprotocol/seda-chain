@@ -158,7 +158,7 @@ func postDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string) 
 			"exec_gas_limit": 10,
 			"tally_program_id": "%s",
 			"tally_inputs": "dGFsbHlfaW5wdXRz",
-			"tally_gas_limit": 10,
+			"tally_gas_limit": 300000000000000,
 			"replication_factor": 1,
 			"consensus_filter": "AA==",
 			"gas_price": "10",
