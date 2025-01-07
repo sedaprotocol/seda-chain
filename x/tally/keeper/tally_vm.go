@@ -18,7 +18,7 @@ const (
 	TallyExitCodeNotEnoughReveals   = 201 // tally VM not executed due to not enough reveals
 	TallyExitCodeInvalidFilterInput = 253 // tally VM not executed due to invalid filter input
 	TallyExitCodeFilterError        = 254 // tally VM not executed due to filter error
-	TallyExitCodeError              = 255 // error while executing tally VM
+	TallyExitCodeExecError          = 255 // error while executing tally VM
 )
 
 func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.RevealBody) (tallyvm.VmResult, error) {

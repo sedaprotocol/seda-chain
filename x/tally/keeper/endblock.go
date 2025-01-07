@@ -210,6 +210,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) TallyResult {
 		filterResult, err = ApplyFilter(filter, reveals)
 		result.consensus = filterResult.Consensus
 		result.proxyPubKeys = filterResult.ProxyPubKeys
+		result.tallyGasUsed += filterResult.GasUsed
 
 		// Phase II: Tally Program Execution
 		if err != nil {
@@ -219,14 +220,14 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) TallyResult {
 			vmRes, err := k.ExecuteTallyProgram(ctx, req, filterResult, reveals)
 			if err != nil {
 				result.result = []byte(err.Error())
-				result.exitInfo.ExitCode = TallyExitCodeFilterError
+				result.exitInfo.ExitCode = TallyExitCodeExecError
 			} else {
 				result.result = vmRes.Result
 				result.exitInfo = vmRes.ExitInfo
 				result.stdout = vmRes.Stdout
 				result.stderr = vmRes.Stderr
-				result.tallyGasUsed = vmRes.GasUsed + filterResult.GasUsed
 			}
+			result.tallyGasUsed += vmRes.GasUsed
 		}
 	}
 
