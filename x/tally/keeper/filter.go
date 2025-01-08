@@ -23,7 +23,8 @@ type FilterResult struct {
 	GasUsed      uint64   // gas used by filter
 }
 
-func errorCount(errors []bool) int {
+// countErrors returns the number of errors in a given error list.
+func countErrors(errors []bool) int {
 	count := 0
 	for _, err := range errors {
 		if err {
@@ -31,6 +32,15 @@ func errorCount(errors []bool) int {
 		}
 	}
 	return count
+}
+
+// invertErrors returns an inversion of a given error list.
+func invertErrors(errors []bool) []bool {
+	inverted := make([]bool, len(errors))
+	for i, err := range errors {
+		inverted[i] = !err
+	}
+	return inverted
 }
 
 // BuildFilter builds a filter based on the requestor-provided input.
@@ -99,9 +109,9 @@ func ApplyFilter(filter types.Filter, reveals []types.RevealBody) (FilterResult,
 	outliers, consensus := filter.ApplyFilter(reveals, result.Errors)
 
 	switch {
-	case errorCount(result.Errors)*3 > len(reveals)*2:
+	case countErrors(result.Errors)*3 > len(reveals)*2:
 		result.Consensus = true
-		result.Outliers = outliers
+		result.Outliers = invertErrors(result.Errors)
 		return result, types.ErrConsensusInError
 	case !consensus:
 		result.Consensus = false
