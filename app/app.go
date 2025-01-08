@@ -970,20 +970,23 @@ func NewApp(
 	app.MountMemoryStores(memKeys)
 
 	// initialize BaseApp
-	anteHandler, err := wasmapp.NewAnteHandler(
-		wasmapp.HandlerOptions{
-			HandlerOptions: ante.HandlerOptions{
-				AccountKeeper:   app.AccountKeeper,
-				BankKeeper:      app.BankKeeper,
-				SignModeHandler: txConfig.SignModeHandler(),
-				FeegrantKeeper:  app.FeeGrantKeeper,
-				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
+	anteHandler, err := NewAnteHandler(
+		HandlerOptions{
+			HandlerOptions: wasmapp.HandlerOptions{
+				HandlerOptions: ante.HandlerOptions{
+					AccountKeeper:   app.AccountKeeper,
+					BankKeeper:      app.BankKeeper,
+					SignModeHandler: txConfig.SignModeHandler(),
+					FeegrantKeeper:  app.FeeGrantKeeper,
+					SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
+				},
+				IBCKeeper:             app.IBCKeeper,
+				WasmConfig:            &wasmConfig,
+				WasmKeeper:            &app.WasmKeeper,
+				TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+				CircuitKeeper:         &app.CircuitKeeper,
 			},
-			IBCKeeper:             app.IBCKeeper,
-			WasmConfig:            &wasmConfig,
-			WasmKeeper:            &app.WasmKeeper,
-			TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
-			CircuitKeeper:         &app.CircuitKeeper,
+			WasmStorageKeeper: &app.WasmStorageKeeper,
 		},
 	)
 	if err != nil {
