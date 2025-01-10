@@ -122,6 +122,12 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 
 			k.Logger(ctx).Info("completed tally", "request_id", req.ID)
 			k.Logger(ctx).Debug("tally result", "request_id", req.ID, "tally_result", tallyResults[i])
+
+			// TODO
+			distMsgs = types.DistributionMessages{
+				Messages:   []types.DistributionMessage{},
+				RefundType: types.DistributionTypeNoConsensus,
+			}
 		}
 
 		processedReqs[req.ID] = distMsgs
