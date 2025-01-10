@@ -10,25 +10,103 @@ import (
 
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
 
+	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper/testdata"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
-func TestProcessTallies(t *testing.T) {
+func TestEndBlock(t *testing.T) {
 	f := initFixture(t)
 
-	drID := f.commitRevealDataRequest(t, "c2VkYXByb3RvY29s")
+	tests := []struct {
+		name              string
+		memo              string
+		replicationFactor int
+		numCommits        int
+		numReveals        int
+		timeout           bool
+		expExitCode       uint32
+	}{
+		{
+			name:              "full single commit-reveal",
+			memo:              "YzJWamRYSmxaR0YwWVE9PQ==",
+			replicationFactor: 1,
+			numCommits:        1,
+			numReveals:        1,
+			timeout:           false,
+			expExitCode:       0,
+		},
+		{
+			name:              "full 5 commit-reveals",
+			memo:              "ZnVsbCA1IGNvbW1pdC1yZXZlYWxz",
+			replicationFactor: 5,
+			numCommits:        5,
+			numReveals:        5,
+			timeout:           false,
+			expExitCode:       0,
+		},
+		{
+			name:              "commit timeout",
+			memo:              "Y29tbWl0IHRpbWVvdXQ=",
+			replicationFactor: 2,
+			numCommits:        0,
+			numReveals:        0,
+			timeout:           true,
+			expExitCode:       keeper.TallyExitCodeNotEnoughCommits,
+		},
+		{
+			name:              "commit timeout with 1 commit",
+			memo:              "Y29tbWl0IHRpbWVvdXQgd2l0aCAxIGNvbW1pdA==",
+			replicationFactor: 2,
+			numCommits:        1,
+			numReveals:        0,
+			timeout:           true,
+			expExitCode:       keeper.TallyExitCodeNotEnoughCommits,
+		},
+		{
+			name:              "commit timeout with 2 commits",
+			memo:              "Y29tbWl0IHRpbWVvdXQgd2l0aCAyIGNvbW1pdHM=",
+			replicationFactor: 2,
+			numCommits:        1,
+			numReveals:        0,
+			timeout:           true,
+			expExitCode:       keeper.TallyExitCodeNotEnoughCommits,
+		},
+		{
+			name:              "reveal timeout",
+			memo:              "cmV2ZWFsIHRpbWVvdXQ=",
+			replicationFactor: 2,
+			numCommits:        2,
+			numReveals:        0,
+			timeout:           true,
+			expExitCode:       keeper.TallyExitCodeNotEnoughReveals,
+		},
+		{
+			name:              "reveal timeout with 2 reveals",
+			memo:              "cmV2ZWFsIHRpbWVvdXQgd2l0aCAyIHJldmVhbHM=",
+			replicationFactor: 3,
+			numCommits:        3,
+			numReveals:        2,
+			timeout:           true,
+			expExitCode:       keeper.TallyExitCodeNotEnoughReveals,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			drID := f.commitRevealDataRequest(t, tt.memo, tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout)
 
-	err := f.tallyKeeper.ProcessTallies(f.Context(), f.coreContractAddr)
-	require.NoError(t, err)
+			err := f.tallyKeeper.EndBlock(f.Context())
+			require.NoError(t, err)
 
-	dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
-	require.NoError(t, err)
-	require.Equal(t, uint32(0), dataResult.ExitCode)
+			dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
+			require.NoError(t, err)
+			require.Equal(t, tt.expExitCode, dataResult.ExitCode)
 
-	dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
-	require.NoError(t, err)
-	require.Equal(t, *dataResult, dataResults[0])
+			dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
+			require.NoError(t, err)
+			require.Contains(t, dataResults, *dataResult)
+		})
+	}
 }
 
 // TestTallyVM tests tally VM using a sample tally wasm that performs

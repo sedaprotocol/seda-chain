@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 
 	"golang.org/x/crypto/sha3"
+
+	"cosmossdk.io/math"
 )
 
 type Request struct {
@@ -103,8 +105,56 @@ func (u *RevealBody) TryHash() (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// SudoRemoveDataRequest is the message type used to remove a given
-// data request from the Core Contract.
-type SudoRemoveDataRequest struct {
-	ID string `json:"dr_id"`
+type DistributionMessages struct {
+	Messages   []DistributionMessage `json:"messages"`
+	RefundType DistributionType      `json:"refund_type"`
+}
+
+type DistributionMessage struct {
+	Kind DistributionKind `json:"kind"`
+	Type DistributionType `json:"type"`
+}
+
+type DistributionKind struct {
+	Burn           *DistributionBurn           `json:"burn,omitempty"`
+	ExecutorReward *DistributionExecutorReward `json:"executor_reward,omitempty"`
+	Send           *DistributionSend           `json:"send,omitempty"`
+}
+
+type DistributionBurn struct {
+	Amount math.Int `json:"amount"`
+}
+
+type DistributionSend struct {
+	To     []byte   `json:"to"`
+	Amount math.Int `json:"amount"`
+}
+
+type DistributionExecutorReward struct {
+	Amount   math.Int `json:"amount"`
+	Identity string   `json:"identity"`
+}
+
+type DistributionType string
+
+const (
+	DistributionTypeTallyReward     DistributionType = "tally_reward"
+	DistributionTypeExecutorReward  DistributionType = "executor_reward"
+	DistributionTypeTimedOut        DistributionType = "timed_out"
+	DistributionTypeNoConsensus     DistributionType = "no_consensus"
+	DistributionTypeRemainderRefund DistributionType = "remainder_refund"
+)
+
+func MarshalSudoRemoveDataRequests(processedReqs map[string]DistributionMessages) ([]byte, error) {
+	return json.Marshal(struct {
+		SudoRemoveDataRequests struct {
+			Requests map[string]DistributionMessages `json:"requests"`
+		} `json:"remove_data_requests"`
+	}{
+		SudoRemoveDataRequests: struct {
+			Requests map[string]DistributionMessages `json:"requests"`
+		}{
+			Requests: processedReqs,
+		},
+	})
 }

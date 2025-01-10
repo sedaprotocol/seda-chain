@@ -18,6 +18,7 @@ import (
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -48,7 +49,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
-	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 )
 
@@ -157,19 +157,16 @@ func initFixture(tb testing.TB) *fixture {
 	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	pubkeyModule := pubkey.NewAppModule(cdc, pubKeyKeeper)
 
-	integrationApp := integration.NewIntegrationApp(newCtx, logger, keys, cdc, map[string]appmodule.AppModule{
-		authtypes.ModuleName:       authModule,
-		banktypes.ModuleName:       bankModule,
-		sdkstakingtypes.ModuleName: stakingModule,
-		types.ModuleName:           pubkeyModule,
-	})
-
-	types.RegisterMsgServer(integrationApp.MsgServiceRouter(), keeper.NewMsgServerImpl(pubKeyKeeper))
-
-	sdkStakingMsgServer := sdkstakingkeeper.NewMsgServerImpl(sdkStakingKeeper)
-	stakingMsgServer := stakingkeeper.NewMsgServerImpl(sdkStakingMsgServer, stakingKeeper)
-	sdkstakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), stakingMsgServer)
-	stakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), stakingMsgServer)
+	integrationApp := integration.NewIntegrationApp(
+		newCtx, logger, keys, cdc,
+		baseapp.NewMsgServiceRouter(),
+		map[string]appmodule.AppModule{
+			authtypes.ModuleName:       authModule,
+			banktypes.ModuleName:       bankModule,
+			sdkstakingtypes.ModuleName: stakingModule,
+			types.ModuleName:           pubkeyModule,
+		},
+	)
 
 	return &fixture{
 		IntegationApp: integrationApp,

@@ -9,6 +9,7 @@ const (
 	DefaultFilterGasCostNone             = 100_000
 	DefaultFilterGasCostMultiplierMode   = 100_000
 	DefaultFilterGasCostMultiplierStddev = 100_000
+	DefaultGasCostCommitment             = 100_000_000
 )
 
 // DefaultParams returns default tally module parameters.
@@ -18,6 +19,7 @@ func DefaultParams() Params {
 		FilterGasCostNone:             DefaultFilterGasCostNone,
 		FilterGasCostMultiplierMode:   DefaultFilterGasCostMultiplierMode,
 		FilterGasCostMultiplierStddev: DefaultFilterGasCostMultiplierStddev,
+		GasCostCommitment:             DefaultGasCostCommitment,
 	}
 }
 
@@ -26,6 +28,17 @@ func (p *Params) Validate() error {
 	if p.MaxTallyGasLimit <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("max tally gas limit must be greater than 0: %d", p.MaxTallyGasLimit)
 	}
-
+	if p.FilterGasCostNone <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("filter gas cost (none) must be greater than 0: %d", p.FilterGasCostNone)
+	}
+	if p.FilterGasCostMultiplierMode <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("filter gas cost (mode) must be greater than 0: %d", p.FilterGasCostMultiplierMode)
+	}
+	if p.FilterGasCostMultiplierStddev <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("filter gas cost (std dev) must be greater than 0: %d", p.FilterGasCostMultiplierStddev)
+	}
+	if p.GasCostCommitment <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("gas cost for a commitment must be greater than 0: %d", p.GasCostCommitment)
+	}
 	return nil
 }

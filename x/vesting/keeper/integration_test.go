@@ -13,6 +13,7 @@ import (
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -41,9 +42,7 @@ import (
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
-	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
-	"github.com/sedaprotocol/seda-chain/x/vesting/keeper"
 	"github.com/sedaprotocol/seda-chain/x/vesting/types"
 )
 
@@ -151,19 +150,16 @@ func initFixture(tb testing.TB) *fixture {
 	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	vestingModule := vesting.NewAppModule(accountKeeper, bankKeeper, stakingKeeper)
 
-	integrationApp := integration.NewIntegrationApp(newCtx, logger, keys, cdc, map[string]appmodule.AppModule{
-		authtypes.ModuleName:       authModule,
-		banktypes.ModuleName:       bankModule,
-		sdkstakingtypes.ModuleName: stakingModule,
-		types.ModuleName:           vestingModule,
-	})
-
-	types.RegisterMsgServer(integrationApp.MsgServiceRouter(), keeper.NewMsgServerImpl(accountKeeper, bankKeeper, stakingKeeper))
-
-	sdkStakingMsgServer := sdkstakingkeeper.NewMsgServerImpl(sdkStakingKeeper)
-	stakingMsgServer := stakingkeeper.NewMsgServerImpl(sdkStakingMsgServer, stakingKeeper)
-	sdkstakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), stakingMsgServer)
-	stakingtypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), stakingMsgServer)
+	integrationApp := integration.NewIntegrationApp(
+		newCtx, logger, keys, cdc,
+		baseapp.NewMsgServiceRouter(),
+		map[string]appmodule.AppModule{
+			authtypes.ModuleName:       authModule,
+			banktypes.ModuleName:       bankModule,
+			sdkstakingtypes.ModuleName: stakingModule,
+			types.ModuleName:           vestingModule,
+		},
+	)
 
 	return &fixture{
 		IntegationApp: integrationApp,

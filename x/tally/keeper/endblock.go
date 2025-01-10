@@ -74,8 +74,8 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
+	processedReqs := make(map[string]types.DistributionMessages)
 	tallyResults := make([]TallyResult, len(tallyList))
-	sudoMsgs := make([]types.SudoRemoveDataRequest, len(tallyList))
 	dataResults := make([]batchingtypes.DataResult, len(tallyList))
 	for i, req := range tallyList {
 		dataResults[i] = batchingtypes.DataResult{
@@ -90,15 +90,27 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			SedaPayload:    req.SedaPayload,
 		}
 
+		var distMsgs types.DistributionMessages
+		var err error
 		switch {
 		case len(req.Commits) == 0 || len(req.Commits) < int(req.ReplicationFactor):
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
 			dataResults[i].ExitCode = TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
+
+			distMsgs, err = k.CalculateCommitterPayouts(ctx, req)
+			if err != nil {
+				return err
+			}
 		case len(req.Reveals) == 0 || len(req.Reveals) < int(req.ReplicationFactor):
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d reveals; received %d", req.ReplicationFactor, len(req.Reveals)))
 			dataResults[i].ExitCode = TallyExitCodeNotEnoughReveals
 			k.Logger(ctx).Info("data request's number of reveals did not meet replication factor", "request_id", req.ID)
+
+			distMsgs, err = k.CalculateCommitterPayouts(ctx, req)
+			if err != nil {
+				return err
+			}
 		default:
 			tallyResults[i] = k.FilterAndTally(ctx, req)
 			dataResults[i].Result = tallyResults[i].result
@@ -109,31 +121,27 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 
 			k.Logger(ctx).Info("completed tally", "request_id", req.ID)
 			k.Logger(ctx).Debug("tally result", "request_id", req.ID, "tally_result", tallyResults[i])
+
+			// TODO
+			distMsgs = types.DistributionMessages{
+				Messages:   []types.DistributionMessage{},
+				RefundType: types.DistributionTypeNoConsensus,
+			}
 		}
 
+		processedReqs[req.ID] = distMsgs
 		dataResults[i].Id, err = dataResults[i].TryHash()
 		if err != nil {
 			return err
 		}
-		sudoMsgs[i] = types.SudoRemoveDataRequest{ID: req.ID}
 	}
 
 	// Notify the Core Contract of tally completion.
-	msg, err := json.Marshal(struct {
-		SudoRemoveDataRequests struct {
-			Requests []types.SudoRemoveDataRequest `json:"requests"`
-		} `json:"remove_data_requests"`
-	}{
-		SudoRemoveDataRequests: struct {
-			Requests []types.SudoRemoveDataRequest `json:"requests"`
-		}{
-			Requests: sudoMsgs,
-		},
-	})
+	msg, err := types.MarshalSudoRemoveDataRequests(processedReqs)
 	if err != nil {
 		return err
 	}
-	postRes, err := k.wasmKeeper.Sudo(ctx, coreContract, msg)
+	_, err = k.wasmKeeper.Sudo(ctx, coreContract, msg)
 	if err != nil {
 		return err
 	}
@@ -144,14 +152,8 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		if err != nil {
 			return err
 		}
-	}
 
-	for i := range sudoMsgs {
-		k.Logger(ctx).Info(
-			"tally flow completed",
-			"request_id", dataResults[i].DrId,
-			"post_result", postRes,
-		)
+		k.Logger(ctx).Info("tally flow completed", "request_id", dataResults[i].DrId)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeTallyCompletion,
@@ -167,6 +169,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			),
 		)
 	}
+
 	return nil
 }
 
@@ -242,13 +245,4 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) TallyResult {
 func (k Keeper) logErrAndRet(ctx sdk.Context, baseErr, registeredErr error, req types.Request) error {
 	k.Logger(ctx).Debug(baseErr.Error(), "request_id", req.ID, "error", registeredErr)
 	return registeredErr
-}
-
-// TODO: This will become more complex when we introduce incentives.
-func calculateExecGasUsed(reveals []types.RevealBody) uint64 {
-	var execGasUsed uint64
-	for _, reveal := range reveals {
-		execGasUsed += reveal.GasUsed
-	}
-	return execGasUsed
 }

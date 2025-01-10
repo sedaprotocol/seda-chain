@@ -24,63 +24,32 @@ import (
 )
 
 const (
-	salt   = "9c0257114eb9399a2985f8e75dad7600c5d89fe3824ffa99ec1c3eb8bf3b0501"
-	reveal = "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w="
+	salt                       = "9c0257114eb9399a2985f8e75dad7600c5d89fe3824ffa99ec1c3eb8bf3b0501"
+	reveal                     = "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w="
+	defaultRevealTimeoutBlocks = 10
 )
 
-// commitRevealDataRequest performs the following steps to prepare a
-// tally-ready data request.
-// 1. Generate staker key and add to allowlist.
-// 2. Upload data request and tally oracle programs.
-// 3. Create an account and stake.
-// 4. Post a data request.
-// 5. The staker commits and reveals.
-// It returns the data request ID.
-func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string) string {
-	// 1. Generate staker key and add to allowlist.
-	privKey := secp256k1.GenPrivKey()
-	stakerKey := privKey.Bytes()
-	stakerPubKey := hex.EncodeToString(privKey.PubKey().Bytes())
-	staker := privKey.PubKey().Address().Bytes()
+// commitRevealDataRequest simulates stakers committing and revealing
+// for a data request. It returns the data request ID.
+func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string, replicationFactor, numCommits, numReveals int, timeout bool) string {
+	stakers := f.addStakers(t, 5)
 
-	_, err := f.contractKeeper.Execute(
-		f.Context(),
-		f.coreContractAddr,
-		f.deployer,
-		addToAllowListMsg(stakerPubKey),
-		sdk.NewCoins(),
-	)
-	require.NoError(t, err)
-
-	// 2. Upload data request and tally oracle programs.
+	// Upload data request and tally oracle programs.
 	execProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm(), f.Context().BlockTime(), f.Context().BlockHeight(), 1000)
-	err = f.wasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
+	err := f.wasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
 	require.NoError(t, err)
 
 	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm2(), f.Context().BlockTime(), f.Context().BlockHeight(), 1000)
 	err = f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 	require.NoError(t, err)
 
-	// 3. Create an account and stake.
-	f.initAccountWithCoins(t, staker, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1e18))))
-
-	proof := f.generateStakeProof(t, stakerKey)
-	_, err = f.contractKeeper.Execute(
-		f.Context(),
-		f.coreContractAddr,
-		staker,
-		stakeMsg(stakerPubKey, proof),
-		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-	)
-	require.NoError(t, err)
-
-	// 4. Post a data request.
+	// Post a data request.
 	resJSON, err := f.contractKeeper.Execute(
 		f.Context(),
 		f.coreContractAddr,
-		f.deployer,
-		postDataRequestMsg(execProgram.Hash, tallyProgram.Hash, requestMemo),
-		sdk.NewCoins(),
+		stakers[0].address,
+		postDataRequestMsg(execProgram.Hash, tallyProgram.Hash, requestMemo, replicationFactor),
+		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(3000000000000100))),
 	)
 	require.NoError(t, err)
 
@@ -93,7 +62,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string) stri
 	require.NoError(t, err)
 	drID := res.DrID
 
-	// 5. The staker commits and reveals.
+	// The stakers commit and reveal.
 	revealBody := types.RevealBody{
 		ID:           drID,
 		Salt:         []byte(salt),
@@ -105,27 +74,79 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string) stri
 	commitment, err := revealBody.TryHash()
 	require.NoError(t, err)
 
-	proof = f.generateCommitProof(t, stakerKey, drID, commitment, res.Height)
-	_, err = f.contractKeeper.Execute(
-		f.Context(),
-		f.coreContractAddr,
-		staker,
-		commitMsg(drID, commitment, stakerPubKey, proof),
-		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-	)
-	require.NoError(t, err)
+	for i := 0; i < numCommits; i++ {
+		proof := f.generateCommitProof(t, stakers[i].key, drID, commitment, res.Height)
+		_, err = f.contractKeeper.Execute(
+			f.Context(),
+			f.coreContractAddr,
+			stakers[i].address,
+			commitMsg(drID, commitment, stakers[i].pubKey, proof),
+			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+		)
+		require.NoError(t, err)
+	}
 
-	proof = f.generateRevealProof(t, stakerKey, drID, commitment, res.Height)
-	_, err = f.contractKeeper.Execute(
-		f.Context(),
-		f.coreContractAddr,
-		staker,
-		revealMsg(drID, stakerPubKey, proof),
-		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-	)
-	require.NoError(t, err)
+	for i := 0; i < numReveals; i++ {
+		proof := f.generateRevealProof(t, stakers[i].key, drID, commitment, res.Height)
+		_, err = f.contractKeeper.Execute(
+			f.Context(),
+			f.coreContractAddr,
+			stakers[i].address,
+			revealMsg(drID, stakers[i].pubKey, proof),
+			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+		)
+		require.NoError(t, err)
+	}
+
+	if timeout {
+		for i := 0; i < defaultRevealTimeoutBlocks; i++ {
+			f.AddBlock()
+		}
+	}
 
 	return res.DrID
+}
+
+type staker struct {
+	key     []byte
+	pubKey  string
+	address []byte
+}
+
+// addStakers generates stakers and adds them to the allowlist. The
+// stakers subsequently send their stakes to the core contract.
+func (f *fixture) addStakers(t *testing.T, num int) []staker {
+	stakers := make([]staker, num)
+	for i := 0; i < num; i++ {
+		privKey := secp256k1.GenPrivKey()
+		stakers[i] = staker{
+			key:     privKey.Bytes(),
+			pubKey:  hex.EncodeToString(privKey.PubKey().Bytes()),
+			address: privKey.PubKey().Address().Bytes(),
+		}
+
+		_, err := f.contractKeeper.Execute(
+			f.Context(),
+			f.coreContractAddr,
+			f.deployer,
+			addToAllowListMsg(stakers[i].pubKey),
+			sdk.NewCoins(),
+		)
+		require.NoError(t, err)
+
+		f.initAccountWithCoins(t, stakers[i].address, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1e18))))
+
+		proof := f.generateStakeProof(t, stakers[i].key)
+		_, err = f.contractKeeper.Execute(
+			f.Context(),
+			f.coreContractAddr,
+			stakers[i].address,
+			stakeMsg(stakers[i].pubKey, proof),
+			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+		)
+		require.NoError(t, err)
+	}
+	return stakers
 }
 
 func addToAllowListMsg(stakerPubKey string) []byte {
@@ -148,7 +169,7 @@ func stakeMsg(stakerPubKey, proof string) []byte {
 	return []byte(fmt.Sprintf(stakeMsg, stakerPubKey, proof))
 }
 
-func postDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string) []byte {
+func postDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) []byte {
 	var postDataRequestMsg = `{
 		"post_data_request": {
 		  "posted_dr": {
@@ -159,7 +180,7 @@ func postDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string) 
 			"tally_program_id": "%s",
 			"tally_inputs": "dGFsbHlfaW5wdXRz",
 			"tally_gas_limit": 300000000000000,
-			"replication_factor": 1,
+			"replication_factor": %d,
 			"consensus_filter": "AA==",
 			"gas_price": "10",
 			"memo": "%s"
@@ -168,7 +189,7 @@ func postDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string) 
 		  "payback_address": "AQID"
 		}
 	}`
-	return []byte(fmt.Sprintf(postDataRequestMsg, hex.EncodeToString(execProgHash), hex.EncodeToString(tallyProgHash), requestMemo))
+	return []byte(fmt.Sprintf(postDataRequestMsg, hex.EncodeToString(execProgHash), hex.EncodeToString(tallyProgHash), replicationFactor, requestMemo))
 }
 
 func commitMsg(drID, commitment, stakerPubKey, proof string) []byte {

@@ -48,6 +48,7 @@ func NewIntegrationApp(
 	logger log.Logger,
 	keys map[string]*storetypes.KVStoreKey,
 	appCodec codec.Codec,
+	router *baseapp.MsgServiceRouter,
 	modules map[string]appmodule.AppModule,
 ) *IntegationApp {
 	db := dbm.NewMemDB()
@@ -78,8 +79,12 @@ func NewIntegrationApp(
 		return moduleManager.EndBlock(sdkCtx)
 	})
 
-	router := baseapp.NewMsgServiceRouter()
 	router.SetInterfaceRegistry(interfaceRegistry)
+	configurator := module.NewConfigurator(appCodec, router, bApp.GRPCQueryRouter())
+	err := moduleManager.RegisterServices(configurator)
+	if err != nil {
+		panic(err)
+	}
 	bApp.SetMsgServiceRouter(router)
 
 	if keys[consensusparamtypes.StoreKey] != nil {
@@ -104,7 +109,7 @@ func NewIntegrationApp(
 		}
 	}
 
-	_, err := bApp.Commit()
+	_, err = bApp.Commit()
 	if err != nil {
 		panic(err)
 	}

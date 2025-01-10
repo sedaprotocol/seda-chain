@@ -22,6 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/sedaprotocol/seda-chain/app/utils"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -178,6 +179,7 @@ func initFixture(tb testing.TB) *fixture {
 	require.NoError(tb, err)
 
 	// x/wasm
+	router := baseapp.NewMsgServiceRouter()
 	wasmKeeper := wasmkeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
@@ -185,7 +187,7 @@ func initFixture(tb testing.TB) *fixture {
 		bankKeeper,
 		stakingKeeper,
 		nil, nil, nil, nil,
-		nil, nil, nil, nil,
+		nil, nil, router, nil,
 		tempDir,
 		wasmtypes.DefaultWasmConfig(),
 		wasmCapabilities,
@@ -249,7 +251,7 @@ func initFixture(tb testing.TB) *fixture {
 	pubKeyModule := pubkey.NewAppModule(cdc, pubKeyKeeper)
 	batchingModule := batching.NewAppModule(cdc, batchingKeeper)
 
-	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, map[string]appmodule.AppModule{
+	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, router, map[string]appmodule.AppModule{
 		authtypes.ModuleName:        authModule,
 		banktypes.ModuleName:        bankModule,
 		sdkstakingtypes.ModuleName:  stakingModule,

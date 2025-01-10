@@ -19,14 +19,19 @@ import (
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
+	"github.com/cosmos/cosmos-sdk/codec/testutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
+	"github.com/cosmos/cosmos-sdk/std"
 	sdkintegration "github.com/cosmos/cosmos-sdk/testutil/integration"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -100,7 +105,26 @@ func initFixture(t testing.TB) *fixture {
 		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, wasmstoragetypes.StoreKey,
 		wasmtypes.StoreKey, pubkeytypes.StoreKey, batchingtypes.StoreKey, types.StoreKey,
 	)
-	cdc := moduletestutil.MakeTestEncodingConfig(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}).Codec
+
+	mb := module.NewBasicManager(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{})
+
+	interfaceRegistry := testutil.CodecOptions{
+		AccAddressPrefix: params.Bech32PrefixAccAddr,
+		ValAddressPrefix: params.Bech32PrefixValAddr,
+	}.NewInterfaceRegistry()
+	protoCodec := codec.NewProtoCodec(interfaceRegistry)
+	aminoCodec := codec.NewLegacyAmino()
+	encCfg := moduletestutil.TestEncodingConfig{
+		InterfaceRegistry: interfaceRegistry,
+		Codec:             protoCodec,
+		TxConfig:          tx.NewTxConfig(protoCodec, tx.DefaultSignModes),
+		Amino:             aminoCodec,
+	}
+	cdc := encCfg.Codec
+	std.RegisterLegacyAminoCodec(encCfg.Amino)
+	std.RegisterInterfaces(encCfg.InterfaceRegistry)
+	mb.RegisterLegacyAminoCodec(encCfg.Amino)
+	mb.RegisterInterfaces(encCfg.InterfaceRegistry)
 
 	buf := &bytes.Buffer{}
 	logger := log.NewLogger(buf, log.LevelOption(zerolog.DebugLevel))
@@ -149,6 +173,7 @@ func initFixture(t testing.TB) *fixture {
 	require.NoError(t, err)
 
 	// x/wasm
+	router := baseapp.NewMsgServiceRouter()
 	wasmKeeper := wasmkeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
@@ -156,7 +181,7 @@ func initFixture(t testing.TB) *fixture {
 		bankKeeper,
 		stakingKeeper,
 		nil, nil, nil, nil,
-		nil, nil, nil, nil,
+		nil, nil, router, nil,
 		tempDir,
 		wasmtypes.DefaultWasmConfig(),
 		wasmCapabilities,
@@ -222,7 +247,7 @@ func initFixture(t testing.TB) *fixture {
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
 	tallyModule := tally.NewAppModule(cdc, tallyKeeper)
 
-	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, map[string]appmodule.AppModule{
+	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, router, map[string]appmodule.AppModule{
 		authtypes.ModuleName:        authModule,
 		banktypes.ModuleName:        bankModule,
 		sdkstakingtypes.ModuleName:  stakingModule,
