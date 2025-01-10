@@ -105,8 +105,6 @@ func TestEndBlock(t *testing.T) {
 			dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
 			require.NoError(t, err)
 			require.Contains(t, dataResults, *dataResult)
-
-			// TODO: Check before and after balances
 		})
 	}
 }
