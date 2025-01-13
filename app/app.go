@@ -579,7 +579,7 @@ func NewApp(
 		app.AccountKeeper.AddressCodec(),
 		runtime.ProvideCometInfoService(),
 	)
-	// If evidence needs to be handled for the app, set routes in router here and seal
+	// Evidence routes and router are set after instantiating SEDA keepers.
 	app.EvidenceKeeper = *evidenceKeeper
 
 	wasmDir := filepath.Join(homePath, wasmDirectory)
@@ -672,6 +672,7 @@ func NewApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[batchingtypes.StoreKey]),
 		app.StakingKeeper,
+		app.SlashingKeeper,
 		app.WasmStorageKeeper,
 		app.PubKeyKeeper,
 		contractKeeper,
@@ -688,6 +689,12 @@ func NewApp(
 		app.WasmKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
+	// Create evidence router, add batching evidence route, seal it, and set it in the keeper.
+	evidenceRouter := evidencetypes.NewRouter()
+	evidenceRouter.AddRoute(batchingtypes.RouteBatchDoubleSign, batchingkeeper.NewBatchDoubleSignHandler(app.BatchingKeeper))
+	evidenceRouter.Seal()
+	app.EvidenceKeeper.SetRouter(evidenceRouter)
 
 	/* =================================================== */
 	/*                  TRANSFER STACK                     */

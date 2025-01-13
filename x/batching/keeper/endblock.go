@@ -110,19 +110,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, types.DataResultTr
 		provingMetaDataHash = hasher.Sum(nil)
 	}
 
-	// Compute the batch ID, which is defined as
-	// keccak256(batch_number, block_height, validator_root, results_root, proving_metadata_hash)
-	var hashContent []byte
-	hashContent = binary.BigEndian.AppendUint64(hashContent, newBatchNum)
-	//nolint:gosec // G115: We shouldn't get negative block heights anyway.
-	hashContent = binary.BigEndian.AppendUint64(hashContent, uint64(ctx.BlockHeight()))
-	hashContent = append(hashContent, valRoot...)
-	hashContent = append(hashContent, superRoot...)
-	hashContent = append(hashContent, provingMetaDataHash...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(hashContent)
-	batchID := hasher.Sum(nil)
+	batchID := types.ComputeBatchID(newBatchNum, ctx.BlockHeight(), valRoot, superRoot, provingMetaDataHash)
 
 	return types.Batch{
 		BatchNumber:           newBatchNum,

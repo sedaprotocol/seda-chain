@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"testing"
 	"time"
 
@@ -11,12 +12,15 @@ import (
 
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
+	sdkmath "cosmossdk.io/math"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
@@ -81,6 +85,7 @@ type fixture struct {
 	accountKeeper     authkeeper.AccountKeeper
 	bankKeeper        bankkeeper.Keeper
 	stakingKeeper     stakingkeeper.Keeper
+	slashingKeeper    slashingkeeper.Keeper
 	contractKeeper    wasmkeeper.PermissionedKeeper
 	wasmKeeper        wasmkeeper.Keeper
 	wasmStorageKeeper wasmstoragekeeper.Keeper
@@ -98,7 +103,7 @@ func initFixture(tb testing.TB) *fixture {
 
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, wasmstoragetypes.StoreKey,
-		wasmtypes.StoreKey, pubkeytypes.StoreKey, tallytypes.StoreKey, types.StoreKey,
+		wasmtypes.StoreKey, pubkeytypes.StoreKey, tallytypes.StoreKey, types.StoreKey, slashingtypes.StoreKey,
 	)
 	cdc := moduletestutil.MakeTestEncodingConfig(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}).Codec
 
@@ -167,6 +172,11 @@ func initFixture(tb testing.TB) *fixture {
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	err = slashingKeeper.SetParams(ctx, slashingtypes.Params{
+		SlashFractionDoubleSign: sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(20)),
+	})
+	require.NoError(tb, err)
+
 	// x/wasm
 	wasmKeeper := wasmkeeper.NewKeeper(
 		cdc,
@@ -213,6 +223,7 @@ func initFixture(tb testing.TB) *fixture {
 		cdc,
 		runtime.NewKVStoreService(keys[types.StoreKey]),
 		stakingKeeper,
+		slashingKeeper,
 		wasmStorageKeeper,
 		pubKeyKeeper,
 		contractKeeper,
@@ -254,6 +265,7 @@ func initFixture(tb testing.TB) *fixture {
 		accountKeeper:     accountKeeper,
 		bankKeeper:        bankKeeper,
 		stakingKeeper:     *stakingKeeper,
+		slashingKeeper:    slashingKeeper,
 		contractKeeper:    *contractKeeper,
 		wasmKeeper:        wasmKeeper,
 		wasmStorageKeeper: *wasmStorageKeeper,
@@ -263,4 +275,52 @@ func initFixture(tb testing.TB) *fixture {
 		mockViewKeeper:    viewKeeper,
 		logBuf:            buf,
 	}
+}
+
+func generateFirstBatch(t *testing.T, f *fixture, numValidators int) ([]sdk.ValAddress, []*ecdsa.PrivateKey, []sdkstakingtypes.Validator) {
+	valAddrs, _, _ := addBatchSigningValidators(t, f, numValidators)
+
+	// Create private keys for all validators and add them to the first batch
+	privKeys := make([]*ecdsa.PrivateKey, numValidators)
+	validatorAddrs := make([]sdk.ValAddress, numValidators)
+	validators := make([]sdkstakingtypes.Validator, numValidators)
+	validatorEntries := make([]types.ValidatorTreeEntry, numValidators)
+	for i := 0; i < numValidators; i++ {
+		privKey, err := crypto.GenerateKey()
+		require.NoError(t, err)
+		privKeys[i] = privKey
+
+		validatorAddr := sdk.ValAddress(valAddrs[i])
+		validatorAddrs[i] = validatorAddr
+
+		pubKeyBytes := crypto.FromECDSAPub(&privKey.PublicKey)
+		ethAddr, err := utils.PubKeyToEthAddress(pubKeyBytes)
+		require.NoError(t, err)
+		validatorEntries[i] = types.ValidatorTreeEntry{
+			ValidatorAddress: validatorAddr,
+			EthAddress:       ethAddr,
+		}
+
+		validator, err := f.stakingKeeper.GetValidator(f.Context(), validatorAddr)
+		require.NoError(t, err)
+		validators[i] = validator
+
+		consAddr, err := validator.GetConsAddr()
+		require.NoError(t, err)
+
+		f.slashingKeeper.SetValidatorSigningInfo(f.Context(), consAddr, slashingtypes.ValidatorSigningInfo{
+			StartHeight: 1,
+		})
+	}
+
+	// Generate a first batch and set it alongside the validators eth addresses
+	batch := types.Batch{
+		BatchId:     []byte("batch1"),
+		BatchNumber: 1,
+		BlockHeight: 1,
+	}
+	err := f.batchingKeeper.SetNewBatch(f.Context(), batch, types.DataResultTreeEntries{}, validatorEntries)
+	require.NoError(t, err)
+
+	return validatorAddrs, privKeys, validators
 }

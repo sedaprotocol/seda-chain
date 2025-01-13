@@ -19,6 +19,7 @@ import (
 
 type Keeper struct {
 	stakingKeeper         types.StakingKeeper
+	slashingKeeper        types.SlashingKeeper
 	wasmStorageKeeper     types.WasmStorageKeeper
 	pubKeyKeeper          types.PubKeyKeeper
 	wasmKeeper            wasmtypes.ContractOpsKeeper
@@ -39,6 +40,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService storetypes.KVStoreService,
 	sk types.StakingKeeper,
+	slk types.SlashingKeeper,
 	wsk types.WasmStorageKeeper,
 	pkk types.PubKeyKeeper,
 	wk wasmtypes.ContractOpsKeeper,
@@ -49,6 +51,7 @@ func NewKeeper(
 
 	k := Keeper{
 		stakingKeeper:         sk,
+		slashingKeeper:        slk,
 		wasmStorageKeeper:     wsk,
 		pubKeyKeeper:          pkk,
 		wasmKeeper:            wk,

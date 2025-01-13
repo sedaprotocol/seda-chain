@@ -1,0 +1,40 @@
+syntax = "proto3";
+package sedachain.batching.v1;
+
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/batching/types";
+
+// BatchDoubleSign implements the Evidence interface and defines evidence of
+// double signing a batch for a given proving scheme.
+message BatchDoubleSign {
+  option (amino.name) = "sedachain/DoubleSign";
+
+  // batch_number is the number of the batch that the validator double signed.
+  uint64 batch_number = 1;
+
+  // block_height is the height of the block which includes the batch that the
+  // validator double signed.
+  int64 block_height = 2;
+
+  // operator_address is the operator address of the validator committing the
+  // double signing.
+  string operator_address = 3
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // validator_root is the hex-encoded root of the validator merkle tree.
+  string validator_root = 4;
+
+  // data_result_root is the hex-encoded root of the data result merkle tree.
+  string data_result_root = 5;
+
+  // proving_metadata_hash is the hex-encoded hash of the proving metadata.
+  string proving_metadata_hash = 6;
+
+  // signature is the hex-encoded signature of the validator.
+  string signature = 7;
+
+  // proving_scheme_index is the SEDA key index of the proving scheme.
+  uint32 proving_scheme_index = 8;
+}

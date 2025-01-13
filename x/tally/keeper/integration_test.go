@@ -199,6 +199,7 @@ func initFixture(t testing.TB) *fixture {
 		cdc,
 		runtime.NewKVStoreService(keys[batchingtypes.StoreKey]),
 		stakingKeeper,
+		slashingKeeper,
 		wasmStorageKeeper,
 		pubKeyKeeper,
 		contractKeeper,
