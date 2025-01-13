@@ -103,7 +103,8 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		}
 
 		var distMsgs types.DistributionMessages
-		if len(req.Commits) < int(req.ReplicationFactor) {
+		switch {
+		case len(req.Commits) < int(req.ReplicationFactor):
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
 			dataResults[i].ExitCode = TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
@@ -112,8 +113,22 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			if err != nil {
 				return err
 			}
-		} else {
-			_, tallyResults[i], distMsgs = k.FilterAndTally(ctx, req, params)
+		case len(req.Reveals) == 0:
+			dataResults[i].Result = []byte(fmt.Sprintf("no reveals"))
+			dataResults[i].ExitCode = TallyExitCodeNoReveals
+			k.Logger(ctx).Info("data request has no reveals", "request_id", req.ID)
+
+			distMsgs, err = k.CalculateCommitterPayouts(ctx, req, gasPriceInt)
+			if err != nil {
+				return err
+			}
+		default:
+			gasPriceInt, ok := math.NewIntFromString(req.GasPrice)
+			if !ok {
+				return fmt.Errorf("invalid gas price: %s", req.GasPrice) // TODO improve error handling
+			}
+
+			_, tallyResults[i], distMsgs = k.FilterAndTally(ctx, req, params, gasPriceInt)
 			dataResults[i].Result = tallyResults[i].Result
 			//nolint:gosec // G115: We shouldn't get negative exit code anyway.
 			dataResults[i].ExitCode = uint32(tallyResults[i].ExitInfo.ExitCode)
@@ -181,10 +196,10 @@ type TallyResult struct {
 
 // FilterAndTally builds and applies filter, executes tally program,
 // and calculates payouts.
-func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.Params) (FilterResult, TallyResult, types.DistributionMessages) {
+func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.Params, gasPrice math.Int) (FilterResult, TallyResult, types.DistributionMessages) {
 	var result TallyResult
 
-	// Sort the reveals by their keys.
+	// Sort the reveals by their keys (executors).
 	keys := make([]string, len(req.Reveals))
 	i := 0
 	for k := range req.Reveals {
@@ -228,21 +243,18 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 	}
 
 	// Phase III: Calculate Payouts
-	// TODO guarantee: len(reveals) > 0
 	var distMsgs types.DistributionMessages
-	var gasUsed uint64
-	var err error
-	if req.ReplicationFactor == 1 || areGasReportsUniform(reveals) {
-		distMsgs.Messages, gasUsed, err = CalculateUniformPayouts(reveals, req.ExecGasLimit, req.ReplicationFactor, req.GasPrice)
-	} else {
-		distMsgs.Messages, gasUsed, err = CalculateDivergentPayouts(reveals, req.ExecGasLimit, req.ReplicationFactor, req.GasPrice)
+	if filterErr == nil || errors.Is(filterErr, types.ErrConsensusInError) {
+		var gasUsed uint64
+		if req.ReplicationFactor == 1 || areGasReportsUniform(reveals) {
+			distMsgs.Messages, gasUsed = CalculateUniformPayouts(keys, reveals[0].GasUsed, req.ExecGasLimit, req.ReplicationFactor, gasPrice)
+		} else {
+			distMsgs.Messages, gasUsed = CalculateDivergentPayouts(keys, reveals, req.ExecGasLimit, req.ReplicationFactor, gasPrice)
+		}
+		distMsgs.RefundType = types.DistributionTypeExecutorReward // TODO double check
+		result.ExecGasUsed = gasUsed
 	}
-	if err != nil {
-		return filterResult, result, types.DistributionMessages{} // TODO
-	}
-	distMsgs.RefundType = types.DistributionTypeNoConsensus // TODO check
-	result.ExecGasUsed = gasUsed
-	// TODO: Requestor refund
+	// TODO: else pay committers?
 
 	return filterResult, result, distMsgs
 }

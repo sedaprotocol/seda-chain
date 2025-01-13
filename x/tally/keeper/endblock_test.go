@@ -73,13 +73,13 @@ func TestEndBlock(t *testing.T) {
 			expExitCode:       keeper.TallyExitCodeNotEnoughCommits,
 		},
 		{
-			name:              "reveal timeout",
+			name:              "reveal timeout with no reveals",
 			memo:              "cmV2ZWFsIHRpbWVvdXQ=",
 			replicationFactor: 2,
 			numCommits:        2,
 			numReveals:        0,
 			timeout:           true,
-			expExitCode:       keeper.TallyExitCodeFilterError,
+			expExitCode:       keeper.TallyExitCodeNoReveals,
 		},
 		{
 			name:              "reveal timeout with 2 reveals",

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
@@ -26,7 +27,7 @@ func TestFilterAndTally(t *testing.T) {
 		replicationFactor uint16
 		consensus         bool
 		consPubKeys       []string // expected proxy public keys in basic consensus
-		gasUsed           uint64
+		filterGasUsed     uint64
 		exitCode          int
 		filterErr         error
 	}{
@@ -43,7 +44,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			gasUsed:           defaultParams.FilterGasCostNone,
+			filterGasUsed:     defaultParams.FilterGasCostNone,
 			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -57,7 +58,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			gasUsed:           defaultParams.FilterGasCostNone,
+			filterGasUsed:     defaultParams.FilterGasCostNone,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -74,7 +75,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			gasUsed:           defaultParams.FilterGasCostMultiplierMode * 5,
+			filterGasUsed:     defaultParams.FilterGasCostMultiplierMode * 5,
 			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -88,19 +89,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			gasUsed:           defaultParams.FilterGasCostMultiplierMode * 5,
-			exitCode:          keeper.TallyExitCodeFilterError,
-			filterErr:         types.ErrNoBasicConsensus,
-		},
-		{
-			name:              "Mode filter - No reveals",
-			tallyInputAsHex:   "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:          []bool{},
-			reveals:           map[string]types.RevealBody{},
-			replicationFactor: 5,
-			consensus:         false,
-			consPubKeys:       nil,
-			gasUsed:           defaultParams.FilterGasCostMultiplierMode * 5,
+			filterGasUsed:     defaultParams.FilterGasCostMultiplierMode * 5,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -117,7 +106,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			gasUsed:           defaultParams.FilterGasCostMultiplierStdDev * 5,
+			filterGasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 5,
 			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -131,19 +120,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			gasUsed:           defaultParams.FilterGasCostMultiplierStdDev * 5,
-			exitCode:          keeper.TallyExitCodeFilterError,
-			filterErr:         types.ErrNoBasicConsensus,
-		},
-		{
-			name:              "Standard deviation filter - No reveals",
-			tallyInputAsHex:   "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
-			outliers:          []bool{},
-			reveals:           map[string]types.RevealBody{},
-			replicationFactor: 5,
-			consensus:         false,
-			consPubKeys:       nil,
-			gasUsed:           defaultParams.FilterGasCostMultiplierStdDev * 5,
+			filterGasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 5,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -157,6 +134,7 @@ func TestFilterAndTally(t *testing.T) {
 			for k, v := range tt.reveals {
 				revealBody := v
 				revealBody.Reveal = base64.StdEncoding.EncodeToString([]byte(v.Reveal))
+				revealBody.GasUsed = v.GasUsed
 				reveals[k] = revealBody
 			}
 
@@ -164,10 +142,12 @@ func TestFilterAndTally(t *testing.T) {
 				Reveals:           reveals,
 				ReplicationFactor: tt.replicationFactor,
 				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-			}, types.DefaultParams())
+				GasPrice:          "1000000000000000000", // 1e18
+				ExecGasLimit:      100000,
+			}, types.DefaultParams(), math.NewInt(1000000000000000000))
 
 			require.Equal(t, tt.outliers, filterRes.Outliers)
-			require.Equal(t, tt.gasUsed, filterRes.GasUsed)
+			require.Equal(t, tt.filterGasUsed, filterRes.GasUsed)
 			require.Equal(t, tt.consensus, filterRes.Consensus)
 			require.Equal(t, tt.consensus, tallyRes.Consensus)
 			require.Equal(t, tt.exitCode, tallyRes.ExitInfo.ExitCode)
@@ -181,6 +161,104 @@ func TestFilterAndTally(t *testing.T) {
 				for _, pk := range tt.consPubKeys {
 					require.Contains(t, tallyRes.ProxyPubKeys, pk)
 				}
+			}
+		})
+	}
+}
+
+func TestExecutorPayout(t *testing.T) {
+	f := initFixture(t)
+
+	defaultParams := types.DefaultParams()
+	err := f.tallyKeeper.SetParams(f.Context(), defaultParams)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name               string
+		tallyInputAsHex    string
+		reveals            map[string]types.RevealBody
+		replicationFactor  uint16
+		execGasLimit       uint64
+		expExecGasUsed     uint64
+		expExecutorRewards map[string]math.Int
+	}{
+		{
+			name:            "3/3 - Uniform gas reporting",
+			tallyInputAsHex: "00",
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      30000,
+			expExecGasUsed:    90000,
+			expExecutorRewards: map[string]math.Int{
+				"a": math.NewIntWithDecimal(30000, 18),
+				"b": math.NewIntWithDecimal(30000, 18),
+				"c": math.NewIntWithDecimal(30000, 18),
+			},
+		},
+		{
+			name:            "3/3 - Divergent gas reporting (1)",
+			tallyInputAsHex: "00",
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      90000,
+			expExecGasUsed:    90000,
+			expExecutorRewards: map[string]math.Int{
+				"a": math.NewIntWithDecimal(43448, 18),
+				"b": math.NewIntWithDecimal(23275, 18),
+				"c": math.NewIntWithDecimal(23275, 18),
+			},
+		},
+		{
+			name:            "3/3 - Divergent gas reporting (2)",
+			tallyInputAsHex: "00",
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 20000},
+				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 35000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      90000,
+			expExecGasUsed:    56000,
+			expExecutorRewards: map[string]math.Int{
+				"a": math.NewIntWithDecimal(16000, 18),
+				"b": math.NewIntWithDecimal(20000, 18),
+				"c": math.NewIntWithDecimal(20000, 18),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filterInput, err := hex.DecodeString(tt.tallyInputAsHex)
+			require.NoError(t, err)
+
+			reveals := make(map[string]types.RevealBody)
+			for k, v := range tt.reveals {
+				revealBody := v
+				revealBody.Reveal = base64.StdEncoding.EncodeToString([]byte(v.Reveal))
+				revealBody.GasUsed = v.GasUsed
+				reveals[k] = revealBody
+			}
+
+			_, tallyRes, distMsgs := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
+				Reveals:           reveals,
+				ReplicationFactor: tt.replicationFactor,
+				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
+				GasPrice:          "1000000000000000000", // 1e18
+				ExecGasLimit:      tt.execGasLimit,
+			}, types.DefaultParams(), math.NewInt(1000000000000000000))
+
+			require.Equal(t, tt.expExecGasUsed, tallyRes.ExecGasUsed)
+			for _, distMsg := range distMsgs.Messages {
+				require.Equal(t, tt.expExecutorRewards[distMsg.Kind.ExecutorReward.Identity], distMsg.Kind.ExecutorReward.Amount)
+				require.Equal(t, types.DistributionTypeExecutorReward, distMsg.Type)
 			}
 		})
 	}

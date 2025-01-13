@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"sort"
 
 	"cosmossdk.io/math"
@@ -52,35 +51,73 @@ func (k Keeper) CalculateCommitterPayouts(ctx sdk.Context, req types.Request, ga
 	return result, nil
 }
 
-// CalculateUniformPayouts returns payouts for the executors of the given reveals
-// and the total gas used for the execution under the uniform reporting scenario.
-func CalculateUniformPayouts(reveals []types.RevealBody, execGasLimit uint64, replicationFactor uint16, gasPrice string) ([]types.DistributionMessage, uint64, error) {
-	gasUsed := max(reveals[0].GasUsed, execGasLimit/uint64(replicationFactor))
-	gasPriceInt, ok := math.NewIntFromString(gasPrice)
-	if !ok {
-		return nil, 0, fmt.Errorf("invalid gas price: %s", gasPrice) // TODO error
-	}
-	payout := gasPriceInt.Mul(math.NewIntFromUint64(gasUsed))
+// CalculateUniformPayouts calculates payouts for the executors when their gas
+// reports are uniformly at "gasUsed". It also returns the total execution gas
+// consumption.
+func CalculateUniformPayouts(executors []string, gasUsed, execGasLimit uint64, replicationFactor uint16, gasPrice math.Int) ([]types.DistributionMessage, uint64) {
+	adjGasUsed := max(gasUsed, execGasLimit/uint64(replicationFactor))
+	payout := gasPrice.Mul(math.NewIntFromUint64(adjGasUsed))
 
-	distMsgs := make([]types.DistributionMessage, len(reveals))
-	for i, reveal := range reveals {
+	distMsgs := make([]types.DistributionMessage, len(executors))
+	for i := range executors {
 		distMsgs[i] = types.DistributionMessage{
 			Kind: types.DistributionKind{
 				ExecutorReward: &types.DistributionExecutorReward{
-					Identity: reveal.ID,
+					Identity: executors[i],
 					Amount:   payout,
 				},
 			},
-			Type: types.DistributionTypeTimedOut, // TODO check
+			Type: types.DistributionTypeExecutorReward,
 		}
 	}
-	return distMsgs, gasUsed, nil
+	return distMsgs, adjGasUsed * uint64(replicationFactor)
 }
 
-// CalculateDivergentPayouts returns payouts for the executors of the given reveals
-// and the total gas used for the execution under the divergent reporting scenario.
-func CalculateDivergentPayouts(reveals []types.RevealBody, execGasLimit uint64, replicationFactor uint16, gasPrice string) ([]types.DistributionMessage, uint64, error) {
-	return nil, 0, nil
+// CalculateDivergentPayouts calculates payouts for the executors of the given
+// reveals when their gas reports are divergent. It also returns the total
+// execution gas consumption.
+// It assumes that the i-th executor is the one who revealed the i-th reveal.
+func CalculateDivergentPayouts(executors []string, reveals []types.RevealBody, execGasLimit uint64, replicationFactor uint16, gasPrice math.Int) ([]types.DistributionMessage, uint64) {
+	adjGasUsed := make([]uint64, len(reveals))
+	var lowestGasUsed uint64
+	var lowestReporterIndex int
+	for i, reveal := range reveals {
+		adjGasUsed[i] = min(reveal.GasUsed, execGasLimit/uint64(replicationFactor))
+		if i == 0 || adjGasUsed[i] < lowestGasUsed {
+			lowestReporterIndex = i
+			lowestGasUsed = adjGasUsed[i]
+		}
+	}
+	medianGasUsed := median(adjGasUsed)
+	totalGasUsed := medianGasUsed*uint64(replicationFactor-1) + min(lowestGasUsed*2, medianGasUsed)
+	totalShares := medianGasUsed*uint64(replicationFactor-1) + lowestGasUsed*2
+	lowestPayout := gasPrice.Mul(math.NewIntFromUint64(lowestGasUsed * 2 * totalGasUsed / totalShares))
+	normalPayout := gasPrice.Mul(math.NewIntFromUint64(medianGasUsed * totalGasUsed / totalShares))
+
+	distMsgs := make([]types.DistributionMessage, len(executors))
+	for i, executor := range executors {
+		payout := normalPayout
+		if i == lowestReporterIndex {
+			payout = lowestPayout
+		}
+		distMsgs[i] = types.DistributionMessage{
+			Kind: types.DistributionKind{
+				ExecutorReward: &types.DistributionExecutorReward{
+					Identity: executor,
+					Amount:   payout,
+				},
+			},
+			Type: types.DistributionTypeExecutorReward,
+		}
+	}
+	return distMsgs, totalGasUsed
+}
+
+func median(arr []uint64) uint64 {
+	sort.Slice(arr, func(i, j int) bool {
+		return arr[i] < arr[j]
+	})
+	return arr[len(arr)/2]
 }
 
 // areGasReportsUniform returns true if the gas reports of the given reveals are
