@@ -228,12 +228,22 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 	}
 
 	// Phase III: Calculate Payouts
-	// TODO: Calculate gas used & payouts
-	result.ExecGasUsed = calculateExecGasUsed(reveals)
-	distMsgs := types.DistributionMessages{
-		Messages:   []types.DistributionMessage{},
-		RefundType: types.DistributionTypeNoConsensus,
+	// TODO guarantee: len(reveals) > 0
+	var distMsgs types.DistributionMessages
+	var gasUsed uint64
+	var err error
+	if req.ReplicationFactor == 1 || areGasReportsUniform(reveals) {
+		distMsgs.Messages, gasUsed, err = CalculateUniformPayouts(reveals, req.ExecGasLimit, req.ReplicationFactor, req.GasPrice)
+	} else {
+		distMsgs.Messages, gasUsed, err = CalculateDivergentPayouts(reveals, req.ExecGasLimit, req.ReplicationFactor, req.GasPrice)
 	}
+	if err != nil {
+		return filterResult, result, types.DistributionMessages{} // TODO
+	}
+	distMsgs.RefundType = types.DistributionTypeNoConsensus // TODO check
+	result.ExecGasUsed = gasUsed
+	// TODO: Requestor refund
+
 	return filterResult, result, distMsgs
 }
 

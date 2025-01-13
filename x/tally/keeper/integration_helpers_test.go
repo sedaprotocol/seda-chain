@@ -30,8 +30,9 @@ const (
 
 // commitRevealDataRequest simulates stakers committing and revealing
 // for a data request. It returns the data request ID.
-func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal string, replicationFactor, numCommits, numReveals int, timeout bool) string {
+func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal string, replicationFactor, numCommits, numReveals int, timeout bool) (string, []staker) {
 	stakers := f.addStakers(t, 5)
+	f.initAccountWithCoins(t, f.deployer, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1e18))))
 
 	// Upload data request and tally oracle programs.
 	execProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm(), f.Context().BlockTime(), f.Context().BlockHeight(), 1000)
@@ -46,7 +47,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal stri
 	resJSON, err := f.contractKeeper.Execute(
 		f.Context(),
 		f.coreContractAddr,
-		stakers[0].address,
+		f.deployer,
 		postDataRequestMsg(execProgram.Hash, tallyProgram.Hash, requestMemo, replicationFactor),
 		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(3000000000000100))),
 	)
@@ -103,7 +104,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal stri
 		}
 	}
 
-	return res.DrID
+	return res.DrID, stakers
 }
 
 type staker struct {

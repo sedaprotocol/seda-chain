@@ -93,10 +93,17 @@ func TestEndBlock(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			drID := f.commitRevealDataRequest(t, tt.memo, "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout)
+			drID, stakers := f.commitRevealDataRequest(t, tt.memo, "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout)
+
+			beforeBalance := f.bankKeeper.GetBalance(f.Context(), stakers[0].address, bondDenom)
 
 			err := f.tallyKeeper.EndBlock(f.Context())
 			require.NoError(t, err)
+
+			// TODO query get_staker pending_withdrawal and check diff
+			afterBalance := f.bankKeeper.GetBalance(f.Context(), stakers[0].address, bondDenom)
+			diff := afterBalance.Sub(beforeBalance)
+			require.Equal(t, "0aseda", diff.String())
 
 			dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
 			require.NoError(t, err)

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"sort"
 
 	"cosmossdk.io/math"
@@ -51,11 +52,48 @@ func (k Keeper) CalculateCommitterPayouts(ctx sdk.Context, req types.Request, ga
 	return result, nil
 }
 
-// TODO: This will become more complex when we introduce incentives.
-func calculateExecGasUsed(reveals []types.RevealBody) uint64 {
-	var execGasUsed uint64
-	for _, reveal := range reveals {
-		execGasUsed += reveal.GasUsed
+// CalculateUniformPayouts returns payouts for the executors of the given reveals
+// and the total gas used for the execution under the uniform reporting scenario.
+func CalculateUniformPayouts(reveals []types.RevealBody, execGasLimit uint64, replicationFactor uint16, gasPrice string) ([]types.DistributionMessage, uint64, error) {
+	gasUsed := max(reveals[0].GasUsed, execGasLimit/uint64(replicationFactor))
+	gasPriceInt, ok := math.NewIntFromString(gasPrice)
+	if !ok {
+		return nil, 0, fmt.Errorf("invalid gas price: %s", gasPrice) // TODO error
 	}
-	return execGasUsed
+	payout := gasPriceInt.Mul(math.NewIntFromUint64(gasUsed))
+
+	distMsgs := make([]types.DistributionMessage, len(reveals))
+	for i, reveal := range reveals {
+		distMsgs[i] = types.DistributionMessage{
+			Kind: types.DistributionKind{
+				ExecutorReward: &types.DistributionExecutorReward{
+					Identity: reveal.ID,
+					Amount:   payout,
+				},
+			},
+			Type: types.DistributionTypeTimedOut, // TODO check
+		}
+	}
+	return distMsgs, gasUsed, nil
+}
+
+// CalculateDivergentPayouts returns payouts for the executors of the given reveals
+// and the total gas used for the execution under the divergent reporting scenario.
+func CalculateDivergentPayouts(reveals []types.RevealBody, execGasLimit uint64, replicationFactor uint16, gasPrice string) ([]types.DistributionMessage, uint64, error) {
+	return nil, 0, nil
+}
+
+// areGasReportsUniform returns true if the gas reports of the given reveals are
+// uniform.
+func areGasReportsUniform(reveals []types.RevealBody) bool {
+	if len(reveals) == 0 {
+		return true
+	}
+	firstGas := reveals[0].GasUsed
+	for i := 1; i < len(reveals); i++ {
+		if reveals[i].GasUsed != firstGas {
+			return false
+		}
+	}
+	return true
 }
