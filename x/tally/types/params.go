@@ -18,7 +18,7 @@ func DefaultParams() Params {
 		MaxTallyGasLimit:              DefaultMaxTallyGasLimit,
 		FilterGasCostNone:             DefaultFilterGasCostNone,
 		FilterGasCostMultiplierMode:   DefaultFilterGasCostMultiplierMode,
-		FilterGasCostMultiplierStddev: DefaultFilterGasCostMultiplierStddev,
+		FilterGasCostMultiplierStdDev: DefaultFilterGasCostMultiplierStddev,
 		GasCostCommitment:             DefaultGasCostCommitment,
 	}
 }
@@ -34,8 +34,8 @@ func (p *Params) Validate() error {
 	if p.FilterGasCostMultiplierMode <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("filter gas cost (mode) must be greater than 0: %d", p.FilterGasCostMultiplierMode)
 	}
-	if p.FilterGasCostMultiplierStddev <= 0 {
-		return sdkerrors.ErrInvalidRequest.Wrapf("filter gas cost (std dev) must be greater than 0: %d", p.FilterGasCostMultiplierStddev)
+	if p.FilterGasCostMultiplierStdDev <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("filter gas cost (std dev) must be greater than 0: %d", p.FilterGasCostMultiplierStdDev)
 	}
 	if p.GasCostCommitment <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("gas cost for a commitment must be greater than 0: %d", p.GasCostCommitment)

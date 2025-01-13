@@ -7,6 +7,13 @@ if ! [ -x "$(command -v $mockgen_cmd)" ]; then
   exit 1
 fi
 
+mockgen_version=$($mockgen_cmd -version 2>&1 | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+' || echo "unknown")
+required_version="v0.4.0"
+
+if [ "$mockgen_version" != "$required_version" ]; then
+  echo "warning: required mockgen version is $required_version, but found $mockgen_version" >&2
+fi
+
 # Generate mocks for the given package
 $mockgen_cmd -source=$GOPATH/pkg/mod/github.com/\!cosm\!wasm/wasmd@v0.53.0/x/wasm/types/exported_keepers.go -package testutil -destination=x/wasm-storage/keeper/testutil/wasm_keepers_mock.go
 $mockgen_cmd -source=x/wasm-storage/types/expected_keepers.go -package testutil -destination=x/wasm-storage/keeper/testutil/expected_keepers_mock.go

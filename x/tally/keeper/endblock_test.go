@@ -79,7 +79,7 @@ func TestEndBlock(t *testing.T) {
 			numCommits:        2,
 			numReveals:        0,
 			timeout:           true,
-			expExitCode:       keeper.TallyExitCodeNotEnoughReveals,
+			expExitCode:       keeper.TallyExitCodeFilterError,
 		},
 		{
 			name:              "reveal timeout with 2 reveals",
@@ -88,12 +88,12 @@ func TestEndBlock(t *testing.T) {
 			numCommits:        3,
 			numReveals:        2,
 			timeout:           true,
-			expExitCode:       keeper.TallyExitCodeNotEnoughReveals,
+			expExitCode:       0,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			drID := f.commitRevealDataRequest(t, tt.memo, tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout)
+			drID := f.commitRevealDataRequest(t, tt.memo, "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout)
 
 			err := f.tallyKeeper.EndBlock(f.Context())
 			require.NoError(t, err)

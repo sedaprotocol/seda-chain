@@ -25,13 +25,12 @@ import (
 
 const (
 	salt                       = "9c0257114eb9399a2985f8e75dad7600c5d89fe3824ffa99ec1c3eb8bf3b0501"
-	reveal                     = "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w="
 	defaultRevealTimeoutBlocks = 10
 )
 
 // commitRevealDataRequest simulates stakers committing and revealing
 // for a data request. It returns the data request ID.
-func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string, replicationFactor, numCommits, numReveals int, timeout bool) string {
+func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal string, replicationFactor, numCommits, numReveals int, timeout bool) string {
 	stakers := f.addStakers(t, 5)
 
 	// Upload data request and tally oracle programs.
@@ -92,7 +91,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo string, repl
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
-			revealMsg(drID, stakers[i].pubKey, proof),
+			revealMsg(drID, reveal, stakers[i].pubKey, proof),
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		require.NoError(t, err)
@@ -204,7 +203,7 @@ func commitMsg(drID, commitment, stakerPubKey, proof string) []byte {
 	return []byte(fmt.Sprintf(commitMsg, drID, commitment, stakerPubKey, proof))
 }
 
-func revealMsg(drID, stakerPubKey, proof string) []byte {
+func revealMsg(drID, reveal, stakerPubKey, proof string) []byte {
 	var revealMsg = `{
 		"reveal_data_result": {
 		  "dr_id": "%s",

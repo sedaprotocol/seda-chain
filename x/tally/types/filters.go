@@ -43,8 +43,9 @@ func (f FilterNone) GasCost() uint64 {
 }
 
 type FilterMode struct {
-	dataPath string // JSON path to reveal data
-	gasCost  uint64
+	dataPath          string // JSON path to reveal data
+	gasCost           uint64
+	replicationFactor uint16
 }
 
 // NewFilterMode constructs a new FilerMode object given a filter
@@ -70,6 +71,7 @@ func NewFilterMode(input []byte, gasCostMultiplier uint64, replicationFactor uin
 	}
 	filter.dataPath = string(path)
 	filter.gasCost = gasCostMultiplier * uint64(replicationFactor)
+	filter.replicationFactor = replicationFactor
 	return filter, nil
 }
 
@@ -90,17 +92,18 @@ func (f FilterMode) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bo
 			outliers[i] = true
 		}
 	}
-	if dataAttrs.maxFreq*3 < len(reveals)*2 {
+	if dataAttrs.maxFreq*3 < int(f.replicationFactor)*2 {
 		return outliers, false
 	}
 	return outliers, true
 }
 
 type FilterStdDev struct {
-	maxSigma   Sigma
-	dataPath   string // JSON path to reveal data
-	filterFunc func(dataList []any, maxSigma Sigma, errors []bool) ([]bool, bool)
-	gasCost    uint64
+	maxSigma          Sigma
+	dataPath          string // JSON path to reveal data
+	filterFunc        func(dataList []any, maxSigma Sigma, errors []bool, replicationFactor uint16) ([]bool, bool)
+	gasCost           uint64
+	replicationFactor uint16
 }
 
 // NewFilterStdDev constructs a new FilterStdDev object given a
@@ -145,6 +148,7 @@ func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor u
 	}
 	filter.dataPath = string(path)
 	filter.gasCost = gasCostMultiplier * uint64(replicationFactor)
+	filter.replicationFactor = replicationFactor
 	return filter, nil
 }
 
@@ -161,14 +165,14 @@ func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor u
 // consensus" error is returned as well.
 func (f FilterStdDev) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bool) {
 	dataList, _ := parseReveals(reveals, f.dataPath, errors)
-	return f.filterFunc(dataList, f.maxSigma, errors)
+	return f.filterFunc(dataList, f.maxSigma, errors, f.replicationFactor)
 }
 
 func (f FilterStdDev) GasCost() uint64 {
 	return f.gasCost
 }
 
-func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma, errors []bool) ([]bool, bool) {
+func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma, errors []bool, replicationFactor uint16) ([]bool, bool) {
 	nums := make([]T, 0, len(dataList))
 	corruptQueue := make([]int, 0, len(dataList)) // queue of corrupt indices in dataList
 	for i, data := range dataList {
@@ -209,7 +213,7 @@ func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma
 
 	// If less than 2/3 of the numbers fall within max sigma range
 	// from the median, there is no consensus in reveal data.
-	if nonOutlierCount*3 < len(nums)*2 {
+	if nonOutlierCount*3 < int(replicationFactor)*2 {
 		return outliers, false
 	}
 	return outliers, true

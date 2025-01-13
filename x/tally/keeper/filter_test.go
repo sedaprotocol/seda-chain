@@ -503,7 +503,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
 			wantErr:     nil,
 		},
 		{
@@ -520,7 +520,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
 			wantErr:     nil,
 		},
 		{
@@ -532,7 +532,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStddev,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev,
 			wantErr:     nil,
 		},
 		{
@@ -549,7 +549,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
 			wantErr:     types.ErrNoConsensus,
 		},
 		{
@@ -566,7 +566,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
 			wantErr:     nil,
 		},
 		{
@@ -583,7 +583,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
 			wantErr:     types.ErrNoConsensus,
 		},
 		{
@@ -600,7 +600,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   true,
 			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 6,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
 			wantErr:     nil,
 		},
 		{
@@ -615,7 +615,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStddev * 4,
+			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 4,
 			wantErr:     types.ErrNoConsensus,
 		},
 	}
@@ -634,10 +634,11 @@ func TestFilter(t *testing.T) {
 				sort.Strings(tt.reveals[i].ProxyPubKeys)
 			}
 
-			filter, err := f.tallyKeeper.BuildFilter(f.Context(), base64.StdEncoding.EncodeToString(filterInput), uint16(len(tt.reveals)))
-			require.NoError(t, err)
-
-			result, err := keeper.ApplyFilter(filter, tt.reveals)
+			result, err := keeper.ExecuteFilter(
+				tt.reveals,
+				base64.StdEncoding.EncodeToString(filterInput), uint16(len(tt.reveals)),
+				types.DefaultParams(),
+			)
 			require.ErrorIs(t, err, tt.wantErr)
 			if tt.consPubKeys == nil {
 				require.Nil(t, nil, result.ProxyPubKeys)

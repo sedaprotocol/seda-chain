@@ -62,9 +62,12 @@ func FuzzStdDevFilter(f *testing.F) {
 		filterInput, err := hex.DecodeString(filterHex)
 		require.NoError(t, err)
 
-		filter, err := fixture.tallyKeeper.BuildFilter(fixture.Context(), base64.StdEncoding.EncodeToString(filterInput), uint16(len(reveals)))
-		require.NoError(t, err)
-		result, err := keeper.ApplyFilter(filter, reveals)
+		result, err := keeper.ExecuteFilter(
+			reveals,
+			base64.StdEncoding.EncodeToString(filterInput),
+			uint16(len(reveals)),
+			types.DefaultParams(),
+		)
 		require.Equal(t, expOutliers, result.Outliers)
 		require.ErrorIs(t, err, nil)
 	})

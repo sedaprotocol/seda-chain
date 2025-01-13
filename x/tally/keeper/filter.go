@@ -4,8 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
@@ -43,45 +41,16 @@ func invertErrors(errors []bool) []bool {
 	return inverted
 }
 
-// BuildFilter builds a filter based on the requestor-provided input.
-func (k Keeper) BuildFilter(ctx sdk.Context, filterInput string, replicationFactor uint16) (types.Filter, error) {
-	input, err := base64.StdEncoding.DecodeString(filterInput)
-	if err != nil {
-		return nil, err
-	}
-	if len(input) == 0 {
-		return nil, types.ErrInvalidFilterType
-	}
-
-	params, err := k.GetParams(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var filter types.Filter
-	switch input[0] {
-	case filterTypeNone:
-		filter = types.NewFilterNone(params.FilterGasCostNone)
-	case filterTypeMode:
-		filter, err = types.NewFilterMode(input, params.FilterGasCostMultiplierMode, replicationFactor)
-	case filterTypeStdDev:
-		filter, err = types.NewFilterStdDev(input, params.FilterGasCostMultiplierStddev, replicationFactor)
-	default:
-		return nil, types.ErrInvalidFilterType
-	}
-	if err != nil {
-		return nil, err
-	}
-	return filter, nil
-}
-
-// ApplyFilter processes filter of the type specified in the first
-// byte of consensus filter. It returns an outlier list, which is
-// a boolean list where true at index i means that the reveal at
-// index i is an outlier, consensus boolean, consensus data proxy
-// public keys, and error. It assumes that the reveals and their
+// ExecuteFilter builds a filter using the given filter input and applies it to
+// the given reveals to determine consensus, proxy public keys in consensus, and
+// outliers. It assumes that the reveals are sorted by their keys and that their
 // proxy public keys are sorted.
-func ApplyFilter(filter types.Filter, reveals []types.RevealBody) (FilterResult, error) {
+func ExecuteFilter(reveals []types.RevealBody, filterInput string, replicationFactor uint16, params types.Params) (FilterResult, error) {
+	filter, err := BuildFilter(filterInput, replicationFactor, params)
+	if err != nil {
+		return FilterResult{}, types.ErrInvalidFilterInput.Wrap(err.Error())
+	}
+
 	var result FilterResult
 	result.Errors = make([]bool, len(reveals))
 	result.Outliers = make([]bool, len(reveals))
@@ -101,13 +70,12 @@ func ApplyFilter(filter types.Filter, reveals []types.RevealBody) (FilterResult,
 			maxFreq = freq[tuple]
 		}
 	}
-	if maxFreq*3 < len(reveals)*2 {
+	if maxFreq*3 < int(replicationFactor)*2 {
 		result.Consensus = false
 		return result, types.ErrNoBasicConsensus
 	}
 
 	outliers, consensus := filter.ApplyFilter(reveals, result.Errors)
-
 	switch {
 	case countErrors(result.Errors)*3 > len(reveals)*2:
 		result.Consensus = true
@@ -121,4 +89,31 @@ func ApplyFilter(filter types.Filter, reveals []types.RevealBody) (FilterResult,
 		result.Outliers = outliers
 		return result, nil
 	}
+}
+
+// BuildFilter builds a filter based on the requestor-provided input.
+func BuildFilter(filterInput string, replicationFactor uint16, params types.Params) (types.Filter, error) {
+	input, err := base64.StdEncoding.DecodeString(filterInput)
+	if err != nil {
+		return nil, err
+	}
+	if len(input) == 0 {
+		return nil, types.ErrInvalidFilterType
+	}
+
+	var filter types.Filter
+	switch input[0] {
+	case filterTypeNone:
+		filter = types.NewFilterNone(params.FilterGasCostNone)
+	case filterTypeMode:
+		filter, err = types.NewFilterMode(input, params.FilterGasCostMultiplierMode, replicationFactor)
+	case filterTypeStdDev:
+		filter, err = types.NewFilterStdDev(input, params.FilterGasCostMultiplierStdDev, replicationFactor)
+	default:
+		return nil, types.ErrInvalidFilterType
+	}
+	if err != nil {
+		return nil, err
+	}
+	return filter, nil
 }

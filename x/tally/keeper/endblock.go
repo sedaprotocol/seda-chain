@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -56,6 +57,11 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 // ProcessTallies fetches from the core contract the list of requests
 // to be tallied and then goes through it to filter and tally.
 func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) error {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return err
+	}
+
 	// Fetch tally-ready data requests.
 	// TODO: Deal with offset and limits. (#313)
 	queryRes, err := k.wasmViewKeeper.QuerySmart(ctx, coreContract, []byte(`{"get_data_requests_by_status":{"status": "tallying", "offset": 0, "limit": 100}}`))
@@ -97,9 +103,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		}
 
 		var distMsgs types.DistributionMessages
-		var err error
-		switch {
-		case len(req.Commits) == 0 || len(req.Commits) < int(req.ReplicationFactor):
+		if len(req.Commits) < int(req.ReplicationFactor) {
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
 			dataResults[i].ExitCode = TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
@@ -108,31 +112,16 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			if err != nil {
 				return err
 			}
-		case len(req.Reveals) == 0 || len(req.Reveals) < int(req.ReplicationFactor):
-			dataResults[i].Result = []byte(fmt.Sprintf("need %d reveals; received %d", req.ReplicationFactor, len(req.Reveals)))
-			dataResults[i].ExitCode = TallyExitCodeNotEnoughReveals
-			k.Logger(ctx).Info("data request's number of reveals did not meet replication factor", "request_id", req.ID)
-
-			distMsgs, err = k.CalculateCommitterPayouts(ctx, req, gasPriceInt)
-			if err != nil {
-				return err
-			}
-		default:
-			tallyResults[i] = k.FilterAndTally(ctx, req)
-			dataResults[i].Result = tallyResults[i].result
+		} else {
+			_, tallyResults[i], distMsgs = k.FilterAndTally(ctx, req, params)
+			dataResults[i].Result = tallyResults[i].Result
 			//nolint:gosec // G115: We shouldn't get negative exit code anyway.
-			dataResults[i].ExitCode = uint32(tallyResults[i].exitInfo.ExitCode)
-			dataResults[i].Consensus = tallyResults[i].consensus
-			dataResults[i].GasUsed = tallyResults[i].execGasUsed + tallyResults[i].tallyGasUsed
+			dataResults[i].ExitCode = uint32(tallyResults[i].ExitInfo.ExitCode)
+			dataResults[i].Consensus = tallyResults[i].Consensus
+			dataResults[i].GasUsed = tallyResults[i].ExecGasUsed + tallyResults[i].TallyGasUsed
 
 			k.Logger(ctx).Info("completed tally", "request_id", req.ID)
 			k.Logger(ctx).Debug("tally result", "request_id", req.ID, "tally_result", tallyResults[i])
-
-			// TODO
-			distMsgs = types.DistributionMessages{
-				Messages:   []types.DistributionMessage{},
-				RefundType: types.DistributionTypeNoConsensus,
-			}
 		}
 
 		processedReqs[req.ID] = distMsgs
@@ -166,12 +155,12 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 				sdk.NewAttribute(types.AttributeDataResultID, dataResults[i].Id),
 				sdk.NewAttribute(types.AttributeDataRequestID, dataResults[i].DrId),
 				sdk.NewAttribute(types.AttributeTypeConsensus, strconv.FormatBool(dataResults[i].Consensus)),
-				sdk.NewAttribute(types.AttributeTallyVMStdOut, strings.Join(tallyResults[i].stdout, "\n")),
-				sdk.NewAttribute(types.AttributeTallyVMStdErr, strings.Join(tallyResults[i].stderr, "\n")),
-				sdk.NewAttribute(types.AttributeExecGasUsed, fmt.Sprintf("%v", tallyResults[i].execGasUsed)),
-				sdk.NewAttribute(types.AttributeTallyGasUsed, fmt.Sprintf("%v", tallyResults[i].tallyGasUsed)),
+				sdk.NewAttribute(types.AttributeTallyVMStdOut, strings.Join(tallyResults[i].StdOut, "\n")),
+				sdk.NewAttribute(types.AttributeTallyVMStdErr, strings.Join(tallyResults[i].StdErr, "\n")),
+				sdk.NewAttribute(types.AttributeExecGasUsed, fmt.Sprintf("%v", tallyResults[i].ExecGasUsed)),
+				sdk.NewAttribute(types.AttributeTallyGasUsed, fmt.Sprintf("%v", tallyResults[i].TallyGasUsed)),
 				sdk.NewAttribute(types.AttributeTallyExitCode, fmt.Sprintf("%02x", dataResults[i].ExitCode)),
-				sdk.NewAttribute(types.AttributeProxyPubKeys, strings.Join(tallyResults[i].proxyPubKeys, "\n")),
+				sdk.NewAttribute(types.AttributeProxyPubKeys, strings.Join(tallyResults[i].ProxyPubKeys, "\n")),
 			),
 		)
 	}
@@ -180,22 +169,22 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 }
 
 type TallyResult struct {
-	consensus    bool
-	stdout       []string
-	stderr       []string
-	result       []byte
-	exitInfo     tallyvm.ExitInfo
-	execGasUsed  uint64
-	tallyGasUsed uint64
-	proxyPubKeys []string // data proxy pubkeys in basic consensus
+	Consensus    bool
+	StdOut       []string
+	StdErr       []string
+	Result       []byte
+	ExitInfo     tallyvm.ExitInfo
+	ExecGasUsed  uint64
+	TallyGasUsed uint64
+	ProxyPubKeys []string // data proxy pubkeys in basic consensus
 }
 
 // FilterAndTally builds and applies filter, executes tally program,
 // and calculates payouts.
-func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) TallyResult {
+func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.Params) (FilterResult, TallyResult, types.DistributionMessages) {
 	var result TallyResult
 
-	// Sort reveals and proxy public keys.
+	// Sort the reveals by their keys.
 	keys := make([]string, len(req.Reveals))
 	i := 0
 	for k := range req.Reveals {
@@ -203,6 +192,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) TallyResult {
 		i++
 	}
 	sort.Strings(keys)
+
 	reveals := make([]types.RevealBody, len(req.Reveals))
 	for i, k := range keys {
 		reveals[i] = req.Reveals[k]
@@ -210,40 +200,41 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request) TallyResult {
 	}
 
 	// Phase I: Filtering
-	var filterResult FilterResult
-	filter, err := k.BuildFilter(ctx, req.ConsensusFilter, req.ReplicationFactor)
-	if err != nil {
-		result.result = []byte(err.Error())
-		result.exitInfo.ExitCode = TallyExitCodeInvalidFilterInput
-	} else {
-		filterResult, err = ApplyFilter(filter, reveals)
-		result.consensus = filterResult.Consensus
-		result.proxyPubKeys = filterResult.ProxyPubKeys
-		result.tallyGasUsed += filterResult.GasUsed
+	filterResult, filterErr := ExecuteFilter(reveals, req.ConsensusFilter, req.ReplicationFactor, params)
+	result.Consensus = filterResult.Consensus
+	result.ProxyPubKeys = filterResult.ProxyPubKeys
+	result.TallyGasUsed += filterResult.GasUsed
 
-		// Phase II: Tally Program Execution
+	// Phase II: Tally Program Execution
+	if filterErr == nil {
+		vmRes, err := k.ExecuteTallyProgram(ctx, req, filterResult, reveals)
 		if err != nil {
-			result.result = []byte(err.Error())
-			result.exitInfo.ExitCode = TallyExitCodeFilterError
+			result.Result = []byte(err.Error())
+			result.ExitInfo.ExitCode = TallyExitCodeExecError
 		} else {
-			vmRes, err := k.ExecuteTallyProgram(ctx, req, filterResult, reveals)
-			if err != nil {
-				result.result = []byte(err.Error())
-				result.exitInfo.ExitCode = TallyExitCodeExecError
-			} else {
-				result.result = vmRes.Result
-				result.exitInfo = vmRes.ExitInfo
-				result.stdout = vmRes.Stdout
-				result.stderr = vmRes.Stderr
-			}
-			result.tallyGasUsed += vmRes.GasUsed
+			result.Result = vmRes.Result
+			result.ExitInfo = vmRes.ExitInfo
+			result.StdOut = vmRes.Stdout
+			result.StdErr = vmRes.Stderr
+		}
+		result.TallyGasUsed += vmRes.GasUsed
+	} else {
+		result.Result = []byte(filterErr.Error())
+		if errors.Is(filterErr, types.ErrInvalidFilterInput) {
+			result.ExitInfo.ExitCode = TallyExitCodeInvalidFilterInput
+		} else {
+			result.ExitInfo.ExitCode = TallyExitCodeFilterError
 		}
 	}
 
 	// Phase III: Calculate Payouts
-	result.execGasUsed = calculateExecGasUsed(reveals)
-
-	return result
+	// TODO: Calculate gas used & payouts
+	result.ExecGasUsed = calculateExecGasUsed(reveals)
+	distMsgs := types.DistributionMessages{
+		Messages:   []types.DistributionMessage{},
+		RefundType: types.DistributionTypeNoConsensus,
+	}
+	return filterResult, result, distMsgs
 }
 
 // logErrAndRet logs the base error along with the request ID for
