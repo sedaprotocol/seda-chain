@@ -91,11 +91,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal stri
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
-<<<<<<< HEAD
 			revealMsg(drID, reveal, stakers[i].pubKey, proof),
-=======
-			revealMsg(drID, stakers[i].pubKey, proof),
->>>>>>> 1e9f138 (feat(x/tally): fixed payout to committers when data request expires)
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		require.NoError(t, err)
