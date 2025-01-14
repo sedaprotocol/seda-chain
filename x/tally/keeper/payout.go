@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"sort"
 
 	"cosmossdk.io/math"
@@ -10,13 +11,44 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
-// CalculateCommitterPayouts constructs distribution messages that
-// pay the fixed gas cost for each commiter of a given data request.
-func (k Keeper) CalculateCommitterPayouts(ctx sdk.Context, req types.Request, gasPrice math.Int) (types.DistributionMessages, error) {
-	result := types.DistributionMessages{
-		Messages:   []types.DistributionMessage{},
-		RefundType: types.DistributionTypeTimedOut,
+// CalculateDataProxyPayouts returns payouts for the data proxies and
+// returns the the gas used by the data proxies per executor.
+func (k Keeper) CalculateDataProxyPayouts(ctx sdk.Context, proxyPubKeys []string, gasPrice math.Int) (types.DistributionMessages, uint64, error) {
+	var result types.DistributionMessages
+	if len(proxyPubKeys) == 0 {
+		return result, 0, nil
 	}
+
+	gasUsed := math.NewInt(0)
+	distMsgs := make([]types.DistributionMessage, len(proxyPubKeys))
+	for i, pubKey := range proxyPubKeys {
+		pubKeyBytes, err := hex.DecodeString(pubKey)
+		if err != nil {
+			return types.DistributionMessages{}, 0, err
+		}
+		proxyConfig, err := k.dataProxyKeeper.GetDataProxyConfig(ctx, pubKeyBytes)
+		if err != nil {
+			return types.DistributionMessages{}, 0, err
+		}
+		gasUsed = gasUsed.Add(proxyConfig.Fee.Amount.Quo(gasPrice))
+
+		distMsgs[i] = types.DistributionMessage{
+			Kind: types.DistributionKind{
+				ExecutorReward: &types.DistributionExecutorReward{
+					Identity: pubKey,
+					Amount:   proxyConfig.Fee.Amount,
+				},
+			},
+		}
+	}
+	result.Messages = distMsgs
+	return types.DistributionMessages{}, gasUsed.Uint64(), nil // TODO may panic
+}
+
+// CalculateCommitterPayouts returns the fixed payouts for the committers of a
+// given data request.
+func (k Keeper) CalculateCommitterPayouts(ctx sdk.Context, req types.Request, gasPrice math.Int) (types.DistributionMessages, error) {
+	var result types.DistributionMessages
 	if len(req.Commits) == 0 {
 		return result, nil
 	}
@@ -44,7 +76,6 @@ func (k Keeper) CalculateCommitterPayouts(ctx sdk.Context, req types.Request, ga
 					Amount:   payout,
 				},
 			},
-			Type: types.DistributionTypeTimedOut,
 		}
 	}
 	result.Messages = distMsgs
@@ -52,10 +83,10 @@ func (k Keeper) CalculateCommitterPayouts(ctx sdk.Context, req types.Request, ga
 }
 
 // CalculateUniformPayouts calculates payouts for the executors when their gas
-// reports are uniformly at "gasUsed". It also returns the total execution gas
+// reports are uniformly at "gasReport". It also returns the total execution gas
 // consumption.
-func CalculateUniformPayouts(executors []string, gasUsed, execGasLimit uint64, replicationFactor uint16, gasPrice math.Int) ([]types.DistributionMessage, uint64) {
-	adjGasUsed := max(gasUsed, execGasLimit/uint64(replicationFactor))
+func CalculateUniformPayouts(executors []string, gasReport, execGasLimit uint64, replicationFactor uint16, gasPrice math.Int) ([]types.DistributionMessage, uint64) {
+	adjGasUsed := max(gasReport, execGasLimit/uint64(replicationFactor))
 	payout := gasPrice.Mul(math.NewIntFromUint64(adjGasUsed))
 
 	distMsgs := make([]types.DistributionMessage, len(executors))
@@ -67,22 +98,20 @@ func CalculateUniformPayouts(executors []string, gasUsed, execGasLimit uint64, r
 					Amount:   payout,
 				},
 			},
-			Type: types.DistributionTypeExecutorReward,
 		}
 	}
 	return distMsgs, adjGasUsed * uint64(replicationFactor)
 }
 
-// CalculateDivergentPayouts calculates payouts for the executors of the given
-// reveals when their gas reports are divergent. It also returns the total
-// execution gas consumption.
+// CalculateDivergentPayouts calculates payouts for the executors given their
+// divergent gas reports. It also returns the total execution gas consumption.
 // It assumes that the i-th executor is the one who revealed the i-th reveal.
-func CalculateDivergentPayouts(executors []string, reveals []types.RevealBody, execGasLimit uint64, replicationFactor uint16, gasPrice math.Int) ([]types.DistributionMessage, uint64) {
-	adjGasUsed := make([]uint64, len(reveals))
+func CalculateDivergentPayouts(executors []string, gasReports []uint64, execGasLimit uint64, replicationFactor uint16, gasPrice math.Int) ([]types.DistributionMessage, uint64) {
+	adjGasUsed := make([]uint64, len(gasReports))
 	var lowestGasUsed uint64
 	var lowestReporterIndex int
-	for i, reveal := range reveals {
-		adjGasUsed[i] = min(reveal.GasUsed, execGasLimit/uint64(replicationFactor))
+	for i, gasReport := range gasReports {
+		adjGasUsed[i] = min(gasReport, execGasLimit/uint64(replicationFactor))
 		if i == 0 || adjGasUsed[i] < lowestGasUsed {
 			lowestReporterIndex = i
 			lowestGasUsed = adjGasUsed[i]
@@ -107,7 +136,6 @@ func CalculateDivergentPayouts(executors []string, reveals []types.RevealBody, e
 					Amount:   payout,
 				},
 			},
-			Type: types.DistributionTypeExecutorReward,
 		}
 	}
 	return distMsgs, totalGasUsed
@@ -122,13 +150,13 @@ func median(arr []uint64) uint64 {
 
 // areGasReportsUniform returns true if the gas reports of the given reveals are
 // uniform.
-func areGasReportsUniform(reveals []types.RevealBody) bool {
-	if len(reveals) == 0 {
+func areGasReportsUniform(reports []uint64) bool {
+	if len(reports) == 0 {
 		return true
 	}
-	firstGas := reveals[0].GasUsed
-	for i := 1; i < len(reveals); i++ {
-		if reveals[i].GasUsed != firstGas {
+	firstGas := reports[0]
+	for i := 1; i < len(reports); i++ {
+		if reports[i] != firstGas {
 			return false
 		}
 	}

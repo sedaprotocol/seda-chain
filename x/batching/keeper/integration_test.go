@@ -48,6 +48,8 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
+	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
+	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 	"github.com/sedaprotocol/seda-chain/x/pubkey"
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
@@ -221,6 +223,12 @@ func initFixture(tb testing.TB) *fixture {
 	)
 	stakingKeeper.SetPubKeyKeeper(pubKeyKeeper)
 
+	dataProxyKeeper := dataproxykeeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(keys[dataproxytypes.StoreKey]),
+		authtypes.NewModuleAddress("gov").String(),
+	)
+
 	batchingKeeper := batchingkeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[types.StoreKey]),
@@ -238,6 +246,7 @@ func initFixture(tb testing.TB) *fixture {
 		runtime.NewKVStoreService(keys[tallytypes.StoreKey]),
 		wasmStorageKeeper,
 		batchingKeeper,
+		dataProxyKeeper,
 		contractKeeper,
 		viewKeeper,
 		authority.String(),

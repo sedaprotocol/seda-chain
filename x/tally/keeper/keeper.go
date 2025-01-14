@@ -18,6 +18,7 @@ import (
 type Keeper struct {
 	wasmStorageKeeper types.WasmStorageKeeper
 	batchingKeeper    types.BatchingKeeper
+	dataProxyKeeper   types.DataProxyKeeper
 	wasmKeeper        wasmtypes.ContractOpsKeeper
 	wasmViewKeeper    wasmtypes.ViewKeeper
 	authority         string
@@ -26,12 +27,13 @@ type Keeper struct {
 	params collections.Item[types.Params]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, wsk types.WasmStorageKeeper, bk types.BatchingKeeper, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper, authority string) Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, wsk types.WasmStorageKeeper, bk types.BatchingKeeper, dpk types.DataProxyKeeper, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper, authority string) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
 		wasmStorageKeeper: wsk,
 		batchingKeeper:    bk,
+		dataProxyKeeper:   dpk,
 		wasmKeeper:        wk,
 		wasmViewKeeper:    wvk,
 		params:            collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),

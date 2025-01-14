@@ -106,13 +106,11 @@ func (u *RevealBody) TryHash() (string, error) {
 }
 
 type DistributionMessages struct {
-	Messages   []DistributionMessage `json:"messages"`
-	RefundType DistributionType      `json:"refund_type"`
+	Messages []DistributionMessage `json:"messages"`
 }
 
 type DistributionMessage struct {
 	Kind DistributionKind `json:"kind"`
-	Type DistributionType `json:"type"`
 }
 
 type DistributionKind struct {
@@ -134,16 +132,6 @@ type DistributionExecutorReward struct {
 	Amount   math.Int `json:"amount"`
 	Identity string   `json:"identity"`
 }
-
-type DistributionType string
-
-const (
-	DistributionTypeTallyReward     DistributionType = "tally_reward"
-	DistributionTypeExecutorReward  DistributionType = "executor_reward"
-	DistributionTypeTimedOut        DistributionType = "timed_out"
-	DistributionTypeNoConsensus     DistributionType = "no_consensus"
-	DistributionTypeRemainderRefund DistributionType = "remainder_refund"
-)
 
 func MarshalSudoRemoveDataRequests(processedReqs map[string]DistributionMessages) ([]byte, error) {
 	return json.Marshal(struct {

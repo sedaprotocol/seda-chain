@@ -127,6 +127,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			if !ok {
 				return fmt.Errorf("invalid gas price: %s", req.GasPrice) // TODO improve error handling
 			}
+			// TODO also make sure gas price is not 0
 
 			_, tallyResults[i], distMsgs = k.FilterAndTally(ctx, req, params, gasPriceInt)
 			dataResults[i].Result = tallyResults[i].Result
@@ -214,13 +215,13 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 		sort.Strings(reveals[i].ProxyPubKeys)
 	}
 
-	// Phase I: Filtering
+	// Phase 1: Filtering
 	filterResult, filterErr := ExecuteFilter(reveals, req.ConsensusFilter, req.ReplicationFactor, params)
 	result.Consensus = filterResult.Consensus
 	result.ProxyPubKeys = filterResult.ProxyPubKeys
 	result.TallyGasUsed += filterResult.GasUsed
 
-	// Phase II: Tally Program Execution
+	// Phase 2: Tally Program Execution
 	if filterErr == nil {
 		vmRes, err := k.ExecuteTallyProgram(ctx, req, filterResult, reveals)
 		if err != nil {
@@ -242,21 +243,44 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 		}
 	}
 
-	// Phase III: Calculate Payouts
-	var distMsgs types.DistributionMessages
-	if filterErr == nil || errors.Is(filterErr, types.ErrConsensusInError) {
-		var gasUsed uint64
-		if req.ReplicationFactor == 1 || areGasReportsUniform(reveals) {
-			distMsgs.Messages, gasUsed = CalculateUniformPayouts(keys, reveals[0].GasUsed, req.ExecGasLimit, req.ReplicationFactor, gasPrice)
-		} else {
-			distMsgs.Messages, gasUsed = CalculateDivergentPayouts(keys, reveals, req.ExecGasLimit, req.ReplicationFactor, gasPrice)
+	// Phase 3: Calculate Payouts
+	// Calculate data proxy payouts if basic consensus was reached.
+	var proxyDistMsgs types.DistributionMessages
+	var proxyGasUsedPerExec uint64
+	if filterErr == nil || !errors.Is(filterErr, types.ErrNoBasicConsensus) {
+		var err error
+		proxyDistMsgs, proxyGasUsedPerExec, err = k.CalculateDataProxyPayouts(ctx, result.ProxyPubKeys, gasPrice)
+		if err != nil {
+			// TODO error handling
 		}
-		distMsgs.RefundType = types.DistributionTypeExecutorReward // TODO double check
-		result.ExecGasUsed = gasUsed
 	}
-	// TODO: else pay committers?
 
-	return filterResult, result, distMsgs
+	// Calculate executor payouts.
+	var execDistMsgs types.DistributionMessages
+	if filterErr == nil || !errors.Is(filterErr, types.ErrNoBasicConsensus) {
+		gasReports := make([]uint64, len(reveals))
+		for i, reveal := range reveals {
+			gasReports[i] = max(0, reveal.GasUsed-proxyGasUsedPerExec)
+		}
+
+		var execGasUsed uint64
+		if req.ReplicationFactor == 1 || areGasReportsUniform(gasReports) {
+			execDistMsgs.Messages, execGasUsed = CalculateUniformPayouts(keys, gasReports[0], req.ExecGasLimit, req.ReplicationFactor, gasPrice)
+		} else {
+			execDistMsgs.Messages, execGasUsed = CalculateDivergentPayouts(keys, gasReports, req.ExecGasLimit, req.ReplicationFactor, gasPrice)
+		}
+		result.ExecGasUsed = execGasUsed
+	} else {
+		var err error
+		execDistMsgs, err = k.CalculateCommitterPayouts(ctx, req, gasPrice)
+		if err != nil {
+			// TODO error handling
+		}
+	}
+
+	return filterResult, result, types.DistributionMessages{
+		Messages: append(proxyDistMsgs.Messages, execDistMsgs.Messages...),
+	}
 }
 
 // logErrAndRet logs the base error along with the request ID for
