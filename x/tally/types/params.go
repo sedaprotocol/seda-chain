@@ -9,7 +9,7 @@ const (
 	DefaultFilterGasCostNone             = 100_000
 	DefaultFilterGasCostMultiplierMode   = 100_000
 	DefaultFilterGasCostMultiplierStddev = 100_000
-	DefaultGasCostCommitment             = 100_000_000
+	DefaultGasCostCommitment             = 5_000_000_000_000
 )
 
 // DefaultParams returns default tally module parameters.

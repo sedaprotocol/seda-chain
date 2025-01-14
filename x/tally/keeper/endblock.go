@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
@@ -90,6 +91,11 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			SedaPayload:    req.SedaPayload,
 		}
 
+		gasPriceInt, ok := math.NewIntFromString(req.GasPrice)
+		if !ok {
+			return fmt.Errorf("invalid gas price: %s", req.GasPrice) // TODO improve error handling
+		}
+
 		var distMsgs types.DistributionMessages
 		var err error
 		switch {
@@ -98,7 +104,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			dataResults[i].ExitCode = TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
 
-			distMsgs, err = k.CalculateCommitterPayouts(ctx, req)
+			distMsgs, err = k.CalculateCommitterPayouts(ctx, req, gasPriceInt)
 			if err != nil {
 				return err
 			}
@@ -107,7 +113,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			dataResults[i].ExitCode = TallyExitCodeNotEnoughReveals
 			k.Logger(ctx).Info("data request's number of reveals did not meet replication factor", "request_id", req.ID)
 
-			distMsgs, err = k.CalculateCommitterPayouts(ctx, req)
+			distMsgs, err = k.CalculateCommitterPayouts(ctx, req, gasPriceInt)
 			if err != nil {
 				return err
 			}

@@ -12,7 +12,7 @@ import (
 
 // CalculateCommitterPayouts constructs distribution messages that
 // pay the fixed gas cost for each commiter of a given data request.
-func (k Keeper) CalculateCommitterPayouts(ctx sdk.Context, req types.Request) (types.DistributionMessages, error) {
+func (k Keeper) CalculateCommitterPayouts(ctx sdk.Context, req types.Request, gasPrice math.Int) (types.DistributionMessages, error) {
 	result := types.DistributionMessages{
 		Messages:   []types.DistributionMessage{},
 		RefundType: types.DistributionTypeTimedOut,
@@ -25,6 +25,7 @@ func (k Keeper) CalculateCommitterPayouts(ctx sdk.Context, req types.Request) (t
 	if err != nil {
 		return types.DistributionMessages{}, err
 	}
+	payout := gasPrice.Mul(math.NewIntFromUint64(gasCost))
 
 	i := 0
 	committers := make([]string, len(req.Commits))
@@ -40,7 +41,7 @@ func (k Keeper) CalculateCommitterPayouts(ctx sdk.Context, req types.Request) (t
 			Kind: types.DistributionKind{
 				ExecutorReward: &types.DistributionExecutorReward{
 					Identity: committer,
-					Amount:   math.NewIntFromUint64(gasCost),
+					Amount:   payout,
 				},
 			},
 			Type: types.DistributionTypeTimedOut,
