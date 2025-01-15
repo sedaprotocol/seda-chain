@@ -63,6 +63,9 @@ func (sc *SqsClient) sendMessageBatch(batch []*sqs.SendMessageBatchRequestEntry)
 	sc.logger.Trace("send batch request succeeded")
 
 	if len(result.Failed) > 0 {
+		for _, failed := range result.Failed {
+			sc.logger.Error("failed to send message", "error", failed.Message, "id", failed.Id, "code", failed.Code, "senderFault", failed.SenderFault)
+		}
 		return fmt.Errorf("failed to send %d messages", len(result.Failed))
 	}
 
