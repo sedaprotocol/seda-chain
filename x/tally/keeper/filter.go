@@ -46,15 +46,9 @@ func invertErrors(errors []bool) []bool {
 // outliers. It assumes that the reveals are sorted by their keys and that their
 // proxy public keys are sorted.
 func ExecuteFilter(reveals []types.RevealBody, filterInput string, replicationFactor uint16, params types.Params) (FilterResult, error) {
-	filter, err := BuildFilter(filterInput, replicationFactor, params)
-	if err != nil {
-		return FilterResult{}, types.ErrInvalidFilterInput.Wrap(err.Error())
-	}
-
 	var result FilterResult
 	result.Errors = make([]bool, len(reveals))
 	result.Outliers = make([]bool, len(reveals))
-	result.GasUsed = filter.GasCost()
 
 	// Determine basic consensus on tuple of (exit_code_success, proxy_pub_keys)
 	var maxFreq int
@@ -74,6 +68,12 @@ func ExecuteFilter(reveals []types.RevealBody, filterInput string, replicationFa
 		result.Consensus = false
 		return result, types.ErrNoBasicConsensus
 	}
+
+	filter, err := BuildFilter(filterInput, replicationFactor, params)
+	if err != nil {
+		return result, types.ErrInvalidFilterInput.Wrap(err.Error())
+	}
+	result.GasUsed = filter.GasCost()
 
 	outliers, consensus := filter.ApplyFilter(reveals, result.Errors)
 	switch {
