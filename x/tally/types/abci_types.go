@@ -105,25 +105,17 @@ func (u *RevealBody) TryHash() (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-type DistributionMessages struct {
-	Messages []DistributionMessage `json:"messages"`
-}
-
-type DistributionMessage struct {
-	Kind DistributionKind `json:"kind"`
-}
-
-type DistributionKind struct {
-	Burn           *DistributionBurn           `json:"burn,omitempty"`
-	ExecutorReward *DistributionExecutorReward `json:"executor_reward,omitempty"`
-	Send           *DistributionSend           `json:"send,omitempty"`
+type Distribution struct {
+	Burn            *DistributionBurn            `json:"burn,omitempty"`
+	ExecutorReward  *DistributionExecutorReward  `json:"executor_reward,omitempty"`
+	DataProxyReward *DistributionDataProxyReward `json:"data_proxy_reward,omitempty"`
 }
 
 type DistributionBurn struct {
 	Amount math.Int `json:"amount"`
 }
 
-type DistributionSend struct {
+type DistributionDataProxyReward struct {
 	To     []byte   `json:"to"`
 	Amount math.Int `json:"amount"`
 }
@@ -133,14 +125,38 @@ type DistributionExecutorReward struct {
 	Identity string   `json:"identity"`
 }
 
-func MarshalSudoRemoveDataRequests(processedReqs map[string]DistributionMessages) ([]byte, error) {
+func NewBurn(amount math.Int) Distribution {
+	return Distribution{
+		Burn: &DistributionBurn{Amount: amount},
+	}
+}
+
+func NewDataProxyReward(pubKey []byte, amount math.Int) Distribution {
+	return Distribution{
+		DataProxyReward: &DistributionDataProxyReward{
+			To:     pubKey,
+			Amount: amount,
+		},
+	}
+}
+
+func NewExecutorReward(identity string, amount math.Int) Distribution {
+	return Distribution{
+		ExecutorReward: &DistributionExecutorReward{
+			Identity: identity,
+			Amount:   amount,
+		},
+	}
+}
+
+func MarshalSudoRemoveDataRequests(processedReqs map[string][]Distribution) ([]byte, error) {
 	return json.Marshal(struct {
 		SudoRemoveDataRequests struct {
-			Requests map[string]DistributionMessages `json:"requests"`
+			Requests map[string][]Distribution `json:"requests"`
 		} `json:"remove_data_requests"`
 	}{
 		SudoRemoveDataRequests: struct {
-			Requests map[string]DistributionMessages `json:"requests"`
+			Requests map[string][]Distribution `json:"requests"`
 		}{
 			Requests: processedReqs,
 		},

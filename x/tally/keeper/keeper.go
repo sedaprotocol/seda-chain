@@ -63,14 +63,6 @@ func (k Keeper) GetMaxTallyGasLimit(ctx sdk.Context) (uint64, error) {
 	return params.MaxTallyGasLimit, nil
 }
 
-func (k Keeper) GetGasCostCommitment(ctx sdk.Context) (uint64, error) {
-	params, err := k.params.Get(ctx)
-	if err != nil {
-		return 0, err
-	}
-	return params.GasCostCommitment, nil
-}
-
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }

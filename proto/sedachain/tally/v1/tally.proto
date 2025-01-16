@@ -15,7 +15,8 @@ message Params {
   // FilterGasCostMultiplierStdDev is the gas cost multiplier for a filter type
   // stddev.
   uint64 filter_gas_cost_multiplier_std_dev = 4;
-  // GasCostCommitment is the gas cost for a commitment corresponding to an
-  // expired data request.
-  uint64 gas_cost_commitment = 5;
+  // GasCostBase is the base gas cost for a data request.
+  uint64 gas_cost_base = 5;
+  // GasCostCommit is the gas cost for a commit charged under certain scenarios.
+  uint64 gas_cost_commit = 6;
 }

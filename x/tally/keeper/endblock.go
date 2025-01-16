@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
@@ -81,7 +82,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
-	processedReqs := make(map[string]types.DistributionMessages)
+	processedReqs := make(map[string][]types.Distribution)
 	tallyResults := make([]TallyResult, len(tallyList))
 	dataResults := make([]batchingtypes.DataResult, len(tallyList))
 	for i, req := range tallyList {
@@ -97,39 +98,36 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			SedaPayload:    req.SedaPayload,
 		}
 
-		gasPriceInt, ok := math.NewIntFromString(req.GasPrice)
+		gasPrice, ok := math.NewIntFromString(req.GasPrice)
 		if !ok {
-			return fmt.Errorf("invalid gas price: %s", req.GasPrice) // TODO improve error handling
+			return fmt.Errorf("invalid gas price: %s", req.GasPrice)
 		}
 
-		var distMsgs types.DistributionMessages
+		var dists []types.Distribution
 		switch {
 		case len(req.Commits) < int(req.ReplicationFactor):
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
 			dataResults[i].ExitCode = TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
 
-			distMsgs, err = k.CalculateCommitterPayouts(ctx, req, gasPriceInt)
+			dists, err = CalculateCommitterPayouts(req, gasPrice.Mul(math.NewIntFromUint64(params.GasCostCommit)))
 			if err != nil {
 				return err
 			}
 		case len(req.Reveals) == 0:
-			dataResults[i].Result = []byte(fmt.Sprintf("no reveals"))
+			dataResults[i].Result = []byte("no reveals")
 			dataResults[i].ExitCode = TallyExitCodeNoReveals
 			k.Logger(ctx).Info("data request has no reveals", "request_id", req.ID)
 
-			distMsgs, err = k.CalculateCommitterPayouts(ctx, req, gasPriceInt)
+			dists, err = CalculateCommitterPayouts(req, gasPrice.Mul(math.NewIntFromUint64(params.GasCostCommit)))
 			if err != nil {
 				return err
 			}
 		default:
-			gasPriceInt, ok := math.NewIntFromString(req.GasPrice)
-			if !ok {
-				return fmt.Errorf("invalid gas price: %s", req.GasPrice) // TODO improve error handling
+			_, tallyResults[i], dists, err = k.FilterAndTally(ctx, req, params, gasPrice)
+			if err != nil {
+				return err
 			}
-			// TODO also make sure gas price is not 0
-
-			_, tallyResults[i], distMsgs = k.FilterAndTally(ctx, req, params, gasPriceInt)
 			dataResults[i].Result = tallyResults[i].Result
 			//nolint:gosec // G115: We shouldn't get negative exit code anyway.
 			dataResults[i].ExitCode = uint32(tallyResults[i].ExitInfo.ExitCode)
@@ -140,7 +138,12 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			k.Logger(ctx).Debug("tally result", "request_id", req.ID, "tally_result", tallyResults[i])
 		}
 
-		processedReqs[req.ID] = distMsgs
+		baseFeeMsg := types.Distribution{
+			Burn: &types.DistributionBurn{
+				Amount: gasPrice.Mul(math.NewIntFromUint64(params.GasCostBase)),
+			},
+		}
+		processedReqs[req.ID] = append([]types.Distribution{baseFeeMsg}, dists...)
 		dataResults[i].Id, err = dataResults[i].TryHash()
 		if err != nil {
 			return err
@@ -197,8 +200,9 @@ type TallyResult struct {
 
 // FilterAndTally builds and applies filter, executes tally program,
 // and calculates payouts.
-func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.Params, gasPrice math.Int) (FilterResult, TallyResult, types.DistributionMessages) {
+func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.Params, gasPrice math.Int) (FilterResult, TallyResult, []types.Distribution, error) {
 	var result TallyResult
+	var dists []types.Distribution
 
 	// Sort the reveals by their keys (executors).
 	keys := make([]string, len(req.Reveals))
@@ -233,7 +237,10 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 			result.StdOut = vmRes.Stdout
 			result.StdErr = vmRes.Stderr
 		}
-		result.TallyGasUsed += vmRes.GasUsed
+		if vmRes.GasUsed > 0 {
+			result.TallyGasUsed += vmRes.GasUsed
+			dists = append(dists, types.NewBurn(gasPrice.Mul(math.NewIntFromUint64(vmRes.GasUsed))))
+		}
 	} else {
 		result.Result = []byte(filterErr.Error())
 		if errors.Is(filterErr, types.ErrInvalidFilterInput) {
@@ -245,18 +252,19 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 
 	// Phase 3: Calculate Payouts
 	// Calculate data proxy payouts if basic consensus was reached.
-	var proxyDistMsgs types.DistributionMessages
+	var proxyDistMsgs []types.Distribution
 	var proxyGasUsedPerExec uint64
 	if filterErr == nil || !errors.Is(filterErr, types.ErrNoBasicConsensus) {
 		var err error
 		proxyDistMsgs, proxyGasUsedPerExec, err = k.CalculateDataProxyPayouts(ctx, result.ProxyPubKeys, gasPrice)
 		if err != nil {
-			// TODO error handling
+			return filterResult, result, dists, err
 		}
 	}
+	dists = append(dists, proxyDistMsgs...)
 
 	// Calculate executor payouts.
-	var execDistMsgs types.DistributionMessages
+	var execDistMsgs []types.Distribution
 	if filterErr == nil || !errors.Is(filterErr, types.ErrNoBasicConsensus) {
 		gasReports := make([]uint64, len(reveals))
 		for i, reveal := range reveals {
@@ -265,22 +273,21 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 
 		var execGasUsed uint64
 		if req.ReplicationFactor == 1 || areGasReportsUniform(gasReports) {
-			execDistMsgs.Messages, execGasUsed = CalculateUniformPayouts(keys, gasReports[0], req.ExecGasLimit, req.ReplicationFactor, gasPrice)
+			execDistMsgs, execGasUsed = CalculateUniformPayouts(keys, gasReports[0], req.ExecGasLimit, req.ReplicationFactor, gasPrice)
 		} else {
-			execDistMsgs.Messages, execGasUsed = CalculateDivergentPayouts(keys, gasReports, req.ExecGasLimit, req.ReplicationFactor, gasPrice)
+			execDistMsgs, execGasUsed = CalculateDivergentPayouts(keys, gasReports, req.ExecGasLimit, req.ReplicationFactor, gasPrice)
 		}
 		result.ExecGasUsed = execGasUsed
 	} else {
 		var err error
-		execDistMsgs, err = k.CalculateCommitterPayouts(ctx, req, gasPrice)
+		execDistMsgs, err = CalculateCommitterPayouts(req, gasPrice.Mul(math.NewIntFromUint64(params.GasCostCommit)))
 		if err != nil {
-			// TODO error handling
+			return filterResult, result, dists, err
 		}
 	}
+	dists = append(dists, execDistMsgs...)
 
-	return filterResult, result, types.DistributionMessages{
-		Messages: append(proxyDistMsgs.Messages, execDistMsgs.Messages...),
-	}
+	return filterResult, result, dists, nil
 }
 
 // logErrAndRet logs the base error along with the request ID for

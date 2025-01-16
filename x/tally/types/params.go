@@ -9,7 +9,8 @@ const (
 	DefaultFilterGasCostNone             = 100_000
 	DefaultFilterGasCostMultiplierMode   = 100_000
 	DefaultFilterGasCostMultiplierStddev = 100_000
-	DefaultGasCostCommitment             = 5_000_000_000_000
+	DefaultGasCostBase                   = 1_000_000_000_000
+	DefaultGasCostCommit                 = 5_000_000_000_000
 )
 
 // DefaultParams returns default tally module parameters.
@@ -19,7 +20,8 @@ func DefaultParams() Params {
 		FilterGasCostNone:             DefaultFilterGasCostNone,
 		FilterGasCostMultiplierMode:   DefaultFilterGasCostMultiplierMode,
 		FilterGasCostMultiplierStdDev: DefaultFilterGasCostMultiplierStddev,
-		GasCostCommitment:             DefaultGasCostCommitment,
+		GasCostBase:                   DefaultGasCostBase,
+		GasCostCommit:                 DefaultGasCostCommit,
 	}
 }
 
@@ -37,8 +39,11 @@ func (p *Params) Validate() error {
 	if p.FilterGasCostMultiplierStdDev <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("filter gas cost (std dev) must be greater than 0: %d", p.FilterGasCostMultiplierStdDev)
 	}
-	if p.GasCostCommitment <= 0 {
-		return sdkerrors.ErrInvalidRequest.Wrapf("gas cost for a commitment must be greater than 0: %d", p.GasCostCommitment)
+	if p.GasCostBase <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("base gas cost must be greater than 0: %d", p.GasCostBase)
+	}
+	if p.GasCostCommit <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("commit gas cost must be greater than 0: %d", p.GasCostCommit)
 	}
 	return nil
 }

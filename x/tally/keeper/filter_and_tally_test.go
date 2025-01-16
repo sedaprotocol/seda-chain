@@ -58,7 +58,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.FilterGasCostNone,
+			filterGasUsed:     0,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -89,7 +89,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.FilterGasCostMultiplierMode * 5,
+			filterGasUsed:     0,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -120,7 +120,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 5,
+			filterGasUsed:     0,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -138,13 +138,14 @@ func TestFilterAndTally(t *testing.T) {
 				reveals[k] = revealBody
 			}
 
-			filterRes, tallyRes, _ := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
+			filterRes, tallyRes, _, err := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
 				Reveals:           reveals,
 				ReplicationFactor: tt.replicationFactor,
 				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
 				GasPrice:          "1000000000000000000", // 1e18
 				ExecGasLimit:      100000,
 			}, types.DefaultParams(), math.NewInt(1000000000000000000))
+			require.NoError(t, err)
 
 			require.Equal(t, tt.outliers, filterRes.Outliers)
 			require.Equal(t, tt.filterGasUsed, filterRes.GasUsed)
@@ -247,18 +248,22 @@ func TestExecutorPayout(t *testing.T) {
 				reveals[k] = revealBody
 			}
 
-			_, tallyRes, distMsgs := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
+			gasPriceStr := "1000000000000000000" // 1e18
+			gasPrice, ok := math.NewIntFromString(gasPriceStr)
+			require.True(t, ok)
+
+			_, tallyRes, distMsgs, err := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
 				Reveals:           reveals,
 				ReplicationFactor: tt.replicationFactor,
 				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-				GasPrice:          "1000000000000000000", // 1e18
+				GasPrice:          gasPriceStr,
 				ExecGasLimit:      tt.execGasLimit,
-			}, types.DefaultParams(), math.NewInt(1000000000000000000))
+			}, types.DefaultParams(), gasPrice)
+			require.NoError(t, err)
 
 			require.Equal(t, tt.expExecGasUsed, tallyRes.ExecGasUsed)
-			for _, distMsg := range distMsgs.Messages {
-				require.Equal(t, tt.expExecutorRewards[distMsg.Kind.ExecutorReward.Identity], distMsg.Kind.ExecutorReward.Amount)
-				require.Equal(t, types.DistributionTypeExecutorReward, distMsg.Type)
+			for _, distMsg := range distMsgs {
+				require.Equal(t, tt.expExecutorRewards[distMsg.ExecutorReward.Identity], distMsg.ExecutorReward.Amount)
 			}
 		})
 	}
