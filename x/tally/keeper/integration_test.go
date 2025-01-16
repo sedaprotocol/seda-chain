@@ -92,6 +92,7 @@ type fixture struct {
 	wasmStorageKeeper wasmstoragekeeper.Keeper
 	tallyKeeper       keeper.Keeper
 	batchingKeeper    batchingkeeper.Keeper
+	dataProxyKeeper   *dataproxykeeper.Keeper
 	wasmViewKeeper    wasmtypes.ViewKeeper
 	logBuf            *bytes.Buffer
 }
@@ -106,6 +107,7 @@ func initFixture(t testing.TB) *fixture {
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, wasmstoragetypes.StoreKey,
 		wasmtypes.StoreKey, pubkeytypes.StoreKey, batchingtypes.StoreKey, types.StoreKey,
+		dataproxytypes.StoreKey,
 	)
 
 	mb := module.NewBasicManager(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{})
@@ -319,6 +321,7 @@ func initFixture(t testing.TB) *fixture {
 		wasmStorageKeeper: *wasmStorageKeeper,
 		tallyKeeper:       tallyKeeper,
 		batchingKeeper:    batchingKeeper,
+		dataProxyKeeper:   dataProxyKeeper,
 		wasmViewKeeper:    wasmKeeper,
 		logBuf:            buf,
 	}

@@ -123,7 +123,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
+			gasUsed:     0,
 			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
@@ -356,7 +356,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
+			gasUsed:     0,
 			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{
@@ -431,7 +431,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:   false,
 			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
+			gasUsed:     0,
 			wantErr:     types.ErrNoBasicConsensus,
 		},
 		{

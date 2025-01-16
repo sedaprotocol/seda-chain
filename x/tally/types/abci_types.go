@@ -105,6 +105,26 @@ func (u *RevealBody) TryHash() (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
+type PayoutRecord struct {
+	Burn       math.Int       `json:"burn"`
+	ProxyDists []Distribution `json:"proxy_dists"`
+	ExecDists  []Distribution `json:"exec_dists"`
+}
+
+// DistributionsWithBaseFee constructs and returns a slice of distributions that
+// the contract expects based on the payout record struct and a new base fee burn.
+func (p PayoutRecord) DistributionsWithBaseFee(baseFee math.Int) []Distribution {
+	if p.Burn.IsNil() {
+		p.Burn = math.ZeroInt()
+	}
+	p.Burn = p.Burn.Add(baseFee)
+	dists := []Distribution{}
+	dists = append(dists, NewBurn(p.Burn))
+	dists = append(dists, p.ProxyDists...)
+	dists = append(dists, p.ExecDists...)
+	return dists
+}
+
 type Distribution struct {
 	Burn            *DistributionBurn            `json:"burn,omitempty"`
 	ExecutorReward  *DistributionExecutorReward  `json:"executor_reward,omitempty"`

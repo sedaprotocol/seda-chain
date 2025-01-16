@@ -6,10 +6,14 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
+	"github.com/sedaprotocol/seda-chain/x/tally/keeper/testdata"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
+	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 func TestFilterAndTally(t *testing.T) {
@@ -138,7 +142,7 @@ func TestFilterAndTally(t *testing.T) {
 				reveals[k] = revealBody
 			}
 
-			filterRes, tallyRes, _, err := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
+			filterRes, tallyRes, _ := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
 				Reveals:           reveals,
 				ReplicationFactor: tt.replicationFactor,
 				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
@@ -174,6 +178,10 @@ func TestExecutorPayout(t *testing.T) {
 	err := f.tallyKeeper.SetParams(f.Context(), defaultParams)
 	require.NoError(t, err)
 
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm2(), f.Context().BlockTime(), f.Context().BlockHeight(), 1000)
+	err = f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
+	require.NoError(t, err)
+
 	tests := []struct {
 		name               string
 		tallyInputAsHex    string
@@ -182,9 +190,10 @@ func TestExecutorPayout(t *testing.T) {
 		execGasLimit       uint64
 		expExecGasUsed     uint64
 		expExecutorRewards map[string]math.Int
+		expProxyRewards    map[string]math.Int
 	}{
 		{
-			name:            "3/3 - Uniform gas reporting",
+			name:            "Uniform gas reporting",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
@@ -192,7 +201,7 @@ func TestExecutorPayout(t *testing.T) {
 				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
 			},
 			replicationFactor: 3,
-			execGasLimit:      30000,
+			execGasLimit:      90000,
 			expExecGasUsed:    90000,
 			expExecutorRewards: map[string]math.Int{
 				"a": math.NewIntWithDecimal(30000, 18),
@@ -201,7 +210,75 @@ func TestExecutorPayout(t *testing.T) {
 			},
 		},
 		{
-			name:            "3/3 - Divergent gas reporting (1)",
+			name:            "Uniform gas reporting beyond execGasLimit",
+			tallyInputAsHex: "00",
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      60000,
+			expExecGasUsed:    60000,
+			expExecutorRewards: map[string]math.Int{
+				"a": math.NewIntWithDecimal(20000, 18),
+				"b": math.NewIntWithDecimal(20000, 18),
+				"c": math.NewIntWithDecimal(20000, 18),
+			},
+		},
+		{
+			name:            "Uniform gas reporting (consensus)",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"c": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 30000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      90000,
+			expExecGasUsed:    90000,
+			expExecutorRewards: map[string]math.Int{
+				"a": math.NewIntWithDecimal(30000, 18),
+				"b": math.NewIntWithDecimal(30000, 18),
+				"c": math.NewIntWithDecimal(30000, 18),
+			},
+		},
+		{
+			name:            "Uniform gas reporting (mode consensus in error)",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 1, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"b": {ExitCode: 1, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 30000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      90000,
+			expExecGasUsed:    90000,
+			expExecutorRewards: map[string]math.Int{
+				"a": math.NewIntWithDecimal(30000, 18),
+				"b": math.NewIntWithDecimal(30000, 18),
+				"c": math.NewIntWithDecimal(30000, 18),
+			},
+		},
+		{
+			name:            "Uniform gas reporting (mode no consensus)",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 20000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      60000,
+			expExecGasUsed:    60000,
+			expExecutorRewards: map[string]math.Int{
+				"a": math.NewIntWithDecimal(16000, 18),
+				"b": math.NewIntWithDecimal(16000, 18),
+				"c": math.NewIntWithDecimal(16000, 18),
+			},
+		},
+		{
+			name:            "Divergent gas reporting (1)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
@@ -218,7 +295,7 @@ func TestExecutorPayout(t *testing.T) {
 			},
 		},
 		{
-			name:            "3/3 - Divergent gas reporting (2)",
+			name:            "Divergent gas reporting (2)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
@@ -234,37 +311,102 @@ func TestExecutorPayout(t *testing.T) {
 				"c": math.NewIntWithDecimal(20000, 18),
 			},
 		},
+		{
+			name:            "Divergent gas reporting (mode no consensus)",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      90000,
+			expExecGasUsed:    56000,
+			expExecutorRewards: map[string]math.Int{
+				"a": math.NewIntWithDecimal(16000*0.8, 18),
+				"b": math.NewIntWithDecimal(20000*0.8, 18),
+				"c": math.NewIntWithDecimal(20000*0.8, 18),
+			},
+		},
+		{
+			name:            "Divergent gas reporting (mode no consensus)",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
+			},
+			replicationFactor: 3,
+			execGasLimit:      90000,
+			expExecGasUsed:    52000, // (7000, 19000, 34000) after subtracting proxy gas
+			expExecutorRewards: map[string]math.Int{
+				"a": math.NewIntWithDecimal(14000*0.8, 18),
+				"b": math.NewIntWithDecimal(19000*0.8, 18),
+				"c": math.NewIntWithDecimal(19000*0.8, 18),
+			},
+			expProxyRewards: map[string]math.Int{
+				"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8": math.NewIntWithDecimal(1000, 18), // = proxyFee / gasPrice
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			filterInput, err := hex.DecodeString(tt.tallyInputAsHex)
 			require.NoError(t, err)
 
+			exp21, ok := math.NewIntFromString("1000000000000000000000") // 1e21
+			require.True(t, ok)
+			proxyFee := sdk.NewCoin(bondDenom, exp21)
 			reveals := make(map[string]types.RevealBody)
 			for k, v := range tt.reveals {
 				revealBody := v
 				revealBody.Reveal = base64.StdEncoding.EncodeToString([]byte(v.Reveal))
 				revealBody.GasUsed = v.GasUsed
 				reveals[k] = revealBody
+
+				for _, pk := range v.ProxyPubKeys {
+					pkBytes, err := hex.DecodeString(pk)
+					if err == nil {
+						err := f.dataProxyKeeper.SetDataProxyConfig(f.Context(), pkBytes,
+							dataproxytypes.ProxyConfig{
+								Fee: &proxyFee,
+							},
+						)
+						require.NoError(t, err)
+					}
+				}
 			}
 
 			gasPriceStr := "1000000000000000000" // 1e18
 			gasPrice, ok := math.NewIntFromString(gasPriceStr)
 			require.True(t, ok)
 
-			_, tallyRes, distMsgs, err := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
-				Reveals:           reveals,
-				ReplicationFactor: tt.replicationFactor,
-				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-				GasPrice:          gasPriceStr,
-				ExecGasLimit:      tt.execGasLimit,
-			}, types.DefaultParams(), gasPrice)
+			_, tallyRes, payoutRecord := f.tallyKeeper.FilterAndTally(
+				f.Context(),
+				types.Request{
+					Reveals:           reveals,
+					ReplicationFactor: tt.replicationFactor,
+					ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
+					GasPrice:          gasPriceStr,
+					ExecGasLimit:      tt.execGasLimit,
+					TallyProgramID:    hex.EncodeToString(tallyProgram.Hash),
+					// TODO tally gas limit
+				}, types.DefaultParams(), gasPrice)
 			require.NoError(t, err)
 
-			require.Equal(t, tt.expExecGasUsed, tallyRes.ExecGasUsed)
-			for _, distMsg := range distMsgs {
-				require.Equal(t, tt.expExecutorRewards[distMsg.ExecutorReward.Identity], distMsg.ExecutorReward.Amount)
+			for _, distMsg := range payoutRecord.ExecDists {
+				require.Equal(t,
+					tt.expExecutorRewards[distMsg.ExecutorReward.Identity].String(),
+					distMsg.ExecutorReward.Amount.String(),
+				)
 			}
+			for _, distMsg := range payoutRecord.ProxyDists {
+				require.Equal(t,
+					tt.expProxyRewards[hex.EncodeToString(distMsg.DataProxyReward.To)].String(),
+					distMsg.DataProxyReward.Amount.String(),
+				)
+			}
+			require.Equal(t, tt.expExecGasUsed, tallyRes.ExecGasUsed)
 		})
 	}
 }
