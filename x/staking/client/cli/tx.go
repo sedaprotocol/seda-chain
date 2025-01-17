@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -15,14 +14,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 	stakingcli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	sdktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
 	pubkeycli "github.com/sedaprotocol/seda-chain/x/pubkey/client/cli"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/staking/types"
@@ -92,7 +89,6 @@ where we can get the pubkey using "%s tendermint show-validator"
 			if err != nil {
 				return err
 			}
-			serverCfg := server.GetServerContextFromCmd(cmd).Config
 
 			txf, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
 			if err != nil {
@@ -108,17 +104,9 @@ where we can get the pubkey using "%s tendermint show-validator"
 			var pks []pubkeytypes.IndexedPubKey
 			withoutSEDAKeys, _ := cmd.Flags().GetBool(FlagWithoutSEDAKeys)
 			if !withoutSEDAKeys {
-				keyFile, _ := cmd.Flags().GetString(pubkeycli.FlagKeyFile)
-				if keyFile != "" {
-					pks, err = utils.LoadSEDAPubKeys(keyFile)
-					if err != nil {
-						return err
-					}
-				} else {
-					pks, err = utils.GenerateSEDAKeys(valAddr, filepath.Dir(serverCfg.PrivValidatorKeyFile()))
-					if err != nil {
-						return err
-					}
+				pks, err = pubkeycli.LoadOrGenerateSEDAKeys(cmd, valAddr)
+				if err != nil {
+					return err
 				}
 			}
 
@@ -137,7 +125,7 @@ where we can get the pubkey using "%s tendermint show-validator"
 	}
 
 	cmd.Flags().Bool(FlagWithoutSEDAKeys, false, "skip generating and uploading SEDA keys")
-	cmd.Flags().String(pubkeycli.FlagKeyFile, "", "path to an existing SEDA key file")
+	pubkeycli.AddSedaKeysFlagsToCmd(cmd)
 	cmd.Flags().String(stakingcli.FlagIP, "", fmt.Sprintf("The node's public IP. It takes effect only when used in combination with --%s", flags.FlagGenerateOnly))
 	cmd.Flags().String(stakingcli.FlagNodeID, "", "The node's ID")
 	flags.AddTxFlagsToCmd(cmd)

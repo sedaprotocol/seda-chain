@@ -27,7 +27,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
+	pubkeycli "github.com/sedaprotocol/seda-chain/x/pubkey/client/cli"
 	customcli "github.com/sedaprotocol/seda-chain/x/staking/client/cli"
 	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 )
@@ -146,7 +146,7 @@ $ %s gentx my-key-name 1000000seda --home=/path/to/home/dir --keyring-backend=os
 			if valAddr.Empty() {
 				return fmt.Errorf("set the from address using --from flag")
 			}
-			pks, err := utils.GenerateSEDAKeys(valAddr, filepath.Dir(config.PrivValidatorKeyFile()))
+			pks, err := pubkeycli.LoadOrGenerateSEDAKeys(cmd, valAddr)
 			if err != nil {
 				return err
 			}
@@ -255,6 +255,7 @@ $ %s gentx my-key-name 1000000seda --home=/path/to/home/dir --keyring-backend=os
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
 	cmd.Flags().String(flags.FlagOutputDocument, "", "Write the genesis transaction JSON document to the given file instead of the default location")
 	cmd.Flags().AddFlagSet(fsCreateValidator)
+	pubkeycli.AddSedaKeysFlagsToCmd(cmd)
 	flags.AddTxFlagsToCmd(cmd)
 	_ = cmd.Flags().MarkHidden(flags.FlagOutput) // signing makes sense to output only json
 

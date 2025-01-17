@@ -90,10 +90,10 @@ VESTING_END=$((VESTING_START + 100000))
 $BIN add-genesis-account vesttest 10000seda --vesting-amount 10000seda --vesting-start-time $VESTING_START --vesting-end-time $VESTING_END --funder seda1jq60my60e87arglrazfpqn753hx0pzcatdek76 --keyring-backend test
 
 # create a default validator
-$BIN gentx satoshi 10000000000000000seda --keyring-backend test
+$BIN gentx satoshi 10000000000000000seda --keyring-backend test --key-file-no-encryption
 
 # collect genesis txns
 $BIN collect-gentxs
 
 # start the chain
-$BIN start --log_level debug 2>&1 | tee local_chain.log &
+$BIN start --log_level debug --allow-unencrypted-seda-keys 2>&1 | tee local_chain.log

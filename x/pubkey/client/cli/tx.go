@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -11,17 +10,28 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 const (
 	// FlagKeyFile defines a flag to specify an existing key file.
 	FlagKeyFile = "key-file"
+	// FlagForceKeyFile defines a flag to specify that the key file should be overwritten if it already exists.
+	FlagForceKeyFile = "key-file-force"
+	// FlagEncryptionKey defines a flag to specify an existing encryption key.
+	FlagEncryptionKey = "key-file-custom-encryption-key"
+	// FlagNoEncryption defines a flag to specify that the generated key file should not be encrypted.
+	FlagNoEncryption = "key-file-no-encryption"
 )
+
+func AddSedaKeysFlagsToCmd(cmd *cobra.Command) {
+	cmd.Flags().String(FlagKeyFile, "", "path to an existing SEDA key file")
+	cmd.Flags().Bool(FlagForceKeyFile, false, "overwrite the existing key file if it already exists")
+	cmd.Flags().Bool(FlagEncryptionKey, false, "use a custom AES encryption key for the SEDA key file (if not set, a random key will be generated)")
+	cmd.Flags().Bool(FlagNoEncryption, false, "do not encrypt the generated SEDA key file (if the key file is not provided)")
+}
 
 // GetTxCmd returns the CLI transaction commands for this module
 func GetTxCmd(valAddrCodec address.Codec) *cobra.Command {
@@ -49,7 +59,6 @@ func AddKey(ac address.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			serverCfg := server.GetServerContextFromCmd(cmd).Config
 
 			valAddr := sdk.ValAddress(clientCtx.GetFromAddress())
 			if valAddr.Empty() {
@@ -60,18 +69,9 @@ func AddKey(ac address.Codec) *cobra.Command {
 				return err
 			}
 
-			var pks []types.IndexedPubKey
-			keyFile, _ := cmd.Flags().GetString(FlagKeyFile)
-			if keyFile != "" {
-				pks, err = utils.LoadSEDAPubKeys(keyFile)
-				if err != nil {
-					return err
-				}
-			} else {
-				pks, err = utils.GenerateSEDAKeys(valAddr, filepath.Dir(serverCfg.PrivValidatorKeyFile()))
-				if err != nil {
-					return err
-				}
+			pks, err := LoadOrGenerateSEDAKeys(cmd, valAddr)
+			if err != nil {
+				return err
 			}
 
 			msg := &types.MsgAddKey{
@@ -82,7 +82,7 @@ func AddKey(ac address.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(FlagKeyFile, "", "path to an existing SEDA key file")
+	AddSedaKeysFlagsToCmd(cmd)
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

@@ -31,8 +31,8 @@ type sedaKeys struct {
 
 // LoadSEDASigner loads the SEDA keys from a given file path and
 // returns a SEDASigner interface.
-func LoadSEDASigner(keyFilePath string) (SEDASigner, error) {
-	keys, err := loadSEDAKeys(keyFilePath)
+func LoadSEDASigner(keyFilePath string, allowUnencrypted bool) (SEDASigner, error) {
+	keys, err := loadSEDAKeys(keyFilePath, allowUnencrypted)
 	if err != nil {
 		keys.keyPath = keyFilePath
 		keys.isLoaded = false
@@ -41,8 +41,15 @@ func LoadSEDASigner(keyFilePath string) (SEDASigner, error) {
 	return &keys, nil
 }
 
-func loadSEDAKeys(keyFilePath string) (keys sedaKeys, err error) {
-	keyFile, err := loadSEDAKeyFile(keyFilePath)
+func loadSEDAKeys(keyFilePath string, allowUnencrypted bool) (keys sedaKeys, err error) {
+	encryptionKey := ReadSEDAKeyEncryptionKeyFromEnv()
+	if encryptionKey == "" && !allowUnencrypted {
+		panic(fmt.Sprintf("SEDA key encryption key is not set, set the %s environment variable or run with --%s", SEDAKeyEncryptionKeyEnvVar, FlagAllowUnencryptedSedaKeys))
+	} else if encryptionKey != "" && allowUnencrypted {
+		panic(fmt.Sprintf("SEDA key encryption key is set, but --%s flag is also set", FlagAllowUnencryptedSedaKeys))
+	}
+
+	keyFile, err := loadSEDAKeyFile(keyFilePath, encryptionKey)
 	if err != nil {
 		return keys, err
 	}
@@ -124,7 +131,10 @@ func (s *sedaKeys) IsLoaded() bool {
 
 // Reload reloads the signer from the key file.
 func (s *sedaKeys) reload() error {
-	keys, err := loadSEDAKeys(s.keyPath)
+	// Reload should run from the same process as the one that loaded the signer,
+	// so the check for the encryption key should already have passed if we're
+	// hitting this function.
+	keys, err := loadSEDAKeys(s.keyPath, true)
 	if err != nil {
 		s.valAddr = nil
 		s.keys = nil

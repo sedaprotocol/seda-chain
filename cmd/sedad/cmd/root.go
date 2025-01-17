@@ -31,6 +31,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -53,6 +54,7 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik" // for swagger docs
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
 )
@@ -77,8 +79,11 @@ func NewRootCmd() *cobra.Command {
 		map[int64]bool{},
 		app.DefaultNodeHome,
 		0,
-		simtestutil.NewAppOptionsWithFlagHome(tempDir()),
-		tempDir(),
+		simtestutil.AppOptionsMap{
+			// taken from simtestutil.NewAppOptionsWithFlagHome(tempDir())
+			flags.FlagHome:                     tempDir(),
+			utils.FlagAllowUnencryptedSedaKeys: "true",
+		}, tempDir(),
 		baseapp.SetChainID("tempchainid"),
 	)
 	encodingConfig := app.EncodingConfig{
@@ -269,6 +274,7 @@ func txCommand(_ module.BasicManager) *cobra.Command {
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
+	startCmd.Flags().Bool(utils.FlagAllowUnencryptedSedaKeys, false, "Allow an unencrypted SEDA key file")
 }
 
 func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) { //nolint:unused // unused

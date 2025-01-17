@@ -34,9 +34,9 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	valAddr := sdk.ValAddress(simtestutil.CreateRandomAccounts(1)[0])
-	pubKeys, err := utils.GenerateSEDAKeys(valAddr, tmpDir)
+	pubKeys, err := utils.GenerateSEDAKeys(valAddr, tmpDir, "", false)
 	require.NoError(t, err)
-	signer, err := utils.LoadSEDASigner(filepath.Join(tmpDir, utils.SEDAKeyFileName))
+	signer, err := utils.LoadSEDASigner(filepath.Join(tmpDir, utils.SEDAKeyFileName), true)
 	require.NoError(t, err)
 
 	secp256k1PubKey := pubKeys[utils.SEDAKeyIndexSecp256k1].PubKey

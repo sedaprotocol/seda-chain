@@ -1,8 +1,11 @@
 package utils
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/ecdsa"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -18,6 +21,29 @@ import (
 
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
+
+const (
+	// FlagAllowUnencryptedSedaKeys is a flag that allows unencrypted SEDA keys.
+	FlagAllowUnencryptedSedaKeys = "allow-unencrypted-seda-keys"
+	// SEDAKeyEncryptionKeyEnvVar is the environment variable that should contain the SEDA key encryption key.
+	SEDAKeyEncryptionKeyEnvVar = "SEDA_KEYS_ENCRYPTION_KEY"
+)
+
+// ReadSEDAKeyEncryptionKeyFromEnv reads the SEDA key encryption key from
+// the environment variable. Returns an empty string if the environment
+// variable is not set.
+func ReadSEDAKeyEncryptionKeyFromEnv() string {
+	return os.Getenv(SEDAKeyEncryptionKeyEnvVar)
+}
+
+func GenerateSEDAKeyEncryptionKey() (string, error) {
+	key := make([]byte, 32)
+	_, err := rand.Read(key)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(key), nil
+}
 
 // SEDAKeyIndex enumerates the SEDA key indices.
 type SEDAKeyIndex uint32
@@ -106,10 +132,11 @@ func (k *indexedPrivKey) UnmarshalJSON(data []byte) error {
 }
 
 // saveSEDAKeyFile saves a given list of indexedPrivKey in the directory
-// at dirPath.
-func saveSEDAKeyFile(keys []indexedPrivKey, valAddr sdk.ValAddress, dirPath string) error {
+// at dirPath. When encryptionKey is not empty, the file is encrypted
+// using the provided key and stored as base64 encoded.
+func saveSEDAKeyFile(keys []indexedPrivKey, valAddr sdk.ValAddress, dirPath string, encryptionKey string, forceKeyFile bool) error {
 	savePath := filepath.Join(dirPath, SEDAKeyFileName)
-	if cmtos.FileExists(savePath) {
+	if SEDAKeyFileExists(dirPath) && !forceKeyFile {
 		return fmt.Errorf("SEDA key file already exists at %s", savePath)
 	}
 	err := cmtos.EnsureDir(filepath.Dir(savePath), 0o700)
@@ -125,6 +152,14 @@ func saveSEDAKeyFile(keys []indexedPrivKey, valAddr sdk.ValAddress, dirPath stri
 		return fmt.Errorf("failed to marshal SEDA keys: %v", err)
 	}
 
+	if encryptionKey != "" {
+		encryptedData, err := encryptBytes(jsonBytes, encryptionKey)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt SEDA keys: %v", err)
+		}
+		jsonBytes = []byte(base64.StdEncoding.EncodeToString(encryptedData))
+	}
+
 	err = os.WriteFile(savePath, jsonBytes, 0o600)
 	if err != nil {
 		return fmt.Errorf("failed to write SEDA key file: %v", err)
@@ -132,12 +167,31 @@ func saveSEDAKeyFile(keys []indexedPrivKey, valAddr sdk.ValAddress, dirPath stri
 	return nil
 }
 
-// loadSEDAKeyFile loads the SEDA key file from the given path.
-func loadSEDAKeyFile(loadPath string) (sedaKeyFile, error) {
+func SEDAKeyFileExists(dirPath string) bool {
+	return cmtos.FileExists(filepath.Join(dirPath, SEDAKeyFileName))
+}
+
+// loadSEDAKeyFile loads the SEDA key file from the given path. When
+// encryptionKey is not empty, the file is processed as base64 encoded
+// and then decrypted using the provided key.
+func loadSEDAKeyFile(loadPath string, encryptionKey string) (sedaKeyFile, error) {
 	keysJSONBytes, err := os.ReadFile(loadPath)
 	if err != nil {
 		return sedaKeyFile{}, fmt.Errorf("failed to read SEDA keys from %v: %v", loadPath, err)
 	}
+
+	if encryptionKey != "" {
+		decodedBytes, err := base64.StdEncoding.DecodeString(string(keysJSONBytes))
+		if err != nil {
+			return sedaKeyFile{}, fmt.Errorf("failed to base64 decode SEDA keys: %v", err)
+		}
+		decryptedData, err := decryptBytes(decodedBytes, encryptionKey)
+		if err != nil {
+			return sedaKeyFile{}, fmt.Errorf("failed to decrypt SEDA keys: %v", err)
+		}
+		keysJSONBytes = decryptedData
+	}
+
 	var keyFile sedaKeyFile
 	err = json.Unmarshal(keysJSONBytes, &keyFile)
 	if err != nil {
@@ -147,16 +201,13 @@ func loadSEDAKeyFile(loadPath string) (sedaKeyFile, error) {
 }
 
 // LoadSEDAPubKeys loads the SEDA key file from the given path and
-// returns a list of index-public key pairs.
-func LoadSEDAPubKeys(loadPath string) ([]pubkeytypes.IndexedPubKey, error) {
-	keysJSONBytes, err := os.ReadFile(loadPath)
+// returns a list of index-public key pairs. When encryptionKey is not
+// empty, the file is processed as base64 encoded and then decrypted
+// using the provided key.
+func LoadSEDAPubKeys(loadPath string, encryptionKey string) ([]pubkeytypes.IndexedPubKey, error) {
+	keyFile, err := loadSEDAKeyFile(loadPath, encryptionKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read SEDA keys from %v: %v", loadPath, err)
-	}
-	var keyFile sedaKeyFile
-	err = json.Unmarshal(keysJSONBytes, &keyFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal SEDA keys from %v: %v", loadPath, err)
+		return nil, err
 	}
 
 	result := make([]pubkeytypes.IndexedPubKey, len(keyFile.Keys))
@@ -174,8 +225,11 @@ func LoadSEDAPubKeys(loadPath string) ([]pubkeytypes.IndexedPubKey, error) {
 // GenerateSEDAKeys generates a new set of SEDA keys and saves them to
 // the SEDA key file, along with the provided validator address. It
 // returns the resulting index-public key pairs. The key file is stored
-// in the directory given by dirPath.
-func GenerateSEDAKeys(valAddr sdk.ValAddress, dirPath string) ([]pubkeytypes.IndexedPubKey, error) {
+// in the directory given by dirPath. When encryptionKey is not empty,
+// the file is encrypted using the provided key and stored as base64
+// encoded. If forceKeyFile is true, the key file is overwritten if it
+// already exists.
+func GenerateSEDAKeys(valAddr sdk.ValAddress, dirPath string, encryptionKey string, forceKeyFile bool) ([]pubkeytypes.IndexedPubKey, error) {
 	privKeys := make([]indexedPrivKey, 0, len(sedaKeyGenerators))
 	pubKeys := make([]pubkeytypes.IndexedPubKey, 0, len(sedaKeyGenerators))
 	for keyIndex, generator := range sedaKeyGenerators {
@@ -194,7 +248,7 @@ func GenerateSEDAKeys(valAddr sdk.ValAddress, dirPath string) ([]pubkeytypes.Ind
 	}
 
 	// The key file is placed in the same directory as the validator key file.
-	err := saveSEDAKeyFile(privKeys, valAddr, dirPath)
+	err := saveSEDAKeyFile(privKeys, valAddr, dirPath, encryptionKey, forceKeyFile)
 	if err != nil {
 		return nil, err
 	}
@@ -234,4 +288,55 @@ func PubKeyToEthAddress(uncompressed []byte) ([]byte, error) {
 		return nil, fmt.Errorf("invalid public key length: %d", len(uncompressed))
 	}
 	return ethcrypto.Keccak256(uncompressed[1:])[12:], nil
+}
+
+func encryptBytes(data []byte, key string) ([]byte, error) {
+	keyBytes, err := base64.StdEncoding.DecodeString(key)
+	if err != nil {
+		return nil, err
+	}
+
+	aes, err := aes.NewCipher(keyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(aes)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	_, err = rand.Read(nonce)
+	if err != nil {
+		return nil, err
+	}
+
+	return gcm.Seal(nonce, nonce, data, nil), nil
+}
+
+func decryptBytes(data []byte, key string) ([]byte, error) {
+	keyBytes, err := base64.StdEncoding.DecodeString(key)
+	if err != nil {
+		return nil, err
+	}
+
+	aes, err := aes.NewCipher(keyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(aes)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceSize := gcm.NonceSize()
+	nonce, encryptedData := data[:nonceSize], data[nonceSize:]
+
+	decryptedData, err := gcm.Open(nil, nonce, encryptedData, nil)
+	if err != nil {
+		return nil, err
+	}
+	return decryptedData, nil
 }

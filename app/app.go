@@ -135,6 +135,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
+
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
@@ -1007,7 +1008,7 @@ func NewApp(
 
 	// Register ABCI handlers for batch signing.
 	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
-	signer, err := utils.LoadSEDASigner(filepath.Join(filepath.Dir(pvKeyFile), utils.SEDAKeyFileName))
+	signer, err := utils.LoadSEDASigner(filepath.Join(filepath.Dir(pvKeyFile), utils.SEDAKeyFileName), cast.ToBool(appOpts.Get(utils.FlagAllowUnencryptedSedaKeys)))
 	if err != nil {
 		app.Logger().Error("error loading SEDA signer", "err", err)
 	}
