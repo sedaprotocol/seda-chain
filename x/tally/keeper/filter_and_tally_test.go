@@ -48,7 +48,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.FilterGasCostNone,
+			filterGasUsed:     defaultParams.GasCostBase + defaultParams.FilterGasCostNone,
 			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -62,7 +62,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			filterGasUsed:     0,
+			filterGasUsed:     defaultParams.GasCostBase,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -79,7 +79,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.FilterGasCostMultiplierMode * 5,
+			filterGasUsed:     defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*5,
 			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -93,7 +93,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			filterGasUsed:     0,
+			filterGasUsed:     defaultParams.GasCostBase,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -110,7 +110,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 5,
+			filterGasUsed:     defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*5,
 			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -124,7 +124,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			filterGasUsed:     0,
+			filterGasUsed:     defaultParams.GasCostBase,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -183,14 +183,15 @@ func TestExecutorPayout(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name               string
-		tallyInputAsHex    string
-		reveals            map[string]types.RevealBody
-		replicationFactor  uint16
-		execGasLimit       uint64
-		expExecGasUsed     uint64
-		expExecutorRewards map[string]math.Int
-		expProxyRewards    map[string]math.Int
+		name              string
+		tallyInputAsHex   string
+		reveals           map[string]types.RevealBody
+		replicationFactor uint16
+		execGasLimit      uint64
+		expExecGasUsed    uint64
+		expReducedPayout  bool
+		expExecutorGas    map[string]math.Int
+		expProxyGas       map[string]math.Int
 	}{
 		{
 			name:            "Uniform gas reporting",
@@ -203,10 +204,10 @@ func TestExecutorPayout(t *testing.T) {
 			replicationFactor: 3,
 			execGasLimit:      90000,
 			expExecGasUsed:    90000,
-			expExecutorRewards: map[string]math.Int{
-				"a": math.NewIntWithDecimal(30000, 18),
-				"b": math.NewIntWithDecimal(30000, 18),
-				"c": math.NewIntWithDecimal(30000, 18),
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(30000),
+				"b": math.NewInt(30000),
+				"c": math.NewInt(30000),
 			},
 		},
 		{
@@ -220,10 +221,10 @@ func TestExecutorPayout(t *testing.T) {
 			replicationFactor: 3,
 			execGasLimit:      60000,
 			expExecGasUsed:    60000,
-			expExecutorRewards: map[string]math.Int{
-				"a": math.NewIntWithDecimal(20000, 18),
-				"b": math.NewIntWithDecimal(20000, 18),
-				"c": math.NewIntWithDecimal(20000, 18),
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(20000),
+				"b": math.NewInt(20000),
+				"c": math.NewInt(20000),
 			},
 		},
 		{
@@ -237,10 +238,10 @@ func TestExecutorPayout(t *testing.T) {
 			replicationFactor: 3,
 			execGasLimit:      90000,
 			expExecGasUsed:    90000,
-			expExecutorRewards: map[string]math.Int{
-				"a": math.NewIntWithDecimal(30000, 18),
-				"b": math.NewIntWithDecimal(30000, 18),
-				"c": math.NewIntWithDecimal(30000, 18),
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(30000),
+				"b": math.NewInt(30000),
+				"c": math.NewInt(30000),
 			},
 		},
 		{
@@ -254,10 +255,10 @@ func TestExecutorPayout(t *testing.T) {
 			replicationFactor: 3,
 			execGasLimit:      90000,
 			expExecGasUsed:    90000,
-			expExecutorRewards: map[string]math.Int{
-				"a": math.NewIntWithDecimal(30000, 18),
-				"b": math.NewIntWithDecimal(30000, 18),
-				"c": math.NewIntWithDecimal(30000, 18),
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(30000),
+				"b": math.NewInt(30000),
+				"c": math.NewInt(30000),
 			},
 		},
 		{
@@ -271,11 +272,12 @@ func TestExecutorPayout(t *testing.T) {
 			replicationFactor: 3,
 			execGasLimit:      60000,
 			expExecGasUsed:    60000,
-			expExecutorRewards: map[string]math.Int{
-				"a": math.NewIntWithDecimal(16000, 18),
-				"b": math.NewIntWithDecimal(16000, 18),
-				"c": math.NewIntWithDecimal(16000, 18),
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(20000),
+				"b": math.NewInt(20000),
+				"c": math.NewInt(20000),
 			},
+			expReducedPayout: true,
 		},
 		{
 			name:            "Divergent gas reporting (1)",
@@ -288,10 +290,10 @@ func TestExecutorPayout(t *testing.T) {
 			replicationFactor: 3,
 			execGasLimit:      90000,
 			expExecGasUsed:    90000,
-			expExecutorRewards: map[string]math.Int{
-				"a": math.NewIntWithDecimal(43448, 18),
-				"b": math.NewIntWithDecimal(23275, 18),
-				"c": math.NewIntWithDecimal(23275, 18),
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(43448),
+				"b": math.NewInt(23275),
+				"c": math.NewInt(23275),
 			},
 		},
 		{
@@ -305,10 +307,10 @@ func TestExecutorPayout(t *testing.T) {
 			replicationFactor: 3,
 			execGasLimit:      90000,
 			expExecGasUsed:    56000,
-			expExecutorRewards: map[string]math.Int{
-				"a": math.NewIntWithDecimal(16000, 18),
-				"b": math.NewIntWithDecimal(20000, 18),
-				"c": math.NewIntWithDecimal(20000, 18),
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(16000),
+				"b": math.NewInt(20000),
+				"c": math.NewInt(20000),
 			},
 		},
 		{
@@ -322,30 +324,32 @@ func TestExecutorPayout(t *testing.T) {
 			replicationFactor: 3,
 			execGasLimit:      90000,
 			expExecGasUsed:    56000,
-			expExecutorRewards: map[string]math.Int{
-				"a": math.NewIntWithDecimal(16000*0.8, 18),
-				"b": math.NewIntWithDecimal(20000*0.8, 18),
-				"c": math.NewIntWithDecimal(20000*0.8, 18),
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(16000),
+				"b": math.NewInt(20000),
+				"c": math.NewInt(20000),
 			},
+			expReducedPayout: true,
 		},
 		{
-			name:            "Divergent gas reporting (mode no consensus)",
+			name:            "Divergent gas reporting (mode no consensus, with proxies)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
-			reveals: map[string]types.RevealBody{
+			reveals: map[string]types.RevealBody{ // (7000, 19000, 34000) after subtracting proxy gas
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
 				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
 				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
-			expExecGasUsed:    52000, // (7000, 19000, 34000) after subtracting proxy gas
-			expExecutorRewards: map[string]math.Int{
-				"a": math.NewIntWithDecimal(14000*0.8, 18),
-				"b": math.NewIntWithDecimal(19000*0.8, 18),
-				"c": math.NewIntWithDecimal(19000*0.8, 18),
+			expExecGasUsed:    55000,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(14000),
+				"b": math.NewInt(19000),
+				"c": math.NewInt(19000),
 			},
-			expProxyRewards: map[string]math.Int{
-				"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8": math.NewIntWithDecimal(1000, 18), // = proxyFee / gasPrice
+			expReducedPayout: true,
+			expProxyGas: map[string]math.Int{
+				"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8": math.NewInt(3000), // = RF * proxyFee / gasPrice
 			},
 		},
 	}
@@ -381,7 +385,7 @@ func TestExecutorPayout(t *testing.T) {
 			gasPrice, ok := math.NewIntFromString(gasPriceStr)
 			require.True(t, ok)
 
-			_, tallyRes, payoutRecord := f.tallyKeeper.FilterAndTally(
+			_, tallyRes, gasCalc := f.tallyKeeper.FilterAndTally(
 				f.Context(),
 				types.Request{
 					Reveals:           reveals,
@@ -394,16 +398,17 @@ func TestExecutorPayout(t *testing.T) {
 				}, types.DefaultParams(), gasPrice)
 			require.NoError(t, err)
 
-			for _, distMsg := range payoutRecord.ExecDists {
+			for _, exec := range gasCalc.Executors {
 				require.Equal(t,
-					tt.expExecutorRewards[distMsg.ExecutorReward.Identity].String(),
-					distMsg.ExecutorReward.Amount.String(),
+					tt.expExecutorGas[exec.PublicKey].String(),
+					exec.Amount.String(),
 				)
 			}
-			for _, distMsg := range payoutRecord.ProxyDists {
+			require.Equal(t, tt.expReducedPayout, gasCalc.ReducedPayout)
+			for _, proxy := range gasCalc.Proxies {
 				require.Equal(t,
-					tt.expProxyRewards[hex.EncodeToString(distMsg.DataProxyReward.To)].String(),
-					distMsg.DataProxyReward.Amount.String(),
+					tt.expProxyGas[hex.EncodeToString(proxy.PublicKey)].String(),
+					proxy.Amount.String(),
 				)
 			}
 			require.Equal(t, tt.expExecGasUsed, tallyRes.ExecGasUsed)

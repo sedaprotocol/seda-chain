@@ -1,6 +1,10 @@
 package types
 
 import (
+	fmt "fmt"
+
+	"cosmossdk.io/math"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
@@ -13,6 +17,8 @@ const (
 	DefaultGasCostCommit                 = 5_000_000_000_000
 )
 
+var DefaultBurnRatio = math.LegacyNewDecWithPrec(2, 1)
+
 // DefaultParams returns default tally module parameters.
 func DefaultParams() Params {
 	return Params{
@@ -22,6 +28,7 @@ func DefaultParams() Params {
 		FilterGasCostMultiplierStdDev: DefaultFilterGasCostMultiplierStddev,
 		GasCostBase:                   DefaultGasCostBase,
 		GasCostCommit:                 DefaultGasCostCommit,
+		BurnRatio:                     DefaultBurnRatio,
 	}
 }
 
@@ -44,6 +51,23 @@ func (p *Params) Validate() error {
 	}
 	if p.GasCostCommit <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("commit gas cost must be greater than 0: %d", p.GasCostCommit)
+	}
+	return validateBurnRatio(p.BurnRatio)
+}
+
+func validateBurnRatio(i interface{}) error {
+	v, ok := i.(math.LegacyDec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if v.IsNil() {
+		return fmt.Errorf("burn ratio must be not nil")
+	}
+	if v.IsNegative() {
+		return fmt.Errorf("burn ratio must be positive: %s", v)
+	}
+	if v.GT(math.LegacyOneDec()) {
+		return fmt.Errorf("burn ratio too large: %s", v)
 	}
 	return nil
 }

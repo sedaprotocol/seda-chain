@@ -1,6 +1,10 @@
 syntax = "proto3";
 package sedachain.tally.v1;
 
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+
 option go_package = "github.com/sedaprotocol/seda-chain/x/tally/types";
 
 // Params defines the parameters for the tally module.
@@ -19,4 +23,12 @@ message Params {
   uint64 gas_cost_base = 5;
   // GasCostCommit is the gas cost for a commit charged under certain scenarios.
   uint64 gas_cost_commit = 6;
+  // BurnRatio is the ratio of the gas cost to be burned in case of reduced
+  // payout scenarios.
+  string burn_ratio = 7 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (amino.dont_omitempty) = true,
+    (gogoproto.nullable) = false
+  ];
 }

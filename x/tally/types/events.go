@@ -1,13 +1,8 @@
 package types
 
 const (
-	EventTypeTallyCompletion         = "tally_completion"
-	EventTypeDataProxyReward         = "data_proxy_reward"
-	EventTypeExecutorRewardUniform   = "executor_reward_uniform"
-	EventTypeExecutorRewardDivergent = "executor_reward_divergent"
-	EventTypeExecutorRewardCommit    = "executor_reward_commit"
-	EventTypeTallyGasBurn            = "tally_gas_burn"
-	EventTypeBaseFeeBurn             = "base_fee_burn"
+	EventTypeTallyCompletion = "tally_completion"
+	EventTypeGasCalculation  = "gas_calculation"
 
 	AttributeDataRequestID = "dr_id"
 	AttributeDataResultID  = "id"
@@ -18,6 +13,8 @@ const (
 	AttributeTallyGasUsed  = "tally_gas_used"
 	AttributeTallyExitCode = "exit_code"
 	AttributeProxyPubKeys  = "proxy_public_keys"
-	AttributeProxyPubKey   = "proxy_public_key"
-	AttributeExecutor      = "executor"
+	AttributeTallyGas      = "tally_gas"
+	AttributeDataProxyGas  = "data_proxy_gas"
+	AttributeExecutorGas   = "executor_reward_gas"
+	AttributeReducedPayout = "reduced_payout"
 )
