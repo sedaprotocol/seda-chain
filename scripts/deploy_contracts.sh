@@ -13,12 +13,19 @@ VOTE_ACCOUNT=$($BIN keys show satoshi --keyring-backend test -a) # for sending v
 
 echo "Deploying core contract"
 
-OUTPUT="$($BIN tx wasm store $CONTRACT_WASM --node $RPC_URL --from $DEV_ACCOUNT --keyring-backend test --gas-prices 100000000000aseda --gas auto --gas-adjustment 1.3 -y --output json --chain-id $CHAIN_ID)"
-TXHASH=$(echo $OUTPUT | jq -r '.txhash')
+OUTPUT="$(
+    $BIN tx wasm store $CONTRACT_WASM \
+    --node $RPC_URL \
+    --chain-id $CHAIN_ID \
+    --from $DEV_ACCOUNT \
+    --keyring-backend test \
+    --gas-prices 100000000000aseda \
+    --gas auto \
+    --gas-adjustment 1.3 \
+    -y --output json \
+    | $BIN query wait-tx --node $RPC_URL --output json\
+)"
 
-sleep 10
-
-OUTPUT="$($BIN query tx $TXHASH --node $RPC_URL --output json)"
 CORE_CODE_ID=$(echo "$OUTPUT" | jq -r '.events[] | select(.type=="store_code") | .attributes[] | select(.key=="code_id") | .value')
 
 echo "Instantiating core contract on code id $CORE_CODE_ID"
@@ -29,19 +36,28 @@ OUTPUT=$($BIN tx wasm-storage submit-proposal instantiate-core-contract $CORE_CO
     --admin $DEV_ACCOUNT \
     --label core$CORE_CODE_ID \
     --title 'Core Contract' --summary 'Instantiates and registers core contract' --deposit 10000000aseda \
-    --from $DEV_ACCOUNT --keyring-backend test \
     --node $RPC_URL \
-    --gas-prices 100000000000aseda --gas auto --gas-adjustment 1.5 \
-    --output json --chain-id $CHAIN_ID -y)
-TXHASH=$(echo "$OUTPUT" | jq -r '.txhash')
+    --chain-id $CHAIN_ID \
+    --from $DEV_ACCOUNT \
+    --keyring-backend test \
+    --gas-prices 100000000000aseda \
+    --gas auto \
+    --gas-adjustment 1.5 \
+    -y --output json \
+    | $BIN query wait-tx --node $RPC_URL --output json\
+)
 
-sleep 10
-
-PROPOSAL_ID="$($BIN query tx $TXHASH --output json | jq '.events[] | select(.type == "submit_proposal") | .attributes[] | select(.key == "proposal_id") | .value' | sed 's/^"\(.*\)"$/\1/')"
+PROPOSAL_ID="$(echo "$OUTPUT" | jq '.events[] | select(.type == "submit_proposal") | .attributes[] | select(.key == "proposal_id") | .value' | sed 's/^"\(.*\)"$/\1/')"
 $BIN tx gov vote $PROPOSAL_ID yes \
-    --from $VOTE_ACCOUNT --keyring-backend test \
-    --gas-prices 100000000000aseda --gas auto --gas-adjustment 1.6 \
-    --chain-id $CHAIN_ID -y
+    --node $RPC_URL \
+    --chain-id $CHAIN_ID \
+    --from $VOTE_ACCOUNT \
+    --keyring-backend test \
+    --gas-prices 100000000000aseda \
+    --gas auto \
+    --gas-adjustment 1.6 \
+    -y \
+    | $BIN query wait-tx --node $RPC_URL --output json
 
 sleep $VOTING_PERIOD
 

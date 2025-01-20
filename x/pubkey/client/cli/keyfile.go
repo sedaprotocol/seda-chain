@@ -111,7 +111,6 @@ func getSEDAKeysEncryptionKey(cmd *cobra.Command, encryptionKey string) (string,
 	}
 
 	if noEncryptionFlag {
-		cmd.Println("not encrypting the generated SEDA key file")
 		return "", nil
 	}
 

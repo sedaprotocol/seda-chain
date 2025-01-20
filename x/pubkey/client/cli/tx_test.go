@@ -83,6 +83,9 @@ func (s *CLITestSuite) SetupSuite() {
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin("seda", sdkmath.NewInt(10))).String()),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, account.String()),
+		// Generating a new encryption key or manually setting the encryption key
+		// requires user interaction, so we disable it here for testing
+		fmt.Sprintf("--%s", cli.FlagNoEncryption),
 	}
 }
 

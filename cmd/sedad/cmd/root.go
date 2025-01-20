@@ -31,7 +31,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -81,7 +80,7 @@ func NewRootCmd() *cobra.Command {
 		0,
 		simtestutil.AppOptionsMap{
 			// taken from simtestutil.NewAppOptionsWithFlagHome(tempDir())
-			flags.FlagHome:                     tempDir(),
+			sdkflags.FlagHome:                  tempDir(),
 			utils.FlagAllowUnencryptedSedaKeys: "true",
 		}, tempDir(),
 		baseapp.SetChainID("tempchainid"),
