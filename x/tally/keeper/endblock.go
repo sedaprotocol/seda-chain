@@ -133,7 +133,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			k.Logger(ctx).Debug("tally result", "request_id", req.ID, "tally_result", tallyResults[i])
 		}
 
-		processedReqs[req.ID] = k.DistributionsFromGasCalculation(ctx, req.ID, gasCalc, gasPrice, params.BurnRatio)
+		processedReqs[req.ID] = k.DistributionsFromGasCalculation(ctx, req.ID, req.Height, gasCalc, gasPrice, params.BurnRatio)
 
 		// Total gas used should not exceed the gas limit specified by the request.
 		dataResults[i].GasUsed = min(req.TallyGasLimit+req.ExecGasLimit, dataResults[i].GasUsed)

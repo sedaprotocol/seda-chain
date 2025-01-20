@@ -32,11 +32,13 @@ type ExecutorGasUsed struct {
 }
 
 // DistributionsFromGasCalculation constructs a list of distribution messages
-// to be sent to the core contract based on the given gas calculation.
-func (k Keeper) DistributionsFromGasCalculation(ctx sdk.Context, reqID string, gasCalc GasCalculation, gasPrice math.Int, burnRatio math.LegacyDec) []types.Distribution {
+// to be sent to the core contract based on the given gas calculation. It takes
+// the request ID and height for event emission.
+func (k Keeper) DistributionsFromGasCalculation(ctx sdk.Context, reqID string, reqHeight uint64, gasCalc GasCalculation, gasPrice math.Int, burnRatio math.LegacyDec) []types.Distribution {
 	dists := []types.Distribution{}
 	attrs := []sdk.Attribute{
 		sdk.NewAttribute(types.AttributeDataRequestID, reqID),
+		sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatUint(reqHeight, 10)),
 		sdk.NewAttribute(types.AttributeReducedPayout, strconv.FormatBool(gasCalc.ReducedPayout)),
 	}
 
@@ -55,13 +57,13 @@ func (k Keeper) DistributionsFromGasCalculation(ctx sdk.Context, reqID string, g
 
 	// Append distribution messages for executors, burning a portion of their
 	// payouts in case of a reduced payout scenario.
-	addBurn := math.ZeroInt()
+	reducedPayoutBurn := math.ZeroInt()
 	for _, executor := range gasCalc.Executors {
 		payoutAmt := executor.Amount
 		if gasCalc.ReducedPayout {
 			burnAmt := burnRatio.MulInt(executor.Amount).TruncateInt()
 			payoutAmt = executor.Amount.Sub(burnAmt)
-			addBurn = addBurn.Add(burnAmt.Mul(gasPrice))
+			reducedPayoutBurn = reducedPayoutBurn.Add(burnAmt.Mul(gasPrice))
 		}
 
 		executorDist := types.NewExecutorReward(executor.PublicKey, payoutAmt, gasPrice)
@@ -70,8 +72,8 @@ func (k Keeper) DistributionsFromGasCalculation(ctx sdk.Context, reqID string, g
 			fmt.Sprintf("%s,%s", executor.PublicKey, payoutAmt.String())))
 	}
 
-	// Add additional burn.
-	dists[0].Burn.Amount = dists[0].Burn.Amount.Add(addBurn.Mul(gasPrice))
+	dists[0].Burn.Amount = dists[0].Burn.Amount.Add(reducedPayoutBurn.Mul(gasPrice))
+	attrs = append(attrs, sdk.NewAttribute(types.AttributeReducedPayoutBurn, reducedPayoutBurn.String()))
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(types.EventTypeGasCalculation, attrs...))
 
