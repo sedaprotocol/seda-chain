@@ -110,7 +110,8 @@ func getSEDAKeysEncryptionKey(cmd *cobra.Command, encryptionKey string) (string,
 		return "", err
 	}
 
-	if noEncryptionFlag {
+	_, allowUnencrypted := os.LookupEnv(utils.EnvAllowUnencryptedSedaKeys)
+	if noEncryptionFlag || allowUnencrypted {
 		return "", nil
 	}
 

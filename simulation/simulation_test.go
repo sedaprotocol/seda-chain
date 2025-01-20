@@ -38,6 +38,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 )
 
 // Get flags every time the simulator is run
@@ -135,6 +136,7 @@ func TestAppStateDeterminism(t *testing.T) {
 	)
 	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
+	appOptions[utils.FlagAllowUnencryptedSedaKeys] = "true"
 
 	for i := 0; i < numSeeds; i++ {
 		config.Seed = r.Int63()

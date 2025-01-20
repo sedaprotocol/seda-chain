@@ -69,4 +69,7 @@ EXPOSE 26656 26657 1317 9090
 
 # USER nonroot
 
-CMD ["sedad", "start"]
+# Allow CLI commands to not encrypt the SEDA keys file
+ENV SEDA_ALLOW_UNENCRYPTED_KEYS=true
+
+CMD ["sedad", "start", "--allow-unencrypted-seda-keys"]
