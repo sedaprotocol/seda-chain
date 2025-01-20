@@ -21,7 +21,7 @@ const (
 	TallyExitCodeExecError          = 255 // error while executing tally VM
 )
 
-func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.RevealBody) (tallyvm.VmResult, error) {
+func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.RevealBody, gasMeter *types.GasMeter) (tallyvm.VmResult, error) {
 	tallyProgram, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyProgramID)
 	if err != nil {
 		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrFindingTallyProgram, req)
@@ -39,18 +39,6 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterRe
 	}
 	paybackAddrHex := hex.EncodeToString(decodedBytes)
 
-	// Adjust gas limit based on the gas used by the filter.
-	maxGasLimit, err := k.GetMaxTallyGasLimit(ctx)
-	if err != nil {
-		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrGettingMaxTallyGasLimit, req)
-	}
-	var gasLimit uint64
-	if min(req.TallyGasLimit, maxGasLimit) > filterResult.GasUsed {
-		gasLimit = min(req.TallyGasLimit, maxGasLimit) - filterResult.GasUsed
-	} else {
-		gasLimit = 0
-	}
-
 	args, err := tallyVMArg(tallyInputs, reveals, filterResult.Outliers)
 	if err != nil {
 		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, req)
@@ -64,7 +52,7 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterRe
 		"arguments", args,
 	)
 
-	return tallyvm.ExecuteTallyVm(tallyProgram.Bytecode, args, map[string]string{
+	vmRes := tallyvm.ExecuteTallyVm(tallyProgram.Bytecode, args, map[string]string{
 		"VM_MODE":               "tally",
 		"CONSENSUS":             fmt.Sprintf("%v", filterResult.Consensus),
 		"BLOCK_HEIGHT":          fmt.Sprintf("%d", ctx.BlockHeight()),
@@ -75,11 +63,14 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterRe
 		"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", req.ExecGasLimit),
 		"TALLY_INPUTS":          req.TallyInputs,
 		"TALLY_PROGRAM_ID":      req.TallyProgramID,
-		"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", gasLimit),
+		"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", gasMeter.RemainingTallyGas()),
 		"DR_GAS_PRICE":          req.GasPrice,
 		"DR_MEMO":               req.Memo,
 		"DR_PAYBACK_ADDRESS":    paybackAddrHex,
-	}), nil
+	})
+
+	gasMeter.ConsumeTallyGas(vmRes.GasUsed)
+	return vmRes, nil
 }
 
 func tallyVMArg(inputArgs []byte, reveals []types.RevealBody, outliers []bool) ([]string, error) {

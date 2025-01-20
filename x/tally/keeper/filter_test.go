@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/math"
+
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
@@ -26,7 +28,7 @@ func TestFilter(t *testing.T) {
 		reveals         []types.RevealBody
 		consensus       bool
 		consPubKeys     []string // expected proxy public keys in basic consensus
-		gasUsed         uint64
+		tallyGasUsed    uint64
 		wantErr         error
 	}{
 		{
@@ -40,10 +42,10 @@ func TestFilter(t *testing.T) {
 				{},
 				{},
 			},
-			consensus:   true,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostNone,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostNone,
+			wantErr:      nil,
 		},
 		{
 			name:            "Mode filter - Happy Path",
@@ -58,10 +60,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"matter":"ignore this", "result": {"text": "A", "number": 10}}`},
 				{Reveal: `{"matter":"ignore this", "result": {"text": "A", "number": 10}}`},
 			},
-			consensus:   true,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 7,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*7,
+			wantErr:      nil,
 		},
 		{
 			name:            "Mode filter - One outlier but consensus",
@@ -72,10 +74,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 				{Reveal: `{"result": {"text": "B", "number": 101}}`},
 			},
-			consensus:   true,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 3,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*3,
+			wantErr:      nil,
 		},
 		{
 			name:            "Mode filter - Multiple modes",
@@ -90,10 +92,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "B"}}`},
 				{Reveal: `{"result": {"text": "C"}}`},
 			},
-			consensus:   false,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 7,
-			wantErr:     types.ErrNoConsensus,
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*7,
+			wantErr:      types.ErrNoConsensus,
 		},
 		{
 			name:            "Mode filter - One corrupt reveal but consensus",
@@ -104,10 +106,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"resultt": {"text": "A", "number": 10}}`},
 				{Reveal: `{"result": {"text": "A", "number": 101}}`},
 			},
-			consensus:   true,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 3,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*3,
+			wantErr:      nil,
 		},
 		{
 			name:            "Mode filter - No consensus on exit code",
@@ -121,10 +123,10 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, Reveal: `{"it_does_not":"ignore this", "result": {"text": "C", "number": 10}}`},
 				{ExitCode: 0, Reveal: `{"matter":"ignore this", "result": {"text": "C", "number": 10}}`},
 			},
-			consensus:   false,
-			consPubKeys: nil,
-			gasUsed:     0,
-			wantErr:     types.ErrNoBasicConsensus,
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + 0,
+			wantErr:      types.ErrNoBasicConsensus,
 		},
 		{
 			name:            "Mode filter - >2/3 bad exit codes",
@@ -138,10 +140,10 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, Reveal: `{"it_does_not":"ignore this", "result": {"text": "C", "number": 10}}`},
 				{ExitCode: 1, Reveal: `{"matter":"ignore this", "result": {"text": "C", "number": 10}}`},
 			},
-			consensus:   true,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
-			wantErr:     types.ErrConsensusInError,
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*6,
+			wantErr:      types.ErrConsensusInError,
 		},
 		{
 			name:            "Mode filter - Uniform reveals",
@@ -216,8 +218,8 @@ func TestFilter(t *testing.T) {
 				"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
 				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
 			},
-			gasUsed: defaultParams.FilterGasCostMultiplierMode * 6,
-			wantErr: nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*6,
+			wantErr:      nil,
 		},
 		{
 			name:            "Mode filter - >2/3 bad exit codes",
@@ -291,8 +293,8 @@ func TestFilter(t *testing.T) {
 				"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
 				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
 			},
-			gasUsed: defaultParams.FilterGasCostMultiplierMode * 6,
-			wantErr: types.ErrConsensusInError,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*6,
+			wantErr:      types.ErrConsensusInError,
 		},
 		{
 			name:            "Mode filter with proxy pubkeys - No basic consensus",
@@ -354,10 +356,10 @@ func TestFilter(t *testing.T) {
 					Reveal: `{"result": {"text": "A"}}`,
 				},
 			},
-			consensus:   false,
-			consPubKeys: nil,
-			gasUsed:     0,
-			wantErr:     types.ErrNoBasicConsensus,
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + 0,
+			wantErr:      types.ErrNoBasicConsensus,
 		},
 		{
 			name:            "Mode filter - Half with different reveals but consensus",
@@ -369,10 +371,10 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 				{ExitCode: 0, ProxyPubKeys: []string{"invalid_proxy_pubkey"}, Reveal: `{"result": {"text": "mac"}}`},
 			},
-			consensus:   true,
-			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*4,
+			wantErr:      nil,
 		},
 		{
 			name:            "Mode filter - No consensus due to non-zero exit code invalidating data",
@@ -384,10 +386,10 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 				{ExitCode: 1, ProxyPubKeys: []string{"invalid_proxy_pubkey"}, Reveal: `{"result": {"text": "mac"}}`},
 			},
-			consensus:   false,
-			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
-			wantErr:     types.ErrNoConsensus,
+			consensus:    false,
+			consPubKeys:  []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*4,
+			wantErr:      types.ErrNoConsensus,
 		},
 		{
 			name:            "Mode filter - No consensus with exit code invalidating a reveal",
@@ -399,10 +401,10 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 				{ExitCode: 1, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 			},
-			consensus:   false,
-			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
-			wantErr:     types.ErrNoConsensus,
+			consensus:    false,
+			consPubKeys:  []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*4,
+			wantErr:      types.ErrNoConsensus,
 		},
 		{
 			name:            "Mode filter - One reports bad pubkey but is not an outlier",
@@ -414,10 +416,10 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 				{ExitCode: 0, ProxyPubKeys: []string{"qwerty"}, Reveal: `{"result": {"text": "windows"}}`},
 			},
-			consensus:   true,
-			consPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 4,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*4,
+			wantErr:      nil,
 		},
 		{
 			name:            "Mode filter - Too many bad exit codes",
@@ -429,10 +431,10 @@ func TestFilter(t *testing.T) {
 				{ExitCode: 1, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 				{ExitCode: 1, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
 			},
-			consensus:   false,
-			consPubKeys: nil,
-			gasUsed:     0,
-			wantErr:     types.ErrNoBasicConsensus,
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + 0,
+			wantErr:      types.ErrNoBasicConsensus,
 		},
 		{
 			name:            "Mode filter - Bad exit code but consensus",
@@ -450,10 +452,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"xx":"ignore this", "result": {"text": "A", "number": 10}}`},
 				{Reveal: `{"xx":"ignore this", "result": {"text": "A", "number": 10}}`},
 			},
-			consensus:   true,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 7,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*7,
+			wantErr:      nil,
 		},
 		{
 			name:            "Mode filter - Consensus not reached due to exit code",
@@ -467,10 +469,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "C", "number": 10}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 			},
-			consensus:   false,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
-			wantErr:     types.ErrNoConsensus,
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*6,
+			wantErr:      types.ErrNoConsensus,
 		},
 		{
 			name:            "Mode filter - Consensus not reached due to corrupt reveal",
@@ -484,10 +486,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": "C", "number": 10}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
 			},
-			consensus:   false,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierMode * 6,
-			wantErr:     types.ErrNoConsensus,
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*6,
+			wantErr:      types.ErrNoConsensus,
 		},
 		{
 			name:            "Standard deviation filter uint64",
@@ -501,10 +503,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": 8, "number": 0}}`},
 				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
-			consensus:   true,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
+			wantErr:      nil,
 		},
 		{
 			name:            "Standard deviation filter int64",
@@ -518,10 +520,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": 8, "number": 0}}`},
 				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
-			consensus:   true,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
+			wantErr:      nil,
 		},
 		{
 			name:            "Standard deviation filter - Single reveal",
@@ -530,10 +532,10 @@ func TestFilter(t *testing.T) {
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": 4, "number": 0}}`},
 			},
-			consensus:   true,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev,
+			wantErr:      nil,
 		},
 		{
 			name:            "Standard deviation filter - One corrupt reveal",
@@ -547,10 +549,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"number": 0}}`}, // corrupt
 				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
-			consensus:   false,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
-			wantErr:     types.ErrNoConsensus,
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
+			wantErr:      types.ErrNoConsensus,
 		},
 		{
 			name:            "Standard deviation filter - Max sigma 1.55",
@@ -564,10 +566,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": 8, "number": 0}}`},
 				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
-			consensus:   true,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
+			wantErr:      nil,
 		},
 		{
 			name:            "Standard deviation filter - Max sigma 1.45",
@@ -581,10 +583,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": 8, "number": 0}}`},
 				{Reveal: `{"result": {"text": 9, "number": 0}}`},
 			},
-			consensus:   false,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
-			wantErr:     types.ErrNoConsensus,
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
+			wantErr:      types.ErrNoConsensus,
 		},
 		{
 			name:            "Standard deviation filter int64 with negative reveals",
@@ -598,10 +600,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": -8, "number": 0}}`},
 				{Reveal: `{"result": {"text": -9, "number": 0}}`},
 			},
-			consensus:   true,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 6,
-			wantErr:     nil,
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
+			wantErr:      nil,
 		},
 		{
 			name:            "Standard deviation filter int64 median -0.5",
@@ -613,10 +615,10 @@ func TestFilter(t *testing.T) {
 				{Reveal: `{"result": {"text": -1, "number": 10}}`},
 				{Reveal: `{"result": {"text": -2, "number": 10}}`},
 			},
-			consensus:   false,
-			consPubKeys: nil,
-			gasUsed:     defaultParams.FilterGasCostMultiplierStdDev * 4,
-			wantErr:     types.ErrNoConsensus,
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*4,
+			wantErr:      types.ErrNoConsensus,
 		},
 	}
 	for _, tt := range tests {
@@ -634,10 +636,13 @@ func TestFilter(t *testing.T) {
 				sort.Strings(tt.reveals[i].ProxyPubKeys)
 			}
 
+			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
+
 			result, err := keeper.ExecuteFilter(
 				tt.reveals,
 				base64.StdEncoding.EncodeToString(filterInput), uint16(len(tt.reveals)),
 				types.DefaultParams(),
+				gasMeter,
 			)
 			require.ErrorIs(t, err, tt.wantErr)
 			if tt.consPubKeys == nil {
@@ -650,7 +655,7 @@ func TestFilter(t *testing.T) {
 
 			require.Equal(t, tt.outliers, result.Outliers)
 			require.Equal(t, tt.consensus, result.Consensus)
-			require.Equal(t, tt.gasUsed, result.GasUsed)
+			require.Equal(t, tt.tallyGasUsed, gasMeter.TallyGasUsed())
 		})
 	}
 }

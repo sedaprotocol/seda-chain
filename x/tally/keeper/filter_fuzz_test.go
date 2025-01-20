@@ -13,6 +13,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
@@ -62,11 +64,14 @@ func FuzzStdDevFilter(f *testing.F) {
 		filterInput, err := hex.DecodeString(filterHex)
 		require.NoError(t, err)
 
+		gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, sdkmath.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
+
 		result, err := keeper.ExecuteFilter(
 			reveals,
 			base64.StdEncoding.EncodeToString(filterInput),
 			uint16(len(reveals)),
 			types.DefaultParams(),
+			gasMeter,
 		)
 		require.Equal(t, expOutliers, result.Outliers)
 		require.ErrorIs(t, err, nil)

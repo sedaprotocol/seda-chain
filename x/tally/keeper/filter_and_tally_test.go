@@ -31,7 +31,7 @@ func TestFilterAndTally(t *testing.T) {
 		replicationFactor uint16
 		consensus         bool
 		consPubKeys       []string // expected proxy public keys in basic consensus
-		filterGasUsed     uint64
+		tallyGasUsed      uint64
 		exitCode          int
 		filterErr         error
 	}{
@@ -48,7 +48,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.GasCostBase + defaultParams.FilterGasCostNone,
+			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostNone,
 			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -62,7 +62,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.GasCostBase,
+			tallyGasUsed:      defaultParams.GasCostBase,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -79,7 +79,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*5,
+			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*5,
 			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -93,7 +93,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.GasCostBase,
+			tallyGasUsed:      defaultParams.GasCostBase,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -110,7 +110,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*5,
+			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*5,
 			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -124,7 +124,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			filterGasUsed:     defaultParams.GasCostBase,
+			tallyGasUsed:      defaultParams.GasCostBase,
 			exitCode:          keeper.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -142,17 +142,18 @@ func TestFilterAndTally(t *testing.T) {
 				reveals[k] = revealBody
 			}
 
-			filterRes, tallyRes, _ := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
+			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
+			filterRes, tallyRes := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
 				Reveals:           reveals,
 				ReplicationFactor: tt.replicationFactor,
 				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
 				GasPrice:          "1000000000000000000", // 1e18
 				ExecGasLimit:      100000,
-			}, types.DefaultParams(), math.NewInt(1000000000000000000))
+			}, types.DefaultParams(), gasMeter)
 			require.NoError(t, err)
 
 			require.Equal(t, tt.outliers, filterRes.Outliers)
-			require.Equal(t, tt.filterGasUsed, filterRes.GasUsed)
+			require.Equal(t, tt.tallyGasUsed, gasMeter.TallyGasUsed())
 			require.Equal(t, tt.consensus, filterRes.Consensus)
 			require.Equal(t, tt.consensus, tallyRes.Consensus)
 			require.Equal(t, tt.exitCode, tallyRes.ExitInfo.ExitCode)
@@ -289,7 +290,7 @@ func TestExecutorPayout(t *testing.T) {
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
-			expExecGasUsed:    90000,
+			expExecGasUsed:    43448 + 23275 + 23275,
 			expExecutorGas: map[string]math.Int{
 				"a": math.NewInt(43448),
 				"b": math.NewInt(23275),
@@ -352,6 +353,28 @@ func TestExecutorPayout(t *testing.T) {
 				"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8": math.NewInt(3000), // = RF * proxyFee / gasPrice
 			},
 		},
+		{
+			name:            "Divergent gas reporting (mode no consensus, with proxies)",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
+			reveals: map[string]types.RevealBody{ // (7000, 19000, 34000) after subtracting proxy gas
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
+			},
+			replicationFactor: 3,
+			execGasLimit:      90000,
+			expExecGasUsed:    54000,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(12000),
+				"b": math.NewInt(18000),
+				"c": math.NewInt(18000),
+			},
+			expReducedPayout: true,
+			expProxyGas: map[string]math.Int{
+				"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8": math.NewInt(3000), // = RF * proxyFee / gasPrice
+				"2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9": math.NewInt(3000), // = RF * proxyFee / gasPrice
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -385,33 +408,35 @@ func TestExecutorPayout(t *testing.T) {
 			gasPrice, ok := math.NewIntFromString(gasPriceStr)
 			require.True(t, ok)
 
-			_, tallyRes, gasCalc := f.tallyKeeper.FilterAndTally(
-				f.Context(),
-				types.Request{
-					Reveals:           reveals,
-					ReplicationFactor: tt.replicationFactor,
-					ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-					GasPrice:          gasPriceStr,
-					ExecGasLimit:      tt.execGasLimit,
-					TallyProgramID:    hex.EncodeToString(tallyProgram.Hash),
-					// TODO tally gas limit
-				}, types.DefaultParams(), gasPrice)
+			request := types.Request{
+				Reveals:           reveals,
+				ReplicationFactor: tt.replicationFactor,
+				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
+				GasPrice:          gasPriceStr,
+				TallyGasLimit:     types.DefaultMaxTallyGasLimit,
+				ExecGasLimit:      tt.execGasLimit,
+				TallyProgramID:    hex.EncodeToString(tallyProgram.Hash),
+			}
+
+			gasMeter := types.NewGasMeter(request.TallyGasLimit, request.ExecGasLimit, types.DefaultMaxTallyGasLimit, gasPrice, types.DefaultGasCostBase)
+			_, tallyRes := f.tallyKeeper.FilterAndTally(f.Context(), request, types.DefaultParams(), gasMeter)
 			require.NoError(t, err)
 
-			for _, exec := range gasCalc.Executors {
+			for _, exec := range gasMeter.Executors {
 				require.Equal(t,
 					tt.expExecutorGas[exec.PublicKey].String(),
 					exec.Amount.String(),
 				)
 			}
-			require.Equal(t, tt.expReducedPayout, gasCalc.ReducedPayout)
-			for _, proxy := range gasCalc.Proxies {
+			require.Equal(t, tt.expReducedPayout, gasMeter.ReducedPayout)
+			for _, proxy := range gasMeter.Proxies {
 				require.Equal(t,
 					tt.expProxyGas[hex.EncodeToString(proxy.PublicKey)].String(),
 					proxy.Amount.String(),
 				)
 			}
 			require.Equal(t, tt.expExecGasUsed, tallyRes.ExecGasUsed)
+			require.Equal(t, tt.expExecGasUsed, gasMeter.ExecutionGasUsed())
 		})
 	}
 }

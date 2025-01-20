@@ -20,17 +20,17 @@ type Filter interface {
 	// an outlier, and a boolean indicating whether consensus in reveal
 	// data has been reached.
 	ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bool)
-	// GasCost returns the cost of the filter in terms of gas amount.
-	GasCost() uint64
 }
 
-type FilterNone struct {
-	gasCost uint64
-}
+type FilterNone struct{}
 
 // NewFilterNone constructs a new FilterNone object.
-func NewFilterNone(gasCost uint64) FilterNone {
-	return FilterNone{gasCost: gasCost}
+func NewFilterNone(gasCost uint64, gasMeter *GasMeter) (FilterNone, error) {
+	outOfGas := gasMeter.ConsumeTallyGas(gasCost)
+	if outOfGas {
+		return FilterNone{}, ErrOutofTallyGas
+	}
+	return FilterNone{}, nil
 }
 
 // FilterNone declares all reveals as non-outliers.
@@ -38,13 +38,8 @@ func (f FilterNone) ApplyFilter(reveals []RevealBody, _ []bool) ([]bool, bool) {
 	return make([]bool, len(reveals)), true
 }
 
-func (f FilterNone) GasCost() uint64 {
-	return f.gasCost
-}
-
 type FilterMode struct {
 	dataPath          string // JSON path to reveal data
-	gasCost           uint64
 	replicationFactor uint16
 }
 
@@ -53,7 +48,12 @@ type FilterMode struct {
 // Mode filter input looks as follows:
 // 0             1                  9       9+data_path_length
 // | filter_type | data_path_length |   data_path   |
-func NewFilterMode(input []byte, gasCostMultiplier uint64, replicationFactor uint16) (FilterMode, error) {
+func NewFilterMode(input []byte, gasCostMultiplier uint64, replicationFactor uint16, gasMeter *GasMeter) (FilterMode, error) {
+	outOfGas := gasMeter.ConsumeTallyGas(gasCostMultiplier * uint64(replicationFactor))
+	if outOfGas {
+		return FilterMode{}, ErrOutofTallyGas
+	}
+
 	var filter FilterMode
 	if len(input) < 9 {
 		return filter, ErrFilterInputTooShort.Wrapf("%d < %d", len(input), 9)
@@ -70,13 +70,8 @@ func NewFilterMode(input []byte, gasCostMultiplier uint64, replicationFactor uin
 		return filter, ErrInvalidPathLen.Wrapf("expected: %d got: %d", int(pathLen), len(path)) // #nosec G115
 	}
 	filter.dataPath = string(path)
-	filter.gasCost = gasCostMultiplier * uint64(replicationFactor)
 	filter.replicationFactor = replicationFactor
 	return filter, nil
-}
-
-func (f FilterMode) GasCost() uint64 {
-	return f.gasCost
 }
 
 // ApplyFilter applies the Mode Filter and returns an outlier list.
@@ -102,7 +97,6 @@ type FilterStdDev struct {
 	maxSigma          Sigma
 	dataPath          string // JSON path to reveal data
 	filterFunc        func(dataList []any, maxSigma Sigma, errors []bool, replicationFactor uint16) ([]bool, bool)
-	gasCost           uint64
 	replicationFactor uint16
 }
 
@@ -111,7 +105,12 @@ type FilterStdDev struct {
 // Standard deviation filter input looks as follows:
 // 0             1           9             10                 18 18+json_path_length
 // | filter_type | max_sigma | number_type | json_path_length | json_path |
-func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor uint16) (FilterStdDev, error) {
+func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor uint16, gasMeter *GasMeter) (FilterStdDev, error) {
+	outOfGas := gasMeter.ConsumeTallyGas(gasCostMultiplier * uint64(replicationFactor))
+	if outOfGas {
+		return FilterStdDev{}, ErrOutofTallyGas
+	}
+
 	var filter FilterStdDev
 	if len(input) < 18 {
 		return filter, ErrFilterInputTooShort.Wrapf("%d < %d", len(input), 18)
@@ -147,7 +146,6 @@ func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor u
 		return filter, ErrInvalidPathLen.Wrapf("expected: %d got: %d", int(pathLen), len(path)) // #nosec G115
 	}
 	filter.dataPath = string(path)
-	filter.gasCost = gasCostMultiplier * uint64(replicationFactor)
 	filter.replicationFactor = replicationFactor
 	return filter, nil
 }
@@ -166,10 +164,6 @@ func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor u
 func (f FilterStdDev) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bool) {
 	dataList, _ := parseReveals(reveals, f.dataPath, errors)
 	return f.filterFunc(dataList, f.maxSigma, errors, f.replicationFactor)
-}
-
-func (f FilterStdDev) GasCost() uint64 {
-	return f.gasCost
 }
 
 func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma, errors []bool, replicationFactor uint16) ([]bool, bool) {

@@ -2,7 +2,7 @@ package types
 
 const (
 	EventTypeTallyCompletion = "tally_completion"
-	EventTypeGasCalculation  = "gas_calculation"
+	EventTypeGasMeter        = "gas_calculation"
 
 	AttributeDataRequestID     = "dr_id"
 	AttributeDataRequestHeight = "dr_height"

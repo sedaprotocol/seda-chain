@@ -18,7 +18,6 @@ type FilterResult struct {
 	Outliers     []bool   // i-th item is non-zero if i-th reveal is an outlier
 	Consensus    bool     // whether consensus (either in data or in error) is reached
 	ProxyPubKeys []string // data proxy public keys in consensus
-	GasUsed      uint64   // gas used by filter
 }
 
 // countErrors returns the number of errors in a given error list.
@@ -45,7 +44,7 @@ func invertErrors(errors []bool) []bool {
 // the given reveals to determine consensus, proxy public keys in consensus, and
 // outliers. It assumes that the reveals are sorted by their keys and that their
 // proxy public keys are sorted.
-func ExecuteFilter(reveals []types.RevealBody, filterInput string, replicationFactor uint16, params types.Params) (FilterResult, error) {
+func ExecuteFilter(reveals []types.RevealBody, filterInput string, replicationFactor uint16, params types.Params, gasMeter *types.GasMeter) (FilterResult, error) {
 	var result FilterResult
 	result.Errors = make([]bool, len(reveals))
 	result.Outliers = make([]bool, len(reveals))
@@ -69,11 +68,10 @@ func ExecuteFilter(reveals []types.RevealBody, filterInput string, replicationFa
 		return result, types.ErrNoBasicConsensus
 	}
 
-	filter, err := BuildFilter(filterInput, replicationFactor, params)
+	filter, err := BuildFilter(filterInput, replicationFactor, params, gasMeter)
 	if err != nil {
 		return result, types.ErrInvalidFilterInput.Wrap(err.Error())
 	}
-	result.GasUsed = filter.GasCost()
 
 	outliers, consensus := filter.ApplyFilter(reveals, result.Errors)
 	switch {
@@ -92,7 +90,7 @@ func ExecuteFilter(reveals []types.RevealBody, filterInput string, replicationFa
 }
 
 // BuildFilter builds a filter based on the requestor-provided input.
-func BuildFilter(filterInput string, replicationFactor uint16, params types.Params) (types.Filter, error) {
+func BuildFilter(filterInput string, replicationFactor uint16, params types.Params, gasMeter *types.GasMeter) (types.Filter, error) {
 	input, err := base64.StdEncoding.DecodeString(filterInput)
 	if err != nil {
 		return nil, err
@@ -104,11 +102,11 @@ func BuildFilter(filterInput string, replicationFactor uint16, params types.Para
 	var filter types.Filter
 	switch input[0] {
 	case filterTypeNone:
-		filter = types.NewFilterNone(params.FilterGasCostNone)
+		filter, err = types.NewFilterNone(params.FilterGasCostNone, gasMeter)
 	case filterTypeMode:
-		filter, err = types.NewFilterMode(input, params.FilterGasCostMultiplierMode, replicationFactor)
+		filter, err = types.NewFilterMode(input, params.FilterGasCostMultiplierMode, replicationFactor, gasMeter)
 	case filterTypeStdDev:
-		filter, err = types.NewFilterStdDev(input, params.FilterGasCostMultiplierStdDev, replicationFactor)
+		filter, err = types.NewFilterStdDev(input, params.FilterGasCostMultiplierStdDev, replicationFactor, gasMeter)
 	default:
 		return nil, types.ErrInvalidFilterType
 	}

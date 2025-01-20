@@ -21,8 +21,9 @@ message Params {
   uint64 filter_gas_cost_multiplier_std_dev = 4;
   // GasCostBase is the base gas cost for a data request.
   uint64 gas_cost_base = 5;
-  // GasCostCommit is the gas cost for a commit charged under certain scenarios.
-  uint64 gas_cost_commit = 6;
+  // GasCostFallback is the gas cost incurred for data request execution when
+  // even basic consensus has not been reached.
+  uint64 gas_cost_fallback = 6;
   // BurnRatio is the ratio of the gas cost to be burned in case of reduced
   // payout scenarios.
   string burn_ratio = 7 [

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,7 +51,9 @@ func TestDecodeFilterInput(t *testing.T) {
 			b, err := hex.DecodeString(tt.hexStr)
 			require.NoError(t, err)
 
-			filter, err := NewFilterMode(b, 1, 1)
+			gasMeter := NewGasMeter(1e13, 0, DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), DefaultGasCostBase)
+
+			filter, err := NewFilterMode(b, 1, 1, gasMeter)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
