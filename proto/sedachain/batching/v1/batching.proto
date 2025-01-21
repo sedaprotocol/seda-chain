@@ -1,6 +1,7 @@
 syntax = "proto3";
 package sedachain.batching.v1;
 
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/batching/types";
@@ -68,7 +69,11 @@ message DataResult {
   // exit_code is the exit code of the tally wasm binary execution.
   uint32 exit_code = 7 [ (gogoproto.jsontag) = "exit_code" ];
   // gas_used is the gas used by the data request execution.
-  uint64 gas_used = 8 [ (gogoproto.jsontag) = "gas_used" ];
+  string gas_used = 8 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.jsontag) = "gas_used"
+  ];
   // result is the result of the tally wasm binary execution.
   bytes result = 9 [ (gogoproto.jsontag) = "result" ];
   // payback_address is the payback address set by the relayer.

@@ -8,6 +8,8 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
+	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -69,6 +71,7 @@ func (s *KeeperTestSuite) TestKeeper_DataResult() {
 	s.SetupTest()
 
 	batchNum := uint64(rand.Intn(100) + 1)
+	gasUsed := math.NewInt(20)
 	mockDataResult := batchingtypes.DataResult{
 		Version:        "0.0.1",
 		DrId:           "74d7e8c9a77b7b4777153a32fcdf2424489f24cd59d3043eb2a30be7bba48306",
@@ -77,7 +80,7 @@ func (s *KeeperTestSuite) TestKeeper_DataResult() {
 		Result:         []byte("Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w="),
 		BlockHeight:    12345,
 		DrBlockHeight:  12343,
-		GasUsed:        20,
+		GasUsed:        &gasUsed,
 		PaybackAddress: "",
 		SedaPayload:    "",
 	}

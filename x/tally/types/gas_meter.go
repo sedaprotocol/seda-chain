@@ -49,8 +49,9 @@ func NewGasMeter(tallyGasLimit, execGasLimit, maxTallyGasLimit uint64, gasPrice 
 	return gasMeter
 }
 
-func (g GasMeter) TotalGasUsed() uint64 {
-	return g.TallyGasUsed() + g.ExecutionGasUsed()
+func (g GasMeter) TotalGasUsed() *math.Int {
+	totalGasUsed := math.NewIntFromUint64(g.TallyGasUsed()).Add(math.NewIntFromUint64(g.ExecutionGasUsed()))
+	return &totalGasUsed
 }
 
 func (g GasMeter) TallyGasUsed() uint64 {
