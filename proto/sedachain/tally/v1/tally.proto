@@ -23,7 +23,7 @@ message Params {
   uint64 gas_cost_base = 5;
   // GasCostFallback is the gas cost incurred for data request execution when
   // even basic consensus has not been reached.
-  uint64 gas_cost_fallback = 6;
+  uint64 execution_gas_cost_fallback = 6;
   // BurnRatio is the ratio of the gas cost to be burned in case of reduced
   // payout scenarios.
   string burn_ratio = 7 [

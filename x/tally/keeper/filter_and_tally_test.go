@@ -281,7 +281,25 @@ func TestExecutorPayout(t *testing.T) {
 			expReducedPayout: true,
 		},
 		{
-			name:            "Divergent gas reporting (1)",
+			name:            "Uniform gas reporting with low gas limit (mode no consensus)",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 20000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      1000,
+			expExecGasUsed:    999,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(333),
+				"b": math.NewInt(333),
+				"c": math.NewInt(333),
+			},
+			expReducedPayout: true,
+		},
+		{
+			name:            "Divergent gas reporting with shares (lowest_report*2 > median_report)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
@@ -298,7 +316,7 @@ func TestExecutorPayout(t *testing.T) {
 			},
 		},
 		{
-			name:            "Divergent gas reporting (2)",
+			name:            "Divergent gas reporting without shares (lowest_report*2 < median_report)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
@@ -310,6 +328,23 @@ func TestExecutorPayout(t *testing.T) {
 			expExecGasUsed:    56000,
 			expExecutorGas: map[string]math.Int{
 				"a": math.NewInt(16000),
+				"b": math.NewInt(20000),
+				"c": math.NewInt(20000),
+			},
+		},
+		{
+			name:            "Divergent gas reporting without shares (lowest_report*2 == median_report)",
+			tallyInputAsHex: "00",
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 10000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 20000},
+				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 35000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      90000,
+			expExecGasUsed:    60000,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(20000),
 				"b": math.NewInt(20000),
 				"c": math.NewInt(20000),
 			},
@@ -333,7 +368,43 @@ func TestExecutorPayout(t *testing.T) {
 			expReducedPayout: true,
 		},
 		{
-			name:            "Divergent gas reporting (mode no consensus, with proxies)",
+			name:            "Divergent gas reporting with low gas limit and no shares (mode no consensus)",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 1},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      1000,
+			expExecGasUsed:    668,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(2),
+				"b": math.NewInt(333),
+				"c": math.NewInt(333),
+			},
+			expReducedPayout: true,
+		},
+		{
+			name:            "Divergent gas reporting with low gas limit and shares (mode no consensus)",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      1000,
+			expExecGasUsed:    997,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(499),
+				"b": math.NewInt(249),
+				"c": math.NewInt(249),
+			},
+			expReducedPayout: true,
+		},
+		{
+			name:            "Divergent gas reporting (mode no consensus, with 1 proxy)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{ // (7000, 19000, 34000) after subtracting proxy gas
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
@@ -354,9 +425,9 @@ func TestExecutorPayout(t *testing.T) {
 			},
 		},
 		{
-			name:            "Divergent gas reporting (mode no consensus, with proxies)",
+			name:            "Divergent gas reporting (mode no consensus, with 2 proxies)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
-			reveals: map[string]types.RevealBody{ // (7000, 19000, 34000) after subtracting proxy gas
+			reveals: map[string]types.RevealBody{ // (6000, 18000, 33000) after subtracting proxy gas
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}},
 				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}},
 				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
@@ -373,6 +444,28 @@ func TestExecutorPayout(t *testing.T) {
 			expProxyGas: map[string]math.Int{
 				"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8": math.NewInt(3000), // = RF * proxyFee / gasPrice
 				"2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9": math.NewInt(3000), // = RF * proxyFee / gasPrice
+			},
+		},
+		{
+			name:            "Divergent gas reporting with low gas limit (mode no consensus, with 2 proxies)",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
+			reveals: map[string]types.RevealBody{ // (0, 0, 0) after subtracting proxy gas and considering gas limit
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
+			},
+			replicationFactor: 3,
+			execGasLimit:      1000,
+			expExecGasUsed:    999,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(0),
+				"b": math.NewInt(0),
+				"c": math.NewInt(0),
+			},
+			expReducedPayout: true,
+			expProxyGas: map[string]math.Int{
+				"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8": math.NewInt(999), // = RF * proxyFee / gasPrice (considering gas limit)
+				"2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9": math.NewInt(0),   // = RF * proxyFee / gasPrice (considering gas limit)
 			},
 		},
 	}

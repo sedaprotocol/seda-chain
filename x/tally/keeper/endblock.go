@@ -109,7 +109,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			dataResults[i].ExitCode = TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
 
-			MeterExecutorGasFallback(req, params.GasCostFallback, gasMeter, false)
+			MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
 		} else {
 			_, tallyResults[i] = k.FilterAndTally(ctx, req, params, gasMeter)
 			dataResults[i].Result = tallyResults[i].Result
@@ -235,19 +235,14 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 	// Calculate executor gas consumption.
 	switch {
 	case errors.Is(filterErr, types.ErrNoBasicConsensus):
-		MeterExecutorGasFallback(req, params.GasCostFallback, gasMeter, true)
+		MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
 	case errors.Is(filterErr, types.ErrInvalidFilterInput) || errors.Is(filterErr, types.ErrNoConsensus) || tallyErr != nil:
 		gasMeter.SetReducedPayoutMode()
 		fallthrough
 	default: // filterErr == ErrConsensusInError || filterErr == nil
-		proxyGasUsedPerExec := gasMeter.ExecutionGasUsed() / uint64(req.ReplicationFactor)
 		gasReports := make([]uint64, len(reveals))
 		for i, reveal := range reveals {
-			if proxyGasUsedPerExec > reveal.GasUsed {
-				gasReports[i] = 0
-			} else {
-				gasReports[i] = reveal.GasUsed - proxyGasUsedPerExec
-			}
+			gasReports[i] = reveal.GasUsed
 		}
 		if areGasReportsUniform(gasReports) {
 			MeterExecutorGasUniform(keys, gasReports[0], req.ReplicationFactor, gasMeter)

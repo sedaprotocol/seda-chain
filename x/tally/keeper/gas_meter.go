@@ -25,9 +25,9 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 	}
 
 	// First distribution message is the combined burn.
-	burn := types.NewBurn(math.NewIntFromUint64(gasMeter.Burn), gasMeter.GasPrice())
+	burn := types.NewBurn(math.NewIntFromUint64(gasMeter.TallyGasUsed()), gasMeter.GasPrice())
 	dists = append(dists, burn)
-	attrs = append(attrs, sdk.NewAttribute(types.AttributeTallyGas, strconv.FormatUint(gasMeter.Burn, 10)))
+	attrs = append(attrs, sdk.NewAttribute(types.AttributeTallyGas, strconv.FormatUint(gasMeter.TallyGasUsed(), 10)))
 
 	// Append distribution messages for data proxies.
 	for _, proxy := range gasMeter.Proxies {
@@ -83,20 +83,16 @@ func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicatio
 
 		gasUsedPerExec := proxyConfig.Fee.Amount.Quo(gasMeter.GasPrice()).Uint64()
 		gasUsedPerExec = min(gasUsedPerExec, gasMeter.RemainingExecGas()/uint64(replicationFactor))
-		gasUsed := gasUsedPerExec * uint64(replicationFactor)
 
-		gasMeter.ConsumeExecGasForProxy(pubKeyBytes, gasUsed)
+		gasMeter.ConsumeExecGasForProxy(pubKeyBytes, gasUsedPerExec, replicationFactor)
 	}
 }
 
 // MeterExecutorGasFallback computes and records the gas consumption of committers
 // of a data request when basic consensus has not been reached. If checkReveal is
 // set to true, it will only consume gas for committers that have also revealed.
-func MeterExecutorGasFallback(req types.Request, gasCostCommit uint64, gasMeter *types.GasMeter, checkReveal bool) {
+func MeterExecutorGasFallback(req types.Request, gasCostCommit uint64, gasMeter *types.GasMeter) {
 	if len(req.Commits) == 0 || gasMeter.RemainingExecGas() == 0 {
-		return
-	}
-	if checkReveal && len(req.Reveals) == 0 {
 		return
 	}
 
@@ -108,15 +104,13 @@ func MeterExecutorGasFallback(req types.Request, gasCostCommit uint64, gasMeter 
 	}
 	sort.Strings(committers)
 
-	var gasLimitPerExec uint64
-	if checkReveal {
-		gasLimitPerExec = gasMeter.RemainingExecGas() / uint64(len(req.Reveals))
-	} else {
-		gasLimitPerExec = gasMeter.RemainingExecGas() / uint64(len(committers))
-	}
+	gasLimitPerExec := gasMeter.RemainingExecGas() / uint64(req.ReplicationFactor)
 
+	hasReveals := len(req.Reveals) > 0
 	for _, committer := range committers {
-		if checkReveal {
+		// If there are reveals, only consume gas for committers that have also
+		// revealed.
+		if hasReveals {
 			if _, ok := req.Reveals[committer]; !ok {
 				continue
 			}
@@ -129,7 +123,8 @@ func MeterExecutorGasFallback(req types.Request, gasCostCommit uint64, gasMeter 
 // MeterExecutorGasUniform computes and records the gas consumption of executors
 // when their gas reports are uniformly at "gasReport".
 func MeterExecutorGasUniform(executors []string, gasReport uint64, replicationFactor uint16, gasMeter *types.GasMeter) {
-	gasUsed := min(gasReport, gasMeter.RemainingExecGas()/uint64(replicationFactor))
+	executorGasReport := gasMeter.CorrectExecGasReportWithProxyGas(gasReport)
+	gasUsed := min(executorGasReport, gasMeter.RemainingExecGas()/uint64(replicationFactor))
 	for _, executor := range executors {
 		gasMeter.ConsumeExecGasForExecutor(executor, gasUsed)
 	}
@@ -142,7 +137,8 @@ func MeterExecutorGasDivergent(executors []string, gasReports []uint64, replicat
 	var lowestReporterIndex int
 	adjGasReports := make([]uint64, len(gasReports))
 	for i, gasReport := range gasReports {
-		adjGasReports[i] = min(gasReport, gasMeter.RemainingExecGas()/uint64(replicationFactor))
+		executorGasReport := gasMeter.CorrectExecGasReportWithProxyGas(gasReport)
+		adjGasReports[i] = min(executorGasReport, gasMeter.RemainingExecGas()/uint64(replicationFactor))
 		if i == 0 || adjGasReports[i] < lowestReport {
 			lowestReporterIndex = i
 			lowestReport = adjGasReports[i]
@@ -151,8 +147,14 @@ func MeterExecutorGasDivergent(executors []string, gasReports []uint64, replicat
 	medianGasUsed := median(adjGasReports)
 	totalGasUsed := medianGasUsed*uint64(replicationFactor-1) + min(lowestReport*2, medianGasUsed)
 	totalShares := medianGasUsed*uint64(replicationFactor-1) + lowestReport*2
-	lowestGasUsed := lowestReport * 2 * totalGasUsed / totalShares
-	regGasUsed := medianGasUsed * totalGasUsed / totalShares
+	var lowestGasUsed, regGasUsed uint64
+	if totalShares == 0 {
+		lowestGasUsed = 0
+		regGasUsed = 0
+	} else {
+		lowestGasUsed = lowestReport * 2 * totalGasUsed / totalShares
+		regGasUsed = medianGasUsed * totalGasUsed / totalShares
+	}
 
 	for i, executor := range executors {
 		gasUsed := regGasUsed

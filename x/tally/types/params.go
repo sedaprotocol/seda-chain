@@ -14,7 +14,7 @@ const (
 	DefaultFilterGasCostMultiplierMode   = 100_000
 	DefaultFilterGasCostMultiplierStddev = 100_000
 	DefaultGasCostBase                   = 1_000_000_000_000
-	DefaultGasCostFallback               = 5_000_000_000_000
+	DefaultExecutionGasCostFallback      = 5_000_000_000_000
 )
 
 var DefaultBurnRatio = math.LegacyNewDecWithPrec(2, 1)
@@ -27,7 +27,7 @@ func DefaultParams() Params {
 		FilterGasCostMultiplierMode:   DefaultFilterGasCostMultiplierMode,
 		FilterGasCostMultiplierStdDev: DefaultFilterGasCostMultiplierStddev,
 		GasCostBase:                   DefaultGasCostBase,
-		GasCostFallback:               DefaultGasCostFallback,
+		ExecutionGasCostFallback:      DefaultExecutionGasCostFallback,
 		BurnRatio:                     DefaultBurnRatio,
 	}
 }
@@ -49,8 +49,8 @@ func (p *Params) Validate() error {
 	if p.GasCostBase <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("base gas cost must be greater than 0: %d", p.GasCostBase)
 	}
-	if p.GasCostFallback <= 0 {
-		return sdkerrors.ErrInvalidRequest.Wrapf("commit gas cost must be greater than 0: %d", p.GasCostFallback)
+	if p.ExecutionGasCostFallback <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("execution gas cost fallback must be greater than 0: %d", p.ExecutionGasCostFallback)
 	}
 	return validateBurnRatio(p.BurnRatio)
 }
