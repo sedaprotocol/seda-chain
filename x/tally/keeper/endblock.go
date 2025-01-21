@@ -104,20 +104,13 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		}
 
 		gasMeter := types.NewGasMeter(req.TallyGasLimit, req.ExecGasLimit, params.MaxTallyGasLimit, gasPrice, params.GasCostBase)
-		switch {
-		case len(req.Commits) < int(req.ReplicationFactor):
+		if len(req.Commits) < int(req.ReplicationFactor) {
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
 			dataResults[i].ExitCode = TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
 
-			MeterExecutorGasFallback(req, params.GasCostFallback, gasMeter)
-		case len(req.Reveals) == 0:
-			dataResults[i].Result = []byte("no reveals")
-			dataResults[i].ExitCode = TallyExitCodeNoReveals
-			k.Logger(ctx).Info("data request has no reveals", "request_id", req.ID)
-
-			MeterExecutorGasFallback(req, params.GasCostFallback, gasMeter)
-		default:
+			MeterExecutorGasFallback(req, params.GasCostFallback, gasMeter, false)
+		} else {
 			_, tallyResults[i] = k.FilterAndTally(ctx, req, params, gasMeter)
 			dataResults[i].Result = tallyResults[i].Result
 			//nolint:gosec // G115: We shouldn't get negative exit code anyway.
@@ -242,7 +235,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 	// Calculate executor gas consumption.
 	switch {
 	case errors.Is(filterErr, types.ErrNoBasicConsensus):
-		MeterExecutorGasFallback(req, params.GasCostFallback, gasMeter)
+		MeterExecutorGasFallback(req, params.GasCostFallback, gasMeter, true)
 	case errors.Is(filterErr, types.ErrInvalidFilterInput) || errors.Is(filterErr, types.ErrNoConsensus) || tallyErr != nil:
 		gasMeter.SetReducedPayoutMode()
 		fallthrough
