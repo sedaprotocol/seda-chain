@@ -30,6 +30,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app"
+	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedastakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
 type validator struct {
@@ -218,7 +220,7 @@ func (v *validator) createKey(name string) error {
 	return v.createKeyFromMnemonic(name, mnemonic)
 }
 
-func (v *validator) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
+func (v *validator) buildCreateValidatorMsg(amount sdk.Coin, valHomeDir string) (sdk.Msg, error) {
 	description := stakingtypes.NewDescription(v.moniker, "", "", "", "")
 	commissionRates := stakingtypes.CommissionRates{
 		Rate:          math.LegacyMustNewDecFromStr("0.1"),
@@ -236,9 +238,15 @@ func (v *validator) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
 		return nil, err
 	}
 
-	return stakingtypes.NewMsgCreateValidator(
+	sedaPubKeys, err := utils.GenerateSEDAKeys(sdk.ValAddress(valAddr), filepath.Join(valHomeDir, "config"), "", true)
+	if err != nil {
+		return nil, err
+	}
+
+	return sedastakingtypes.NewMsgCreateSEDAValidator(
 		sdk.ValAddress(valAddr).String(),
 		valPubKey,
+		sedaPubKeys,
 		amount,
 		description,
 		commissionRates,

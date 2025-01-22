@@ -208,7 +208,7 @@ func (s *IntegrationTestSuite) initGenesis(c *chain) {
 		selfDelegationCoin, err := sdk.ParseCoinNormalized(selfDelegationStr)
 		s.Require().NoError(err)
 
-		createValmsg, err := val.buildCreateValidatorMsg(selfDelegationCoin)
+		createValmsg, err := val.buildCreateValidatorMsg(selfDelegationCoin, val.configDir())
 		s.Require().NoError(err)
 
 		signedTx, err := val.signMsg(createValmsg)
