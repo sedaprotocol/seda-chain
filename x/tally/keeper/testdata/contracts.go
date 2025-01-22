@@ -13,6 +13,9 @@ var (
 
 	//go:embed sample_tally_2.wasm
 	sampleTallyWasm2 []byte
+
+	//go:embed random_string_tally.wasm
+	randomStringTallyWasm []byte
 )
 
 func CoreContractWasm() []byte {
@@ -30,4 +33,13 @@ func SampleTallyWasm() []byte {
 // Hash: 5f3b31bff28c64a143119ee6389d62e38767672daace9c36db54fa2d18e9f391
 func SampleTallyWasm2() []byte {
 	return sampleTallyWasm2
+}
+
+// RandomStringTallyWasm returns a tally wasm binary that concatenates the
+// strings found in the 'value' attribute of the reveals. The random
+// element from the name only applies to the execution phase, not the tally.
+// taken from https://github.com/sedaprotocol/dr-playground 8b40cbc
+// Hash: dae38b4ed8c00031a12c1cd506b8f4949b3a314720939f7b5400d1f6b9978337
+func RandomStringTallyWasm() []byte {
+	return randomStringTallyWasm
 }

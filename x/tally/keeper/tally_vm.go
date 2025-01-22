@@ -81,11 +81,20 @@ func tallyVMArg(inputArgs []byte, reveals []types.RevealBody, outliers []bool) (
 	}
 	arg = append(arg, string(r))
 
-	o, err := json.Marshal(outliers)
+	outliersArg := make([]int, len(outliers))
+	for i, outlier := range outliers {
+		if outlier {
+			outliersArg[i] = 1
+		} else {
+			outliersArg[i] = 0
+		}
+	}
+
+	o, err := json.Marshal(outliersArg)
 	if err != nil {
 		return nil, err
 	}
 	arg = append(arg, string(o))
 
-	return arg, err
+	return arg, nil
 }
