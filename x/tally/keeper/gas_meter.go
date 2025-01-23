@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/hex"
 	"fmt"
+	stdmath "math"
 	"sort"
 	"strconv"
 
@@ -81,8 +82,15 @@ func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicatio
 			continue
 		}
 
-		gasUsedPerExec := proxyConfig.Fee.Amount.Quo(gasMeter.GasPrice()).Uint64()
-		gasUsedPerExec = min(gasUsedPerExec, gasMeter.RemainingExecGas()/uint64(replicationFactor))
+		// Compute the proxy gas used per executor, capping it at the max uint64
+		// value and the remaining execution gas.
+		gasUsedPerExecInt := proxyConfig.Fee.Amount.Quo(gasMeter.GasPrice())
+		var gasUsedPerExec uint64
+		if gasUsedPerExecInt.IsUint64() {
+			gasUsedPerExec = min(gasUsedPerExecInt.Uint64(), gasMeter.RemainingExecGas()/uint64(replicationFactor))
+		} else {
+			gasUsedPerExec = min(stdmath.MaxUint64, gasMeter.RemainingExecGas()/uint64(replicationFactor))
+		}
 
 		gasMeter.ConsumeExecGasForProxy(pubKeyBytes, gasUsedPerExec, replicationFactor)
 	}
@@ -145,17 +153,16 @@ func MeterExecutorGasDivergent(executors []string, gasReports []uint64, replicat
 		}
 	}
 	medianGasUsed := median(adjGasReports)
-	totalGasUsed := medianGasUsed*uint64(replicationFactor-1) + min(lowestReport*2, medianGasUsed)
-	totalShares := medianGasUsed*uint64(replicationFactor-1) + lowestReport*2
+	totalGasUsed := math.NewIntFromUint64(medianGasUsed*uint64(replicationFactor-1) + min(lowestReport*2, medianGasUsed))
+	totalShares := math.NewIntFromUint64(medianGasUsed * uint64(replicationFactor-1)).Add(math.NewIntFromUint64(lowestReport * 2))
 	var lowestGasUsed, regGasUsed uint64
-	if totalShares == 0 {
+	if totalShares.IsZero() {
 		lowestGasUsed = 0
 		regGasUsed = 0
 	} else {
-		lowestGasUsed = lowestReport * 2 * totalGasUsed / totalShares
-		regGasUsed = medianGasUsed * totalGasUsed / totalShares
+		lowestGasUsed = math.NewIntFromUint64(lowestReport * 2).Mul(totalGasUsed).Quo(totalShares).Uint64()
+		regGasUsed = math.NewIntFromUint64(medianGasUsed).Mul(totalGasUsed).Quo(totalShares).Uint64()
 	}
-
 	for i, executor := range executors {
 		gasUsed := regGasUsed
 		if i == lowestReporterIndex {

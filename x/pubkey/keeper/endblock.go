@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
@@ -83,7 +85,7 @@ func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, keyIndex utils.SEDAKey
 		return false, err
 	}
 
-	var powerSum uint64
+	powerSum := math.ZeroInt()
 	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
 		registered, err := k.HasRegisteredKey(ctx, valAddr, keyIndex)
 		if err != nil {
@@ -93,7 +95,7 @@ func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, keyIndex utils.SEDAKey
 			return false
 		}
 		//nolint:gosec // G115: We shouldn't get negative power anyway.
-		powerSum += uint64(power)
+		powerSum = powerSum.Add(math.NewInt(power))
 		return false
 	})
 	if err != nil {
@@ -105,12 +107,13 @@ func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, keyIndex utils.SEDAKey
 		return false, err
 	}
 
-	requiredPower := totalPower.Uint64()*uint64(activationThresholdPercent) + 1
-	gotPower := powerSum * 100
+	requiredPower := totalPower.Mul(math.NewIntFromUint64(uint64(activationThresholdPercent))).Add(math.OneInt())
+	gotPower := powerSum.Mul(math.NewInt(100))
 
-	k.Logger(ctx).Info("checked status of secp256k1 proving scheme", "required", requiredPower, "got", gotPower)
+	k.Logger(ctx).Info("checked status of secp256k1 proving scheme",
+		"required", requiredPower.String(), "got", gotPower.String())
 
-	if gotPower >= requiredPower {
+	if gotPower.GTE(requiredPower) {
 		return true, nil
 	}
 	return false, nil
