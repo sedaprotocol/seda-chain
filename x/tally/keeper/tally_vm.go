@@ -68,6 +68,10 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterRe
 		"DR_PAYBACK_ADDRESS":    paybackAddrHex,
 	})
 
+	if vmRes.ExitInfo.ExitCode != 0 && len(vmRes.Result) == 0 {
+		vmRes.Result = []byte(vmRes.ExitInfo.ExitMessage)
+	}
+
 	gasMeter.ConsumeTallyGas(vmRes.GasUsed)
 	return vmRes, nil
 }
