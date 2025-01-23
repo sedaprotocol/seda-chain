@@ -14,6 +14,7 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	sdkstaking "github.com/cosmos/cosmos-sdk/x/staking"
 	sdkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -21,6 +22,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/x/staking/client/cli"
 	"github.com/sedaprotocol/seda-chain/x/staking/keeper"
+	"github.com/sedaprotocol/seda-chain/x/staking/simulation"
 	"github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
@@ -134,4 +136,12 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 // RegisterInvariants registers the staking module invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
 	keeper.RegisterInvariants(ir, am.keeper)
+}
+
+// WeightedOperations returns the all the staking module operations with their respective weights.
+func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
+	return simulation.WeightedOperations(
+		simState.AppParams, simState.Cdc, simState.TxConfig,
+		am.accountKeeper, am.bankKeeper, am.keeper,
+	)
 }

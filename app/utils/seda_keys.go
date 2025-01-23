@@ -13,9 +13,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/spf13/cast"
-
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/spf13/cast"
 
 	cmtos "github.com/cometbft/cometbft/libs/os"
 
