@@ -3,11 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
-	"slices"
-
-	"golang.org/x/exp/constraints"
-
-	"github.com/josharian/atox"
+	"math/big"
 )
 
 var (
@@ -96,10 +92,11 @@ func (f FilterMode) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bo
 }
 
 type FilterStdDev struct {
-	maxSigma          Sigma
+	sigmaMultiplier   SigmaMultiplier
 	dataPath          string // JSON path to reveal data
-	filterFunc        func(dataList []string, maxSigma Sigma, errors []bool, replicationFactor uint16) ([]bool, bool)
+	filterFunc        func(dataList []string, sigmaMultiplier SigmaMultiplier, errors []bool, replicationFactor uint16, bitLenLimit int) ([]bool, bool)
 	replicationFactor uint16
+	bitLenLimit       int
 }
 
 // NewFilterStdDev constructs a new FilterStdDev object given a
@@ -118,58 +115,61 @@ func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor u
 		return filter, ErrFilterInputTooShort.Wrapf("%d < %d", len(input), 18)
 	}
 
-	maxSigma, err := NewSigma(input[1:9])
+	sigmaMultiplier, err := NewSigmaMultiplier(input[1:9])
 	if err != nil {
 		return filter, err
 	}
-	filter.maxSigma = maxSigma
+	filter.sigmaMultiplier = sigmaMultiplier
 
 	switch input[9] {
-	case 0x00: // Int32
-		filter.filterFunc = detectOutliersInteger[int32]
-	case 0x01: // Int64
-		filter.filterFunc = detectOutliersInteger[int64]
-	case 0x02: // Uint32
-		filter.filterFunc = detectOutliersInteger[uint32]
-	case 0x03: // Uint64
-		filter.filterFunc = detectOutliersInteger[uint64]
+	case 0x00: // 32-bit signed integer
+		filter.bitLenLimit = 31
+	case 0x01: // 32-bit unsigned integer
+		filter.bitLenLimit = 32
+	case 0x02: // 64-bit signed integer
+		filter.bitLenLimit = 63
+	case 0x03: // 64-bit unsigned integer
+		filter.bitLenLimit = 64
+	case 0x04: // 128-bit signed integer
+		filter.bitLenLimit = 127
+	case 0x05: // 128-bit unsigned integer
+		filter.bitLenLimit = 128
+	case 0x06: // 256-bit signed integer
+		filter.bitLenLimit = 255
+	case 0x07: // 256-bit unsigned integer
+		filter.bitLenLimit = 256
 	default:
 		return filter, ErrInvalidNumberType
 	}
+	filter.filterFunc = detectOutliersBigInt
 
 	var pathLen uint64
 	err = binary.Read(bytes.NewReader(input[10:18]), binary.BigEndian, &pathLen)
 	if err != nil {
 		return filter, err
 	}
-
 	path := input[18:]
 	if len(path) != int(pathLen) /* #nosec G115 */ {
 		return filter, ErrInvalidPathLen.Wrapf("expected: %d got: %d", int(pathLen), len(path)) // #nosec G115
 	}
+
 	filter.dataPath = string(path)
 	filter.replicationFactor = replicationFactor
 	return filter, nil
 }
 
 // ApplyFilter applies the Standard Deviation Filter and returns an
-// outlier list.
-// (i) If more than 1/3 of reveals are corrupted (i.e. invalid json
-// path, invalid bytes, etc.), a corrupt reveals error is returned
-// without an outlier list.
-// (ii) If the number type is invalid, an error is returned without
-// an outlier list.
-// (iii) Otherwise, an outlier list is returned. A reveal is declared
-// an outlier if it deviates from the median by more than the given
-// max sigma. If less than 2/3 of the reveals are non-outliers, "no
-// consensus" error is returned as well.
+// outlier list. A reveal is declared an outlier if it deviates from
+// the median by more than the sample standard deviation multiplied
+// by the given sigma multiplier value.
 func (f FilterStdDev) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bool) {
 	dataList, _ := parseReveals(reveals, f.dataPath, errors)
-	return f.filterFunc(dataList, f.maxSigma, errors, f.replicationFactor)
+	return f.filterFunc(dataList, f.sigmaMultiplier, errors, f.replicationFactor, f.bitLenLimit)
 }
 
-func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma Sigma, errors []bool, replicationFactor uint16) ([]bool, bool) {
-	nums := make([]T, 0, len(dataList))
+func detectOutliersBigInt(dataList []string, sigmaMultiplier SigmaMultiplier, errors []bool, replicationFactor uint16, bitLenLimit int) ([]bool, bool) {
+	sum := new(big.Int)
+	nums := make([]*big.Int, 0, len(dataList))
 	corruptQueue := make([]int, 0, len(dataList)) // queue of corrupt indices in dataList
 	for i, data := range dataList {
 		if data == "" {
@@ -178,13 +178,20 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma Si
 			continue
 		}
 
-		num, err := atox.N[T](data)
-		if err != nil {
+		num := new(big.Int)
+		_, ok := num.SetString(data, 10)
+		if !ok || num.BitLen() > bitLenLimit {
+			errors[i] = true
+			corruptQueue = append(corruptQueue, i)
+			continue
+		}
+		if bitLenLimit%2 == 0 && num.Sign() == -1 {
 			errors[i] = true
 			corruptQueue = append(corruptQueue, i)
 			continue
 		}
 		nums = append(nums, num)
+		sum.Add(sum, num)
 	}
 
 	// Construct outliers list.
@@ -193,14 +200,34 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma Si
 		return outliers, false
 	}
 
-	median := findMedian(nums)
+	// Find sample standard deviation.
+	n := big.NewInt(int64(len(nums)))
+	mean := sum.Div(sum, n)
+
+	sumSquaredDiff := new(big.Int)
+	for _, num := range nums {
+		diff := new(big.Int).Sub(num, mean)
+		diff.Mul(diff, diff)
+		sumSquaredDiff.Add(sumSquaredDiff, diff)
+	}
+
+	maxDev := new(big.Rat)
+	if n.Cmp(big.NewInt(1)) > 0 {
+		variance := new(big.Int).Div(sumSquaredDiff, n.Sub(n, big.NewInt(1)))
+		stdDev := new(big.Int).Sqrt(variance)
+		maxDev.Mul(sigmaMultiplier.BigRat(), new(big.Rat).SetInt(stdDev))
+	} else {
+		maxDev.SetInt64(1) // doesn't matter what we set here
+	}
+
+	// Fill out the outliers list.
 	var numsInd, nonOutlierCount int
 	for i := range outliers {
 		if len(corruptQueue) > 0 && i == corruptQueue[0] {
 			outliers[i] = true
 			corruptQueue = corruptQueue[1:]
 		} else {
-			if median.IsWithinSigma(nums[numsInd], maxSigma) {
+			if isWithinMaxDev(nums[numsInd], mean, maxDev) {
 				nonOutlierCount++
 			} else {
 				outliers[i] = true
@@ -217,20 +244,10 @@ func detectOutliersInteger[T constraints.Integer](dataList []string, maxSigma Si
 	return outliers, true
 }
 
-// findMedian returns the median of a given slice of integers.
-// It makes a copy of the slice to leave the given slice intact.
-func findMedian[T constraints.Integer](nums []T) *HalfStepInt[T] {
-	length := len(nums)
-	numsSorted := make([]T, length)
-	copy(numsSorted, nums)
-	slices.Sort(numsSorted)
-
-	median := new(HalfStepInt[T])
-	mid := length / 2
-	if length%2 == 1 {
-		median.Mid(numsSorted[mid], numsSorted[mid])
-	} else {
-		median.Mid(numsSorted[mid-1], numsSorted[mid])
-	}
-	return median
+// isWithinMaxDev returns true if the given number is within the given
+// deviation amount from the mean.
+func isWithinMaxDev(num, mean *big.Int, maxDev *big.Rat) bool {
+	diff := new(big.Int).Sub(num, mean)
+	absDiff := new(big.Rat).SetInt(new(big.Int).Abs(diff))
+	return maxDev.Cmp(absDiff) >= 0
 }

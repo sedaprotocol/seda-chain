@@ -492,16 +492,78 @@ func TestFilter(t *testing.T) {
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
-			name:            "Standard deviation filter uint64",
-			tallyInputAsHex: "02000000000016E36003000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = $.result.text
-			outliers:        []bool{true, false, false, false, false, true},
+			name:            "Standard deviation int32",
+			tallyInputAsHex: "02000000000016E36000000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.5, number_type = 0x00, json_path = $.result.text
+			outliers:        make([]bool, 6),
 			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": 4, "number": 0}}`},
-				{Reveal: `{"result": {"text": 5, "number": 10}}`},
-				{Reveal: `{"result": {"text": 6, "number": 101}}`},
-				{Reveal: `{"result": {"text": 7, "number": 0}}`},
-				{Reveal: `{"result": {"text": 8, "number": 0}}`},
-				{Reveal: `{"result": {"text": 9, "number": 0}}`},
+				{Reveal: `{"result": {"text": 4}}`},
+				{Reveal: `{"result": {"text": 5}}`},
+				{Reveal: `{"result": {"text": 6}}`},
+				{Reveal: `{"result": {"text": 7}}`},
+				{Reveal: `{"result": {"text": 8}}`},
+				{Reveal: `{"result": {"text": 9}}`},
+			},
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
+			wantErr:      types.ErrNoConsensus,
+		},
+		{
+			name:            "Standard deviation uint32 (Some invalid reveals)",
+			tallyInputAsHex: "0200000000000F424005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x01, json_path = $.result.text
+			outliers:        make([]bool, 4),
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": 4294967295}}`},        // ok (max of uint64)
+				{Reveal: `{"result": {"text": 4294967296}}`},        // overflow
+				{Reveal: `{"result": {"text": 4294967295}}`},        // ok
+				{Reveal: `{"result": {"text": -100, "number": 0}}`}, // negative
+			},
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*4,
+			wantErr:      types.ErrNoConsensus,
+		},
+		{
+			name:            "Standard deviation uint64 (Some invalid reveals)",
+			tallyInputAsHex: "0200000000000F424005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x03, json_path = $.result.text
+			outliers:        make([]bool, 4),
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": 18446744073709551615}}`}, // ok (max of uint64)
+				{Reveal: `{"result": {"text": 18446744073709551616}}`}, // overflow
+				{Reveal: `{"result": {"text": 18446744073709551615}}`}, // ok
+				{Reveal: `{"result": {"text": -100, "number": 0}}`},    // negative
+			},
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*4,
+			wantErr:      types.ErrNoConsensus,
+		},
+		{
+			name:            "Standard deviation uint128 (Some invalid reveals)",
+			tallyInputAsHex: "0200000000000F424005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x05, json_path = $.result.text
+			outliers:        make([]bool, 4),
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": 340282366920938463463374607431768211455}}`}, // ok (max of uint128)
+				{Reveal: `{"result": {"text": 340282366920938463463374607431768211456}}`}, // overflow
+				{Reveal: `{"result": {"text": 340282366920938463463374607431768211455}}`}, // ok
+				{Reveal: `{"result": {"text": -100, "number": 0}}`},                       // negative
+			},
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*4,
+			wantErr:      types.ErrNoConsensus,
+		},
+		{
+			name:            "Standard deviation int64 (With an overflow)",
+			tallyInputAsHex: "0200000000001E848002000000000000000D242E726573756C742E74657874", // sigma_multiplier = 2.0, number_type = 0x02, json_path = $.result.text
+			outliers:        []bool{false, false, false, false, true, true},
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": 4}}`},
+				{Reveal: `{"result": {"text": 5}}`},
+				{Reveal: `{"result": {"text": 6}}`},
+				{Reveal: `{"result": {"text": 7}}`},
+				{Reveal: `{"result": {"text": -9223372036854775808}}`}, // overflow
+				{Reveal: `{"result": {"text": 9}}`},
 			},
 			consensus:    true,
 			consPubKeys:  nil,
@@ -509,25 +571,8 @@ func TestFilter(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
-			name:            "Standard deviation filter int64",
-			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
-			outliers:        []bool{true, false, false, false, false, true},
-			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": 4, "number": 0}}`},
-				{Reveal: `{"result": {"text": 5, "number": 10}}`},
-				{Reveal: `{"result": {"text": 6, "number": 101}}`},
-				{Reveal: `{"result": {"text": 7, "number": 0}}`},
-				{Reveal: `{"result": {"text": 8, "number": 0}}`},
-				{Reveal: `{"result": {"text": 9, "number": 0}}`},
-			},
-			consensus:    true,
-			consPubKeys:  nil,
-			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
-			wantErr:      nil,
-		},
-		{
-			name:            "Standard deviation filter - Single reveal",
-			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = $.result.text
+			name:            "Standard deviation (Single reveal)",
+			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.5, number_type = 0x01, json_path = $.result.text
 			outliers:        []bool{false},
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": 4, "number": 0}}`},
@@ -538,33 +583,16 @@ func TestFilter(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
-			name:            "Standard deviation filter - One corrupt reveal",
-			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = uint64, json_path = $.result.text
-			outliers:        make([]bool, 6),
-			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": 4, "number": 0}}`},
-				{Reveal: `{"result": {"text": 5, "number": 10}}`},
-				{Reveal: `{"result": {"text": 6, "number": 101}}`},
-				{Reveal: `{"result": {"text": 7, "number": 0}}`},
-				{Reveal: `{"result": {"number": 0}}`}, // corrupt
-				{Reveal: `{"result": {"text": 9, "number": 0}}`},
-			},
-			consensus:    false,
-			consPubKeys:  nil,
-			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
-			wantErr:      types.ErrNoConsensus,
-		},
-		{
-			name:            "Standard deviation filter - Max sigma 1.55",
-			tallyInputAsHex: "02000000000017A6B003000000000000000D242E726573756C742E74657874", // max_sigma = 1.55, number_type = uint64, json_path = $.result.text
-			outliers:        []bool{true, false, false, false, false, true},
-			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": 4, "number": 0}}`},
-				{Reveal: `{"result": {"text": 5, "number": 10}}`},
-				{Reveal: `{"result": {"text": 6, "number": 101}}`},
-				{Reveal: `{"result": {"text": 7, "number": 0}}`},
-				{Reveal: `{"result": {"text": 8, "number": 0}}`},
-				{Reveal: `{"result": {"text": 9, "number": 0}}`},
+			name:            "Standard deviation int32 (One overflow)",
+			tallyInputAsHex: "0200000000001E848000000000000000000D242E726573756C742E74657874", // sigma_multiplier = 2.0, number_type = 0x00, json_path = $.result.text
+			outliers:        []bool{false, false, false, false, false, true},
+			reveals: []types.RevealBody{ // mean = 5.5 -> 5, stddev = 1.29
+				{Reveal: `{"result": {"text": 4}}`},
+				{Reveal: `{"result": {"text": 5}}`},
+				{Reveal: `{"result": {"text": 6}}`},
+				{Reveal: `{"result": {"text": 7}}`},
+				{Reveal: `{"result": {"text": 6}}`},
+				{Reveal: `{"result": {"text": 4294967296}}`}, // overflow
 			},
 			consensus:    true,
 			consPubKeys:  nil,
@@ -572,27 +600,10 @@ func TestFilter(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
-			name:            "Standard deviation filter - Max sigma 1.45",
-			tallyInputAsHex: "02000000000016201003000000000000000D242E726573756C742E74657874", // max_sigma = 1.45, number_type = uint64, json_path = $.result.text
-			outliers:        make([]bool, 6),
-			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": 4, "number": 0}}`},
-				{Reveal: `{"result": {"text": 5, "number": 10}}`},
-				{Reveal: `{"result": {"text": 6, "number": 101}}`},
-				{Reveal: `{"result": {"text": 7, "number": 0}}`},
-				{Reveal: `{"result": {"text": 8, "number": 0}}`},
-				{Reveal: `{"result": {"text": 9, "number": 0}}`},
-			},
-			consensus:    false,
-			consPubKeys:  nil,
-			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
-			wantErr:      types.ErrNoConsensus,
-		},
-		{
-			name:            "Standard deviation filter int64 with negative reveals",
-			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
-			outliers:        []bool{true, false, false, false, false, true},
-			reveals: []types.RevealBody{
+			name:            "Standard deviation int32 (Negative numbers)",
+			tallyInputAsHex: "0200000000001E848000000000000000000D242E726573756C742E74657874", // sigma_multiplier = 2.0, number_type = 0x00, json_path = $.result.text
+			outliers:        []bool{true, false, false, false, false, false},
+			reveals: []types.RevealBody{ // mean = 5, stddev = 1
 				{Reveal: `{"result": {"text": -4, "number": 0}}`},
 				{Reveal: `{"result": {"text": -5, "number": 10}}`},
 				{Reveal: `{"result": {"text": -6, "number": 101}}`},
@@ -606,19 +617,164 @@ func TestFilter(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
-			name:            "Standard deviation filter int64 median -0.5",
-			tallyInputAsHex: "02000000000007A12001000000000000000D242E726573756C742E74657874", // max_sigma = 0.5, number_type = int64, json_path = $.result.text
-			outliers:        make([]bool, 4),
+			name:            "Standard deviation uint128 (One corrupt and one overflow)",
+			tallyInputAsHex: "0200000000002DC6C005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 3, number_type = 0x05, json_path = $.result.text
+			outliers:        []bool{false, true, false, false, false, true, false, false},
+			reveals: []types.RevealBody{ // mean = 416667, stddev = 75277
+				{Reveal: `{"result": {"text": 200000, "number": 0}}`},
+				{Reveal: `{"result": {"number": 700000, "number": 0}}`}, // corrupt
+				{Reveal: `{"result": {"text": 400000, "number": 10}}`},
+				{Reveal: `{"result": {"text": 400000, "number": 101}}`},
+				{Reveal: `{"result": {"text": 400000, "number": 0}}`},
+				{Reveal: `{"result": {"text": 340282366920938463463374607431768211456, "number": 0}}`}, // overflow
+				{Reveal: `{"result": {"text": 500000, "number": 0}}`},
+				{Reveal: `{"result": {"text": 500000, "number": 0}}`},
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*8,
+			wantErr:      nil,
+		},
+		{
+			name:            "Standard deviation int256",
+			tallyInputAsHex: "02000000000016E36003000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.5, number_type = 0x06, json_path = $.result.text
+			outliers:        []bool{false, false, false, false, false, false, false, true},
+			reveals: []types.RevealBody{ // mean = 5, stddev = 2
+				{Reveal: `{"result": {"text": 2, "number": 0}}`},
+				{Reveal: `{"result": {"text": 4, "number": 10}}`},
+				{Reveal: `{"result": {"text": 4, "number": 101}}`},
+				{Reveal: `{"result": {"text": 4, "number": 0}}`},
+				{Reveal: `{"result": {"text": 5, "number": 0}}`},
+				{Reveal: `{"result": {"text": 5, "number": 0}}`},
+				{Reveal: `{"result": {"text": 7, "number": 0}}`},
+				{Reveal: `{"result": {"text": 9, "number": 0}}`},
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*8,
+			wantErr:      nil,
+		},
+		{
+			name:            "Standard deviation int256 (Negative numbers)",
+			tallyInputAsHex: "0200000000000F424006000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x06, json_path = $.result.text
+			outliers:        []bool{false, false, true, false, false, false},
 			reveals: []types.RevealBody{
-				{Reveal: `{"result": {"text": 1, "number": 0}}`},
-				{Reveal: `{"result": {"text": 0, "number": 0}}`},
-				{Reveal: `{"result": {"text": -1, "number": 10}}`},
-				{Reveal: `{"result": {"text": -2, "number": 10}}`},
+				{Reveal: `{"result": {"text": -28930, "number": 0}}`},
+				{Reveal: `{"result": {"text": -28000, "number": 10}}`},
+				{Reveal: `{"result": {"text": -30005, "number": 101}}`},
+				{Reveal: `{"result": {"text": -28600, "number": 0}}`},
+				{Reveal: `{"result": {"text": -27758, "number": 0}}`},
+				{Reveal: `{"result": {"text": -28121, "number": 0}}`},
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
+			wantErr:      nil,
+		},
+		{
+			name:            "Standard deviation int256 (Negative numbers (2))",
+			tallyInputAsHex: "0200000000000F424006000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x06, json_path = $.result.text
+			outliers:        make([]bool, 6),
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": -28930, "number": 0}}`},
+				{Reveal: `{"result": {"text": -28000, "number": 10}}`},
+				{Reveal: `{"result": {"text": -29005, "number": 101}}`},
+				{Reveal: `{"result": {"text": -28600, "number": 0}}`},
+				{Reveal: `{"result": {"text": -27758, "number": 0}}`},
+				{Reveal: `{"result": {"text": -28121, "number": 0}}`},
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*4,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
 			wantErr:      types.ErrNoConsensus,
+		},
+		{
+			name:            "Standard deviation int256 (Negative numbers (3))",
+			tallyInputAsHex: "0200000000000F8C7806000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.019, number_type = 0x06, json_path = $.result.text
+			outliers:        make([]bool, 6),
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": -28930, "number": 0}}`},
+				{Reveal: `{"result": {"text": -28000, "number": 10}}`},
+				{Reveal: `{"result": {"text": -29005, "number": 101}}`},
+				{Reveal: `{"result": {"text": -28600, "number": 0}}`},
+				{Reveal: `{"result": {"text": -27758, "number": 0}}`},
+				{Reveal: `{"result": {"text": -28121, "number": 0}}`},
+			}, // stddev = 517 mean = -28403 range = [-28929.823, -27876.177]
+			consensus:    false,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
+			wantErr:      types.ErrNoConsensus,
+		},
+		{
+			name:            "Standard deviation int256 (Negative numbers (4))",
+			tallyInputAsHex: "0200000000000F9C1806000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.023, number_type = 0x06, json_path = $.result.text
+			outliers:        []bool{false, false, true, false, true, false},
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": -28930, "number": 0}}`},
+				{Reveal: `{"result": {"text": -28000, "number": 10}}`},
+				{Reveal: `{"result": {"text": -29005, "number": 101}}`},
+				{Reveal: `{"result": {"text": -28600, "number": 0}}`},
+				{Reveal: `{"result": {"text": -27758, "number": 0}}`},
+				{Reveal: `{"result": {"text": -28121, "number": 0}}`},
+			}, // stddev = 517 mean = -28403 range = [-27873.11, -28930.891]
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*6,
+			wantErr:      nil,
+		},
+		{
+			name:            "Standard deviation int256 (Very large numbers)",
+			tallyInputAsHex: "0200000000000F424006000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x06, json_path = $.result.text
+			outliers:        []bool{true, false, false, false, false, false, false, true},
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": 2000000000000000000000000000000000000000, "number": 0}}`},
+				{Reveal: `{"result": {"text": 4000000000000000000000000000000000000000, "number": 10}}`},
+				{Reveal: `{"result": {"text": 4000000000000000000000000000000000000000, "number": 101}}`},
+				{Reveal: `{"result": {"text": 4000000000000000000000000000000000000000, "number": 0}}`},
+				{Reveal: `{"result": {"text": 5000000000000000000000000000000000000000, "number": 0}}`},
+				{Reveal: `{"result": {"text": 5000000000000000000000000000000000000000, "number": 0}}`},
+				{Reveal: `{"result": {"text": 7000000000000000000000000000000000000000, "number": 0}}`},
+				{Reveal: `{"result": {"text": 9000000000000000000000000000000000000000, "number": 0}}`},
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*8,
+			wantErr:      nil,
+		},
+		{
+			name:            "Standard deviation int256 (Some reveals too large)",
+			tallyInputAsHex: "0200000000000F424006000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x06, json_path = $.result.text
+			outliers:        []bool{true, false, false, false, false, true, false, false, false},
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": -58896044618658097711785492504343953926634992332820282019728792003956564819968, "number": 0}}`},   // too small
+				{Reveal: `{"result": {"text": -57896044618658097711785492504343953926634992332820282019728792003956564819967, "number": 10}}`},  // ok (min of int256)
+				{Reveal: `{"result": {"text": -57896044618658097711785492504343953926634992332820282019728792003956564819967, "number": 101}}`}, // ok
+				{Reveal: `{"result": {"text": -57896044618658097711785492504343953926634992332820282019728792003956564819967, "number": 0}}`},   // ok
+				{Reveal: `{"result": {"text": -57896044618658097711785492504343953926634992332820282019728792003956564819967, "number": 0}}`},   // ok
+				{Reveal: `{"result": {"text": 115792089237316195423570985008687907853269984665640564039457584007913129639936, "number": 0}}`},   // too large (max of uint256 + 1)
+				{Reveal: `{"result": {"text": -57896044618658097711785492504343953926634992332820282019728792003956564819967, "number": 0}}`},   // ok
+				{Reveal: `{"result": {"text": -57896044618658097711785492504343953926634992332820282019728792003956564819967, "number": 0}}`},   // ok
+				{Reveal: `{"result": {"text": -57896044618658097711785492504343953926634992332820282019728792003956564819967, "number": 0}}`},   // ok
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*9,
+			wantErr:      nil,
+		},
+		{
+			name:            "Standard deviation uint256 (Some reveals negative)",
+			tallyInputAsHex: "0200000000000F424007000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x07, json_path = $.result.text
+			outliers:        []bool{false, false, false, true},
+			reveals: []types.RevealBody{
+				{Reveal: `{"result": {"text": 115792089237316195423570985008687907853269984665640564039457584007913129639935}}`}, // ok (max of uint256)
+				{Reveal: `{"result": {"text": 115792089237316195423570985008687907853269984665640564039457584007913129639935}}`}, // ok
+				{Reveal: `{"result": {"text": 115792089237316195423570985008687907853269984665640564039457584007913129639935}}`}, // ok
+				{Reveal: `{"result": {"text": -100, "number": 0}}`},                                                              // negative
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*4,
+			wantErr:      nil,
 		},
 	}
 	for _, tt := range tests {
