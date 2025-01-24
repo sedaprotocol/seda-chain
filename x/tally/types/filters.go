@@ -3,7 +3,9 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"slices"
+	"strconv"
 
 	"golang.org/x/exp/constraints"
 )
@@ -124,13 +126,13 @@ func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor u
 
 	switch input[9] {
 	case 0x00: // Int32
-		filter.filterFunc = detectOutliersInteger[int32]
+		filter.filterFunc = detectOutliersSignedInteger[int32]
 	case 0x01: // Int64
-		filter.filterFunc = detectOutliersInteger[int64]
+		filter.filterFunc = detectOutliersSignedInteger[int64]
 	case 0x02: // Uint32
-		filter.filterFunc = detectOutliersInteger[uint32]
+		filter.filterFunc = detectOutliersUnsignedInt[uint32]
 	case 0x03: // Uint64
-		filter.filterFunc = detectOutliersInteger[uint64]
+		filter.filterFunc = detectOutliersUnsignedInt[uint64]
 	default:
 		return filter, ErrInvalidNumberType
 	}
@@ -166,7 +168,7 @@ func (f FilterStdDev) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, 
 	return f.filterFunc(dataList, f.maxSigma, errors, f.replicationFactor)
 }
 
-func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma, errors []bool, replicationFactor uint16) ([]bool, bool) {
+func detectOutliersSignedInteger[T constraints.Integer](dataList []any, maxSigma Sigma, errors []bool, replicationFactor uint16) ([]bool, bool) {
 	nums := make([]T, 0, len(dataList))
 	corruptQueue := make([]int, 0, len(dataList)) // queue of corrupt indices in dataList
 	for i, data := range dataList {
@@ -182,6 +184,67 @@ func detectOutliersInteger[T constraints.Integer](dataList []any, maxSigma Sigma
 			continue
 		}
 		nums = append(nums, T(num))
+	}
+
+	// Construct outliers list.
+	outliers := make([]bool, len(dataList))
+	if len(nums) == 0 {
+		return outliers, false
+	}
+	median := findMedian(nums)
+	var numsInd, nonOutlierCount int
+	for i := range outliers {
+		if len(corruptQueue) > 0 && i == corruptQueue[0] {
+			outliers[i] = true
+			corruptQueue = corruptQueue[1:]
+		} else {
+			if median.IsWithinSigma(nums[numsInd], maxSigma) {
+				nonOutlierCount++
+			} else {
+				outliers[i] = true
+			}
+			numsInd++
+		}
+	}
+
+	// If less than 2/3 of the numbers fall within max sigma range
+	// from the median, there is no consensus in reveal data.
+	if nonOutlierCount*3 < int(replicationFactor)*2 {
+		return outliers, false
+	}
+	return outliers, true
+}
+
+func detectOutliersUnsignedInt[T constraints.Unsigned](dataList []any, maxSigma Sigma, errors []bool, replicationFactor uint16) ([]bool, bool) {
+	nums := make([]T, 0, len(dataList))
+	corruptQueue := make([]int, 0, len(dataList)) // queue of corrupt indices in dataList
+	for i, data := range dataList {
+		if data == nil {
+			errors[i] = true
+			corruptQueue = append(corruptQueue, i)
+			continue
+		}
+		var num T
+		num1, ok := data.(int64)
+		if !ok {
+			jsonNum, ok := data.(json.Number)
+			if !ok {
+				errors[i] = true
+				corruptQueue = append(corruptQueue, i)
+				continue
+			}
+
+			num2, err := strconv.ParseUint(jsonNum.String(), 10, 64)
+			if err != nil {
+				errors[i] = true
+				corruptQueue = append(corruptQueue, i)
+				continue
+			}
+			num = T(num2)
+		} else {
+			num = T(num1)
+		}
+		nums = append(nums, num)
 	}
 
 	// Construct outliers list.

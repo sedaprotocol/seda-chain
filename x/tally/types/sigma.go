@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 
 	"golang.org/x/exp/constraints"
+
+	"cosmossdk.io/math"
 )
 
 // Sigma is a 10^6 precision fixed-point unsigned number represented
@@ -43,15 +45,18 @@ type HalfStepInt[T constraints.Integer] struct {
 // Mid sets h to the middle point between the two integers x and y
 // and returns h.
 func (h *HalfStepInt[T]) Mid(x, y T) *HalfStepInt[T] {
-	h.integer = (x + y) / 2
-	h.neg = (x + y) < 0
-	h.halfStep = false
-	// Set h's halfStep to true if x+y is odd, or equivalently,
-	// if only one of x and y is odd.
-	if (x%2 == 0 && y%2 != 0) ||
-		(x%2 != 0 && y%2 == 0) {
-		h.halfStep = true
+	if x == y {
+		h.integer = x
+		h.neg = x < 0
+		h.halfStep = false
+		return h
 	}
+
+	// Use big int math to avoid overflow.
+	sum := math.NewIntFromUint64(uint64(x)).Add(math.NewIntFromUint64(uint64(y)))
+	h.integer = T(sum.QuoRaw(2).Uint64())
+	h.neg = sum.IsNegative()
+	h.halfStep = !sum.ModRaw(2).IsZero()
 	return h
 }
 

@@ -5,11 +5,8 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"math"
-	"math/rand"
 	"slices"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -25,11 +22,8 @@ func FuzzStdDevFilter(f *testing.F) {
 	err := fixture.tallyKeeper.SetParams(fixture.Context(), types.DefaultParams())
 	require.NoError(f, err)
 
-	f.Fuzz(func(t *testing.T, n0, n1, n2, n3, n4, n5, n6, n7, n8, n9 int64) {
-		source := rand.NewSource(time.Now().UnixNano())
-		t.Log("random testing with seed", source.Int63())
-
-		nums := []int64{n0, n1, n2, n3, n4, n5, n6, n7, n8, n9}
+	f.Fuzz(func(t *testing.T, n0, n1, n2, n3, n4, n5, n6, n7, n8, n9 uint64) {
+		nums := []uint64{n0, n1, n2, n3, n4, n5, n6, n7, n8, n9}
 		var reveals []types.RevealBody
 		for _, num := range nums {
 			revealStr := fmt.Sprintf(`{"result": {"text": %d}}`, num)
@@ -38,29 +32,43 @@ func FuzzStdDevFilter(f *testing.F) {
 			})
 		}
 
-		// Compute stats about nums using floating-point arithmetic.
+		// Compute expected results using arbitrary-precision arithmetic.
 		length := len(nums)
-		numsSorted := make([]int64, length)
+		numsSorted := make([]uint64, length)
 		copy(numsSorted, nums)
 		slices.Sort(numsSorted)
-		var median float64
+
+		median := sdkmath.LegacyZeroDec()
 		mid := length / 2
 		if length%2 == 1 {
-			median = float64(numsSorted[mid]+numsSorted[mid]) / 2
+			median = sdkmath.NewIntFromUint64(numsSorted[mid]).ToLegacyDec()
 		} else {
-			median = float64(numsSorted[mid-1]+numsSorted[mid]) / 2
+			median = sdkmath.NewIntFromUint64(numsSorted[mid-1]).Add(sdkmath.NewIntFromUint64(numsSorted[mid])).ToLegacyDec().Quo(sdkmath.NewInt(2).ToLegacyDec())
 		}
-		neighborDist := float64(numsSorted[mid] - numsSorted[mid-1])
-		expOutliers := make([]int, len(nums))
+		sigmaInt := sdkmath.NewIntFromUint64(numsSorted[mid] - numsSorted[mid-1])
+		for !sigmaInt.Mul(sdkmath.NewInt(1e6)).IsUint64() {
+			sigmaInt = sigmaInt.Quo(sdkmath.NewInt(10))
+		}
+		neighborDist := sigmaInt.ToLegacyDec()
+		expOutliers := make([]bool, len(nums))
+		expNonOutlierCount := 0
+		expConsensus := true
 		for i, num := range nums {
-			if math.Abs(float64(num)-median) > neighborDist {
-				expOutliers[i] = 1
+			if sdkmath.NewIntFromUint64(num).ToLegacyDec().Sub(median).Abs().GT(neighborDist) {
+				expOutliers[i] = true
+			} else {
+				expNonOutlierCount++
 			}
 		}
+		if expNonOutlierCount*3 < len(nums)*2 {
+			expOutliers = make([]bool, len(nums))
+			expConsensus = false
+		}
 
+		// Prepare inputs and execute filter.
 		bz := make([]byte, 8)
-		binary.BigEndian.PutUint64(bz, uint64(neighborDist*1e6))
-		filterHex := fmt.Sprintf("02%s01000000000000000b726573756C742E74657874", hex.EncodeToString(bz)) // max_sigma = neighborDist, number_type = int64, json_path = result.text
+		binary.BigEndian.PutUint64(bz, sigmaInt.Mul(sdkmath.NewInt(1e6)).Uint64())
+		filterHex := fmt.Sprintf("02%s03000000000000000b726573756C742E74657874", hex.EncodeToString(bz)) // max_sigma = neighborDist, number_type = int64, json_path = result.text
 		filterInput, err := hex.DecodeString(filterHex)
 		require.NoError(t, err)
 
@@ -73,7 +81,13 @@ func FuzzStdDevFilter(f *testing.F) {
 			types.DefaultParams(),
 			gasMeter,
 		)
+
+		require.Equal(t, expConsensus, result.Consensus)
 		require.Equal(t, expOutliers, result.Outliers)
-		require.ErrorIs(t, err, nil)
+		if expConsensus {
+			require.ErrorIs(t, err, nil)
+		} else {
+			require.ErrorIs(t, err, types.ErrNoConsensus)
+		}
 	})
 }
