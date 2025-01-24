@@ -156,7 +156,7 @@ func TestFilterAndTally(t *testing.T) {
 			require.Equal(t, tt.tallyGasUsed, gasMeter.TallyGasUsed())
 			require.Equal(t, tt.consensus, filterRes.Consensus)
 			require.Equal(t, tt.consensus, tallyRes.Consensus)
-			require.Equal(t, tt.exitCode, tallyRes.ExitInfo.ExitCode)
+			require.Equal(t, tt.exitCode, tallyRes.ExitCode)
 			if tt.filterErr != nil {
 				require.Equal(t, []byte(tt.filterErr.Error()), tallyRes.Result)
 			}

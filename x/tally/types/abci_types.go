@@ -9,6 +9,8 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/math"
+
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
 )
 
 type Request struct {
@@ -103,6 +105,36 @@ func (u *RevealBody) TryHash() (string, error) {
 	hasher.Write(proxyPubKeyHasher.Sum(nil))
 
 	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+type VMResult struct {
+	Stdout      []string
+	Stderr      []string
+	Result      []byte
+	GasUsed     uint64
+	ExitCode    int
+	ExitMessage string
+}
+
+// MapVMResult maps a tallyvm.VmResult to a VmResult, taking care of checking the result pointer
+// and setting the exit message if the result is empty. This allows us to display the exit message
+// to the end user.
+func MapVMResult(vmRes tallyvm.VmResult) VMResult {
+	result := VMResult{
+		ExitCode:    vmRes.ExitInfo.ExitCode,
+		ExitMessage: vmRes.ExitInfo.ExitMessage,
+		Stdout:      vmRes.Stdout,
+		Stderr:      vmRes.Stderr,
+		GasUsed:     vmRes.GasUsed,
+	}
+
+	if vmRes.Result == nil || (vmRes.ResultLen == 0 && vmRes.ExitInfo.ExitCode != 0) {
+		result.Result = []byte(vmRes.ExitInfo.ExitMessage)
+	} else if vmRes.Result != nil {
+		result.Result = *vmRes.Result
+	}
+
+	return result
 }
 
 type Distribution struct {

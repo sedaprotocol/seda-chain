@@ -116,6 +116,59 @@ func TestEndBlock(t *testing.T) {
 	}
 }
 
+func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
+	f := initFixture(t)
+
+	// Set max result size to 1 and verify that the data request fails
+	params := types.DefaultParams()
+	params.MaxResultSize = 1
+	msg := &types.MsgUpdateParams{
+		Authority: f.tallyKeeper.GetAuthority(),
+		Params:    params,
+	}
+
+	_, err := f.tallyMsgServer.UpdateParams(f.Context(), msg)
+	require.NoError(t, err)
+
+	drID, _ := f.commitRevealDataRequest(t, "cmV2ZWFsIHRpbWVvdXQ=", "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", 1, 1, 1, false)
+
+	err = f.tallyKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
+	require.NoError(t, err)
+	require.NotEqual(t, uint32(0), dataResult.ExitCode)
+	require.Contains(t, string(dataResult.Result), "Result larger than 1bytes")
+
+	dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
+	require.NoError(t, err)
+	require.Contains(t, dataResults, *dataResult)
+
+	// Set max result size to 1024 and verify that the data request succeeds
+	params.MaxResultSize = 1024
+	msg = &types.MsgUpdateParams{
+		Authority: f.tallyKeeper.GetAuthority(),
+		Params:    params,
+	}
+
+	_, err = f.tallyMsgServer.UpdateParams(f.Context(), msg)
+	require.NoError(t, err)
+
+	drID, _ = f.commitRevealDataRequest(t, "cmV2ZWFsIHRpbWVvdXQgd2l0aCAyIHJldmVhbHM=", "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", 1, 1, 1, false)
+
+	err = f.tallyKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	dataResultAfter, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
+	require.NoError(t, err)
+	require.Equal(t, uint32(0), dataResultAfter.ExitCode)
+	require.Contains(t, string(dataResultAfter.Result), "VM_MODE=tally")
+
+	dataResultsAfter, err := f.batchingKeeper.GetDataResults(f.Context(), false)
+	require.NoError(t, err)
+	require.Contains(t, dataResultsAfter, *dataResultAfter)
+}
+
 // TestTallyVM tests tally VM using a sample tally wasm that performs
 // preliminary checks on the given reveal data.
 func TestTallyVM(t *testing.T) {
@@ -271,7 +324,7 @@ func TestTallyVM(t *testing.T) {
 
 				bz, err := hex.DecodeString(tc.args[0])
 				require.NoError(t, err)
-				require.Contains(t, string(result.Result), string(bz))
+				require.Contains(t, string(*result.Result), string(bz))
 			}
 		})
 	}
@@ -337,7 +390,7 @@ func TestTallyVM_EnvVars(t *testing.T) {
 
 			require.Equal(t, 0, len(result.Stderr))
 			for key := range envs {
-				require.Contains(t, string(result.Result), fmt.Sprintf("%s=%s", key, envs[key]))
+				require.Contains(t, string(*result.Result), fmt.Sprintf("%s=%s", key, envs[key]))
 			}
 		})
 	}

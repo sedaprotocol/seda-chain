@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	DefaultMaxResultSize                 = 1024
 	DefaultMaxTallyGasLimit              = 150_000_000_000_000
 	DefaultFilterGasCostNone             = 100_000
 	DefaultFilterGasCostMultiplierMode   = 100_000
@@ -22,6 +23,7 @@ var DefaultBurnRatio = math.LegacyNewDecWithPrec(2, 1)
 // DefaultParams returns default tally module parameters.
 func DefaultParams() Params {
 	return Params{
+		MaxResultSize:                 DefaultMaxResultSize,
 		MaxTallyGasLimit:              DefaultMaxTallyGasLimit,
 		FilterGasCostNone:             DefaultFilterGasCostNone,
 		FilterGasCostMultiplierMode:   DefaultFilterGasCostMultiplierMode,
@@ -34,6 +36,9 @@ func DefaultParams() Params {
 
 // ValidateBasic performs basic validation on tally module parameters.
 func (p *Params) Validate() error {
+	if p.MaxResultSize <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("max result size must be greater than 0: %d", p.MaxResultSize)
+	}
 	if p.MaxTallyGasLimit <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("max tally gas limit must be greater than 0: %d", p.MaxTallyGasLimit)
 	}

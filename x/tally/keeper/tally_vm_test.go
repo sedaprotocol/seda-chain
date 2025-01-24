@@ -49,7 +49,7 @@ func TestExecuteTallyProgram_RandomString(t *testing.T) {
 	}, gasMeter)
 
 	require.NoError(t, err)
-	require.Equal(t, 0, vmRes.ExitInfo.ExitCode)
+	require.Equal(t, 0, vmRes.ExitCode)
 	require.Equal(t, "one,three", string(vmRes.Result))
 }
 
@@ -73,6 +73,6 @@ func TestExecuteTallyProgram_InvalidImports(t *testing.T) {
 	}, []types.RevealBody{}, gasMeter)
 
 	require.NoError(t, err)
-	require.NotEqual(t, 0, vmRes.ExitInfo.ExitCode)
+	require.NotEqual(t, 0, vmRes.ExitCode)
 	require.Contains(t, string(vmRes.Result), "\"seda_v1\".\"this_does_not_exist\"")
 }

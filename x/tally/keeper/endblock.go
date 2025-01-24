@@ -80,6 +80,8 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		return err
 	}
 
+	tallyvm.TallyMaxBytes = uint(params.MaxResultSize)
+
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
 	processedReqs := make(map[string][]types.Distribution)
@@ -114,7 +116,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			_, tallyResults[i] = k.FilterAndTally(ctx, req, params, gasMeter)
 			dataResults[i].Result = tallyResults[i].Result
 			//nolint:gosec // G115: We shouldn't get negative exit code anyway.
-			dataResults[i].ExitCode = uint32(tallyResults[i].ExitInfo.ExitCode)
+			dataResults[i].ExitCode = uint32(tallyResults[i].ExitCode)
 			dataResults[i].Consensus = tallyResults[i].Consensus
 
 			k.Logger(ctx).Info("completed tally", "request_id", req.ID)
@@ -172,7 +174,7 @@ type TallyResult struct {
 	StdOut       []string
 	StdErr       []string
 	Result       []byte
-	ExitInfo     tallyvm.ExitInfo
+	ExitCode     int
 	ExecGasUsed  uint64
 	TallyGasUsed uint64
 	ProxyPubKeys []string // data proxy pubkeys in basic consensus
@@ -204,25 +206,25 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 	}
 
 	// Phase 2: Tally Program Execution
-	var vmRes tallyvm.VmResult
+	var vmRes types.VMResult
 	var tallyErr error
 	if filterErr == nil {
 		vmRes, tallyErr = k.ExecuteTallyProgram(ctx, req, filterResult, reveals, gasMeter)
 		if tallyErr != nil {
 			tallyResult.Result = []byte(tallyErr.Error())
-			tallyResult.ExitInfo.ExitCode = TallyExitCodeExecError
+			tallyResult.ExitCode = TallyExitCodeExecError
 		} else {
 			tallyResult.Result = vmRes.Result
-			tallyResult.ExitInfo = vmRes.ExitInfo
+			tallyResult.ExitCode = vmRes.ExitCode
 			tallyResult.StdOut = vmRes.Stdout
 			tallyResult.StdErr = vmRes.Stderr
 		}
 	} else {
 		tallyResult.Result = []byte(filterErr.Error())
 		if errors.Is(filterErr, types.ErrInvalidFilterInput) {
-			tallyResult.ExitInfo.ExitCode = TallyExitCodeInvalidFilterInput
+			tallyResult.ExitCode = TallyExitCodeInvalidFilterInput
 		} else {
-			tallyResult.ExitInfo.ExitCode = TallyExitCodeFilterError
+			tallyResult.ExitCode = TallyExitCodeFilterError
 		}
 	}
 

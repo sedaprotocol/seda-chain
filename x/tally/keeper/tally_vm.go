@@ -20,27 +20,27 @@ const (
 	TallyExitCodeExecError          = 255 // error while executing tally VM
 )
 
-func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.RevealBody, gasMeter *types.GasMeter) (tallyvm.VmResult, error) {
+func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.RevealBody, gasMeter *types.GasMeter) (types.VMResult, error) {
 	tallyProgram, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyProgramID)
 	if err != nil {
-		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrFindingTallyProgram, req)
+		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrFindingTallyProgram, req)
 	}
 	tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
 	if err != nil {
-		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingTallyInputs, req)
+		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingTallyInputs, req)
 	}
 
 	// Convert base64-encoded payback address to hex encoding that
 	// the tally VM expects.
 	decodedBytes, err := base64.StdEncoding.DecodeString(req.PaybackAddress)
 	if err != nil {
-		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingPaybackAddress, req)
+		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingPaybackAddress, req)
 	}
 	paybackAddrHex := hex.EncodeToString(decodedBytes)
 
 	args, err := tallyVMArg(tallyInputs, reveals, filterResult.Outliers)
 	if err != nil {
-		return tallyvm.VmResult{}, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, req)
+		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, req)
 	}
 
 	k.Logger(ctx).Info(
@@ -68,12 +68,14 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterRe
 		"DR_PAYBACK_ADDRESS":    paybackAddrHex,
 	})
 
-	if vmRes.ExitInfo.ExitCode != 0 && len(vmRes.Result) == 0 {
-		vmRes.Result = []byte(vmRes.ExitInfo.ExitMessage)
+	gasMeter.ConsumeTallyGas(vmRes.GasUsed)
+
+	result := types.MapVMResult(vmRes)
+	if result.ExitMessage != "" {
+		k.Logger(ctx).Error("tally vm exit message", "request_id", req.ID, "exit_message", result.ExitMessage)
 	}
 
-	gasMeter.ConsumeTallyGas(vmRes.GasUsed)
-	return vmRes, nil
+	return result, nil
 }
 
 func tallyVMArg(inputArgs []byte, reveals []types.RevealBody, outliers []bool) ([]string, error) {

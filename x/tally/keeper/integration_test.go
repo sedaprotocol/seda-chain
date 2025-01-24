@@ -43,6 +43,8 @@ import (
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
+
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/integration"
@@ -91,6 +93,7 @@ type fixture struct {
 	wasmKeeper        wasmkeeper.Keeper
 	wasmStorageKeeper wasmstoragekeeper.Keeper
 	tallyKeeper       keeper.Keeper
+	tallyMsgServer    types.MsgServer
 	batchingKeeper    batchingkeeper.Keeper
 	dataProxyKeeper   *dataproxykeeper.Keeper
 	wasmViewKeeper    wasmtypes.ViewKeeper
@@ -103,6 +106,7 @@ func initFixture(t testing.TB) *fixture {
 	tempDir := t.TempDir()
 
 	chainID := "integration-app"
+	tallyvm.TallyMaxBytes = 1024
 
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, wasmstoragetypes.StoreKey,
@@ -253,6 +257,8 @@ func initFixture(t testing.TB) *fixture {
 		authority.String(),
 	)
 
+	tallyMsgServer := keeper.NewMsgServerImpl(tallyKeeper)
+
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
 	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
@@ -320,6 +326,7 @@ func initFixture(t testing.TB) *fixture {
 		wasmKeeper:        wasmKeeper,
 		wasmStorageKeeper: *wasmStorageKeeper,
 		tallyKeeper:       tallyKeeper,
+		tallyMsgServer:    tallyMsgServer,
 		batchingKeeper:    batchingKeeper,
 		dataProxyKeeper:   dataProxyKeeper,
 		wasmViewKeeper:    wasmKeeper,

@@ -32,4 +32,6 @@ message Params {
     (amino.dont_omitempty) = true,
     (gogoproto.nullable) = false
   ];
+  // MaxResultSize is the maximum size of the result of a data request in bytes.
+  uint32 max_result_size = 8;
 }
