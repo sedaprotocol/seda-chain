@@ -45,8 +45,6 @@ func loadSEDAKeys(keyFilePath string, allowUnencrypted bool) (keys sedaKeys, err
 	encryptionKey := ReadSEDAKeyEncryptionKeyFromEnv()
 	if encryptionKey == "" && !allowUnencrypted {
 		panic(fmt.Sprintf("SEDA key encryption key is not set, set the %s environment variable or run with --%s", SEDAKeyEncryptionKeyEnvVar, FlagAllowUnencryptedSedaKeys))
-	} else if encryptionKey != "" && allowUnencrypted {
-		panic(fmt.Sprintf("SEDA key encryption key is set, but --%s flag is also set", FlagAllowUnencryptedSedaKeys))
 	}
 
 	keyFile, err := loadSEDAKeyFile(keyFilePath, encryptionKey)
