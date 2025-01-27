@@ -18,41 +18,25 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
-func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
-	// Use defer to prevent returning an error, which would cause
-	// the chain to halt.
-	defer func() {
-		// Handle a panic.
-		if r := recover(); r != nil {
-			k.Logger(ctx).Error("recovered from panic in tally end block", "err", r)
-		}
-		// Handle an error.
-		if err != nil {
-			k.Logger(ctx).Error("error in tally end block", "err", err)
-		}
-		err = nil
-	}()
-
+func (k Keeper) EndBlock(ctx sdk.Context) error {
 	coreContract, err := k.wasmStorageKeeper.GetCoreContractAddr(ctx)
 	if err != nil {
-		return
+		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get core contract address", "err", err)
+		return nil
 	}
 	if coreContract == nil {
 		k.Logger(ctx).Info("skipping tally end block - core contract has not been registered")
-		return
+		return nil
 	}
 
 	postRes, err := k.wasmKeeper.Sudo(ctx, coreContract, []byte(`{"expire_data_requests":{}}`))
 	if err != nil {
-		return
+		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to expire data requests", "err", err)
+		return nil
 	}
 	k.Logger(ctx).Debug("sudo expire_data_requests", "res", postRes)
 
-	err = k.ProcessTallies(ctx, coreContract)
-	if err != nil {
-		return
-	}
-	return
+	return k.ProcessTallies(ctx, coreContract)
 }
 
 // ProcessTallies fetches from the core contract the list of requests
@@ -60,14 +44,16 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally params", "err", err)
+		return nil
 	}
 
 	// Fetch tally-ready data requests.
 	// TODO: Deal with offset and limits. (#313)
 	queryRes, err := k.wasmViewKeeper.QuerySmart(ctx, coreContract, []byte(`{"get_data_requests_by_status":{"status": "tallying", "offset": 0, "limit": 100}}`))
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally-ready data requests", "err", err)
+		return nil
 	}
 	if string(queryRes) == "[]" {
 		return nil
@@ -77,7 +63,8 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	var tallyList []types.Request
 	err = json.Unmarshal(queryRes, &tallyList)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to unmarshal tally-ready data requests", "err", err)
+		return nil
 	}
 
 	tallyvm.TallyMaxBytes = uint(params.MaxResultSize)
@@ -88,21 +75,16 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	tallyResults := make([]TallyResult, len(tallyList))
 	dataResults := make([]batchingtypes.DataResult, len(tallyList))
 	for i, req := range tallyList {
-		dataResults[i] = batchingtypes.DataResult{
-			DrId:          req.ID,
-			DrBlockHeight: req.Height,
-			Version:       req.Version,
-			//nolint:gosec // G115: We shouldn't get negative block heights anyway.
-			BlockHeight: uint64(ctx.BlockHeight()),
-			//nolint:gosec // G115: We shouldn't get negative timestamps anyway.
-			BlockTimestamp: uint64(ctx.BlockTime().Unix()),
-			PaybackAddress: req.PaybackAddress,
-			SedaPayload:    req.SedaPayload,
+		dataResults[i], err = req.ToResult(ctx)
+		if err != nil {
+			types.MarkResultAsFallback(&dataResults[i], err, TallyExitCodeInvalidRequest)
+			continue
 		}
 
 		gasPrice, ok := math.NewIntFromString(req.GasPrice)
 		if !ok {
-			return fmt.Errorf("invalid gas price: %s", req.GasPrice)
+			types.MarkResultAsFallback(&dataResults[i], fmt.Errorf("invalid gas price: %s", req.GasPrice), TallyExitCodeInvalidRequest)
+			continue
 		}
 
 		gasMeter := types.NewGasMeter(req.TallyGasLimit, req.ExecGasLimit, params.MaxTallyGasLimit, gasPrice, params.GasCostBase)
@@ -135,17 +117,21 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	// Notify the Core Contract of tally completion.
 	msg, err := types.MarshalSudoRemoveDataRequests(processedReqs)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to marshal sudo remove data requests", "err", err)
+		return nil
 	}
 	_, err = k.wasmKeeper.Sudo(ctx, coreContract, msg)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to notify core contract of tally completion", "err", err)
+		return nil
 	}
 
 	// Store the data results for batching.
 	for i := range dataResults {
 		err := k.batchingKeeper.SetDataResultForBatching(ctx, dataResults[i])
+		// If writing to the store fails we should stop the node to prevent acting on invalid state.
 		if err != nil {
+			k.Logger(ctx).Error("failed to store data result for batching", "err", err)
 			return err
 		}
 

@@ -15,6 +15,7 @@ import (
 
 const (
 	TallyExitCodeNotEnoughCommits   = 200 // tally VM not executed due to not enough commits
+	TallyExitCodeInvalidRequest     = 201 // tally VM not executed due to invalid request
 	TallyExitCodeInvalidFilterInput = 253 // tally VM not executed due to invalid filter input
 	TallyExitCodeFilterError        = 254 // tally VM not executed due to filter error
 	TallyExitCodeExecError          = 255 // error while executing tally VM

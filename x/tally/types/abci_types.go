@@ -5,12 +5,17 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 
 	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/math"
 
+	"github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
+
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
 type Request struct {
@@ -31,6 +36,43 @@ type Request struct {
 	Reveals           map[string]RevealBody `json:"reveals"`
 	SedaPayload       string                `json:"seda_payload"`
 	Version           string                `json:"version"`
+}
+
+// Validate validates the request fields and returns any validation error along with a partially filled DataResult
+// containing the valid fields that were successfully decoded.
+func (req *Request) ToResult(ctx types.Context) (result batchingtypes.DataResult, encodingErr error) {
+	// If for whatever reason the request ID is not a valid hex string there is no way to proceed
+	// so we're simply going panic.
+	// This should never happen since encoding bytes to hex is an operation that can't fail on the contract (Rust) side.
+	if _, err := hex.DecodeString(req.ID); err != nil {
+		panic(fmt.Sprintf("invalid request ID: %s", req.ID))
+	}
+
+	result.DrId = req.ID
+	result.DrBlockHeight = req.Height
+	result.Version = req.Version
+	//nolint:gosec // G115: We shouldn't get negative block heights.
+	result.BlockHeight = uint64(ctx.BlockHeight())
+	//nolint:gosec // G115: We shouldn't get negative timestamps.
+	result.BlockTimestamp = uint64(ctx.BlockTime().Unix())
+
+	// Validate PaybackAddress
+	if _, err := base64.StdEncoding.DecodeString(req.PaybackAddress); err != nil {
+		encodingErr = fmt.Errorf("invalid payback address: %w", err)
+		result.PaybackAddress = base64.RawStdEncoding.EncodeToString([]byte(""))
+	} else {
+		result.PaybackAddress = req.PaybackAddress
+	}
+
+	// Validate SedaPayload
+	if _, err := base64.StdEncoding.DecodeString(req.SedaPayload); err != nil {
+		encodingErr = fmt.Errorf("invalid seda payload: %w", err)
+		result.SedaPayload = base64.RawStdEncoding.EncodeToString([]byte(""))
+	} else {
+		result.SedaPayload = req.SedaPayload
+	}
+
+	return result, encodingErr
 }
 
 type RevealBody struct {
