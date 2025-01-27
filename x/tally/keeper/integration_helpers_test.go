@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	salt                       = "9c0257114eb9399a2985f8e75dad7600c5d89fe3824ffa99ec1c3eb8bf3b0501"
+	saltHex                    = "9c0257114eb9399a2985f8e75dad7600c5d89fe3824ffa99ec1c3eb8bf3b0501"
 	defaultRevealTimeoutBlocks = 10
 )
 
@@ -65,13 +65,12 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal stri
 	// The stakers commit and reveal.
 	revealBody := types.RevealBody{
 		ID:           drID,
-		Salt:         []byte(salt),
 		Reveal:       reveal,
 		GasUsed:      0,
 		ExitCode:     0,
 		ProxyPubKeys: []string{},
 	}
-	commitment, err := revealBody.TryHash()
+	commitment, err := f.generateRevealBodyHash(t, revealBody, saltHex)
 	require.NoError(t, err)
 
 	for i := 0; i < numCommits; i++ {
@@ -222,7 +221,7 @@ func revealMsg(drID, reveal, stakerPubKey, proof string) []byte {
 		  "stdout": []
 		}
 	}`
-	return []byte(fmt.Sprintf(revealMsg, drID, drID, salt, reveal, stakerPubKey, proof))
+	return []byte(fmt.Sprintf(revealMsg, drID, drID, saltHex, reveal, stakerPubKey, proof))
 }
 
 // generateStakeProof generates a proof for a stake message given a
@@ -325,4 +324,44 @@ func (f *fixture) initAccountWithCoins(t *testing.T, addr sdk.AccAddress, coins 
 	require.NoError(t, err)
 	err = f.bankKeeper.SendCoinsFromModuleToAccount(f.Context(), minttypes.ModuleName, addr, coins)
 	require.NoError(t, err)
+}
+
+// generateRevealBodyHash generates the hash of a given reveal body.
+// Since the RevealBody type in the tally module does not include the
+// salt field, the salt must be provided separately.
+func (f *fixture) generateRevealBodyHash(t *testing.T, rb types.RevealBody, salt string) (string, error) {
+	revealHasher := sha3.NewLegacyKeccak256()
+	revealBytes, err := base64.StdEncoding.DecodeString(rb.Reveal)
+	if err != nil {
+		return "", err
+	}
+	revealHasher.Write(revealBytes)
+	revealHash := revealHasher.Sum(nil)
+
+	hasher := sha3.NewLegacyKeccak256()
+
+	idBytes, err := hex.DecodeString(rb.ID)
+	if err != nil {
+		return "", err
+	}
+	hasher.Write(idBytes)
+
+	hasher.Write([]byte(salt))
+	hasher.Write([]byte{rb.ExitCode})
+
+	gasUsedBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(gasUsedBytes, rb.GasUsed)
+	hasher.Write(gasUsedBytes)
+
+	hasher.Write(revealHash)
+
+	proxyPubKeyHasher := sha3.NewLegacyKeccak256()
+	for _, key := range rb.ProxyPubKeys {
+		keyHasher := sha3.NewLegacyKeccak256()
+		keyHasher.Write([]byte(key))
+		proxyPubKeyHasher.Write(keyHasher.Sum(nil))
+	}
+	hasher.Write(proxyPubKeyHasher.Sum(nil))
+
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }

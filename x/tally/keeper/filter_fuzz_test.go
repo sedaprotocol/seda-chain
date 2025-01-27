@@ -30,11 +30,8 @@ func FuzzStdDevFilter(f *testing.F) {
 			})
 		}
 
-		// Compute expected results using arbitrary-precision arithmetic.
-
 		// Prepare inputs and execute filter.
 		bz := make([]byte, 8)
-		// binary.BigEndian.PutUint64(bz, sigmaInt.Mul(sdkmath.NewInt(1e6)).Uint64())
 		filterHex := fmt.Sprintf("02%s05000000000000000b726573756C742E74657874", hex.EncodeToString(bz)) // max_sigma = neighborDist, number_type = int64, json_path = result.text
 		filterInput, err := hex.DecodeString(filterHex)
 		require.NoError(t, err)

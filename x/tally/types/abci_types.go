@@ -2,12 +2,9 @@ package types
 
 import (
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-
-	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/math"
 
@@ -77,7 +74,6 @@ func (req *Request) ToResult(ctx types.Context) (result batchingtypes.DataResult
 
 type RevealBody struct {
 	ID           string   `json:"id"`
-	Salt         []byte   `json:"salt"`
 	ExitCode     byte     `json:"exit_code"`
 	GasUsed      uint64   `json:"gas_used"`
 	Reveal       string   `json:"reveal"` // base64-encoded string
@@ -95,11 +91,6 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 		intSlice[i] = int(b)
 	}
 
-	saltIntSlice := make([]int, len(u.Salt))
-	for i, b := range u.Salt {
-		saltIntSlice[i] = int(b)
-	}
-
 	type Alias RevealBody
 	return json.Marshal(&struct {
 		Reveal []int `json:"reveal"`
@@ -107,46 +98,8 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 		*Alias
 	}{
 		Reveal: intSlice,
-		Salt:   saltIntSlice,
 		Alias:  (*Alias)(u),
 	})
-}
-
-func (u *RevealBody) TryHash() (string, error) {
-	revealHasher := sha3.NewLegacyKeccak256()
-	revealBytes, err := base64.StdEncoding.DecodeString(u.Reveal)
-	if err != nil {
-		return "", err
-	}
-	revealHasher.Write(revealBytes)
-	revealHash := revealHasher.Sum(nil)
-
-	hasher := sha3.NewLegacyKeccak256()
-
-	idBytes, err := hex.DecodeString(u.ID)
-	if err != nil {
-		return "", err
-	}
-	hasher.Write(idBytes)
-
-	hasher.Write(u.Salt)
-	hasher.Write([]byte{u.ExitCode})
-
-	gasUsedBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(gasUsedBytes, u.GasUsed)
-	hasher.Write(gasUsedBytes)
-
-	hasher.Write(revealHash)
-
-	proxyPubKeyHasher := sha3.NewLegacyKeccak256()
-	for _, key := range u.ProxyPubKeys {
-		keyHasher := sha3.NewLegacyKeccak256()
-		keyHasher.Write([]byte(key))
-		proxyPubKeyHasher.Write(keyHasher.Sum(nil))
-	}
-	hasher.Write(proxyPubKeyHasher.Sum(nil))
-
-	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 type VMResult struct {
