@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"math"
 	"math/big"
 )
 
@@ -94,10 +95,27 @@ func (f FilterMode) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bo
 type FilterStdDev struct {
 	sigmaMultiplier   SigmaMultiplier
 	dataPath          string // JSON path to reveal data
-	filterFunc        func(dataList []string, sigmaMultiplier SigmaMultiplier, errors []bool, replicationFactor uint16, bitLenLimit int) ([]bool, bool)
 	replicationFactor uint16
-	bitLenLimit       int
+	// The maximum and minimum values that can be represented by the number type as specified by the requestor
+	maxNumber *big.Int
+	minNumber *big.Int
 }
+
+var (
+	minUint       = big.NewInt(0)
+	minInt32      = big.NewInt(0).SetInt64(math.MinInt32)
+	maxInt32      = big.NewInt(0).SetInt64(math.MaxInt32)
+	maxUint32     = big.NewInt(0).SetUint64(math.MaxUint32)
+	minInt64      = big.NewInt(0).SetInt64(math.MinInt64)
+	maxInt64      = big.NewInt(0).SetInt64(math.MaxInt64)
+	maxUint64     = big.NewInt(0).SetUint64(math.MaxUint64)
+	minInt128, _  = big.NewInt(0).SetString("-170141183460469231731687303715884105728", 10)
+	maxInt128, _  = big.NewInt(0).SetString("170141183460469231731687303715884105727", 10)
+	maxUint128, _ = big.NewInt(0).SetString("340282366920938463463374607431768211455", 10)
+	minInt256, _  = big.NewInt(0).SetString("-57896044618658097711785492504343953926634992332820282019728792003956564819968", 10)
+	maxInt256, _  = big.NewInt(0).SetString("57896044618658097711785492504343953926634992332820282019728792003956564819967", 10)
+	maxUint256, _ = big.NewInt(0).SetString("115792089237316195423570985008687907853269984665640564039457584007913129639935", 10)
+)
 
 // NewFilterStdDev constructs a new FilterStdDev object given a
 // filter input.
@@ -123,25 +141,32 @@ func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor u
 
 	switch input[9] {
 	case 0x00: // 32-bit signed integer
-		filter.bitLenLimit = 31
+		filter.maxNumber = maxInt32
+		filter.minNumber = minInt32
 	case 0x01: // 32-bit unsigned integer
-		filter.bitLenLimit = 32
+		filter.maxNumber = maxUint32
+		filter.minNumber = minUint
 	case 0x02: // 64-bit signed integer
-		filter.bitLenLimit = 63
+		filter.maxNumber = maxInt64
+		filter.minNumber = minInt64
 	case 0x03: // 64-bit unsigned integer
-		filter.bitLenLimit = 64
+		filter.maxNumber = maxUint64
+		filter.minNumber = minUint
 	case 0x04: // 128-bit signed integer
-		filter.bitLenLimit = 127
+		filter.maxNumber = maxInt128
+		filter.minNumber = minInt128
 	case 0x05: // 128-bit unsigned integer
-		filter.bitLenLimit = 128
+		filter.maxNumber = maxUint128
+		filter.minNumber = minUint
 	case 0x06: // 256-bit signed integer
-		filter.bitLenLimit = 255
+		filter.maxNumber = maxInt256
+		filter.minNumber = minInt256
 	case 0x07: // 256-bit unsigned integer
-		filter.bitLenLimit = 256
+		filter.maxNumber = maxUint256
+		filter.minNumber = minUint
 	default:
 		return filter, ErrInvalidNumberType
 	}
-	filter.filterFunc = detectOutliersBigInt
 
 	var pathLen uint64
 	err = binary.Read(bytes.NewReader(input[10:18]), binary.BigEndian, &pathLen)
@@ -164,10 +189,10 @@ func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor u
 // by the given sigma multiplier value.
 func (f FilterStdDev) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bool) {
 	dataList, _ := parseReveals(reveals, f.dataPath, errors)
-	return f.filterFunc(dataList, f.sigmaMultiplier, errors, f.replicationFactor, f.bitLenLimit)
+	return detectOutliersBigInt(dataList, f.sigmaMultiplier, errors, f.replicationFactor, f.minNumber, f.maxNumber)
 }
 
-func detectOutliersBigInt(dataList []string, sigmaMultiplier SigmaMultiplier, errors []bool, replicationFactor uint16, bitLenLimit int) ([]bool, bool) {
+func detectOutliersBigInt(dataList []string, sigmaMultiplier SigmaMultiplier, errors []bool, replicationFactor uint16, minNumber *big.Int, maxNumber *big.Int) ([]bool, bool) {
 	sum := new(big.Int)
 	nums := make([]*big.Int, 0, len(dataList))
 	corruptQueue := make([]int, 0, len(dataList)) // queue of corrupt indices in dataList
@@ -180,12 +205,7 @@ func detectOutliersBigInt(dataList []string, sigmaMultiplier SigmaMultiplier, er
 
 		num := new(big.Int)
 		_, ok := num.SetString(data, 10)
-		if !ok || num.BitLen() > bitLenLimit {
-			errors[i] = true
-			corruptQueue = append(corruptQueue, i)
-			continue
-		}
-		if bitLenLimit%2 == 0 && num.Sign() == -1 {
+		if !ok || num.Cmp(minNumber) < 0 || num.Cmp(maxNumber) > 0 {
 			errors[i] = true
 			corruptQueue = append(corruptQueue, i)
 			continue
