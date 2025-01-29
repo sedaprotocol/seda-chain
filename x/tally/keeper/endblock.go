@@ -31,6 +31,11 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 
 	postRes, err := k.wasmKeeper.Sudo(ctx, coreContract, []byte(`{"expire_data_requests":{}}`))
 	if err != nil {
+		if types.IsContractPausedError(err) {
+			k.Logger(ctx).Warn("Contract is paused, skipping tally end block")
+			return nil
+		}
+
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to expire data requests", "err", err)
 		return nil
 	}
@@ -56,6 +61,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		return nil
 	}
 	if string(queryRes) == "[]" {
+		k.Logger(ctx).Debug("no tally-ready data requests - skipping tally process")
 		return nil
 	}
 	k.Logger(ctx).Info("non-empty tally list - starting tally process")
