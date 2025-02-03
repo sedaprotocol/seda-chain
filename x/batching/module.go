@@ -3,9 +3,9 @@ package batching
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
@@ -116,7 +117,6 @@ func NewAppModule(cdc codec.Codec, keeper keeper.Keeper) AppModule {
 // RegisterServices registers a gRPC query service to respond to the module-specific gRPC queries
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.Querier{Keeper: am.keeper})
-	prometheus.Register(batchEndBlockTimeMetric)
 }
 
 // RegisterInvariants registers the invariants of the module. If an invariant deviates from its predicted value, the InvariantRegistry triggers appropriate logic (most often the chain will be halted)
@@ -144,14 +144,9 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 	return nil
 }
 
-var batchEndBlockTimeMetric = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "seda_batch_end_block_time",
-	Help: "Duration of the last call for the runtime of the batch end block function in seconds",
-})
-
 // EndBlock returns the end block logic for the batching module.
 func (am AppModule) EndBlock(ctx context.Context) error {
-	timer := prometheus.NewTimer(prometheus.ObserverFunc(batchEndBlockTimeMetric.Set))
-	defer timer.ObserveDuration()
+	start := time.Now()
+	defer func() { telemetry.SetGauge(float32(time.Since(start).Seconds()), "seda_batch_end_block_time") }()
 	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
 }

@@ -3,9 +3,9 @@ package tally
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 
 	"cosmossdk.io/core/appmodule"
@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
@@ -117,9 +118,6 @@ func NewAppModule(cdc codec.Codec, keeper keeper.Keeper) AppModule {
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.Querier{Keeper: am.keeper})
-	prometheus.Register(tallyEndBlockTimeMetric)
-	prometheus.Register(keeper.TallyEndBlockNumberOfDataRequestsToTally)
-	prometheus.Register(keeper.TallyEndBlockGasBurned)
 }
 
 // RegisterInvariants registers the invariants of the module. If an invariant deviates from its predicted value, the InvariantRegistry triggers appropriate logic (most often the chain will be halted)
@@ -146,17 +144,15 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 	return nil
 }
 
-var tallyEndBlockTimeMetric = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "seda_tally_end_block_time",
-	Help: "Duration of the last call for the runtime of the tally end block function in seconds",
-})
-
 // EndBlock returns the end block logic for the tally module.
 func (am AppModule) EndBlock(ctx context.Context) error {
-	timer := prometheus.NewTimer(prometheus.ObserverFunc(tallyEndBlockTimeMetric.Set))
-	defer timer.ObserveDuration()
+	start := time.Now()
+	defer func() { telemetry.SetGauge(float32(time.Since(start).Seconds()), "seda_tally_end_block_time") }()
+
+	// Set this to zero so it always shows up even if there are no tallies
+	telemetry.SetGauge(0.0, "seda_tally_end_block_number_of_data_requests_to_tally")
 	// We reset the amount of gas burned in the end block
 	// since we only add to it during the processing of tallies
-	keeper.TallyEndBlockGasBurned.Set(0.0)
+	telemetry.SetGauge(0.0, "seda_tally_end_block_gas_burned")
 	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
 }
