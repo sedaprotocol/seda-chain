@@ -7,7 +7,7 @@ on:
         - main
 
 env:
-  GO_VERSION: "1.21.0"
+  GO_VERSION: "1.22.11"
   GOPRIVATE: github.com/sedaprotocol/vrf-go
   GITHUB_TOKEN: ${{ secrets.PAT }}
   TAR_PATH: /tmp/seda-docker-image.tar
