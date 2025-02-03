@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
+	"github.com/prometheus/client_golang/prometheus"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -23,6 +24,11 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 var _ types.MsgServer = msgServer{}
+
+var OracleProgramCountMetric = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "seda_oracle_program_count",
+	Help: "The count of stored oracle programs",
+})
 
 // StoreOracleProgram stores an oracle program. It unzips a gzip-
 // compressed wasm and stores it using its hash as the key. If a
@@ -73,6 +79,11 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 			sdk.NewAttribute(types.AttributeOracleProgramHash, hashHex),
 		),
 	)
+
+	if !ctx.IsCheckTx() {
+		// only increment the metric if the transaction is included in a block
+		OracleProgramCountMetric.Inc()
+	}
 
 	return &types.MsgStoreOracleProgramResponse{
 		Hash: hashHex,
