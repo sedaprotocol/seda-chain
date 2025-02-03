@@ -378,7 +378,7 @@ rm-testcache:
 ###                                Release                                  ###
 ###############################################################################
 
-GO_VERSION=1.21
+GO_VERSION=1.22
 GORELEASER_IMAGE := ghcr.io/goreleaser/goreleaser-cross:v$(GO_VERSION)
 COSMWASM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //')
 ifdef GITHUB_TOKEN

@@ -1,6 +1,6 @@
 # [Choice] Debian OS version (use bullseye on local arm64/Apple Silicon): buster, bullseye
 ARG VARIANT="bullseye"
-FROM golang:1.21
+FROM golang:1.22
 
 ARG DEBIAN_FRONTEND=noninteractive
 
