@@ -58,6 +58,8 @@ import (
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
 )
 
+const defaultWasmDir = "wasm"
+
 // NewRootCmd creates a new root command for a Cosmos SDK application
 func NewRootCmd() *cobra.Command {
 	cfg := sdk.GetConfig()
@@ -354,7 +356,7 @@ func newApp(
 		cast.ToString(appOpts.Get(sdkflags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		appOpts,
-		"wasm",
+		defaultWasmDir,
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
@@ -395,7 +397,7 @@ func appExport(
 		homePath,
 		uint(1),
 		appOpts,
-		tempDir(),
+		defaultWasmDir,
 	)
 
 	if height != -1 {
