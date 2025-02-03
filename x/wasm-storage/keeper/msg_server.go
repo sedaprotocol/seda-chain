@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"cosmossdk.io/collections"
 
@@ -24,6 +25,11 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 var _ types.MsgServer = msgServer{}
+
+var OracleProgramCountMetric = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "seda_oracle_program_count",
+	Help: "The count of stored oracle programs",
+})
 
 // StoreOracleProgram stores an oracle program. It unzips a gzip-
 // compressed wasm and stores it using its hash as the key. If a
@@ -63,8 +69,10 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 			sdk.NewAttribute(types.AttributeOracleProgramHash, hashHex),
 		),
 	)
-	if err != nil {
-		return nil, err
+
+	if !ctx.IsCheckTx() {
+		// only increment the metric if the transaction is included in a block
+		OracleProgramCountMetric.Inc()
 	}
 
 	return &types.MsgStoreOracleProgramResponse{
@@ -111,9 +119,6 @@ func (m msgServer) StoreExecutorWasm(goCtx context.Context, msg *types.MsgStoreE
 			sdk.NewAttribute(types.AttributeExecutorWasmHash, hashString),
 		),
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	return &types.MsgStoreExecutorWasmResponse{
 		Hash: hashString,

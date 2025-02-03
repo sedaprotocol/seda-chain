@@ -11,6 +11,7 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
 
@@ -44,6 +45,11 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 	return k.ProcessTallies(ctx, coreContract)
 }
 
+var TallyEndBlockNumberOfDataRequestsToTally = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "seda_tally_end_block_number_of_data_requests_to_tally",
+	Help: "The number of data requests to tally at the end of the block",
+})
+
 // ProcessTallies fetches from the core contract the list of requests
 // to be tallied and then goes through it to filter and tally.
 func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) error {
@@ -72,6 +78,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to unmarshal tally-ready data requests", "err", err)
 		return nil
 	}
+	TallyEndBlockNumberOfDataRequestsToTally.Set(float64(len(tallyList)))
 
 	tallyvm.TallyMaxBytes = uint(params.MaxResultSize)
 

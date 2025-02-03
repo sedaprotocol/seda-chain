@@ -10,9 +10,15 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
+
+var TallyEndBlockGasBurned = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "seda_tally_end_block_gas_burned",
+	Help: "The amount of gas burned in the tally end block",
+})
 
 // DistributionsFromGasMeter constructs a list of distribution messages to be
 // sent to the core contract based on the given gas meter. It takes the ID and
@@ -56,6 +62,7 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 	}
 
 	dists[0].Burn.Amount = dists[0].Burn.Amount.Add(reducedPayoutBurn.Mul(gasMeter.GasPrice()))
+	TallyEndBlockGasBurned.Add(float64(dists[0].Burn.Amount.Uint64()))
 	attrs = append(attrs, sdk.NewAttribute(types.AttributeReducedPayoutBurn, reducedPayoutBurn.String()))
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(types.EventTypeGasMeter, attrs...))
