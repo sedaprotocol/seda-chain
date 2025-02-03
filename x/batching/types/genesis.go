@@ -1,6 +1,14 @@
 package types
 
-import "cosmossdk.io/collections"
+import (
+	"bytes"
+	"encoding/hex"
+	fmt "fmt"
+
+	"golang.org/x/crypto/sha3"
+
+	"cosmossdk.io/collections"
+)
 
 // NewGenesisState constructs a GenesisState object.
 func NewGenesisState(
@@ -26,6 +34,38 @@ func DefaultGenesisState() *GenesisState {
 }
 
 // ValidateGenesis validates batching genesis data.
-func ValidateGenesis(_ GenesisState) error {
+func ValidateGenesis(gs GenesisState) error {
+	if gs.CurrentBatchNumber != uint64(len(gs.Batches)) {
+		return fmt.Errorf("current batch number %d should be equal to number of batches %d", gs.CurrentBatchNumber, len(gs.Batches))
+	}
+
+	for _, batch := range gs.Batches {
+		if batch.BatchNumber > gs.CurrentBatchNumber {
+			return fmt.Errorf("batch number %d should not exceed current batch number %d", batch.BatchNumber, gs.CurrentBatchNumber)
+		}
+
+		var provingMetaDataHash []byte
+		if len(batch.ProvingMetadata) == 0 {
+			provingMetaDataHash = make([]byte, 32)
+		} else {
+			hasher := sha3.NewLegacyKeccak256()
+			hasher.Write(batch.ProvingMetadata)
+			provingMetaDataHash = hasher.Sum(nil)
+		}
+		valRoot, err := hex.DecodeString(batch.ValidatorRoot)
+		if err != nil {
+			return err
+		}
+		dataRoot, err := hex.DecodeString(batch.DataResultRoot)
+		if err != nil {
+			return err
+		}
+
+		expectedBatchID := ComputeBatchID(batch.BatchNumber, batch.BlockHeight, valRoot, dataRoot, provingMetaDataHash)
+		if !bytes.Equal(batch.BatchId, expectedBatchID) {
+			return fmt.Errorf("batch id %s does not match expected batch id %s", hex.EncodeToString(batch.BatchId), hex.EncodeToString(expectedBatchID))
+		}
+	}
+
 	return nil
 }
