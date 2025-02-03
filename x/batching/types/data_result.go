@@ -39,11 +39,13 @@ func (dr *DataResult) TryHash() (string, error) {
 	resultHash := hasher.Sum(nil)
 
 	gasUsedBytes := make([]byte, 16)
-	gasUsedBigInt := dr.GasUsed.BigInt().Bytes()
-	if len(gasUsedBigInt) > 16 {
-		return "", errors.New("math.Int too large for u128")
+	if dr.GasUsed != nil && !dr.GasUsed.IsNil() {
+		gasUsedBigInt := dr.GasUsed.BigInt().Bytes()
+		if len(gasUsedBigInt) > 16 {
+			return "", errors.New("math.Int too large for u128")
+		}
+		copy(gasUsedBytes[16-len(gasUsedBigInt):], gasUsedBigInt)
 	}
-	copy(gasUsedBytes[16-len(gasUsedBigInt):], gasUsedBigInt)
 
 	paybackAddrBytes, err := base64.StdEncoding.DecodeString(dr.PaybackAddress)
 	if err != nil {
