@@ -9,7 +9,6 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
@@ -57,7 +56,6 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 	}
 
 	dists[0].Burn.Amount = dists[0].Burn.Amount.Add(reducedPayoutBurn.Mul(gasMeter.GasPrice()))
-	telemetry.SetGauge(float32(dists[0].Burn.Amount.Uint64()), "seda_tally_end_block_gas_burned")
 	attrs = append(attrs, sdk.NewAttribute(types.AttributeReducedPayoutBurn, reducedPayoutBurn.String()))
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(types.EventTypeGasMeter, attrs...))

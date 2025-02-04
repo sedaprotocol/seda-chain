@@ -152,6 +152,6 @@ func (am AppModule) EndBlock(ctx context.Context) error {
 	telemetry.SetGauge(0.0, "seda_tally_end_block_number_of_data_requests_to_tally")
 	// We reset the amount of gas burned in the end block
 	// since we only add to it during the processing of tallies
-	telemetry.SetGauge(0.0, "seda_tally_end_block_gas_burned")
+	telemetry.SetGauge(0.0, "seda_tally_end_block_tera_gas_burned")
 	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
 }
