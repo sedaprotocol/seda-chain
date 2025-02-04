@@ -3,7 +3,6 @@ package batching
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -146,7 +145,7 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 
 // EndBlock returns the end block logic for the batching module.
 func (am AppModule) EndBlock(ctx context.Context) error {
-	start := time.Now()
-	defer func() { telemetry.SetGauge(float32(time.Since(start).Seconds()), "seda_batch_end_block_time") }()
+	start := telemetry.Now()
+	defer telemetry.ModuleMeasureSince(types.ModuleName, start, "seda_batch_end_block_time")
 	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
 }

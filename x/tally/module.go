@@ -3,7 +3,6 @@ package tally
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -146,8 +145,8 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 
 // EndBlock returns the end block logic for the tally module.
 func (am AppModule) EndBlock(ctx context.Context) error {
-	start := time.Now()
-	defer func() { telemetry.SetGauge(float32(time.Since(start).Seconds()), "seda_tally_end_block_time") }()
+	start := telemetry.Now()
+	defer telemetry.ModuleMeasureSince(types.ModuleName, start, "seda_tally_end_block_time")
 
 	// Set this to zero so it always shows up even if there are no tallies
 	telemetry.SetGauge(0.0, "seda_tally_end_block_number_of_data_requests_to_tally")
