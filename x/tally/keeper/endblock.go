@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"sort"
 	"strconv"
 	"strings"
@@ -79,6 +80,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	processedReqs := make(map[string][]types.Distribution)
 	tallyResults := make([]TallyResult, len(tallyList))
 	dataResults := make([]batchingtypes.DataResult, len(tallyList))
+	tera_gas_burned := float32(0)
 	for i, req := range tallyList {
 		dataResults[i], err = req.ToResult(ctx)
 		if err != nil {
@@ -115,6 +117,9 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		}
 
 		processedReqs[req.ID] = k.DistributionsFromGasMeter(ctx, req.ID, req.Height, gasMeter, params.BurnRatio)
+		request_burned := new(big.Float).SetInt(processedReqs[req.ID][0].Burn.Amount.BigInt())
+		request_gas_burned, _ := new(big.Float).Quo(request_burned, big.NewFloat(1e12)).Float32()
+		tera_gas_burned += request_gas_burned
 
 		dataResults[i].GasUsed = gasMeter.TotalGasUsed()
 		dataResults[i].Id, err = dataResults[i].TryHash()
@@ -122,6 +127,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			return err
 		}
 	}
+	telemetry.SetGauge(tera_gas_burned, "seda_tally_end_block_tera_gas_burned")
 
 	// Notify the Core Contract of tally completion.
 	msg, err := types.MarshalSudoRemoveDataRequests(processedReqs)
