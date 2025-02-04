@@ -276,7 +276,7 @@ PACKAGES_E2E=$(shell go list ./... | grep /e2e)
 
 TEST_PACKAGES=./...
 TEST_TARGETS := test-unit test-unit-cover test-unit-race test-e2e
-TEST_COVERAGE_PROFILE=coverage.out
+TEST_COVERAGE_PROFILE=coverage.txt
 
 UNIT_TEST_TAGS = norace
 TEST_RACE_TAGS = ""
