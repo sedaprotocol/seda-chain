@@ -10,18 +10,22 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	"github.com/sedaprotocol/seda-chain/app/upgrades"
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
+	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
+	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 const (
-	UpgradeName = "v0.0.7"
+	UpgradeName = "v1.0.0"
 )
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: storetypes.StoreUpgrades{
-		// double check these
-		Added:   []string{},
+		Added:   []string{wasmstoragetypes.StoreKey, batchingtypes.StoreKey, tallytypes.StoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey},
 		Deleted: []string{},
 	},
 }
