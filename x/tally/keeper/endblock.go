@@ -101,21 +101,17 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 
 		gasMeter := types.NewGasMeter(req.TallyGasLimit, req.ExecGasLimit, params.MaxTallyGasLimit, gasPrice, params.GasCostBase)
 		if len(req.Commits) < int(req.ReplicationFactor) {
-			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
-			dataResults[i].ExitCode = TallyExitCodeNotEnoughCommits
-			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
 
-			MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
-		} else {
-			_, tallyResults[i] = k.FilterAndTally(ctx, req, params, gasMeter)
-			dataResults[i].Result = tallyResults[i].Result
-			//nolint:gosec // G115: We shouldn't get negative exit code anyway.
-			dataResults[i].ExitCode = uint32(tallyResults[i].ExitCode)
-			dataResults[i].Consensus = tallyResults[i].Consensus
-
-			k.Logger(ctx).Info("completed tally", "request_id", req.ID)
-			k.Logger(ctx).Debug("tally result", "request_id", req.ID, "tally_result", tallyResults[i])
 		}
+
+		_, tallyResults[i] = k.FilterAndTally(ctx, req, params, gasMeter)
+		dataResults[i].Result = tallyResults[i].Result
+		//nolint:gosec // G115: We shouldn't get negative exit code anyway.
+		dataResults[i].ExitCode = uint32(tallyResults[i].ExitCode)
+		dataResults[i].Consensus = tallyResults[i].Consensus
+
+		k.Logger(ctx).Info("completed tally", "request_id", req.ID)
+		k.Logger(ctx).Debug("tally result", "request_id", req.ID, "tally_result", tallyResults[i])
 
 		processedReqs[req.ID] = k.DistributionsFromGasMeter(ctx, req.ID, req.Height, gasMeter, params.BurnRatio)
 
@@ -203,10 +199,21 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 	}
 
 	// Phase 1: Filtering
-	filterResult, filterErr := ExecuteFilter(reveals, req.ConsensusFilter, req.ReplicationFactor, params, gasMeter)
+	// filterResult, filterErr := ExecuteFilter(reveals, req.ConsensusFilter, req.ReplicationFactor, params, gasMeter)
+	outliers := make([]bool, len(reveals))
+	for i, _ := range reveals {
+		outliers[i] = false
+	}
+	filterResult := FilterResult{
+		Consensus:    true,
+		Outliers:     outliers,
+		ProxyPubKeys: []string{},
+		Errors:       outliers,
+	}
+	var filterErr error
 	tallyResult := TallyResult{
-		Consensus:    filterResult.Consensus,
-		ProxyPubKeys: filterResult.ProxyPubKeys,
+		Consensus:    true,
+		ProxyPubKeys: []string{},
 	}
 
 	// Phase 2: Tally Program Execution
@@ -239,23 +246,23 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 	}
 
 	// Calculate executor gas consumption.
-	switch {
-	case errors.Is(filterErr, types.ErrNoBasicConsensus):
-		MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
-	case errors.Is(filterErr, types.ErrInvalidFilterInput) || errors.Is(filterErr, types.ErrNoConsensus) || tallyErr != nil:
-		gasMeter.SetReducedPayoutMode()
-		fallthrough
-	default: // filterErr == ErrConsensusInError || filterErr == nil
-		gasReports := make([]uint64, len(reveals))
-		for i, reveal := range reveals {
-			gasReports[i] = reveal.GasUsed
-		}
-		if areGasReportsUniform(gasReports) {
-			MeterExecutorGasUniform(keys, gasReports[0], req.ReplicationFactor, gasMeter)
-		} else {
-			MeterExecutorGasDivergent(keys, gasReports, req.ReplicationFactor, gasMeter)
-		}
-	}
+	// switch {
+	// case errors.Is(filterErr, types.ErrNoBasicConsensus):
+	// 	MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
+	// case errors.Is(filterErr, types.ErrInvalidFilterInput) || errors.Is(filterErr, types.ErrNoConsensus) || tallyErr != nil:
+	// 	gasMeter.SetReducedPayoutMode()
+	// 	fallthrough
+	// default: // filterErr == ErrConsensusInError || filterErr == nil
+	// 	gasReports := make([]uint64, len(reveals))
+	// 	for i, reveal := range reveals {
+	// 		gasReports[i] = reveal.GasUsed
+	// 	}
+	// 	if areGasReportsUniform(gasReports) {
+	// 		MeterExecutorGasUniform(keys, gasReports[0], req.ReplicationFactor, gasMeter)
+	// 	} else {
+	// 		MeterExecutorGasDivergent(keys, gasReports, req.ReplicationFactor, gasMeter)
+	// 	}
+	// }
 
 	tallyResult.TallyGasUsed = gasMeter.TallyGasUsed()
 	tallyResult.ExecGasUsed = gasMeter.ExecutionGasUsed()
