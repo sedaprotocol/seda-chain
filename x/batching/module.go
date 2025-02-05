@@ -146,6 +146,6 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 // EndBlock returns the end block logic for the batching module.
 func (am AppModule) EndBlock(ctx context.Context) error {
 	start := telemetry.Now()
-	defer telemetry.ModuleMeasureSince(types.ModuleName, start, "seda_batch_end_block_time")
+	defer telemetry.ModuleMeasureSince(types.ModuleName, start, telemetry.MetricKeyEndBlocker)
 	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
 }

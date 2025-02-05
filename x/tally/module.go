@@ -146,12 +146,12 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 // EndBlock returns the end block logic for the tally module.
 func (am AppModule) EndBlock(ctx context.Context) error {
 	start := telemetry.Now()
-	defer telemetry.ModuleMeasureSince(types.ModuleName, start, "seda_tally_end_block_time")
+	defer telemetry.ModuleMeasureSince(types.ModuleName, start, telemetry.MetricKeyEndBlocker)
 
-	// Set this to zero so it always shows up even if there are no tallies
-	telemetry.SetGauge(0.0, "seda_tally_end_block_number_of_data_requests_to_tally")
-	// We reset the amount of gas burned in the end block
-	// since we only add to it during the processing of tallies
-	telemetry.SetGauge(0.0, "seda_tally_end_block_tera_gas_burned")
+	// We reset all gauges to zero so blocks without tally executions
+	// will show correct values in the telemetry.
+	telemetry.SetGauge(0.0, types.TelemetryKeyDataRequestsTallied)
+	telemetry.SetGauge(0.0, types.TelemetryKeyGasBurned)
+
 	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
 }
