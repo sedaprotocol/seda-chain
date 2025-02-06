@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/collections"
 	errorsmod "cosmossdk.io/errors"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
@@ -35,4 +36,13 @@ func (q Querier) DataProxyConfig(ctx context.Context, req *types.QueryDataProxyC
 	}
 
 	return &types.QueryDataProxyConfigResponse{Config: &result}, nil
+}
+
+func (q Querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	params, err := q.Keeper.GetParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryParamsResponse{Params: params}, nil
 }

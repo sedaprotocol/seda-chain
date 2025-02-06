@@ -2,6 +2,7 @@ syntax = "proto3";
 package sedachain.data_proxy.v1;
 
 import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
 import "sedachain/data_proxy/v1/data_proxy.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/data-proxy/types";
@@ -15,6 +16,11 @@ service Query {
     option (google.api.http).get =
         "/seda-chain/data-proxy/data_proxy_config/{pub_key}";
   }
+
+  // Params returns the total set of data proxy parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/seda-chain/data-proxy/params";
+  }
 }
 
 // The request message for QueryDataProxyConfig RPC method.
@@ -25,3 +31,12 @@ message QueryDataProxyConfigRequest {
 
 // The response message for QueryDataProxyConfig RPC method.
 message QueryDataProxyConfigResponse { ProxyConfig config = 1; }
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
