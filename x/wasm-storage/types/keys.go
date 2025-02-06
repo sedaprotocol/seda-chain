@@ -16,13 +16,11 @@ const (
 var (
 	// OracleProgramPrefix defines prefix to store oracle programs.
 	OracleProgramPrefix = collections.NewPrefix(0)
-	// ExecutorPrefix defines prefix to store executor wasms.
-	ExecutorPrefix = collections.NewPrefix(1)
 	// WasmExpPrefix defines prefix to track wasm expiration.
-	WasmExpPrefix = collections.NewPrefix(2)
+	WasmExpPrefix = collections.NewPrefix(1)
 	// CoreContractRegistryPrefix defines prefix to store address of
 	// Core Contract.
-	CoreContractRegistryPrefix = collections.NewPrefix(3)
+	CoreContractRegistryPrefix = collections.NewPrefix(2)
 	// ParamsPrefix defines prefix to store parameters of wasm-storage module.
-	ParamsPrefix = collections.NewPrefix(4)
+	ParamsPrefix = collections.NewPrefix(3)
 )

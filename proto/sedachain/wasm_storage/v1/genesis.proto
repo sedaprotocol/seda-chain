@@ -10,6 +10,5 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 message GenesisState {
   Params params = 1 [ (gogoproto.nullable) = false ];
   repeated OracleProgram oracle_programs = 2 [ (gogoproto.nullable) = false ];
-  repeated ExecutorWasm executor_wasms = 3 [ (gogoproto.nullable) = false ];
-  string core_contract_registry = 4;
+  string core_contract_registry = 3;
 }

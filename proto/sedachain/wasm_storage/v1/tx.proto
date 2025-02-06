@@ -14,9 +14,6 @@ service Msg {
   // StoreOracleProgram stores an oracle program.
   rpc StoreOracleProgram(MsgStoreOracleProgram)
       returns (MsgStoreOracleProgramResponse);
-  // StoreExecutorWasm stores an executor wasm.
-  rpc StoreExecutorWasm(MsgStoreExecutorWasm)
-      returns (MsgStoreExecutorWasmResponse);
   // InstantiateCoreContract instantiates the Core Contract and registers its
   // address.
   rpc InstantiateCoreContract(MsgInstantiateCoreContract)
@@ -35,17 +32,6 @@ message MsgStoreOracleProgram {
 
 // The response message for the StoreOracleProgram method.
 message MsgStoreOracleProgramResponse { string hash = 1; }
-
-// The request message for the StoreExecutorWasm method.
-message MsgStoreExecutorWasm {
-  option (cosmos.msg.v1.signer) = "sender";
-
-  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  bytes wasm = 2;
-}
-
-// The response message for the StoreExecutorWasm method.
-message MsgStoreExecutorWasmResponse { string hash = 1; }
 
 // The request message for the InstantiateCoreContract method.
 message MsgInstantiateCoreContract {

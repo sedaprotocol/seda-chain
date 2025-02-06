@@ -85,54 +85,6 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 	}, nil
 }
 
-// StoreOracleProgram stores an executor wasm used in the SEDA protocol.
-// It unzips a gzip-compressed wasm and stores it using its hash as the key.
-// If a duplicate wasm already exists, an error is returned.
-func (m msgServer) StoreExecutorWasm(goCtx context.Context, msg *types.MsgStoreExecutorWasm) (*types.MsgStoreExecutorWasmResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	if err := msg.ValidateBasic(); err != nil {
-		return nil, err
-	}
-	if msg.Sender != m.authority {
-		return nil, types.ErrInvalidAuthority.Wrapf("expected %s, got %s", m.authority, msg.Sender)
-	}
-
-	params, err := m.Keeper.Params.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-	unzipped, err := unzipWasm(msg.Wasm, params.MaxWasmSize)
-	if err != nil {
-		return nil, err
-	}
-
-	wasm := types.NewExecutorWasm(unzipped, ctx.BlockTime())
-	exists, _ := m.Keeper.ExecutorWasm.Has(ctx, wasm.Hash)
-	if exists {
-		return nil, types.ErrWasmAlreadyExists
-	}
-	if err = m.Keeper.ExecutorWasm.Set(ctx, wasm.Hash, wasm); err != nil {
-		return nil, err
-	}
-
-	hashString := hex.EncodeToString(wasm.Hash)
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeExecutorWasm,
-			sdk.NewAttribute(types.AttributeSender, msg.Sender),
-			sdk.NewAttribute(types.AttributeExecutorWasmHash, hashString),
-		),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.MsgStoreExecutorWasmResponse{
-		Hash: hashString,
-	}, nil
-}
-
 // InstantiateCoreContract instantiate a new contract with a
 // predictable address and updates the core contract registry.
 func (m msgServer) InstantiateCoreContract(goCtx context.Context, msg *types.MsgInstantiateCoreContract) (*types.MsgInstantiateCoreContractResponse, error) {

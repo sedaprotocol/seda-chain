@@ -5,18 +5,17 @@ import (
 )
 
 // NewGenesisState constructs a GenesisState object.
-func NewGenesisState(params Params, programs []OracleProgram, execWasms []ExecutorWasm, coreAddr string) GenesisState {
+func NewGenesisState(params Params, programs []OracleProgram, coreAddr string) GenesisState {
 	return GenesisState{
 		Params:               params,
 		OraclePrograms:       programs,
-		ExecutorWasms:        execWasms,
 		CoreContractRegistry: coreAddr,
 	}
 }
 
 // DefaultGenesisState creates a default GenesisState object.
 func DefaultGenesisState() *GenesisState {
-	state := NewGenesisState(DefaultParams(), nil, nil, "")
+	state := NewGenesisState(DefaultParams(), nil, "")
 	return &state
 }
 

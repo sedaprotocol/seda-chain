@@ -219,178 +219,6 @@ func (m *QueryOracleProgramsResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// The request message for QueryExecutorWasm RPC.
-type QueryExecutorWasmRequest struct {
-	Hash string `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-}
-
-func (m *QueryExecutorWasmRequest) Reset()         { *m = QueryExecutorWasmRequest{} }
-func (m *QueryExecutorWasmRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryExecutorWasmRequest) ProtoMessage()    {}
-func (*QueryExecutorWasmRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0e3a991a3b0319b3, []int{4}
-}
-func (m *QueryExecutorWasmRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryExecutorWasmRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryExecutorWasmRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryExecutorWasmRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryExecutorWasmRequest.Merge(m, src)
-}
-func (m *QueryExecutorWasmRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryExecutorWasmRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryExecutorWasmRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryExecutorWasmRequest proto.InternalMessageInfo
-
-func (m *QueryExecutorWasmRequest) GetHash() string {
-	if m != nil {
-		return m.Hash
-	}
-	return ""
-}
-
-// The response message for QueryExecutorWasm RPC.
-type QueryExecutorWasmResponse struct {
-	Wasm *ExecutorWasm `protobuf:"bytes,1,opt,name=wasm,proto3" json:"wasm,omitempty"`
-}
-
-func (m *QueryExecutorWasmResponse) Reset()         { *m = QueryExecutorWasmResponse{} }
-func (m *QueryExecutorWasmResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryExecutorWasmResponse) ProtoMessage()    {}
-func (*QueryExecutorWasmResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0e3a991a3b0319b3, []int{5}
-}
-func (m *QueryExecutorWasmResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryExecutorWasmResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryExecutorWasmResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryExecutorWasmResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryExecutorWasmResponse.Merge(m, src)
-}
-func (m *QueryExecutorWasmResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryExecutorWasmResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryExecutorWasmResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryExecutorWasmResponse proto.InternalMessageInfo
-
-func (m *QueryExecutorWasmResponse) GetWasm() *ExecutorWasm {
-	if m != nil {
-		return m.Wasm
-	}
-	return nil
-}
-
-// The request message for QueryExecutorWasms RPC.
-type QueryExecutorWasmsRequest struct {
-}
-
-func (m *QueryExecutorWasmsRequest) Reset()         { *m = QueryExecutorWasmsRequest{} }
-func (m *QueryExecutorWasmsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryExecutorWasmsRequest) ProtoMessage()    {}
-func (*QueryExecutorWasmsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0e3a991a3b0319b3, []int{6}
-}
-func (m *QueryExecutorWasmsRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryExecutorWasmsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryExecutorWasmsRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryExecutorWasmsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryExecutorWasmsRequest.Merge(m, src)
-}
-func (m *QueryExecutorWasmsRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryExecutorWasmsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryExecutorWasmsRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryExecutorWasmsRequest proto.InternalMessageInfo
-
-// The response message for QueryExecutorWasms RPC.
-type QueryExecutorWasmsResponse struct {
-	List []string `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
-}
-
-func (m *QueryExecutorWasmsResponse) Reset()         { *m = QueryExecutorWasmsResponse{} }
-func (m *QueryExecutorWasmsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryExecutorWasmsResponse) ProtoMessage()    {}
-func (*QueryExecutorWasmsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0e3a991a3b0319b3, []int{7}
-}
-func (m *QueryExecutorWasmsResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryExecutorWasmsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryExecutorWasmsResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryExecutorWasmsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryExecutorWasmsResponse.Merge(m, src)
-}
-func (m *QueryExecutorWasmsResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryExecutorWasmsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryExecutorWasmsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryExecutorWasmsResponse proto.InternalMessageInfo
-
-func (m *QueryExecutorWasmsResponse) GetList() []string {
-	if m != nil {
-		return m.List
-	}
-	return nil
-}
-
 // The request message for QueryCoreContractRegistry RPC.
 type QueryCoreContractRegistryRequest struct {
 }
@@ -399,7 +227,7 @@ func (m *QueryCoreContractRegistryRequest) Reset()         { *m = QueryCoreContr
 func (m *QueryCoreContractRegistryRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryCoreContractRegistryRequest) ProtoMessage()    {}
 func (*QueryCoreContractRegistryRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0e3a991a3b0319b3, []int{8}
+	return fileDescriptor_0e3a991a3b0319b3, []int{4}
 }
 func (m *QueryCoreContractRegistryRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -437,7 +265,7 @@ func (m *QueryCoreContractRegistryResponse) Reset()         { *m = QueryCoreCont
 func (m *QueryCoreContractRegistryResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryCoreContractRegistryResponse) ProtoMessage()    {}
 func (*QueryCoreContractRegistryResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0e3a991a3b0319b3, []int{9}
+	return fileDescriptor_0e3a991a3b0319b3, []int{5}
 }
 func (m *QueryCoreContractRegistryResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -481,7 +309,7 @@ func (m *QueryParamsRequest) Reset()         { *m = QueryParamsRequest{} }
 func (m *QueryParamsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryParamsRequest) ProtoMessage()    {}
 func (*QueryParamsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0e3a991a3b0319b3, []int{10}
+	return fileDescriptor_0e3a991a3b0319b3, []int{6}
 }
 func (m *QueryParamsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -520,7 +348,7 @@ func (m *QueryParamsResponse) Reset()         { *m = QueryParamsResponse{} }
 func (m *QueryParamsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryParamsResponse) ProtoMessage()    {}
 func (*QueryParamsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0e3a991a3b0319b3, []int{11}
+	return fileDescriptor_0e3a991a3b0319b3, []int{7}
 }
 func (m *QueryParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -561,10 +389,6 @@ func init() {
 	proto.RegisterType((*QueryOracleProgramResponse)(nil), "sedachain.wasm_storage.v1.QueryOracleProgramResponse")
 	proto.RegisterType((*QueryOracleProgramsRequest)(nil), "sedachain.wasm_storage.v1.QueryOracleProgramsRequest")
 	proto.RegisterType((*QueryOracleProgramsResponse)(nil), "sedachain.wasm_storage.v1.QueryOracleProgramsResponse")
-	proto.RegisterType((*QueryExecutorWasmRequest)(nil), "sedachain.wasm_storage.v1.QueryExecutorWasmRequest")
-	proto.RegisterType((*QueryExecutorWasmResponse)(nil), "sedachain.wasm_storage.v1.QueryExecutorWasmResponse")
-	proto.RegisterType((*QueryExecutorWasmsRequest)(nil), "sedachain.wasm_storage.v1.QueryExecutorWasmsRequest")
-	proto.RegisterType((*QueryExecutorWasmsResponse)(nil), "sedachain.wasm_storage.v1.QueryExecutorWasmsResponse")
 	proto.RegisterType((*QueryCoreContractRegistryRequest)(nil), "sedachain.wasm_storage.v1.QueryCoreContractRegistryRequest")
 	proto.RegisterType((*QueryCoreContractRegistryResponse)(nil), "sedachain.wasm_storage.v1.QueryCoreContractRegistryResponse")
 	proto.RegisterType((*QueryParamsRequest)(nil), "sedachain.wasm_storage.v1.QueryParamsRequest")
@@ -576,51 +400,45 @@ func init() {
 }
 
 var fileDescriptor_0e3a991a3b0319b3 = []byte{
-	// 703 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x55, 0xcf, 0x6e, 0xd3, 0x30,
-	0x18, 0x6f, 0x46, 0x19, 0x60, 0xd8, 0x0e, 0x66, 0x87, 0x2e, 0x43, 0xdd, 0x16, 0x09, 0x3a, 0x26,
-	0x6a, 0xaf, 0xfb, 0x7b, 0x18, 0x08, 0x69, 0x13, 0x70, 0xdc, 0xd6, 0x03, 0x20, 0x2e, 0x95, 0x9b,
-	0x5a, 0x69, 0xa4, 0x36, 0xce, 0x6c, 0x77, 0x6c, 0x20, 0x2e, 0x3c, 0xc1, 0x24, 0x9e, 0x03, 0x09,
-	0x24, 0x78, 0x87, 0x89, 0xd3, 0x24, 0x2e, 0x9c, 0x10, 0x5a, 0x79, 0x10, 0x14, 0xc7, 0x61, 0x35,
-	0x4a, 0xd2, 0x96, 0x9b, 0x6b, 0x7f, 0xbf, 0x3f, 0xfe, 0xf9, 0xfb, 0x52, 0x70, 0x57, 0xd0, 0x16,
-	0x71, 0xdb, 0xc4, 0x0f, 0xf0, 0x6b, 0x22, 0xba, 0x0d, 0x21, 0x19, 0x27, 0x1e, 0xc5, 0x47, 0x35,
-	0x7c, 0xd8, 0xa3, 0xfc, 0x04, 0x85, 0x9c, 0x49, 0x06, 0x67, 0xff, 0x96, 0xa1, 0xc1, 0x32, 0x74,
-	0x54, 0xb3, 0xef, 0x78, 0x8c, 0x79, 0x1d, 0x8a, 0x49, 0xe8, 0x63, 0x12, 0x04, 0x4c, 0x12, 0xe9,
-	0xb3, 0x40, 0xc4, 0x40, 0x7b, 0xc6, 0x63, 0x1e, 0x53, 0x4b, 0x1c, 0xad, 0xf4, 0xee, 0xb2, 0xcb,
-	0x44, 0x97, 0x09, 0xdc, 0x24, 0x82, 0xc6, 0x3a, 0xf8, 0xa8, 0xd6, 0xa4, 0x92, 0xd4, 0x70, 0x48,
-	0x3c, 0x3f, 0x50, 0x14, 0xba, 0xf6, 0x41, 0xb6, 0x43, 0xc3, 0x8a, 0xaa, 0x76, 0x30, 0x98, 0x3d,
-	0x88, 0xf8, 0xf6, 0x38, 0x71, 0x3b, 0x74, 0x9f, 0x33, 0x8f, 0x93, 0x6e, 0x9d, 0x1e, 0xf6, 0xa8,
-	0x90, 0x10, 0x82, 0x62, 0x9b, 0x88, 0x76, 0xc9, 0x5a, 0xb0, 0x96, 0x6e, 0xd4, 0xd5, 0xda, 0xe9,
-	0x02, 0x3b, 0x0d, 0x20, 0x42, 0x16, 0x08, 0x0a, 0xf7, 0xc0, 0x34, 0x53, 0x07, 0x8d, 0x30, 0x3e,
-	0x51, 0xd8, 0x9b, 0xab, 0x4b, 0x28, 0x33, 0x10, 0x64, 0x32, 0x4d, 0xb1, 0xc1, 0x9f, 0x4e, 0x2b,
-	0x4d, 0x4e, 0x24, 0x06, 0x9f, 0x02, 0x70, 0x79, 0x7f, 0x2d, 0x75, 0x0f, 0xc5, 0x61, 0xa1, 0x28,
-	0x2c, 0x14, 0x3f, 0x8a, 0x0e, 0x0b, 0xed, 0x13, 0x8f, 0x6a, 0x6c, 0x7d, 0x00, 0xe9, 0xbc, 0x01,
-	0x73, 0xa9, 0x2a, 0xfa, 0x56, 0x10, 0x14, 0x3b, 0xbe, 0x90, 0x25, 0x6b, 0xe1, 0x4a, 0x94, 0x43,
-	0xb4, 0x86, 0xcf, 0x0c, 0xe9, 0x09, 0x25, 0x5d, 0x19, 0x2a, 0x1d, 0x13, 0x1a, 0xda, 0x08, 0x94,
-	0x94, 0xf6, 0x93, 0x63, 0xea, 0xf6, 0x24, 0xe3, 0x2f, 0x88, 0xc8, 0x7d, 0x80, 0x97, 0xfa, 0xc5,
-	0xcc, 0x7a, 0xed, 0x74, 0x1b, 0x14, 0xa3, 0x78, 0x75, 0x14, 0x95, 0x9c, 0xd4, 0x0d, 0xb8, 0x02,
-	0x39, 0x73, 0x29, 0xcc, 0x49, 0xd4, 0xce, 0x8a, 0x7e, 0x88, 0x7f, 0x0e, 0xb3, 0x13, 0x72, 0x1c,
-	0xb0, 0xa0, 0x10, 0xbb, 0x8c, 0xd3, 0x5d, 0x16, 0x48, 0x4e, 0x5c, 0x59, 0xa7, 0x9e, 0x2f, 0x24,
-	0x3f, 0x49, 0x58, 0x1f, 0x81, 0xc5, 0x9c, 0x1a, 0x4d, 0x5e, 0x02, 0xd7, 0x48, 0xab, 0xc5, 0xa9,
-	0x10, 0x3a, 0x88, 0xe4, 0xa7, 0x33, 0x03, 0xa0, 0x82, 0xef, 0x93, 0x81, 0xae, 0x70, 0x9e, 0x83,
-	0xdb, 0xc6, 0xae, 0xa6, 0x79, 0x0c, 0x26, 0x43, 0xb5, 0xa3, 0xd3, 0x59, 0xcc, 0x49, 0x27, 0x86,
-	0xee, 0x14, 0xcf, 0x7e, 0xce, 0x17, 0xea, 0x1a, 0xb6, 0xfa, 0xf5, 0x3a, 0xb8, 0xaa, 0x88, 0xe1,
-	0x17, 0x0b, 0x4c, 0x19, 0xbd, 0x02, 0xd7, 0x73, 0xc8, 0x32, 0x07, 0xcc, 0xde, 0x18, 0x13, 0x15,
-	0xdf, 0xc4, 0xd9, 0x7c, 0xff, 0xfd, 0xf7, 0x87, 0x89, 0x15, 0x88, 0x70, 0x04, 0xaf, 0x5e, 0x0e,
-	0x7b, 0x35, 0x19, 0x76, 0x73, 0x08, 0xf1, 0xdb, 0xa8, 0x73, 0xde, 0xc1, 0xcf, 0x16, 0x98, 0x36,
-	0x5b, 0x1c, 0x8e, 0xe7, 0x20, 0x89, 0xd8, 0xde, 0x1c, 0x17, 0xa6, 0x9d, 0xaf, 0x28, 0xe7, 0xcb,
-	0x70, 0x69, 0x44, 0xe7, 0x02, 0x7e, 0xb2, 0xc0, 0xad, 0xc1, 0x9e, 0x83, 0x6b, 0xc3, 0xa4, 0x53,
-	0x06, 0xc9, 0x5e, 0x1f, 0x0f, 0xa4, 0xdd, 0x6e, 0x28, 0xb7, 0x18, 0x56, 0x33, 0xdd, 0x52, 0x0d,
-	0x6b, 0x44, 0xbb, 0x49, 0xcc, 0x1f, 0x2d, 0x30, 0x65, 0x8c, 0x09, 0x1c, 0x4b, 0x5e, 0x8c, 0xdc,
-	0x1d, 0xa9, 0xb3, 0xe8, 0x60, 0xe5, 0xfa, 0x3e, 0xac, 0x8c, 0xe6, 0x5a, 0xc0, 0x6f, 0x16, 0x98,
-	0x49, 0x1b, 0x40, 0xb8, 0x3d, 0xcc, 0x40, 0xce, 0x68, 0xdb, 0x0f, 0xff, 0x0f, 0xac, 0x2f, 0xb1,
-	0xa5, 0x2e, 0x51, 0x83, 0x38, 0xf3, 0x12, 0x2e, 0xe3, 0xb4, 0xe1, 0x6a, 0x7c, 0x83, 0x27, 0x9e,
-	0x4f, 0x2d, 0x30, 0x19, 0x4f, 0x2f, 0xac, 0x0e, 0x73, 0x60, 0x7c, 0x36, 0x6c, 0x34, 0x6a, 0xb9,
-	0xb6, 0x58, 0x51, 0x16, 0x17, 0xe1, 0x7c, 0xa6, 0xc5, 0xf8, 0xbb, 0xb1, 0x73, 0x70, 0x76, 0x51,
-	0xb6, 0xce, 0x2f, 0xca, 0xd6, 0xaf, 0x8b, 0xb2, 0x75, 0xda, 0x2f, 0x17, 0xce, 0xfb, 0xe5, 0xc2,
-	0x8f, 0x7e, 0xb9, 0xf0, 0x6a, 0xcb, 0xf3, 0x65, 0xbb, 0xd7, 0x44, 0x2e, 0xeb, 0x2a, 0x12, 0xf5,
-	0x9f, 0xec, 0xb2, 0xce, 0x20, 0xe3, 0xb1, 0xc9, 0x29, 0x4f, 0x42, 0x2a, 0x9a, 0x93, 0xaa, 0x72,
-	0xed, 0x4f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x78, 0xed, 0x89, 0xf1, 0x8f, 0x08, 0x00, 0x00,
+	// 595 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0xc1, 0x6e, 0xd3, 0x40,
+	0x10, 0x8d, 0x4b, 0x1a, 0xc4, 0xa2, 0xf6, 0xb0, 0xe4, 0x90, 0x1a, 0xe4, 0x26, 0x96, 0xa0, 0x51,
+	0x45, 0x76, 0x9b, 0x02, 0xed, 0x01, 0x10, 0x52, 0x2b, 0xc1, 0xb1, 0x69, 0x0e, 0x1c, 0xb8, 0x44,
+	0x1b, 0x67, 0xe5, 0x58, 0x4a, 0x3c, 0xee, 0xee, 0x26, 0x10, 0x10, 0x17, 0xbe, 0xa0, 0x12, 0x5f,
+	0x82, 0xc4, 0x47, 0x54, 0x9c, 0x2a, 0xb8, 0x70, 0x42, 0x28, 0xe1, 0x43, 0x90, 0xd7, 0x1b, 0x1a,
+	0x4b, 0x71, 0xd2, 0x70, 0x1b, 0xaf, 0xe7, 0xbd, 0x79, 0xf3, 0xf6, 0xd9, 0xe8, 0xbe, 0xe4, 0x1d,
+	0xe6, 0x75, 0x59, 0x10, 0xd2, 0xb7, 0x4c, 0xf6, 0x5b, 0x52, 0x81, 0x60, 0x3e, 0xa7, 0xc3, 0x3a,
+	0x3d, 0x1b, 0x70, 0x31, 0x22, 0x91, 0x00, 0x05, 0x78, 0xeb, 0x5f, 0x1b, 0x99, 0x6d, 0x23, 0xc3,
+	0xba, 0x7d, 0xcf, 0x07, 0xf0, 0x7b, 0x9c, 0xb2, 0x28, 0xa0, 0x2c, 0x0c, 0x41, 0x31, 0x15, 0x40,
+	0x28, 0x13, 0xa0, 0x5d, 0xf4, 0xc1, 0x07, 0x5d, 0xd2, 0xb8, 0x32, 0xa7, 0xbb, 0x1e, 0xc8, 0x3e,
+	0x48, 0xda, 0x66, 0x92, 0x27, 0x73, 0xe8, 0xb0, 0xde, 0xe6, 0x8a, 0xd5, 0x69, 0xc4, 0xfc, 0x20,
+	0xd4, 0x14, 0xa6, 0xf7, 0x61, 0xb6, 0xc2, 0x94, 0x14, 0xdd, 0xed, 0x52, 0xb4, 0x75, 0x1a, 0xf3,
+	0x9d, 0x08, 0xe6, 0xf5, 0x78, 0x43, 0x80, 0x2f, 0x58, 0xbf, 0xc9, 0xcf, 0x06, 0x5c, 0x2a, 0x8c,
+	0x51, 0xbe, 0xcb, 0x64, 0xb7, 0x64, 0x95, 0xad, 0xea, 0xad, 0xa6, 0xae, 0xdd, 0x3e, 0xb2, 0xe7,
+	0x01, 0x64, 0x04, 0xa1, 0xe4, 0xf8, 0x04, 0x6d, 0x82, 0x7e, 0xd1, 0x8a, 0x92, 0x37, 0x1a, 0x7b,
+	0x7b, 0xbf, 0x4a, 0x32, 0x0d, 0x21, 0x69, 0xa6, 0x0d, 0x98, 0x7d, 0x74, 0x3b, 0xf3, 0xc6, 0xc9,
+	0xa9, 0xc0, 0x97, 0x08, 0x5d, 0xed, 0x6f, 0x46, 0x3d, 0x20, 0x89, 0x59, 0x24, 0x36, 0x8b, 0x24,
+	0x97, 0x62, 0xcc, 0x22, 0x0d, 0xe6, 0x73, 0x83, 0x6d, 0xce, 0x20, 0xdd, 0xf7, 0xe8, 0xee, 0xdc,
+	0x29, 0x66, 0x2b, 0x8c, 0xf2, 0xbd, 0x40, 0xaa, 0x92, 0x55, 0xbe, 0x11, 0xfb, 0x10, 0xd7, 0xf8,
+	0x55, 0x6a, 0xf4, 0x9a, 0x1e, 0xbd, 0xb3, 0x74, 0x74, 0x42, 0x98, 0x9a, 0xed, 0xa2, 0xb2, 0x9e,
+	0x7d, 0x0c, 0x82, 0x1f, 0x43, 0xa8, 0x04, 0xf3, 0x54, 0x93, 0xfb, 0x81, 0x54, 0x62, 0x64, 0xb4,
+	0xba, 0xcf, 0x51, 0x65, 0x41, 0x8f, 0x51, 0x59, 0x42, 0x37, 0x59, 0xa7, 0x23, 0xb8, 0x94, 0xe6,
+	0xc2, 0xa6, 0x8f, 0x6e, 0x11, 0x61, 0x0d, 0x6f, 0xb0, 0x19, 0xf3, 0xdc, 0xd7, 0xe8, 0x4e, 0xea,
+	0xd4, 0xd0, 0xbc, 0x40, 0x85, 0x48, 0x9f, 0x18, 0x3f, 0x2b, 0x0b, 0xae, 0x2e, 0x81, 0x1e, 0xe5,
+	0x2f, 0x7e, 0x6d, 0xe7, 0x9a, 0x06, 0xb6, 0xff, 0x7d, 0x1d, 0xad, 0x6b, 0x62, 0xfc, 0xd5, 0x42,
+	0x1b, 0x29, 0x4b, 0xf1, 0xe3, 0x05, 0x64, 0x99, 0x39, 0xb4, 0x9f, 0xac, 0x88, 0x4a, 0x36, 0x71,
+	0x0f, 0x3e, 0xfd, 0xf8, 0xf3, 0x79, 0x6d, 0x0f, 0x13, 0x1a, 0xc3, 0x6b, 0x57, 0xdf, 0x44, 0x6d,
+	0xfa, 0x4d, 0xa4, 0xb3, 0x4a, 0x3f, 0xc4, 0x09, 0xff, 0x88, 0xbf, 0x58, 0x68, 0x33, 0x9d, 0x04,
+	0xbc, 0x9a, 0x82, 0xa9, 0xc5, 0xf6, 0xc1, 0xaa, 0x30, 0xa3, 0x7c, 0x4f, 0x2b, 0xdf, 0xc5, 0xd5,
+	0x6b, 0x2a, 0x97, 0xf8, 0x9b, 0x85, 0x8a, 0xf3, 0xd2, 0x81, 0x9f, 0x2e, 0x93, 0xb0, 0x20, 0x77,
+	0xf6, 0xb3, 0xff, 0x03, 0x9b, 0x2d, 0x0e, 0xf5, 0x16, 0x75, 0x4c, 0x33, 0xb7, 0xf0, 0x40, 0xf0,
+	0x96, 0x67, 0xf0, 0x2d, 0x31, 0xd5, 0x7c, 0x6e, 0xa1, 0x42, 0x12, 0x2d, 0x5c, 0x5b, 0xa6, 0x20,
+	0x95, 0x69, 0x9b, 0x5c, 0xb7, 0xdd, 0x48, 0xdc, 0xd1, 0x12, 0x2b, 0x78, 0x3b, 0x53, 0x62, 0x12,
+	0xea, 0xa3, 0xd3, 0x8b, 0xb1, 0x63, 0x5d, 0x8e, 0x1d, 0xeb, 0xf7, 0xd8, 0xb1, 0xce, 0x27, 0x4e,
+	0xee, 0x72, 0xe2, 0xe4, 0x7e, 0x4e, 0x9c, 0xdc, 0x9b, 0x43, 0x3f, 0x50, 0xdd, 0x41, 0x9b, 0x78,
+	0xd0, 0xd7, 0x24, 0xfa, 0xbf, 0xea, 0x41, 0x6f, 0x96, 0xf1, 0x5d, 0x9a, 0x53, 0x8d, 0x22, 0x2e,
+	0xdb, 0x05, 0xdd, 0xf9, 0xe8, 0x6f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xad, 0x94, 0x29, 0x75, 0x53,
+	0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -639,10 +457,6 @@ type QueryClient interface {
 	OracleProgram(ctx context.Context, in *QueryOracleProgramRequest, opts ...grpc.CallOption) (*QueryOracleProgramResponse, error)
 	// OraclePrograms returns all oracle programs.
 	OraclePrograms(ctx context.Context, in *QueryOracleProgramsRequest, opts ...grpc.CallOption) (*QueryOracleProgramsResponse, error)
-	// ExecutorWasm returns an executor wasm given its hash.
-	ExecutorWasm(ctx context.Context, in *QueryExecutorWasmRequest, opts ...grpc.CallOption) (*QueryExecutorWasmResponse, error)
-	// ExecutorWasms returns all executor wasms.
-	ExecutorWasms(ctx context.Context, in *QueryExecutorWasmsRequest, opts ...grpc.CallOption) (*QueryExecutorWasmsResponse, error)
 	// CoreContractRegistry returns the Core Contract Registry address.
 	CoreContractRegistry(ctx context.Context, in *QueryCoreContractRegistryRequest, opts ...grpc.CallOption) (*QueryCoreContractRegistryResponse, error)
 	// Params returns the total set of wasm-storage parameters.
@@ -675,24 +489,6 @@ func (c *queryClient) OraclePrograms(ctx context.Context, in *QueryOracleProgram
 	return out, nil
 }
 
-func (c *queryClient) ExecutorWasm(ctx context.Context, in *QueryExecutorWasmRequest, opts ...grpc.CallOption) (*QueryExecutorWasmResponse, error) {
-	out := new(QueryExecutorWasmResponse)
-	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/ExecutorWasm", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *queryClient) ExecutorWasms(ctx context.Context, in *QueryExecutorWasmsRequest, opts ...grpc.CallOption) (*QueryExecutorWasmsResponse, error) {
-	out := new(QueryExecutorWasmsResponse)
-	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/ExecutorWasms", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *queryClient) CoreContractRegistry(ctx context.Context, in *QueryCoreContractRegistryRequest, opts ...grpc.CallOption) (*QueryCoreContractRegistryResponse, error) {
 	out := new(QueryCoreContractRegistryResponse)
 	err := c.cc.Invoke(ctx, "/sedachain.wasm_storage.v1.Query/CoreContractRegistry", in, out, opts...)
@@ -717,10 +513,6 @@ type QueryServer interface {
 	OracleProgram(context.Context, *QueryOracleProgramRequest) (*QueryOracleProgramResponse, error)
 	// OraclePrograms returns all oracle programs.
 	OraclePrograms(context.Context, *QueryOracleProgramsRequest) (*QueryOracleProgramsResponse, error)
-	// ExecutorWasm returns an executor wasm given its hash.
-	ExecutorWasm(context.Context, *QueryExecutorWasmRequest) (*QueryExecutorWasmResponse, error)
-	// ExecutorWasms returns all executor wasms.
-	ExecutorWasms(context.Context, *QueryExecutorWasmsRequest) (*QueryExecutorWasmsResponse, error)
 	// CoreContractRegistry returns the Core Contract Registry address.
 	CoreContractRegistry(context.Context, *QueryCoreContractRegistryRequest) (*QueryCoreContractRegistryResponse, error)
 	// Params returns the total set of wasm-storage parameters.
@@ -736,12 +528,6 @@ func (*UnimplementedQueryServer) OracleProgram(ctx context.Context, req *QueryOr
 }
 func (*UnimplementedQueryServer) OraclePrograms(ctx context.Context, req *QueryOracleProgramsRequest) (*QueryOracleProgramsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OraclePrograms not implemented")
-}
-func (*UnimplementedQueryServer) ExecutorWasm(ctx context.Context, req *QueryExecutorWasmRequest) (*QueryExecutorWasmResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExecutorWasm not implemented")
-}
-func (*UnimplementedQueryServer) ExecutorWasms(ctx context.Context, req *QueryExecutorWasmsRequest) (*QueryExecutorWasmsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExecutorWasms not implemented")
 }
 func (*UnimplementedQueryServer) CoreContractRegistry(ctx context.Context, req *QueryCoreContractRegistryRequest) (*QueryCoreContractRegistryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CoreContractRegistry not implemented")
@@ -786,42 +572,6 @@ func _Query_OraclePrograms_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QueryServer).OraclePrograms(ctx, req.(*QueryOracleProgramsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Query_ExecutorWasm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryExecutorWasmRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).ExecutorWasm(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/sedachain.wasm_storage.v1.Query/ExecutorWasm",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ExecutorWasm(ctx, req.(*QueryExecutorWasmRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Query_ExecutorWasms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryExecutorWasmsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).ExecutorWasms(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/sedachain.wasm_storage.v1.Query/ExecutorWasms",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ExecutorWasms(ctx, req.(*QueryExecutorWasmsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -874,14 +624,6 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "OraclePrograms",
 			Handler:    _Query_OraclePrograms_Handler,
-		},
-		{
-			MethodName: "ExecutorWasm",
-			Handler:    _Query_ExecutorWasm_Handler,
-		},
-		{
-			MethodName: "ExecutorWasms",
-			Handler:    _Query_ExecutorWasms_Handler,
 		},
 		{
 			MethodName: "CoreContractRegistry",
@@ -1028,126 +770,6 @@ func (m *QueryOracleProgramsResponse) MarshalToSizedBuffer(dAtA []byte) (int, er
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.List) > 0 {
-		for iNdEx := len(m.List) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.List[iNdEx])
-			copy(dAtA[i:], m.List[iNdEx])
-			i = encodeVarintQuery(dAtA, i, uint64(len(m.List[iNdEx])))
-			i--
-			dAtA[i] = 0xa
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryExecutorWasmRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryExecutorWasmRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryExecutorWasmRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Hash) > 0 {
-		i -= len(m.Hash)
-		copy(dAtA[i:], m.Hash)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Hash)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryExecutorWasmResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryExecutorWasmResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryExecutorWasmResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Wasm != nil {
-		{
-			size, err := m.Wasm.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryExecutorWasmsRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryExecutorWasmsRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryExecutorWasmsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryExecutorWasmsResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryExecutorWasmsResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryExecutorWasmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
 	if len(m.List) > 0 {
 		for iNdEx := len(m.List) - 1; iNdEx >= 0; iNdEx-- {
 			i -= len(m.List[iNdEx])
@@ -1334,56 +956,6 @@ func (m *QueryOracleProgramsResponse) Size() (n int) {
 	if m.Pagination != nil {
 		l = m.Pagination.Size()
 		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryExecutorWasmRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Hash)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryExecutorWasmResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Wasm != nil {
-		l = m.Wasm.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryExecutorWasmsRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *QueryExecutorWasmsResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.List) > 0 {
-		for _, s := range m.List {
-			l = len(s)
-			n += 1 + l + sovQuery(uint64(l))
-		}
 	}
 	return n
 }
@@ -1786,306 +1358,6 @@ func (m *QueryOracleProgramsResponse) Unmarshal(dAtA []byte) error {
 			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryExecutorWasmRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryExecutorWasmRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryExecutorWasmRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Hash = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryExecutorWasmResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryExecutorWasmResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryExecutorWasmResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Wasm", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Wasm == nil {
-				m.Wasm = &ExecutorWasm{}
-			}
-			if err := m.Wasm.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryExecutorWasmsRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryExecutorWasmsRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryExecutorWasmsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryExecutorWasmsResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryExecutorWasmsResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryExecutorWasmsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field List", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.List = append(m.List, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

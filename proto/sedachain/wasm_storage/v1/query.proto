@@ -23,19 +23,6 @@ service Query {
     option (google.api.http).get = "/seda-chain/wasm-storage/oracle_programs";
   }
 
-  // ExecutorWasm returns an executor wasm given its hash.
-  rpc ExecutorWasm(QueryExecutorWasmRequest)
-      returns (QueryExecutorWasmResponse) {
-    option (google.api.http).get =
-        "/seda-chain/wasm-storage/executor_wasm/{hash}";
-  }
-
-  // ExecutorWasms returns all executor wasms.
-  rpc ExecutorWasms(QueryExecutorWasmsRequest)
-      returns (QueryExecutorWasmsResponse) {
-    option (google.api.http).get = "/seda-chain/wasm-storage/executor_wasms";
-  }
-
   // CoreContractRegistry returns the Core Contract Registry address.
   rpc CoreContractRegistry(QueryCoreContractRegistryRequest)
       returns (QueryCoreContractRegistryResponse) {
@@ -66,18 +53,6 @@ message QueryOracleProgramsResponse {
   repeated string list = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
-
-// The request message for QueryExecutorWasm RPC.
-message QueryExecutorWasmRequest { string hash = 1; }
-
-// The response message for QueryExecutorWasm RPC.
-message QueryExecutorWasmResponse { ExecutorWasm wasm = 1; }
-
-// The request message for QueryExecutorWasms RPC.
-message QueryExecutorWasmsRequest {}
-
-// The response message for QueryExecutorWasms RPC.
-message QueryExecutorWasmsResponse { repeated string list = 1; }
 
 // The request message for QueryCoreContractRegistry RPC.
 message QueryCoreContractRegistryRequest {}

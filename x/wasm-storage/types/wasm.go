@@ -42,17 +42,3 @@ func NewOracleProgram(bytecode []byte, addedAt time.Time, _, _ int64) OracleProg
 		ExpirationHeight: expHeight,
 	}
 }
-
-// NewExecutorWasm constructs a new ExecutorWasm object given bytecode.
-// It panics if it fails to compute hash of bytecode.
-func NewExecutorWasm(bytecode []byte, addedAt time.Time) ExecutorWasm {
-	hash := crypto.Keccak256(bytecode)
-	if hash == nil {
-		panic("failed to compute hash")
-	}
-	return ExecutorWasm{
-		Hash:     hash,
-		Bytecode: bytecode,
-		AddedAt:  addedAt,
-	}
-}

@@ -17,14 +17,6 @@ message OracleProgram {
   int64 expiration_height = 4;
 }
 
-// ExecutorWasm is a wasm used by some component in the protocol.
-message ExecutorWasm {
-  bytes hash = 1;
-  bytes bytecode = 2;
-  google.protobuf.Timestamp added_at = 3
-      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
-}
-
 // Params to define the max wasm size allowed.
 message Params {
   option (gogoproto.equal) = true;

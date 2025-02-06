@@ -41,47 +41,8 @@ func SubmitProposalCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 	cmd.AddCommand(
-		ProposalStoreExecutorCmd(),
 		ProposalInstantiateCoreContract(),
 	)
-	return cmd
-}
-
-func ProposalStoreExecutorCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "store-executor-wasm [wasm file] --title [text] --summary [text] --authority [address]",
-		Short: "Submit a proposal to store an executor wasm",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
-			if err != nil {
-				return err
-			}
-
-			authority, err := cmd.Flags().GetString(flagAuthority)
-			if err != nil {
-				return fmt.Errorf("authority: %s", err)
-			}
-			if len(authority) == 0 {
-				return errors.New("authority address is required")
-			}
-
-			src, err := parseStoreExecutorArgs(args[0], authority, cmd.Flags())
-			if err != nil {
-				return err
-			}
-
-			proposalMsg, err := govv1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary, false)
-			if err != nil {
-				return err
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
-		},
-		SilenceUsage: true,
-	}
-
-	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -134,19 +95,6 @@ func ProposalInstantiateCoreContract() *cobra.Command {
 	addCommonProposalFlags(cmd)
 
 	return cmd
-}
-
-func parseStoreExecutorArgs(file, sender string, _ *flag.FlagSet) (*types.MsgStoreExecutorWasm, error) {
-	zipped, err := gzipWasmFile(file)
-	if err != nil {
-		return nil, err
-	}
-
-	msg := &types.MsgStoreExecutorWasm{
-		Sender: sender,
-		Wasm:   zipped,
-	}
-	return msg, nil
 }
 
 func parseInstantiateCoreContractArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender string, flags *flag.FlagSet) (*types.MsgInstantiateCoreContract, error) {

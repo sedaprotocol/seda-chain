@@ -23,14 +23,12 @@ type Keeper struct {
 	wasmKeeper     wasmtypes.ContractOpsKeeper
 	wasmViewKeeper wasmtypes.ViewKeeper
 
-	// authority is the address capable of executing MsgUpdateParams
-	// or MsgStoreExecutorWasm. Typically, this should be the gov module
-	// address.
+	// authority is the address capable of executing MsgUpdateParams.
+	// Typically, this should be the gov module address.
 	authority string
 
 	Schema                  collections.Schema
 	OracleProgram           collections.Map[[]byte, types.OracleProgram]
-	ExecutorWasm            collections.Map[[]byte, types.ExecutorWasm]
 	OracleProgramExpiration collections.KeySet[collections.Pair[int64, []byte]]
 	CoreContractRegistry    collections.Item[string]
 	Params                  collections.Item[types.Params]
@@ -54,7 +52,6 @@ func NewKeeper(
 		wasmKeeper:              wk,
 		wasmViewKeeper:          wvk,
 		OracleProgram:           collections.NewMap(sb, types.OracleProgramPrefix, "oracle_program", collections.BytesKey, codec.CollValue[types.OracleProgram](cdc)),
-		ExecutorWasm:            collections.NewMap(sb, types.ExecutorPrefix, "executor_wasm", collections.BytesKey, codec.CollValue[types.ExecutorWasm](cdc)),
 		OracleProgramExpiration: collections.NewKeySet(sb, types.WasmExpPrefix, "oracle_program_expiration", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
 		CoreContractRegistry:    collections.NewItem(sb, types.CoreContractRegistryPrefix, "core_contract_registry", collections.StringValue),
 		Params:                  collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
@@ -125,28 +122,6 @@ func (k Keeper) IterateOraclePrograms(ctx sdk.Context, callback func(program typ
 	return nil
 }
 
-// IterateExecutorWasms iterates over the executor wasms and performs
-// a given callback function.
-func (k Keeper) IterateExecutorWasms(ctx sdk.Context, callback func(wasm types.ExecutorWasm) (stop bool)) error {
-	iter, err := k.ExecutorWasm.Iterate(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		kv, err := iter.KeyValue()
-		if err != nil {
-			return err
-		}
-
-		if callback(kv.Value) {
-			break
-		}
-	}
-	return nil
-}
-
 // ListOraclePrograms returns hashes and expiration block heights
 // of all oracle programs in the store.
 func (k Keeper) ListOraclePrograms(ctx sdk.Context) []string {
@@ -161,19 +136,6 @@ func (k Keeper) ListOraclePrograms(ctx sdk.Context) []string {
 	return results
 }
 
-// ListExecutorWasms returns hex-encoded hashes of all executor wasms in the store.
-func (k Keeper) ListExecutorWasms(ctx sdk.Context) []string {
-	var hashes []string
-	err := k.IterateExecutorWasms(ctx, func(w types.ExecutorWasm) bool {
-		hashes = append(hashes, hex.EncodeToString(w.Hash))
-		return false
-	})
-	if err != nil {
-		return nil
-	}
-	return hashes
-}
-
 func (k Keeper) GetAllOraclePrograms(ctx sdk.Context) []types.OracleProgram {
 	var programs []types.OracleProgram
 	err := k.IterateOraclePrograms(ctx, func(program types.OracleProgram) bool {
@@ -184,18 +146,6 @@ func (k Keeper) GetAllOraclePrograms(ctx sdk.Context) []types.OracleProgram {
 		return nil
 	}
 	return programs
-}
-
-func (k Keeper) GetAllExecutorWasms(ctx sdk.Context) []types.ExecutorWasm {
-	var wasms []types.ExecutorWasm
-	err := k.IterateExecutorWasms(ctx, func(wasm types.ExecutorWasm) bool {
-		wasms = append(wasms, wasm)
-		return false
-	})
-	if err != nil {
-		return nil
-	}
-	return wasms
 }
 
 // GetExpiredOracleProgamKeys retrieves the keys of the oracle programs

@@ -9,18 +9,10 @@ import (
 
 var (
 	_ sdk.Msg = &MsgStoreOracleProgram{}
-	_ sdk.Msg = &MsgStoreExecutorWasm{}
 	_ sdk.Msg = &MsgInstantiateCoreContract{}
 )
 
 func (msg *MsgStoreOracleProgram) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return err
-	}
-	return validateWasmSize(msg.Wasm)
-}
-
-func (msg *MsgStoreExecutorWasm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return err
 	}
