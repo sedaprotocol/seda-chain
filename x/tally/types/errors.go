@@ -1,8 +1,6 @@
 package types
 
 import (
-	"strings"
-
 	"cosmossdk.io/errors"
 )
 
@@ -25,7 +23,3 @@ var (
 	ErrConstructingTallyVMArgs = errors.Register("tally", 15, "failed to construct tally VM arguments")
 	ErrGettingMaxTallyGasLimit = errors.Register("tally", 16, "failed to get max tally gas limit")
 )
-
-func IsContractPausedError(err error) bool {
-	return strings.HasPrefix(err.Error(), "Contract paused")
-}

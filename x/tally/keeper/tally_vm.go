@@ -13,14 +13,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
-const (
-	TallyExitCodeNotEnoughCommits   = 200 // tally VM not executed due to not enough commits
-	TallyExitCodeInvalidRequest     = 201 // tally VM not executed due to invalid request
-	TallyExitCodeInvalidFilterInput = 253 // tally VM not executed due to invalid filter input
-	TallyExitCodeFilterError        = 254 // tally VM not executed due to filter error
-	TallyExitCodeExecError          = 255 // error while executing tally VM
-)
-
 func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.RevealBody, gasMeter *types.GasMeter) (types.VMResult, error) {
 	tallyProgram, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyProgramID)
 	if err != nil {

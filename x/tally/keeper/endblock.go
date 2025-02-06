@@ -31,11 +31,6 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 
 	postRes, err := k.wasmKeeper.Sudo(ctx, coreContract, []byte(`{"expire_data_requests":{}}`))
 	if err != nil {
-		if types.IsContractPausedError(err) {
-			k.Logger(ctx).Warn("Contract is paused, skipping tally end block")
-			return nil
-		}
-
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to expire data requests", "err", err)
 		return nil
 	}
@@ -66,14 +61,16 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	}
 	k.Logger(ctx).Info("non-empty tally list - starting tally process")
 
-	var tallyList []types.Request
-	err = json.Unmarshal(queryRes, &tallyList)
+	var contractQueryResponse types.ContractListResponse
+	err = json.Unmarshal(queryRes, &contractQueryResponse)
 	if err != nil {
-		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to unmarshal tally-ready data requests", "err", err)
+		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to unmarshal data requests contract response", "err", err)
 		return nil
 	}
 
 	tallyvm.TallyMaxBytes = uint(params.MaxResultSize)
+
+	tallyList := contractQueryResponse.DataRequests
 
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
@@ -83,28 +80,32 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	for i, req := range tallyList {
 		dataResults[i], err = req.ToResult(ctx)
 		if err != nil {
-			types.MarkResultAsFallback(&dataResults[i], err, TallyExitCodeInvalidRequest)
+			types.MarkResultAsFallback(&dataResults[i], err)
+			continue
+		}
+
+		if contractQueryResponse.IsPaused {
+			types.MarkResultAsPaused(&dataResults[i])
 			continue
 		}
 
 		gasPrice, ok := math.NewIntFromString(req.GasPrice)
 		if !ok {
-			types.MarkResultAsFallback(&dataResults[i], fmt.Errorf("invalid gas price: %s", req.GasPrice), TallyExitCodeInvalidRequest)
+			types.MarkResultAsFallback(&dataResults[i], fmt.Errorf("invalid gas price: %s", req.GasPrice))
 			continue
 		}
 
 		gasMeter := types.NewGasMeter(req.TallyGasLimit, req.ExecGasLimit, params.MaxTallyGasLimit, gasPrice, params.GasCostBase)
 		if len(req.Commits) < int(req.ReplicationFactor) {
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
-			dataResults[i].ExitCode = TallyExitCodeNotEnoughCommits
+			dataResults[i].ExitCode = types.TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
 
 			MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
 		} else {
 			_, tallyResults[i] = k.FilterAndTally(ctx, req, params, gasMeter)
 			dataResults[i].Result = tallyResults[i].Result
-			//nolint:gosec // G115: We shouldn't get negative exit code anyway.
-			dataResults[i].ExitCode = uint32(tallyResults[i].ExitCode)
+			dataResults[i].ExitCode = tallyResults[i].ExitCode
 			dataResults[i].Consensus = tallyResults[i].Consensus
 
 			k.Logger(ctx).Info("completed tally", "request_id", req.ID)
@@ -166,7 +167,7 @@ type TallyResult struct {
 	StdOut       []string
 	StdErr       []string
 	Result       []byte
-	ExitCode     int
+	ExitCode     uint32
 	ExecGasUsed  uint64
 	TallyGasUsed uint64
 	ProxyPubKeys []string // data proxy pubkeys in basic consensus
@@ -204,7 +205,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 		vmRes, tallyErr = k.ExecuteTallyProgram(ctx, req, filterResult, reveals, gasMeter)
 		if tallyErr != nil {
 			tallyResult.Result = []byte(tallyErr.Error())
-			tallyResult.ExitCode = TallyExitCodeExecError
+			tallyResult.ExitCode = types.TallyExitCodeExecError
 		} else {
 			tallyResult.Result = vmRes.Result
 			tallyResult.ExitCode = vmRes.ExitCode
@@ -214,9 +215,9 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 	} else {
 		tallyResult.Result = []byte(filterErr.Error())
 		if errors.Is(filterErr, types.ErrInvalidFilterInput) {
-			tallyResult.ExitCode = TallyExitCodeInvalidFilterInput
+			tallyResult.ExitCode = types.TallyExitCodeInvalidFilterInput
 		} else {
-			tallyResult.ExitCode = TallyExitCodeFilterError
+			tallyResult.ExitCode = types.TallyExitCodeFilterError
 		}
 	}
 

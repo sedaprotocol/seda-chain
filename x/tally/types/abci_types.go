@@ -15,6 +15,11 @@ import (
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
+type ContractListResponse struct {
+	IsPaused     bool      `json:"is_paused"`
+	DataRequests []Request `json:"data_requests"`
+}
+
 type Request struct {
 	ID                string                `json:"id"`
 	Height            uint64                `json:"height"`
@@ -107,7 +112,7 @@ type VMResult struct {
 	Stderr      []string
 	Result      []byte
 	GasUsed     uint64
-	ExitCode    int
+	ExitCode    uint32
 	ExitMessage string
 }
 
@@ -116,7 +121,8 @@ type VMResult struct {
 // to the end user.
 func MapVMResult(vmRes tallyvm.VmResult) VMResult {
 	result := VMResult{
-		ExitCode:    vmRes.ExitInfo.ExitCode,
+		//nolint:gosec // G115: We shouldn't get negative exit code anyway.
+		ExitCode:    uint32(vmRes.ExitInfo.ExitCode),
 		ExitMessage: vmRes.ExitInfo.ExitMessage,
 		Stdout:      vmRes.Stdout,
 		Stderr:      vmRes.Stderr,

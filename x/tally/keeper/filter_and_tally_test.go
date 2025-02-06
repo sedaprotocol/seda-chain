@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
-	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper/testdata"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -32,7 +31,7 @@ func TestFilterAndTally(t *testing.T) {
 		consensus         bool
 		consPubKeys       []string // expected proxy public keys in basic consensus
 		tallyGasUsed      uint64
-		exitCode          int
+		exitCode          uint32
 		filterErr         error
 	}{
 		{
@@ -49,7 +48,7 @@ func TestFilterAndTally(t *testing.T) {
 			consensus:         true,
 			consPubKeys:       nil,
 			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostNone,
-			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
+			exitCode:          types.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
 		{
@@ -63,7 +62,7 @@ func TestFilterAndTally(t *testing.T) {
 			consensus:         false,
 			consPubKeys:       nil,
 			tallyGasUsed:      defaultParams.GasCostBase,
-			exitCode:          keeper.TallyExitCodeFilterError,
+			exitCode:          types.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
 		{
@@ -80,7 +79,7 @@ func TestFilterAndTally(t *testing.T) {
 			consensus:         true,
 			consPubKeys:       nil,
 			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*5,
-			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
+			exitCode:          types.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
 		{
@@ -94,7 +93,7 @@ func TestFilterAndTally(t *testing.T) {
 			consensus:         false,
 			consPubKeys:       nil,
 			tallyGasUsed:      defaultParams.GasCostBase,
-			exitCode:          keeper.TallyExitCodeFilterError,
+			exitCode:          types.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
 		{
@@ -111,7 +110,7 @@ func TestFilterAndTally(t *testing.T) {
 			consensus:         true,
 			consPubKeys:       nil,
 			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*5,
-			exitCode:          keeper.TallyExitCodeExecError, // since tally program does not exist
+			exitCode:          types.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
 		{
@@ -125,7 +124,7 @@ func TestFilterAndTally(t *testing.T) {
 			consensus:         false,
 			consPubKeys:       nil,
 			tallyGasUsed:      defaultParams.GasCostBase,
-			exitCode:          keeper.TallyExitCodeFilterError,
+			exitCode:          types.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
 	}

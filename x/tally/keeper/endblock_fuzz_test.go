@@ -103,11 +103,13 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 		ExitCode:     fuzz.exitCode,
 		ProxyPubKeys: []string{},
 	}
-	commitment, err := f.generateRevealBodyHash(t, revealBody, fuzz.salt)
+	commitment, err := f.generateRevealBodyHash(revealBody, fuzz.salt)
 	require.NoError(t, err)
 
 	for i := 0; i < numCommits; i++ {
-		proof := f.generateCommitProof(t, stakers[i].key, drID, commitment, res.Height)
+		proof, err := f.generateCommitProof(stakers[i].key, drID, commitment, res.Height)
+		require.NoError(t, err)
+
 		_, err = f.contractKeeper.Execute(
 			f.Context(),
 			f.coreContractAddr,
@@ -119,7 +121,9 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 	}
 
 	for i := 0; i < numReveals; i++ {
-		proof := f.generateRevealProof(t, stakers[i].key, drID, commitment, res.Height)
+		proof, err := f.generateRevealProof(stakers[i].key, drID, commitment, res.Height)
+		require.NoError(t, err)
+
 		_, err = f.contractKeeper.Execute(
 			f.Context(),
 			f.coreContractAddr,
