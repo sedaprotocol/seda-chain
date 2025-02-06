@@ -13,7 +13,7 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/pubkey/types";
 service Query {
   // Params returns the total set of pubkey parameters.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/seda/pubkey/params";
+    option (google.api.http).get = "/seda-chain/pubkey/params";
   }
 
   // ValidatorKeys returns a given validator's registered keys.
