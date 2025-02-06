@@ -84,3 +84,12 @@ func (q Querier) CoreContractRegistry(c context.Context, _ *types.QueryCoreContr
 		Address: coreAddress.String(),
 	}, nil
 }
+
+func (q Querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	params, err := q.Keeper.GetParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryParamsResponse{Params: params}, nil
+}

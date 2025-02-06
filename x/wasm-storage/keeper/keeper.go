@@ -219,6 +219,10 @@ func (k Keeper) GetExpiredOracleProgamKeys(ctx sdk.Context, expirationHeight int
 	return ret, nil
 }
 
+func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
+	return k.Params.Get(ctx)
+}
+
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }

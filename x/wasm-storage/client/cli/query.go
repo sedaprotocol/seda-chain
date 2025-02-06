@@ -27,6 +27,7 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdQueryOraclePrograms(),
 		GetCmdQueryExecutorWasms(),
 		GetCmdQueryCoreContractRegistry(),
+		GetCmdQueryParams(),
 	)
 	return cmd
 }
@@ -167,6 +168,30 @@ func GetCmdQueryCoreContractRegistry() *cobra.Command {
 				cmd.Context(),
 				&types.QueryCoreContractRegistryRequest{},
 			)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetCmdQueryParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query wasm-storage module parameters",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Params(cmd.Context(), &types.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}
