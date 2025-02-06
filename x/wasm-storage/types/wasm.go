@@ -25,20 +25,14 @@ func validateWasmSize(s []byte) error {
 
 // NewOracleProgram constructs a new OracleProgram object given
 // bytecode. It panics if it fails to compute hash of bytecode.
-func NewOracleProgram(bytecode []byte, addedAt time.Time, _, _ int64) OracleProgram {
+func NewOracleProgram(bytecode []byte, addedAt time.Time) OracleProgram {
 	hash := crypto.Keccak256(bytecode)
 	if hash == nil {
 		panic("failed to compute hash")
 	}
-	var expHeight int64
-	// TODO(#347) Expiration is disabled for now.
-	// if ttl > 0 {
-	// 	expHeight = curBlock + ttl
-	// }
 	return OracleProgram{
-		Hash:             hash,
-		Bytecode:         bytecode,
-		AddedAt:          addedAt,
-		ExpirationHeight: expHeight,
+		Hash:     hash,
+		Bytecode: bytecode,
+		AddedAt:  addedAt,
 	}
 }

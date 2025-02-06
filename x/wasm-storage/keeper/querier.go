@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -39,7 +38,7 @@ func (q Querier) OraclePrograms(c context.Context, req *types.QueryOracleProgram
 	results, pageRes, err := query.CollectionPaginate(
 		ctx, q.Keeper.OracleProgram, req.Pagination,
 		func(_ []byte, v types.OracleProgram) (string, error) {
-			return fmt.Sprintf("%s,%d", hex.EncodeToString(v.Hash), v.ExpirationHeight), nil
+			return hex.EncodeToString(v.Hash), nil
 		},
 	)
 	if err != nil {

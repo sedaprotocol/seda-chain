@@ -27,11 +27,10 @@ type Keeper struct {
 	// Typically, this should be the gov module address.
 	authority string
 
-	Schema                  collections.Schema
-	OracleProgram           collections.Map[[]byte, types.OracleProgram]
-	OracleProgramExpiration collections.KeySet[collections.Pair[int64, []byte]]
-	CoreContractRegistry    collections.Item[string]
-	Params                  collections.Item[types.Params]
+	Schema               collections.Schema
+	OracleProgram        collections.Map[[]byte, types.OracleProgram]
+	CoreContractRegistry collections.Item[string]
+	Params               collections.Item[types.Params]
 }
 
 func NewKeeper(
@@ -46,15 +45,14 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
-		authority:               authority,
-		accountKeeper:           ak,
-		bankKeeper:              bk,
-		wasmKeeper:              wk,
-		wasmViewKeeper:          wvk,
-		OracleProgram:           collections.NewMap(sb, types.OracleProgramPrefix, "oracle_program", collections.BytesKey, codec.CollValue[types.OracleProgram](cdc)),
-		OracleProgramExpiration: collections.NewKeySet(sb, types.WasmExpPrefix, "oracle_program_expiration", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
-		CoreContractRegistry:    collections.NewItem(sb, types.CoreContractRegistryPrefix, "core_contract_registry", collections.StringValue),
-		Params:                  collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
+		authority:            authority,
+		accountKeeper:        ak,
+		bankKeeper:           bk,
+		wasmKeeper:           wk,
+		wasmViewKeeper:       wvk,
+		OracleProgram:        collections.NewMap(sb, types.OracleProgramPrefix, "oracle_program", collections.BytesKey, codec.CollValue[types.OracleProgram](cdc)),
+		CoreContractRegistry: collections.NewItem(sb, types.CoreContractRegistryPrefix, "core_contract_registry", collections.StringValue),
+		Params:               collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
 	}
 
 	schema, err := sb.Build()
@@ -122,12 +120,11 @@ func (k Keeper) IterateOraclePrograms(ctx sdk.Context, callback func(program typ
 	return nil
 }
 
-// ListOraclePrograms returns hashes and expiration block heights
-// of all oracle programs in the store.
+// ListOraclePrograms returns hashes of all oracle programs in the store.
 func (k Keeper) ListOraclePrograms(ctx sdk.Context) []string {
 	var results []string
 	err := k.IterateOraclePrograms(ctx, func(w types.OracleProgram) bool {
-		results = append(results, fmt.Sprintf("%s,%d", hex.EncodeToString(w.Hash), w.ExpirationHeight))
+		results = append(results, hex.EncodeToString(w.Hash))
 		return false
 	})
 	if err != nil {
@@ -146,27 +143,6 @@ func (k Keeper) GetAllOraclePrograms(ctx sdk.Context) []types.OracleProgram {
 		return nil
 	}
 	return programs
-}
-
-// GetExpiredOracleProgamKeys retrieves the keys of the oracle programs
-// that will expire at the given block height.
-func (k Keeper) GetExpiredOracleProgamKeys(ctx sdk.Context, expirationHeight int64) ([][]byte, error) {
-	ret := make([][]byte, 0)
-	rng := collections.NewPrefixedPairRange[int64, []byte](expirationHeight)
-
-	itr, err := k.OracleProgramExpiration.Iterate(ctx, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	keys, err := itr.Keys()
-	if err != nil {
-		return nil, err
-	}
-	for _, k := range keys {
-		ret = append(ret, k.K2())
-	}
-	return ret, nil
 }
 
 func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {

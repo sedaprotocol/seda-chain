@@ -12,9 +12,6 @@ message OracleProgram {
   bytes bytecode = 2;
   google.protobuf.Timestamp added_at = 3
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
-  // ExpirationHeight represents the block height at which the oracle
-  // program will be pruned. The value of zero means no expiration.
-  int64 expiration_height = 4;
 }
 
 // Params to define the max wasm size allowed.
@@ -23,10 +20,7 @@ message Params {
 
   // MaxWasmSize specifies the maximum size of a gzipped oracle program allowed.
   int64 max_wasm_size = 1;
-  // WasmTTL represents the number of blocks a wasm's life is extended when it's
-  // created or used.
-  int64 wasm_ttl = 2 [ (gogoproto.customname) = "WasmTTL" ];
   // UploadMultiplier is the multiplier for the gas cost of uploading an oracle
   // program.
-  uint64 upload_multiplier = 3;
+  uint64 upload_multiplier = 2;
 }

@@ -24,7 +24,7 @@ func FuzzGasMetering(f *testing.F) {
 	err := fixture.tallyKeeper.SetParams(fixture.Context(), defaultParams)
 	require.NoError(f, err)
 
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm2(), fixture.Context().BlockTime(), fixture.Context().BlockHeight(), 1000)
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm2(), fixture.Context().BlockTime())
 	err = fixture.wasmStorageKeeper.OracleProgram.Set(fixture.Context(), tallyProgram.Hash, tallyProgram)
 	require.NoError(f, err)
 

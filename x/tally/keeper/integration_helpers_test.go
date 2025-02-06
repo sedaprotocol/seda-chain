@@ -40,11 +40,11 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal stri
 	f.initDeployer(t)
 
 	// Upload data request and tally oracle programs.
-	execProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm(), f.Context().BlockTime(), f.Context().BlockHeight(), 1000)
+	execProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm(), f.Context().BlockTime())
 	err := f.wasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
 	require.NoError(t, err)
 
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm2(), f.Context().BlockTime(), f.Context().BlockHeight(), 1000)
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm2(), f.Context().BlockTime())
 	err = f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 	require.NoError(t, err)
 

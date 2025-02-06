@@ -1,17 +1,12 @@
 package e2e
 
 import (
-	"bytes"
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 	"time"
-
-	"github.com/ethereum/go-ethereum/crypto"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
@@ -21,43 +16,6 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
-
-func (s *IntegrationTestSuite) testWasmStorageStoreExecutorWasm() {
-	proposalCounter++
-	proposalID := proposalCounter
-
-	senderAddress, err := s.chain.validators[0].keyInfo.GetAddress()
-	s.Require().NoError(err)
-	sender := senderAddress.String()
-
-	bytecode, err := os.ReadFile(filepath.Join(localWasmDirPath, executorWasm))
-	if err != nil {
-		panic("failed to read an executor wasm file")
-	}
-	executorHashBytes := crypto.Keccak256(bytecode)
-	if executorHashBytes == nil {
-		panic("failed to compute hash")
-	}
-	executorHashStr := hex.EncodeToString(executorHashBytes)
-
-	s.execWasmStorageStoreExecutor(s.chain, 0, executorWasm, "clean_title", "sustainable_summary", sender, standardFees.String(), false, proposalID)
-	s.execGovVoteYes(s.chain, 0, sender, standardFees.String(), false, proposalID)
-
-	s.Require().Eventually(
-		func() bool {
-			executorWasmRes, err := queryExecutorWasm(s.endpoint, executorHashStr)
-			s.Require().NoError(err)
-			s.Require().True(bytes.Equal(executorHashBytes, executorWasmRes.Wasm.Hash))
-
-			wasms, err := queryExecutorWasms(s.endpoint)
-			s.Require().NoError(err)
-
-			return executorHashStr == wasms.List[0]
-		},
-		30*time.Second,
-		5*time.Second,
-	)
-}
 
 func (s *IntegrationTestSuite) execWasmStorageStoreExecutor(
 	c *chain,

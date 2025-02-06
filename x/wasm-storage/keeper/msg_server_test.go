@@ -110,7 +110,6 @@ func (s *KeeperTestSuite) TestStoreOracleProgramGasMultiplier() {
 		Authority: s.authority,
 		Params: types.Params{
 			MaxWasmSize:      1000000,
-			WasmTTL:          1000,
 			UploadMultiplier: 1,
 		},
 	})
@@ -131,7 +130,6 @@ func (s *KeeperTestSuite) TestStoreOracleProgramGasMultiplier() {
 		Authority: s.authority,
 		Params: types.Params{
 			MaxWasmSize:      1000000,
-			WasmTTL:          1000,
 			UploadMultiplier: 200,
 		},
 	})
@@ -168,7 +166,6 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 				Authority: s.authority,
 				Params: types.Params{
 					MaxWasmSize:      1000000, // 1 MB
-					WasmTTL:          100,
 					UploadMultiplier: 10,
 				},
 			},
@@ -180,7 +177,6 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 				Authority: "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
 				Params: types.Params{
 					MaxWasmSize:      1, // 1 MB
-					WasmTTL:          1000,
 					UploadMultiplier: 10,
 				},
 			},
@@ -192,23 +188,10 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 				Authority: authority,
 				Params: types.Params{
 					MaxWasmSize:      0, // 0 MB
-					WasmTTL:          100,
 					UploadMultiplier: 10,
 				},
 			},
 			expErrMsg: "invalid max wasm size 0: invalid param",
-		},
-		{
-			name: "invalid wasm time to live",
-			input: &types.MsgUpdateParams{
-				Authority: authority,
-				Params: types.Params{
-					MaxWasmSize:      111110,
-					WasmTTL:          1,
-					UploadMultiplier: 10,
-				},
-			},
-			expErrMsg: "WasmTTL 1 < 2: invalid param",
 		},
 		{
 			name: "invalid upload multiplier",
@@ -216,7 +199,6 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 				Authority: authority,
 				Params: types.Params{
 					MaxWasmSize:      111110,
-					WasmTTL:          1000,
 					UploadMultiplier: 0,
 				},
 			},
@@ -241,104 +223,3 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 		})
 	}
 }
-
-// TODO(#347) Expiration is disabled for now.
-/*
-func (s *KeeperTestSuite) TestDRWasmPruning() {
-	params, err := s.keeper.Params.Get(s.ctx)
-	s.Require().NoError(err)
-	wasmTTL := params.WasmTTL
-
-	// Get the list of all oracle programs.
-	oraclePrograms := s.keeper.ListOraclePrograms(s.ctx)
-	s.Require().Empty(oraclePrograms)
-
-	// Save 1 DR Wasm with default exp [params.WasmTTL]
-	drWasm1, err := os.ReadFile("testutil/hello-world.wasm")
-	s.Require().NoError(err)
-	drWasmZipped1, err := ioutils.GzipIt(drWasm1)
-	s.Require().NoError(err)
-
-	resp1, err := s.msgSrvr.StoreOracleProgram(s.ctx, &types.MsgStoreOracleProgram{
-		Sender: s.authority,
-		Wasm:   drWasmZipped1,
-	})
-	s.Require().NoError(err)
-
-	// Save 1 DR Wasm with default 2 * exp [params.WasmTTL]
-	// First double the wasm lifespan.
-	params.WasmTTL = 2 * wasmTTL
-	s.Require().NoError(s.keeper.Params.Set(s.ctx, params))
-
-	drWasm2, err := os.ReadFile("testutil/cowsay.wasm")
-	s.Require().NoError(err)
-	drWasmZipped2, err := ioutils.GzipIt(drWasm2)
-	s.Require().NoError(err)
-
-	resp2, err := s.msgSrvr.StoreOracleProgram(s.ctx, &types.MsgStoreOracleProgram{
-		Sender: s.authority,
-		Wasm:   drWasmZipped2,
-	})
-	s.Require().NoError(err)
-
-	firstWasmPruneHeight := s.ctx.BlockHeight() + wasmTTL
-	secondWasmPruneHeight := s.ctx.BlockHeight() + (2 * wasmTTL)
-
-	// Wasm pruning takes place during the EndBlocker. If the height of a pruning block is H,
-	// and the wasm to prune is W;
-	// W would be available at H. W would NOT be available from H+1.
-
-	// Artificially move to the pruning block for the first wasm.
-	s.ctx = s.ctx.WithBlockHeight(firstWasmPruneHeight)
-
-	// H = params.WasmTTL. || firstWasmPruneHeight => 0 + params.WasmTTL
-	// We still have 2 wasms.
-	list := s.keeper.ListOraclePrograms(s.ctx)
-
-	s.Require().ElementsMatch(list, []string{fmt.Sprintf("%s,%d", resp1.Hash, firstWasmPruneHeight), fmt.Sprintf("%s,%d", resp2.Hash, secondWasmPruneHeight)})
-	// Check WsmExp is in sync
-	s.Require().Len(getAllWasmExpEntry(s.T(), s.ctx, s.keeper), 2)
-
-	// Simulate EndBlocker Call. This will remove one wasm.
-	s.Require().NoError(s.keeper.EndBlock(s.ctx))
-
-	// Go to the next block
-	// H = params.WasmTTL + 1.
-	s.ctx = s.ctx.WithBlockHeight(firstWasmPruneHeight + 1)
-	// Simulate EndBlocker Call. This EndBlocker call will have no effect. As at this height no wasm to prune.
-	s.Require().NoError(s.keeper.EndBlock(s.ctx))
-	// Check: 1 wasm was pruned, 1 remained.
-	list = s.keeper.ListOraclePrograms(s.ctx)
-	s.Require().ElementsMatch(list, []string{fmt.Sprintf("%s,%d", resp2.Hash, secondWasmPruneHeight)})
-	// Check WsmExp is in sync
-	s.Require().Len(getAllWasmExpEntry(s.T(), s.ctx, s.keeper), 1)
-
-	// H = 2 * params.WasmTTL.
-	s.ctx = s.ctx.WithBlockHeight(secondWasmPruneHeight)
-	list = s.keeper.ListOraclePrograms(s.ctx)
-	s.Require().ElementsMatch(list, []string{fmt.Sprintf("%s,%d", resp2.Hash, secondWasmPruneHeight)})
-	// Simulate EndBlocker Call
-	s.Require().NoError(s.keeper.EndBlock(s.ctx))
-
-	// Go to the next block
-	s.ctx = s.ctx.WithBlockHeight(secondWasmPruneHeight + 1)
-
-	// Both wasm must be pruned.
-	list = s.keeper.ListOraclePrograms(s.ctx)
-	s.Require().Empty(list) // Check WsmExp is in sync
-	s.Require().Empty(getAllWasmExpEntry(s.T(), s.ctx, s.keeper))
-}
-
-func getAllWasmExpEntry(t *testing.T, c sdk.Context, k *keeper.Keeper) []string {
-	t.Helper()
-	it, err := k.OracleProgramExpiration.Iterate(c, nil)
-	require.NoError(t, err)
-	keys, err := it.Keys()
-	require.NoError(t, err)
-	hashes := make([]string, 0)
-	for _, key := range keys {
-		hashes = append(hashes, hex.EncodeToString(key.K2()))
-	}
-	return hashes
-}
-*/

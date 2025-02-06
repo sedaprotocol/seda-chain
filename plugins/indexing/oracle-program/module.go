@@ -25,15 +25,13 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 		}
 
 		data := struct {
-			ID               string    `json:"id"`
-			Bytecode         []byte    `json:"bytecode"`
-			AddedAt          time.Time `json:"addedAt"`
-			ExpirationHeight int64     `json:"expirationHeight"`
+			ID       string    `json:"id"`
+			Bytecode []byte    `json:"bytecode"`
+			AddedAt  time.Time `json:"addedAt"`
 		}{
-			ID:               hex.EncodeToString(val.Hash),
-			Bytecode:         val.Bytecode,
-			AddedAt:          val.AddedAt,
-			ExpirationHeight: val.ExpirationHeight,
+			ID:       hex.EncodeToString(val.Hash),
+			Bytecode: val.Bytecode,
+			AddedAt:  val.AddedAt,
 		}
 
 		return types.NewMessage("oracle-program", data, ctx), nil

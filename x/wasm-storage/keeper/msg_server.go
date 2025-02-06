@@ -7,8 +7,6 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
-	"cosmossdk.io/collections"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -44,7 +42,7 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 		return nil, err
 	}
 
-	program := types.NewOracleProgram(unzipped, ctx.BlockTime(), ctx.BlockHeight(), params.WasmTTL)
+	program := types.NewOracleProgram(unzipped, ctx.BlockTime())
 	if exists, _ := m.OracleProgram.Has(ctx, program.Hash); exists {
 		return nil, types.ErrWasmAlreadyExists
 	}
@@ -66,10 +64,6 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 		adjGasUsed = gasUsed*params.UploadMultiplier - gasUsed
 	}
 	ctx.GasMeter().ConsumeGas(adjGasUsed, "oracle program upload")
-
-	if err := m.OracleProgramExpiration.Set(ctx, collections.Join(program.ExpirationHeight, program.Hash)); err != nil {
-		return nil, err
-	}
 
 	hashHex := hex.EncodeToString(program.Hash)
 	ctx.EventManager().EmitEvent(

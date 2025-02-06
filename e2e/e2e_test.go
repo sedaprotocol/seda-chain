@@ -7,6 +7,5 @@ func (s *IntegrationTestSuite) TestWasmStorage() {
 		s.T().Skip()
 	}
 	s.testWasmStorageStoreOracleProgram()
-	s.testWasmStorageStoreExecutorWasm() // involves gov process
-	s.testInstantiateCoreContract()      // involves gov process
+	s.testInstantiateCoreContract() // involves gov process
 }

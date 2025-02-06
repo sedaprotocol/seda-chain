@@ -178,7 +178,7 @@ func TestExecutorPayout(t *testing.T) {
 	err := f.tallyKeeper.SetParams(f.Context(), defaultParams)
 	require.NoError(t, err)
 
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm2(), f.Context().BlockTime(), f.Context().BlockHeight(), 1000)
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm2(), f.Context().BlockTime())
 	err = f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 	require.NoError(t, err)
 

@@ -64,38 +64,10 @@ func queryOracleProgram(endpoint, hash string) (wasmstoragetypes.QueryOracleProg
 	return res, nil
 }
 
-func queryExecutorWasm(endpoint, hash string) (wasmstoragetypes.QueryExecutorWasmResponse, error) {
-	var res wasmstoragetypes.QueryExecutorWasmResponse
-
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/executor_wasm/%s", endpoint, hash))
-	if err != nil {
-		return res, err
-	}
-
-	if err = cdc.UnmarshalJSON(body, &res); err != nil {
-		return res, err
-	}
-	return res, nil
-}
-
 func queryOraclePrograms(endpoint string) (wasmstoragetypes.QueryOracleProgramsResponse, error) {
 	var res wasmstoragetypes.QueryOracleProgramsResponse
 
 	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/oracle_programs", endpoint))
-	if err != nil {
-		return res, err
-	}
-
-	if err = cdc.UnmarshalJSON(body, &res); err != nil {
-		return res, err
-	}
-	return res, nil
-}
-
-func queryExecutorWasms(endpoint string) (wasmstoragetypes.QueryExecutorWasmsResponse, error) {
-	var res wasmstoragetypes.QueryExecutorWasmsResponse
-
-	body, err := httpGet(fmt.Sprintf("%s/seda-chain/wasm-storage/executor_wasms", endpoint))
 	if err != nil {
 		return res, err
 	}

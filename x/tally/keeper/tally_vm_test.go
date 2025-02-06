@@ -23,7 +23,7 @@ import (
 func TestExecuteTallyProgram_RandomString(t *testing.T) {
 	f := initFixture(t)
 
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.RandomStringTallyWasm(), f.Context().BlockTime(), f.Context().BlockHeight(), 1000)
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.RandomStringTallyWasm(), f.Context().BlockTime())
 	f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 
 	gasMeter := types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1)
@@ -63,7 +63,7 @@ func TestExecuteTallyProgram_RandomString(t *testing.T) {
 func TestExecuteTallyProgram_InvalidImports(t *testing.T) {
 	f := initFixture(t)
 
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.InvalidImportWasm(), f.Context().BlockTime(), f.Context().BlockHeight(), 1000)
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.InvalidImportWasm(), f.Context().BlockTime())
 	f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 
 	gasMeter := types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1)

@@ -63,7 +63,7 @@ func GetCmdQueryOracleProgram() *cobra.Command {
 func GetCmdQueryOraclePrograms() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-oracle-programs",
-		Short: "List hashes and expiration heights of all oracle programs",
+		Short: "List hashes of all oracle programs",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
