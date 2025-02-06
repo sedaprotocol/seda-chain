@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"math"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
@@ -47,9 +48,24 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 	if exists, _ := m.OracleProgram.Has(ctx, program.Hash); exists {
 		return nil, types.ErrWasmAlreadyExists
 	}
+
+	beforeGas := ctx.GasMeter().GasConsumed()
 	if err := m.OracleProgram.Set(ctx, program.Hash, program); err != nil {
 		return nil, err
 	}
+
+	// Apply the upload multiplier to the gas used to store the oracle program.
+	afterGas := ctx.GasMeter().GasConsumed()
+	gasUsed := afterGas - beforeGas
+	var adjGasUsed uint64
+	// If the gas used is greater than the max uint64 divided by the upload multiplier we would overflow
+	// so we set the gas used to the max uint64, which should result in an out of gas error.
+	if gasUsed > math.MaxUint64/params.UploadMultiplier {
+		adjGasUsed = math.MaxUint64
+	} else {
+		adjGasUsed = gasUsed*params.UploadMultiplier - gasUsed
+	}
+	ctx.GasMeter().ConsumeGas(adjGasUsed, "oracle program upload")
 
 	if err := m.OracleProgramExpiration.Set(ctx, collections.Join(program.ExpirationHeight, program.Hash)); err != nil {
 		return nil, err
@@ -63,9 +79,6 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 			sdk.NewAttribute(types.AttributeOracleProgramHash, hashHex),
 		),
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	return &types.MsgStoreOracleProgramResponse{
 		Hash: hashHex,

@@ -6,9 +6,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 
+	storetypes "cosmossdk.io/store/types"
+
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
-	// "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -95,6 +96,63 @@ func (s *KeeperTestSuite) TestStoreOracleProgram() {
 			s.Require().Equal(tc.expOutput, *res)
 		})
 	}
+}
+
+func (s *KeeperTestSuite) TestStoreOracleProgramGasMultiplier() {
+	dummyWasm := make([]byte, 100)
+	dummyWasmZipped, err := ioutils.GzipIt(dummyWasm)
+	s.Require().NoError(err)
+
+	s.SetupTest()
+
+	// Start without a multiplier
+	_, err = s.msgSrvr.UpdateParams(s.ctx, &types.MsgUpdateParams{
+		Authority: s.authority,
+		Params: types.Params{
+			MaxWasmSize:      1000000,
+			WasmTTL:          1000,
+			UploadMultiplier: 1,
+		},
+	})
+	s.Require().NoError(err)
+
+	// Use a fresh gas meter for the test
+	firstMeter := storetypes.NewGasMeter(100000000000)
+	_, err = s.msgSrvr.StoreOracleProgram(s.ctx.WithGasMeter(firstMeter), &types.MsgStoreOracleProgram{
+		Sender: s.authority,
+		Wasm:   dummyWasmZipped,
+	})
+	s.Require().NoError(err)
+
+	// We can't check the gas consumed here because for some reason it fluctuates between 12720 and 12750 :(
+
+	// Set a multiplier of 200
+	_, err = s.msgSrvr.UpdateParams(s.ctx, &types.MsgUpdateParams{
+		Authority: s.authority,
+		Params: types.Params{
+			MaxWasmSize:      1000000,
+			WasmTTL:          1000,
+			UploadMultiplier: 200,
+		},
+	})
+	s.Require().NoError(err)
+
+	// Change the dummy wasm slightly
+	dummyWasm[0] = 0x01
+	updatedDummyWasmZipped, err := ioutils.GzipIt(dummyWasm)
+	s.Require().NoError(err)
+
+	// Use a fresh gas meter for the test
+	secondMeter := storetypes.NewGasMeter(100000000000)
+	_, err = s.msgSrvr.StoreOracleProgram(s.ctx.WithGasMeter(secondMeter), &types.MsgStoreOracleProgram{
+		Sender: s.authority,
+		Wasm:   updatedDummyWasmZipped,
+	})
+	s.Require().NoError(err)
+
+	// We can't check the exact multiplier here because the gas consumed is not constant, and the multiplier
+	// is only applied to the gas used to store the wasm, not the other operations in `StoreOracleProgram`.
+	s.Require().Greater(secondMeter.GasConsumed(), firstMeter.GasConsumed()*uint64(100), "expected the gas consumed to be greater than 100x %d, got %d", firstMeter.GasConsumed(), secondMeter.GasConsumed())
 }
 
 func (s *KeeperTestSuite) TestStoreExecutorWasm() {
@@ -205,8 +263,9 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			input: &types.MsgUpdateParams{
 				Authority: s.authority,
 				Params: types.Params{
-					MaxWasmSize: 1000000, // 1 MB
-					WasmTTL:     100,
+					MaxWasmSize:      1000000, // 1 MB
+					WasmTTL:          100,
+					UploadMultiplier: 10,
 				},
 			},
 			expErrMsg: "",
@@ -216,8 +275,9 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			input: &types.MsgUpdateParams{
 				Authority: "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
 				Params: types.Params{
-					MaxWasmSize: 1, // 1 MB
-					WasmTTL:     1000,
+					MaxWasmSize:      1, // 1 MB
+					WasmTTL:          1000,
+					UploadMultiplier: 10,
 				},
 			},
 			expErrMsg: "expected " + authority + ", got seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l: invalid authority",
@@ -227,8 +287,9 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			input: &types.MsgUpdateParams{
 				Authority: authority,
 				Params: types.Params{
-					MaxWasmSize: 0, // 0 MB
-					WasmTTL:     100,
+					MaxWasmSize:      0, // 0 MB
+					WasmTTL:          100,
+					UploadMultiplier: 10,
 				},
 			},
 			expErrMsg: "invalid max wasm size 0: invalid param",
@@ -238,11 +299,24 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			input: &types.MsgUpdateParams{
 				Authority: authority,
 				Params: types.Params{
-					MaxWasmSize: 111110,
-					WasmTTL:     1,
+					MaxWasmSize:      111110,
+					WasmTTL:          1,
+					UploadMultiplier: 10,
 				},
 			},
 			expErrMsg: "WasmTTL 1 < 2: invalid param",
+		},
+		{
+			name: "invalid upload multiplier",
+			input: &types.MsgUpdateParams{
+				Authority: authority,
+				Params: types.Params{
+					MaxWasmSize:      111110,
+					WasmTTL:          1000,
+					UploadMultiplier: 0,
+				},
+			},
+			expErrMsg: "invalid upload multiplier 0: invalid param",
 		},
 	}
 
