@@ -17,47 +17,11 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockAccountKeeper is a mock of AccountKeeper interface.
-type MockAccountKeeper struct {
-	ctrl     *gomock.Controller
-	recorder *MockAccountKeeperMockRecorder
-}
-
-// MockAccountKeeperMockRecorder is the mock recorder for MockAccountKeeper.
-type MockAccountKeeperMockRecorder struct {
-	mock *MockAccountKeeper
-}
-
-// NewMockAccountKeeper creates a new mock instance.
-func NewMockAccountKeeper(ctrl *gomock.Controller) *MockAccountKeeper {
-	mock := &MockAccountKeeper{ctrl: ctrl}
-	mock.recorder = &MockAccountKeeperMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAccountKeeper) EXPECT() *MockAccountKeeperMockRecorder {
-	return m.recorder
-}
-
-// GetAccount mocks base method.
-func (m *MockAccountKeeper) GetAccount(ctx context.Context, addr types.AccAddress) types.AccountI {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccount", ctx, addr)
-	ret0, _ := ret[0].(types.AccountI)
-	return ret0
-}
-
-// GetAccount indicates an expected call of GetAccount.
-func (mr *MockAccountKeeperMockRecorder) GetAccount(ctx, addr any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccount", reflect.TypeOf((*MockAccountKeeper)(nil).GetAccount), ctx, addr)
-}
-
 // MockBankKeeper is a mock of BankKeeper interface.
 type MockBankKeeper struct {
 	ctrl     *gomock.Controller
 	recorder *MockBankKeeperMockRecorder
+	isgomock struct{}
 }
 
 // MockBankKeeperMockRecorder is the mock recorder for MockBankKeeper.
@@ -77,16 +41,55 @@ func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
 	return m.recorder
 }
 
-// SpendableCoins mocks base method.
-func (m *MockBankKeeper) SpendableCoins(ctx context.Context, addr types.AccAddress) types.Coins {
+// SendCoinsFromAccountToModule mocks base method.
+func (m *MockBankKeeper) SendCoinsFromAccountToModule(ctx context.Context, senderAddr types.AccAddress, recipientModule string, amt types.Coins) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SpendableCoins", ctx, addr)
-	ret0, _ := ret[0].(types.Coins)
+	ret := m.ctrl.Call(m, "SendCoinsFromAccountToModule", ctx, senderAddr, recipientModule, amt)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SpendableCoins indicates an expected call of SpendableCoins.
-func (mr *MockBankKeeperMockRecorder) SpendableCoins(ctx, addr any) *gomock.Call {
+// SendCoinsFromAccountToModule indicates an expected call of SendCoinsFromAccountToModule.
+func (mr *MockBankKeeperMockRecorder) SendCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SpendableCoins", reflect.TypeOf((*MockBankKeeper)(nil).SpendableCoins), ctx, addr)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromAccountToModule", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromAccountToModule), ctx, senderAddr, recipientModule, amt)
+}
+
+// MockStakingKeeper is a mock of StakingKeeper interface.
+type MockStakingKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockStakingKeeperMockRecorder
+	isgomock struct{}
+}
+
+// MockStakingKeeperMockRecorder is the mock recorder for MockStakingKeeper.
+type MockStakingKeeperMockRecorder struct {
+	mock *MockStakingKeeper
+}
+
+// NewMockStakingKeeper creates a new mock instance.
+func NewMockStakingKeeper(ctrl *gomock.Controller) *MockStakingKeeper {
+	mock := &MockStakingKeeper{ctrl: ctrl}
+	mock.recorder = &MockStakingKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockStakingKeeper) EXPECT() *MockStakingKeeperMockRecorder {
+	return m.recorder
+}
+
+// BondDenom mocks base method.
+func (m *MockStakingKeeper) BondDenom(ctx context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BondDenom", ctx)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BondDenom indicates an expected call of BondDenom.
+func (mr *MockStakingKeeperMockRecorder) BondDenom(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BondDenom", reflect.TypeOf((*MockStakingKeeper)(nil).BondDenom), ctx)
 }

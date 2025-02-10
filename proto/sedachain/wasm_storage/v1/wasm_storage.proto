@@ -18,9 +18,10 @@ message OracleProgram {
 message Params {
   option (gogoproto.equal) = true;
 
-  // MaxWasmSize specifies the maximum size of a gzipped oracle program allowed.
-  int64 max_wasm_size = 1;
-  // UploadMultiplier is the multiplier for the gas cost of uploading an oracle
+  // MaxWasmSize specifies the maximum allowed size of an unzipped oracle
   // program.
-  uint64 upload_multiplier = 2;
+  int64 max_wasm_size = 1;
+  // WasmCostPerByte is the cost per unzipped byte of uploading an oracle
+  // program in aseda.
+  uint64 wasm_cost_per_byte = 2;
 }

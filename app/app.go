@@ -646,10 +646,9 @@ func NewApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[wasmstoragetypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		app.AccountKeeper,
 		app.BankKeeper,
+		app.StakingKeeper,
 		contractKeeper,
-		app.WasmKeeper,
 	)
 
 	app.PubKeyKeeper = pubkeykeeper.NewKeeper(

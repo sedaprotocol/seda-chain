@@ -18,10 +18,9 @@ import (
 )
 
 type Keeper struct {
-	accountKeeper  types.AccountKeeper
-	bankKeeper     types.BankKeeper
-	wasmKeeper     wasmtypes.ContractOpsKeeper
-	wasmViewKeeper wasmtypes.ViewKeeper
+	bankKeeper    types.BankKeeper
+	stakingKeeper types.StakingKeeper
+	wasmKeeper    wasmtypes.ContractOpsKeeper
 
 	// authority is the address capable of executing MsgUpdateParams.
 	// Typically, this should be the gov module address.
@@ -37,19 +36,17 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService storetypes.KVStoreService,
 	authority string,
-	ak types.AccountKeeper,
 	bk types.BankKeeper,
+	sk types.StakingKeeper,
 	wk wasmtypes.ContractOpsKeeper,
-	wvk wasmtypes.ViewKeeper,
 ) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
 		authority:            authority,
-		accountKeeper:        ak,
 		bankKeeper:           bk,
+		stakingKeeper:        sk,
 		wasmKeeper:           wk,
-		wasmViewKeeper:       wvk,
 		OracleProgram:        collections.NewMap(sb, types.OracleProgramPrefix, "oracle_program", collections.BytesKey, codec.CollValue[types.OracleProgram](cdc)),
 		CoreContractRegistry: collections.NewItem(sb, types.CoreContractRegistryPrefix, "core_contract_registry", collections.StringValue),
 		Params:               collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),

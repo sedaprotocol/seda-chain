@@ -3,11 +3,15 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
-	"math"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
+	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -33,11 +37,37 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
+
 	params, err := m.Params.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
-	unzipped, err := unzipWasm(msg.Wasm, params.MaxWasmSize)
+
+	denom, err := m.stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// The user should have attached fees for the size of the wasm file multiplied
+	// by the cost per byte, so we derive the max wasm size from that.
+	storageFee := msg.StorageFee.AmountOf(denom)
+	paidStorage := storageFee.Quo(math.NewIntFromUint64(params.WasmCostPerByte))
+
+	if !paidStorage.IsInt64() || paidStorage.Int64() > params.MaxWasmSize {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "WASM file is too large")
+	}
+
+	senderAddress, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
+	}
+
+	err = m.bankKeeper.SendCoinsFromAccountToModule(ctx, senderAddress, authtypes.FeeCollectorName, msg.StorageFee)
+	if err != nil {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInsufficientFunds, err.Error())
+	}
+
+	unzipped, err := unzipWasm(msg.Wasm, paidStorage.Int64())
 	if err != nil {
 		return nil, err
 	}
@@ -47,23 +77,9 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 		return nil, types.ErrWasmAlreadyExists
 	}
 
-	beforeGas := ctx.GasMeter().GasConsumed()
 	if err := m.OracleProgram.Set(ctx, program.Hash, program); err != nil {
 		return nil, err
 	}
-
-	// Apply the upload multiplier to the gas used to store the oracle program.
-	afterGas := ctx.GasMeter().GasConsumed()
-	gasUsed := afterGas - beforeGas
-	var adjGasUsed uint64
-	// If the gas used is greater than the max uint64 divided by the upload multiplier we would overflow
-	// so we set the gas used to the max uint64, which should result in an out of gas error.
-	if gasUsed > math.MaxUint64/params.UploadMultiplier {
-		adjGasUsed = math.MaxUint64
-	} else {
-		adjGasUsed = gasUsed*params.UploadMultiplier - gasUsed
-	}
-	ctx.GasMeter().ConsumeGas(adjGasUsed, "oracle program upload")
 
 	hashHex := hex.EncodeToString(program.Hash)
 	ctx.EventManager().EmitEvent(

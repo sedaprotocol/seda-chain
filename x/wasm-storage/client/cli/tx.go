@@ -8,10 +8,14 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
+	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -45,14 +49,28 @@ func GetCmdStoreOracleProgram() *cobra.Command {
 				return err
 			}
 
-			wasm, err := gzipWasmFile(args[0])
+			// Get the params to check the max WASM size and cost per byte.
+			queryClient := types.NewQueryClient(clientCtx)
+			params, err := queryClient.Params(cmd.Context(), &types.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}
 
+			length, wasm, err := gzipWasmFile(args[0])
+			if err != nil {
+				return err
+			}
+
+			if length > params.Params.MaxWasmSize {
+				return fmt.Errorf("WASM file is too large. Max size is %d bytes", params.Params.MaxWasmSize)
+			}
+
+			storageFee := math.NewIntFromUint64(params.Params.WasmCostPerByte).Mul(math.NewInt(length))
+
 			msg := &types.MsgStoreOracleProgram{
-				Sender: clientCtx.GetFromAddress().String(),
-				Wasm:   wasm,
+				Sender:     clientCtx.GetFromAddress().String(),
+				Wasm:       wasm,
+				StorageFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, storageFee)),
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -62,19 +80,20 @@ func GetCmdStoreOracleProgram() *cobra.Command {
 	return cmd
 }
 
-func gzipWasmFile(filename string) ([]byte, error) {
+// gzipWasmFile returns the length of the unzipped wasm file and the zipped wasm file.
+func gzipWasmFile(filename string) (int64, []byte, error) {
 	wasm, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
 
 	if !ioutils.IsWasm(wasm) {
-		return nil, fmt.Errorf("invalid Wasm file")
+		return 0, nil, fmt.Errorf("invalid Wasm file")
 	}
 
 	zipped, err := ioutils.GzipIt(wasm)
 	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
-	return zipped, nil
+	return int64(len(wasm)), zipped, nil
 }

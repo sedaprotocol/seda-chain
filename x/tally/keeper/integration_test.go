@@ -204,10 +204,9 @@ func initFixture(t testing.TB) *fixture {
 		cdc,
 		runtime.NewKVStoreService(keys[wasmstoragetypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		accountKeeper,
 		bankKeeper,
+		stakingKeeper,
 		contractKeeper,
-		wasmKeeper,
 	)
 
 	slashingKeeper := slashingkeeper.NewKeeper(

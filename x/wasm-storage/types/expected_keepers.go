@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type AccountKeeper interface {
-	GetAccount(ctx context.Context, addr sdk.AccAddress) sdk.AccountI
+type BankKeeper interface {
+	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 }
 
-type BankKeeper interface {
-	SpendableCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins
+type StakingKeeper interface {
+	BondDenom(ctx context.Context) (string, error)
 }

@@ -2,14 +2,22 @@ package keeper_test
 
 import (
 	"encoding/hex"
+	"math"
 	"os"
+
+	"go.uber.org/mock/gomock"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/ethereum/go-ethereum/crypto"
 
-	storetypes "cosmossdk.io/store/types"
-
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
+	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -33,11 +41,13 @@ func (s *KeeperTestSuite) TestStoreOracleProgram() {
 		expOutput types.MsgStoreOracleProgramResponse
 	}{
 		{
-			name:   "happy path",
-			preRun: func() {},
-			input: types.MsgStoreOracleProgram{
-				Sender: s.authority,
-				Wasm:   regWasmZipped,
+			name: "happy path",
+			preRun: func() {
+				s.ApplyDefaultMockExpectations()
+			}, input: types.MsgStoreOracleProgram{
+				Sender:     s.authority,
+				Wasm:       regWasmZipped,
+				StorageFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(len(regWasm))).Mul(sdkmath.NewInt(int64(types.DefaultWasmCostPerByte))))),
 			},
 			expErr: false,
 			expOutput: types.MsgStoreOracleProgramResponse{
@@ -45,15 +55,69 @@ func (s *KeeperTestSuite) TestStoreOracleProgram() {
 			},
 		},
 		{
+			name: "Invalid address",
+			preRun: func() {
+				s.ApplyDefaultMockExpectations()
+			}, input: types.MsgStoreOracleProgram{
+				Sender:     "seda9ucvn84ynyjzyzeavwvurmdyxat26l",
+				Wasm:       regWasmZipped,
+				StorageFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(len(regWasm))).Mul(sdkmath.NewInt(int64(types.DefaultWasmCostPerByte))))),
+			},
+			expErr:    true,
+			expErrMsg: "invalid address",
+		},
+		{
+			name: "Invalid storage fee",
+			preRun: func() {
+				s.ApplyDefaultMockExpectations()
+			}, input: types.MsgStoreOracleProgram{
+				Sender:     s.authority,
+				Wasm:       regWasmZipped,
+				StorageFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(math.MaxInt64).Add(sdkmath.NewInt(1)).Mul(sdkmath.NewInt(int64(types.DefaultWasmCostPerByte))))),
+			},
+			expErr:    true,
+			expErrMsg: "WASM file is too large",
+		},
+		{
+			name: "Storage fee is too low",
+			preRun: func() {
+				s.ApplyDefaultMockExpectations()
+			},
+			input: types.MsgStoreOracleProgram{
+				Sender:     s.authority,
+				Wasm:       regWasmZipped,
+				StorageFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(len(regWasm)-100)).Mul(sdkmath.NewInt(int64(types.DefaultWasmCostPerByte))))),
+			},
+			expErr:    true,
+			expErrMsg: "exceeds limit",
+		},
+		{
+			name: "Insufficient funds",
+			preRun: func() {
+				s.mockBankKeeper.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), gomock.Any(), authtypes.FeeCollectorName, gomock.Any()).Return(errorsmod.Wrap(sdkerrors.ErrInsufficientFunds, "insufficient funds")).Times(1)
+				s.ApplyDefaultMockExpectations()
+			},
+			input: types.MsgStoreOracleProgram{
+				Sender:     s.authority,
+				Wasm:       regWasmZipped,
+				StorageFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(len(regWasm))).Mul(sdkmath.NewInt(int64(types.DefaultWasmCostPerByte))))),
+			},
+			expErr:    true,
+			expErrMsg: "insufficient funds",
+		},
+		{
 			name: "oracle program already exist",
 			input: types.MsgStoreOracleProgram{
-				Sender: s.authority,
-				Wasm:   regWasmZipped,
+				Sender:     s.authority,
+				Wasm:       regWasmZipped,
+				StorageFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(len(regWasm))).Mul(sdkmath.NewInt(int64(types.DefaultWasmCostPerByte))))),
 			},
 			preRun: func() {
+				s.ApplyDefaultMockExpectations()
 				input := types.MsgStoreOracleProgram{
-					Sender: s.authority,
-					Wasm:   regWasmZipped,
+					Sender:     s.authority,
+					Wasm:       regWasmZipped,
+					StorageFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(len(regWasm))).Mul(sdkmath.NewInt(int64(types.DefaultWasmCostPerByte))))),
 				}
 				_, err := s.msgSrvr.StoreOracleProgram(s.ctx, &input)
 				s.Require().Nil(err)
@@ -64,20 +128,26 @@ func (s *KeeperTestSuite) TestStoreOracleProgram() {
 		{
 			name: "unzipped Wasm",
 			input: types.MsgStoreOracleProgram{
-				Sender: s.authority,
-				Wasm:   regWasm,
+				Sender:     s.authority,
+				Wasm:       regWasm,
+				StorageFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(len(regWasm))).Mul(sdkmath.NewInt(int64(types.DefaultWasmCostPerByte))))),
 			},
-			preRun:    func() {},
+			preRun: func() {
+				s.ApplyDefaultMockExpectations()
+			},
 			expErr:    true,
 			expErrMsg: "wasm is not gzip compressed",
 		},
 		{
 			name: "oversized Wasm",
 			input: types.MsgStoreOracleProgram{
-				Sender: s.authority,
-				Wasm:   oversizedWasmZipped,
+				Sender:     s.authority,
+				Wasm:       oversizedWasmZipped,
+				StorageFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(len(oversizedWasm))).Mul(sdkmath.NewInt(int64(types.DefaultWasmCostPerByte))))),
 			},
-			preRun:    func() {},
+			preRun: func() {
+				s.ApplyDefaultMockExpectations()
+			},
 			expErr:    true,
 			expErrMsg: "",
 		},
@@ -89,68 +159,13 @@ func (s *KeeperTestSuite) TestStoreOracleProgram() {
 			input := tc.input
 			res, err := s.msgSrvr.StoreOracleProgram(s.ctx, &input)
 			if tc.expErr {
-				s.Require().ErrorContains(err, tc.expErrMsg)
+				s.Require().Contains(err.Error(), tc.expErrMsg)
 				return
 			}
 			s.Require().NoError(err)
 			s.Require().Equal(tc.expOutput, *res)
 		})
 	}
-}
-
-func (s *KeeperTestSuite) TestStoreOracleProgramGasMultiplier() {
-	dummyWasm := make([]byte, 100)
-	dummyWasmZipped, err := ioutils.GzipIt(dummyWasm)
-	s.Require().NoError(err)
-
-	s.SetupTest()
-
-	// Start without a multiplier
-	_, err = s.msgSrvr.UpdateParams(s.ctx, &types.MsgUpdateParams{
-		Authority: s.authority,
-		Params: types.Params{
-			MaxWasmSize:      1000000,
-			UploadMultiplier: 1,
-		},
-	})
-	s.Require().NoError(err)
-
-	// Use a fresh gas meter for the test
-	firstMeter := storetypes.NewGasMeter(100000000000)
-	_, err = s.msgSrvr.StoreOracleProgram(s.ctx.WithGasMeter(firstMeter), &types.MsgStoreOracleProgram{
-		Sender: s.authority,
-		Wasm:   dummyWasmZipped,
-	})
-	s.Require().NoError(err)
-
-	// We can't check the gas consumed here because for some reason it fluctuates between 12720 and 12750 :(
-
-	// Set a multiplier of 200
-	_, err = s.msgSrvr.UpdateParams(s.ctx, &types.MsgUpdateParams{
-		Authority: s.authority,
-		Params: types.Params{
-			MaxWasmSize:      1000000,
-			UploadMultiplier: 200,
-		},
-	})
-	s.Require().NoError(err)
-
-	// Change the dummy wasm slightly
-	dummyWasm[0] = 0x01
-	updatedDummyWasmZipped, err := ioutils.GzipIt(dummyWasm)
-	s.Require().NoError(err)
-
-	// Use a fresh gas meter for the test
-	secondMeter := storetypes.NewGasMeter(100000000000)
-	_, err = s.msgSrvr.StoreOracleProgram(s.ctx.WithGasMeter(secondMeter), &types.MsgStoreOracleProgram{
-		Sender: s.authority,
-		Wasm:   updatedDummyWasmZipped,
-	})
-	s.Require().NoError(err)
-
-	// We can't check the exact multiplier here because the gas consumed is not constant, and the multiplier
-	// is only applied to the gas used to store the wasm, not the other operations in `StoreOracleProgram`.
-	s.Require().Greater(secondMeter.GasConsumed(), firstMeter.GasConsumed()*uint64(100), "expected the gas consumed to be greater than 100x %d, got %d", firstMeter.GasConsumed(), secondMeter.GasConsumed())
 }
 
 func (s *KeeperTestSuite) TestUpdateParams() {
@@ -165,8 +180,8 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			input: &types.MsgUpdateParams{
 				Authority: s.authority,
 				Params: types.Params{
-					MaxWasmSize:      1000000, // 1 MB
-					UploadMultiplier: 10,
+					MaxWasmSize:     1000000, // 1 MB
+					WasmCostPerByte: 50000000000000,
 				},
 			},
 			expErrMsg: "",
@@ -176,8 +191,8 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			input: &types.MsgUpdateParams{
 				Authority: "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
 				Params: types.Params{
-					MaxWasmSize:      1, // 1 MB
-					UploadMultiplier: 10,
+					MaxWasmSize:     1, // 1 MB
+					WasmCostPerByte: 50000000000000,
 				},
 			},
 			expErrMsg: "expected " + authority + ", got seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l: invalid authority",
@@ -187,22 +202,22 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			input: &types.MsgUpdateParams{
 				Authority: authority,
 				Params: types.Params{
-					MaxWasmSize:      0, // 0 MB
-					UploadMultiplier: 10,
+					MaxWasmSize:     0, // 0 MB
+					WasmCostPerByte: 50000000000000,
 				},
 			},
 			expErrMsg: "invalid max wasm size 0: invalid param",
 		},
 		{
-			name: "invalid upload multiplier",
+			name: "invalid cost per byte",
 			input: &types.MsgUpdateParams{
 				Authority: authority,
 				Params: types.Params{
-					MaxWasmSize:      111110,
-					UploadMultiplier: 0,
+					MaxWasmSize:     111110,
+					WasmCostPerByte: 0,
 				},
 			},
-			expErrMsg: "invalid upload multiplier 0: invalid param",
+			expErrMsg: "invalid wasm cost per byte 0: invalid param",
 		},
 	}
 

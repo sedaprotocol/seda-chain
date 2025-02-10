@@ -3,8 +3,12 @@ package types
 import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
+	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	appparams "github.com/sedaprotocol/seda-chain/app/params"
 )
 
 var (
@@ -14,8 +18,13 @@ var (
 
 func (msg *MsgStoreOracleProgram) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return err
+		return errorsmod.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 	}
+
+	if msg.StorageFee.AmountOf(appparams.DefaultBondDenom).IsZero() {
+		return sdkerrors.ErrInvalidRequest.Wrap("storage fee must be greater than 0aseda")
+	}
+
 	return validateWasmSize(msg.Wasm)
 }
 

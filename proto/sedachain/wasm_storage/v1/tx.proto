@@ -6,6 +6,7 @@ import "cosmos/msg/v1/msg.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "sedachain/wasm_storage/v1/wasm_storage.proto";
+import "amino/amino.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 
@@ -27,7 +28,15 @@ message MsgStoreOracleProgram {
   option (cosmos.msg.v1.signer) = "sender";
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // The wasm program to store as gzip-compressed bytes.
   bytes wasm = 2;
+  // The length of the unzipped wasm program in bytes.
+  repeated cosmos.base.v1beta1.Coin storage_fee = 3 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (amino.encoding) = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }
 
 // The response message for the StoreOracleProgram method.

@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	// MaxWasmSize is the maximum size of wasm bytecode.
-	MaxWasmSize = 800 * 1024
-	// MinWasmSize is the realistic minimum size of wasm bytecode.
+	// MaxWasmSize is the maximum size of gzipped wasm bytecode that we'll accept.
+	MaxWasmSize = 1024 * 1024
+	// MinWasmSize is the realistic minimum size of gzipped wasm bytecode.
 	MinWasmSize = 20
 )
 
