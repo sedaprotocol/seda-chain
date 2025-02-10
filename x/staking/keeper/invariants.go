@@ -37,7 +37,7 @@ func PubKeyRegistrationInvariant(k *Keeper) sdk.Invariant {
 			panic(err)
 		}
 		if activated {
-			err = k.IterateValidators(ctx, func(_ int64, validator types.ValidatorI) bool {
+			err = k.IterateBondedValidatorsByPower(ctx, func(_ int64, validator types.ValidatorI) bool {
 				valAddr, err := k.validatorAddressCodec.StringToBytes(validator.GetOperator())
 				if err != nil {
 					panic(err)
