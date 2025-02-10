@@ -99,7 +99,7 @@ func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicatio
 // MeterExecutorGasFallback computes and records the gas consumption of committers
 // of a data request when basic consensus has not been reached. If checkReveal is
 // set to true, it will only consume gas for committers that have also revealed.
-func MeterExecutorGasFallback(req types.Request, gasCostCommit uint64, gasMeter *types.GasMeter) {
+func MeterExecutorGasFallback(req types.Request, gasCostFallback uint64, gasMeter *types.GasMeter) {
 	if len(req.Commits) == 0 || gasMeter.RemainingExecGas() == 0 {
 		return
 	}
@@ -123,7 +123,7 @@ func MeterExecutorGasFallback(req types.Request, gasCostCommit uint64, gasMeter 
 				continue
 			}
 		}
-		gasUsed := min(gasLimitPerExec, gasCostCommit)
+		gasUsed := min(gasLimitPerExec, gasCostFallback)
 		gasMeter.ConsumeExecGasForExecutor(committer, gasUsed)
 	}
 }

@@ -45,7 +45,7 @@ func Test_ConstructDataResultTree(t *testing.T) {
 	for i, entry := range entries.Entries {
 		entryHexes = append(entryHexes, hex.EncodeToString(entry))
 		drIds = append(drIds, dataResults[i].Id)
-		entriesWithSep[i] = append([]byte{utils.SEDASeparatorDataRequest}, entry...)
+		entriesWithSep[i] = append([]byte{utils.SEDASeparatorDataResult}, entry...)
 	}
 	require.ElementsMatch(t, drIds, entryHexes)
 

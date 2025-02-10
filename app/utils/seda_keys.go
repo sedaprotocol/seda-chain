@@ -65,7 +65,7 @@ const (
 
 // SEDA domain separators
 const (
-	SEDASeparatorDataRequest byte = iota
+	SEDASeparatorDataResult byte = iota
 	SEDASeparatorSecp256k1
 )
 
