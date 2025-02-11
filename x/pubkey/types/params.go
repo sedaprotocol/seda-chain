@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	DefaultActivationBlockDelay       = 25
+	DefaultActivationBlockDelay       = 11520 // roughly 1 day
 	DefaultActivationThresholdPercent = 80
 )
 
