@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"testing"
 	"time"
@@ -331,6 +332,21 @@ func initFixture(t testing.TB) *fixture {
 		wasmViewKeeper:    wasmKeeper,
 		logBuf:            buf,
 	}
+}
+
+func (f *fixture) SetDataProxyConfig(proxyPubKey string, proxyFee sdk.Coin) error {
+	pkBytes, err := hex.DecodeString(proxyPubKey)
+	if err != nil {
+		return err
+	}
+
+	err = f.dataProxyKeeper.SetDataProxyConfig(f.Context(), pkBytes,
+		dataproxytypes.ProxyConfig{
+			Fee: &proxyFee,
+		},
+	)
+
+	return err
 }
 
 var setStakingConfigMsg = `{

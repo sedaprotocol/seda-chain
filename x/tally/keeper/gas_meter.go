@@ -46,7 +46,7 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 		if gasMeter.ReducedPayout {
 			burnAmt := burnRatio.MulInt(executor.Amount).TruncateInt()
 			payoutAmt = executor.Amount.Sub(burnAmt)
-			reducedPayoutBurn = reducedPayoutBurn.Add(burnAmt.Mul(gasMeter.GasPrice()))
+			reducedPayoutBurn = reducedPayoutBurn.Add(burnAmt)
 		}
 
 		executorDist := types.NewExecutorReward(executor.PublicKey, payoutAmt, gasMeter.GasPrice())

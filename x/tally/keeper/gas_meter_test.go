@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
+	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper/testdata"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -42,15 +42,8 @@ func FuzzGasMetering(f *testing.F) {
 		"2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9": math.NewInt(10000), // = RF * proxyFee / gasPrice
 	}
 	for _, pk := range proxyPubKeys {
-		pkBytes, err := hex.DecodeString(pk)
-		if err == nil {
-			err := fixture.dataProxyKeeper.SetDataProxyConfig(fixture.Context(), pkBytes,
-				dataproxytypes.ProxyConfig{
-					Fee: &proxyFee,
-				},
-			)
-			require.NoError(f, err)
-		}
+		err = fixture.SetDataProxyConfig(pk, proxyFee)
+		require.NoError(f, err)
 	}
 
 	execGasLimit := uint64(1e11) // ^uint64(0)
@@ -107,5 +100,94 @@ func FuzzGasMetering(f *testing.F) {
 		tallySum := math.NewIntFromUint64(gasMeter.TallyGasUsed())
 		tallySum = tallySum.Add(math.NewIntFromUint64(gasMeter.RemainingTallyGas()))
 		require.Equal(t, tallySum.String(), strconv.FormatUint(tallyGasLimit, 10))
+
+		dists := fixture.tallyKeeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+		require.Len(t, dists, 13)
+
+		totalDist := math.NewInt(0)
+		for _, dist := range dists {
+			if dist.Burn != nil {
+				totalDist = totalDist.Add(dist.Burn.Amount)
+			}
+			if dist.DataProxyReward != nil {
+				totalDist = totalDist.Add(dist.DataProxyReward.Amount)
+			}
+			if dist.ExecutorReward != nil {
+				totalDist = totalDist.Add(dist.ExecutorReward.Amount)
+			}
+		}
+
+		totalGasPayed := totalDist.Quo(gasMeter.GasPrice())
+
+		require.True(t, totalGasPayed.LTE(sumExec.Add((tallySum))), "total gas payed is not less than or equal to the sum of exec and tally gas used")
+
+		gasMeter.SetReducedPayoutMode()
+		distsReduced := fixture.tallyKeeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+		totalDistReduced := math.NewInt(0)
+		for _, dist := range distsReduced {
+			if dist.Burn != nil {
+				totalDistReduced = totalDistReduced.Add(dist.Burn.Amount)
+			}
+			if dist.DataProxyReward != nil {
+				totalDistReduced = totalDistReduced.Add(dist.DataProxyReward.Amount)
+			}
+			if dist.ExecutorReward != nil {
+				totalDistReduced = totalDistReduced.Add(dist.ExecutorReward.Amount)
+			}
+		}
+
+		totalGasPayedReduced := totalDistReduced.Quo(gasMeter.GasPrice())
+
+		require.Equal(t, totalGasPayedReduced.String(), totalGasPayed.String(), "total gas payed in reduced mode is not equal to the total gas payed in normal mode")
 	})
+}
+
+// Encountered this scenario on a testnet.
+func ReproductionTestReducedPayoutWithProxies(t *testing.T) {
+	fixture := initFixture(t)
+
+	// Set up data proxies.
+	err := fixture.SetDataProxyConfig("03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", sdk.NewCoin(bondDenom, math.NewInt(1000000000000000000)))
+	require.NoError(t, err)
+	err = fixture.SetDataProxyConfig("020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec", sdk.NewCoin(bondDenom, math.NewInt(10000000000000)))
+	require.NoError(t, err)
+
+	// Scenario: 4 data proxy calls (3 to the same proxy, 1 to a different proxy), replication factor = 1.
+	gasMeter := types.NewGasMeter(150000000000000, 300000000000000, types.DefaultMaxTallyGasLimit, math.NewInt(100000), types.DefaultGasCostBase)
+	fixture.tallyKeeper.MeterProxyGas(fixture.Context(), []string{"020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0"}, 1, gasMeter)
+
+	keeper.MeterExecutorGasUniform([]string{"020c4fe9e5063e7b5051284423089682082cf085a3b8f9e86bdb30407d761efc49"}, 81644889168750, 1, gasMeter)
+
+	require.Equalf(t, uint64(81644889168750), gasMeter.ExecutionGasUsed(), "expected exec gas used %d, got %d", 81644889168750, gasMeter.ExecutionGasUsed())
+	require.Equalf(t, uint64(1000000000000), gasMeter.TallyGasUsed(), "expected tally gas used %d, got %d", 1000000100000, gasMeter.TallyGasUsed())
+
+	dists := fixture.tallyKeeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+
+	require.Len(t, dists, 6)
+
+	require.Equal(t, "100000000000000000", dists[0].Burn.Amount.String(), "Burn amount is incorrect")
+	require.Equal(t, "10000000000000", dists[1].DataProxyReward.Amount.String(), "Data proxy 2 (...dec) did not receive correct payout")
+	require.Equal(t, "1000000000000000000", dists[2].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, "1000000000000000000", dists[3].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, "1000000000000000000", dists[4].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, "5164478916875000000", dists[5].ExecutorReward.Amount.String(), "Executor did not receive correct payout")
+
+	// Test with reduced payout mode.
+	gasMeter.SetReducedPayoutMode()
+
+	// Sanity check that the gas meter is not affected by the reduced payout mode.
+	require.Equalf(t, uint64(81644889168750), gasMeter.ExecutionGasUsed(), "expected exec gas used %d, got %d", 81644889168750, gasMeter.ExecutionGasUsed())
+	require.Equalf(t, uint64(1000000000000), gasMeter.TallyGasUsed(), "expected tally gas used %d, got %d", 1000000100000, gasMeter.TallyGasUsed())
+
+	distsReduced := fixture.tallyKeeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+
+	require.Equal(t, "1132895783375000000", distsReduced[0].Burn.Amount.String(), "Burn amount is incorrect")
+	require.Equal(t, "10000000000000", distsReduced[1].DataProxyReward.Amount.String(), "Data proxy 2 (...dec) did not receive correct payout")
+	require.Equal(t, "1000000000000000000", distsReduced[2].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, "1000000000000000000", distsReduced[3].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, "1000000000000000000", distsReduced[4].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, "4131583133500000000", distsReduced[5].ExecutorReward.Amount.String(), "Executor did not receive correct reduced payout")
+
+	// Sanity check that the difference between the two distributions is the same as the reduced payout.
+	require.Equal(t, distsReduced[0].Burn.Amount.Sub(dists[0].Burn.Amount).String(), dists[5].ExecutorReward.Amount.Sub(distsReduced[5].ExecutorReward.Amount).String(), "Difference between burn and executor reward is not the same as the reduced payout")
 }
