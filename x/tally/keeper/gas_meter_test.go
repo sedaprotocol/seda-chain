@@ -105,14 +105,18 @@ func FuzzGasMetering(f *testing.F) {
 		require.Len(t, dists, 13)
 
 		totalDist := math.NewInt(0)
+		totalExecDist := math.NewInt(0)
+		burn := math.NewInt(0)
 		for _, dist := range dists {
 			if dist.Burn != nil {
+				burn = burn.Add(dist.Burn.Amount)
 				totalDist = totalDist.Add(dist.Burn.Amount)
 			}
 			if dist.DataProxyReward != nil {
 				totalDist = totalDist.Add(dist.DataProxyReward.Amount)
 			}
 			if dist.ExecutorReward != nil {
+				totalExecDist = totalExecDist.Add(dist.ExecutorReward.Amount)
 				totalDist = totalDist.Add(dist.ExecutorReward.Amount)
 			}
 		}
@@ -124,8 +128,10 @@ func FuzzGasMetering(f *testing.F) {
 		gasMeter.SetReducedPayoutMode()
 		distsReduced := fixture.tallyKeeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
 		totalDistReduced := math.NewInt(0)
+		burnReduced := math.NewInt(0)
 		for _, dist := range distsReduced {
 			if dist.Burn != nil {
+				burnReduced = burnReduced.Add(dist.Burn.Amount)
 				totalDistReduced = totalDistReduced.Add(dist.Burn.Amount)
 			}
 			if dist.DataProxyReward != nil {
@@ -139,6 +145,11 @@ func FuzzGasMetering(f *testing.F) {
 		totalGasPayedReduced := totalDistReduced.Quo(gasMeter.GasPrice())
 
 		require.Equal(t, totalGasPayedReduced.String(), totalGasPayed.String(), "total gas payed in reduced mode is not equal to the total gas payed in normal mode")
+		if totalExecDist.Equal(math.NewInt(0)) {
+			require.True(t, burnReduced.Equal(burn), "burn amount in reduced mode is not equal to the burn amount in normal mode when there is no exec gas used")
+		} else {
+			require.True(t, burnReduced.GT(burn), "burn amount in reduced mode is equal to the burn amount in normal mode when there is exec gas used")
+		}
 	})
 }
 
