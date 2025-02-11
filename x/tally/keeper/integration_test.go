@@ -18,6 +18,7 @@ import (
 
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -281,6 +282,14 @@ func initFixture(t testing.TB) *fixture {
 
 	// Upload, instantiate, and configure the Core Contract.
 	deployer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	int1e21, ok := math.NewIntFromString("1000000000000000000000")
+	require.True(t, ok)
+	err = bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(bondDenom, int1e21)))
+	require.NoError(t, err)
+	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, deployer, sdk.NewCoins(sdk.NewCoin(bondDenom, int1e21)))
+	require.NoError(t, err)
+
 	codeID, _, err := contractKeeper.Create(ctx, deployer, testdata.CoreContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
@@ -334,18 +343,17 @@ func initFixture(t testing.TB) *fixture {
 	}
 }
 
-func (f *fixture) SetDataProxyConfig(proxyPubKey string, proxyFee sdk.Coin) error {
+func (f *fixture) SetDataProxyConfig(proxyPubKey, payoutAddr string, proxyFee sdk.Coin) error {
 	pkBytes, err := hex.DecodeString(proxyPubKey)
 	if err != nil {
 		return err
 	}
-
 	err = f.dataProxyKeeper.SetDataProxyConfig(f.Context(), pkBytes,
 		dataproxytypes.ProxyConfig{
-			Fee: &proxyFee,
+			PayoutAddress: payoutAddr,
+			Fee:           &proxyFee,
 		},
 	)
-
 	return err
 }
 

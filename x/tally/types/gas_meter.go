@@ -18,8 +18,8 @@ type GasMeter struct {
 }
 
 type ProxyGasUsed struct {
-	PublicKey []byte
-	Amount    math.Int
+	PayoutAddress string
+	Amount        math.Int
 }
 
 type ExecutorGasUsed struct {
@@ -100,12 +100,12 @@ func (g *GasMeter) ConsumeTallyGas(amount uint64) bool {
 // ConsumeExecGasForProxy consumes execution gas for data proxy payout and records
 // the payout information. It returns true if the execution gas runs out during
 // the process.
-func (g *GasMeter) ConsumeExecGasForProxy(proxyPubKey []byte, gasUsedPerExec uint64, replicationFactor uint16) bool {
+func (g *GasMeter) ConsumeExecGasForProxy(payoutAddr string, gasUsedPerExec uint64, replicationFactor uint16) bool {
 	amount := gasUsedPerExec * uint64(replicationFactor)
 
 	g.Proxies = append(g.Proxies, ProxyGasUsed{
-		PublicKey: proxyPubKey,
-		Amount:    math.NewIntFromUint64(amount),
+		PayoutAddress: payoutAddr,
+		Amount:        math.NewIntFromUint64(amount),
 	})
 
 	if amount > g.execGasRemaining {

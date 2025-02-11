@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/cometbft/cometbft/crypto/secp256k1"
@@ -35,9 +36,8 @@ type PostDataRequestResponse struct {
 
 // commitRevealDataRequest simulates stakers committing and revealing
 // for a data request. It returns the data request ID.
-func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal string, replicationFactor, numCommits, numReveals int, timeout bool) (string, []staker) {
+func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal string, proxyPubKeys []string, gasUsed uint64, replicationFactor, numCommits, numReveals int, timeout bool) (string, []staker) {
 	stakers := f.addStakers(t, 5)
-	f.initDeployer(t)
 
 	// Upload data request and tally oracle programs.
 	execProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm(), f.Context().BlockTime())
@@ -55,10 +55,10 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal stri
 	drID := res.DrID
 
 	// The stakers commit and reveal.
-	commitment, err := f.commitDataRequest(stakers, res.Height, drID, reveal, numCommits)
+	commitment, err := f.commitDataRequest(stakers, res.Height, gasUsed, drID, reveal, proxyPubKeys, numCommits)
 	require.NoError(t, err)
 
-	err = f.revealDataRequest(stakers, res.Height, drID, reveal, commitment, numReveals)
+	err = f.revealDataRequest(stakers, res.Height, gasUsed, drID, reveal, proxyPubKeys, commitment, numReveals)
 	require.NoError(t, err)
 
 	if timeout {
@@ -66,12 +66,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal stri
 			f.AddBlock()
 		}
 	}
-
 	return res.DrID, stakers
-}
-
-func (f *fixture) initDeployer(t *testing.T) {
-	f.initAccountWithCoins(t, f.deployer, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1e18))))
 }
 
 func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) (PostDataRequestResponse, error) {
@@ -80,7 +75,7 @@ func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMem
 		f.coreContractAddr,
 		f.deployer,
 		postDataRequestMsg(execProgHash, tallyProgHash, requestMemo, replicationFactor),
-		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(3000000000000100))),
+		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1500000000000000000))),
 	)
 	if err != nil {
 		return PostDataRequestResponse{}, err
@@ -95,13 +90,13 @@ func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMem
 	return res, nil
 }
 
-func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID, reveal string, numCommits int) (string, error) {
+func (f *fixture) commitDataRequest(stakers []staker, height, gasUsed uint64, drID, reveal string, proxyPubKeys []string, numCommits int) (string, error) {
 	revealBody := types.RevealBody{
 		ID:           drID,
 		Reveal:       reveal,
-		GasUsed:      0,
+		GasUsed:      gasUsed,
 		ExitCode:     0,
-		ProxyPubKeys: []string{},
+		ProxyPubKeys: proxyPubKeys,
 	}
 	commitment, err := f.generateRevealBodyHash(revealBody, saltHex)
 	if err != nil {
@@ -118,7 +113,7 @@ func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID, revea
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
-			commitMsg(drID, commitment, stakers[i].pubKey, proof),
+			commitMsg(drID, commitment, stakers[i].pubKey, proof, gasUsed),
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		if err != nil {
@@ -129,7 +124,7 @@ func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID, revea
 	return commitment, nil
 }
 
-func (f *fixture) revealDataRequest(stakers []staker, height uint64, drID, reveal, commitment string, numReveals int) error {
+func (f *fixture) revealDataRequest(stakers []staker, height, gasUsed uint64, drID, reveal string, proxyPubKeys []string, commitment string, numReveals int) error {
 	for i := 0; i < numReveals; i++ {
 		proof, err := f.generateRevealProof(stakers[i].key, drID, commitment, height)
 		if err != nil {
@@ -140,7 +135,7 @@ func (f *fixture) revealDataRequest(stakers []staker, height uint64, drID, revea
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
-			revealMsg(drID, reveal, stakers[i].pubKey, proof),
+			revealMsg(drID, reveal, stakers[i].pubKey, proof, proxyPubKeys, gasUsed),
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		if err != nil {
@@ -231,7 +226,7 @@ func postDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string, 
 			"version": "0.0.1",
 			"exec_program_id": "%s",
 			"exec_inputs": "ZXhlY19pbnB1dHM=",
-			"exec_gas_limit": 10,
+			"exec_gas_limit": 100000000000000000,
 			"tally_program_id": "%s",
 			"tally_inputs": "dGFsbHlfaW5wdXRz",
 			"tally_gas_limit": 300000000000000,
@@ -247,37 +242,43 @@ func postDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string, 
 	return []byte(fmt.Sprintf(postDataRequestMsg, hex.EncodeToString(execProgHash), hex.EncodeToString(tallyProgHash), replicationFactor, requestMemo))
 }
 
-func commitMsg(drID, commitment, stakerPubKey, proof string) []byte {
+func commitMsg(drID, commitment, stakerPubKey, proof string, gasUsed uint64) []byte {
 	var commitMsg = `{
 		"commit_data_result": {
 		  "dr_id": "%s",
 		  "commitment": "%s",
 		  "public_key": "%s",
-		  "proof": "%s"
+		  "proof": "%s",
+		  "gas_used": %d
 		}
 	}`
-	return []byte(fmt.Sprintf(commitMsg, drID, commitment, stakerPubKey, proof))
+	return []byte(fmt.Sprintf(commitMsg, drID, commitment, stakerPubKey, proof, gasUsed))
 }
 
-func revealMsg(drID, reveal, stakerPubKey, proof string) []byte {
-	var revealMsg = `{
+func revealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, gasUsed uint64) []byte {
+	quotedObjects := []string{}
+	for _, obj := range proxyPubKeys {
+		quotedObjects = append(quotedObjects, fmt.Sprintf("%q", obj))
+	}
+	pks := strings.Join(quotedObjects, ",")
+
+	return []byte(fmt.Sprintf(`{
 		"reveal_data_result": {
 		  "dr_id": "%s",
 		  "reveal_body": {
 			"id": "%s",
 			"salt": "%s",
 			"exit_code": 0,
-			"gas_used": 0,
+			"gas_used": %d,
 			"reveal": "%s",
-			"proxy_public_keys": []
+			"proxy_public_keys": [%s]
 		  },
 		  "public_key": "%s",
 		  "proof": "%s",
 		  "stderr": [],
 		  "stdout": []
 		}
-	}`
-	return []byte(fmt.Sprintf(revealMsg, drID, drID, saltHex, reveal, stakerPubKey, proof))
+	}`, drID, drID, saltHex, gasUsed, reveal, pks, stakerPubKey, proof))
 }
 
 // generateStakeProof generates a proof for a stake message given a

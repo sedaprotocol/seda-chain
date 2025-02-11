@@ -36,13 +36,17 @@ func FuzzGasMetering(f *testing.F) {
 	require.NoError(f, err)
 
 	proxyPubKeys := []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}
+	pubKeyToPayoutAddr := map[string]string{
+		proxyPubKeys[0]: "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f",
+		proxyPubKeys[1]: "seda149sewl80wccuzhhukxgn2jg4kcun02d8qclwkt",
+	}
 	proxyFee := sdk.NewCoin(bondDenom, math.NewIntWithDecimal(1, 21))
 	expProxyGasUsed := map[string]math.Int{
-		"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8": math.NewInt(10000), // = RF * proxyFee / gasPrice
-		"2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9": math.NewInt(10000), // = RF * proxyFee / gasPrice
+		pubKeyToPayoutAddr[proxyPubKeys[0]]: math.NewInt(10000), // = RF * proxyFee / gasPrice
+		pubKeyToPayoutAddr[proxyPubKeys[1]]: math.NewInt(10000), // = RF * proxyFee / gasPrice
 	}
 	for _, pk := range proxyPubKeys {
-		err = fixture.SetDataProxyConfig(pk, proxyFee)
+		err = fixture.SetDataProxyConfig(pk, pubKeyToPayoutAddr[pk], proxyFee)
 		require.NoError(f, err)
 	}
 
@@ -88,7 +92,7 @@ func FuzzGasMetering(f *testing.F) {
 		// Check proxy gas used.
 		for _, proxy := range gasMeter.Proxies {
 			require.Equal(t,
-				expProxyGasUsed[hex.EncodeToString(proxy.PublicKey)].String(),
+				expProxyGasUsed[proxy.PayoutAddress].String(),
 				proxy.Amount.String(),
 			)
 			sumExec = sumExec.Add(proxy.Amount)
@@ -158,9 +162,9 @@ func ReproductionTestReducedPayoutWithProxies(t *testing.T) {
 	fixture := initFixture(t)
 
 	// Set up data proxies.
-	err := fixture.SetDataProxyConfig("03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", sdk.NewCoin(bondDenom, math.NewInt(1000000000000000000)))
+	err := fixture.SetDataProxyConfig("03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f", sdk.NewCoin(bondDenom, math.NewInt(1000000000000000000)))
 	require.NoError(t, err)
-	err = fixture.SetDataProxyConfig("020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec", sdk.NewCoin(bondDenom, math.NewInt(10000000000000)))
+	err = fixture.SetDataProxyConfig("020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec", "seda149sewl80wccuzhhukxgn2jg4kcun02d8qclwkt", sdk.NewCoin(bondDenom, math.NewInt(10000000000000)))
 	require.NoError(t, err)
 
 	// Scenario: 4 data proxy calls (3 to the same proxy, 1 to a different proxy), replication factor = 1.

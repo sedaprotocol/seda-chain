@@ -182,6 +182,12 @@ func TestExecutorPayout(t *testing.T) {
 	err = f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 	require.NoError(t, err)
 
+	pubKeys := []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}
+	pubKeyToPayoutAddr := map[string]string{
+		pubKeys[0]: "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f",
+		pubKeys[1]: "seda149sewl80wccuzhhukxgn2jg4kcun02d8qclwkt",
+	}
+
 	tests := []struct {
 		name              string
 		tallyInputAsHex   string
@@ -406,9 +412,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting (mode no consensus, with 1 proxy)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{ // (7000, 19000, 34000) after subtracting proxy gas
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{pubKeys[0]}},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{pubKeys[0]}},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{pubKeys[0]}},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
@@ -420,16 +426,16 @@ func TestExecutorPayout(t *testing.T) {
 			},
 			expReducedPayout: true,
 			expProxyGas: map[string]math.Int{
-				"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8": math.NewInt(3000), // = RF * proxyFee / gasPrice
+				pubKeyToPayoutAddr[pubKeys[0]]: math.NewInt(3000), // = RF * proxyFee / gasPrice
 			},
 		},
 		{
 			name:            "Divergent gas reporting (mode no consensus, with 2 proxies)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{ // (6000, 18000, 33000) after subtracting proxy gas
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{pubKeys[0]}},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
@@ -441,17 +447,17 @@ func TestExecutorPayout(t *testing.T) {
 			},
 			expReducedPayout: true,
 			expProxyGas: map[string]math.Int{
-				"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8": math.NewInt(3000), // = RF * proxyFee / gasPrice
-				"2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9": math.NewInt(3000), // = RF * proxyFee / gasPrice
+				pubKeyToPayoutAddr[pubKeys[0]]: math.NewInt(3000), // = RF * proxyFee / gasPrice
+				pubKeyToPayoutAddr[pubKeys[1]]: math.NewInt(3000), // = RF * proxyFee / gasPrice
 			},
 		},
 		{
 			name:            "Divergent gas reporting with low gas limit (mode no consensus, with 2 proxies)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{ // (0, 0, 0) after subtracting proxy gas and considering gas limit
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8", "2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9"}},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8"}},
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
+				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{pubKeys[0]}},
 			},
 			replicationFactor: 3,
 			execGasLimit:      1000,
@@ -463,8 +469,8 @@ func TestExecutorPayout(t *testing.T) {
 			},
 			expReducedPayout: true,
 			expProxyGas: map[string]math.Int{
-				"161b0d3a1efbf2f7d2f130f68a2ccf8f8f3220e8": math.NewInt(999), // = RF * proxyFee / gasPrice (considering gas limit)
-				"2a4c8d5b3ef9a1c7d6b430e78f9dcc2a2a1440f9": math.NewInt(0),   // = RF * proxyFee / gasPrice (considering gas limit)
+				pubKeyToPayoutAddr[pubKeys[0]]: math.NewInt(999), // = RF * proxyFee / gasPrice (considering gas limit)
+				pubKeyToPayoutAddr[pubKeys[1]]: math.NewInt(0),   // = RF * proxyFee / gasPrice (considering gas limit)
 			},
 		},
 	}
@@ -488,7 +494,8 @@ func TestExecutorPayout(t *testing.T) {
 					if err == nil {
 						err := f.dataProxyKeeper.SetDataProxyConfig(f.Context(), pkBytes,
 							dataproxytypes.ProxyConfig{
-								Fee: &proxyFee,
+								PayoutAddress: pubKeyToPayoutAddr[pk],
+								Fee:           &proxyFee,
 							},
 						)
 						require.NoError(t, err)
@@ -523,7 +530,7 @@ func TestExecutorPayout(t *testing.T) {
 			require.Equal(t, tt.expReducedPayout, gasMeter.ReducedPayout)
 			for _, proxy := range gasMeter.Proxies {
 				require.Equal(t,
-					tt.expProxyGas[hex.EncodeToString(proxy.PublicKey)].String(),
+					tt.expProxyGas[proxy.PayoutAddress].String(),
 					proxy.Amount.String(),
 				)
 			}

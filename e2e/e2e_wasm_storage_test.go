@@ -19,7 +19,7 @@ const (
 	oracleProgram = "burner.wasm"
 	tallyProgram  = "reflect.wasm"
 	executorWasm  = "staking.wasm"
-	coreWasm      = "seda_contract.wasm"
+	coreWasm      = "core_contract.wasm"
 )
 
 func (s *IntegrationTestSuite) testWasmStorageStoreOracleProgram() {

@@ -33,7 +33,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegisterDataProxy) (*types.MsgRegisterDataProxyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if err := msg.Validate(); err != nil {
+	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
 
@@ -99,7 +99,7 @@ func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegist
 func (m msgServer) EditDataProxy(goCtx context.Context, msg *types.MsgEditDataProxy) (*types.MsgEditDataProxyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if err := msg.Validate(); err != nil {
+	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
 

@@ -7,7 +7,7 @@ import (
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 )
 
-func (m *MsgRegisterDataProxy) Validate() error {
+func (m *MsgRegisterDataProxy) ValidateBasic() error {
 	if m.PayoutAddress == "" {
 		return sdkerrors.ErrInvalidRequest.Wrap("empty payout address")
 	}
@@ -30,7 +30,7 @@ func (m *MsgRegisterDataProxy) Validate() error {
 	return nil
 }
 
-func (m *MsgEditDataProxy) Validate() error {
+func (m *MsgEditDataProxy) ValidateBasic() error {
 	if m.PubKey == "" {
 		return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
 	}

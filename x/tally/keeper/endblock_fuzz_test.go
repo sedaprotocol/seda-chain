@@ -65,7 +65,6 @@ func FuzzEndBlock(f *testing.F) {
 // for a data request. It returns the data request ID.
 func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitReveal, replicationFactor, numCommits, numReveals int, timeout bool) (string, []staker) {
 	stakers := f.addStakers(t, 5)
-	f.initAccountWithCoins(t, f.deployer, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1e18))))
 
 	// Upload data request and tally oracle programs.
 	execProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm(), f.Context().BlockTime())
@@ -82,7 +81,7 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 		f.coreContractAddr,
 		f.deployer,
 		postDataRequestMsg(execProgram.Hash, tallyProgram.Hash, fuzz.requestMemo, replicationFactor),
-		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(3000000000000100))),
+		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1003000000000000000))),
 	)
 	require.NoError(t, err)
 
@@ -114,7 +113,7 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
-			commitMsg(drID, commitment, stakers[i].pubKey, proof),
+			commitMsg(drID, commitment, stakers[i].pubKey, proof, 0),
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		require.NoError(t, err)

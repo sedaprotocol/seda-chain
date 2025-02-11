@@ -5,7 +5,7 @@ set -x
 CHAIN_ID=seda-1-local
 RPC_URL=http://127.0.0.1:26657
 BIN=$(git rev-parse --show-toplevel)/build/sedad
-CONTRACT_WASM=$(git rev-parse --show-toplevel)/testutil/testwasms/seda_contract.wasm
+CONTRACT_WASM=$(git rev-parse --show-toplevel)/testutil/testwasms/core_contract.wasm
 VOTING_PERIOD=30 # seconds
 DEV_ACCOUNT=$($BIN keys show satoshi --keyring-backend test -a) # for sending wasm-storage txs
 VOTE_ACCOUNT=$($BIN keys show satoshi --keyring-backend test -a) # for sending vote txs

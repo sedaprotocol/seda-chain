@@ -6,6 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
@@ -87,11 +90,15 @@ func TestEndBlock(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			drID, stakers := f.commitRevealDataRequest(t, tt.memo, "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout)
+			proxyPubKeys := []string{"03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0"}
+			err := f.SetDataProxyConfig(proxyPubKeys[0], "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f", sdk.NewCoin(bondDenom, math.NewInt(1000000000000000000)))
+			require.NoError(t, err)
+
+			drID, stakers := f.commitRevealDataRequest(t, tt.memo, "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", proxyPubKeys, 150000000000000000, tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout)
 
 			beforeBalance := f.bankKeeper.GetBalance(f.Context(), stakers[0].address, bondDenom)
 
-			err := f.tallyKeeper.EndBlock(f.Context())
+			err = f.tallyKeeper.EndBlock(f.Context())
 			require.NoError(t, err)
 
 			// TODO query get_staker pending_withdrawal and check diff
@@ -124,7 +131,7 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	_, err := f.tallyMsgServer.UpdateParams(f.Context(), msg)
 	require.NoError(t, err)
 
-	drID, _ := f.commitRevealDataRequest(t, "cmV2ZWFsIHRpbWVvdXQ=", "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", 1, 1, 1, false)
+	drID, _ := f.commitRevealDataRequest(t, "cmV2ZWFsIHRpbWVvdXQ=", "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", []string{}, 0, 1, 1, 1, false)
 
 	err = f.tallyKeeper.EndBlock(f.Context())
 	require.NoError(t, err)
@@ -148,7 +155,7 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	_, err = f.tallyMsgServer.UpdateParams(f.Context(), msg)
 	require.NoError(t, err)
 
-	drID, _ = f.commitRevealDataRequest(t, "cmV2ZWFsIHRpbWVvdXQgd2l0aCAyIHJldmVhbHM=", "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", 1, 1, 1, false)
+	drID, _ = f.commitRevealDataRequest(t, "cmV2ZWFsIHRpbWVvdXQgd2l0aCAyIHJldmVhbHM=", "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", []string{}, 0, 1, 1, 1, false)
 
 	err = f.tallyKeeper.EndBlock(f.Context())
 	require.NoError(t, err)
@@ -165,7 +172,6 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 
 func TestEndBlock_PausedContract(t *testing.T) {
 	f := initFixture(t)
-	f.initDeployer(t)
 	stakers := f.addStakers(t, 5)
 
 	noCommitsDr, err := f.postDataRequest([]byte{}, []byte{}, base64.StdEncoding.EncodeToString([]byte("noCommits")), 1)
@@ -174,16 +180,16 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	noRevealsDr, err := f.postDataRequest([]byte{}, []byte{}, base64.StdEncoding.EncodeToString([]byte("noReveals")), 1)
 	require.NoError(t, err)
 
-	_, err = f.commitDataRequest(stakers, noRevealsDr.Height, noRevealsDr.DrID, base64.StdEncoding.EncodeToString([]byte("sike")), 1)
+	_, err = f.commitDataRequest(stakers, noRevealsDr.Height, 0, noRevealsDr.DrID, base64.StdEncoding.EncodeToString([]byte("sike")), []string{}, 1)
 	require.NoError(t, err)
 
 	resolvedDr, err := f.postDataRequest([]byte{}, []byte{}, base64.StdEncoding.EncodeToString([]byte("resolved")), 1)
 	require.NoError(t, err)
 
-	commitment, err := f.commitDataRequest(stakers, resolvedDr.Height, resolvedDr.DrID, base64.StdEncoding.EncodeToString([]byte("sike")), 1)
+	commitment, err := f.commitDataRequest(stakers, resolvedDr.Height, 0, resolvedDr.DrID, base64.StdEncoding.EncodeToString([]byte("sike")), []string{}, 1)
 	require.NoError(t, err)
 
-	err = f.revealDataRequest(stakers, resolvedDr.Height, resolvedDr.DrID, base64.StdEncoding.EncodeToString([]byte("sike")), commitment, 1)
+	err = f.revealDataRequest(stakers, resolvedDr.Height, 0, resolvedDr.DrID, base64.StdEncoding.EncodeToString([]byte("sike")), []string{}, commitment, 1)
 	require.NoError(t, err)
 
 	// Ensure the DR without commitments and the DR without reveals are timed out

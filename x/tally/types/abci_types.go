@@ -149,8 +149,8 @@ type DistributionBurn struct {
 }
 
 type DistributionDataProxyReward struct {
-	To     []byte   `json:"to"`
-	Amount math.Int `json:"amount"`
+	PayoutAddress string   `json:"payout_address"`
+	Amount        math.Int `json:"amount"`
 }
 
 type DistributionExecutorReward struct {
@@ -164,11 +164,11 @@ func NewBurn(amount, gasPrice math.Int) Distribution {
 	}
 }
 
-func NewDataProxyReward(pubKey []byte, amount, gasPrice math.Int) Distribution {
+func NewDataProxyReward(payoutAddr string, amount, gasPrice math.Int) Distribution {
 	return Distribution{
 		DataProxyReward: &DistributionDataProxyReward{
-			To:     pubKey,
-			Amount: amount.Mul(gasPrice),
+			PayoutAddress: payoutAddr,
+			Amount:        amount.Mul(gasPrice),
 		},
 	}
 }
