@@ -79,10 +79,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	tallyResults := make([]TallyResult, len(tallyList))
 	dataResults := make([]batchingtypes.DataResult, len(tallyList))
 
-	// Since we're not using this variable for state/consensus and only for telemetry,
-	// we can use a float without worrying about determinism or precision.
-	gasBurned := float32(0)
-
 	for i, req := range tallyList {
 		dataResults[i], err = req.ToResult(ctx)
 		if err != nil {
@@ -119,9 +115,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		}
 
 		processedReqs[req.ID] = k.DistributionsFromGasMeter(ctx, req.ID, req.Height, gasMeter, params.BurnRatio)
-
-		requestBurned := float32(processedReqs[req.ID][0].Burn.Amount.Uint64())
-		gasBurned += requestBurned
 
 		dataResults[i].GasUsed = gasMeter.TotalGasUsed()
 		dataResults[i].Id, err = dataResults[i].TryHash()
@@ -168,7 +161,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		)
 	}
 
-	telemetry.SetGauge(gasBurned, types.TelemetryKeyGasBurned)
 	telemetry.SetGauge(float32(len(tallyList)), types.TelemetryKeyDataRequestsTallied)
 
 	return nil

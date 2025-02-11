@@ -151,7 +151,6 @@ func (am AppModule) EndBlock(ctx context.Context) error {
 	// We reset all gauges to zero so blocks without tally executions
 	// will show correct values in the telemetry.
 	telemetry.SetGauge(0.0, types.TelemetryKeyDataRequestsTallied)
-	telemetry.SetGauge(0.0, types.TelemetryKeyGasBurned)
 
 	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
 }
