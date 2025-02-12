@@ -149,7 +149,7 @@ func GetCmdQueryDataResult() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "data-result <data_request_id> <optional_data_request_height>",
 		Short: "Get the data result associated with a given data request",
-		Args:  cobra.MaximumNArgs(2),
+		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
