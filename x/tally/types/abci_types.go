@@ -79,6 +79,7 @@ func (req *Request) ToResult(ctx types.Context) (result batchingtypes.DataResult
 
 type RevealBody struct {
 	ID           string   `json:"id"`
+	Salt         string   `json:"salt"` // hex-encoded string
 	ExitCode     byte     `json:"exit_code"`
 	GasUsed      uint64   `json:"gas_used"`
 	Reveal       string   `json:"reveal"` // base64-encoded string
@@ -91,9 +92,9 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	intSlice := make([]int, len(revealBytes))
-	for i, b := range revealBytes {
-		intSlice[i] = int(b)
+	saltBytes, err := hex.DecodeString(u.Salt)
+	if err != nil {
+		return nil, err
 	}
 
 	type Alias RevealBody
@@ -102,9 +103,18 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 		Salt   []int `json:"salt"`
 		*Alias
 	}{
-		Reveal: intSlice,
+		Reveal: bytesToIntSlice(revealBytes),
+		Salt:   bytesToIntSlice(saltBytes),
 		Alias:  (*Alias)(u),
 	})
+}
+
+func bytesToIntSlice(bytes []byte) []int {
+	intSlice := make([]int, len(bytes))
+	for i, b := range bytes {
+		intSlice[i] = int(b)
+	}
+	return intSlice
 }
 
 type VMResult struct {
