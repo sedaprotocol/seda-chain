@@ -35,7 +35,7 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 		proxyDist := types.NewDataProxyReward(proxy.PayoutAddress, proxy.Amount, gasMeter.GasPrice())
 		dists = append(dists, proxyDist)
 		attrs = append(attrs, sdk.NewAttribute(types.AttributeDataProxyGas,
-			fmt.Sprintf("%s,%s", proxy.PayoutAddress, proxy.Amount.String())))
+			fmt.Sprintf("%s,%s,%s", proxy.PublicKey, proxy.PayoutAddress, proxy.Amount.String())))
 	}
 
 	// Append distribution messages for executors, burning a portion of their
@@ -92,7 +92,7 @@ func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicatio
 			gasUsedPerExec = min(stdmath.MaxUint64, gasMeter.RemainingExecGas()/uint64(replicationFactor))
 		}
 
-		gasMeter.ConsumeExecGasForProxy(proxyConfig.PayoutAddress, gasUsedPerExec, replicationFactor)
+		gasMeter.ConsumeExecGasForProxy(pubKey, proxyConfig.PayoutAddress, gasUsedPerExec, replicationFactor)
 	}
 }
 
