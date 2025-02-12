@@ -54,6 +54,10 @@ func TestExportGenesis(t *testing.T) {
 
 	// Export and import genesis.
 	exportGenesis := f.batchingKeeper.ExportGenesis(f.Context())
+
+	err = types.ValidateGenesis(exportGenesis)
+	require.NoError(t, err)
+
 	f.batchingKeeper.InitGenesis(f.Context(), exportGenesis)
 
 	// Compare imported state against the state before export.
@@ -82,11 +86,13 @@ func TestExportGenesis(t *testing.T) {
 	batchSigsAfter, err := f.batchingKeeper.GetBatchSignatures(f.Context(), latestBatchBefore.BatchNumber)
 	require.NoError(t, err)
 	require.ElementsMatch(t, batchSigsBefore, batchSigsAfter)
-
 }
 
 func (suite *KeeperTestSuite) TestInitGenesis() {
 	gs := types.DefaultGenesisState()
+	err := types.ValidateGenesis(*gs)
+	require.NoError(suite.T(), err)
+
 	keeper := suite.keeper
 	keeper.InitGenesis(suite.ctx, *gs)
 

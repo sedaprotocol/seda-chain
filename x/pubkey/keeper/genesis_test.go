@@ -72,9 +72,24 @@ func (s *KeeperTestSuite) TestImportExportGenesis() {
 				},
 			},
 		},
+		ProvingSchemes: []types.ProvingScheme{
+			{
+				Index:            0,
+				IsActivated:      false,
+				ActivationHeight: types.DefaultActivationHeight,
+			},
+		},
+		Params: types.DefaultParams(),
 	}
+
+	err := types.ValidateGenesis(genState)
+	s.Require().NoError(err)
 
 	s.keeper.InitGenesis(s.ctx, genState)
 	exportedGenState := s.keeper.ExportGenesis(s.ctx)
+
+	err = types.ValidateGenesis(exportedGenState)
+	s.Require().NoError(err)
+
 	s.Require().ElementsMatch(genState.ValidatorPubKeys, exportedGenState.ValidatorPubKeys)
 }

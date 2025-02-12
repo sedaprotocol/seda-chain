@@ -9,7 +9,6 @@ import (
 func (s *KeeperTestSuite) TestImportExportGenesis() {
 	pubkeyOne, err := hex.DecodeString("034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4")
 	s.Require().NoError(err)
-
 	pubkeyTwo, err := hex.DecodeString("02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3")
 	s.Require().NoError(err)
 
@@ -48,8 +47,15 @@ func (s *KeeperTestSuite) TestImportExportGenesis() {
 		},
 	}
 
+	err = types.ValidateGenesis(genState)
+	s.Require().NoError(err)
+
 	s.keeper.InitGenesis(s.ctx, genState)
 	exportedGenState := s.keeper.ExportGenesis(s.ctx)
+
+	err = types.ValidateGenesis(exportedGenState)
+	s.Require().NoError(err)
+
 	s.Require().Equal(genState.Params, exportedGenState.Params)
 	s.Require().ElementsMatch(genState.DataProxyConfigs, exportedGenState.DataProxyConfigs)
 	s.Require().ElementsMatch(genState.FeeUpdateQueue, exportedGenState.FeeUpdateQueue)

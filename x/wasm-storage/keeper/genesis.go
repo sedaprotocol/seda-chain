@@ -1,4 +1,4 @@
-package wasmstorage
+package keeper
 
 import (
 	"errors"
@@ -7,12 +7,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 // InitGenesis puts all data from genesis state into store.
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
+func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 	if err := k.Params.Set(ctx, data.Params); err != nil {
 		panic(err)
 	}
@@ -28,7 +27,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 }
 
 // ExportGenesis extracts all data from store to genesis state.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
+func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	params, err := k.Params.Get(ctx)
 	if err != nil {
 		panic(err)

@@ -776,6 +776,36 @@ func TestFilter(t *testing.T) {
 			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*4,
 			wantErr:      nil,
 		},
+		{
+			name:            "Std dev filter (JSON value number)",
+			tallyInputAsHex: "02000000000016E36000000000000000000124", // sigma_multiplier = 1.5, number_type = 0x00, json_path = $
+			outliers:        []bool{false, false, true, false},
+			reveals: []types.RevealBody{
+				{Reveal: `3136`},
+				{Reveal: `3136`},
+				{Reveal: `"3136"`}, // string, not number
+				{Reveal: `3136`},
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*4,
+			wantErr:      nil,
+		},
+		{
+			name:            "Mode filter (JSON value string)",
+			tallyInputAsHex: "01000000000000000124", // json_path = $
+			outliers:        []bool{false, false, false, true},
+			reveals: []types.RevealBody{
+				{Reveal: `"yes"`},
+				{Reveal: `"yes"`},
+				{Reveal: `"yes"`},
+				{Reveal: `yes`}, // invalid due to no surrounding double quotes
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*4,
+			wantErr:      nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
