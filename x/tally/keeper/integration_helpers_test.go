@@ -34,9 +34,17 @@ type PostDataRequestResponse struct {
 	Height uint64 `json:"height"`
 }
 
+type commitRevealConfig struct {
+	requestMemo  string
+	reveal       string
+	proxyPubKeys []string
+	gasUsed      uint64
+	exitCode     byte
+}
+
 // commitRevealDataRequest simulates stakers committing and revealing
 // for a data request. It returns the data request ID.
-func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal string, proxyPubKeys []string, gasUsed uint64, replicationFactor, numCommits, numReveals int, timeout bool) (string, []staker) {
+func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCommits, numReveals int, timeout bool, config commitRevealConfig) (string, []staker) {
 	stakers := f.addStakers(t, 5)
 
 	// Upload data request and tally oracle programs.
@@ -49,16 +57,16 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, requestMemo, reveal stri
 	require.NoError(t, err)
 
 	// Post a data request.
-	res, err := f.postDataRequest(execProgram.Hash, tallyProgram.Hash, requestMemo, replicationFactor)
+	res, err := f.postDataRequest(execProgram.Hash, tallyProgram.Hash, config.requestMemo, replicationFactor)
 	require.NoError(t, err)
 
 	drID := res.DrID
 
 	// The stakers commit and reveal.
-	commitment, err := f.commitDataRequest(stakers, res.Height, gasUsed, drID, reveal, proxyPubKeys, numCommits)
+	commitment, err := f.commitDataRequest(stakers, res.Height, drID, numCommits, config)
 	require.NoError(t, err)
 
-	err = f.revealDataRequest(stakers, res.Height, gasUsed, drID, reveal, proxyPubKeys, commitment, numReveals)
+	err = f.revealDataRequest(stakers, res.Height, drID, commitment, numReveals, config)
 	require.NoError(t, err)
 
 	if timeout {
@@ -90,13 +98,13 @@ func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMem
 	return res, nil
 }
 
-func (f *fixture) commitDataRequest(stakers []staker, height, gasUsed uint64, drID, reveal string, proxyPubKeys []string, numCommits int) (string, error) {
+func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID string, numCommits int, config commitRevealConfig) (string, error) {
 	revealBody := types.RevealBody{
 		ID:           drID,
-		Reveal:       reveal,
-		GasUsed:      gasUsed,
-		ExitCode:     0,
-		ProxyPubKeys: proxyPubKeys,
+		Reveal:       config.reveal,
+		GasUsed:      config.gasUsed,
+		ExitCode:     config.exitCode,
+		ProxyPubKeys: config.proxyPubKeys,
 	}
 	commitment, err := f.generateRevealBodyHash(revealBody, saltHex)
 	if err != nil {
@@ -113,7 +121,7 @@ func (f *fixture) commitDataRequest(stakers []staker, height, gasUsed uint64, dr
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
-			commitMsg(drID, commitment, stakers[i].pubKey, proof, gasUsed),
+			commitMsg(drID, commitment, stakers[i].pubKey, proof, config.gasUsed),
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		if err != nil {
@@ -124,7 +132,7 @@ func (f *fixture) commitDataRequest(stakers []staker, height, gasUsed uint64, dr
 	return commitment, nil
 }
 
-func (f *fixture) revealDataRequest(stakers []staker, height, gasUsed uint64, drID, reveal string, proxyPubKeys []string, commitment string, numReveals int) error {
+func (f *fixture) revealDataRequest(stakers []staker, height uint64, drID, commitment string, numReveals int, config commitRevealConfig) error {
 	for i := 0; i < numReveals; i++ {
 		proof, err := f.generateRevealProof(stakers[i].key, drID, commitment, height)
 		if err != nil {
@@ -135,7 +143,7 @@ func (f *fixture) revealDataRequest(stakers []staker, height, gasUsed uint64, dr
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
-			revealMsg(drID, reveal, stakers[i].pubKey, proof, proxyPubKeys, gasUsed),
+			revealMsg(drID, config.reveal, stakers[i].pubKey, proof, config.proxyPubKeys, config.exitCode, config.gasUsed),
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		if err != nil {
@@ -255,7 +263,7 @@ func commitMsg(drID, commitment, stakerPubKey, proof string, gasUsed uint64) []b
 	return []byte(fmt.Sprintf(commitMsg, drID, commitment, stakerPubKey, proof, gasUsed))
 }
 
-func revealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, gasUsed uint64) []byte {
+func revealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, exitCode byte, gasUsed uint64) []byte {
 	quotedObjects := []string{}
 	for _, obj := range proxyPubKeys {
 		quotedObjects = append(quotedObjects, fmt.Sprintf("%q", obj))
@@ -268,7 +276,7 @@ func revealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, 
 		  "reveal_body": {
 			"id": "%s",
 			"salt": "%s",
-			"exit_code": 0,
+			"exit_code": %d,
 			"gas_used": %d,
 			"reveal": "%s",
 			"proxy_public_keys": [%s]
@@ -278,7 +286,7 @@ func revealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, 
 		  "stderr": [],
 		  "stdout": []
 		}
-	}`, drID, drID, saltHex, gasUsed, reveal, pks, stakerPubKey, proof))
+	}`, drID, drID, saltHex, exitCode, gasUsed, reveal, pks, stakerPubKey, proof))
 }
 
 // generateStakeProof generates a proof for a stake message given a

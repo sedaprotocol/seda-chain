@@ -26,7 +26,7 @@ func TestEndBlock(t *testing.T) {
 	}{
 		{
 			name:              "full single commit-reveal",
-			memo:              "YzJWamRYSmxaR0YwWVE9PQ==",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo0")),
 			replicationFactor: 1,
 			numCommits:        1,
 			numReveals:        1,
@@ -35,7 +35,7 @@ func TestEndBlock(t *testing.T) {
 		},
 		{
 			name:              "full 5 commit-reveals",
-			memo:              "ZnVsbCA1IGNvbW1pdC1yZXZlYWxz",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo1")),
 			replicationFactor: 5,
 			numCommits:        5,
 			numReveals:        5,
@@ -44,7 +44,7 @@ func TestEndBlock(t *testing.T) {
 		},
 		{
 			name:              "commit timeout",
-			memo:              "Y29tbWl0IHRpbWVvdXQ=",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo2")),
 			replicationFactor: 2,
 			numCommits:        0,
 			numReveals:        0,
@@ -53,7 +53,7 @@ func TestEndBlock(t *testing.T) {
 		},
 		{
 			name:              "commit timeout with 1 commit",
-			memo:              "Y29tbWl0IHRpbWVvdXQgd2l0aCAxIGNvbW1pdA==",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo3")),
 			replicationFactor: 2,
 			numCommits:        1,
 			numReveals:        0,
@@ -62,7 +62,7 @@ func TestEndBlock(t *testing.T) {
 		},
 		{
 			name:              "commit timeout with 2 commits",
-			memo:              "Y29tbWl0IHRpbWVvdXQgd2l0aCAyIGNvbW1pdHM=",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo4")),
 			replicationFactor: 2,
 			numCommits:        1,
 			numReveals:        0,
@@ -71,7 +71,7 @@ func TestEndBlock(t *testing.T) {
 		},
 		{
 			name:              "reveal timeout with no reveals",
-			memo:              "cmV2ZWFsIHRpbWVvdXQ=",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo5")),
 			replicationFactor: 2,
 			numCommits:        2,
 			numReveals:        0,
@@ -80,7 +80,7 @@ func TestEndBlock(t *testing.T) {
 		},
 		{
 			name:              "reveal timeout with 2 reveals",
-			memo:              "cmV2ZWFsIHRpbWVvdXQgd2l0aCAyIHJldmVhbHM=",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo6")),
 			replicationFactor: 3,
 			numCommits:        3,
 			numReveals:        2,
@@ -94,12 +94,20 @@ func TestEndBlock(t *testing.T) {
 			err := f.SetDataProxyConfig(proxyPubKeys[0], "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f", sdk.NewCoin(bondDenom, math.NewInt(1000000000000000000)))
 			require.NoError(t, err)
 
-			drID, stakers := f.commitRevealDataRequest(t, tt.memo, "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", proxyPubKeys, 150000000000000000, tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout)
+			drID, stakers := f.commitRevealDataRequest(
+				t, tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout,
+				commitRevealConfig{
+					requestMemo:  tt.memo,
+					reveal:       base64.StdEncoding.EncodeToString([]byte("reveal")),
+					proxyPubKeys: proxyPubKeys,
+					gasUsed:      150000000000000000,
+				})
 
 			beforeBalance := f.bankKeeper.GetBalance(f.Context(), stakers[0].address, bondDenom)
 
 			err = f.tallyKeeper.EndBlock(f.Context())
 			require.NoError(t, err)
+			require.NotContains(t, f.logBuf.String(), "ERR")
 
 			// TODO query get_staker pending_withdrawal and check diff
 			afterBalance := f.bankKeeper.GetBalance(f.Context(), stakers[0].address, bondDenom)
@@ -117,6 +125,13 @@ func TestEndBlock(t *testing.T) {
 	}
 }
 
+func TestEndBlock_NoTallyReadyDataRequests(t *testing.T) {
+	f := initFixture(t)
+	err := f.tallyKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+	require.NotContains(t, f.logBuf.String(), "ERR")
+}
+
 func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	f := initFixture(t)
 
@@ -131,7 +146,12 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	_, err := f.tallyMsgServer.UpdateParams(f.Context(), msg)
 	require.NoError(t, err)
 
-	drID, _ := f.commitRevealDataRequest(t, "cmV2ZWFsIHRpbWVvdXQ=", "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", []string{}, 0, 1, 1, 1, false)
+	drID, _ := f.commitRevealDataRequest(
+		t, 1, 1, 1, false,
+		commitRevealConfig{
+			requestMemo: base64.StdEncoding.EncodeToString([]byte("memo")),
+			reveal:      base64.StdEncoding.EncodeToString([]byte("reveal")),
+		})
 
 	err = f.tallyKeeper.EndBlock(f.Context())
 	require.NoError(t, err)
@@ -155,7 +175,12 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	_, err = f.tallyMsgServer.UpdateParams(f.Context(), msg)
 	require.NoError(t, err)
 
-	drID, _ = f.commitRevealDataRequest(t, "cmV2ZWFsIHRpbWVvdXQgd2l0aCAyIHJldmVhbHM=", "Ghkvq84TmIuEmU1ClubNxBjVXi8df5QhiNQEC5T8V6w=", []string{}, 0, 1, 1, 1, false)
+	drID, _ = f.commitRevealDataRequest(
+		t, 1, 1, 1, false,
+		commitRevealConfig{
+			requestMemo: base64.StdEncoding.EncodeToString([]byte("memo")),
+			reveal:      base64.StdEncoding.EncodeToString([]byte("reveal")),
+		})
 
 	err = f.tallyKeeper.EndBlock(f.Context())
 	require.NoError(t, err)
@@ -180,16 +205,28 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	noRevealsDr, err := f.postDataRequest([]byte{}, []byte{}, base64.StdEncoding.EncodeToString([]byte("noReveals")), 1)
 	require.NoError(t, err)
 
-	_, err = f.commitDataRequest(stakers, noRevealsDr.Height, 0, noRevealsDr.DrID, base64.StdEncoding.EncodeToString([]byte("sike")), []string{}, 1)
+	_, err = f.commitDataRequest(
+		stakers, noRevealsDr.Height, noRevealsDr.DrID, 1,
+		commitRevealConfig{
+			reveal: base64.StdEncoding.EncodeToString([]byte("sike")),
+		})
 	require.NoError(t, err)
 
 	resolvedDr, err := f.postDataRequest([]byte{}, []byte{}, base64.StdEncoding.EncodeToString([]byte("resolved")), 1)
 	require.NoError(t, err)
 
-	commitment, err := f.commitDataRequest(stakers, resolvedDr.Height, 0, resolvedDr.DrID, base64.StdEncoding.EncodeToString([]byte("sike")), []string{}, 1)
+	commitment, err := f.commitDataRequest(
+		stakers, resolvedDr.Height, resolvedDr.DrID, 1,
+		commitRevealConfig{
+			reveal: base64.StdEncoding.EncodeToString([]byte("sike")),
+		})
 	require.NoError(t, err)
 
-	err = f.revealDataRequest(stakers, resolvedDr.Height, 0, resolvedDr.DrID, base64.StdEncoding.EncodeToString([]byte("sike")), []string{}, commitment, 1)
+	err = f.revealDataRequest(
+		stakers, resolvedDr.Height, resolvedDr.DrID, commitment, 1,
+		commitRevealConfig{
+			reveal: base64.StdEncoding.EncodeToString([]byte("sike")),
+		})
 	require.NoError(t, err)
 
 	// Ensure the DR without commitments and the DR without reveals are timed out
@@ -201,6 +238,7 @@ func TestEndBlock_PausedContract(t *testing.T) {
 
 	err = f.tallyKeeper.EndBlock(f.Context())
 	require.NoError(t, err)
+	require.NotContains(t, f.logBuf.String(), "ERR")
 
 	noCommitsResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), noCommitsDr.DrID)
 	require.NoError(t, err)

@@ -48,6 +48,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally params", "err", err)
 		return nil
 	}
+	tallyvm.TallyMaxBytes = uint(params.MaxResultSize)
 
 	// Fetch tally-ready data requests.
 	// TODO: Deal with offset and limits. (#313)
@@ -56,11 +57,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally-ready data requests", "err", err)
 		return nil
 	}
-	if string(queryRes) == "[]" {
-		k.Logger(ctx).Debug("no tally-ready data requests - skipping tally process")
-		return nil
-	}
-	k.Logger(ctx).Info("non-empty tally list - starting tally process")
 
 	var contractQueryResponse types.ContractListResponse
 	err = json.Unmarshal(queryRes, &contractQueryResponse)
@@ -69,9 +65,12 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		return nil
 	}
 
-	tallyvm.TallyMaxBytes = uint(params.MaxResultSize)
-
 	tallyList := contractQueryResponse.DataRequests
+	if len(tallyList) == 0 {
+		k.Logger(ctx).Debug("no tally-ready data requests - skipping tally process")
+		return nil
+	}
+	k.Logger(ctx).Info("non-empty tally list - starting tally process")
 
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.

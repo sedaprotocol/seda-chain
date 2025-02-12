@@ -64,7 +64,7 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterRe
 	gasMeter.ConsumeTallyGas(vmRes.GasUsed)
 
 	result := types.MapVMResult(vmRes)
-	if result.ExitMessage != "" {
+	if result.ExitCode != 0 {
 		k.Logger(ctx).Error("tally vm exit message", "request_id", req.ID, "exit_message", result.ExitMessage)
 	}
 

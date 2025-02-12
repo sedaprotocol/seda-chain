@@ -55,6 +55,7 @@ func FuzzEndBlock(f *testing.F) {
 
 		err = fixture.tallyKeeper.EndBlock(fixture.Context())
 		require.NoError(t, err)
+		require.NotContains(t, fixture.logBuf.String(), "ERR")
 
 		_, err := fixture.batchingKeeper.GetLatestDataResult(fixture.Context(), drID)
 		require.NoError(t, err)
