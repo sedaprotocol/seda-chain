@@ -1,4 +1,4 @@
-package testdata
+package testwasms
 
 import (
 	_ "embed"
@@ -8,17 +8,17 @@ var (
 	//go:embed core_contract.wasm
 	coreContract []byte
 
+	//go:embed invalid_import.wasm
+	invalidImportWasm []byte
+
+	//go:embed random_string_tally.wasm
+	randomStringTallyWasm []byte
+
 	//go:embed sample_tally.wasm
 	sampleTallyWasm []byte
 
 	//go:embed sample_tally_2.wasm
 	sampleTallyWasm2 []byte
-
-	//go:embed random_string_tally.wasm
-	randomStringTallyWasm []byte
-
-	//go:embed invalid_import.wasm
-	invalidImportWasm []byte
 )
 
 func CoreContractWasm() []byte {
@@ -52,4 +52,16 @@ func RandomStringTallyWasm() []byte {
 // Hash: 18d962cac6d9f931546f111da8d11b3ed54ccd77b79637b1c49a86ead16edb78
 func InvalidImportWasm() []byte {
 	return invalidImportWasm
+}
+
+func BurnerWasmFileName() string {
+	return "burner.wasm"
+}
+
+func ReflectWasmFileName() string {
+	return "reflect.wasm"
+}
+
+func CoreContractWasmFileName() string {
+	return "core_contract.wasm"
 }

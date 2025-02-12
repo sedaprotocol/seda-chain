@@ -11,8 +11,8 @@ import (
 
 	"cosmossdk.io/math"
 
+	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
-	"github.com/sedaprotocol/seda-chain/x/tally/keeper/testdata"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
@@ -23,7 +23,7 @@ import (
 func TestExecuteTallyProgram_RandomString(t *testing.T) {
 	f := initFixture(t)
 
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.RandomStringTallyWasm(), f.Context().BlockTime())
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.RandomStringTallyWasm(), f.Context().BlockTime())
 	f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 
 	gasMeter := types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1)
@@ -63,7 +63,7 @@ func TestExecuteTallyProgram_RandomString(t *testing.T) {
 func TestExecuteTallyProgram_InvalidImports(t *testing.T) {
 	f := initFixture(t)
 
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.InvalidImportWasm(), f.Context().BlockTime())
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.InvalidImportWasm(), f.Context().BlockTime())
 	f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 
 	gasMeter := types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1)
@@ -211,7 +211,7 @@ func TestTallyVM(t *testing.T) {
 			err := json.Unmarshal(tc.requestJSON, &req)
 			require.NoError(t, err)
 
-			result := tallyvm.ExecuteTallyVm(testdata.SampleTallyWasm(), tc.args, map[string]string{
+			result := tallyvm.ExecuteTallyVm(testwasms.SampleTallyWasm(), tc.args, map[string]string{
 				"VM_MODE":               "tally",
 				"CONSENSUS":             fmt.Sprintf("%v", true),
 				"BLOCK_HEIGHT":          fmt.Sprintf("%d", 1),
@@ -297,7 +297,7 @@ func TestTallyVM_EnvVars(t *testing.T) {
 				"DR_PAYBACK_ADDRESS":    req.PaybackAddress,
 			}
 
-			result := tallyvm.ExecuteTallyVm(testdata.SampleTallyWasm2(), tc.args, envs)
+			result := tallyvm.ExecuteTallyVm(testwasms.SampleTallyWasm2(), tc.args, envs)
 
 			require.Equal(t, 0, len(result.Stderr))
 			for key := range envs {

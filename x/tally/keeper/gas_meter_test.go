@@ -10,8 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
-	"github.com/sedaprotocol/seda-chain/x/tally/keeper/testdata"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -24,7 +24,7 @@ func FuzzGasMetering(f *testing.F) {
 	err := fixture.tallyKeeper.SetParams(fixture.Context(), defaultParams)
 	require.NoError(f, err)
 
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testdata.SampleTallyWasm2(), fixture.Context().BlockTime())
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm2(), fixture.Context().BlockTime())
 	err = fixture.wasmStorageKeeper.OracleProgram.Set(fixture.Context(), tallyProgram.Hash, tallyProgram)
 	require.NoError(f, err)
 

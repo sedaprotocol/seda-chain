@@ -50,6 +50,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/integration"
+	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
@@ -60,7 +61,6 @@ import (
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally"
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
-	"github.com/sedaprotocol/seda-chain/x/tally/keeper/testdata"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
@@ -290,7 +290,7 @@ func initFixture(t testing.TB) *fixture {
 	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, deployer, sdk.NewCoins(sdk.NewCoin(bondDenom, int1e21)))
 	require.NoError(t, err)
 
-	codeID, _, err := contractKeeper.Create(ctx, deployer, testdata.CoreContractWasm(), nil)
+	codeID, _, err := contractKeeper.Create(ctx, deployer, testwasms.CoreContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 

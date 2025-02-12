@@ -12,14 +12,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-const (
-	oracleProgram = "burner.wasm"
-	tallyProgram  = "reflect.wasm"
-	executorWasm  = "staking.wasm"
-	coreWasm      = "core_contract.wasm"
+var (
+	oracleProgram = testwasms.BurnerWasmFileName()
+	tallyProgram  = testwasms.ReflectWasmFileName()
+	coreWasm      = testwasms.CoreContractWasmFileName()
 )
 
 func (s *IntegrationTestSuite) testWasmStorageStoreOracleProgram() {
