@@ -82,7 +82,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - Multiple modes",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        make([]bool, 7),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": "A"}}`},
 				{Reveal: `{"result": {"text": "A"}}`},
@@ -114,7 +114,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - No consensus on exit code",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        make([]bool, 6),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{ExitCode: 1, Reveal: `{"high_level_prop1":"ignore this", "result": {"text": "A", "number": 0}}`},
 				{ExitCode: 1, Reveal: `{"makes_this_json":"ignore this", "result": {"text": "A", "number": 10}}`},
@@ -299,7 +299,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter with proxy pubkeys - No basic consensus",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        make([]bool, 6),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{
 					ExitCode: 1,
@@ -379,7 +379,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - No consensus due to non-zero exit code invalidating data",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        make([]bool, 4),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
@@ -394,7 +394,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - No consensus with exit code invalidating a reveal",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        make([]bool, 4),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": ""}}`},
@@ -424,7 +424,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - Too many bad exit codes",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []bool{false, false, false, false},
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "mac"}}`},
 				{ExitCode: 0, ProxyPubKeys: []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"}, Reveal: `{"result": {"text": "windows"}}`},
@@ -460,7 +460,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - Consensus not reached due to exit code",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        make([]bool, 6),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": "A", "number": 0}}`, ExitCode: 1},
 				{Reveal: `{"result": {"text": "A", "number": 0}}`},
@@ -477,7 +477,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Mode filter - Consensus not reached due to corrupt reveal",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        make([]bool, 6),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{Reveal: `{"resalt": {"text": "A", "number": 0}}`},
 				{Reveal: `{"result": {"text": "A", "number": 10}}`},
@@ -494,7 +494,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Standard deviation int32",
 			tallyInputAsHex: "02000000000016E36000000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.5, number_type = 0x00, json_path = $.result.text
-			outliers:        make([]bool, 6),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": 4}}`},
 				{Reveal: `{"result": {"text": 5}}`},
@@ -511,7 +511,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Standard deviation uint32 (Some invalid reveals)",
 			tallyInputAsHex: "0200000000000F424005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x01, json_path = $.result.text
-			outliers:        make([]bool, 4),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": 4294967295}}`},        // ok (max of uint64)
 				{Reveal: `{"result": {"text": 4294967296}}`},        // overflow
@@ -526,7 +526,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Standard deviation uint64 (Some invalid reveals)",
 			tallyInputAsHex: "0200000000000F424005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x03, json_path = $.result.text
-			outliers:        make([]bool, 4),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": 18446744073709551615}}`}, // ok (max of uint64)
 				{Reveal: `{"result": {"text": 18446744073709551616}}`}, // overflow
@@ -541,7 +541,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Standard deviation uint128 (Some invalid reveals)",
 			tallyInputAsHex: "0200000000000F424005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x05, json_path = $.result.text
-			outliers:        make([]bool, 4),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": 340282366920938463463374607431768211455}}`}, // ok (max of uint128)
 				{Reveal: `{"result": {"text": 340282366920938463463374607431768211456}}`}, // overflow
@@ -674,7 +674,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Standard deviation int256 (Negative numbers (2))",
 			tallyInputAsHex: "0200000000000F424006000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.0, number_type = 0x06, json_path = $.result.text
-			outliers:        make([]bool, 6),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": -28930, "number": 0}}`},
 				{Reveal: `{"result": {"text": -28000, "number": 10}}`},
@@ -691,7 +691,7 @@ func TestFilter(t *testing.T) {
 		{
 			name:            "Standard deviation int256 (Negative numbers (3))",
 			tallyInputAsHex: "0200000000000F8C7806000000000000000D242E726573756C742E74657874", // sigma_multiplier = 1.019, number_type = 0x06, json_path = $.result.text
-			outliers:        make([]bool, 6),
+			outliers:        nil,
 			reveals: []types.RevealBody{
 				{Reveal: `{"result": {"text": -28930, "number": 0}}`},
 				{Reveal: `{"result": {"text": -28000, "number": 10}}`},

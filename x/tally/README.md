@@ -7,13 +7,13 @@ Primarily, the tally module aggregates the Oracle Program execution results repo
 ```mermaid
 flowchart TD
     A["2/3 agree on<br>(exec_success,<br>proxy_pubkeys)?"]
-    A -->|ErrNoBasicConsensus| G1["fallback gas to committers"]
+    A -->|"ErrNoBasicConsensus<br>(outliers=nil)"| G1["fallback gas to committers"]
     A --->|Yes| C
     C["BuildFilter<br>(based on<br> requestor-provided input)"]
-    C -->|"ErrInvalidFilterInput<br>(No outlier list)"| R["ReducePayout mode"]
+    C -->|"ErrInvalidFilterInput<br>(outliers=nil)"| R["ReducePayout mode"]
     C --->|OK| D
     D["ApplyFilter<br>(parse reveals and<br>determine <br>consensus & outliers)"]
-    D ---->|"ErrNoConsensus<br>(>1/3 outlier)<br>(No outlier list)"| R
+    D ---->|"ErrNoConsensus<br>(>1/3 outlier)<br>(outliers=nil)"| R
     D --->|"ErrConsensusInError<br>(>2/3 error)"| G2
     D ----->|"Consensus<br>(<=1/3 outlier)"| F["TallyVM Execution"]
     R ---> G2

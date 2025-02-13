@@ -245,9 +245,9 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 			gasReports[i] = reveal.GasUsed
 		}
 		if areGasReportsUniform(gasReports) {
-			MeterExecutorGasUniform(keys, gasReports[0], req.ReplicationFactor, gasMeter)
+			MeterExecutorGasUniform(keys, gasReports[0], filterResult.Outliers, req.ReplicationFactor, gasMeter)
 		} else {
-			MeterExecutorGasDivergent(keys, gasReports, req.ReplicationFactor, gasMeter)
+			MeterExecutorGasDivergent(keys, gasReports, filterResult.Outliers, req.ReplicationFactor, gasMeter)
 		}
 	}
 

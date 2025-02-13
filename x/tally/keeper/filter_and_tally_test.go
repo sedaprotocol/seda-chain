@@ -54,7 +54,7 @@ func TestFilterAndTally(t *testing.T) {
 		{
 			name:            "None filter - Four reveals missing",
 			tallyInputAsHex: "00",
-			outliers:        []bool{false},
+			outliers:        nil,
 			reveals: map[string]types.RevealBody{
 				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
 			},
@@ -85,7 +85,7 @@ func TestFilterAndTally(t *testing.T) {
 		{
 			name:            "Mode filter - Four reveals missing",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
-			outliers:        []bool{false},
+			outliers:        nil,
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
 			},
@@ -116,7 +116,7 @@ func TestFilterAndTally(t *testing.T) {
 		{
 			name:            "Standard deviation filter - Four reveals missing",
 			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
-			outliers:        []bool{false},
+			outliers:        nil,
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
 			},
@@ -234,7 +234,7 @@ func TestExecutorPayout(t *testing.T) {
 			},
 		},
 		{
-			name:            "Uniform gas reporting (consensus)",
+			name:            "Uniform gas reporting (consensus with 1 outlier)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
@@ -243,11 +243,10 @@ func TestExecutorPayout(t *testing.T) {
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
-			expExecGasUsed:    90000,
+			expExecGasUsed:    60000,
 			expExecutorGas: map[string]math.Int{
 				"a": math.NewInt(30000),
 				"b": math.NewInt(30000),
-				"c": math.NewInt(30000),
 			},
 		},
 		{
@@ -430,22 +429,21 @@ func TestExecutorPayout(t *testing.T) {
 			},
 		},
 		{
-			name:            "Divergent gas reporting (mode no consensus, with 2 proxies)",
+			name:            "Divergent gas reporting (consensus with 1 outlier, with 2 proxies)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{ // (6000, 18000, 33000) after subtracting proxy gas
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
 				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{pubKeys[0]}},
+				"c": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{pubKeys[0]}},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
-			expExecGasUsed:    54000,
+			expExecGasUsed:    42000,
 			expExecutorGas: map[string]math.Int{
-				"a": math.NewInt(12000),
 				"b": math.NewInt(18000),
 				"c": math.NewInt(18000),
 			},
-			expReducedPayout: true,
+			expReducedPayout: false,
 			expProxyGas: map[string]math.Int{
 				pubKeyToPayoutAddr[pubKeys[0]]: math.NewInt(3000), // = RF * proxyFee / gasPrice
 				pubKeyToPayoutAddr[pubKeys[1]]: math.NewInt(3000), // = RF * proxyFee / gasPrice
@@ -471,6 +469,81 @@ func TestExecutorPayout(t *testing.T) {
 			expProxyGas: map[string]math.Int{
 				pubKeyToPayoutAddr[pubKeys[0]]: math.NewInt(999), // = RF * proxyFee / gasPrice (considering gas limit)
 				pubKeyToPayoutAddr[pubKeys[1]]: math.NewInt(0),   // = RF * proxyFee / gasPrice (considering gas limit)
+			},
+		},
+		{
+			name:            "Standard deviation uint128 (1 reveal missing, consensus with 2 outliers, uniform gas reporting)",
+			tallyInputAsHex: "0200000000002DC6C005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 3, number_type = 0x05, json_path = $.result.text
+			reveals: map[string]types.RevealBody{ // mean = 416667, stddev = 75277
+				"a": {Reveal: `{"result": {"text": 200000, "number": 0}}`, GasUsed: 25000},
+				"b": {Reveal: `{"result": {"number": 700000, "number": 0}}`, GasUsed: 25000}, // corrupt
+				"c": {Reveal: `{"result": {"text": 400000, "number": 10}}`, GasUsed: 25000},
+				"d": {Reveal: `{"result": {"text": 400000, "number": 101}}`, GasUsed: 25000},
+				"e": {Reveal: `{"result": {"text": 400000, "number": 0}}`, GasUsed: 25000},
+				"f": {Reveal: `{"result": {"text": 340282366920938463463374607431768211456, "number": 0}}`, GasUsed: 25000}, // overflow
+				"g": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 25000},
+				"h": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 25000},
+			},
+			replicationFactor: 9,
+			execGasLimit:      900000,
+			expExecGasUsed:    150000,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(25000),
+				"c": math.NewInt(25000),
+				"d": math.NewInt(25000),
+				"e": math.NewInt(25000),
+				"g": math.NewInt(25000),
+				"h": math.NewInt(25000),
+			},
+		},
+		{
+			name:            "Standard deviation uint128 (1 reveal missing, consensus with 2 outliers, divergent gas reporting)",
+			tallyInputAsHex: "0200000000002DC6C005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 3, number_type = 0x05, json_path = $.result.text
+			reveals: map[string]types.RevealBody{ // mean = 416667, stddev = 75277
+				"a": {Reveal: `{"result": {"text": 200000, "number": 0}}`, GasUsed: 25000},
+				"b": {Reveal: `{"result": {"number": 700000, "number": 0}}`, GasUsed: 27000}, // corrupt
+				"c": {Reveal: `{"result": {"text": 400000, "number": 10}}`, GasUsed: 21500},
+				"d": {Reveal: `{"result": {"text": 400000, "number": 101}}`, GasUsed: 29000},
+				"e": {Reveal: `{"result": {"text": 400000, "number": 0}}`, GasUsed: 35000},
+				"f": {Reveal: `{"result": {"text": 340282366920938463463374607431768211456, "number": 0}}`, GasUsed: 400}, // overflow
+				"g": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 29800},
+				"h": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 25000},
+			},
+			replicationFactor: 9,
+			execGasLimit:      900000,
+			expExecGasUsed:    156000,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(26000),
+				"c": math.NewInt(26000),
+				"d": math.NewInt(26000),
+				"e": math.NewInt(26000),
+				"g": math.NewInt(26000),
+				"h": math.NewInt(26000),
+			},
+		},
+		{
+			name:            "Standard deviation uint128 (1 reveal missing, consensus with 2 outliers, divergent gas reporting)",
+			tallyInputAsHex: "0200000000002DC6C005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 3, number_type = 0x05, json_path = $.result.text
+			reveals: map[string]types.RevealBody{ // mean = 416667, stddev = 75277
+				"a": {Reveal: `{"result": {"text": 200000, "number": 0}}`, GasUsed: 25000},
+				"b": {Reveal: `{"result": {"number": 700000, "number": 0}}`, GasUsed: 27000}, // corrupt
+				"c": {Reveal: `{"result": {"text": 400000, "number": 10}}`, GasUsed: 21500},
+				"d": {Reveal: `{"result": {"text": 400000, "number": 101}}`, GasUsed: 29000},
+				"e": {Reveal: `{"result": {"text": 400000, "number": 0}}`, GasUsed: 35000},
+				"f": {Reveal: `{"result": {"text": 340282366920938463463374607431768211456, "number": 0}}`, GasUsed: 29800}, // overflow
+				"g": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 400},
+				"h": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 25000},
+			},
+			replicationFactor: 9,
+			execGasLimit:      900000,
+			expExecGasUsed:    130800,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(26000),
+				"c": math.NewInt(26000),
+				"d": math.NewInt(26000),
+				"e": math.NewInt(26000),
+				"g": math.NewInt(800),
+				"h": math.NewInt(26000),
 			},
 		},
 	}

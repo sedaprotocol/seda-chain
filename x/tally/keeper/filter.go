@@ -45,47 +45,46 @@ func invertErrors(errors []bool) []bool {
 // outliers. It assumes that the reveals are sorted by their keys and that their
 // proxy public keys are sorted.
 func ExecuteFilter(reveals []types.RevealBody, filterInput string, replicationFactor uint16, params types.Params, gasMeter *types.GasMeter) (FilterResult, error) {
-	var result FilterResult
-	result.Errors = make([]bool, len(reveals))
-	result.Outliers = make([]bool, len(reveals))
+	var res FilterResult
+	res.Errors = make([]bool, len(reveals))
+	res.Outliers = make([]bool, len(reveals))
 
 	// Determine basic consensus on tuple of (exit_code_success, proxy_pub_keys)
 	var maxFreq int
 	freq := make(map[string]int, len(reveals))
 	for i, reveal := range reveals {
 		success := reveal.ExitCode == 0
-		result.Errors[i] = !success
+		res.Errors[i] = !success
 		tuple := fmt.Sprintf("%v%v", success, reveal.ProxyPubKeys)
 		freq[tuple]++
 
 		if freq[tuple] > maxFreq {
-			result.ProxyPubKeys = reveal.ProxyPubKeys
+			res.ProxyPubKeys = reveal.ProxyPubKeys
 			maxFreq = freq[tuple]
 		}
 	}
 	if maxFreq*3 < int(replicationFactor)*2 {
-		result.Consensus = false
-		return result, types.ErrNoBasicConsensus
+		res.Consensus, res.Outliers = false, nil
+		return res, types.ErrNoBasicConsensus
 	}
 
 	filter, err := BuildFilter(filterInput, replicationFactor, params, gasMeter)
 	if err != nil {
-		return result, types.ErrInvalidFilterInput.Wrap(err.Error())
+		res.Consensus, res.Outliers = false, nil
+		return res, types.ErrInvalidFilterInput.Wrap(err.Error())
 	}
 
-	outliers, consensus := filter.ApplyFilter(reveals, result.Errors)
+	outliers, consensus := filter.ApplyFilter(reveals, res.Errors)
 	switch {
-	case countErrors(result.Errors)*3 > len(reveals)*2:
-		result.Consensus = true
-		result.Outliers = invertErrors(result.Errors)
-		return result, types.ErrConsensusInError
+	case countErrors(res.Errors)*3 > len(reveals)*2:
+		res.Consensus, res.Outliers = true, invertErrors(res.Errors)
+		return res, types.ErrConsensusInError
 	case !consensus:
-		result.Consensus = false
-		return result, types.ErrNoConsensus
+		res.Consensus, res.Outliers = false, nil
+		return res, types.ErrNoConsensus
 	default:
-		result.Consensus = true
-		result.Outliers = outliers
-		return result, nil
+		res.Consensus, res.Outliers = true, outliers
+		return res, nil
 	}
 }
 

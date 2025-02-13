@@ -129,18 +129,24 @@ func MeterExecutorGasFallback(req types.Request, gasCostFallback uint64, gasMete
 }
 
 // MeterExecutorGasUniform computes and records the gas consumption of executors
-// when their gas reports are uniformly at "gasReport".
-func MeterExecutorGasUniform(executors []string, gasReport uint64, replicationFactor uint16, gasMeter *types.GasMeter) {
+// when their gas reports are uniformly at "gasReport". If a non-nil outliers
+// slice is provided, no gas consumption will be recorded for the executors
+// specified as outliers.
+func MeterExecutorGasUniform(executors []string, gasReport uint64, outliers []bool, replicationFactor uint16, gasMeter *types.GasMeter) {
 	executorGasReport := gasMeter.CorrectExecGasReportWithProxyGas(gasReport)
 	gasUsed := min(executorGasReport, gasMeter.RemainingExecGas()/uint64(replicationFactor))
-	for _, executor := range executors {
+	for i, executor := range executors {
+		if outliers != nil && outliers[i] {
+			continue
+		}
 		gasMeter.ConsumeExecGasForExecutor(executor, gasUsed)
 	}
 }
 
 // MeterExecutorGasDivergent computes and records the gas consumption of executors
-// when their gas reports are divergent.
-func MeterExecutorGasDivergent(executors []string, gasReports []uint64, replicationFactor uint16, gasMeter *types.GasMeter) {
+// when their gas reports are divergent. If a non-nil outliers slice is provided,
+// no gas consumption will be recorded for the executors specified as outliers.
+func MeterExecutorGasDivergent(executors []string, gasReports []uint64, outliers []bool, replicationFactor uint16, gasMeter *types.GasMeter) {
 	var lowestReport uint64
 	var lowestReporterIndex int
 	adjGasReports := make([]uint64, len(gasReports))
@@ -164,6 +170,9 @@ func MeterExecutorGasDivergent(executors []string, gasReports []uint64, replicat
 		regGasUsed = math.NewIntFromUint64(medianGasUsed).Mul(totalGasUsed).Quo(totalShares).Uint64()
 	}
 	for i, executor := range executors {
+		if outliers != nil && outliers[i] {
+			continue
+		}
 		gasUsed := regGasUsed
 		if i == lowestReporterIndex {
 			gasUsed = lowestGasUsed
