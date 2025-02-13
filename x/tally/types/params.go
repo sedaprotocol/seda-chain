@@ -10,7 +10,7 @@ import (
 
 const (
 	DefaultMaxResultSize                 = 1024
-	DefaultMaxTallyGasLimit              = 150_000_000_000_000
+	DefaultMaxTallyGasLimit              = 50_000_000_000_000
 	DefaultFilterGasCostNone             = 100_000
 	DefaultFilterGasCostMultiplierMode   = 100_000
 	DefaultFilterGasCostMultiplierStddev = 100_000
