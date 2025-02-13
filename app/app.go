@@ -942,6 +942,41 @@ func (app *App) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.
 		panic(err)
 	}
 	response, err := app.mm.InitGenesis(ctx, app.appCodec, genesisState)
+
+	expectedTotalEscrowed := sdk.Coins{}
+
+	// 1. Iterate over all IBC transfer channels
+	portID := app.TransferKeeper.GetPort(ctx)
+	transferChannels := app.IBCKeeper.ChannelKeeper.GetAllChannelsWithPortPrefix(ctx, portID)
+	for _, channel := range transferChannels {
+		// 2. For each channel, get the escrow address and corresponding bank balance
+		escrowAddress := ibctransfertypes.GetEscrowAddress(portID, channel.ChannelId)
+		bankBalances := app.BankKeeper.GetAllBalances(ctx, escrowAddress)
+
+		// 3. Aggregate the bank balances to calculate the expected total escrowed
+		expectedTotalEscrowed = expectedTotalEscrowed.Add(bankBalances...)
+	}
+
+	fmt.Println(
+		"Calculated expected total escrowed from escrow account bank balances",
+		"num channels", len(transferChannels),
+		"bank total escrowed", expectedTotalEscrowed,
+	)
+
+	// 4. Set the total escrowed for each denom
+	for _, totalEscrowCoin := range expectedTotalEscrowed {
+		prevDenomEscrow := app.TransferKeeper.GetTotalEscrowForDenom(ctx, totalEscrowCoin.Denom)
+
+		app.TransferKeeper.SetTotalEscrowForDenom(ctx, totalEscrowCoin)
+
+		fmt.Println(
+			"Corrected total escrow for denom to match escrow account bank balances",
+			"denom", totalEscrowCoin.Denom,
+			"previous escrow", prevDenomEscrow.String(),
+			"new escrow", totalEscrowCoin.String(),
+		)
+	}
+
 	return response, err
 }
 
