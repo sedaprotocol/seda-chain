@@ -51,8 +51,10 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	tallyvm.TallyMaxBytes = uint(params.MaxResultSize)
 
 	// Fetch tally-ready data requests.
-	// TODO: Deal with offset and limits. (#313)
-	queryRes, err := k.wasmViewKeeper.QuerySmart(ctx, coreContract, []byte(`{"get_data_requests_by_status":{"status": "tallying", "offset": 0, "limit": 100}}`))
+	queryRes, err := k.wasmViewKeeper.QuerySmart(
+		ctx, coreContract,
+		[]byte(fmt.Sprintf(`{"get_data_requests_by_status":{"status": "tallying", "offset": 0, "limit": %d}}`, params.MaxTalliesPerBlock)),
+	)
 	if err != nil {
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally-ready data requests", "err", err)
 		return nil

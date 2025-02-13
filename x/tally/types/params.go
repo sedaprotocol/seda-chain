@@ -16,6 +16,7 @@ const (
 	DefaultFilterGasCostMultiplierStddev = 100_000
 	DefaultGasCostBase                   = 1_000_000_000_000
 	DefaultExecutionGasCostFallback      = 5_000_000_000_000
+	DefaultMaxTalliesPerBlock            = 100
 )
 
 var DefaultBurnRatio = math.LegacyNewDecWithPrec(2, 1)
@@ -31,6 +32,7 @@ func DefaultParams() Params {
 		GasCostBase:                   DefaultGasCostBase,
 		ExecutionGasCostFallback:      DefaultExecutionGasCostFallback,
 		BurnRatio:                     DefaultBurnRatio,
+		MaxTalliesPerBlock:            DefaultMaxTalliesPerBlock,
 	}
 }
 

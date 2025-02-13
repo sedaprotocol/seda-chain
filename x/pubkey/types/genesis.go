@@ -12,7 +12,7 @@ func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
 		ProvingSchemes: []ProvingScheme{
 			{
-				Index:            0, // TODO resolve import cycle for uint32(utils.SEDAKeyIndexSecp256k1),
+				Index:            0, // SEDA Key Index for Secp256k1
 				IsActivated:      false,
 				ActivationHeight: DefaultActivationHeight,
 			},

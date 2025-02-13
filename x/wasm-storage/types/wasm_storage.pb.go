@@ -93,8 +93,8 @@ type Params struct {
 	// MaxWasmSize specifies the maximum allowed size of an unzipped oracle
 	// program.
 	MaxWasmSize int64 `protobuf:"varint,1,opt,name=max_wasm_size,json=maxWasmSize,proto3" json:"max_wasm_size,omitempty"`
-	// WasmCostPerByte is the cost per unzipped byte of uploading an oracle program in
-	// aseda.
+	// WasmCostPerByte is the cost per unzipped byte of uploading an oracle
+	// program in aseda.
 	WasmCostPerByte uint64 `protobuf:"varint,2,opt,name=wasm_cost_per_byte,json=wasmCostPerByte,proto3" json:"wasm_cost_per_byte,omitempty"`
 }
 
