@@ -98,11 +98,13 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 // InstantiateCoreContract instantiate a new contract with a
 // predictable address and updates the core contract registry.
 func (m msgServer) InstantiateCoreContract(goCtx context.Context, msg *types.MsgInstantiateCoreContract) (*types.MsgInstantiateCoreContractResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
+	if m.GetAuthority() != msg.Sender {
+		return nil, types.ErrInvalidAuthority.Wrapf("expected %s, got %s", m.authority, msg.Sender)
+	}
+
 	var adminAddr sdk.AccAddress
 	var err error
 	if msg.Admin != "" {
@@ -111,6 +113,7 @@ func (m msgServer) InstantiateCoreContract(goCtx context.Context, msg *types.Msg
 		}
 	}
 
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	contractAddr, _, err := m.wasmKeeper.Instantiate2(ctx, msg.CodeID, adminAddr, adminAddr, msg.Msg, msg.Label, msg.Funds, msg.Salt, msg.FixMsg)
 	if err != nil {
 		return nil, err

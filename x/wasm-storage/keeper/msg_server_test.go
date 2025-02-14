@@ -21,6 +21,14 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
+var (
+	testAddrs = []sdk.AccAddress{
+		sdk.AccAddress([]byte("to0_________________")),
+		sdk.AccAddress([]byte("to1_________________")),
+		sdk.AccAddress([]byte("to2_________________")),
+	}
+)
+
 func (s *KeeperTestSuite) TestStoreOracleProgram() {
 	regWasm, err := os.ReadFile("testutil/hello-world.wasm")
 	s.Require().NoError(err)
@@ -164,6 +172,80 @@ func (s *KeeperTestSuite) TestStoreOracleProgram() {
 			}
 			s.Require().NoError(err)
 			s.Require().Equal(tc.expOutput, *res)
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestInstantiateCoreContract() {
+	cases := []struct {
+		name      string
+		input     *types.MsgInstantiateCoreContract
+		expErrMsg string
+	}{
+		{
+			name: "happy path",
+			input: &types.MsgInstantiateCoreContract{
+				Sender: s.authority,
+				Admin:  s.authority,
+				CodeID: 1,
+				Label:  "label",
+				Msg:    []byte(`{}`),
+				Funds:  sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1000000000000000000))),
+				Salt:   []byte("salt"),
+				FixMsg: true,
+			},
+			expErrMsg: "",
+		},
+		{
+			name: "invalid authority",
+			input: &types.MsgInstantiateCoreContract{
+				Sender: "seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l",
+				Admin:  s.authority,
+				CodeID: 1,
+				Label:  "label",
+				Msg:    []byte(`{}`),
+				Funds:  sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1000000000000000000))),
+				Salt:   []byte("salt"),
+				FixMsg: true,
+			},
+			expErrMsg: "expected " + s.authority + ", got seda1ucv5709wlf9jn84ynyjzyzeavwvurmdyxat26l: invalid authority",
+		},
+		{
+			name: "invalid msg json",
+			input: &types.MsgInstantiateCoreContract{
+				Sender: s.authority,
+				Admin:  s.authority,
+				CodeID: 1,
+				Label:  "label",
+				Msg:    []byte(`}`),
+				Funds:  sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1000000000000000000))),
+				Salt:   []byte("salt"),
+				FixMsg: true,
+			},
+			expErrMsg: "invalid",
+		},
+	}
+
+	s.SetupTest()
+	for _, tc := range cases {
+		s.Run(tc.name, func() {
+			s.mockWasmKeeper.EXPECT().Instantiate2(
+				s.ctx, tc.input.CodeID, gomock.Any(), gomock.Any(),
+				tc.input.Msg, tc.input.Label, tc.input.Funds, tc.input.Salt,
+				tc.input.FixMsg).Return(testAddrs[0], []byte{}, nil).MaxTimes(1)
+
+			_, err := s.msgSrvr.InstantiateCoreContract(s.ctx, tc.input)
+			if tc.expErrMsg != "" {
+				s.Require().Error(err)
+				s.Require().Equal(tc.expErrMsg, err.Error())
+				return
+			}
+			s.Require().NoError(err)
+
+			// Check that the address is correctly set.
+			addr, err := s.keeper.CoreContractRegistry.Get(s.ctx)
+			s.Require().NoError(err)
+			s.Require().Equal(testAddrs[0].String(), addr)
 		})
 	}
 }
