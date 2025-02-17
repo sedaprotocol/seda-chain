@@ -50,27 +50,30 @@ func (k Keeper) SetNewBatch(ctx context.Context, batch types.Batch, dataEntries 
 		return types.ErrBatchAlreadyExists.Wrapf("batch block height %d", batch.BlockHeight)
 	}
 
-	newBatchNum, err := k.incrementCurrentBatchNum(ctx)
+	batchNum, err := k.GetCurrentBatchNum(ctx)
 	if err != nil {
 		return err
 	}
-	if batch.BatchNumber != newBatchNum {
-		return types.ErrInvalidBatchNumber.Wrapf("got %d; expected %d", batch.BatchNumber, newBatchNum)
+	if batch.BatchNumber != batchNum {
+		return types.ErrInvalidBatchNumber.Wrapf("got %d; expected %d", batch.BatchNumber, batchNum)
 	}
-	batch.BatchNumber = newBatchNum
 
-	err = k.setDataResultTreeEntry(ctx, newBatchNum, dataEntries)
+	err = k.setDataResultTreeEntry(ctx, batchNum, dataEntries)
 	if err != nil {
 		return err
 	}
 
 	for _, valEntry := range valEntries {
-		err = k.setValidatorTreeEntry(ctx, newBatchNum, valEntry)
+		err = k.setValidatorTreeEntry(ctx, batchNum, valEntry)
 		if err != nil {
 			return err
 		}
 	}
 
+	_, err = k.incrementCurrentBatchNum(ctx)
+	if err != nil {
+		return err
+	}
 	return k.batches.Set(ctx, batch.BlockHeight, batch)
 }
 
@@ -100,7 +103,7 @@ func (k Keeper) GetLatestBatch(ctx context.Context) (types.Batch, error) {
 	if currentBatchNum == collections.DefaultSequenceStart {
 		return types.Batch{}, types.ErrBatchingHasNotStarted
 	}
-	return k.GetBatchByBatchNumber(ctx, currentBatchNum)
+	return k.GetBatchByBatchNumber(ctx, currentBatchNum-1)
 }
 
 // GetLatestSignedBatch returns the latest batch whose signatures have
@@ -113,14 +116,14 @@ func (k Keeper) GetLatestSignedBatch(ctx sdk.Context) (types.Batch, error) {
 	if currentBatchNum == collections.DefaultSequenceStart {
 		return types.Batch{}, types.ErrBatchingHasNotStarted
 	}
-	batch, err := k.GetBatchByBatchNumber(ctx, currentBatchNum)
+	batch, err := k.GetBatchByBatchNumber(ctx, currentBatchNum-1)
 	if err != nil {
 		return types.Batch{}, err
 	}
 
 	if batch.BlockHeight > ctx.BlockHeight()+abci.BlockOffsetCollectPhase {
 		currentBatchNum--
-		for currentBatchNum > collections.DefaultSequenceStart {
+		for currentBatchNum >= collections.DefaultSequenceStart {
 			batch, err = k.GetBatchByBatchNumber(ctx, currentBatchNum)
 			if err != nil {
 				return types.Batch{}, err

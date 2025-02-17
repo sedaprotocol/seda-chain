@@ -25,7 +25,6 @@ const (
 	// signing phase and the corresponding batch's creation height.
 	// The signing phase consists of ExtendVote and VerifyVoteExtension.
 	BlockOffsetSignPhase = -1
-
 	// BlockOffsetCollectPhase is the block height difference between the
 	// batch signature collection phase and the corresponding batch's
 	// creation height. The collection phase spans PrepareProposal,
@@ -33,8 +32,9 @@ const (
 	// signatures.
 	BlockOffsetCollectPhase = -2
 
-	// MaxVoteExtensionLength is the maximum size of vote extension in
-	// bytes.
+	// MinVoteExtensionLength is the minimum size of vote extension in bytes.
+	MinVoteExtensionLength = 65
+	// MaxVoteExtensionLength is the maximum size of vote extension in bytes.
 	MaxVoteExtensionLength = 65 * 5
 )
 
@@ -96,17 +96,19 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 			}
 		}
 
-		// Check if the validator was in the previous validator tree.
-		// If not, it means the validator just joined the active set,
-		// so it should start signing from the next batch.
-		_, err = h.batchingKeeper.GetValidatorTreeEntry(ctx, batch.BatchNumber-1, h.signer.GetValAddress())
-		if err != nil {
-			if errors.Is(err, collections.ErrNotFound) {
-				h.logger.Info("validator was not in the previous validator tree - not signing the batch")
-			} else {
-				h.logger.Error("unexpected error while checking previous validator tree entry", "err", err)
+		// Check if the validator was in the previous validator tree. If not,
+		// this means the validator has just joined the active set, so it skips
+		// signing this batch. The very first batch is signed by all validators.
+		if batch.BatchNumber != collections.DefaultSequenceStart {
+			_, err = h.batchingKeeper.GetValidatorTreeEntry(ctx, batch.BatchNumber-1, h.signer.GetValAddress())
+			if err != nil {
+				if errors.Is(err, collections.ErrNotFound) {
+					h.logger.Info("validator was not in the previous validator tree - not signing the batch")
+				} else {
+					h.logger.Error("unexpected error while checking previous validator tree entry", "err", err)
+				}
+				return nil, err
 			}
-			return nil, err
 		}
 
 		valKeys, err := h.pubKeyKeeper.GetValidatorKeys(ctx, h.signer.GetValAddress().String())
@@ -343,8 +345,8 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 // succeeds.
 func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batchID, voteExtension, consAddr []byte) error {
 	if len(voteExtension) > MaxVoteExtensionLength {
-		h.logger.Error("invalid vote extension length", "len", len(voteExtension))
-		return ErrInvalidVoteExtensionLength
+		h.logger.Error("vote extension exceeds max length", "len", len(voteExtension))
+		return ErrVoteExtensionTooLong
 	}
 
 	validator, err := h.stakingKeeper.GetValidatorByConsAddr(ctx, consAddr)
@@ -381,6 +383,10 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 		expectedAddr = valEntry.EthAddress
 	}
 
+	if len(voteExtension) < MinVoteExtensionLength {
+		h.logger.Error("vote extension is too short", "len", len(voteExtension))
+		return ErrVoteExtensionTooShort
+	}
 	sigPubKey, err := crypto.Ecrecover(batchID, voteExtension[:65])
 	if err != nil {
 		return err

@@ -69,7 +69,7 @@ func (k Keeper) ConstructBatch(ctx sdk.Context) (types.Batch, types.DataResultTr
 		if !errors.Is(err, types.ErrBatchingHasNotStarted) {
 			return types.Batch{}, types.DataResultTreeEntries{}, nil, err
 		}
-		newBatchNum = collections.DefaultSequenceStart + 1
+		newBatchNum = collections.DefaultSequenceStart
 	} else {
 		newBatchNum = latestBatch.BatchNumber + 1
 		latestDataRootHex = latestBatch.DataResultRoot

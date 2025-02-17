@@ -33,7 +33,7 @@ func TestHandleEvidence(t *testing.T) {
 	}
 
 	// Store the legitimate batch for which the validator will be double signing
-	doubleSignBatchNumber := uint64(2)
+	doubleSignBatchNumber := uint64(1)
 	doubleSignBlockHeight := int64(4)
 
 	batchToDoubleSign := types.Batch{
@@ -105,7 +105,7 @@ func TestHandleEvidence_DifferentBlockHeight(t *testing.T) {
 	}
 
 	// Store the legitimate batch for which the validator will be double signing
-	doubleSignBatchNumber := uint64(2)
+	doubleSignBatchNumber := uint64(1)
 	doubleSignBlockHeight := int64(4)
 
 	batchToDoubleSign := types.Batch{
@@ -171,7 +171,7 @@ func TestHandleEvidence_InvalidBatchID(t *testing.T) {
 	_, _, _ = generateFirstBatch(t, f, 1)
 
 	evidence := &types.BatchDoubleSign{
-		BatchNumber:         1,
+		BatchNumber:         0,
 		BlockHeight:         1,
 		DataResultRoot:      "x027c97e8b0588f86a9e140d73a31af5ee0d37b93ff0f2f54f5305d0f2ea3fd9",
 		ValidatorRoot:       "y2306d94cc69db8435c56294ff7f27cf3a7d042f8965e2d76f38c63a616a937b0",
@@ -193,7 +193,7 @@ func TestHandleEvidence_LegitBatchID(t *testing.T) {
 
 	// Create evidence for a legitimate batch
 	evidence := &types.BatchDoubleSign{
-		BatchNumber:         2,
+		BatchNumber:         1,
 		BlockHeight:         2,
 		OperatorAddress:     notFraudAddr.String(),
 		DataResultRoot:      "6027c97e8b0588f86a9e140d73a31af5ee0d37b93ff0f2f54f5305d0f2ea3fd9",
@@ -207,7 +207,7 @@ func TestHandleEvidence_LegitBatchID(t *testing.T) {
 
 	err = f.batchingKeeper.SetNewBatch(f.Context(), types.Batch{
 		BatchId:     legitBatchID,
-		BatchNumber: 2,
+		BatchNumber: 1,
 		BlockHeight: 2,
 	}, types.DataResultTreeEntries{}, []types.ValidatorTreeEntry{})
 	require.NoError(t, err)
@@ -238,7 +238,7 @@ func TestHandleEvidence_InvalidSignature(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			evidence := &types.BatchDoubleSign{
-				BatchNumber:         1,
+				BatchNumber:         0,
 				BlockHeight:         1,
 				DataResultRoot:      "6027c97e8b0588f86a9e140d73a31af5ee0d37b93ff0f2f54f5305d0f2ea3fd9",
 				ValidatorRoot:       "2306d94cc69db8435c56294ff7f27cf3a7d042f8965e2d76f38c63a616a937b0",
@@ -263,7 +263,7 @@ func TestHandleEvidence_DifferentPrivateKey(t *testing.T) {
 	fraudPrivKey := privKeys[1]
 
 	// Store the legitimate batch for which the validator will be double signing
-	doubleSignBatchNumber := uint64(2)
+	doubleSignBatchNumber := uint64(1)
 	doubleSignBlockHeight := int64(4)
 
 	batchToDoubleSign := types.Batch{
@@ -312,7 +312,7 @@ func TestHandleEvidence_StaleEvidence(t *testing.T) {
 	fraudPrivKey := privKeys[0]
 
 	// Store the legitimate batch for which the validator will be double signing
-	doubleSignBatchNumber := uint64(2)
+	doubleSignBatchNumber := uint64(1)
 	doubleSignBlockHeight := int64(4)
 
 	batchToDoubleSign := types.Batch{
@@ -389,7 +389,7 @@ func TestHandleEvidence_TombstonedValidator(t *testing.T) {
 	fraudulentValidator := validators[0]
 
 	// Store the legitimate batch for which the validator will be double signing
-	doubleSignBatchNumber := uint64(2)
+	doubleSignBatchNumber := uint64(1)
 	doubleSignBlockHeight := int64(4)
 
 	batchToDoubleSign := types.Batch{

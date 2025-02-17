@@ -175,6 +175,8 @@ func (s *ABCITestSuite) SetupTest(mockBatchNumber uint64, isNewValidator []bool)
 		mockPubKeyKeeper.EXPECT().GetValidatorKeys(gomock.Any(), val.valAddr.String()).
 			Return(pubkeytypes.ValidatorPubKeys{}, nil).
 			AnyTimes()
+		mockPubKeyKeeper.EXPECT().GetValidatorKeyAtIndex(gomock.Any(), val.valAddr.Bytes(), utils.SEDAKeyIndexSecp256k1).Return(val.sedaPubKeys[0].PubKey, nil).AnyTimes()
+
 		mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), val.consAddr).
 			Return(stakingtypes.Validator{OperatorAddress: val.valAddr.String()}, nil).
 			AnyTimes()
@@ -229,16 +231,15 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 			mockBatchNumber: 100,
 			isNewValidator:  []bool{false, false, true},
 		},
-		// {
-		// 	name:            "one empty vote extension",
-		// 	mockBatchNumber: 100,
-		// 	emptyVoteExt:    []bool{false, false, true},
-		// },
-		// TODO Reactivate
-		// {
-		// 	name:            "first batch",
-		// 	mockBatchNumber: collections.DefaultSequenceStart,
-		// },
+		{
+			name:            "one empty vote extension",
+			mockBatchNumber: 100,
+			emptyVoteExt:    []bool{false, false, true},
+		},
+		{
+			name:            "first batch",
+			mockBatchNumber: collections.DefaultSequenceStart,
+		},
 		{
 			name:             "unrecoverable signature is injected in proposal",
 			mockBatchNumber:  100,

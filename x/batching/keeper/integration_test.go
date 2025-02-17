@@ -6,12 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	gomock "go.uber.org/mock/gomock"
 
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
+	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -19,8 +21,6 @@ import (
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/sedaprotocol/seda-chain/app/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -44,6 +44,7 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/integration"
 	"github.com/sedaprotocol/seda-chain/x/batching"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
@@ -326,7 +327,7 @@ func generateFirstBatch(t *testing.T, f *fixture, numValidators int) ([]sdk.ValA
 	// Generate a first batch and set it alongside the validators eth addresses
 	batch := types.Batch{
 		BatchId:     []byte("batch1"),
-		BatchNumber: 1,
+		BatchNumber: collections.DefaultSequenceStart,
 		BlockHeight: 1,
 	}
 	err := f.batchingKeeper.SetNewBatch(f.Context(), batch, types.DataResultTreeEntries{}, validatorEntries)
