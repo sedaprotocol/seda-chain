@@ -55,20 +55,6 @@ jobs:
           mkdir build
           docker run --rm -v $(pwd)/build:/output seda-static cp -r /build/. /output/
 
-      - name: 🐳 Build and Push
-        id: build
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./dockerfiles/Dockerfile.release
-          labels: ${{ steps.meta.outputs.labels }}
-          push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},name-canonical=true,push=true
-          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}, ${{ env.REGISTRY_IMAGE }}:latest
-
       - name: 🪵 Conventional Changelog
         id: changelog
         uses: TriPSs/conventional-changelog-action@v5
@@ -94,3 +80,17 @@ jobs:
           generateReleaseNotes: true
           body: ${{ steps.changelog.outputs.clean_changelog }}
           artifacts: "checksum.txt,build/sedad-amd64,build/sedad-arm64"
+
+      - name: 🐳 Build and Push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./dockerfiles/Dockerfile.release
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},name-canonical=true,push=true
+          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}, ${{ env.REGISTRY_IMAGE }}:latest
