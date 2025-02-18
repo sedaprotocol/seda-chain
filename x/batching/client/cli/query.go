@@ -47,17 +47,17 @@ func GetCmdQueryBatch() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			var batchNum uint64
+			var req types.QueryBatchRequest
 			if len(args) != 0 {
-				batchNum, err = strconv.ParseUint(args[0], 10, 64)
+				req.BatchNumber, err = strconv.ParseUint(args[0], 10, 64)
 				if err != nil {
 					return err
 				}
+			} else {
+				req.LatestSigned = true
 			}
-			req := &types.QueryBatchRequest{
-				BatchNumber: batchNum,
-			}
-			res, err := queryClient.Batch(cmd.Context(), req)
+
+			res, err := queryClient.Batch(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}

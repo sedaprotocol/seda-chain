@@ -20,7 +20,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/x/batching"
 	"github.com/sedaprotocol/seda-chain/x/batching/keeper"
-	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
 type KeeperTestSuite struct {
@@ -28,7 +28,7 @@ type KeeperTestSuite struct {
 	ctx         sdk.Context
 	keeper      *keeper.Keeper
 	cdc         codec.Codec
-	queryClient batchingtypes.QueryClient
+	queryClient types.QueryClient
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -51,13 +51,13 @@ func (s *KeeperTestSuite) SetupTest() {
 
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, enCfg.InterfaceRegistry)
 	querier := keeper.NewQuerierImpl(*s.keeper)
-	batchingtypes.RegisterQueryServer(queryHelper, querier)
-	s.queryClient = batchingtypes.NewQueryClient(queryHelper)
+	types.RegisterQueryServer(queryHelper, querier)
+	s.queryClient = types.NewQueryClient(queryHelper)
 }
 
 func setupKeeper(t *testing.T) (*keeper.Keeper, moduletestutil.TestEncodingConfig, sdk.Context) {
 	t.Helper()
-	key := storetypes.NewKVStoreKey(batchingtypes.StoreKey)
+	key := storetypes.NewKVStoreKey(types.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(t, key, storetypes.NewTransientStoreKey("transient_test"))
 	ctx := testCtx.Ctx
 	encCfg := moduletestutil.MakeTestEncodingConfig(batching.AppModuleBasic{})
@@ -67,12 +67,83 @@ func setupKeeper(t *testing.T) (*keeper.Keeper, moduletestutil.TestEncodingConfi
 	return &keeper, encCfg, ctx
 }
 
+func (s *KeeperTestSuite) TestKeeper_GetLatestSignedBatch() {
+	s.SetupTest()
+
+	// Height 1
+	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
+	batch, err := s.keeper.GetLatestSignedBatch(s.ctx)
+	s.Require().ErrorIs(err, types.ErrNoSignedBatch)
+
+	// Height 2
+	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
+	batch, err = s.keeper.GetLatestSignedBatch(s.ctx)
+	s.Require().ErrorIs(err, types.ErrNoSignedBatch)
+
+	// Height 3
+	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
+	batch, err = s.keeper.GetLatestSignedBatch(s.ctx)
+	s.Require().ErrorIs(err, types.ErrBatchingHasNotStarted)
+
+	// Height 4
+	// - Batch 0 is created.
+	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
+	err = s.keeper.SetNewBatch(s.ctx, types.Batch{
+		BatchNumber: 0,
+		BlockHeight: s.ctx.BlockHeight(),
+	}, types.DataResultTreeEntries{}, nil)
+	s.Require().NoError(err)
+
+	// Height 5
+	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
+	batch, err = s.keeper.GetLatestSignedBatch(s.ctx)
+	s.Require().ErrorIs(err, types.ErrNoSignedBatch)
+
+	// Height 6
+	// - Batch 1 is created.
+	// - Signatures for batch 0 has been collected.
+	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
+	err = s.keeper.SetNewBatch(s.ctx, types.Batch{
+		BatchNumber: 1,
+		BlockHeight: s.ctx.BlockHeight(),
+	}, types.DataResultTreeEntries{}, nil)
+
+	batch, err = s.keeper.GetLatestSignedBatch(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(0), batch.BatchNumber)
+
+	// At height 7
+	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
+	batch, err = s.keeper.GetLatestSignedBatch(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(0), batch.BatchNumber)
+
+	// At height 8
+	// - Signatures for batch 1 has been collected.
+	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
+	batch, err = s.keeper.GetLatestSignedBatch(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1), batch.BatchNumber)
+
+	// At height 9
+	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
+	batch, err = s.keeper.GetLatestSignedBatch(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1), batch.BatchNumber)
+
+	// At height 10
+	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
+	batch, err = s.keeper.GetLatestSignedBatch(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1), batch.BatchNumber)
+}
+
 func (s *KeeperTestSuite) TestKeeper_DataResult() {
 	s.SetupTest()
 
 	batchNum := uint64(rand.Intn(100) + 1)
 	gasUsed := math.NewInt(20)
-	mockDataResult := batchingtypes.DataResult{
+	mockDataResult := types.DataResult{
 		Version:        "0.0.1",
 		DrId:           "74d7e8c9a77b7b4777153a32fcdf2424489f24cd59d3043eb2a30be7bba48306",
 		Consensus:      true,
@@ -88,7 +159,7 @@ func (s *KeeperTestSuite) TestKeeper_DataResult() {
 	err := s.keeper.SetDataResultForBatching(s.ctx, mockDataResult)
 	s.Require().NoError(err)
 
-	res, err := s.queryClient.DataResult(s.ctx, &batchingtypes.QueryDataResultRequest{
+	res, err := s.queryClient.DataResult(s.ctx, &types.QueryDataResultRequest{
 		DataRequestId: mockDataResult.DrId,
 	})
 	s.Require().NoError(err)
@@ -99,12 +170,12 @@ func (s *KeeperTestSuite) TestKeeper_DataResult() {
 	err = s.keeper.MarkDataResultAsBatched(s.ctx, mockDataResult, batchNum)
 	s.Require().NoError(err)
 
-	res, err = s.queryClient.DataResult(s.ctx, &batchingtypes.QueryDataResultRequest{
+	res, err = s.queryClient.DataResult(s.ctx, &types.QueryDataResultRequest{
 		DataRequestId: mockDataResult.DrId,
 	})
 	s.Require().NoError(err)
 	s.Require().Equal(&mockDataResult, res.DataResult)
-	s.Require().Equal(&batchingtypes.BatchAssignment{
+	s.Require().Equal(&types.BatchAssignment{
 		BatchNumber:       batchNum,
 		DataRequestId:     mockDataResult.DrId,
 		DataRequestHeight: mockDataResult.DrBlockHeight,
@@ -120,11 +191,11 @@ func (s *KeeperTestSuite) TestKeeper_DataResult() {
 	err = s.keeper.MarkDataResultAsBatched(s.ctx, mockDataResult2, batchNum)
 	s.Require().NoError(err)
 
-	res, err = s.queryClient.DataResult(s.ctx, &batchingtypes.QueryDataResultRequest{
+	res, err = s.queryClient.DataResult(s.ctx, &types.QueryDataResultRequest{
 		DataRequestId: mockDataResult2.DrId,
 	})
 	s.Require().NoError(err)
-	s.Require().Equal(&batchingtypes.BatchAssignment{
+	s.Require().Equal(&types.BatchAssignment{
 		BatchNumber:       batchNum,
 		DataRequestId:     mockDataResult2.DrId,
 		DataRequestHeight: mockDataResult2.DrBlockHeight,
@@ -132,13 +203,13 @@ func (s *KeeperTestSuite) TestKeeper_DataResult() {
 	s.Require().Equal(&mockDataResult2, res.DataResult)
 
 	// We should still be able to query the first data result.
-	res, err = s.queryClient.DataResult(s.ctx, &batchingtypes.QueryDataResultRequest{
+	res, err = s.queryClient.DataResult(s.ctx, &types.QueryDataResultRequest{
 		DataRequestId:     mockDataResult.DrId,
 		DataRequestHeight: mockDataResult.DrBlockHeight,
 	})
 	s.Require().NoError(err)
 	s.Require().Equal(&mockDataResult, res.DataResult)
-	s.Require().Equal(&batchingtypes.BatchAssignment{
+	s.Require().Equal(&types.BatchAssignment{
 		BatchNumber:       batchNum,
 		DataRequestId:     mockDataResult.DrId,
 		DataRequestHeight: mockDataResult.DrBlockHeight,

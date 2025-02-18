@@ -37,7 +37,13 @@ service Query {
 }
 
 // The request message for QueryBatch RPC.
-message QueryBatchRequest { uint64 batch_number = 1; }
+message QueryBatchRequest {
+  // latest_signed, if true, overrides the batch_number field and returns the
+  // latest signed batch.
+  bool latest_signed = 1;
+  // batch_number is used to query a specific batch.
+  uint64 batch_number = 2;
+}
 
 // The response message for QueryBatch RPC.
 message QueryBatchResponse {

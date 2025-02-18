@@ -109,6 +109,9 @@ func (k Keeper) GetLatestBatch(ctx context.Context) (types.Batch, error) {
 // GetLatestSignedBatch returns the latest batch whose signatures have
 // been collected.
 func (k Keeper) GetLatestSignedBatch(ctx sdk.Context) (types.Batch, error) {
+	if ctx.BlockHeight() <= -abci.BlockOffsetCollectPhase {
+		return types.Batch{}, types.ErrNoSignedBatch
+	}
 	currentBatchNum, err := k.currentBatchNumber.Peek(ctx)
 	if err != nil {
 		return types.Batch{}, err
@@ -116,25 +119,21 @@ func (k Keeper) GetLatestSignedBatch(ctx sdk.Context) (types.Batch, error) {
 	if currentBatchNum == collections.DefaultSequenceStart {
 		return types.Batch{}, types.ErrBatchingHasNotStarted
 	}
-	batch, err := k.GetBatchByBatchNumber(ctx, currentBatchNum-1)
+	return k.getLatestSignedBatch(ctx, currentBatchNum-1)
+}
+
+func (k Keeper) getLatestSignedBatch(ctx sdk.Context, batchNumber uint64) (types.Batch, error) {
+	batch, err := k.GetBatchByBatchNumber(ctx, batchNumber)
 	if err != nil {
 		return types.Batch{}, err
 	}
-
+	// If the batch's signatures have not been collected yet, make a
+	// recursive call to get the previous batch.
 	if batch.BlockHeight > ctx.BlockHeight()+abci.BlockOffsetCollectPhase {
-		currentBatchNum--
-		for currentBatchNum >= collections.DefaultSequenceStart {
-			batch, err = k.GetBatchByBatchNumber(ctx, currentBatchNum)
-			if err != nil {
-				return types.Batch{}, err
-			}
-			if batch.BlockHeight <= ctx.BlockHeight()+abci.BlockOffsetCollectPhase {
-				break
-			} else if currentBatchNum == collections.DefaultSequenceStart {
-				return types.Batch{}, types.ErrNoSignedBatches
-			}
-			currentBatchNum--
+		if batchNumber == collections.DefaultSequenceStart {
+			return types.Batch{}, types.ErrNoSignedBatch
 		}
+		return k.getLatestSignedBatch(ctx, batchNumber-1)
 	}
 	return batch, nil
 }

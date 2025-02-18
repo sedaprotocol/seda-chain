@@ -23,7 +23,7 @@ func (s *IntegrationTestSuite) testUnbond() {
 		s.execUnbond(s.chain, 0, sdk.ValAddress(val1Addr), val1, standardFees.String(), false)
 		s.Require().Eventually(
 			func() bool {
-				batch, err := queryBatch(s.endpoint, 2)
+				batch, err := queryBatch(s.endpoint, 1)
 				if err != nil {
 					return false
 				}
@@ -36,7 +36,7 @@ func (s *IntegrationTestSuite) testUnbond() {
 		s.execUnbond(s.chain, 1, sdk.ValAddress(val2Addr), val2, standardFees.String(), false)
 		s.Require().Eventually(
 			func() bool {
-				batch, err := queryBatch(s.endpoint, 3)
+				batch, err := queryBatch(s.endpoint, 2)
 				if err != nil {
 					return false
 				}
