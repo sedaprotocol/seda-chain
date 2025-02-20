@@ -30,6 +30,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 const (
@@ -152,6 +154,7 @@ func (s *IntegrationTestSuite) initNodes(c *chain) {
 		s.Require().NoError(err)
 		addrAll = append(addrAll, acctAddr)
 	}
+	c.deployer = c.genesisAccounts[len(c.genesisAccounts)-1]
 
 	err = modifyGenesis(val0ConfigDir, "", initBalanceStr, addrAll, initialGlobalFeeAmt+asedaDenom, asedaDenom)
 	s.Require().NoError(err)
@@ -225,11 +228,16 @@ func (s *IntegrationTestSuite) initGenesis(c *chain) {
 	appGenState[genutiltypes.ModuleName], err = cdc.MarshalJSON(&genUtilGenState)
 	s.Require().NoError(err)
 
+	pubKeyGenState := pubkeytypes.DefaultGenesisState()
+	pubKeyGenState.Params.ActivationBlockDelay = 1
+	appGenState[pubkeytypes.ModuleName], err = cdc.MarshalJSON(pubKeyGenState)
+	s.Require().NoError(err)
+
 	appGenesis.AppState, err = json.MarshalIndent(appGenState, "", "  ")
 	s.Require().NoError(err)
 
-	// Disable vote extensions in e2e testing.
-	appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = 10000
+	// Enable vote extensions in e2e testing
+	appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = 1
 
 	err = genutil.ExportGenesisFile(appGenesis, genFilePath)
 	s.Require().NoError(err)

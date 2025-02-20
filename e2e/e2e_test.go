@@ -1,6 +1,9 @@
 package e2e
 
-var runWasmStorageTest = true
+var (
+	runWasmStorageTest = true
+	runBatchingTest    = true
+)
 
 func (s *IntegrationTestSuite) TestWasmStorage() {
 	if !runWasmStorageTest {
@@ -8,4 +11,11 @@ func (s *IntegrationTestSuite) TestWasmStorage() {
 	}
 	s.testWasmStorageStoreOracleProgram()
 	s.testInstantiateCoreContract() // involves gov process
+}
+
+func (s *IntegrationTestSuite) TestBatching() {
+	if !runBatchingTest {
+		s.T().Skip()
+	}
+	s.testUnbond() // to trigger batch creation and signing
 }

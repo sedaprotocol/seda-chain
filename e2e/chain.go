@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
 	"github.com/sedaprotocol/seda-chain/app"
@@ -41,10 +42,12 @@ func init() {
 }
 
 type chain struct {
-	dataDir         string
-	id              string
-	validators      []*validator
-	genesisAccounts []*account // initial accounts in genesis
+	dataDir          string
+	id               string
+	validators       []*validator
+	genesisAccounts  []*account // initial accounts in genesis
+	deployer         *account
+	coreContractAddr sdk.AccAddress
 }
 
 func newChain() (*chain, error) {

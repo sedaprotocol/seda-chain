@@ -20,30 +20,30 @@ func (s *IntegrationTestSuite) testInstantiateCoreContract() {
 	proposalCounter++
 	proposalID := proposalCounter
 
-	senderAddress, err := s.chain.validators[0].keyInfo.GetAddress()
+	deployerAddr, err := s.chain.deployer.keyInfo.GetAddress()
 	s.Require().NoError(err)
-	sender := senderAddress.String()
+	deployer := deployerAddr.String()
+
+	voterAddr, err := s.chain.validators[0].keyInfo.GetAddress()
+	s.Require().NoError(err)
+	voter := voterAddr.String()
 
 	_, err = os.ReadFile(filepath.Join(localWasmDirPath, coreWasm))
 	s.Require().NoError(err)
 
-	s.execWasmStore(s.chain, 0, coreWasm, sender, standardFees.String(), false)
-	s.execInstantiateCoreContract(s.chain, 0, "clean_title", "sustainable_summary", sender, standardFees.String(), false, proposalID)
-	s.execGovVoteYes(s.chain, 0, sender, standardFees.String(), false, proposalID)
+	s.execWasmStore(s.chain, 0, coreWasm, deployer, standardFees.String(), false)
+	s.execInstantiateCoreContract(s.chain, 0, "clean_title", "sustainable_summary", voter, standardFees.String(), false, proposalID)
+	s.execGovVoteYes(s.chain, 0, voter, standardFees.String(), false, proposalID)
 
 	s.Require().Eventually(
 		func() bool {
 			res, err := queryCoreContractRegistry(s.endpoint)
 			s.Require().NoError(err)
-
-			_, err = sdktypes.AccAddressFromBech32(res.Address)
-			s.Require().NoError(err)
 			s.Require().NotEmpty(res.Address)
 
-			// TODO Seed query is deactivated for now.
-			// s.execGetSeedQuery(s.chain, 0, res.Address, false)
-			// s.Require().NoError(err)
-
+			addr, err := sdktypes.AccAddressFromBech32(res.Address)
+			s.Require().NoError(err)
+			s.chain.coreContractAddr = addr
 			return true
 		},
 		30*time.Second,
