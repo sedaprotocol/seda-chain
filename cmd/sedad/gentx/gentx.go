@@ -277,12 +277,7 @@ func readUnsignedGenTxFile(clientCtx client.Context, r io.Reader) (sdk.Tx, error
 		return nil, err
 	}
 
-	aTx, err := clientCtx.TxConfig.TxJSONDecoder()(bz)
-	if err != nil {
-		return nil, err
-	}
-
-	return aTx, err
+	return clientCtx.TxConfig.TxJSONDecoder()(bz)
 }
 
 func writeSignedGenTx(clientCtx client.Context, outputDocument string, tx sdk.Tx) error {
