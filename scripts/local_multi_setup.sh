@@ -12,6 +12,10 @@ BIN=./build/sedad
 
 # always returns true so set -e doesn't exit if it is not running.
 killall sedad || true
+tmux kill-session -t validator1 || true
+tmux kill-session -t validator2 || true
+tmux kill-session -t validator3 || true
+tmux kill-session -t validator4 || true
 rm -rf $HOME/.sedad/
 rm -f val1_multi_local.log
 rm -f val2_multi_local.log
@@ -42,21 +46,22 @@ $BIN add-genesis-account $($BIN keys show validator1 -a --keyring-backend=test -
 $BIN gentx validator1 10000000000000000000aseda --keyring-backend=test --home=$HOME/.sedad/validator1 --key-file-no-encryption --chain-id=testing 
 $BIN collect-gentxs --home=$HOME/.sedad/validator1
 
+# app.toml port key (validator1 uses default ports)
+# validator  LCD,  gRPC
+# validator1 1317, 9090
+# validator2 1316, 9088
+# validator3 1315, 9087
+# validator4 1314, 9086
+
 # change app.toml values
-# port key (validator1 uses default ports)
-# validator1 1317, 9050, 9091, 26658, 26657, 26656, 6060, 26660
-# validator2 1316, 9088, 9089, 26655, 26654, 26653, 6061, 26630
 VALIDATOR1_APP_TOML=$HOME/.sedad/validator1/config/app.toml
 VALIDATOR2_APP_TOML=$HOME/.sedad/validator2/config/app.toml
 VALIDATOR3_APP_TOML=$HOME/.sedad/validator3/config/app.toml
 VALIDATOR4_APP_TOML=$HOME/.sedad/validator4/config/app.toml
 
-# validator1
-# sed -i '' -E 's|0.0.0.0:9090|0.0.0.0:9050|g' $VALIDATOR1_APP_TOML
 # validator2
 sed -i '' -E 's|tcp://0.0.0.0:1317|tcp://0.0.0.0:1316|g' $VALIDATOR2_APP_TOML # API server
 sed -i '' -E 's|0.0.0.0:9090|0.0.0.0:9088|g' $VALIDATOR2_APP_TOML # gRPC server
-# sed -i '' -E 's|0.0.0.0:9091|0.0.0.0:9089|g' $VALIDATOR2_APP_TOML
 # validator3
 sed -i '' -E 's|tcp://0.0.0.0:1317|tcp://0.0.0.0:1315|g' $VALIDATOR3_APP_TOML # API server
 sed -i '' -E 's|0.0.0.0:9090|0.0.0.0:9087|g' $VALIDATOR3_APP_TOML # gRPC server
@@ -64,44 +69,62 @@ sed -i '' -E 's|0.0.0.0:9090|0.0.0.0:9087|g' $VALIDATOR3_APP_TOML # gRPC server
 sed -i '' -E 's|tcp://0.0.0.0:1317|tcp://0.0.0.0:1314|g' $VALIDATOR4_APP_TOML # API server
 sed -i '' -E 's|0.0.0.0:9090|0.0.0.0:9086|g' $VALIDATOR4_APP_TOML # gRPC server
 
+# config.toml port key (validator1 uses default ports)
+# validator  ABCI , RPC  , P2P  , Prometheus
+# validator1 26658, 26657, 26656, 26660
+# validator2 26655, 26654, 26653, 26630
+# validator3 26652, 26651, 26650, 26620
+# validator4 26649, 26648, 26647, 26610
+
 # change config.toml values
 VALIDATOR1_CONFIG=$HOME/.sedad/validator1/config/config.toml
 VALIDATOR2_CONFIG=$HOME/.sedad/validator2/config/config.toml
 VALIDATOR3_CONFIG=$HOME/.sedad/validator3/config/config.toml
 VALIDATOR4_CONFIG=$HOME/.sedad/validator4/config/config.toml
 
+# Allow duplicate IP addresses and enable Prometheus
 # validator1
 sed -i '' -E 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $VALIDATOR1_CONFIG
-# sed -i '' -E 's|version = "v0"|version = "v1"|g' $VALIDATOR1_CONFIG
 sed -i '' -E 's|prometheus = false|prometheus = true|g' $VALIDATOR1_CONFIG
 
 # validator2
-sed -i '' -E 's|tcp://127.0.0.1:26658|tcp://127.0.0.1:26655|g' $VALIDATOR2_CONFIG # ABCI app
-# sed -i '' -E 's|tcp://127.0.0.1:26657|tcp://127.0.0.1:26654|g' $VALIDATOR2_CONFIG
-sed -i '' -E 's|tcp://0.0.0.0:26657|tcp://127.0.0.1:26654|g' $VALIDATOR2_CONFIG # RPC listen
-sed -i '' -E 's|tcp://0.0.0.0:26656|tcp://0.0.0.0:26653|g' $VALIDATOR2_CONFIG # incoming connections
 sed -i '' -E 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $VALIDATOR2_CONFIG
 sed -i '' -E 's|prometheus = false|prometheus = true|g' $VALIDATOR2_CONFIG
 sed -i '' -E 's|prometheus_listen_addr = ":26660"|prometheus_listen_addr = ":26630"|g' $VALIDATOR2_CONFIG
 
 # validator3
-sed -i '' -E 's|tcp://127.0.0.1:26658|tcp://127.0.0.1:26654|g' $VALIDATOR3_CONFIG # ABCI app
-sed -i '' -E 's|tcp://0.0.0.0:26657|tcp://127.0.0.1:26653|g' $VALIDATOR3_CONFIG # RPC listen
-sed -i '' -E 's|tcp://0.0.0.0:26656|tcp://0.0.0.0:26652|g' $VALIDATOR3_CONFIG # incoming connections
 sed -i '' -E 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $VALIDATOR3_CONFIG
 sed -i '' -E 's|prometheus = false|prometheus = true|g' $VALIDATOR3_CONFIG
 sed -i '' -E 's|prometheus_listen_addr = ":26660"|prometheus_listen_addr = ":26620"|g' $VALIDATOR3_CONFIG
 
 # validator4
-sed -i '' -E 's|tcp://127.0.0.1:26658|tcp://127.0.0.1:26653|g' $VALIDATOR4_CONFIG # ABCI app
-sed -i '' -E 's|tcp://0.0.0.0:26657|tcp://127.0.0.1:26652|g' $VALIDATOR4_CONFIG # RPC listen
-sed -i '' -E 's|tcp://0.0.0.0:26656|tcp://0.0.0.0:26651|g' $VALIDATOR4_CONFIG # incoming connections
 sed -i '' -E 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $VALIDATOR4_CONFIG
 sed -i '' -E 's|prometheus = false|prometheus = true|g' $VALIDATOR4_CONFIG
 sed -i '' -E 's|prometheus_listen_addr = ":26660"|prometheus_listen_addr = ":26610"|g' $VALIDATOR4_CONFIG
 
+# change config.toml ports
+# validator2
+sed -i '' -E 's|tcp://127.0.0.1:26658|tcp://127.0.0.1:26655|g' $VALIDATOR2_CONFIG # ABCI app
+sed -i '' -E 's|tcp://0.0.0.0:26657|tcp://127.0.0.1:26654|g' $VALIDATOR2_CONFIG # RPC listen
+sed -i '' -E 's|tcp://0.0.0.0:26656|tcp://0.0.0.0:26653|g' $VALIDATOR2_CONFIG # incoming connections
+
+# validator3
+sed -i '' -E 's|tcp://127.0.0.1:26658|tcp://127.0.0.1:26652|g' $VALIDATOR3_CONFIG # ABCI app
+sed -i '' -E 's|tcp://0.0.0.0:26657|tcp://127.0.0.1:26651|g' $VALIDATOR3_CONFIG # RPC listen
+sed -i '' -E 's|tcp://0.0.0.0:26656|tcp://0.0.0.0:26650|g' $VALIDATOR3_CONFIG # incoming connections
+
+# validator4
+sed -i '' -E 's|tcp://127.0.0.1:26658|tcp://127.0.0.1:26649|g' $VALIDATOR4_CONFIG # ABCI app
+sed -i '' -E 's|tcp://0.0.0.0:26657|tcp://127.0.0.1:26648|g' $VALIDATOR4_CONFIG # RPC listen
+sed -i '' -E 's|tcp://0.0.0.0:26656|tcp://0.0.0.0:26647|g' $VALIDATOR4_CONFIG # incoming connections
+
 # modify genesis file
+jq '.consensus.params.block.max_gas="100000000"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
 jq '.consensus.params.abci.vote_extensions_enable_height = "10"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
+jq '.app_state["pubkey"]["params"]["activation_block_delay"]="25"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
+jq '.app_state["gov"]["voting_params"]["voting_period"]="30s"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
+jq '.app_state["gov"]["params"]["voting_period"]="30s"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
+jq '.app_state["gov"]["params"]["expedited_voting_period"]="15s"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
 
 cp $HOME/.sedad/validator1/config/genesis.json $HOME/.sedad/validator2/config/genesis.json
 cp $HOME/.sedad/validator1/config/genesis.json $HOME/.sedad/validator3/config/genesis.json
@@ -191,11 +214,8 @@ cat << EOF > validator4.json
 	"min-self-delegation": "1"
 }
 EOF
-$BIN tx staking create-validator validator4.json --without-seda-keys --from=validator4 --keyring-backend=test --home=$HOME/.sedad/validator4 --broadcast-mode sync --chain-id=testing --node http://localhost:26657 --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7
+$BIN tx staking create-validator validator4.json --from=validator4 --keyring-backend=test --home=$HOME/.sedad/validator4 --broadcast-mode sync --chain-id=testing --node http://localhost:26657 --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7 --key-file-no-encryption
 rm validator4.json
 
 sleep 10
 echo "4 validators are up and running!"
-
-# val4 generates and uploads SEDA keys
-# $BIN tx pubkey add-seda-keys --from validator4 --keyring-backend test --home $HOME/.sedad/validator4 --gas-prices 10000000000aseda --gas auto --gas-adjustment 2.0 --keyring-backend test --chain-id=testing --node http://localhost:26657 --yes
