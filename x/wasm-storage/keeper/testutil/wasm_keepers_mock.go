@@ -26,6 +26,7 @@ import (
 type MockViewKeeper struct {
 	ctrl     *gomock.Controller
 	recorder *MockViewKeeperMockRecorder
+	isgomock struct{}
 }
 
 // MockViewKeeperMockRecorder is the mock recorder for MockViewKeeper.
@@ -237,6 +238,7 @@ func (mr *MockViewKeeperMockRecorder) QuerySmart(ctx, contractAddr, req any) *go
 type MockContractOpsKeeper struct {
 	ctrl     *gomock.Controller
 	recorder *MockContractOpsKeeperMockRecorder
+	isgomock struct{}
 }
 
 // MockContractOpsKeeperMockRecorder is the mock recorder for MockContractOpsKeeper.
@@ -437,6 +439,7 @@ func (mr *MockContractOpsKeeperMockRecorder) UpdateContractAdmin(ctx, contractAd
 type MockIBCContractKeeper struct {
 	ctrl     *gomock.Controller
 	recorder *MockIBCContractKeeperMockRecorder
+	isgomock struct{}
 }
 
 // MockIBCContractKeeperMockRecorder is the mock recorder for MockIBCContractKeeper.

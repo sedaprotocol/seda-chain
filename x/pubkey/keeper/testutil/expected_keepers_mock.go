@@ -24,6 +24,7 @@ import (
 type MockStakingKeeper struct {
 	ctrl     *gomock.Controller
 	recorder *MockStakingKeeperMockRecorder
+	isgomock struct{}
 }
 
 // MockStakingKeeperMockRecorder is the mock recorder for MockStakingKeeper.
@@ -136,6 +137,7 @@ func (mr *MockStakingKeeperMockRecorder) IterateLastValidatorPowers(ctx, handler
 type MockSlashingKeeper struct {
 	ctrl     *gomock.Controller
 	recorder *MockSlashingKeeperMockRecorder
+	isgomock struct{}
 }
 
 // MockSlashingKeeperMockRecorder is the mock recorder for MockSlashingKeeper.
