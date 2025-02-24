@@ -26,6 +26,7 @@ import (
 type MockBatchingKeeper struct {
 	ctrl     *gomock.Controller
 	recorder *MockBatchingKeeperMockRecorder
+	isgomock struct{}
 }
 
 // MockBatchingKeeperMockRecorder is the mock recorder for MockBatchingKeeper.
@@ -93,6 +94,7 @@ func (mr *MockBatchingKeeperMockRecorder) SetBatchSigSecp256k1(ctx, batchNum, va
 type MockPubKeyKeeper struct {
 	ctrl     *gomock.Controller
 	recorder *MockPubKeyKeeperMockRecorder
+	isgomock struct{}
 }
 
 // MockPubKeyKeeperMockRecorder is the mock recorder for MockPubKeyKeeper.
@@ -146,6 +148,7 @@ func (mr *MockPubKeyKeeperMockRecorder) GetValidatorKeys(ctx, validatorAddr any)
 type MockStakingKeeper struct {
 	ctrl     *gomock.Controller
 	recorder *MockStakingKeeperMockRecorder
+	isgomock struct{}
 }
 
 // MockStakingKeeperMockRecorder is the mock recorder for MockStakingKeeper.
