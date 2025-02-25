@@ -50,7 +50,8 @@ type Handlers struct {
 }
 
 func NewHandlers(
-	dph *baseapp.DefaultProposalHandler,
+	prepareHandler sdk.PrepareProposalHandler,
+	processHandler sdk.ProcessProposalHandler,
 	bk BatchingKeeper,
 	pkk PubKeyKeeper,
 	sk StakingKeeper,
@@ -59,8 +60,8 @@ func NewHandlers(
 	logger log.Logger,
 ) *Handlers {
 	return &Handlers{
-		defaultPrepareProposal: dph.PrepareProposalHandler(),
-		defaultProcessProposal: dph.ProcessProposalHandler(),
+		defaultPrepareProposal: prepareHandler,
+		defaultProcessProposal: processHandler,
 		batchingKeeper:         bk,
 		pubKeyKeeper:           pkk,
 		stakingKeeper:          sk,
