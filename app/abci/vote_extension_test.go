@@ -2,16 +2,21 @@ package abci
 
 import (
 	"bytes"
+	"encoding/json"
 	"path/filepath"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog"
+	"github.com/skip-mev/slinky/abci/strategies/codec"
+	"github.com/skip-mev/slinky/abci/testutils"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/crypto/sha3"
 
+	abcitypes "github.com/cometbft/cometbft/abci/types"
 	cometabci "github.com/cometbft/cometbft/abci/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"cosmossdk.io/log"
 
@@ -29,19 +34,20 @@ import (
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
-func TestExtendVerifyVoteHandlers(t *testing.T) {
+func TestABCIHandlers(t *testing.T) {
 	// Set up SEDA signer.
 	tmpDir := t.TempDir()
 
-	valAddr := sdk.ValAddress(simtestutil.CreateRandomAccounts(1)[0])
-	pubKeys, err := utils.GenerateSEDAKeys(valAddr, tmpDir, "", false)
-	require.NoError(t, err)
-	signer, err := utils.LoadSEDASigner(filepath.Join(tmpDir, utils.SEDAKeyFileName), true)
-	require.NoError(t, err)
+	valConsAddr := sdk.ConsAddress([]byte("testval"))
+	valValAddr := sdk.ValAddress(simtestutil.CreateRandomAccounts(1)[0])
 
-	secp256k1PubKey := pubKeys[utils.SEDAKeyIndexSecp256k1].PubKey
-
+	sedaPubKeys, err := utils.GenerateSEDAKeys(valValAddr, tmpDir, "", false)
+	require.NoError(t, err)
+	secp256k1PubKey := sedaPubKeys[utils.SEDAKeyIndexSecp256k1].PubKey
 	ethAddr, err := utils.PubKeyToEthAddress(secp256k1PubKey)
+	require.NoError(t, err)
+
+	signer, err := utils.LoadSEDASigner(filepath.Join(tmpDir, utils.SEDAKeyFileName), true)
 	require.NoError(t, err)
 
 	// Configure address prefixes.
@@ -54,9 +60,7 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	buf := &bytes.Buffer{}
 	logger := log.NewLogger(buf, log.LevelOption(zerolog.DebugLevel))
 
-	ctx := sdk.Context{}.WithBlockHeight(101)
-
-	// Mock configurations
+	// Mock configurations (Batch 100 is created at height H)
 	ctrl := gomock.NewController(t)
 	mockBatchingKeeper := testutil.NewMockBatchingKeeper(ctrl)
 	mockPubKeyKeeper := testutil.NewMockPubKeyKeeper(ctrl)
@@ -68,19 +72,22 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	mockBatch := batchingtypes.Batch{
 		BatchNumber: 100,
 		BatchId:     batchID,
-		BlockHeight: 100, // created from the previous block
+		BlockHeight: 100,
 	}
 
-	mockBatchingKeeper.EXPECT().GetBatchForHeight(gomock.Any(), int64(100)).Return(mockBatch, nil).AnyTimes()
-	mockBatchingKeeper.EXPECT().GetValidatorTreeEntry(gomock.Any(), uint64(99), valAddr).Return(
+	mockBatchingKeeper.EXPECT().GetBatchForHeight(gomock.Any(), mockBatch.BlockHeight).Return(mockBatch, nil).AnyTimes()
+	mockBatchingKeeper.EXPECT().GetValidatorTreeEntry(gomock.Any(), mockBatch.BatchNumber-1, valValAddr).Return(
 		batchingtypes.ValidatorTreeEntry{
 			EthAddress: ethAddr,
 		}, nil).AnyTimes()
-	mockPubKeyKeeper.EXPECT().GetValidatorKeys(gomock.Any(), valAddr.String()).Return(pubkeytypes.ValidatorPubKeys{}, nil)
+	mockPubKeyKeeper.EXPECT().GetValidatorKeys(gomock.Any(), valValAddr.String()).Return(pubkeytypes.ValidatorPubKeys{}, nil)
 
-	// Construct the handler and execute it.
+	// Construct the handler.
+	defaultProposalHandler := baseapp.NewDefaultProposalHandler(mempool.NoOpMempool{}, nil)
 	handler := NewHandlers(
-		baseapp.NewDefaultProposalHandler(mempool.NoOpMempool{}, nil),
+		defaultProposalHandler.PrepareProposalHandler(),
+		defaultProposalHandler.ProcessProposalHandler(),
+		NewNoOpVoteExtensionValidator(),
 		mockBatchingKeeper,
 		mockPubKeyKeeper,
 		mockStakingKeeper,
@@ -90,7 +97,17 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	)
 	extendVoteHandler := handler.ExtendVoteHandler()
 	verifyVoteHandler := handler.VerifyVoteExtensionHandler()
+	prepareProposalHandler := handler.PrepareProposalHandler()
+	preBlockerHandler := handler.PreBlocker()
 
+	// ExtendVote at H+1
+	ctx := sdk.Context{}.
+		WithBlockHeight(101).
+		WithConsensusParams(cmtproto.ConsensusParams{
+			Abci: &cmtproto.ABCIParams{
+				VoteExtensionsEnableHeight: 100,
+			},
+		})
 	evRes, err := extendVoteHandler(ctx, &cometabci.RequestExtendVote{
 		Height: 101,
 	})
@@ -101,18 +118,67 @@ func TestExtendVerifyVoteHandlers(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, secp256k1PubKey, sigPubKey)
 
-	testVal := sdk.ConsAddress([]byte("testval"))
-	mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), testVal).Return(
+	mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), valConsAddr).Return(
 		stakingtypes.Validator{
-			OperatorAddress: valAddr.String(),
+			OperatorAddress: valValAddr.String(),
 		}, nil,
-	)
+	).AnyTimes()
 
+	// VerifyVoteExtension at H+1
 	vvRes, err := verifyVoteHandler(ctx, &cometabci.RequestVerifyVoteExtension{
 		Height:           101,
 		VoteExtension:    evRes.VoteExtension,
-		ValidatorAddress: testVal,
+		ValidatorAddress: valConsAddr,
 	})
 	require.NoError(t, err)
 	require.Equal(t, cometabci.ResponseVerifyVoteExtension_ACCEPT, vvRes.Status)
+
+	// PrepareProposal at H+2
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+
+	veCodec := codec.NewDefaultVoteExtensionCodec()
+	emptyVote, err := testutils.CreateExtendedVoteInfo(valConsAddr, map[uint64][]byte{}, veCodec)
+	require.NoError(t, err)
+	emptyVote.VoteExtension = evRes.VoteExtension
+
+	extendedCommit := cometabci.ExtendedCommitInfo{
+		Round: 1,
+		Votes: []cometabci.ExtendedVoteInfo{
+			emptyVote,
+		},
+	}
+
+	prepareRes, err := prepareProposalHandler(ctx, &cometabci.RequestPrepareProposal{
+		LocalLastCommit: extendedCommit,
+		MaxTxBytes:      22020096,
+		Height:          102,
+	})
+	require.NoError(t, err)
+
+	// Ensure last commit is injected here.
+	var injected abcitypes.ExtendedCommitInfo
+	err = json.Unmarshal(prepareRes.Txs[0], &injected)
+	require.NoError(t, err)
+	require.Equal(t, extendedCommit, injected)
+
+	// ProcessProposal at H+2
+	processRes, err := handler.ProcessProposalHandler()(ctx, &cometabci.RequestProcessProposal{
+		ProposedLastCommit: cometabci.CommitInfo{
+			Round: 1,
+			Votes: nil,
+		},
+		Txs:    prepareRes.Txs,
+		Height: 102,
+	})
+	require.NoError(t, err)
+	require.Equal(t, cometabci.ResponseProcessProposal_ACCEPT, processRes.Status)
+
+	// PreBlocker at H+2
+	mockBatchingKeeper.EXPECT().SetBatchSigSecp256k1(gomock.Any(), mockBatch.BatchNumber, valValAddr, evRes.VoteExtension).Return(nil)
+
+	_, err = preBlockerHandler(ctx, &cometabci.RequestFinalizeBlock{
+		Txs:    prepareRes.Txs,
+		Height: 102,
+	})
+	require.NoError(t, err)
 }

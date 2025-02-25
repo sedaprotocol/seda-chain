@@ -38,9 +38,25 @@ const (
 	MaxVoteExtensionLength = 65 * 5
 )
 
+type VoteExtensionValidator func(ctx sdk.Context, extCommit abcitypes.ExtendedCommitInfo) error
+
+func NewDefaultVoteExtensionValidator(validatorStore baseapp.ValidatorStore) VoteExtensionValidator {
+	return func(ctx sdk.Context, extCommit abcitypes.ExtendedCommitInfo) error {
+		return baseapp.ValidateVoteExtensions(ctx, validatorStore, ctx.HeaderInfo().Height, ctx.HeaderInfo().ChainID, extCommit)
+	}
+}
+
+// NoOpValidateVoteExtensions is a no-op validation method (purely used for testing).
+func NewNoOpVoteExtensionValidator() VoteExtensionValidator {
+	return func(_ sdk.Context, _ abcitypes.ExtendedCommitInfo) error {
+		return nil
+	}
+}
+
 type Handlers struct {
 	defaultPrepareProposal sdk.PrepareProposalHandler
 	defaultProcessProposal sdk.ProcessProposalHandler
+	voteExtensionValidator VoteExtensionValidator
 	batchingKeeper         BatchingKeeper
 	pubKeyKeeper           PubKeyKeeper
 	stakingKeeper          StakingKeeper
@@ -50,7 +66,9 @@ type Handlers struct {
 }
 
 func NewHandlers(
-	dph *baseapp.DefaultProposalHandler,
+	prepareHandler sdk.PrepareProposalHandler,
+	processHandler sdk.ProcessProposalHandler,
+	voteExtensionValidator VoteExtensionValidator,
 	bk BatchingKeeper,
 	pkk PubKeyKeeper,
 	sk StakingKeeper,
@@ -59,8 +77,9 @@ func NewHandlers(
 	logger log.Logger,
 ) *Handlers {
 	return &Handlers{
-		defaultPrepareProposal: dph.PrepareProposalHandler(),
-		defaultProcessProposal: dph.ProcessProposalHandler(),
+		defaultPrepareProposal: prepareHandler,
+		defaultProcessProposal: processHandler,
+		voteExtensionValidator: voteExtensionValidator,
 		batchingKeeper:         bk,
 		pubKeyKeeper:           pkk,
 		stakingKeeper:          sk,
@@ -190,7 +209,7 @@ func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 		var injection []byte
 		if req.Height > ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight && collectSigs {
-			err := baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), req.LocalLastCommit)
+			err := h.voteExtensionValidator(ctx, req.LocalLastCommit)
 			if err != nil {
 				return nil, err
 			}
@@ -253,7 +272,7 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 		}
 
 		// Validate vote extensions and batch signatures.
-		err = baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), extendedVotes)
+		err = h.voteExtensionValidator(ctx, extendedVotes)
 		if err != nil {
 			return nil, err
 		}
