@@ -81,6 +81,7 @@ jobs:
           generateReleaseNotes: true
           body: ${{ steps.changelog.outputs.clean_changelog }}
           artifacts: "checksum.txt,build/sedad-amd64,build/sedad-arm64"
+          prerelease: ${{ contains(github.ref_name, '-rc') }}
       
       - name: 🐳 Build and Push
         id: build
