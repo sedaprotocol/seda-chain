@@ -7,6 +7,7 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app/upgrades"
 	v018 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.8"
+	v019 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.9"
 	v1 "github.com/sedaprotocol/seda-chain/app/upgrades/testnet/v1"
 )
 
@@ -16,6 +17,7 @@ var Upgrades = []upgrades.Upgrade{
 	v1.Upgrade,
 	// mainnet
 	v018.Upgrade,
+	v019.Upgrade,
 }
 
 func (app *App) setupUpgrades() {

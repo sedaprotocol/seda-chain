@@ -31,7 +31,6 @@ import (
 	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -146,7 +145,6 @@ func NewRootCmd() *cobra.Command {
 
 	autoCliOpts := tempApp.AutoCliOpts()
 	initClientCtx, _ = config.ReadFromClientConfig(initClientCtx)
-	autoCliOpts.Keyring, _ = keyring.NewAutoCLIKeyring(initClientCtx.Keyring)
 	autoCliOpts.ClientCtx = initClientCtx
 
 	builder := &autocli.Builder{
@@ -156,10 +154,7 @@ func NewRootCmd() *cobra.Command {
 			AddressCodec:          autoCliOpts.AddressCodec,
 			ValidatorAddressCodec: autoCliOpts.ValidatorAddressCodec,
 			ConsensusAddressCodec: autoCliOpts.ConsensusAddressCodec,
-			Keyring:               autoCliOpts.Keyring,
 		},
-		ClientCtx:    autoCliOpts.ClientCtx,
-		TxConfigOpts: autoCliOpts.TxConfigOpts,
 		GetClientConn: func(cmd *cobra.Command) (grpc.ClientConnInterface, error) {
 			return client.GetClientQueryContext(cmd)
 		},
