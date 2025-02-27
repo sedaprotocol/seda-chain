@@ -6,6 +6,7 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/sedaprotocol/seda-chain/app/upgrades"
+	v017 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.7"
 	v018 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.8"
 	v019 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.9"
 	v1 "github.com/sedaprotocol/seda-chain/app/upgrades/testnet/v1"
@@ -16,6 +17,7 @@ var Upgrades = []upgrades.Upgrade{
 	// testnet
 	v1.Upgrade,
 	// mainnet
+	v017.Upgrade,
 	v018.Upgrade,
 	v019.Upgrade,
 }
