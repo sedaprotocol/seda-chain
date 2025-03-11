@@ -8,6 +8,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -49,6 +50,30 @@ func queryGovProposal(endpoint string, proposalID int) (govtypes.QueryProposalRe
 func queryBatch(endpoint string, batchNumber uint64) (batchingtypes.QueryBatchResponse, error) {
 	var res batchingtypes.QueryBatchResponse
 	body, err := httpGet(fmt.Sprintf("%s/seda-chain/batching/batch/%s", endpoint, fmt.Sprintf("%d", batchNumber)))
+	if err != nil {
+		return res, err
+	}
+	if err = cdc.UnmarshalJSON(body, &res); err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
+func queryLatestBatch(endpoint string) (batchingtypes.QueryBatchResponse, error) {
+	var res batchingtypes.QueryBatchResponse
+	body, err := httpGet(fmt.Sprintf("%s/seda-chain/batching/batch/0?latest_signed=1", endpoint))
+	if err != nil {
+		return res, err
+	}
+	if err = cdc.UnmarshalJSON(body, &res); err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
+func queryPubkey(endpoint string, validatorAddress string) (pubkeytypes.QueryValidatorKeysResponse, error) {
+	var res pubkeytypes.QueryValidatorKeysResponse
+	body, err := httpGet(fmt.Sprintf("%s/seda-chain/pubkey/validator_keys/%s", endpoint, validatorAddress))
 	if err != nil {
 		return res, err
 	}
