@@ -2,6 +2,7 @@ package abci
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -16,7 +17,6 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
-	cometabci "github.com/cometbft/cometbft/abci/types"
 	cmtsecp256k1 "github.com/cometbft/cometbft/crypto/secp256k1"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -213,9 +213,17 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 		mockBatchNumber    uint64
 		heightWithoutBatch bool
 		isNewValidator     []bool
-		emptyVoteExt       []bool
-		overwriteVoteExt   [][]byte
-		expErr             string
+		overwriteVoteExt   *struct {
+			overwrite []bool
+			extension [][]byte
+		}
+		maliciousProposer *struct {
+			inject         []bool
+			injection      [][]byte
+			additionalVote *abcitypes.ExtendedVoteInfo
+			replaceVote    *abcitypes.ExtendedVoteInfo
+		}
+		expErr string
 	}{
 		{
 			name:            "happy path",
@@ -234,26 +242,117 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 		{
 			name:            "one empty vote extension",
 			mockBatchNumber: 100,
-			emptyVoteExt:    []bool{false, false, true},
+			overwriteVoteExt: &struct {
+				overwrite []bool
+				extension [][]byte
+			}{
+				overwrite: []bool{false, false, true},
+				extension: [][]byte{nil, nil, nil},
+			},
 		},
 		{
 			name:            "first batch",
 			mockBatchNumber: collections.DefaultSequenceStart,
 		},
 		{
-			name:             "unrecoverable signature is injected in proposal",
-			mockBatchNumber:  100,
-			overwriteVoteExt: [][]byte{bytes.Repeat([]byte("b"), 65), nil, nil},
-			expErr:           "invalid signature recovery id",
+			name:            "unrecoverable signature is injected in proposal",
+			mockBatchNumber: 100,
+			overwriteVoteExt: &struct {
+				overwrite []bool
+				extension [][]byte
+			}{
+				overwrite: []bool{true, false, false},
+				extension: [][]byte{bytes.Repeat([]byte("b"), 65), nil, nil},
+			},
+			expErr: "invalid signature recovery id",
 		},
 		{
-			name:             "invalid signature is injected in proposal",
-			mockBatchNumber:  100,
-			overwriteVoteExt: [][]byte{nil, nil, {189, 92, 197, 8, 100, 52, 95, 183, 251, 111, 24, 99, 59, 203, 64, 250, 13, 35, 168, 193, 106, 244, 191, 48, 10, 108, 68, 197, 222, 59, 230, 110, 21, 108, 12, 217, 108, 92, 115, 214, 255, 70, 107, 170, 228, 54, 53, 157, 41, 140, 40, 132, 157, 197, 248, 219, 113, 227, 148, 194, 197, 46, 153, 49, 0}},
-			expErr:           "batch signature is invalid",
+			name:            "invalid signature is injected in proposal",
+			mockBatchNumber: 100,
+			overwriteVoteExt: &struct {
+				overwrite []bool
+				extension [][]byte
+			}{
+				overwrite: []bool{false, false, true},
+				extension: [][]byte{nil, nil, {189, 92, 197, 8, 100, 52, 95, 183, 251, 111, 24, 99, 59, 203, 64, 250, 13, 35, 168, 193, 106, 244, 191, 48, 10, 108, 68, 197, 222, 59, 230, 110, 21, 108, 12, 217, 108, 92, 115, 214, 255, 70, 107, 170, 228, 54, 53, 157, 41, 140, 40, 132, 157, 197, 248, 219, 113, 227, 148, 194, 197, 46, 153, 49, 0}},
+			},
+			expErr: "batch signature is invalid",
+		},
+		{
+			name:            "propser injects an empty vote extension",
+			mockBatchNumber: 100,
+			maliciousProposer: &struct {
+				inject         []bool
+				injection      [][]byte
+				additionalVote *abcitypes.ExtendedVoteInfo
+				replaceVote    *abcitypes.ExtendedVoteInfo
+			}{
+				inject:    []bool{false, true, false},
+				injection: [][]byte{nil, nil, nil},
+			},
+			expErr: "", // set during test execution
+		},
+		{
+			name:            "propser injects an arbitrary vote extension",
+			mockBatchNumber: 100,
+			maliciousProposer: &struct {
+				inject         []bool
+				injection      [][]byte
+				additionalVote *abcitypes.ExtendedVoteInfo
+				replaceVote    *abcitypes.ExtendedVoteInfo
+			}{
+				inject:    []bool{false, false, true},
+				injection: [][]byte{nil, nil, {189, 92, 197, 8, 100, 52, 95, 183, 251, 111, 24, 99, 59, 203, 64, 250, 13, 35, 168, 193, 106, 244, 191, 48, 10, 108, 68, 197, 222, 59, 230, 110, 21, 108, 12, 217, 108, 92, 115, 214, 255, 70, 107, 170, 228, 54, 53, 157, 41, 140, 40, 132, 157, 197, 248, 219, 113, 227, 148, 194, 197, 46, 153, 49, 0}},
+			},
+			expErr: "", // set during test execution
+		},
+		{
+			name:            "propser injects an additional vote",
+			mockBatchNumber: 100,
+			maliciousProposer: &struct {
+				inject         []bool
+				injection      [][]byte
+				additionalVote *abcitypes.ExtendedVoteInfo
+				replaceVote    *abcitypes.ExtendedVoteInfo
+			}{
+				inject:    []bool{false, false, false},
+				injection: [][]byte{nil, nil, nil},
+				additionalVote: &abcitypes.ExtendedVoteInfo{
+					Validator: abcitypes.Validator{
+						Address: mustDecodeBase64("a5XdK0N65IhetG24u0rbKjHMcEo="),
+						Power:   333,
+					},
+					VoteExtension:      mustDecodeBase64("DSyP4ZXSX9T2s0YBAQl2GPcUpZ4pKdeFObjklK5mnSkxHxvQW51whL8ubsckGbWHNZpLP1b102VG6YZfrO/mcwE="),
+					ExtensionSignature: mustDecodeBase64("l42SpFcnbqi8EAdWeaN5KSLvF2zfTW2MXjwxoB6WweoIG3a2HHC9PP5kq3Ox1M452HBHZS2j6oDeG+OqwYmxsA=="),
+					BlockIdFlag:        cmtproto.BlockIDFlagCommit,
+				},
+			},
+			expErr: "extended commit votes length 4 does not match last commit votes length 3",
+		},
+		{
+			name:            "propser replaces a vote",
+			mockBatchNumber: 100,
+			maliciousProposer: &struct {
+				inject         []bool
+				injection      [][]byte
+				additionalVote *abcitypes.ExtendedVoteInfo
+				replaceVote    *abcitypes.ExtendedVoteInfo
+			}{
+				inject:    []bool{false, false, false},
+				injection: [][]byte{nil, nil, nil},
+				replaceVote: &abcitypes.ExtendedVoteInfo{
+					Validator: abcitypes.Validator{
+						Address: mustDecodeBase64("a5XdK0N65IhetG24u0rbKjHMcEo="),
+						Power:   400,
+					},
+					VoteExtension:      mustDecodeBase64("DSyP4ZXSX9T2s0YBAQl2GPcUpZ4pKdeFObjklK5mnSkxHxvQW51whL8ubsckGbWHNZpLP1b102VG6YZfrO/mcwE="),
+					ExtensionSignature: mustDecodeBase64("l42SpFcnbqi8EAdWeaN5KSLvF2zfTW2MXjwxoB6WweoIG3a2HHC9PP5kq3Ox1M452HBHZS2j6oDeG+OqwYmxsA=="),
+					BlockIdFlag:        cmtproto.BlockIDFlagCommit,
+				},
+			},
+			expErr: "extended commit vote address 6B95DD2B437AE4885EB46DB8BB4ADB2A31CC704A does not match last commit vote address",
 		},
 	}
-
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			s.SetupTest(tc.mockBatchNumber, tc.isNewValidator)
@@ -265,7 +364,7 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 			for i, val := range s.vals {
 				// ExtendVote at H+1
 				evRes, err := val.handlers.ExtendVoteHandler()(
-					s.ctx, &cometabci.RequestExtendVote{
+					s.ctx, &abcitypes.RequestExtendVote{
 						Height: s.ctx.BlockHeight(),
 					})
 				if tc.isNewValidator != nil && tc.isNewValidator[i] {
@@ -282,10 +381,8 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 						s.Require().Equal(val.sedaPubKeys[utils.SEDAKeyIndexSecp256k1].PubKey, sigPubKey)
 
 						s.vals[i].voteExt = evRes.VoteExtension
-						if tc.emptyVoteExt != nil && tc.emptyVoteExt[i] {
-							s.vals[i].voteExt = nil
-						} else if tc.overwriteVoteExt != nil && tc.overwriteVoteExt[i] != nil {
-							s.vals[i].voteExt = tc.overwriteVoteExt[i]
+						if tc.overwriteVoteExt != nil && tc.overwriteVoteExt.overwrite[i] {
+							s.vals[i].voteExt = tc.overwriteVoteExt.extension[i]
 						}
 					}
 				}
@@ -296,18 +393,17 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 						continue
 					}
 					vvRes, err := otherVal.handlers.VerifyVoteExtensionHandler()(
-						s.ctx, &cometabci.RequestVerifyVoteExtension{
+						s.ctx, &abcitypes.RequestVerifyVoteExtension{
 							Height:           s.ctx.BlockHeight(),
 							VoteExtension:    s.vals[i].voteExt,
 							ValidatorAddress: val.consAddr,
 						})
-					if (tc.emptyVoteExt != nil && tc.emptyVoteExt[i]) ||
-						(tc.overwriteVoteExt != nil && tc.overwriteVoteExt[i] != nil) {
+					if tc.overwriteVoteExt != nil && tc.overwriteVoteExt.overwrite[i] {
 						s.Require().Error(err)
 						s.Require().Contains(err.Error(), tc.expErr)
 					} else {
 						s.Require().NoError(err)
-						s.Require().Equal(cometabci.ResponseVerifyVoteExtension_ACCEPT, vvRes.Status)
+						s.Require().Equal(abcitypes.ResponseVerifyVoteExtension_ACCEPT, vvRes.Status)
 					}
 				}
 			}
@@ -319,7 +415,7 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 			s.ctx = s.ctx.WithCometInfo(info)
 
 			prepareRes, err := s.vals[0].handlers.PrepareProposalHandler()(
-				s.ctx, &cometabci.RequestPrepareProposal{
+				s.ctx, &abcitypes.RequestPrepareProposal{
 					LocalLastCommit: llc,
 					MaxTxBytes:      22020096,
 					Height:          s.ctx.BlockHeight(),
@@ -336,11 +432,35 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 				s.Require().Equal(0, len(prepareRes.Txs))
 			}
 
+			if tc.maliciousProposer != nil {
+				var extendedVotes abcitypes.ExtendedCommitInfo
+				err = json.Unmarshal(prepareRes.Txs[0], &extendedVotes)
+				s.Require().NoError(err)
+
+				for i := range extendedVotes.Votes {
+					if tc.maliciousProposer.inject[i] {
+						extendedVotes.Votes[i].VoteExtension = tc.maliciousProposer.injection[i]
+						if tc.expErr == "" {
+							tc.expErr = fmt.Sprintf("failed to verify validator %X vote extension signature", extendedVotes.Votes[i].Validator.Address)
+						}
+					}
+				}
+				if tc.maliciousProposer.additionalVote != nil {
+					extendedVotes.Votes = append(extendedVotes.Votes, *tc.maliciousProposer.additionalVote)
+				}
+				if tc.maliciousProposer.replaceVote != nil {
+					extendedVotes.Votes[0] = *tc.maliciousProposer.replaceVote
+				}
+
+				prepareRes.Txs[0], err = json.Marshal(extendedVotes)
+				s.Require().NoError(err)
+			}
+
 			// ProcessProposal at H+2 (all validators)
 			for _, val := range s.vals {
 				processRes, err := val.handlers.ProcessProposalHandler()(
-					s.ctx, &cometabci.RequestProcessProposal{
-						ProposedLastCommit: cometabci.CommitInfo{
+					s.ctx, &abcitypes.RequestProcessProposal{
+						ProposedLastCommit: abcitypes.CommitInfo{
 							Round: 1,
 							Votes: nil,
 						},
@@ -348,13 +468,13 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 						Height: s.ctx.BlockHeight(),
 					})
 
-				if tc.emptyVoteExt != nil || tc.overwriteVoteExt != nil {
+				if tc.overwriteVoteExt != nil || tc.maliciousProposer != nil {
 					s.Require().Error(err)
 					s.Require().Contains(err.Error(), tc.expErr)
 					return
 				} else {
 					s.Require().NoError(err)
-					s.Require().Equal(cometabci.ResponseProcessProposal_ACCEPT, processRes.Status)
+					s.Require().Equal(abcitypes.ResponseProcessProposal_ACCEPT, processRes.Status)
 				}
 			}
 
@@ -366,7 +486,7 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 			}
 			for _, val := range s.vals {
 				_, err := val.handlers.PreBlocker()(
-					s.ctx, &cometabci.RequestFinalizeBlock{
+					s.ctx, &abcitypes.RequestFinalizeBlock{
 						Txs:    prepareRes.Txs,
 						Height: s.ctx.BlockHeight(),
 					})
@@ -475,4 +595,12 @@ func (v extendedVoteInfos) Less(i, j int) bool {
 
 func (v extendedVoteInfos) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
+}
+
+func mustDecodeBase64(s string) []byte {
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
