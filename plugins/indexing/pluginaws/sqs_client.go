@@ -2,6 +2,7 @@ package pluginaws
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/service/sqs"
 
@@ -11,6 +12,7 @@ import (
 const (
 	MaxAwsRequestLengthBytes = 262_144 // 256KB
 	MaxSQSBatchSize          = 10
+	NilString                = "nil"
 )
 
 func (sc *SqsClient) PublishToQueue(data []*types.Message) error {
@@ -64,7 +66,27 @@ func (sc *SqsClient) sendMessageBatch(batch []*sqs.SendMessageBatchRequestEntry)
 
 	if len(result.Failed) > 0 {
 		for _, failed := range result.Failed {
-			sc.logger.Error("failed to send message", "error", failed.Message, "id", failed.Id, "code", failed.Code, "senderFault", failed.SenderFault)
+			errorMessage := NilString
+			if failed.Message != nil {
+				errorMessage = *failed.Message
+			}
+
+			id := NilString
+			if failed.Id != nil {
+				id = *failed.Id
+			}
+
+			errorCode := NilString
+			if failed.Code != nil {
+				errorCode = *failed.Code
+			}
+
+			senderFault := NilString
+			if failed.SenderFault != nil {
+				senderFault = strconv.FormatBool(*failed.SenderFault)
+			}
+
+			sc.logger.Error("failed to send message", "error", errorMessage, "id", id, "code", errorCode, "senderFault", senderFault)
 		}
 		return fmt.Errorf("failed to send %d messages", len(result.Failed))
 	}
