@@ -55,6 +55,7 @@ func initAppConfig() (string, interface{}) {
 	//
 	// In simapp, we set the min gas prices to 0.
 	srvCfg.MinGasPrices = params.MinimumGasPrice.String()
+	srvCfg.Mempool.MaxTxs = params.DefaultMempoolMaxTxs
 
 	// GRPC settings
 	srvCfg.GRPC.Enable = true

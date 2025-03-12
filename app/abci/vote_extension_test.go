@@ -91,6 +91,7 @@ type ABCITestSuite struct {
 	mockBatchingKeeper *testutil.MockBatchingKeeper
 	mockPubKeyKeeper   *testutil.MockPubKeyKeeper
 	mockStakingKeeper  *testutil.MockStakingKeeper
+	mockTxVerifier     *testutil.MockTxVerifier
 }
 
 func (s *ABCITestSuite) SetupSuite() {
@@ -184,12 +185,17 @@ func (s *ABCITestSuite) SetupTest(mockBatchNumber uint64, isNewValidator []bool)
 	s.mockBatchingKeeper = mockBatchingKeeper
 	s.mockPubKeyKeeper = mockPubKeyKeeper
 	s.mockStakingKeeper = mockStakingKeeper
+	s.mockTxVerifier = testutil.NewMockTxVerifier(ctrl)
+
+	s.mockTxVerifier.EXPECT().ProcessProposalVerifyTx(testutil.ValidTx).Return(testutil.NewMockTx(100), nil).AnyTimes()
+	s.mockTxVerifier.EXPECT().ProcessProposalVerifyTx(testutil.InvalidTx).Return(nil, fmt.Errorf("invalid TX")).AnyTimes()
+	s.mockTxVerifier.EXPECT().ProcessProposalVerifyTx(testutil.LargeTx).Return(testutil.NewMockTx(10000), nil).AnyTimes()
 
 	// Construct handler for each validator.
 	buf := &bytes.Buffer{}
 	logger := log.NewLogger(buf, log.LevelOption(zerolog.DebugLevel))
 	for i, val := range s.vals {
-		defaultProposalHandler := baseapp.NewDefaultProposalHandler(mempool.NoOpMempool{}, nil)
+		defaultProposalHandler := baseapp.NewDefaultProposalHandler(mempool.NewSenderNonceMempool(), s.mockTxVerifier)
 		s.vals[i].handlers = NewHandlers(
 			defaultProposalHandler.PrepareProposalHandler(),
 			defaultProposalHandler.ProcessProposalHandler(),
@@ -207,27 +213,42 @@ func TestABCITestSuite(t *testing.T) {
 	suite.Run(t, new(ABCITestSuite))
 }
 
+type voteExtensionOverwrite struct {
+	overwrite []bool
+	extension [][]byte
+}
+
+type maliciousProposer struct {
+	inject         []bool
+	injection      [][]byte
+	additionalVote *abcitypes.ExtendedVoteInfo
+	replaceVote    *abcitypes.ExtendedVoteInfo
+}
+
 func (s *ABCITestSuite) TestABCIHandlers() {
 	testCases := []struct {
-		name               string
-		mockBatchNumber    uint64
-		heightWithoutBatch bool
-		isNewValidator     []bool
-		overwriteVoteExt   *struct {
-			overwrite []bool
-			extension [][]byte
-		}
-		maliciousProposer *struct {
-			inject         []bool
-			injection      [][]byte
-			additionalVote *abcitypes.ExtendedVoteInfo
-			replaceVote    *abcitypes.ExtendedVoteInfo
-		}
-		expErr string
+		name                 string
+		mockBatchNumber      uint64
+		heightWithoutBatch   bool
+		isNewValidator       []bool
+		overwriteVoteExt     *voteExtensionOverwrite
+		maliciousProposer    *maliciousProposer
+		additionalTxBytes    [][]byte
+		shouldRejectProposal bool
+		expErr               string
 	}{
 		{
-			name:            "happy path",
+			name:            "happy path without transactions",
 			mockBatchNumber: 100,
+		},
+		{
+			name:            "happy path with transactions",
+			mockBatchNumber: 100,
+			additionalTxBytes: [][]byte{
+				testutil.ValidTx,
+				testutil.ValidTx,
+				testutil.ValidTx,
+			},
 		},
 		{
 			name:               "no batch to sign",
@@ -242,10 +263,7 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 		{
 			name:            "one empty vote extension",
 			mockBatchNumber: 100,
-			overwriteVoteExt: &struct {
-				overwrite []bool
-				extension [][]byte
-			}{
+			overwriteVoteExt: &voteExtensionOverwrite{
 				overwrite: []bool{false, false, true},
 				extension: [][]byte{nil, nil, nil},
 			},
@@ -257,10 +275,7 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 		{
 			name:            "unrecoverable signature is injected in proposal",
 			mockBatchNumber: 100,
-			overwriteVoteExt: &struct {
-				overwrite []bool
-				extension [][]byte
-			}{
+			overwriteVoteExt: &voteExtensionOverwrite{
 				overwrite: []bool{true, false, false},
 				extension: [][]byte{bytes.Repeat([]byte("b"), 65), nil, nil},
 			},
@@ -269,52 +284,34 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 		{
 			name:            "invalid signature is injected in proposal",
 			mockBatchNumber: 100,
-			overwriteVoteExt: &struct {
-				overwrite []bool
-				extension [][]byte
-			}{
+			overwriteVoteExt: &voteExtensionOverwrite{
 				overwrite: []bool{false, false, true},
 				extension: [][]byte{nil, nil, {189, 92, 197, 8, 100, 52, 95, 183, 251, 111, 24, 99, 59, 203, 64, 250, 13, 35, 168, 193, 106, 244, 191, 48, 10, 108, 68, 197, 222, 59, 230, 110, 21, 108, 12, 217, 108, 92, 115, 214, 255, 70, 107, 170, 228, 54, 53, 157, 41, 140, 40, 132, 157, 197, 248, 219, 113, 227, 148, 194, 197, 46, 153, 49, 0}},
 			},
 			expErr: "batch signature is invalid",
 		},
 		{
-			name:            "propser injects an empty vote extension",
+			name:            "proposer injects an empty vote extension",
 			mockBatchNumber: 100,
-			maliciousProposer: &struct {
-				inject         []bool
-				injection      [][]byte
-				additionalVote *abcitypes.ExtendedVoteInfo
-				replaceVote    *abcitypes.ExtendedVoteInfo
-			}{
+			maliciousProposer: &maliciousProposer{
 				inject:    []bool{false, true, false},
 				injection: [][]byte{nil, nil, nil},
 			},
 			expErr: "", // set during test execution
 		},
 		{
-			name:            "propser injects an arbitrary vote extension",
+			name:            "proposer injects an arbitrary vote extension",
 			mockBatchNumber: 100,
-			maliciousProposer: &struct {
-				inject         []bool
-				injection      [][]byte
-				additionalVote *abcitypes.ExtendedVoteInfo
-				replaceVote    *abcitypes.ExtendedVoteInfo
-			}{
+			maliciousProposer: &maliciousProposer{
 				inject:    []bool{false, false, true},
 				injection: [][]byte{nil, nil, {189, 92, 197, 8, 100, 52, 95, 183, 251, 111, 24, 99, 59, 203, 64, 250, 13, 35, 168, 193, 106, 244, 191, 48, 10, 108, 68, 197, 222, 59, 230, 110, 21, 108, 12, 217, 108, 92, 115, 214, 255, 70, 107, 170, 228, 54, 53, 157, 41, 140, 40, 132, 157, 197, 248, 219, 113, 227, 148, 194, 197, 46, 153, 49, 0}},
 			},
 			expErr: "", // set during test execution
 		},
 		{
-			name:            "propser injects an additional vote",
+			name:            "proposer injects an additional vote",
 			mockBatchNumber: 100,
-			maliciousProposer: &struct {
-				inject         []bool
-				injection      [][]byte
-				additionalVote *abcitypes.ExtendedVoteInfo
-				replaceVote    *abcitypes.ExtendedVoteInfo
-			}{
+			maliciousProposer: &maliciousProposer{
 				inject:    []bool{false, false, false},
 				injection: [][]byte{nil, nil, nil},
 				additionalVote: &abcitypes.ExtendedVoteInfo{
@@ -330,14 +327,9 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 			expErr: "extended commit votes length 4 does not match last commit votes length 3",
 		},
 		{
-			name:            "propser replaces a vote",
+			name:            "proposer replaces a vote",
 			mockBatchNumber: 100,
-			maliciousProposer: &struct {
-				inject         []bool
-				injection      [][]byte
-				additionalVote *abcitypes.ExtendedVoteInfo
-				replaceVote    *abcitypes.ExtendedVoteInfo
-			}{
+			maliciousProposer: &maliciousProposer{
 				inject:    []bool{false, false, false},
 				injection: [][]byte{nil, nil, nil},
 				replaceVote: &abcitypes.ExtendedVoteInfo{
@@ -351,6 +343,26 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 				},
 			},
 			expErr: "extended commit vote address 6B95DD2B437AE4885EB46DB8BB4ADB2A31CC704A does not match last commit vote address",
+		},
+		{
+			name:            "proposer bloats the proposal with invalid txs",
+			mockBatchNumber: 100,
+			additionalTxBytes: [][]byte{
+				testutil.ValidTx,
+				testutil.ValidTx,
+				testutil.InvalidTx,
+			},
+			shouldRejectProposal: true,
+		},
+		{
+			name:            "proposer exceeds the block gas limit",
+			mockBatchNumber: 100,
+			additionalTxBytes: [][]byte{
+				testutil.LargeTx,
+				testutil.LargeTx,
+				testutil.LargeTx,
+			},
+			shouldRejectProposal: true,
 		},
 	}
 	for _, tc := range testCases {
@@ -456,6 +468,10 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 				s.Require().NoError(err)
 			}
 
+			if tc.additionalTxBytes != nil {
+				prepareRes.Txs = append(prepareRes.Txs, tc.additionalTxBytes...)
+			}
+
 			// ProcessProposal at H+2 (all validators)
 			for _, val := range s.vals {
 				processRes, err := val.handlers.ProcessProposalHandler()(
@@ -474,7 +490,11 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 					return
 				} else {
 					s.Require().NoError(err)
-					s.Require().Equal(abcitypes.ResponseProcessProposal_ACCEPT, processRes.Status)
+					if tc.shouldRejectProposal {
+						s.Require().Equal(abcitypes.ResponseProcessProposal_REJECT, processRes.Status, "Proposal was accepted when it should be rejected")
+					} else {
+						s.Require().Equal(abcitypes.ResponseProcessProposal_ACCEPT, processRes.Status, "Proposal was rejected when it should be accepted")
+					}
 				}
 			}
 
@@ -503,6 +523,9 @@ func (s *ABCITestSuite) incrementBlockHeight() {
 		WithConsensusParams(cmtproto.ConsensusParams{
 			Abci: &cmtproto.ABCIParams{
 				VoteExtensionsEnableHeight: s.ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight,
+			},
+			Block: &cmtproto.BlockParams{
+				MaxGas: 20000,
 			},
 		}).
 		WithBlockHeader(cmtproto.Header{

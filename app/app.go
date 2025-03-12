@@ -1010,7 +1010,18 @@ func NewApp(
 		app.Logger().Error("error loading SEDA signer", "err", err)
 	}
 
-	defaultProposalHandler := baseapp.NewDefaultProposalHandler(mempool.NoOpMempool{}, bApp)
+	// Since in prior versions -1 would be written to the config file and
+	// lead to the NoOpMempool being used. -1 doesn't make sense for the
+	// SNM so we change it to the default.
+	maxTxsInMempool := cast.ToInt(appOpts.Get(server.FlagMempoolMaxTxs))
+	if maxTxsInMempool < 0 {
+		maxTxsInMempool = appparams.DefaultMempoolMaxTxs
+	}
+	appMempool := mempool.NewSenderNonceMempool(
+		mempool.SenderNonceMaxTxOpt(maxTxsInMempool),
+	)
+	app.SetMempool(appMempool)
+	defaultProposalHandler := baseapp.NewDefaultProposalHandler(appMempool, bApp)
 
 	abciHandler := appabci.NewHandlers(
 		defaultProposalHandler.PrepareProposalHandler(),
