@@ -64,10 +64,9 @@ func (g GasMeter) ExecutionGasUsed() uint64 {
 }
 
 func (g GasMeter) CorrectExecGasReportWithProxyGas(gasReport uint64) uint64 {
-	if gasReport < g.totalProxyGasPerExec {
+	if gasReport <= g.totalProxyGasPerExec {
 		return 0
 	}
-
 	return gasReport - g.totalProxyGasPerExec
 }
 
@@ -91,6 +90,7 @@ func (g *GasMeter) SetReducedPayoutMode() {
 // the tally gas limit is not sufficient to cover the amount.
 func (g *GasMeter) ConsumeTallyGas(amount uint64) bool {
 	if amount > g.tallyGasRemaining {
+		g.tallyGasRemaining = 0
 		return true
 	}
 
@@ -101,7 +101,7 @@ func (g *GasMeter) ConsumeTallyGas(amount uint64) bool {
 // ConsumeExecGasForProxy consumes execution gas for data proxy payout and records
 // the payout information. It returns true if the execution gas runs out during
 // the process.
-func (g *GasMeter) ConsumeExecGasForProxy(proxyPubkey, payoutAddr string, gasUsedPerExec uint64, replicationFactor uint16) bool {
+func (g *GasMeter) ConsumeExecGasForProxy(proxyPubkey, payoutAddr string, gasUsedPerExec uint64, replicationFactor uint16) {
 	amount := gasUsedPerExec * uint64(replicationFactor)
 
 	g.Proxies = append(g.Proxies, ProxyGasUsed{
@@ -112,18 +112,21 @@ func (g *GasMeter) ConsumeExecGasForProxy(proxyPubkey, payoutAddr string, gasUse
 
 	if amount > g.execGasRemaining {
 		g.execGasRemaining = 0
-		return true
+	} else {
+		g.execGasRemaining -= amount
 	}
 
+	// It does not matter that totalProxyGasPerExec would not reflect the actual
+	// execution gas consumption in the out of gas case because this would not
+	// affect the executor gas report correction in CorrectExecGasReportWithProxyGas()
+	// anyways.
 	g.totalProxyGasPerExec += gasUsedPerExec
-	g.execGasRemaining -= amount
-	return false
 }
 
 // ConsumeExecGasForExecutor consumes execution gas for executor payout and
 // records the payout information. It returns true if the execution gas runs
 // out during the process.
-func (g *GasMeter) ConsumeExecGasForExecutor(executorPubKey string, amount uint64) bool {
+func (g *GasMeter) ConsumeExecGasForExecutor(executorPubKey string, amount uint64) {
 	g.Executors = append(g.Executors, ExecutorGasUsed{
 		PublicKey: executorPubKey,
 		Amount:    math.NewIntFromUint64(amount),
@@ -131,8 +134,7 @@ func (g *GasMeter) ConsumeExecGasForExecutor(executorPubKey string, amount uint6
 
 	if amount > g.execGasRemaining {
 		g.execGasRemaining = 0
-		return true
+	} else {
+		g.execGasRemaining -= amount
 	}
-	g.execGasRemaining -= amount
-	return false
 }
