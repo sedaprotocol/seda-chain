@@ -223,6 +223,7 @@ type maliciousProposer struct {
 	injection      [][]byte
 	additionalVote *abcitypes.ExtendedVoteInfo
 	replaceVote    *abcitypes.ExtendedVoteInfo
+	noInjection    bool
 }
 
 func (s *ABCITestSuite) TestABCIHandlers() {
@@ -364,6 +365,15 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 			},
 			shouldRejectProposal: true,
 		},
+		{
+			name:            "proposer does not inject extended votes",
+			mockBatchNumber: 100,
+			maliciousProposer: &maliciousProposer{
+				noInjection: true,
+			},
+			shouldRejectProposal: true,
+			expErr:               "no injected extended votes tx",
+		},
 	}
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
@@ -444,7 +454,9 @@ func (s *ABCITestSuite) TestABCIHandlers() {
 				s.Require().Equal(0, len(prepareRes.Txs))
 			}
 
-			if tc.maliciousProposer != nil {
+			if tc.maliciousProposer != nil && tc.maliciousProposer.noInjection {
+				prepareRes.Txs = nil
+			} else if tc.maliciousProposer != nil {
 				var extendedVotes abcitypes.ExtendedCommitInfo
 				err = json.Unmarshal(prepareRes.Txs[0], &extendedVotes)
 				s.Require().NoError(err)

@@ -249,6 +249,11 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			return nil, err
 		}
 
+		if len(req.Txs) == 0 {
+			h.logger.Error("proposal does not contain extended votes injection")
+			return nil, ErrNoInjectedExtendedVotesTx
+		}
+
 		var extendedVotes abcitypes.ExtendedCommitInfo
 		if err := json.Unmarshal(req.Txs[0], &extendedVotes); err != nil {
 			h.logger.Error("failed to decode injected extended votes tx", "err", err)
@@ -312,6 +317,11 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 		batchNum := batch.BatchNumber
 
 		h.logger.Debug("begin pre-block logic for storing batch signatures", "batch_number", batchNum)
+
+		if len(req.Txs) == 0 {
+			h.logger.Error("proposal does not contain extended votes injection")
+			return nil, ErrNoInjectedExtendedVotesTx
+		}
 
 		var extendedVotes abcitypes.ExtendedCommitInfo
 		if err := json.Unmarshal(req.Txs[0], &extendedVotes); err != nil {
