@@ -859,3 +859,302 @@ func TestFilter(t *testing.T) {
 		})
 	}
 }
+
+// TestFilterWildcard tests filters with JSON paths containing wildcard expressions.
+func TestFilterWildcard(t *testing.T) {
+	f := initFixture(t)
+
+	defaultParams := types.DefaultParams()
+	err := f.tallyKeeper.SetParams(f.Context(), defaultParams)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name           string
+		filterInputHex string // filter input without JSON path as hex
+		jsonPath       string // JSON path, if applicable (separated to accomodate odd length byte slices)
+		outliers       []bool
+		reveals        []types.RevealBody
+		consensus      bool
+		consPubKeys    []string // expected proxy public keys in basic consensus
+		tallyGasUsed   uint64
+		wantErr        error
+	}{
+		{
+			name:           "Mode filter - Nested elements",
+			filterInputHex: "010000000000000014",
+			jsonPath:       "$.store.*[*].country",
+			outliers:       []bool{false, false, false, true, false, false, true},
+			reveals: []types.RevealBody{
+				{Reveal: sampleRevealNested},
+				{Reveal: sampleRevealNested},
+				{Reveal: sampleRevealNested2},
+				{},
+				{Reveal: sampleRevealNested},
+				{Reveal: sampleRevealNested2},
+				{},
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*7,
+			wantErr:      nil,
+		},
+		{
+			name:           "Mode filter",
+			filterInputHex: "010000000000000012",
+			jsonPath:       "$.store.*[*].title",
+			outliers:       []bool{false, false, false, true, false, false, true},
+			reveals: []types.RevealBody{
+				{Reveal: sampleReveal},
+				{Reveal: sampleReveal},
+				{Reveal: sampleReveal2},
+				{},
+				{Reveal: sampleReveal},
+				{Reveal: sampleReveal2},
+				{},
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*7,
+			wantErr:      nil,
+		},
+		{
+			name:           "Mode filter - Prices differ but the lowest is the same",
+			filterInputHex: "010000000000000012",
+			jsonPath:       "$.store.*[*].price",
+			outliers:       []bool{false, false, false, true, false, false, true},
+			reveals: []types.RevealBody{
+				{Reveal: sampleReveal},
+				{Reveal: sampleReveal},
+				{Reveal: sampleReveal2},
+				{Reveal: sampleRevealNested},
+				{Reveal: sampleReveal},
+				{Reveal: sampleReveal2},
+				{Reveal: sampleRevealNested},
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*7,
+			wantErr:      nil,
+		},
+		{
+			name:           "Standard deviation",
+			filterInputHex: "0200000000000F4240070000000000000012", // sigma_multiplier = 1.0, number_type = 0x07
+			jsonPath:       "$.store.*[*].price",
+			outliers:       []bool{false, false, false, true, false, false, true},
+			reveals: []types.RevealBody{
+				{Reveal: sampleReveal},
+				{Reveal: sampleReveal},
+				{Reveal: sampleReveal2},
+				{},
+				{Reveal: sampleReveal},
+				{Reveal: sampleReveal2},
+				{},
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*7,
+			wantErr:      nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filterInput, err := hex.DecodeString(tt.filterInputHex)
+			require.NoError(t, err)
+			filterInput = append(filterInput, []byte(tt.jsonPath)...)
+
+			// For illustration
+			for i := 0; i < len(tt.reveals); i++ {
+				tt.reveals[i].Reveal = base64.StdEncoding.EncodeToString([]byte(tt.reveals[i].Reveal))
+			}
+
+			// Since ApplyFilter assumes the pubkeys are sorted.
+			for i := range tt.reveals {
+				sort.Strings(tt.reveals[i].ProxyPubKeys)
+			}
+
+			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
+
+			result, err := keeper.ExecuteFilter(
+				tt.reveals,
+				base64.StdEncoding.EncodeToString(filterInput), uint16(len(tt.reveals)),
+				types.DefaultParams(),
+				gasMeter,
+			)
+			require.ErrorIs(t, err, tt.wantErr)
+			if tt.consPubKeys == nil {
+				require.Nil(t, nil, result.ProxyPubKeys)
+			} else {
+				for _, pk := range tt.consPubKeys {
+					require.Contains(t, result.ProxyPubKeys, pk)
+				}
+			}
+
+			require.Equal(t, tt.outliers, result.Outliers)
+			require.Equal(t, tt.consensus, result.Consensus)
+			require.Equal(t, tt.tallyGasUsed, gasMeter.TallyGasUsed())
+		})
+	}
+}
+
+var sampleReveal = `{
+  "store": {
+    "book": [
+      {
+        "category": "fiction",
+        "author": "J.K. Rowling",
+        "title": "Harry Potter and the Sorcerer's Stone",
+        "price": 1999
+      },
+      {
+        "category": "fantasy",
+        "author": "J.R.R. Tolkien",
+        "title": "The Hobbit",
+        "price": 1499
+      },
+      {
+        "category": "science fiction",
+        "author": "Isaac Asimov",
+        "title": "Foundation",
+        "price": 1899
+      }
+    ]
+  }
+}`
+
+var sampleReveal2 = `{
+	"store": {
+	  "book": [
+		{
+		  "category": "science fiction",
+		  "author": "Isaac Asimov",
+		  "title": "Foundation",
+		  "price": 5899
+		},
+		{
+		  "category": "fiction",
+		  "author": "J.K. Rowling",
+		  "title": "Harry Potter and the Sorcerer's Stone",
+		  "price": 3999
+		},
+		{
+		  "category": "fantasy",
+		  "author": "J.R.R. Tolkien",
+		  "title": "The Hobbit",
+		  "price": 1499
+		}
+	  ]
+	}
+}`
+
+var sampleRevealNested = `{
+  "store": {
+    "books": [
+      {
+        "category": "fiction",
+        "author": "Author 1",
+        "title": "Book Title 1",
+        "country": [
+          {
+            "name": "angola"
+          },
+          {
+            "name": "brazil"
+          }
+        ]
+      },
+      {
+        "category": "non-fiction",
+        "author": "Author 2",
+        "title": "Book Title 2",
+        "country": [
+          {
+            "name": "angola"
+          },
+          {
+            "name": "brazil"
+          }
+        ]
+      },
+      {
+        "category": "fiction",
+        "author": "Author 3",
+        "title": "Book Title 3",
+        "country": [
+          {
+            "name": "angola"
+          },
+          {
+            "name": "brazil"
+          }
+        ]
+      }
+    ],
+    "music": [
+      {
+        "category": "pop",
+        "country": "China"
+      },
+      {
+        "category": "rock",
+        "country": "Solomon Islands"
+      }
+    ]
+  }
+}`
+
+var sampleRevealNested2 = `{
+	"store": {
+	  "music": [
+		{
+			"category": "rock",
+			"country": "Solomon Islands"
+		},
+		{
+			"category": "pop",
+			"country": "China"
+		}
+	  ],
+	  "books": [
+	  	{
+		  "category": "fiction",
+		  "author": "Author 3",
+		  "title": "Book Title 3",
+		  "country": [
+			{
+			  "name": "angola"
+			},
+			{
+			  "name": "brazil"
+			}
+		  ]
+		},
+		{
+		  "category": "fiction",
+		  "author": "Author 1",
+		  "title": "Book Title 1",
+		  "country": [
+			{
+			  "name": "angola"
+			},
+			{
+			  "name": "brazil"
+			}
+		  ]
+		},
+		{
+		  "category": "non-fiction",
+		  "author": "Author 2",
+		  "title": "Book Title 2",
+		  "country": [
+			{
+			  "name": "angola"
+			},
+			{
+			  "name": "brazil"
+			}
+		  ]
+		}
+	  ]
+	}
+}`

@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/base64"
+	"slices"
 
 	"github.com/ohler55/ojg/gen"
 	"github.com/ohler55/ojg/jp"
@@ -44,11 +45,22 @@ func parseReveals(reveals []RevealBody, dataPath string, errors []bool) ([]strin
 			continue
 		}
 		elems := expr.GetNodes(obj)
-		if len(elems) < 1 {
+
+		var data string
+		switch len(elems) {
+		case 0:
 			errors[i] = true
 			continue
+		case 1:
+			data = elems[0].String()
+		default:
+			elemsStr := make([]string, len(elems))
+			for i, elem := range elems {
+				elemsStr[i] = elem.String()
+			}
+			slices.Sort(elemsStr)
+			data = elemsStr[0]
 		}
-		data := elems[0].String()
 
 		freq[data]++
 		maxFreq = max(freq[data], maxFreq)
