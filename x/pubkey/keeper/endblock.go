@@ -141,12 +141,14 @@ func (k Keeper) JailValidators(ctx sdk.Context, keyIndex utils.SEDAKeyIndex) err
 			if err != nil {
 				return err
 			}
-			err = k.slashingKeeper.Jail(ctx, consAddr)
-			if err != nil {
-				return err
+			if !val.IsJailed() {
+				err = k.slashingKeeper.Jail(ctx, consAddr)
+				if err != nil {
+					return err
+				}
 			}
 			k.Logger(ctx).Info(
-				"jailed validator for missing required public key",
+				"validator is jailed for missing required public key (or was already jailed)",
 				"consensus_address", consAddr,
 				"operator_address", val.OperatorAddress,
 				"key_index", keyIndex,

@@ -76,11 +76,12 @@ var (
 
 type fixture struct {
 	*integration.IntegationApp
-	cdc           codec.Codec
-	accountKeeper authkeeper.AccountKeeper
-	bankKeeper    bankkeeper.Keeper
-	stakingKeeper stakingkeeper.Keeper
-	keeper        keeper.Keeper
+	cdc            codec.Codec
+	accountKeeper  authkeeper.AccountKeeper
+	bankKeeper     bankkeeper.Keeper
+	stakingKeeper  stakingkeeper.Keeper
+	keeper         keeper.Keeper
+	slashingKeeper slashingkeeper.Keeper
 }
 
 func initFixture(tb testing.TB) *fixture {
@@ -169,16 +170,18 @@ func initFixture(tb testing.TB) *fixture {
 	)
 
 	return &fixture{
-		IntegationApp: integrationApp,
-		cdc:           cdc,
-		accountKeeper: accountKeeper,
-		bankKeeper:    bankKeeper,
-		stakingKeeper: *stakingKeeper,
-		keeper:        *pubKeyKeeper,
+		IntegationApp:  integrationApp,
+		cdc:            cdc,
+		accountKeeper:  accountKeeper,
+		bankKeeper:     bankKeeper,
+		stakingKeeper:  *stakingKeeper,
+		keeper:         *pubKeyKeeper,
+		slashingKeeper: slashingKeeper,
 	}
 }
 
-func createValidators(t *testing.T, f *fixture, powers []int64) ([]sdk.AccAddress, []sdk.ValAddress, []cryptotypes.PubKey) {
+// createValidators creates validators with given powers and jail the last one.
+func createValidatorsAndJailLastOne(t *testing.T, f *fixture, powers []int64) ([]sdk.AccAddress, []sdk.ValAddress, []cryptotypes.PubKey) {
 	t.Helper()
 	addrs := simtestutil.AddTestAddrsIncremental(f.bankKeeper, f.stakingKeeper, f.Context(), len(powers), math.NewIntFromUint64(1e19))
 	valAddrs := simtestutil.ConvertAddrsToValAddrs(addrs)
@@ -194,6 +197,14 @@ func createValidators(t *testing.T, f *fixture, powers []int64) ([]sdk.AccAddres
 
 		_, err = f.stakingKeeper.Delegate(f.Context(), addrs[i], f.stakingKeeper.TokensFromConsensusPower(f.Context(), powers[i]), sdkstakingtypes.Unbonded, val, true)
 		require.NoError(t, err)
+
+		// Jail last validator.
+		if i == len(powers)-1 {
+			consAddr, err := val.GetConsAddr()
+			require.NoError(t, err)
+			err = f.slashingKeeper.Jail(f.Context(), consAddr)
+			require.NoError(t, err)
+		}
 	}
 
 	_, err := f.stakingKeeper.EndBlocker(f.Context())
@@ -207,20 +218,28 @@ func TestEndBlock(t *testing.T) {
 
 	f.keeper.InitGenesis(ctx, *types.DefaultGenesisState())
 
-	_, valAddrs, _ := createValidators(t, f, []int64{1, 3, 5, 7, 2, 1}) // 1+3+5+7+2+1 = 19
+	// Create 6 validators and jail the last one.
+	_, valAddrs, _ := createValidatorsAndJailLastOne(t, f, []int64{1, 3, 5, 7, 2, 1}) // 1+3+5+7+2+1 = 19
 	pubKeys := generatePubKeys(t, 6)
+
+	for i, valAddr := range valAddrs {
+		validator, err := f.stakingKeeper.GetValidator(ctx, valAddr)
+		require.NoError(t, err)
+		require.Equal(t, validator.IsJailed(), i == len(valAddrs)-1)
+	}
 
 	activationBlockDelay, err := f.keeper.GetActivationBlockDelay(ctx)
 	require.NoError(t, err)
 
-	// Check for start of activation process.
+	// All but last two validators register their keys.
 	var expectedActivationHeight int64 = types.DefaultActivationHeight
-	for i := range valAddrs[:len(valAddrs)-1] {
+	for i := range valAddrs[:len(valAddrs)-2] {
 		err := f.keeper.SetValidatorKeyAtIndex(ctx, valAddrs[i], utils.SEDAKeyIndexSecp256k1, pubKeys[i])
 		require.NoError(t, err)
 		err = f.keeper.EndBlock(ctx)
 		require.NoError(t, err)
 
+		// Activation height is set after 3 validators have registered their keys.
 		if i >= 3 {
 			expectedActivationHeight = ctx.BlockHeight() + activationBlockDelay
 		}
@@ -241,7 +260,7 @@ func TestEndBlock(t *testing.T) {
 	for i := range valAddrs {
 		val, err := f.stakingKeeper.GetValidator(ctx, valAddrs[i])
 		require.NoError(t, err)
-		if i == len(valAddrs)-1 {
+		if i >= len(valAddrs)-2 {
 			require.Equal(t, val.Jailed, true)
 		} else {
 			require.Equal(t, val.Jailed, false)
