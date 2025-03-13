@@ -80,6 +80,20 @@ func TestFilter(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
+			name:            "Mode filter - exactly 2/3rd reports an error",
+			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
+			outliers:        []bool{false, false, true},
+			reveals: []types.RevealBody{
+				{ExitCode: 1, Reveal: ``},
+				{ExitCode: 2, Reveal: ``},
+				{ExitCode: 0, Reveal: `{"result": {"text": "A", "number": 0}}`},
+			},
+			consensus:    true,
+			consPubKeys:  nil,
+			tallyGasUsed: defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*3,
+			wantErr:      types.ErrConsensusInError,
+		},
+		{
 			name:            "Mode filter - Multiple modes",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
 			outliers:        nil,

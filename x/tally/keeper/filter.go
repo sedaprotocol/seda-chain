@@ -76,7 +76,7 @@ func ExecuteFilter(reveals []types.RevealBody, filterInput string, replicationFa
 
 	outliers, consensus := filter.ApplyFilter(reveals, res.Errors)
 	switch {
-	case countErrors(res.Errors)*3 > len(reveals)*2:
+	case countErrors(res.Errors)*3 >= len(reveals)*2:
 		res.Consensus, res.Outliers = true, invertErrors(res.Errors)
 		return res, types.ErrConsensusInError
 	case !consensus:
