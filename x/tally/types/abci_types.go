@@ -78,12 +78,12 @@ func (req *Request) ToResult(ctx types.Context) (result batchingtypes.DataResult
 }
 
 type RevealBody struct {
-	ID           string   `json:"id"`
-	Salt         string   `json:"salt"` // hex-encoded string
-	ExitCode     byte     `json:"exit_code"`
-	GasUsed      uint64   `json:"gas_used"`
-	Reveal       string   `json:"reveal"` // base64-encoded string
-	ProxyPubKeys []string `json:"proxy_public_keys"`
+	RequestID          string   `json:"dr_id"`
+	RequestBlockHeight uint64   `json:"dr_block_height"`
+	ExitCode           byte     `json:"exit_code"`
+	GasUsed            uint64   `json:"gas_used"`
+	Reveal             string   `json:"reveal"` // base64-encoded string
+	ProxyPubKeys       []string `json:"proxy_public_keys"`
 }
 
 func (u *RevealBody) MarshalJSON() ([]byte, error) {
@@ -92,19 +92,12 @@ func (u *RevealBody) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	saltBytes, err := hex.DecodeString(u.Salt)
-	if err != nil {
-		return nil, err
-	}
-
 	type Alias RevealBody
 	return json.Marshal(&struct {
 		Reveal []int `json:"reveal"`
-		Salt   []int `json:"salt"`
 		*Alias
 	}{
 		Reveal: bytesToIntSlice(revealBytes),
-		Salt:   bytesToIntSlice(saltBytes),
 		Alias:  (*Alias)(u),
 	})
 }

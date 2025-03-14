@@ -25,7 +25,6 @@ import (
 )
 
 const (
-	saltHex                    = "9c0257114eb9399a2985f8e75dad7600c5d89fe3824ffa99ec1c3eb8bf3b0501"
 	defaultRevealTimeoutBlocks = 10
 )
 
@@ -35,11 +34,12 @@ type PostDataRequestResponse struct {
 }
 
 type commitRevealConfig struct {
-	requestMemo  string
-	reveal       string
-	proxyPubKeys []string
-	gasUsed      uint64
-	exitCode     byte
+	requestHeight uint64
+	requestMemo   string
+	reveal        string
+	proxyPubKeys  []string
+	gasUsed       uint64
+	exitCode      byte
 }
 
 // commitRevealDataRequest simulates stakers committing and revealing
@@ -63,10 +63,10 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCo
 	drID := res.DrID
 
 	// The stakers commit and reveal.
-	commitment, err := f.commitDataRequest(stakers, res.Height, drID, numCommits, config)
+	revealMsgs, err := f.commitDataRequest(stakers, res.Height, drID, numCommits, config)
 	require.NoError(t, err)
 
-	err = f.revealDataRequest(stakers, res.Height, drID, commitment, numReveals, config)
+	err = f.revealDataRequest(stakers, revealMsgs[:numReveals])
 	require.NoError(t, err)
 
 	if timeout {
@@ -98,25 +98,28 @@ func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMem
 	return res, nil
 }
 
-func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID string, numCommits int, config commitRevealConfig) (string, error) {
+// commitDataRequest executes a commit for each of the given stakers and returns
+// a list of corresponding reveal messages.
+func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID string, numCommits int, config commitRevealConfig) ([][]byte, error) {
 	revealBody := types.RevealBody{
-		ID:           drID,
+		RequestID:    drID,
 		Reveal:       config.reveal,
 		GasUsed:      config.gasUsed,
 		ExitCode:     config.exitCode,
 		ProxyPubKeys: config.proxyPubKeys,
 	}
-	commitment, err := f.generateRevealBodyHash(revealBody, saltHex)
-	if err != nil {
-		return "", err
-	}
 
+	var revealMsgs [][]byte
 	for i := 0; i < numCommits; i++ {
-		proof, err := f.generateCommitProof(stakers[i].key, drID, commitment, height)
+		revealMsg, commitment, _, err := f.createRevealMsg(stakers[i], revealBody)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
+		proof, err := f.generateCommitProof(stakers[i].key, drID, commitment, height)
+		if err != nil {
+			return nil, err
+		}
 		_, err = f.contractKeeper.Execute(
 			f.Context(),
 			f.coreContractAddr,
@@ -125,32 +128,28 @@ func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID string
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
+
+		revealMsgs = append(revealMsgs, revealMsg)
 	}
 
-	return commitment, nil
+	return revealMsgs, nil
 }
 
-func (f *fixture) revealDataRequest(stakers []staker, height uint64, drID, commitment string, numReveals int, config commitRevealConfig) error {
-	for i := 0; i < numReveals; i++ {
-		proof, err := f.generateRevealProof(stakers[i].key, drID, commitment, height)
-		if err != nil {
-			return err
-		}
-
-		_, err = f.contractKeeper.Execute(
+func (f *fixture) revealDataRequest(stakers []staker, revealMsgs [][]byte) error {
+	for i := 0; i < len(revealMsgs); i++ {
+		_, err := f.contractKeeper.Execute(
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
-			revealMsg(drID, config.reveal, stakers[i].pubKey, proof, config.proxyPubKeys, config.exitCode, config.gasUsed),
+			revealMsgs[i],
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -263,7 +262,7 @@ func commitMsg(drID, commitment, stakerPubKey, proof string, gasUsed uint64) []b
 	return []byte(fmt.Sprintf(commitMsg, drID, commitment, stakerPubKey, proof, gasUsed))
 }
 
-func revealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, exitCode byte, gasUsed uint64) []byte {
+func revealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, exitCode byte, drHeight, gasUsed uint64) []byte {
 	quotedObjects := []string{}
 	for _, obj := range proxyPubKeys {
 		quotedObjects = append(quotedObjects, fmt.Sprintf("%q", obj))
@@ -272,10 +271,9 @@ func revealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, 
 
 	return []byte(fmt.Sprintf(`{
 		"reveal_data_result": {
-		  "dr_id": "%s",
 		  "reveal_body": {
-			"id": "%s",
-			"salt": "%s",
+			"dr_id": "%s",
+			"dr_block_height": %d,
 			"exit_code": %d,
 			"gas_used": %d,
 			"reveal": "%s",
@@ -286,7 +284,7 @@ func revealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, 
 		  "stderr": [],
 		  "stdout": []
 		}
-	}`, drID, drID, saltHex, exitCode, gasUsed, reveal, pks, stakerPubKey, proof))
+	}`, drID, drHeight, exitCode, gasUsed, reveal, pks, stakerPubKey, proof))
 }
 
 // generateStakeProof generates a proof for a stake message given a
@@ -357,40 +355,6 @@ func (f *fixture) generateCommitProof(signKey []byte, drID, commitment string, d
 	return hex.EncodeToString(proof), nil
 }
 
-func (f *fixture) generateRevealProof(signKey []byte, drID, revealBodyHash string, drHeight uint64) (string, error) {
-	revealBytes := []byte("reveal_data_result")
-	drIDBytes := []byte(drID)
-
-	drHeightBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(drHeightBytes, drHeight)
-
-	revealBodyHashBytes, err := hex.DecodeString(revealBodyHash)
-	if err != nil {
-		return "", err
-	}
-
-	chainIDBytes := []byte(f.chainID)
-	contractAddrBytes := []byte(f.coreContractAddr.String())
-
-	allBytes := append([]byte{}, revealBytes...)
-	allBytes = append(allBytes, drIDBytes...)
-	allBytes = append(allBytes, drHeightBytes...)
-	allBytes = append(allBytes, revealBodyHashBytes...)
-	allBytes = append(allBytes, chainIDBytes...)
-	allBytes = append(allBytes, contractAddrBytes...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	hash := hasher.Sum(nil)
-
-	proof, err := vrf.NewK256VRF().Prove(signKey, hash)
-	if err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(proof), nil
-}
-
 func (f *fixture) initAccountWithCoins(t *testing.T, addr sdk.AccAddress, coins sdk.Coins) {
 	err := f.bankKeeper.MintCoins(f.Context(), minttypes.ModuleName, coins)
 	require.NoError(t, err)
@@ -401,24 +365,27 @@ func (f *fixture) initAccountWithCoins(t *testing.T, addr sdk.AccAddress, coins 
 // generateRevealBodyHash generates the hash of a given reveal body.
 // Since the RevealBody type in the tally module does not include the
 // salt field, the salt must be provided separately.
-func (f *fixture) generateRevealBodyHash(rb types.RevealBody, salt string) (string, error) {
+func (f *fixture) generateRevealBodyHash(rb types.RevealBody) ([]byte, error) {
 	revealHasher := sha3.NewLegacyKeccak256()
 	revealBytes, err := base64.StdEncoding.DecodeString(rb.Reveal)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	revealHasher.Write(revealBytes)
 	revealHash := revealHasher.Sum(nil)
 
 	hasher := sha3.NewLegacyKeccak256()
 
-	idBytes, err := hex.DecodeString(rb.ID)
+	idBytes, err := hex.DecodeString(rb.RequestID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	hasher.Write(idBytes)
 
-	hasher.Write([]byte(salt))
+	reqHeightBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(reqHeightBytes, rb.RequestBlockHeight)
+	hasher.Write(reqHeightBytes)
+
 	hasher.Write([]byte{rb.ExitCode})
 
 	gasUsedBytes := make([]byte, 8)
@@ -435,5 +402,59 @@ func (f *fixture) generateRevealBodyHash(rb types.RevealBody, salt string) (stri
 	}
 	hasher.Write(proxyPubKeyHasher.Sum(nil))
 
-	return hex.EncodeToString(hasher.Sum(nil)), nil
+	return hasher.Sum(nil), nil
+}
+
+// createRevealMsg constructs and returns a reveal message and its corresponding
+// commitment and proof.
+func (f *fixture) createRevealMsg(staker staker, revealBody types.RevealBody) ([]byte, string, string, error) {
+	revealBodyHash, err := f.generateRevealBodyHash(revealBody)
+	if err != nil {
+		return nil, "", "", err
+	}
+	proof, err := generateRevealProof(staker.key, revealBodyHash, f.chainID, f.coreContractAddr.String())
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	msg := revealMsg(
+		revealBody.RequestID,
+		revealBody.Reveal,
+		staker.pubKey,
+		proof,
+		revealBody.ProxyPubKeys,
+		revealBody.ExitCode,
+		revealBody.RequestBlockHeight,
+		revealBody.GasUsed,
+	)
+
+	// commitment = hash(revealBodyHash | publicKey | proof | stderr | stdout)
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write([]byte("reveal_message"))
+	hasher.Write(revealBodyHash)
+	hasher.Write([]byte(staker.pubKey))
+	hasher.Write([]byte(proof))
+	hasher.Write([]byte(strings.Join([]string{""}, "")))
+	hasher.Write([]byte(strings.Join([]string{""}, "")))
+	commitment := hasher.Sum(nil)
+
+	return msg, hex.EncodeToString(commitment), proof, nil
+}
+
+func generateRevealProof(signKey []byte, revealBodyHash []byte, chainID, coreContractAddr string) (string, error) {
+	revealBytes := []byte("reveal_data_result")
+
+	allBytes := append(revealBytes, revealBodyHash...)
+	allBytes = append(allBytes, []byte(chainID)...)
+	allBytes = append(allBytes, []byte(coreContractAddr)...)
+
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(allBytes)
+	hash := hasher.Sum(nil)
+
+	proof, err := vrf.NewK256VRF().Prove(signKey, hash)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(proof), nil
 }

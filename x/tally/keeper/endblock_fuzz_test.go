@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"testing"
 
@@ -26,12 +25,13 @@ func getRandomBytes(length int) []byte {
 }
 
 type fuzzCommitReveal struct {
-	requestMemo  string // base64-encoded
-	reveal       string // base64-encoded
-	exitCode     byte
-	gasUsed      uint64
-	salt         string
-	proxyPubKeys []string
+	requestHeight uint64
+	requestMemo   string // base64-encoded
+	reveal        string // base64-encoded
+	exitCode      byte
+	gasUsed       uint64
+	salt          string
+	proxyPubKeys  []string
 }
 
 func FuzzEndBlock(f *testing.F) {
@@ -41,17 +41,17 @@ func FuzzEndBlock(f *testing.F) {
 	err := fixture.tallyKeeper.SetParams(fixture.Context(), defaultParams)
 	require.NoError(f, err)
 
-	f.Fuzz(func(t *testing.T, reveal, proxyPubKey, salt []byte, exitCode byte, gasUsed uint64) {
+	f.Fuzz(func(t *testing.T, reveal, proxyPubKey []byte, exitCode byte, requestHeight, gasUsed uint64) {
 		sim := fuzzCommitReveal{
-			requestMemo:  base64.StdEncoding.EncodeToString(getRandomBytes(10)),
-			reveal:       base64.StdEncoding.EncodeToString(reveal),
-			exitCode:     exitCode,
-			gasUsed:      gasUsed,
-			salt:         hex.EncodeToString(salt),
-			proxyPubKeys: []string{hex.EncodeToString(proxyPubKey)},
+			requestHeight: requestHeight,
+			requestMemo:   base64.StdEncoding.EncodeToString(getRandomBytes(10)),
+			reveal:        base64.StdEncoding.EncodeToString(reveal),
+			exitCode:      exitCode,
+			gasUsed:       gasUsed,
+			proxyPubKeys:  []string{hex.EncodeToString(proxyPubKey)},
 		}
 
-		drID, _ := fixture.fuzzCommitRevealDataRequest(t, sim, 4, 4, 4, false)
+		drID, _ := fixture.fuzzCommitRevealDataRequest(t, sim, 4, false)
 
 		err = fixture.tallyKeeper.EndBlock(fixture.Context())
 		require.NoError(t, err)
@@ -64,7 +64,7 @@ func FuzzEndBlock(f *testing.F) {
 
 // commitRevealDataRequest simulates stakers committing and revealing
 // for a data request. It returns the data request ID.
-func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitReveal, replicationFactor, numCommits, numReveals int, timeout bool) (string, []staker) {
+func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitReveal, replicationFactor int, timeout bool) (string, []staker) {
 	stakers := f.addStakers(t, 5)
 
 	// Upload data request and tally oracle programs.
@@ -97,38 +97,55 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 
 	// The stakers commit and reveal.
 	revealBody := types.RevealBody{
-		ID:           drID,
-		Reveal:       fuzz.reveal,
-		GasUsed:      fuzz.gasUsed,
-		ExitCode:     fuzz.exitCode,
-		ProxyPubKeys: []string{},
+		RequestID:          drID,
+		RequestBlockHeight: fuzz.requestHeight,
+		Reveal:             fuzz.reveal,
+		GasUsed:            fuzz.gasUsed,
+		ExitCode:           fuzz.exitCode,
+		ProxyPubKeys:       []string{},
 	}
-	commitment, err := f.generateRevealBodyHash(revealBody, fuzz.salt)
-	require.NoError(t, err)
 
-	for i := 0; i < numCommits; i++ {
-		proof, err := f.generateCommitProof(stakers[i].key, drID, commitment, res.Height)
+	var revealMsgs [][]byte
+	var commitments []string
+	var revealProofs []string
+	for i := 0; i < replicationFactor; i++ {
+		revealMsg, commitment, revealProof, err := f.createRevealMsg(stakers[i], revealBody)
+		require.NoError(t, err)
+
+		commitProof, err := f.generateCommitProof(stakers[i].key, drID, commitment, res.Height)
 		require.NoError(t, err)
 
 		_, err = f.contractKeeper.Execute(
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
-			commitMsg(drID, commitment, stakers[i].pubKey, proof, 0),
+			commitMsg(drID, commitment, stakers[i].pubKey, commitProof, 0),
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		require.NoError(t, err)
+
+		revealMsgs = append(revealMsgs, revealMsg)
+		commitments = append(commitments, commitment)
+		revealProofs = append(revealProofs, revealProof)
 	}
 
-	for i := 0; i < numReveals; i++ {
-		proof, err := f.generateRevealProof(stakers[i].key, drID, commitment, res.Height)
-		require.NoError(t, err)
+	for i := 0; i < len(revealMsgs); i++ {
+		msg := revealMsg(
+			revealBody.RequestID,
+			revealBody.Reveal,
+			stakers[i].pubKey,
+			revealProofs[i],
+			revealBody.ProxyPubKeys,
+			revealBody.ExitCode,
+			revealBody.RequestBlockHeight,
+			revealBody.GasUsed,
+		)
 
 		_, err = f.contractKeeper.Execute(
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
-			fuzzRevealMsg(drID, stakers[i].pubKey, proof, fuzz),
+			msg,
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		require.NoError(t, err)
@@ -141,25 +158,4 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 	}
 
 	return res.DrID, stakers
-}
-
-func fuzzRevealMsg(drID, stakerPubKey, proof string, fuzz fuzzCommitReveal) []byte {
-	var revealMsg = `{
-		"reveal_data_result": {
-		  "dr_id": "%s",
-		  "reveal_body": {
-			"id": "%s",
-			"salt": "%s",
-			"exit_code": %d,
-			"gas_used": %d,
-			"reveal": "%s",
-			"proxy_public_keys": []
-		  },
-		  "public_key": "%s",
-		  "proof": "%s",
-		  "stderr": [],
-		  "stdout": []
-		}
-	}`
-	return []byte(fmt.Sprintf(revealMsg, drID, drID, fuzz.salt, fuzz.exitCode, fuzz.gasUsed, fuzz.reveal, stakerPubKey, proof))
 }

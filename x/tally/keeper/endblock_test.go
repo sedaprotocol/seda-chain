@@ -97,10 +97,11 @@ func TestEndBlock(t *testing.T) {
 			drID, stakers := f.commitRevealDataRequest(
 				t, tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout,
 				commitRevealConfig{
-					requestMemo:  tt.memo,
-					reveal:       base64.StdEncoding.EncodeToString([]byte("reveal")),
-					proxyPubKeys: proxyPubKeys,
-					gasUsed:      150000000000000000,
+					requestHeight: 1,
+					requestMemo:   tt.memo,
+					reveal:        base64.StdEncoding.EncodeToString([]byte("reveal")),
+					proxyPubKeys:  proxyPubKeys,
+					gasUsed:       150000000000000000,
 				})
 
 			beforeBalance := f.bankKeeper.GetBalance(f.Context(), stakers[0].address, bondDenom)
@@ -149,8 +150,9 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	drID, _ := f.commitRevealDataRequest(
 		t, 1, 1, 1, false,
 		commitRevealConfig{
-			requestMemo: base64.StdEncoding.EncodeToString([]byte("memo")),
-			reveal:      base64.StdEncoding.EncodeToString([]byte("reveal")),
+			requestHeight: 1,
+			requestMemo:   base64.StdEncoding.EncodeToString([]byte("memo")),
+			reveal:        base64.StdEncoding.EncodeToString([]byte("reveal")),
 		})
 
 	err = f.tallyKeeper.EndBlock(f.Context())
@@ -178,8 +180,9 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	drID, _ = f.commitRevealDataRequest(
 		t, 1, 1, 1, false,
 		commitRevealConfig{
-			requestMemo: base64.StdEncoding.EncodeToString([]byte("memo")),
-			reveal:      base64.StdEncoding.EncodeToString([]byte("reveal")),
+			requestHeight: 1,
+			requestMemo:   base64.StdEncoding.EncodeToString([]byte("memo")),
+			reveal:        base64.StdEncoding.EncodeToString([]byte("reveal")),
 		})
 
 	err = f.tallyKeeper.EndBlock(f.Context())
@@ -208,25 +211,23 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	_, err = f.commitDataRequest(
 		stakers, noRevealsDr.Height, noRevealsDr.DrID, 1,
 		commitRevealConfig{
-			reveal: base64.StdEncoding.EncodeToString([]byte("sike")),
+			requestHeight: 1,
+			reveal:        base64.StdEncoding.EncodeToString([]byte("sike")),
 		})
 	require.NoError(t, err)
 
 	resolvedDr, err := f.postDataRequest([]byte{}, []byte{}, base64.StdEncoding.EncodeToString([]byte("resolved")), 1)
 	require.NoError(t, err)
 
-	commitment, err := f.commitDataRequest(
+	revealMsgs, err := f.commitDataRequest(
 		stakers, resolvedDr.Height, resolvedDr.DrID, 1,
 		commitRevealConfig{
-			reveal: base64.StdEncoding.EncodeToString([]byte("sike")),
+			requestHeight: 1,
+			reveal:        base64.StdEncoding.EncodeToString([]byte("sike")),
 		})
 	require.NoError(t, err)
 
-	err = f.revealDataRequest(
-		stakers, resolvedDr.Height, resolvedDr.DrID, commitment, 1,
-		commitRevealConfig{
-			reveal: base64.StdEncoding.EncodeToString([]byte("sike")),
-		})
+	err = f.revealDataRequest(stakers, revealMsgs)
 	require.NoError(t, err)
 
 	// Ensure the DR without commitments and the DR without reveals are timed out
