@@ -135,6 +135,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
+
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
@@ -645,6 +646,8 @@ func NewApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[wasmstoragetypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authtypes.FeeCollectorName,
+		txConfig.TxDecoder(),
 		app.BankKeeper,
 		app.StakingKeeper,
 		contractKeeper,

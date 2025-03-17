@@ -22,6 +22,9 @@ type Keeper struct {
 	stakingKeeper types.StakingKeeper
 	wasmKeeper    wasmtypes.ContractOpsKeeper
 
+	txDecoder sdk.TxDecoder
+	// feeCollectorName is the name of the FeeCollector ModuleAccount.
+	feeCollectorName string
 	// authority is the address capable of executing MsgUpdateParams.
 	// Typically, this should be the gov module address.
 	authority string
@@ -36,6 +39,8 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService storetypes.KVStoreService,
 	authority string,
+	feeCollectorName string,
+	txDecoder sdk.TxDecoder,
 	bk types.BankKeeper,
 	sk types.StakingKeeper,
 	wk wasmtypes.ContractOpsKeeper,
@@ -44,6 +49,8 @@ func NewKeeper(
 
 	k := Keeper{
 		authority:            authority,
+		feeCollectorName:     feeCollectorName,
+		txDecoder:            txDecoder,
 		bankKeeper:           bk,
 		stakingKeeper:        sk,
 		wasmKeeper:           wk,

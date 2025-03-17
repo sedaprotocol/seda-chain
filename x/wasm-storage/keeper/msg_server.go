@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
@@ -13,6 +14,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	"github.com/sedaprotocol/seda-chain/utils"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -95,7 +97,7 @@ func (m msgServer) StoreOracleProgram(goCtx context.Context, msg *types.MsgStore
 	}, nil
 }
 
-// InstantiateCoreContract instantiate a new contract with a
+// InstantiateCoreContract instantiates a new contract with a
 // predictable address and updates the core contract registry.
 func (m msgServer) InstantiateCoreContract(goCtx context.Context, msg *types.MsgInstantiateCoreContract) (*types.MsgInstantiateCoreContractResponse, error) {
 	if err := msg.ValidateBasic(); err != nil {
@@ -144,6 +146,7 @@ func unzipWasm(wasm []byte, maxSize int64) ([]byte, error) {
 	return unzipped, nil
 }
 
+// UpdateParams updates the module parameters.
 func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -163,4 +166,59 @@ func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParam
 		return nil, err
 	}
 	return &types.MsgUpdateParamsResponse{}, nil
+}
+
+// RefundTxFee identifies the last message in the tx based on the exclusivity and
+// uniqueness of commit/reveal txs guaranteed by CommitRevealDecorator ante handler
+// and then issues a refund of the collected fees based on the gas consumed.
+func (m msgServer) RefundTxFee(goCtx context.Context, req *types.MsgRefundTxFee) (*types.MsgRefundTxFeeResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Check that the authority is the core contract.
+	if _, err := sdk.AccAddressFromBech32(req.Authority); err != nil {
+		return nil, err
+	}
+	coreContract, err := m.CoreContractRegistry.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if coreContract != req.Authority {
+		return nil, types.ErrInvalidAuthority.Wrapf("expected %s, got %s", coreContract, req.Authority)
+	}
+
+	// Decode the last message in the tx.
+	tx, err := m.txDecoder(ctx.TxBytes())
+	if err != nil {
+		return nil, err
+	}
+	feeTx, ok := tx.(sdk.FeeTx)
+	if !ok {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "transaction is not a fee tx")
+	}
+	// Fee may be zero in simulation setting.
+	if feeTx.GetFee().IsZero() {
+		return &types.MsgRefundTxFeeResponse{}, nil
+	}
+
+	msgs := tx.GetMsgs()
+	msgInfo, ok := utils.ExtractCommitRevealMsgInfo(coreContract, msgs[len(msgs)-1])
+	if !ok {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "last message in tx is not a commit or reveal")
+	}
+
+	// Refund the fee if the info submitted by the contract matches the last msg.
+	if msgInfo == fmt.Sprintf("%s,%s,%t", req.DrId, req.PublicKey, req.IsReveal) {
+		// Refund the fee if the gas limit is set within a reasonable range.
+		if ctx.GasMeter().Limit() < ctx.GasMeter().GasConsumed()*3 {
+			err = m.bankKeeper.SendCoinsFromModuleToAccount(ctx, m.feeCollectorName, feeTx.FeePayer(), feeTx.GetFee())
+			if err != nil {
+				return nil, errorsmod.Wrap(sdkerrors.ErrInsufficientFunds, err.Error())
+			}
+		} else {
+			// Fee is not returned when the gas limit is too large to prevent
+			// attacks that exhaust the block gas limit.
+			ctx.Logger().Info("gas limit too large for refund", "gas_limit", ctx.GasMeter().Limit(), "gas_consumed", ctx.GasMeter().GasConsumed())
+		}
+	}
+	return &types.MsgRefundTxFeeResponse{}, nil
 }

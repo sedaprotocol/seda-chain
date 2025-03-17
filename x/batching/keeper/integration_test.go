@@ -65,19 +65,6 @@ import (
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-var wasmCapabilities = []string{
-	"iterator",
-	"staking",
-	"stargate",
-	"cosmwasm_1_1",
-	"cosmwasm_1_2",
-	"cosmwasm_1_3",
-	"cosmwasm_1_4",
-	"cosmwasm_1_5",
-	"cosmwasm_2_0",
-	"cosmwasm_2_1",
-}
-
 const (
 	bech32Prefix = "seda"
 	bondDenom    = "aseda"
@@ -193,7 +180,7 @@ func initFixture(tb testing.TB) *fixture {
 		nil, nil, router, nil,
 		tempDir,
 		wasmtypes.DefaultWasmConfig(),
-		wasmCapabilities,
+		app.GetWasmCapabilities(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		[]wasmkeeper.Option{}...,
 	)
@@ -208,6 +195,8 @@ func initFixture(tb testing.TB) *fixture {
 		cdc,
 		runtime.NewKVStoreService(keys[wasmstoragetypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authtypes.FeeCollectorName,
+		nil,
 		bankKeeper,
 		stakingKeeper,
 		contractKeeper,

@@ -1,15 +1,16 @@
 package app
 
 import (
-	"encoding/json"
 	"errors"
 
 	wasmapp "github.com/CosmWasm/wasmd/app"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/sedaprotocol/seda-chain/utils"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 )
 
@@ -50,121 +51,29 @@ func NewCommitRevealDecorator(wasmStorageKeeper *wasmstoragekeeper.Keeper, wasmK
 	return &CommitRevealDecorator{wasmStorageKeeper: wasmStorageKeeper, wasmKeeper: wasmKeeper}
 }
 
-// AnteHandle checks if a transaction consists of only eligible commit or reveal messages
-// and if so, sets the min gas prices to 0.
+// AnteHandle guarantees the following properties about the tx:
+// 1. Exclusivity: The tx does not mix commit/reveal messages with other messages.
+// 2. Uniqueness: Each of the commit/reveal messages is unique.
 func (d CommitRevealDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	// Without a core contract there is no need to check for free gas
 	coreContract, err := d.wasmStorageKeeper.GetCoreContractAddr(ctx)
 	if err != nil || coreContract == nil {
 		return next(ctx, tx, simulate)
 	}
 
-	// If any message does not qualify for free gas we don't need to check further
+	seen := make(map[string]bool)
+	seenCommitReveal := false
 	for _, msg := range tx.GetMsgs() {
-		if !d.checkFreeGas(ctx, coreContract, msg) {
-			return next(ctx, tx, simulate)
-		}
-	}
-
-	// Only when all messages qualify for free gas, we set the min gas prices to 0
-	return next(ctx.WithMinGasPrices(sdk.NewDecCoins()), tx, simulate)
-}
-
-// These are the JSON messages used by the overlay when executing the contract, the chain
-// uses the same messages to query the contract.
-type CommitDataResult struct {
-	DrID       string `json:"dr_id"`
-	PublicKey  string `json:"public_key"`
-	Commitment string `json:"commitment"`
-	Proof      string `json:"proof"`
-}
-
-type RevealDataResult struct {
-	DrID      string `json:"dr_id"`
-	PublicKey string `json:"public_key"`
-}
-
-type CanExecutorCommitQuery struct {
-	CanExecutorCommit CommitDataResult `json:"can_executor_commit"`
-}
-
-type CanExecutorRevealQuery struct {
-	CanExecutorReveal RevealDataResult `json:"can_executor_reveal"`
-}
-
-func (d CommitRevealDecorator) checkFreeGas(ctx sdk.Context, coreContract sdk.AccAddress, msg sdk.Msg) bool {
-	switch msg := msg.(type) {
-	case *wasmtypes.MsgExecuteContract:
-		// Not the core contract, so we don't need to check for free gas
-		if msg.Contract != coreContract.String() {
-			return false
-		}
-
-		contractMsg, err := unmarshalMsg(msg.Msg)
-		if err != nil {
-			return false
-		}
-
-		switch contractMsg := contractMsg.(type) {
-		case CommitDataResult:
-			result, err := d.queryContract(ctx, coreContract, CanExecutorCommitQuery{CanExecutorCommit: contractMsg})
-			if err != nil {
-				return false
+		msgInfo, commitOrReveal := utils.ExtractCommitRevealMsgInfo(coreContract.String(), msg)
+		if commitOrReveal {
+			if seen[msgInfo] {
+				return sdk.Context{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "duplicate commit or reveal message detected: %s", msgInfo)
 			}
-
-			return result
-		case RevealDataResult:
-			result, err := d.queryContract(ctx, coreContract, CanExecutorRevealQuery{CanExecutorReveal: contractMsg})
-			if err != nil {
-				return false
-			}
-
-			return result
-		// Not a commit or reveal message, so we don't need to check for free gas
-		default:
-			return false
+			seen[msgInfo] = true
+			seenCommitReveal = true
+		} else if seenCommitReveal {
+			return sdk.Context{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "commit or reveal message cannot be mixed with other messages")
 		}
-	// Not an execute contract message, so we don't need to check for free gas
-	default:
-		return false
-	}
-}
-
-func (d CommitRevealDecorator) queryContract(ctx sdk.Context, coreContract sdk.AccAddress, query interface{}) (bool, error) {
-	queryBytes, err := json.Marshal(query)
-	if err != nil {
-		return false, err
-	}
-	queryRes, err := d.wasmKeeper.QuerySmart(ctx, coreContract, queryBytes)
-	if err != nil {
-		return false, err
 	}
 
-	var result bool
-	if err := json.Unmarshal(queryRes, &result); err != nil {
-		return false, err
-	}
-
-	return result, nil
-}
-
-func unmarshalMsg(msg wasmtypes.RawContractMessage) (interface{}, error) {
-	// We're only interested in the commit or reveal messages
-	var msgData struct {
-		CommitDataResult *CommitDataResult `json:"commit_data_result"`
-		RevealDataResult *RevealDataResult `json:"reveal_data_result"`
-	}
-	if err := json.Unmarshal(msg, &msgData); err != nil {
-		return nil, err
-	}
-
-	if msgData.CommitDataResult != nil {
-		return *msgData.CommitDataResult, nil
-	}
-
-	if msgData.RevealDataResult != nil {
-		return *msgData.RevealDataResult, nil
-	}
-
-	return nil, nil
+	return next(ctx, tx, simulate)
 }

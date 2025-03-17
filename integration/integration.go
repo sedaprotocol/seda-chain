@@ -184,6 +184,21 @@ func (app *IntegationApp) Context() sdk.Context {
 	return app.ctx
 }
 
+// SetContextTxBytes sets the txBytes of the application context.
+func (app *IntegationApp) SetContextTxBytes(txBytes []byte) {
+	app.ctx = app.ctx.WithTxBytes(txBytes)
+}
+
+// SetBasicGasMeter sets a new basic gas meter at the given limit.
+func (app *IntegationApp) SetBasicGasMeter(limit uint64) {
+	app.ctx = app.ctx.WithGasMeter(storetypes.NewGasMeter(limit))
+}
+
+// SetInfiniteGasMeter sets a new infinite gas meter.
+func (app *IntegationApp) SetInfiniteGasMeter() {
+	app.ctx = app.ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
+}
+
 // AddTime adds time to the application context.
 func (app *IntegationApp) AddTime(seconds int64) {
 	newTime := app.ctx.BlockHeader().Time.Add(time.Duration(int64(time.Second) * seconds))

@@ -209,7 +209,7 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = f.commitDataRequest(
-		stakers, noRevealsDr.Height, noRevealsDr.DrID, 1,
+		stakers[:1], noRevealsDr.Height, noRevealsDr.DrID,
 		commitRevealConfig{
 			requestHeight: 1,
 			reveal:        base64.StdEncoding.EncodeToString([]byte("sike")),
@@ -220,14 +220,14 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	require.NoError(t, err)
 
 	revealMsgs, err := f.commitDataRequest(
-		stakers, resolvedDr.Height, resolvedDr.DrID, 1,
+		stakers[:1], resolvedDr.Height, resolvedDr.DrID,
 		commitRevealConfig{
 			requestHeight: 1,
 			reveal:        base64.StdEncoding.EncodeToString([]byte("sike")),
 		})
 	require.NoError(t, err)
 
-	err = f.revealDataRequest(stakers, revealMsgs)
+	err = f.executeReveals(stakers, revealMsgs)
 	require.NoError(t, err)
 
 	// Ensure the DR without commitments and the DR without reveals are timed out

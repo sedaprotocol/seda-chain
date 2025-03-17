@@ -13,6 +13,7 @@ import (
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
@@ -22,6 +23,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/codec/testutil"
@@ -67,16 +69,6 @@ import (
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-var wasmCapabilities = []string{
-	"iterator",
-	"staking",
-	"stargate",
-	"cosmwasm_1_1",
-	"cosmwasm_1_2",
-	"cosmwasm_1_3",
-	"cosmwasm_1_4",
-}
-
 const (
 	bech32Prefix = "seda"
 	bondDenom    = "aseda"
@@ -85,6 +77,7 @@ const (
 type fixture struct {
 	*integration.IntegationApp
 	cdc               codec.Codec
+	txConfig          client.TxConfig
 	chainID           string
 	coreContractAddr  sdk.AccAddress
 	deployer          sdk.AccAddress
@@ -116,7 +109,7 @@ func initFixture(t testing.TB) *fixture {
 		dataproxytypes.StoreKey,
 	)
 
-	mb := module.NewBasicManager(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{})
+	mb := module.NewBasicManager(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}, wasm.AppModuleBasic{})
 
 	interfaceRegistry := testutil.CodecOptions{
 		AccAddressPrefix: params.Bech32PrefixAccAddr,
@@ -131,6 +124,7 @@ func initFixture(t testing.TB) *fixture {
 		Amino:             aminoCodec,
 	}
 	cdc := encCfg.Codec
+	txConfig := encCfg.TxConfig
 	std.RegisterLegacyAminoCodec(encCfg.Amino)
 	std.RegisterInterfaces(encCfg.InterfaceRegistry)
 	mb.RegisterLegacyAminoCodec(encCfg.Amino)
@@ -146,6 +140,7 @@ func initFixture(t testing.TB) *fixture {
 	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
 
 	maccPerms := map[string][]string{
+		authtypes.FeeCollectorName:        nil,
 		minttypes.ModuleName:              {authtypes.Minter},
 		sdkstakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		sdkstakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
@@ -194,7 +189,7 @@ func initFixture(t testing.TB) *fixture {
 		nil, nil, router, nil,
 		tempDir,
 		wasmtypes.DefaultWasmConfig(),
-		wasmCapabilities,
+		app.GetWasmCapabilities(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		[]wasmkeeper.Option{}...,
 	)
@@ -206,6 +201,8 @@ func initFixture(t testing.TB) *fixture {
 		cdc,
 		runtime.NewKVStoreService(keys[wasmstoragetypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authtypes.FeeCollectorName,
+		encCfg.TxConfig.TxDecoder(),
 		bankKeeper,
 		stakingKeeper,
 		contractKeeper,
@@ -327,6 +324,7 @@ func initFixture(t testing.TB) *fixture {
 		chainID:           chainID,
 		deployer:          deployer,
 		cdc:               cdc,
+		txConfig:          txConfig,
 		coreContractAddr:  coreContractAddr,
 		accountKeeper:     accountKeeper,
 		bankKeeper:        bankKeeper,

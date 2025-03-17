@@ -13,6 +13,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -77,12 +78,14 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 	require.NoError(t, err)
 
 	// Post a data request.
+	amount, ok := math.NewIntFromString("150000000000000000000")
+	require.True(t, ok)
 	resJSON, err := f.contractKeeper.Execute(
 		f.Context(),
 		f.coreContractAddr,
 		f.deployer,
-		postDataRequestMsg(execProgram.Hash, tallyProgram.Hash, fuzz.requestMemo, replicationFactor),
-		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1003000000000000000))),
+		testutil.PostDataRequestMsg(execProgram.Hash, tallyProgram.Hash, fuzz.requestMemo, replicationFactor),
+		sdk.NewCoins(sdk.NewCoin(bondDenom, amount)),
 	)
 	require.NoError(t, err)
 
@@ -115,13 +118,9 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 		commitProof, err := f.generateCommitProof(stakers[i].key, drID, commitment, res.Height)
 		require.NoError(t, err)
 
-		_, err = f.contractKeeper.Execute(
-			f.Context(),
-			f.coreContractAddr,
-			stakers[i].address,
-			commitMsg(drID, commitment, stakers[i].pubKey, commitProof, 0),
-			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-		)
+		commitMsg := testutil.CommitMsg(drID, commitment, stakers[i].pubKey, commitProof, 0)
+
+		err = f.executeCommitReveal(stakers[i].address, commitMsg, 500000)
 		require.NoError(t, err)
 
 		revealMsgs = append(revealMsgs, revealMsg)
@@ -130,7 +129,7 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 	}
 
 	for i := 0; i < len(revealMsgs); i++ {
-		msg := revealMsg(
+		msg := testutil.RevealMsg(
 			revealBody.RequestID,
 			revealBody.Reveal,
 			stakers[i].pubKey,
@@ -141,13 +140,7 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 			revealBody.GasUsed,
 		)
 
-		_, err = f.contractKeeper.Execute(
-			f.Context(),
-			f.coreContractAddr,
-			stakers[i].address,
-			msg,
-			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-		)
+		err = f.executeCommitReveal(stakers[i].address, msg, 500000)
 		require.NoError(t, err)
 	}
 

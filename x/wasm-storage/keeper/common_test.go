@@ -3,17 +3,23 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdkcdctestutil "github.com/cosmos/cosmos-sdk/codec/testutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
+	"github.com/cosmos/cosmos-sdk/std"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
@@ -33,6 +39,7 @@ type KeeperTestSuite struct {
 	msgSrvr           wasmstoragetypes.MsgServer
 	queryClient       wasmstoragetypes.QueryClient
 	authority         string
+	txConfig          client.TxConfig
 	mockBankKeeper    *testutil.MockBankKeeper
 	mockStakingKeeper *testutil.MockStakingKeeper
 	mockWasmKeeper    *testutil.MockContractOpsKeeper
@@ -51,44 +58,71 @@ func (s *KeeperTestSuite) SetupSuite() {
 }
 
 func (s *KeeperTestSuite) SetupTest() {
+	aminoCodec := codec.NewLegacyAmino()
+	interfaceRegistry := sdkcdctestutil.CodecOptions{
+		AccAddressPrefix: params.Bech32PrefixAccAddr,
+		ValAddressPrefix: params.Bech32PrefixValAddr,
+	}.NewInterfaceRegistry()
+	codec := codec.NewProtoCodec(interfaceRegistry)
+
+	encCfg := moduletestutil.TestEncodingConfig{
+		InterfaceRegistry: interfaceRegistry,
+		Codec:             codec,
+		TxConfig:          tx.NewTxConfig(codec, tx.DefaultSignModes),
+		Amino:             aminoCodec,
+	}
+
+	mb := module.NewBasicManager(wasmstorage.AppModuleBasic{}, wasm.AppModuleBasic{})
+
+	std.RegisterLegacyAminoCodec(encCfg.Amino)
+	std.RegisterInterfaces(encCfg.InterfaceRegistry)
+	mb.RegisterLegacyAminoCodec(encCfg.Amino)
+	mb.RegisterInterfaces(encCfg.InterfaceRegistry)
+
+	s.txConfig = encCfg.TxConfig
 	s.authority = authtypes.NewModuleAddress("gov").String()
-	enCfg, ctx := s.SetupKeepers(s.T(), s.authority)
-	s.ctx = ctx
-	s.cdc = enCfg.Codec
+	s.ctx = s.SetupKeepers(s.T(), s.authority, encCfg)
 
 	msr := keeper.NewMsgServerImpl(*s.keeper)
 	s.msgSrvr = msr
 
-	queryHelper := baseapp.NewQueryServerTestHelper(ctx, enCfg.InterfaceRegistry)
+	queryHelper := baseapp.NewQueryServerTestHelper(s.ctx, encCfg.InterfaceRegistry)
 	querier := keeper.NewQuerierImpl(*s.keeper)
 	wasmstoragetypes.RegisterQueryServer(queryHelper, querier)
 	s.queryClient = wasmstoragetypes.NewQueryClient(queryHelper)
 
-	err := s.keeper.Params.Set(ctx, wasmstoragetypes.DefaultParams())
+	err := s.keeper.Params.Set(s.ctx, wasmstoragetypes.DefaultParams())
 	s.Require().NoError(err)
 }
 
-func (s *KeeperTestSuite) SetupKeepers(t *testing.T, authority string) (moduletestutil.TestEncodingConfig, sdk.Context) {
+func (s *KeeperTestSuite) SetupKeepers(t *testing.T, authority string, encCfg moduletestutil.TestEncodingConfig) sdk.Context {
 	t.Helper()
 	key := storetypes.NewKVStoreKey(wasmstoragetypes.StoreKey)
 	testCtx := sdktestutil.DefaultContextWithDB(t, key, storetypes.NewTransientStoreKey("transient_test"))
 	ctx := testCtx.Ctx
-	encCfg := moduletestutil.MakeTestEncodingConfig(wasmstorage.AppModuleBasic{})
-	wasmstoragetypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 
 	ctrl := gomock.NewController(t)
 	mockBankKeeper := testutil.NewMockBankKeeper(ctrl)
 	mockStakingKeeper := testutil.NewMockStakingKeeper(ctrl)
 	mockWasmKeeper := testutil.NewMockContractOpsKeeper(ctrl)
 
-	wasmStorageKeeper := keeper.NewKeeper(encCfg.Codec, runtime.NewKVStoreService(key), authority, mockBankKeeper, mockStakingKeeper, mockWasmKeeper)
+	wasmStorageKeeper := keeper.NewKeeper(
+		encCfg.Codec,
+		runtime.NewKVStoreService(key),
+		authority,
+		authtypes.FeeCollectorName,
+		encCfg.TxConfig.TxDecoder(),
+		mockBankKeeper,
+		mockStakingKeeper,
+		mockWasmKeeper,
+	)
 
 	s.mockBankKeeper = mockBankKeeper
 	s.mockStakingKeeper = mockStakingKeeper
 	s.mockWasmKeeper = mockWasmKeeper
 	s.keeper = wasmStorageKeeper
 
-	return encCfg, ctx
+	return ctx
 }
 
 func (s *KeeperTestSuite) ApplyDefaultMockExpectations() {

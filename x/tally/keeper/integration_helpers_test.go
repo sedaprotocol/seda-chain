@@ -16,9 +16,14 @@ import (
 
 	"cosmossdk.io/math"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
+	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -63,10 +68,10 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCo
 	drID := res.DrID
 
 	// The stakers commit and reveal.
-	revealMsgs, err := f.commitDataRequest(stakers, res.Height, drID, numCommits, config)
+	revealMsgs, err := f.commitDataRequest(stakers[:numCommits], res.Height, drID, config)
 	require.NoError(t, err)
 
-	err = f.revealDataRequest(stakers, revealMsgs[:numReveals])
+	err = f.executeReveals(stakers, revealMsgs[:numReveals])
 	require.NoError(t, err)
 
 	if timeout {
@@ -78,12 +83,16 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCo
 }
 
 func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) (PostDataRequestResponse, error) {
+	amount, ok := math.NewIntFromString("150000000000000000000")
+	if !ok {
+		return PostDataRequestResponse{}, fmt.Errorf("failed to convert string to int")
+	}
 	resJSON, err := f.contractKeeper.Execute(
 		f.Context(),
 		f.coreContractAddr,
 		f.deployer,
-		postDataRequestMsg(execProgHash, tallyProgHash, requestMemo, replicationFactor),
-		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1500000000000000000))),
+		testutil.PostDataRequestMsg(execProgHash, tallyProgHash, requestMemo, replicationFactor),
+		sdk.NewCoins(sdk.NewCoin(bondDenom, amount)),
 	)
 	if err != nil {
 		return PostDataRequestResponse{}, err
@@ -94,13 +103,12 @@ func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMem
 	if err != nil {
 		return PostDataRequestResponse{}, err
 	}
-
 	return res, nil
 }
 
-// commitDataRequest executes a commit for each of the given stakers and returns
-// a list of corresponding reveal messages.
-func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID string, numCommits int, config commitRevealConfig) ([][]byte, error) {
+// commitDataRequest executes a commit for each of the given stakers and
+// returns a list of corresponding reveal messages.
+func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID string, config commitRevealConfig) ([][]byte, error) {
 	revealBody := types.RevealBody{
 		RequestID:    drID,
 		Reveal:       config.reveal,
@@ -110,7 +118,7 @@ func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID string
 	}
 
 	var revealMsgs [][]byte
-	for i := 0; i < numCommits; i++ {
+	for i := 0; i < len(stakers); i++ {
 		revealMsg, commitment, _, err := f.createRevealMsg(stakers[i], revealBody)
 		if err != nil {
 			return nil, err
@@ -120,13 +128,9 @@ func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID string
 		if err != nil {
 			return nil, err
 		}
-		_, err = f.contractKeeper.Execute(
-			f.Context(),
-			f.coreContractAddr,
-			stakers[i].address,
-			commitMsg(drID, commitment, stakers[i].pubKey, proof, config.gasUsed),
-			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-		)
+		commitMsg := testutil.CommitMsg(drID, commitment, stakers[i].pubKey, proof, config.gasUsed)
+
+		err = f.executeCommitReveal(stakers[i].address, commitMsg, 500000)
 		if err != nil {
 			return nil, err
 		}
@@ -137,15 +141,10 @@ func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID string
 	return revealMsgs, nil
 }
 
-func (f *fixture) revealDataRequest(stakers []staker, revealMsgs [][]byte) error {
+// executeReveals executes a list of reveal messages.
+func (f *fixture) executeReveals(stakers []staker, revealMsgs [][]byte) error {
 	for i := 0; i < len(revealMsgs); i++ {
-		_, err := f.contractKeeper.Execute(
-			f.Context(),
-			f.coreContractAddr,
-			stakers[i].address,
-			revealMsgs[i],
-			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-		)
+		err := f.executeCommitReveal(stakers[i].address, revealMsgs[i], 500000)
 		if err != nil {
 			return err
 		}
@@ -175,7 +174,7 @@ func (f *fixture) addStakers(t *testing.T, num int) []staker {
 			f.Context(),
 			f.coreContractAddr,
 			f.deployer,
-			addToAllowListMsg(stakers[i].pubKey),
+			testutil.AddToAllowListMsg(stakers[i].pubKey),
 			sdk.NewCoins(),
 		)
 		require.NoError(t, err)
@@ -187,7 +186,7 @@ func (f *fixture) addStakers(t *testing.T, num int) []staker {
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
-			stakeMsg(stakers[i].pubKey, proof),
+			testutil.StakeMsg(stakers[i].pubKey, proof),
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		require.NoError(t, err)
@@ -204,87 +203,6 @@ func (f *fixture) pauseContract(t *testing.T) {
 		sdk.NewCoins(),
 	)
 	require.NoError(t, err)
-}
-
-func addToAllowListMsg(stakerPubKey string) []byte {
-	var addToAllowListMsg = `{
-		"add_to_allowlist": {
-		  "public_key": "%s"
-		}
-	}`
-	return []byte(fmt.Sprintf(addToAllowListMsg, stakerPubKey))
-}
-
-func stakeMsg(stakerPubKey, proof string) []byte {
-	var stakeMsg = `{
-		"stake": {
-		  "public_key": "%s",
-		  "proof": "%s",
-		  "memo": "YWRkcmVzcw=="
-		}
-	}`
-	return []byte(fmt.Sprintf(stakeMsg, stakerPubKey, proof))
-}
-
-func postDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) []byte {
-	var postDataRequestMsg = `{
-		"post_data_request": {
-		  "posted_dr": {
-			"version": "0.0.1",
-			"exec_program_id": "%s",
-			"exec_inputs": "ZXhlY19pbnB1dHM=",
-			"exec_gas_limit": 100000000000000000,
-			"tally_program_id": "%s",
-			"tally_inputs": "dGFsbHlfaW5wdXRz",
-			"tally_gas_limit": 300000000000000,
-			"replication_factor": %d,
-			"consensus_filter": "AA==",
-			"gas_price": "10",
-			"memo": "%s"
-		  },
-		  "seda_payload": "",
-		  "payback_address": "AQID"
-		}
-	}`
-	return []byte(fmt.Sprintf(postDataRequestMsg, hex.EncodeToString(execProgHash), hex.EncodeToString(tallyProgHash), replicationFactor, requestMemo))
-}
-
-func commitMsg(drID, commitment, stakerPubKey, proof string, gasUsed uint64) []byte {
-	var commitMsg = `{
-		"commit_data_result": {
-		  "dr_id": "%s",
-		  "commitment": "%s",
-		  "public_key": "%s",
-		  "proof": "%s",
-		  "gas_used": %d
-		}
-	}`
-	return []byte(fmt.Sprintf(commitMsg, drID, commitment, stakerPubKey, proof, gasUsed))
-}
-
-func revealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, exitCode byte, drHeight, gasUsed uint64) []byte {
-	quotedObjects := []string{}
-	for _, obj := range proxyPubKeys {
-		quotedObjects = append(quotedObjects, fmt.Sprintf("%q", obj))
-	}
-	pks := strings.Join(quotedObjects, ",")
-
-	return []byte(fmt.Sprintf(`{
-		"reveal_data_result": {
-		  "reveal_body": {
-			"dr_id": "%s",
-			"dr_block_height": %d,
-			"exit_code": %d,
-			"gas_used": %d,
-			"reveal": "%s",
-			"proxy_public_keys": [%s]
-		  },
-		  "public_key": "%s",
-		  "proof": "%s",
-		  "stderr": [],
-		  "stdout": []
-		}
-	}`, drID, drHeight, exitCode, gasUsed, reveal, pks, stakerPubKey, proof))
 }
 
 // generateStakeProof generates a proof for a stake message given a
@@ -417,7 +335,7 @@ func (f *fixture) createRevealMsg(staker staker, revealBody types.RevealBody) ([
 		return nil, "", "", err
 	}
 
-	msg := revealMsg(
+	msg := testutil.RevealMsg(
 		revealBody.RequestID,
 		revealBody.Reveal,
 		staker.pubKey,
@@ -457,4 +375,54 @@ func generateRevealProof(signKey []byte, revealBodyHash []byte, chainID, coreCon
 		return "", err
 	}
 	return hex.EncodeToString(proof), nil
+}
+
+// executeCommitReveal executes a commit msg or a reveal msg with the required
+// context.
+func (f *fixture) executeCommitReveal(sender sdk.AccAddress, msg []byte, gasLimit uint64) error {
+	contractMsg := wasmtypes.MsgExecuteContract{
+		Sender:   sdk.AccAddress(sender).String(),
+		Contract: f.coreContractAddr.String(),
+		Msg:      msg,
+		Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+	}
+
+	fee := sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(gasLimit*1e10)))
+	txf := tx.Factory{}.
+		WithChainID(f.chainID).
+		WithTxConfig(f.txConfig).
+		WithFees(fee.String()).
+		WithFeePayer(sender)
+
+	tx, err := txf.BuildUnsignedTx(&contractMsg)
+	if err != nil {
+		return err
+	}
+
+	txBytes, err := f.txConfig.TxEncoder()(tx.GetTx())
+	if err != nil {
+		return err
+	}
+	f.SetContextTxBytes(txBytes)
+	f.SetBasicGasMeter(gasLimit)
+
+	// Transfer the fee to the fee collector.
+	err = f.bankKeeper.SendCoinsFromAccountToModule(f.Context(), sender, authtypes.FeeCollectorName, fee)
+	if err != nil {
+		return err
+	}
+
+	// Execute the message.
+	_, err = f.contractKeeper.Execute(
+		f.Context(),
+		f.coreContractAddr,
+		sender,
+		msg,
+		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+	)
+	if err != nil {
+		return err
+	}
+	f.SetInfiniteGasMeter()
+	return nil
 }
