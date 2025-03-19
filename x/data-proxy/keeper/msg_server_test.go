@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"encoding/hex"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -23,8 +24,8 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
 				Fee:           s.NewFeeFromString("10000000000000000000"),
 				Memo:          "",
-				PubKey:        "0235697aaf54b1e2b8dc99667742c58a293d90da91758e24bfecd197443df65881",
-				Signature:     "c458fde9f64c0a92179ec8d61fdd5f93b90c2382e2617a3b166db62e46d78d8276b3664ac668b0c485ad033566fa2947b8ed1a7a9c4a7a21197746f3595ebc3a",
+				PubKey:        "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1",
+				Signature:     "6e8b21cf5fb2a87ea39d5320d37a47c3abdb70c41cafb0b6a499c0a7489ac04b22c9117bdd8f2a057818fd0baf5c1c529cb36f95037a28d20170dee66f322693",
 			},
 			expected: &types.ProxyConfig{
 				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
@@ -42,8 +43,8 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
 				Fee:           s.NewFeeFromString("9000000000000000000"),
 				Memo:          "This is a sweet proxy",
-				PubKey:        "0235697aaf54b1e2b8dc99667742c58a293d90da91758e24bfecd197443df65881",
-				Signature:     "1ae1729fdeb2d3f4074926948acf969760082fceeea3932b93cb9e74107066e92fc64b8210076417eb2982c50bf9f69b4950e2cbed21986ac1f58d9b640e070f",
+				PubKey:        "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1",
+				Signature:     "a8fe95113f86e564d63b0214aa44c4bdf793d0276ff516347e8d9a253a37aec9412ebb64c1d7e4d65e924c1da8b7d2b1f8afcf695b2148d31e31d3967c89b73e",
 			},
 			expected: &types.ProxyConfig{
 				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
@@ -135,6 +136,22 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 			expected: nil,
 			wantErr:  sdkerrors.ErrInvalidRequest,
 		},
+		{
+			name: "Invalid memo length",
+			msg: &types.MsgRegisterDataProxy{
+				AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				Fee: &sdk.Coin{
+					Denom:  "uatom",
+					Amount: s.NewIntFromString("10000"),
+				},
+				Memo:      strings.Repeat("a", types.MaxMemoLength+1),
+				PubKey:    "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4f3",
+				Signature: "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
+			},
+			expected: nil,
+			wantErr:  sdkerrors.ErrInvalidRequest,
+		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
@@ -163,9 +180,9 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 			AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 			PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 			Fee:           s.NewFeeFromString("10000000000000000000"),
-
-			PubKey:    "0235697aaf54b1e2b8dc99667742c58a293d90da91758e24bfecd197443df65881",
-			Signature: "7b79c33ea37c94f28d307f50d238860f527c0333505e1d6a220556238bd0977b57400c527d847d4e36e7f27928bed3846042fb111d398bb71c12ae53298345b0",
+			Memo:          "",
+			PubKey:        "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1",
+			Signature:     "32473a31c221d8cf9ce4f6269369c9ce2b0ce9139f3dc93bd9e020bd76186c06087dc8d5367c0b6e7175a108694f2abc89b9675bea8ff35360fb8dc7225f8870",
 		}
 
 		_, err := s.msgSrvr.RegisterDataProxy(s.ctx, msg)
@@ -316,6 +333,21 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 				Sender:           "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 				NewPayoutAddress: types.DoNotModifyField,
 				NewMemo:          types.DoNotModifyField,
+				NewFee: &sdk.Coin{
+					Denom:  "uatom",
+					Amount: s.NewIntFromString("10000"),
+				},
+				PubKey: "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+			},
+			expected: nil,
+			wantErr:  sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "Update memo with invalid memo length",
+			msg: &types.MsgEditDataProxy{
+				Sender:           "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewPayoutAddress: types.DoNotModifyField,
+				NewMemo:          strings.Repeat("b", types.MaxMemoLength+1),
 				NewFee: &sdk.Coin{
 					Denom:  "uatom",
 					Amount: s.NewIntFromString("10000"),

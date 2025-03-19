@@ -23,6 +23,9 @@ func (m *MsgRegisterDataProxy) ValidateBasic() error {
 	if m.Signature == "" {
 		return sdkerrors.ErrInvalidRequest.Wrap("empty signature")
 	}
+	if err := ValidateMemo(m.Memo); err != nil {
+		return err
+	}
 	if m.Fee.Denom != appparams.DefaultBondDenom {
 		return sdkerrors.ErrInvalidRequest.Wrapf("invalid coin denomination: got %s, expected %s", m.Fee.Denom, appparams.DefaultBondDenom)
 	}
@@ -55,6 +58,12 @@ func (m *MsgEditDataProxy) ValidateBasic() error {
 	if hasNewFee {
 		if m.NewFee.Denom != appparams.DefaultBondDenom {
 			return sdkerrors.ErrInvalidRequest.Wrapf("invalid coin denomination: got %s, expected %s", m.NewFee.Denom, appparams.DefaultBondDenom)
+		}
+	}
+
+	if hasNewMemo {
+		if err := ValidateMemo(m.NewMemo); err != nil {
+			return err
 		}
 	}
 

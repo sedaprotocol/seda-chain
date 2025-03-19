@@ -8,9 +8,17 @@ const (
 	UseMinimumDelay  = 0
 )
 
+func ValidateMemo(memo string) error {
+	if len(memo) > MaxMemoLength {
+		return sdkerrors.ErrInvalidRequest.Wrapf("invalid memo length; got: %d, max < %d", len(memo), MaxMemoLength)
+	}
+
+	return nil
+}
+
 func (p *ProxyConfig) Validate() error {
-	if len(p.Memo) > MaxMemoLength {
-		return sdkerrors.ErrInvalidRequest.Wrapf("invalid memo length; got: %d, max < %d", len(p.Memo), MaxMemoLength)
+	if err := ValidateMemo(p.Memo); err != nil {
+		return err
 	}
 
 	return nil

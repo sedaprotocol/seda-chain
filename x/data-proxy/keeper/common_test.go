@@ -62,8 +62,8 @@ func (s *KeeperTestSuite) SetupTest() {
 		runtime.NewKVStoreService(key),
 		s.authority,
 	)
-	// Testvectors are generated for seda-1
-	s.ctx = testCtx.Ctx.WithChainID("seda-1")
+	// Testvectors are generated for seda-1-testvectors
+	s.ctx = testCtx.Ctx.WithChainID("seda-1-testvectors")
 	s.cdc = encCfg.Codec
 	s.serverCtx = server.NewDefaultContext()
 
