@@ -26,7 +26,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
-	"github.com/cosmos/cosmos-sdk/codec/testutil"
+	sdktestutil "github.com/cosmos/cosmos-sdk/codec/testutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdkintegration "github.com/cosmos/cosmos-sdk/testutil/integration"
@@ -51,7 +51,7 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
-	"github.com/sedaprotocol/seda-chain/integration"
+	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
@@ -75,7 +75,7 @@ const (
 )
 
 type fixture struct {
-	*integration.IntegationApp
+	*testutil.IntegationApp
 	cdc               codec.Codec
 	txConfig          client.TxConfig
 	chainID           string
@@ -111,7 +111,7 @@ func initFixture(t testing.TB) *fixture {
 
 	mb := module.NewBasicManager(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}, wasm.AppModuleBasic{})
 
-	interfaceRegistry := testutil.CodecOptions{
+	interfaceRegistry := sdktestutil.CodecOptions{
 		AccAddressPrefix: params.Bech32PrefixAccAddr,
 		ValAddressPrefix: params.Bech32PrefixValAddr,
 	}.NewInterfaceRegistry()
@@ -263,7 +263,7 @@ func initFixture(t testing.TB) *fixture {
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
 	tallyModule := tally.NewAppModule(cdc, tallyKeeper)
 
-	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, router, map[string]appmodule.AppModule{
+	integrationApp := testutil.NewIntegrationApp(ctx, logger, keys, cdc, router, map[string]appmodule.AppModule{
 		authtypes.ModuleName:        authModule,
 		banktypes.ModuleName:        bankModule,
 		sdkstakingtypes.ModuleName:  stakingModule,

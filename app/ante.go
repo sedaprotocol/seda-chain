@@ -1,29 +1,34 @@
 package app
 
 import (
+	"context"
 	"errors"
 
 	wasmapp "github.com/CosmWasm/wasmd/app"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/utils"
-	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 )
 
-// HandlerOptions extends the wasmapp.HandlerOptions with a WasmStorageKeeper.
+// HandlerOptions extends the wasmapp.HandlerOptions with the expected
+// Wasm Storage keeper.
 type HandlerOptions struct {
 	wasmapp.HandlerOptions
 
-	WasmStorageKeeper *wasmstoragekeeper.Keeper
+	WasmStorageKeeper WasmStorageKeeper
+}
+
+type WasmStorageKeeper interface {
+	GetCoreContractAddr(ctx context.Context) (sdk.AccAddress, error)
 }
 
 // NewAnteHandler wraps the wasmapp.NewAnteHandler with a CommitRevealDecorator.
-// We manually prepend the decorator so we don't have to maintain the order of the decorators
-// required by CosmWasm.
+// We manually prepend the decorator so we don't have to maintain the order of
+// the decorators required by CosmWasm.
 func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	if options.WasmStorageKeeper == nil {
 		return nil, errors.New("wasm storage keeper is required for ante builder")
@@ -34,21 +39,21 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		return nil, err
 	}
 
-	commitRevealDecorator := NewCommitRevealDecorator(options.WasmStorageKeeper, options.WasmKeeper)
+	commitRevealDecorator := NewCommitRevealDecorator(options.WasmStorageKeeper)
 
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
 		return commitRevealDecorator.AnteHandle(ctx, tx, simulate, wasmAnteHandler)
 	}, nil
 }
 
-// Decorator which allows for free gas for eligible commit and/or reveal messages.
+// CommitRevealDecorator guarantees certain properties about transactions
+// involving commit/reveal messages.
 type CommitRevealDecorator struct {
-	wasmStorageKeeper *wasmstoragekeeper.Keeper
-	wasmKeeper        *wasmkeeper.Keeper
+	wasmStorageKeeper WasmStorageKeeper
 }
 
-func NewCommitRevealDecorator(wasmStorageKeeper *wasmstoragekeeper.Keeper, wasmKeeper *wasmkeeper.Keeper) *CommitRevealDecorator {
-	return &CommitRevealDecorator{wasmStorageKeeper: wasmStorageKeeper, wasmKeeper: wasmKeeper}
+func NewCommitRevealDecorator(wasmStorageKeeper WasmStorageKeeper) *CommitRevealDecorator {
+	return &CommitRevealDecorator{wasmStorageKeeper: wasmStorageKeeper}
 }
 
 // AnteHandle guarantees the following properties about the tx:
@@ -61,18 +66,27 @@ func (d CommitRevealDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate b
 	}
 
 	seen := make(map[string]bool)
-	seenCommitReveal := false
-	for _, msg := range tx.GetMsgs() {
-		msgInfo, commitOrReveal := utils.ExtractCommitRevealMsgInfo(coreContract.String(), msg)
-		if commitOrReveal {
-			if seen[msgInfo] {
-				return sdk.Context{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "duplicate commit or reveal message detected: %s", msgInfo)
-			}
-			seen[msgInfo] = true
-			seenCommitReveal = true
-		} else if seenCommitReveal {
+	commitRevealTx := false
+	for i, msg := range tx.GetMsgs() {
+		msgInfo, commitRevealMsg := utils.ExtractCommitRevealMsgInfo(coreContract.String(), msg)
+		// The first message determines the type of the tx.
+		if i == 0 {
+			commitRevealTx = commitRevealMsg
+		}
+
+		// We don't allow mixing commit/reveal messages with other messages.
+		if commitRevealTx != commitRevealMsg {
 			return sdk.Context{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "commit or reveal message cannot be mixed with other messages")
 		}
+		// If we don't have a commit/reveal message, we can skip the rest of the loop.
+		if !commitRevealTx {
+			continue
+		}
+		// If we see a duplicate commit/reveal message, we return an error.
+		if seen[msgInfo] {
+			return sdk.Context{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "duplicate commit or reveal message detected: %s", msgInfo)
+		}
+		seen[msgInfo] = true
 	}
 
 	return next(ctx, tx, simulate)

@@ -43,7 +43,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
-	"github.com/sedaprotocol/seda-chain/integration"
+	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/x/pubkey"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
@@ -75,7 +75,7 @@ var (
 )
 
 type fixture struct {
-	*integration.IntegationApp
+	*testutil.IntegationApp
 	cdc            codec.Codec
 	accountKeeper  authkeeper.AccountKeeper
 	bankKeeper     bankkeeper.Keeper
@@ -158,7 +158,7 @@ func initFixture(tb testing.TB) *fixture {
 	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	pubkeyModule := pubkey.NewAppModule(cdc, pubKeyKeeper)
 
-	integrationApp := integration.NewIntegrationApp(
+	integrationApp := testutil.NewIntegrationApp(
 		newCtx, logger, keys, cdc,
 		baseapp.NewMsgServiceRouter(),
 		map[string]appmodule.AppModule{

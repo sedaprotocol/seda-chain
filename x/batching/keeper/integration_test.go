@@ -45,7 +45,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
-	"github.com/sedaprotocol/seda-chain/integration"
+	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/x/batching"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
@@ -61,7 +61,7 @@ import (
 	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
-	"github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper/testutil"
+	wasmstoragetestutil "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper/testutil"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -71,7 +71,7 @@ const (
 )
 
 type fixture struct {
-	*integration.IntegationApp
+	*testutil.IntegationApp
 	cdc               codec.Codec
 	accountKeeper     authkeeper.AccountKeeper
 	bankKeeper        bankkeeper.Keeper
@@ -83,7 +83,7 @@ type fixture struct {
 	tallyKeeper       tallykeeper.Keeper
 	pubKeyKeeper      pubkeykeeper.Keeper
 	batchingKeeper    batchingkeeper.Keeper
-	mockViewKeeper    *testutil.MockViewKeeper
+	mockViewKeeper    *wasmstoragetestutil.MockViewKeeper
 	logBuf            *bytes.Buffer
 }
 
@@ -189,7 +189,7 @@ func initFixture(tb testing.TB) *fixture {
 	contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&wasmKeeper)
 
 	ctrl := gomock.NewController(tb)
-	viewKeeper := testutil.NewMockViewKeeper(ctrl)
+	viewKeeper := wasmstoragetestutil.NewMockViewKeeper(ctrl)
 
 	wasmStorageKeeper := wasmstoragekeeper.NewKeeper(
 		cdc,
@@ -249,7 +249,7 @@ func initFixture(tb testing.TB) *fixture {
 	pubKeyModule := pubkey.NewAppModule(cdc, pubKeyKeeper)
 	batchingModule := batching.NewAppModule(cdc, batchingKeeper)
 
-	integrationApp := integration.NewIntegrationApp(ctx, logger, keys, cdc, router, map[string]appmodule.AppModule{
+	integrationApp := testutil.NewIntegrationApp(ctx, logger, keys, cdc, router, map[string]appmodule.AppModule{
 		authtypes.ModuleName:        authModule,
 		banktypes.ModuleName:        bankModule,
 		sdkstakingtypes.ModuleName:  stakingModule,

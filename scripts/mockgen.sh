@@ -20,3 +20,4 @@ $mockgen_cmd -source=x/wasm-storage/types/expected_keepers.go -package testutil 
 $mockgen_cmd -source=x/pubkey/types/expected_keepers.go -package testutil -destination=x/pubkey/keeper/testutil/expected_keepers_mock.go
 $mockgen_cmd -source=x/staking/types/expected_keepers.go -package testutil -destination=x/staking/keeper/testutil/expected_keepers_mock.go
 $mockgen_cmd -source=app/abci/expected_keepers.go -package testutil -destination=app/abci/testutil/expected_keepers_mock.go
+$mockgen_cmd -source=app/ante.go -package testutil -destination=app/testutil/expected_keepers_mock.go
