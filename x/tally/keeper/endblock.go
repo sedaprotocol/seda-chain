@@ -93,7 +93,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		}
 
 		gasPrice, ok := math.NewIntFromString(req.GasPrice)
-		if !ok {
+		if !ok || !gasPrice.IsPositive() {
 			types.MarkResultAsFallback(&dataResults[i], fmt.Errorf("invalid gas price: %s", req.GasPrice))
 			continue
 		}

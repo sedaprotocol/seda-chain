@@ -40,12 +40,14 @@ type Request struct {
 	Version           string                `json:"version"`
 }
 
-// Validate validates the request fields and returns any validation error along with a partially filled DataResult
-// containing the valid fields that were successfully decoded.
+// Validate validates the request fields and returns any validation error along
+// with a partially filled DataResult containing the valid fields that were
+// successfully decoded.
 func (req *Request) ToResult(ctx types.Context) (result batchingtypes.DataResult, encodingErr error) {
-	// If for whatever reason the request ID is not a valid hex string there is no way to proceed
-	// so we're simply going panic.
-	// This should never happen since encoding bytes to hex is an operation that can't fail on the contract (Rust) side.
+	// If for whatever reason the request ID is not a valid hex string there is
+	// no way to proceed, so we're simply going panic.
+	// This should never happen since encoding bytes to hex is an operation that
+	// can't fail on the contract (Rust) side.
 	if _, err := hex.DecodeString(req.ID); err != nil {
 		panic(fmt.Sprintf("invalid request ID: %s", req.ID))
 	}
