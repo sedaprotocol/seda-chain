@@ -14,7 +14,6 @@ import (
 	addresscodec "cosmossdk.io/core/address"
 	"cosmossdk.io/log"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
@@ -162,7 +161,7 @@ func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 		err = h.verifyBatchSignatures(ctx, batch.BatchNumber, batch.BatchId, req.VoteExtension, req.ValidatorAddress)
 		if err != nil {
 			h.logger.Error("failed to verify batch signature", "req", req, "err", err)
-			return nil, err
+			return &abcitypes.ResponseVerifyVoteExtension{Status: abcitypes.ResponseVerifyVoteExtension_REJECT}, err
 		}
 
 		h.logger.Debug(
@@ -182,7 +181,7 @@ func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		// Check if there is a batch whose signatures must be collected
 		// at this block height.
 		var collectSigs bool
-		_, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetCollectPhase)
+		batch, err := h.batchingKeeper.GetBatchForHeight(ctx, ctx.BlockHeight()+BlockOffsetCollectPhase)
 		if err != nil {
 			if !errors.Is(err, collections.ErrNotFound) {
 				return nil, err
@@ -192,8 +191,26 @@ func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		}
 
 		var injection []byte
-		if req.Height > ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight && collectSigs {
-			err := baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), req.LocalLastCommit)
+		if IsVoteExtensionsEnabled(ctx) && collectSigs {
+			for i, vote := range req.LocalLastCommit.Votes {
+				// Verify the signatures since they're not guaranteed to have passed VerifyVoteExtension.
+				if err := h.verifyBatchSignatures(ctx, batch.BatchNumber, batch.BatchId, vote.VoteExtension, vote.Validator.Address); err != nil {
+					h.logger.Info(
+						"failed to validate vote extension - pruning vote",
+						"err", err,
+						"validator", vote.Validator.Address,
+					)
+
+					// failed to validate this vote-extension, mark it as absent in the original commit
+					vote.BlockIdFlag = cmttypes.BlockIDFlagAbsent
+					vote.ExtensionSignature = nil
+					vote.VoteExtension = nil
+					req.LocalLastCommit.Votes[i] = vote
+				}
+			}
+
+			// Validate after pruning to ensure we have enough voting power.
+			err := ValidateVoteExtensions(ctx, h.stakingKeeper, req.LocalLastCommit)
 			if err != nil {
 				return nil, err
 			}
@@ -237,7 +254,7 @@ func (h *Handlers) PrepareProposalHandler() sdk.PrepareProposalHandler {
 // the canonical set of vote extensions injected by the proposer.
 func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abcitypes.RequestProcessProposal) (*abcitypes.ResponseProcessProposal, error) {
-		if req.Height <= ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight {
+		if !IsVoteExtensionsEnabled(ctx) {
 			return h.defaultProcessProposal(ctx, req)
 		}
 
@@ -246,24 +263,24 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			if errors.Is(err, collections.ErrNotFound) {
 				return h.defaultProcessProposal(ctx, req)
 			}
-			return nil, err
+			return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_REJECT}, err
 		}
 
 		if len(req.Txs) == 0 {
 			h.logger.Error("proposal does not contain extended votes injection")
-			return nil, ErrNoInjectedExtendedVotesTx
+			return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_REJECT}, ErrNoInjectedExtendedVotesTx
 		}
 
 		var extendedVotes abcitypes.ExtendedCommitInfo
 		if err := json.Unmarshal(req.Txs[0], &extendedVotes); err != nil {
 			h.logger.Error("failed to decode injected extended votes tx", "err", err)
-			return nil, err
+			return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_REJECT}, err
 		}
 
 		// Validate vote extensions and batch signatures.
-		err = baseapp.ValidateVoteExtensions(ctx, h.stakingKeeper, req.Height, ctx.ChainID(), extendedVotes)
+		err = ValidateVoteExtensions(ctx, h.stakingKeeper, extendedVotes)
 		if err != nil {
-			return nil, err
+			return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_REJECT}, err
 		}
 
 		for _, vote := range extendedVotes.Votes {
@@ -272,7 +289,7 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 				err = h.verifyBatchSignatures(ctx, batch.BatchNumber, batch.BatchId, vote.VoteExtension, vote.Validator.Address)
 				if err != nil {
 					h.logger.Error("proposal contains an invalid vote extension", "vote", vote)
-					return nil, err
+					return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_REJECT}, err
 				}
 			}
 		}
@@ -302,7 +319,7 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 		}()
 
 		res = new(sdk.ResponsePreBlock)
-		if req.Height <= ctx.ConsensusParams().Abci.VoteExtensionsEnableHeight {
+		if !IsVoteExtensionsEnabled(ctx) {
 			return res, nil
 		}
 
@@ -330,6 +347,12 @@ func (h *Handlers) PreBlocker() sdk.PreBlocker {
 		}
 
 		for _, vote := range extendedVotes.Votes {
+			// Skip votes that are absent (possibly pruned invalid votes)
+			// or have no vote extension (for new validators).
+			if vote.BlockIdFlag == cmttypes.BlockIDFlagAbsent || len(vote.VoteExtension) == 0 {
+				continue
+			}
+
 			validator, err := h.stakingKeeper.GetValidatorByConsAddr(ctx, vote.Validator.Address)
 			if err != nil {
 				return nil, err
