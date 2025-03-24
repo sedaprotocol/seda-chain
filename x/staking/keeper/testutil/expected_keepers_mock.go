@@ -14,8 +14,8 @@ import (
 	reflect "reflect"
 
 	types "github.com/cosmos/cosmos-sdk/types"
-	utils "github.com/sedaprotocol/seda-chain/app/utils"
-	types0 "github.com/sedaprotocol/seda-chain/x/pubkey/types"
+	types0 "github.com/sedaprotocol/seda-chain/types"
+	types1 "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -44,7 +44,7 @@ func (m *MockPubKeyKeeper) EXPECT() *MockPubKeyKeeperMockRecorder {
 }
 
 // HasRegisteredKey mocks base method.
-func (m *MockPubKeyKeeper) HasRegisteredKey(ctx context.Context, validatorAddr types.ValAddress, index utils.SEDAKeyIndex) (bool, error) {
+func (m *MockPubKeyKeeper) HasRegisteredKey(ctx context.Context, validatorAddr types.ValAddress, index types0.SEDAKeyIndex) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HasRegisteredKey", ctx, validatorAddr, index)
 	ret0, _ := ret[0].(bool)
@@ -59,7 +59,7 @@ func (mr *MockPubKeyKeeperMockRecorder) HasRegisteredKey(ctx, validatorAddr, ind
 }
 
 // IsProvingSchemeActivated mocks base method.
-func (m *MockPubKeyKeeper) IsProvingSchemeActivated(ctx context.Context, index utils.SEDAKeyIndex) (bool, error) {
+func (m *MockPubKeyKeeper) IsProvingSchemeActivated(ctx context.Context, index types0.SEDAKeyIndex) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsProvingSchemeActivated", ctx, index)
 	ret0, _ := ret[0].(bool)
@@ -74,7 +74,7 @@ func (mr *MockPubKeyKeeperMockRecorder) IsProvingSchemeActivated(ctx, index any)
 }
 
 // StoreIndexedPubKeys mocks base method.
-func (m *MockPubKeyKeeper) StoreIndexedPubKeys(ctx types.Context, valAddr types.ValAddress, pubKeys []types0.IndexedPubKey) error {
+func (m *MockPubKeyKeeper) StoreIndexedPubKeys(ctx types.Context, valAddr types.ValAddress, pubKeys []types1.IndexedPubKey) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreIndexedPubKeys", ctx, valAddr, pubKeys)
 	ret0, _ := ret[0].(error)

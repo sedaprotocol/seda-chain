@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
@@ -24,7 +24,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 		err = nil
 	}()
 
-	scheme, err := k.GetProvingScheme(ctx, utils.SEDAKeyIndexSecp256k1)
+	scheme, err := k.GetProvingScheme(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 	// Process activation in progress.
 	activationInProgress := scheme.ActivationHeight != types.DefaultActivationHeight
 	if activationInProgress && ctx.BlockHeight() >= scheme.ActivationHeight {
-		err = k.JailValidators(ctx, utils.SEDAKeyIndexSecp256k1)
+		err = k.JailValidators(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			return err
 		}
@@ -49,7 +49,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 			return err
 		}
 
-		k.Logger(ctx).Info("proving scheme activated", "key_index", utils.SEDAKeyIndexSecp256k1)
+		k.Logger(ctx).Info("proving scheme activated", "key_index", sedatypes.SEDAKeyIndexSecp256k1)
 		return
 	}
 
@@ -57,17 +57,17 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 	// process if the rate has reached the threshold. If the activation
 	// process is already in progress and the threshold is not met,
 	// cancel the activation process.
-	met, err := k.CheckKeyRegistrationRate(ctx, utils.SEDAKeyIndexSecp256k1)
+	met, err := k.CheckKeyRegistrationRate(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return err
 	}
 	if !activationInProgress && met {
-		err = k.StartProvingSchemeActivation(ctx, utils.SEDAKeyIndexSecp256k1)
+		err = k.StartProvingSchemeActivation(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			return err
 		}
 	} else if activationInProgress && !met {
-		err = k.CancelProvingSchemeActivation(ctx, utils.SEDAKeyIndexSecp256k1)
+		err = k.CancelProvingSchemeActivation(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
 
 // CheckKeyRegistrationRate checks if the current registration rate of
 // public keys of the given key scheme exceeds the threshold.
-func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, keyIndex utils.SEDAKeyIndex) (bool, error) {
+func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, keyIndex sedatypes.SEDAKeyIndex) (bool, error) {
 	// If the sum of the voting power has reached 80%, enable secp256k1
 	// proving scheme.
 	totalPower, err := k.stakingKeeper.GetLastTotalPower(ctx)
@@ -122,7 +122,7 @@ func (k Keeper) CheckKeyRegistrationRate(ctx sdk.Context, keyIndex utils.SEDAKey
 // JailValidators goes through all validators in the store and jails
 // validators without the public key corresponding to the given key
 // scheme.
-func (k Keeper) JailValidators(ctx sdk.Context, keyIndex utils.SEDAKeyIndex) error {
+func (k Keeper) JailValidators(ctx sdk.Context, keyIndex sedatypes.SEDAKeyIndex) error {
 	validators, err := k.stakingKeeper.GetAllValidators(ctx)
 	if err != nil {
 		return err

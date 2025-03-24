@@ -15,6 +15,7 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 )
 
 type SEDAKeysTestSuite struct {
@@ -44,7 +45,7 @@ func (s *SEDAKeysTestSuite) TestSEDAKeyEncryptionDecryption() {
 	generatedKeys, err := utils.GenerateSEDAKeys(valAddr, tempDir, encryptionKey, false)
 
 	s.Require().NoError(err)
-	s.Require().Equal(utils.SEDAKeyIndex(generatedKeys[0].Index), utils.SEDAKeyIndexSecp256k1)
+	s.Require().Equal(sedatypes.SEDAKeyIndex(generatedKeys[0].Index), sedatypes.SEDAKeyIndexSecp256k1)
 	s.Require().NotEmpty(generatedKeys[0].PubKey, "public key should not be empty")
 
 	keyfilePath := filepath.Join(tempDir, utils.SEDAKeyFileName)
@@ -81,7 +82,7 @@ func (s *SEDAKeysTestSuite) TestSEDAKeyWithoutEncryption() {
 	generatedKeys, err := utils.GenerateSEDAKeys(valAddr, tempDir, "", false)
 
 	s.Require().NoError(err)
-	s.Require().Equal(utils.SEDAKeyIndex(generatedKeys[0].Index), utils.SEDAKeyIndexSecp256k1)
+	s.Require().Equal(sedatypes.SEDAKeyIndex(generatedKeys[0].Index), sedatypes.SEDAKeyIndexSecp256k1)
 	s.Require().NotEmpty(generatedKeys[0].PubKey, "public key should not be empty")
 
 	keyfilePath := filepath.Join(tempDir, utils.SEDAKeyFileName)

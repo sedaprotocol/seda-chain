@@ -10,6 +10,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/staking/types"
 )
 
@@ -58,7 +59,7 @@ func (m msgServer) CreateSEDAValidator(ctx context.Context, msg *types.MsgCreate
 	}
 
 	// Validate and store the public keys.
-	activated, err := m.pubKeyKeeper.IsProvingSchemeActivated(ctx, utils.SEDAKeyIndexSecp256k1)
+	activated, err := m.pubKeyKeeper.IsProvingSchemeActivated(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return nil, err
 	}

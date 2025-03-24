@@ -8,7 +8,7 @@ import (
 
 	"cosmossdk.io/x/evidence/exported"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 )
 
 // Evidence type constants
@@ -55,7 +55,7 @@ func (e *BatchDoubleSign) ValidateBasic() error {
 	}
 
 	// Currently we only support secp256k1 signatures for batch signing
-	if e.ProvingSchemeIndex != uint32(utils.SEDAKeyIndexSecp256k1) {
+	if e.ProvingSchemeIndex != uint32(sedatypes.SEDAKeyIndexSecp256k1) {
 		return fmt.Errorf("invalid proving scheme index: %d", e.ProvingSchemeIndex)
 	}
 

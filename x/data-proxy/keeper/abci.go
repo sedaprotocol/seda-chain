@@ -8,22 +8,8 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 )
 
-func (k *Keeper) EndBlock(ctx sdk.Context) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			k.Logger(ctx).Error("recovered from panic in data-proxy EndBlock", "err", r)
-		}
-		if err != nil {
-			k.Logger(ctx).Error("error in data-proxy EndBlock", "err", err)
-		}
-		err = nil
-	}()
-
-	err = k.ProcessFeeUpdates(ctx)
-	if err != nil {
-		return
-	}
-	return
+func (k *Keeper) EndBlock(ctx sdk.Context) error {
+	return k.ProcessFeeUpdates(ctx)
 }
 
 func (k *Keeper) ProcessFeeUpdates(ctx sdk.Context) error {

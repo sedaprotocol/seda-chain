@@ -9,12 +9,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 type SEDASigner interface {
 	GetValAddress() sdk.ValAddress
-	Sign(input []byte, index SEDAKeyIndex) (signature []byte, err error)
+	Sign(input []byte, index sedatypes.SEDAKeyIndex) (signature []byte, err error)
 	ReloadIfMismatch(pubKeys []pubkeytypes.IndexedPubKey) error
 	IsLoaded() bool
 }
@@ -23,7 +24,7 @@ var _ SEDASigner = &sedaKeys{}
 
 type sedaKeys struct {
 	valAddr  sdk.ValAddress
-	keys     map[SEDAKeyIndex]indexedPrivKey
+	keys     map[sedatypes.SEDAKeyIndex]indexedPrivKey
 	pubKeys  []pubkeytypes.IndexedPubKey // sorted by index
 	keyPath  string
 	isLoaded bool
@@ -52,7 +53,7 @@ func loadSEDAKeys(keyFilePath string, allowUnencrypted bool) (keys sedaKeys, err
 		return keys, err
 	}
 
-	keysMap := make(map[SEDAKeyIndex]indexedPrivKey)
+	keysMap := make(map[sedatypes.SEDAKeyIndex]indexedPrivKey)
 	indPubKeys := make([]pubkeytypes.IndexedPubKey, len(keyFile.Keys))
 	for _, key := range keyFile.Keys {
 		keysMap[key.Index] = key
@@ -79,7 +80,7 @@ func (s *sedaKeys) GetValAddress() sdk.ValAddress {
 }
 
 // Sign signs a 32-byte digest with the key at the given index.
-func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
+func (s *sedaKeys) Sign(input []byte, index sedatypes.SEDAKeyIndex) ([]byte, error) {
 	if !s.isLoaded {
 		return nil, fmt.Errorf("signer is not loaded")
 	}
@@ -87,7 +88,7 @@ func (s *sedaKeys) Sign(input []byte, index SEDAKeyIndex) ([]byte, error) {
 	var signature []byte
 	var err error
 	switch index {
-	case SEDAKeyIndexSecp256k1:
+	case sedatypes.SEDAKeyIndexSecp256k1:
 		signature, err = ethcrypto.Sign(input, s.keys[index].PrivKey)
 	default:
 		err = fmt.Errorf("invalid SEDA key index %d", index)

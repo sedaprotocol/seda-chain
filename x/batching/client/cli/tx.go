@@ -14,7 +14,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
@@ -94,11 +94,11 @@ func SubmitBatchDoubleSign() *cobra.Command {
 			provingSchemeInput, _ := cmd.Flags().GetString(FlagProvingScheme)
 			if provingSchemeInput != "" {
 				provingSchemeIndex, err = strconv.ParseUint(provingSchemeInput, 10, 32)
-				if err != nil || provingSchemeIndex != uint64(utils.SEDAKeyIndexSecp256k1) {
+				if err != nil || provingSchemeIndex != uint64(sedatypes.SEDAKeyIndexSecp256k1) {
 					return fmt.Errorf("invalid proving scheme index: %s", provingSchemeInput)
 				}
 			} else {
-				provingSchemeIndex = uint64(utils.SEDAKeyIndexSecp256k1)
+				provingSchemeIndex = uint64(sedatypes.SEDAKeyIndexSecp256k1)
 			}
 
 			evidence := &types.BatchDoubleSign{
@@ -126,7 +126,7 @@ func SubmitBatchDoubleSign() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(FlagProvingScheme, "0", fmt.Sprintf("proving scheme index [%d]", utils.SEDAKeyIndexSecp256k1))
+	cmd.Flags().String(FlagProvingScheme, "0", fmt.Sprintf("proving scheme index [%d]", sedatypes.SEDAKeyIndexSecp256k1))
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

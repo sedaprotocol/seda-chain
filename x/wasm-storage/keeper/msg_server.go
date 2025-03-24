@@ -14,7 +14,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/sedaprotocol/seda-chain/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -201,7 +201,7 @@ func (m msgServer) RefundTxFee(goCtx context.Context, req *types.MsgRefundTxFee)
 	}
 
 	msgs := tx.GetMsgs()
-	msgInfo, ok := utils.ExtractCommitRevealMsgInfo(coreContract, msgs[len(msgs)-1])
+	msgInfo, ok := sedatypes.ExtractCommitRevealMsgInfo(coreContract, msgs[len(msgs)-1])
 	if !ok {
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "last message in tx is not a commit or reveal")
 	}

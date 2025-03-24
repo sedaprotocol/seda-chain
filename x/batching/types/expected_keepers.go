@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 )
 
 type SlashingKeeper interface {
@@ -36,6 +36,6 @@ type WasmStorageKeeper interface {
 }
 
 type PubKeyKeeper interface {
-	GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex) ([]byte, error)
-	IsProvingSchemeActivated(ctx context.Context, index utils.SEDAKeyIndex) (bool, error)
+	GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index sedatypes.SEDAKeyIndex) ([]byte, error)
+	IsProvingSchemeActivated(ctx context.Context, index sedatypes.SEDAKeyIndex) (bool, error)
 }

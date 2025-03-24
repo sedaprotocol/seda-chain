@@ -21,6 +21,7 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
@@ -56,25 +57,12 @@ func GenerateSEDAKeyEncryptionKey() (string, error) {
 	return base64.StdEncoding.EncodeToString(key), nil
 }
 
-// SEDAKeyIndex enumerates the SEDA key indices.
-type SEDAKeyIndex uint32
-
-const (
-	SEDAKeyIndexSecp256k1 SEDAKeyIndex = iota
-)
-
-// SEDA domain separators
-const (
-	SEDASeparatorDataResult byte = iota
-	SEDASeparatorSecp256k1
-)
-
 type privKeyGenerator func() *ecdsa.PrivateKey
 
 // sedaKeyGenerators maps the SEDA key index to the corresponding
 // private key generator.
-var sedaKeyGenerators = map[SEDAKeyIndex]privKeyGenerator{
-	SEDAKeyIndexSecp256k1: func() *ecdsa.PrivateKey {
+var sedaKeyGenerators = map[sedatypes.SEDAKeyIndex]privKeyGenerator{
+	sedatypes.SEDAKeyIndexSecp256k1: func() *ecdsa.PrivateKey {
 		privKey, err := ecdsa.GenerateKey(ethcrypto.S256(), rand.Reader)
 		if err != nil {
 			panic(fmt.Sprintf("failed to generate secp256k1 private key: %v", err))
@@ -87,8 +75,8 @@ type pubKeyValidator func([]byte) bool
 
 // sedaPubKeyValidators maps the SEDA key index to the corresponding
 // public key validator.
-var sedaPubKeyValidators = map[SEDAKeyIndex]pubKeyValidator{
-	SEDAKeyIndexSecp256k1: func(pub []byte) bool {
+var sedaPubKeyValidators = map[sedatypes.SEDAKeyIndex]pubKeyValidator{
+	sedatypes.SEDAKeyIndexSecp256k1: func(pub []byte) bool {
 		_, err := ethcrypto.UnmarshalPubkey(pub)
 		return err == nil
 	},
@@ -104,9 +92,9 @@ type sedaKeyFile struct {
 
 // indexedPrivKey is used for persisting the SEDA keys in a file.
 type indexedPrivKey struct {
-	Index   SEDAKeyIndex      `json:"index"`
-	PrivKey *ecdsa.PrivateKey `json:"priv_key"`
-	PubKey  []byte            `json:"pub_key"`
+	Index   sedatypes.SEDAKeyIndex `json:"index"`
+	PrivKey *ecdsa.PrivateKey      `json:"priv_key"`
+	PubKey  []byte                 `json:"pub_key"`
 }
 
 func (k *indexedPrivKey) MarshalJSON() ([]byte, error) {
@@ -277,7 +265,7 @@ func ValidateSEDAPubKeys(indPubKeys []pubkeytypes.IndexedPubKey) error {
 		return indPubKeys[i].Index < indPubKeys[j].Index
 	})
 	for _, indPubKey := range indPubKeys {
-		index := SEDAKeyIndex(indPubKey.Index)
+		index := sedatypes.SEDAKeyIndex(indPubKey.Index)
 		keyValidator, exists := sedaPubKeyValidators[index]
 		if !exists {
 			return fmt.Errorf("invalid SEDA key index %d", indPubKey.Index)

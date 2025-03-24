@@ -16,7 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
@@ -65,7 +65,7 @@ func (k Keeper) GetAuthority() string {
 // for a validator.
 func (k Keeper) StoreIndexedPubKeys(ctx sdk.Context, valAddr sdk.ValAddress, pubKeys []types.IndexedPubKey) error {
 	for _, pk := range pubKeys {
-		err := k.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndex(pk.Index), pk.PubKey)
+		err := k.SetValidatorKeyAtIndex(ctx, valAddr, sedatypes.SEDAKeyIndex(pk.Index), pk.PubKey)
 		if err != nil {
 			return err
 		}
@@ -82,7 +82,7 @@ func (k Keeper) StoreIndexedPubKeys(ctx sdk.Context, valAddr sdk.ValAddress, pub
 	return nil
 }
 
-func (k Keeper) SetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex, pubKey []byte) error {
+func (k Keeper) SetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index sedatypes.SEDAKeyIndex, pubKey []byte) error {
 	err := k.pubKeys.Set(ctx, collections.Join(validatorAddr.Bytes(), uint32(index)), pubKey)
 	if err != nil {
 		return err
@@ -90,7 +90,7 @@ func (k Keeper) SetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.Va
 	return nil
 }
 
-func (k Keeper) GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex) ([]byte, error) {
+func (k Keeper) GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.ValAddress, index sedatypes.SEDAKeyIndex) ([]byte, error) {
 	pubKey, err := k.pubKeys.Get(ctx, collections.Join(validatorAddr.Bytes(), uint32(index)))
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (k Keeper) GetValidatorKeyAtIndex(ctx context.Context, validatorAddr sdk.Va
 
 // HasRegisteredKey returns true if the validator has registered a key
 // at the index.
-func (k Keeper) HasRegisteredKey(ctx context.Context, validatorAddr sdk.ValAddress, index utils.SEDAKeyIndex) (bool, error) {
+func (k Keeper) HasRegisteredKey(ctx context.Context, validatorAddr sdk.ValAddress, index sedatypes.SEDAKeyIndex) (bool, error) {
 	_, err := k.pubKeys.Get(ctx, collections.Join(validatorAddr.Bytes(), uint32(index)))
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
@@ -188,13 +188,13 @@ func (k Keeper) SetProvingScheme(ctx context.Context, scheme types.ProvingScheme
 	return nil
 }
 
-func (k Keeper) GetProvingScheme(ctx context.Context, index utils.SEDAKeyIndex) (types.ProvingScheme, error) {
+func (k Keeper) GetProvingScheme(ctx context.Context, index sedatypes.SEDAKeyIndex) (types.ProvingScheme, error) {
 	return k.provingSchemes.Get(ctx, uint32(index))
 }
 
 // StartProvingSchemeActivation starts the activation of the given
 // proving scheme.
-func (k Keeper) StartProvingSchemeActivation(ctx sdk.Context, index utils.SEDAKeyIndex) error {
+func (k Keeper) StartProvingSchemeActivation(ctx sdk.Context, index sedatypes.SEDAKeyIndex) error {
 	scheme, err := k.provingSchemes.Get(ctx, uint32(index))
 	if err != nil {
 		return err
@@ -207,7 +207,7 @@ func (k Keeper) StartProvingSchemeActivation(ctx sdk.Context, index utils.SEDAKe
 	return k.SetProvingScheme(ctx, scheme)
 }
 
-func (k Keeper) CancelProvingSchemeActivation(ctx sdk.Context, index utils.SEDAKeyIndex) error {
+func (k Keeper) CancelProvingSchemeActivation(ctx sdk.Context, index sedatypes.SEDAKeyIndex) error {
 	scheme, err := k.provingSchemes.Get(ctx, uint32(index))
 	if err != nil {
 		return err
@@ -216,7 +216,7 @@ func (k Keeper) CancelProvingSchemeActivation(ctx sdk.Context, index utils.SEDAK
 	return k.SetProvingScheme(ctx, scheme)
 }
 
-func (k Keeper) IsProvingSchemeActivated(ctx context.Context, index utils.SEDAKeyIndex) (bool, error) {
+func (k Keeper) IsProvingSchemeActivated(ctx context.Context, index sedatypes.SEDAKeyIndex) (bool, error) {
 	scheme, err := k.provingSchemes.Get(ctx, uint32(index))
 	if err != nil {
 		return false, err

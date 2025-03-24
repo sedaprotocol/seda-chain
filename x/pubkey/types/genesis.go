@@ -2,6 +2,8 @@ package types
 
 import (
 	fmt "fmt"
+
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 )
 
 const (
@@ -22,6 +24,17 @@ func DefaultGenesisState() *GenesisState {
 }
 
 func ValidateGenesis(data GenesisState) error {
+	// Ensure secp256k1 proving scheme exists to prevent panic in batching end blocker.
+	found := false
+	for _, scheme := range data.ProvingSchemes {
+		if scheme.Index == uint32(sedatypes.SEDAKeyIndexSecp256k1) {
+			found = true
+		}
+	}
+	if !found {
+		return fmt.Errorf("secp256k1 proving scheme is required")
+	}
+
 	for _, val := range data.ValidatorPubKeys {
 		if val.ValidatorAddr == "" {
 			return fmt.Errorf("empty validator address")

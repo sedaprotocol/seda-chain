@@ -9,7 +9,7 @@ import (
 
 	"cosmossdk.io/collections"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
@@ -18,7 +18,7 @@ func TestExportGenesis(t *testing.T) {
 	f := initFixture(t)
 
 	f.pubKeyKeeper.SetProvingScheme(f.Context(), pubkeytypes.ProvingScheme{
-		Index:       uint32(utils.SEDAKeyIndexSecp256k1),
+		Index:       uint32(sedatypes.SEDAKeyIndexSecp256k1),
 		IsActivated: true,
 	})
 

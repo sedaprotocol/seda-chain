@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
@@ -15,7 +15,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 			panic(err)
 		}
 		for _, pk := range val.IndexedPubKeys {
-			err = k.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndex(pk.Index), pk.PubKey)
+			err = k.SetValidatorKeyAtIndex(ctx, valAddr, sedatypes.SEDAKeyIndex(pk.Index), pk.PubKey)
 			if err != nil {
 				panic(err)
 			}

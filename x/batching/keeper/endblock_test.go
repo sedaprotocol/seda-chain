@@ -25,6 +25,7 @@ import (
 	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
@@ -45,7 +46,7 @@ func Test_ConstructDataResultTree(t *testing.T) {
 	for i, entry := range entries.Entries {
 		entryHexes = append(entryHexes, hex.EncodeToString(entry))
 		drIds = append(drIds, dataResults[i].Id)
-		entriesWithSep[i] = append([]byte{utils.SEDASeparatorDataResult}, entry...)
+		entriesWithSep[i] = append([]byte{sedatypes.SEDASeparatorDataResult}, entry...)
 	}
 	require.ElementsMatch(t, drIds, entryHexes)
 
@@ -88,7 +89,7 @@ func Test_ConstructValidatorTree(t *testing.T) {
 		require.NoError(t, err)
 
 		// Reconstruct the validator tree entry.
-		entriesWithSep[i] = append([]byte{utils.SEDASeparatorSecp256k1}, entry.EthAddress...)
+		entriesWithSep[i] = append([]byte{sedatypes.SEDASeparatorSecp256k1}, entry.EthAddress...)
 		entriesWithSep[i] = binary.BigEndian.AppendUint32(entriesWithSep[i], entry.VotingPowerPercent)
 	}
 	require.ElementsMatch(t, expectedAddrs, parsedAddrs)
@@ -143,7 +144,7 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 		_, err = f.stakingKeeper.Keeper.EndBlocker(ctx)
 		require.NoError(t, err)
 
-		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1, pubKeys[i])
+		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, sedatypes.SEDAKeyIndexSecp256k1, pubKeys[i])
 		require.NoError(t, err)
 	}
 	return addrs, pubKeys, powers
@@ -770,7 +771,7 @@ func addBatchSigningValidatorsFromTestData(t *testing.T, f *fixture, testData []
 		require.NoError(t, err)
 		pk := elliptic.Marshal(privKey.PublicKey, privKey.PublicKey.X, privKey.PublicKey.Y)
 
-		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1, pk)
+		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, sedatypes.SEDAKeyIndexSecp256k1, pk)
 		require.NoError(t, err)
 	}
 	return addrs, secp256k1PubKeys, powers

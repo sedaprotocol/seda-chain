@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/sedaprotocol/seda-chain/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 )
 
 // HandlerOptions extends the wasmapp.HandlerOptions with the expected
@@ -68,7 +68,7 @@ func (d CommitRevealDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate b
 	seen := make(map[string]bool)
 	commitRevealTx := false
 	for i, msg := range tx.GetMsgs() {
-		msgInfo, commitRevealMsg := utils.ExtractCommitRevealMsgInfo(coreContract.String(), msg)
+		msgInfo, commitRevealMsg := sedatypes.ExtractCommitRevealMsgInfo(coreContract.String(), msg)
 		// The first message determines the type of the tx.
 		if i == 0 {
 			commitRevealTx = commitRevealMsg

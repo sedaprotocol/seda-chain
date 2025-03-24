@@ -13,38 +13,26 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
-func (k Keeper) EndBlock(ctx sdk.Context) (err error) {
-	// Use defer to prevent returning an error, which would cause
-	// the chain to halt.
-	defer func() {
-		// Handle a panic.
-		if r := recover(); r != nil {
-			k.Logger(ctx).Error("recovered from panic in batching end blocker", "err", r)
-		}
-		// Handle an error.
-		if err != nil {
-			k.Logger(ctx).Error("error in batching end blocker", "err", err)
-		}
-		err = nil
-	}()
-
+func (k Keeper) EndBlock(ctx sdk.Context) error {
 	// Since we're only using the secp256k1 key for batching, we only
 	// need to check if the secp256k1 proving scheme is activated.
-	isActivated, err := k.pubKeyKeeper.IsProvingSchemeActivated(ctx, utils.SEDAKeyIndexSecp256k1)
+	isActivated, err := k.pubKeyKeeper.IsProvingSchemeActivated(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return err
 	}
 	if !isActivated {
+		k.Logger(ctx).Info("skip batching since proving scheme has not been activated", "index", sedatypes.SEDAKeyIndexSecp256k1)
 		return nil
 	}
 
 	batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
 	if err != nil {
 		if errors.Is(err, types.ErrNoBatchingUpdate) {
-			k.Logger(ctx).Info("skip batch creation", "height", ctx.BlockHeight())
+			k.Logger(ctx).Info("skip batch creation due to no update", "height", ctx.BlockHeight())
 			return nil
 		}
 		return err
@@ -140,7 +128,7 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) (ty
 			return types.DataResultTreeEntries{}, nil, err
 		}
 		entries[i] = resID
-		treeEntries[i] = append([]byte{utils.SEDASeparatorDataResult}, resID...)
+		treeEntries[i] = append([]byte{sedatypes.SEDASeparatorDataResult}, resID...)
 
 		err = k.MarkDataResultAsBatched(ctx, res, newBatchNum)
 		if err != nil {
@@ -167,7 +155,7 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([]types.ValidatorTreeEn
 	err = k.stakingKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) (stop bool) {
 		// Retrieve corresponding public key and convert it to
 		// uncompressed form.
-		secp256k1PubKey, err := k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valAddr, utils.SEDAKeyIndexSecp256k1)
+		secp256k1PubKey, err := k.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valAddr, sedatypes.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			if errors.Is(err, collections.ErrNotFound) {
 				return false
@@ -180,7 +168,7 @@ func (k Keeper) ConstructValidatorTree(ctx sdk.Context) ([]types.ValidatorTreeEn
 			panic(err)
 		}
 
-		separator := []byte{utils.SEDASeparatorSecp256k1}
+		separator := []byte{sedatypes.SEDASeparatorSecp256k1}
 		//nolint:gosec // G115: Max of powerPercent should be 1e8 < 2^64.
 		powerPercent := uint32(math.NewInt(power).MulRaw(1e8).Quo(totalPower).Uint64())
 

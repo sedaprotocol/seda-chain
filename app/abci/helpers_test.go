@@ -37,6 +37,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/abci/testutil"
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
@@ -119,7 +120,7 @@ func (s *ABCITestSuite) SetupTest(mockBatchNumber uint64, isNewValidator []bool)
 		vals[i].sedaPubKeys, err = utils.GenerateSEDAKeys(val.valAddr, dirPath, "", false)
 		s.Require().NoError(err)
 
-		secp256k1PubKey := vals[i].sedaPubKeys[utils.SEDAKeyIndexSecp256k1].PubKey
+		secp256k1PubKey := vals[i].sedaPubKeys[sedatypes.SEDAKeyIndexSecp256k1].PubKey
 		vals[i].ethAddr, err = utils.PubKeyToEthAddress(secp256k1PubKey)
 		s.Require().NoError(err)
 
@@ -180,7 +181,7 @@ func (s *ABCITestSuite) SetupTest(mockBatchNumber uint64, isNewValidator []bool)
 		mockPubKeyKeeper.EXPECT().GetValidatorKeys(gomock.Any(), val.valAddr.String()).
 			Return(pubkeytypes.ValidatorPubKeys{}, nil).
 			AnyTimes()
-		mockPubKeyKeeper.EXPECT().GetValidatorKeyAtIndex(gomock.Any(), val.valAddr.Bytes(), utils.SEDAKeyIndexSecp256k1).Return(val.sedaPubKeys[0].PubKey, nil).AnyTimes()
+		mockPubKeyKeeper.EXPECT().GetValidatorKeyAtIndex(gomock.Any(), val.valAddr.Bytes(), sedatypes.SEDAKeyIndexSecp256k1).Return(val.sedaPubKeys[0].PubKey, nil).AnyTimes()
 
 		mockStakingKeeper.EXPECT().GetValidatorByConsAddr(gomock.Any(), val.consAddr).
 			Return(stakingtypes.Validator{OperatorAddress: val.valAddr.String()}, nil).

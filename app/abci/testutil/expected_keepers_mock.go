@@ -16,9 +16,9 @@ import (
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	types "github.com/cosmos/cosmos-sdk/types"
 	types0 "github.com/cosmos/cosmos-sdk/x/staking/types"
-	utils "github.com/sedaprotocol/seda-chain/app/utils"
-	types1 "github.com/sedaprotocol/seda-chain/x/batching/types"
-	types2 "github.com/sedaprotocol/seda-chain/x/pubkey/types"
+	types1 "github.com/sedaprotocol/seda-chain/types"
+	types2 "github.com/sedaprotocol/seda-chain/x/batching/types"
+	types3 "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -47,10 +47,10 @@ func (m *MockBatchingKeeper) EXPECT() *MockBatchingKeeperMockRecorder {
 }
 
 // GetBatchForHeight mocks base method.
-func (m *MockBatchingKeeper) GetBatchForHeight(ctx context.Context, height int64) (types1.Batch, error) {
+func (m *MockBatchingKeeper) GetBatchForHeight(ctx context.Context, height int64) (types2.Batch, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBatchForHeight", ctx, height)
-	ret0, _ := ret[0].(types1.Batch)
+	ret0, _ := ret[0].(types2.Batch)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -62,10 +62,10 @@ func (mr *MockBatchingKeeperMockRecorder) GetBatchForHeight(ctx, height any) *go
 }
 
 // GetValidatorTreeEntry mocks base method.
-func (m *MockBatchingKeeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddr types.ValAddress) (types1.ValidatorTreeEntry, error) {
+func (m *MockBatchingKeeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valAddr types.ValAddress) (types2.ValidatorTreeEntry, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetValidatorTreeEntry", ctx, batchNum, valAddr)
-	ret0, _ := ret[0].(types1.ValidatorTreeEntry)
+	ret0, _ := ret[0].(types2.ValidatorTreeEntry)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -115,7 +115,7 @@ func (m *MockPubKeyKeeper) EXPECT() *MockPubKeyKeeperMockRecorder {
 }
 
 // GetValidatorKeyAtIndex mocks base method.
-func (m *MockPubKeyKeeper) GetValidatorKeyAtIndex(ctx context.Context, validatorAddr types.ValAddress, index utils.SEDAKeyIndex) ([]byte, error) {
+func (m *MockPubKeyKeeper) GetValidatorKeyAtIndex(ctx context.Context, validatorAddr types.ValAddress, index types1.SEDAKeyIndex) ([]byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetValidatorKeyAtIndex", ctx, validatorAddr, index)
 	ret0, _ := ret[0].([]byte)
@@ -130,10 +130,10 @@ func (mr *MockPubKeyKeeperMockRecorder) GetValidatorKeyAtIndex(ctx, validatorAdd
 }
 
 // GetValidatorKeys mocks base method.
-func (m *MockPubKeyKeeper) GetValidatorKeys(ctx context.Context, validatorAddr string) (types2.ValidatorPubKeys, error) {
+func (m *MockPubKeyKeeper) GetValidatorKeys(ctx context.Context, validatorAddr string) (types3.ValidatorPubKeys, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetValidatorKeys", ctx, validatorAddr)
-	ret0, _ := ret[0].(types2.ValidatorPubKeys)
+	ret0, _ := ret[0].(types3.ValidatorPubKeys)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

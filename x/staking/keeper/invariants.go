@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 )
 
 // RegisterInvariants registers all staking invariants.
@@ -32,7 +32,7 @@ func PubKeyRegistrationInvariant(k *Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var broken bool
 		var violator string
-		activated, err := k.pubKeyKeeper.IsProvingSchemeActivated(ctx, utils.SEDAKeyIndexSecp256k1)
+		activated, err := k.pubKeyKeeper.IsProvingSchemeActivated(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			panic(err)
 		}
@@ -42,7 +42,7 @@ func PubKeyRegistrationInvariant(k *Keeper) sdk.Invariant {
 				if err != nil {
 					panic(err)
 				}
-				registered, err := k.pubKeyKeeper.HasRegisteredKey(ctx, valAddr, utils.SEDAKeyIndexSecp256k1)
+				registered, err := k.pubKeyKeeper.HasRegisteredKey(ctx, valAddr, sedatypes.SEDAKeyIndexSecp256k1)
 				if err != nil {
 					panic(err)
 				}

@@ -18,6 +18,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 )
 
 const (
@@ -117,7 +118,7 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		}
 
 		// Sign and reload the signer if the public key has changed.
-		signature, err := h.signer.Sign(batch.BatchId, utils.SEDAKeyIndexSecp256k1)
+		signature, err := h.signer.Sign(batch.BatchId, sedatypes.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			return nil, err
 		}
@@ -305,20 +306,6 @@ func (h *Handlers) ProcessProposalHandler() sdk.ProcessProposalHandler {
 // and store them.
 func (h *Handlers) PreBlocker() sdk.PreBlocker {
 	return func(ctx sdk.Context, req *abcitypes.RequestFinalizeBlock) (res *sdk.ResponsePreBlock, err error) {
-		// Use defer to prevent returning an error, which would cause
-		// the chain to halt.
-		defer func() {
-			// Handle a panic.
-			if r := recover(); r != nil {
-				h.logger.Error("recovered from panic in pre-blocker", "err", r)
-			}
-			// Handle an error.
-			if err != nil {
-				h.logger.Error("error in pre-blocker", "err", err)
-			}
-			err = nil
-		}()
-
 		res = new(sdk.ResponsePreBlock)
 		if !IsVoteExtensionsEnabled(ctx) {
 			return res, nil
@@ -395,7 +382,7 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 	// Recover and verify secp256k1 public key.
 	var expectedAddr []byte
 	if batchNum == collections.DefaultSequenceStart {
-		pubKey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, utils.SEDAKeyIndexSecp256k1)
+		pubKey, err := h.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, valOper, sedatypes.SEDAKeyIndexSecp256k1)
 		if err != nil {
 			return err
 		}

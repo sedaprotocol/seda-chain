@@ -34,7 +34,7 @@ import (
 	sdktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
-	"github.com/sedaprotocol/seda-chain/app/utils"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	"github.com/sedaprotocol/seda-chain/x/staking/keeper"
@@ -326,9 +326,9 @@ func (s *MsgServerTestSuite) TestMsgServer() {
 			s.bankKeeper.EXPECT().DelegateCoinsFromAccountToModule(gomock.Any(), sdk.AccAddress(tc.address), sdktypes.NotBondedPoolName, gomock.Any()).AnyTimes()
 			s.pubkeyKeeper.EXPECT().StoreIndexedPubKeys(gomock.Any(), sdk.ValAddress(tc.address), gomock.Any()).Return(nil).MaxTimes(1)
 			if tc.provingSchemeActivated {
-				s.pubkeyKeeper.EXPECT().IsProvingSchemeActivated(gomock.Any(), utils.SEDAKeyIndexSecp256k1).Return(true, nil).MaxTimes(1)
+				s.pubkeyKeeper.EXPECT().IsProvingSchemeActivated(gomock.Any(), sedatypes.SEDAKeyIndexSecp256k1).Return(true, nil).MaxTimes(1)
 			} else {
-				s.pubkeyKeeper.EXPECT().IsProvingSchemeActivated(gomock.Any(), utils.SEDAKeyIndexSecp256k1).Return(false, nil).MaxTimes(1)
+				s.pubkeyKeeper.EXPECT().IsProvingSchemeActivated(gomock.Any(), sedatypes.SEDAKeyIndexSecp256k1).Return(false, nil).MaxTimes(1)
 			}
 
 			_, err := s.router.Handler(tc.input)(s.ctx, tc.input)

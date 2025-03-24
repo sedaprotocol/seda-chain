@@ -21,3 +21,4 @@ $mockgen_cmd -source=x/pubkey/types/expected_keepers.go -package testutil -desti
 $mockgen_cmd -source=x/staking/types/expected_keepers.go -package testutil -destination=x/staking/keeper/testutil/expected_keepers_mock.go
 $mockgen_cmd -source=app/abci/expected_keepers.go -package testutil -destination=app/abci/testutil/expected_keepers_mock.go
 $mockgen_cmd -source=app/ante.go -package testutil -destination=app/testutil/expected_keepers_mock.go
+$mockgen_cmd -source=app/utils/seda_keys.go -package testutil -destination=app/abci/testutil/seda_keys_mock.go

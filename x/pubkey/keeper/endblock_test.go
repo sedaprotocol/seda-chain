@@ -42,8 +42,8 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"
-	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/testutil"
+	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/pubkey"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
@@ -234,7 +234,7 @@ func TestEndBlock(t *testing.T) {
 	// All but last two validators register their keys.
 	var expectedActivationHeight int64 = types.DefaultActivationHeight
 	for i := range valAddrs[:len(valAddrs)-2] {
-		err := f.keeper.SetValidatorKeyAtIndex(ctx, valAddrs[i], utils.SEDAKeyIndexSecp256k1, pubKeys[i])
+		err := f.keeper.SetValidatorKeyAtIndex(ctx, valAddrs[i], sedatypes.SEDAKeyIndexSecp256k1, pubKeys[i])
 		require.NoError(t, err)
 		err = f.keeper.EndBlock(ctx)
 		require.NoError(t, err)
@@ -243,7 +243,7 @@ func TestEndBlock(t *testing.T) {
 		if i >= 3 {
 			expectedActivationHeight = ctx.BlockHeight() + activationBlockDelay
 		}
-		scheme, err := f.keeper.GetProvingScheme(ctx, utils.SEDAKeyIndexSecp256k1)
+		scheme, err := f.keeper.GetProvingScheme(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 		require.NoError(t, err)
 		require.Equal(t, expectedActivationHeight, scheme.ActivationHeight)
 		require.Equal(t, scheme.IsActivated, false)
@@ -253,7 +253,7 @@ func TestEndBlock(t *testing.T) {
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + activationBlockDelay)
 	err = f.keeper.EndBlock(ctx)
 	require.NoError(t, err)
-	scheme, err := f.keeper.GetProvingScheme(ctx, utils.SEDAKeyIndexSecp256k1)
+	scheme, err := f.keeper.GetProvingScheme(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 	require.NoError(t, err)
 	require.Equal(t, scheme.IsActivated, true)
 
