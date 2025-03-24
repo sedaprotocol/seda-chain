@@ -32,7 +32,7 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 
 	// Append distribution messages for data proxies.
 	for _, proxy := range gasMeter.Proxies {
-		proxyDist := types.NewDataProxyReward(proxy.PayoutAddress, proxy.Amount, gasMeter.GasPrice())
+		proxyDist := types.NewDataProxyReward(proxy.PublicKey, proxy.PayoutAddress, proxy.Amount, gasMeter.GasPrice())
 		dists = append(dists, proxyDist)
 		attrs = append(attrs, sdk.NewAttribute(types.AttributeDataProxyGas,
 			fmt.Sprintf("%s,%s,%s", proxy.PublicKey, proxy.PayoutAddress, proxy.Amount.String())))
