@@ -445,6 +445,75 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 		s.Require().False(firstUpdateNoLongerScheduled)
 	})
 
+	s.Run("Scheduling a fee update should fail if the max updates per block is reached", func() {
+		s.SetupTest()
+
+		err = s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, initialProxyConfig)
+		s.Require().NoError(err)
+
+		updateHeight := int64(types.DefaultMinFeeUpdateDelay + uint32(s.ctx.BlockHeight()))
+
+		// Set the max number of updates for the target block
+		for i := 0; i < types.MaxUpdatesPerBlock-1; i++ {
+			newPubkey := make([]byte, len(pubKeyBytes)+1)
+			copy(newPubkey, pubKeyBytes)
+			newPubkey[len(pubKeyBytes)] = byte(i)
+			s.keeper.SetFeeUpdate(s.ctx, updateHeight, newPubkey)
+		}
+		// One manual so we can verify that after rescheduling a spot is available
+		maxEdit, err := s.msgSrvr.EditDataProxy(s.ctx, &types.MsgEditDataProxy{
+			Sender:           "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			NewPayoutAddress: types.DoNotModifyField,
+			NewMemo:          types.DoNotModifyField,
+			NewFee:           s.NewFeeFromString("1337"),
+			PubKey:           "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+		})
+		s.Require().NoError(err)
+		s.Require().NotNil(maxEdit)
+
+		// Register a new proxy
+		registerRes, err := s.msgSrvr.RegisterDataProxy(s.ctx, &types.MsgRegisterDataProxy{
+			AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+			Fee:           s.NewFeeFromString("10000000000000000000"),
+			Memo:          "",
+			PubKey:        "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1",
+			Signature:     "6e8b21cf5fb2a87ea39d5320d37a47c3abdb70c41cafb0b6a499c0a7489ac04b22c9117bdd8f2a057818fd0baf5c1c529cb36f95037a28d20170dee66f322693",
+		})
+		s.Require().NoError(err)
+		s.Require().NotNil(registerRes)
+
+		// Try to schedule a fee update
+		editMsg := &types.MsgEditDataProxy{
+			Sender:           "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			NewPayoutAddress: types.DoNotModifyField,
+			NewMemo:          types.DoNotModifyField,
+			NewFee:           s.NewFeeFromString("1984"),
+			PubKey:           "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1",
+		}
+
+		firstEditRes, err := s.msgSrvr.EditDataProxy(s.ctx, editMsg)
+		s.Require().Nil(firstEditRes)
+		s.Require().ErrorIs(err, types.ErrMaxUpdatesReached)
+
+		// Reschedule the fee update of the manually added proxy
+		maxReschedule, err := s.msgSrvr.EditDataProxy(s.ctx, &types.MsgEditDataProxy{
+			Sender:           "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			NewPayoutAddress: types.DoNotModifyField,
+			NewMemo:          types.DoNotModifyField,
+			FeeUpdateDelay:   types.DefaultMinFeeUpdateDelay + 100,
+			NewFee:           s.NewFeeFromString("100"),
+			PubKey:           "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
+		})
+		s.Require().NoError(err)
+		s.Require().NotNil(maxReschedule)
+
+		// Retry the update that failed before
+		secondEditRes, err := s.msgSrvr.EditDataProxy(s.ctx, editMsg)
+		s.Require().NoError(err)
+		s.Require().NotNil(secondEditRes)
+	})
+
 	s.Run("Transferring admin address should allow the new address to submit changes", func() {
 		s.SetupTest()
 

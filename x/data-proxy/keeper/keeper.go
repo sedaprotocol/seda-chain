@@ -71,12 +71,22 @@ func (k Keeper) RemoveFeeUpdate(ctx sdk.Context, height int64, pubKey []byte) er
 	return k.feeUpdateQueue.Remove(ctx, collections.Join(height, pubKey))
 }
 
-func (k Keeper) processProxyFeeUpdate(ctx sdk.Context, pubKeyBytes []byte, proxyConfig types.ProxyConfig, newFee *sdk.Coin, updateDelay uint32) (int64, error) {
+func (k Keeper) scheduleFeeUpdate(ctx sdk.Context, pubKeyBytes []byte, proxyConfig types.ProxyConfig, newFee *sdk.Coin, updateDelay uint32) (int64, error) {
 	// Determine update height
 	updateHeight := ctx.BlockHeight() + int64(updateDelay)
 	feeUpdate := &types.FeeUpdate{
 		NewFee:       newFee,
 		UpdateHeight: updateHeight,
+	}
+
+	// Check if the max updates per block is reached
+	keys, err := k.getFeeUpdateKeys(ctx, updateHeight)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(keys) >= types.MaxUpdatesPerBlock {
+		return 0, types.ErrMaxUpdatesReached
 	}
 
 	// Delete previous pending update, if applicable
@@ -89,7 +99,7 @@ func (k Keeper) processProxyFeeUpdate(ctx sdk.Context, pubKeyBytes []byte, proxy
 
 	// Schedule new update
 	proxyConfig.FeeUpdate = feeUpdate
-	err := k.SetFeeUpdate(ctx, updateHeight, pubKeyBytes)
+	err = k.SetFeeUpdate(ctx, updateHeight, pubKeyBytes)
 	if err != nil {
 		return 0, err
 	}
@@ -102,16 +112,19 @@ func (k Keeper) processProxyFeeUpdate(ctx sdk.Context, pubKeyBytes []byte, proxy
 	return updateHeight, nil
 }
 
-func (k Keeper) GetFeeUpdatePubKeys(ctx sdk.Context, activationHeight int64) ([][]byte, error) {
-	pubkeys := make([][]byte, 0)
-	rng := collections.NewPrefixedPairRange[int64, []byte](activationHeight)
-
-	itr, err := k.feeUpdateQueue.Iterate(ctx, rng)
+func (k Keeper) getFeeUpdateKeys(ctx sdk.Context, height int64) ([]collections.Pair[int64, []byte], error) {
+	itr, err := k.feeUpdateQueue.Iterate(ctx, collections.NewPrefixedPairRange[int64, []byte](height))
 	if err != nil {
 		return nil, err
 	}
 
-	keys, err := itr.Keys()
+	return itr.Keys()
+}
+
+func (k Keeper) GetFeeUpdatePubKeys(ctx sdk.Context, activationHeight int64) ([][]byte, error) {
+	pubkeys := make([][]byte, 0)
+
+	keys, err := k.getFeeUpdateKeys(ctx, activationHeight)
 	if err != nil {
 		return nil, err
 	}

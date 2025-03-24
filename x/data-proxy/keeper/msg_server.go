@@ -158,7 +158,7 @@ func (m msgServer) EditDataProxy(goCtx context.Context, msg *types.MsgEditDataPr
 		updateDelay = msg.FeeUpdateDelay
 	}
 
-	updateHeight, err := m.processProxyFeeUpdate(ctx, pubKeyBytes, proxyConfig, msg.NewFee, updateDelay)
+	updateHeight, err := m.scheduleFeeUpdate(ctx, pubKeyBytes, proxyConfig, msg.NewFee, updateDelay)
 	if err != nil {
 		return nil, err
 	}
