@@ -1084,11 +1084,11 @@ func (app *App) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sd
 	if app.preBlocker == nil {
 		panic("app-level pre-blocker has not been configured")
 	}
-	_, err := app.preBlocker(ctx, req)
+	_, err := app.mm.PreBlock(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return app.mm.PreBlock(ctx)
+	return app.preBlocker(ctx, req)
 }
 
 // BeginBlocker application updates every begin block
