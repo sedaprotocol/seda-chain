@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -420,7 +421,19 @@ func (h *Handlers) verifyBatchSignatures(ctx sdk.Context, batchNum uint64, batch
 		h.logger.Error("vote extension is too short", "len", len(voteExtension))
 		return ErrVoteExtensionTooShort
 	}
-	sigPubKey, err := crypto.Ecrecover(batchID, voteExtension[:65])
+
+	signature := voteExtension[:65]
+	r := new(big.Int).SetBytes(signature[:32])
+	s := new(big.Int).SetBytes(signature[32:64])
+	v := signature[64]
+
+	// We require the signature to be in the low-s form, which is the default for
+	// the secp256k1 library used to sign the batch ID.
+	if !crypto.ValidateSignatureValues(v, r, s, true) {
+		return ErrInvalidBatchSignature
+	}
+
+	sigPubKey, err := crypto.Ecrecover(batchID, signature)
 	if err != nil {
 		return err
 	}

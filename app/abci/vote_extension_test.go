@@ -63,7 +63,7 @@ func (s *ABCITestSuite) TestABCIHandlersVerifyVoteExtensionHandler() {
 			name:            "new batch + invalid signature",
 			mockBatchNumber: 100,
 			reqVoteExt:      &abcitypes.RequestVerifyVoteExtension{VoteExtension: make([]byte, abci.MaxVoteExtensionLength)},
-			expectedErr:     "recovery failed",
+			expectedErr:     "batch signature is invalid",
 			shouldReject:    true,
 		},
 		{
