@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"encoding/hex"
 	"os"
 	"path/filepath"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
-func (s *KeeperTestSuite) TestMsgServer_AddKey() {
+func (s *KeeperTestSuite) TestMsgServer_InitialAddKey() {
 	pubKeys, valAddrs := s.generatePubKeysAndValAddrs(10)
 
 	tests := []struct {
@@ -127,7 +128,6 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 			}
 			s.Require().NoError(err)
 			s.Require().NotNil(got)
-
 			// Check the validator's keys at once.
 			pksActual, err := s.keeper.GetValidatorKeys(s.ctx, tt.valAddr.String())
 			s.Require().NoError(err)
@@ -142,4 +142,75 @@ func (s *KeeperTestSuite) TestMsgServer_AddKey() {
 			}
 		})
 	}
+}
+
+func (s *KeeperTestSuite) TestMsgServer_SubsequentAddKey() {
+	s.Run("AddKey should return previous keys registered for the validator if present", func() {
+		pubKeys, valAddrs := s.generatePubKeysAndValAddrs(3)
+
+		// Mock validator store.
+		valAddr := valAddrs[0]
+		s.mockStakingKeeper.EXPECT().GetValidator(gomock.Any(), valAddr.Bytes()).Return(stakingtypes.Validator{}, nil).AnyTimes()
+
+		// First add key message
+		firstKey := pubKeys[0]
+		msg1 := &types.MsgAddKey{
+			ValidatorAddr: valAddr.String(),
+			IndexedPubKeys: []types.IndexedPubKey{
+				{
+					Index:  0,
+					PubKey: firstKey,
+				},
+			},
+		}
+
+		got1, err := s.msgSrvr.AddKey(s.ctx, msg1)
+		s.Require().NoError(err)
+		s.Require().NotNil(got1)
+
+		// Second add key message with different key
+		secondKey := pubKeys[1]
+		msg2 := &types.MsgAddKey{
+			ValidatorAddr: valAddr.String(),
+			IndexedPubKeys: []types.IndexedPubKey{
+				{
+					Index:  0,
+					PubKey: secondKey,
+				},
+			},
+		}
+
+		got2, err := s.msgSrvr.AddKey(s.ctx, msg2)
+		s.Require().NoError(err)
+		s.Require().NotNil(got2)
+		// Check that we emitted the previously registered keys.
+		events := s.ctx.EventManager().Events()
+		// 3 events: 1 for the first key, 1 for the new key, 1 for the removal of the first key
+		s.Require().Len(events, 3)
+		s.Require().Equal(events[2].Type, types.EventTypeRemoveKey)
+		s.Require().Equal(events[2].Attributes[0].Key, types.AttributeValidatorAddr)
+		s.Require().Equal(events[2].Attributes[0].Value, valAddr.String())
+		s.Require().Equal(events[2].Attributes[1].Key, types.AttributePubKeyIndex)
+		s.Require().Equal(events[2].Attributes[1].Value, "0")
+		s.Require().Equal(events[2].Attributes[2].Key, types.AttributePublicKey)
+		s.Require().Equal(events[2].Attributes[2].Value, hex.EncodeToString(firstKey))
+
+		thirdKey := pubKeys[2]
+		msg3 := &types.MsgAddKey{
+			ValidatorAddr: valAddr.String(),
+			IndexedPubKeys: []types.IndexedPubKey{
+				{
+					Index:  0,
+					PubKey: thirdKey,
+				},
+			},
+		}
+
+		got3, err := s.msgSrvr.AddKey(s.ctx, msg3)
+		s.Require().NoError(err)
+		s.Require().NotNil(got3)
+		// 5 events: the 3 previous events + 1 for the third key and 1 for the removal of the second key
+		s.Require().Len(s.ctx.EventManager().Events(), 5)
+		s.Require().Equal(s.ctx.EventManager().Events()[4].Attributes[2].Value, hex.EncodeToString(secondKey))
+	})
 }

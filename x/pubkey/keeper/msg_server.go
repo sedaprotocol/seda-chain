@@ -2,6 +2,9 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
+	"errors"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -26,7 +29,7 @@ func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.M
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Validate the message.
-	err := msg.Validate()
+	err := msg.ValidateBasic()
 	if err != nil {
 		return nil, err
 	}
@@ -45,11 +48,32 @@ func (m msgServer) AddKey(goCtx context.Context, msg *types.MsgAddKey) (*types.M
 		return nil, sdkerrors.ErrNotFound.Wrapf("validator not found %s", msg.ValidatorAddr)
 	}
 
+	// Retrieve previously registered keys.
+	previousKeys, err := m.GetValidatorKeys(ctx, msg.ValidatorAddr)
+	if err != nil && !errors.Is(err, sdkerrors.ErrNotFound) {
+		return nil, err
+	}
+
 	// Store the public keys.
 	err = m.StoreIndexedPubKeys(ctx, valAddr, msg.IndexedPubKeys)
 	if err != nil {
 		return nil, err
 	}
+
+	if len(previousKeys.IndexedPubKeys) > 0 {
+		events := make(sdk.Events, len(previousKeys.IndexedPubKeys))
+		for i, pk := range previousKeys.IndexedPubKeys {
+			events[i] = sdk.NewEvent(
+				types.EventTypeRemoveKey,
+				sdk.NewAttribute(types.AttributeValidatorAddr, msg.ValidatorAddr),
+				sdk.NewAttribute(types.AttributePubKeyIndex, fmt.Sprintf("%d", pk.Index)),
+				sdk.NewAttribute(types.AttributePublicKey, hex.EncodeToString(pk.PubKey)),
+			)
+		}
+
+		ctx.EventManager().EmitEvents(events)
+	}
+
 	return &types.MsgAddKeyResponse{}, nil
 }
 

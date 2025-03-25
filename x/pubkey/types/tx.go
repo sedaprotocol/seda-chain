@@ -7,7 +7,7 @@ import (
 
 var _ sdk.Msg = &MsgAddKey{}
 
-func (m *MsgAddKey) Validate() error {
+func (m *MsgAddKey) ValidateBasic() error {
 	if m.ValidatorAddr == "" {
 		return sdkerrors.ErrInvalidRequest.Wrap("empty validator address")
 	}
