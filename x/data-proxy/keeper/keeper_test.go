@@ -10,8 +10,6 @@ import (
 
 func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 	s.Run("Apply single pending fee update", func() {
-		s.SetupTest()
-
 		pubKeyBytes := secp256k1.GenPrivKey().PubKey().Bytes()
 
 		err := s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, types.ProxyConfig{
@@ -48,8 +46,6 @@ func (s *KeeperTestSuite) TestKeeper_EndBlockFeeUpdate() {
 	})
 
 	s.Run("Apply multiple pending fee updates", func() {
-		s.SetupTest()
-
 		pubKeys := []struct {
 			pubKeyBytes []byte
 			pubKeyHex   string

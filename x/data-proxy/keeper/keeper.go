@@ -15,6 +15,8 @@ import (
 )
 
 type Keeper struct {
+	bankKeeper types.BankKeeper
+
 	// authority is the address capable of executing MsgUpdateParams. Typically, this should be the gov module address.
 	authority string
 
@@ -24,10 +26,11 @@ type Keeper struct {
 	params           collections.Item[types.Params]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, authority string) *Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, bk types.BankKeeper, authority string) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
 		authority:        authority,
+		bankKeeper:       bk,
 		dataProxyConfigs: collections.NewMap(sb, types.DataProxyConfigPrefix, "configs", collections.BytesKey, codec.CollValue[types.ProxyConfig](cdc)),
 		feeUpdateQueue:   collections.NewKeySet(sb, types.FeeUpdatesPrefix, "fee_updates", collections.PairKeyCodec(collections.Int64Key, collections.BytesKey)),
 		params:           collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),

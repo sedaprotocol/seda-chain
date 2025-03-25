@@ -6,16 +6,23 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"go.uber.org/mock/gomock"
 
+	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 )
 
 func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
+	fee := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, types.DefaultRegistrationFee))
+	adminAddr, err := sdk.AccAddressFromBech32("seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5")
+	s.Require().NoError(err)
+
 	tests := []struct {
-		name     string
-		msg      *types.MsgRegisterDataProxy
-		expected *types.ProxyConfig
-		wantErr  error
+		name      string
+		msg       *types.MsgRegisterDataProxy
+		expected  *types.ProxyConfig
+		wantErr   error
+		mockSetup func()
 	}{
 		{
 			name: "Happy path",
@@ -65,8 +72,9 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				PubKey:        "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
 				Signature:     "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
 			},
-			expected: nil,
-			wantErr:  sdkerrors.ErrInvalidAddress,
+			expected:  nil,
+			wantErr:   sdkerrors.ErrInvalidAddress,
+			mockSetup: func() {},
 		},
 		{
 			name: "Invalid signature",
@@ -117,8 +125,9 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				PubKey:        "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4f3",
 				Signature:     "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
 			},
-			expected: nil,
-			wantErr:  sdkerrors.ErrInvalidRequest,
+			expected:  nil,
+			wantErr:   sdkerrors.ErrInvalidRequest,
+			mockSetup: func() {},
 		},
 		{
 			name: "Invalid fee denom",
@@ -133,8 +142,9 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				PubKey:    "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4f3",
 				Signature: "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
 			},
-			expected: nil,
-			wantErr:  sdkerrors.ErrInvalidRequest,
+			expected:  nil,
+			wantErr:   sdkerrors.ErrInvalidRequest,
+			mockSetup: func() {},
 		},
 		{
 			name: "Invalid memo length",
@@ -149,13 +159,43 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				PubKey:    "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4f3",
 				Signature: "5076d9d98754505d2f6f94f5a44062b9e95c2c5cfe7f21c69270814dc947bd285f5ed64e595aa956004687a225263f2831252cb41379cab2e3505b90f3da2701",
 			},
-			expected: nil,
-			wantErr:  sdkerrors.ErrInvalidRequest,
+			expected:  nil,
+			wantErr:   sdkerrors.ErrInvalidRequest,
+			mockSetup: func() {},
+		},
+		{
+			name: "Insufficient balance for registration fee",
+			msg: &types.MsgRegisterDataProxy{
+				AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				Fee:           s.NewFeeFromString("10000000000000000000"),
+				Memo:          "",
+				PubKey:        "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1",
+				Signature:     "6e8b21cf5fb2a87ea39d5320d37a47c3abdb70c41cafb0b6a499c0a7489ac04b22c9117bdd8f2a057818fd0baf5c1c529cb36f95037a28d20170dee66f322693",
+			},
+			expected: &types.ProxyConfig{
+				PayoutAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				Fee:           s.NewFeeFromString("10000000000000000000"),
+				Memo:          "",
+				FeeUpdate:     nil,
+				AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			},
+			wantErr: sdkerrors.ErrInsufficientFunds,
+			mockSetup: func() {
+				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), adminAddr, types.ModuleName, fee).
+					Return(sdkerrors.ErrInsufficientFunds).
+					MaxTimes(1)
+			},
 		},
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			s.SetupTest()
+			if tt.mockSetup != nil {
+				tt.mockSetup()
+			} else {
+				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), adminAddr, types.ModuleName, fee).Return(nil)
+				s.bankKeeper.EXPECT().BurnCoins(gomock.Any(), types.ModuleName, fee).Return(nil)
+			}
 
 			res, err := s.msgSrvr.RegisterDataProxy(s.ctx, tt.msg)
 			if tt.wantErr != nil {
@@ -163,7 +203,6 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 				s.Require().Nil(res)
 				return
 			}
-
 			s.Require().NoError(err)
 
 			pubKeyBytes, err := hex.DecodeString(tt.msg.PubKey)
@@ -176,6 +215,9 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 	}
 
 	s.Run("Registering an already existing data proxy should fail", func() {
+		s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), adminAddr, types.ModuleName, fee).Return(nil).Times(2)
+		s.bankKeeper.EXPECT().BurnCoins(gomock.Any(), types.ModuleName, fee).Return(nil).Times(2)
+
 		msg := &types.MsgRegisterDataProxy{
 			AdminAddress:  "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 			PayoutAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
@@ -185,7 +227,7 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterDataProxy() {
 			Signature:     "32473a31c221d8cf9ce4f6269369c9ce2b0ce9139f3dc93bd9e020bd76186c06087dc8d5367c0b6e7175a108694f2abc89b9675bea8ff35360fb8dc7225f8870",
 		}
 
-		_, err := s.msgSrvr.RegisterDataProxy(s.ctx, msg)
+		_, err = s.msgSrvr.RegisterDataProxy(s.ctx, msg)
 		s.Require().NoError(err)
 
 		pubKeyBytes, err := hex.DecodeString(msg.PubKey)
@@ -360,8 +402,6 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			s.SetupTest()
-
 			err = s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, initialProxyConfig)
 			s.Require().NoError(err)
 
@@ -390,8 +430,6 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 	}
 
 	s.Run("Updating the fee for a proxy that already has a pending update should cancel the old update", func() {
-		s.SetupTest()
-
 		firstUpdateHeight := types.DefaultMinFeeUpdateDelay + 100
 		secondUpdateHeight := types.DefaultMinFeeUpdateDelay + 37
 
@@ -446,7 +484,12 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 	})
 
 	s.Run("Scheduling a fee update should fail if the max updates per block is reached", func() {
-		s.SetupTest()
+		// Mock bank keeper setup
+		fee := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, types.DefaultRegistrationFee))
+		adminAddr, err := sdk.AccAddressFromBech32("seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5")
+		s.Require().NoError(err)
+		s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), adminAddr, types.ModuleName, fee).Return(nil)
+		s.bankKeeper.EXPECT().BurnCoins(gomock.Any(), types.ModuleName, fee).Return(nil)
 
 		err = s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, initialProxyConfig)
 		s.Require().NoError(err)
@@ -515,8 +558,6 @@ func (s *KeeperTestSuite) TestMsgServer_EditDataProxy() {
 	})
 
 	s.Run("Transferring admin address should allow the new address to submit changes", func() {
-		s.SetupTest()
-
 		err = s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, initialProxyConfig)
 		s.Require().NoError(err)
 
@@ -573,7 +614,6 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParamsErrors() {
 		},
 	}
 
-	s.SetupTest()
 	for _, tt := range cases {
 		s.Run(tt.name, func() {
 			res, err := s.msgSrvr.UpdateParams(s.ctx, tt.input)
@@ -598,8 +638,6 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 	}
 
 	s.Run("Updating the minimum delay should not affect existing updates", func() {
-		s.SetupTest()
-
 		// Register data proxy
 		err = s.keeper.SetDataProxyConfig(s.ctx, pubKeyBytes, initialProxyConfig)
 		s.Require().NoError(err)

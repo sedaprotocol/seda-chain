@@ -217,6 +217,7 @@ var (
 		ibcfeetypes.ModuleName:         nil,
 		icatypes.ModuleName:            nil,
 		wasmtypes.ModuleName:           {authtypes.Burner},
+		dataproxytypes.ModuleName:      {authtypes.Burner},
 	}
 )
 
@@ -665,6 +666,7 @@ func NewApp(
 	app.DataProxyKeeper = *dataproxykeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[dataproxytypes.StoreKey]),
+		app.BankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

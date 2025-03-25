@@ -37,8 +37,25 @@ func (m msgServer) RegisterDataProxy(goCtx context.Context, msg *types.MsgRegist
 		return nil, err
 	}
 
-	if _, err := sdk.AccAddressFromBech32(msg.AdminAddress); err != nil {
+	adminAddr, err := sdk.AccAddressFromBech32(msg.AdminAddress)
+	if err != nil {
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid admin address: %s", msg.AdminAddress)
+	}
+
+	// Burn the registration fee.
+	params, err := m.GetParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+	fee := sdk.NewCoins(params.RegistrationFee)
+
+	err = m.bankKeeper.SendCoinsFromAccountToModule(ctx, adminAddr, types.ModuleName, fee)
+	if err != nil {
+		return nil, err
+	}
+	err = m.bankKeeper.BurnCoins(ctx, types.ModuleName, fee)
+	if err != nil {
+		return nil, err
 	}
 
 	pubKeyBytes, err := hex.DecodeString(msg.PubKey)

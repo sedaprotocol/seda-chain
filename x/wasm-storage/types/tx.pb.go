@@ -290,7 +290,7 @@ func (m *MsgInstantiateCoreContractResponse) GetContractAddress() string {
 
 // The request message for the UpdateParams method.
 type MsgUpdateParams struct {
-	// authority is the address that controls the module (defaults to x/gov unless
+	// Authority is the address that controls the module (defaults to x/gov unless
 	// overwritten).
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	Params    Params `protobuf:"bytes,2,opt,name=params,proto3" json:"params"`
@@ -382,13 +382,13 @@ var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
 // The request message for the MsgRefundTxFee method.
 type MsgRefundTxFee struct {
-	// authority is the address that controls the method.
+	// Authority is the address that controls the method.
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
-	// drId is the hex-encoded data request ID.
+	// DrId is the hex-encoded data request ID.
 	DrId string `protobuf:"bytes,2,opt,name=dr_id,json=drId,proto3" json:"dr_id,omitempty"`
-	// publicKey is the hex-encoded public key (identifier) of the executor.
+	// PublicKey is the hex-encoded public key (identifier) of the executor.
 	PublicKey string `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	// is_reveal is true for a reveal message and false for a commit message.
+	// IsReveal is true for a reveal message and false for a commit message.
 	IsReveal bool `protobuf:"varint,4,opt,name=is_reveal,json=isReveal,proto3" json:"is_reveal,omitempty"`
 }
 

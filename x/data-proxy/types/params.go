@@ -1,7 +1,12 @@
 package types
 
 import (
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	appparams "github.com/sedaprotocol/seda-chain/app/params"
 )
 
 const (
@@ -10,10 +15,13 @@ const (
 	LowestFeeUpdateDelay     uint32 = 1
 )
 
+var DefaultRegistrationFee = math.NewIntWithDecimal(50, 18) // (50)*10^(18) aseda
+
 // DefaultParams returns default data-proxy module parameters.
 func DefaultParams() Params {
 	return Params{
 		MinFeeUpdateDelay: DefaultMinFeeUpdateDelay,
+		RegistrationFee:   sdk.NewCoin(appparams.DefaultBondDenom, DefaultRegistrationFee),
 	}
 }
 

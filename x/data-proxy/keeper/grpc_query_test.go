@@ -55,8 +55,6 @@ func (s *KeeperTestSuite) TestQuerier_ProxyConfig() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			s.SetupTest()
-
 			if tt.config != nil {
 				pubkeyBytes, err := hex.DecodeString(tt.pubKeyHex)
 				s.Require().NoError(err)

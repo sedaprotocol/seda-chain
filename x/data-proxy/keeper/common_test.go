@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
@@ -20,6 +21,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/params"
 	dataproxy "github.com/sedaprotocol/seda-chain/x/data-proxy"
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
+	"github.com/sedaprotocol/seda-chain/x/data-proxy/keeper/testutil"
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 )
 
@@ -27,6 +29,7 @@ type KeeperTestSuite struct {
 	suite.Suite
 	ctx         sdk.Context
 	keeper      *keeper.Keeper
+	bankKeeper  *testutil.MockBankKeeper
 	cdc         codec.Codec
 	msgSrvr     types.MsgServer
 	queryClient types.QueryClient
@@ -57,9 +60,13 @@ func (s *KeeperTestSuite) SetupTest() {
 	encCfg := moduletestutil.MakeTestEncodingConfig(dataproxy.AppModuleBasic{})
 	types.RegisterInterfaces(encCfg.InterfaceRegistry)
 
+	ctrl := gomock.NewController(t)
+	s.bankKeeper = testutil.NewMockBankKeeper(ctrl)
+
 	s.keeper = keeper.NewKeeper(
 		encCfg.Codec,
 		runtime.NewKVStoreService(key),
+		s.bankKeeper,
 		s.authority,
 	)
 	// Testvectors are generated for seda-1-testvectors
@@ -77,6 +84,10 @@ func (s *KeeperTestSuite) SetupTest() {
 
 	err := s.keeper.SetParams(s.ctx, types.DefaultParams())
 	s.Require().NoError(err)
+}
+
+func (s *KeeperTestSuite) SetupSubTest() {
+	s.SetupTest()
 }
 
 func (s *KeeperTestSuite) NewIntFromString(val string) math.Int {

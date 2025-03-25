@@ -14,6 +14,13 @@ message Params {
   // min_fee_update_delay is the minimum number of blocks after which a fee
   // update comes into effect.
   uint32 min_fee_update_delay = 1;
+
+  // registration_fee is the fee incurred for registering a data proxy.
+  // This fee is burned.
+  cosmos.base.v1beta1.Coin registration_fee = 2 [
+    (gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // ProxyConfig defines a data-proxy entry in the registry.

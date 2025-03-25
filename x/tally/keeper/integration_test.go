@@ -229,6 +229,7 @@ func initFixture(t testing.TB) *fixture {
 	dataProxyKeeper := dataproxykeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[dataproxytypes.StoreKey]),
+		bankKeeper,
 		authtypes.NewModuleAddress("gov").String(),
 	)
 
