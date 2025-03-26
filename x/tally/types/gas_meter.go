@@ -1,13 +1,15 @@
 package types
 
 import (
+	"encoding/binary"
+
 	"cosmossdk.io/math"
 )
 
 // GasMeter stores the results of the canonical gas consumption calculations.
 type GasMeter struct {
-	Proxies              []ProxyGasUsed
-	Executors            []ExecutorGasUsed
+	proxies              []ProxyGasUsed
+	executors            []ExecutorGasUsed
 	ReducedPayout        bool
 	tallyGasLimit        uint64
 	tallyGasRemaining    uint64
@@ -17,15 +19,27 @@ type GasMeter struct {
 	gasPrice             math.Int // gas price for the request
 }
 
+var _ HashSortable = ProxyGasUsed{}
+
 type ProxyGasUsed struct {
 	PayoutAddress string
 	PublicKey     string
 	Amount        math.Int
 }
 
+func (p ProxyGasUsed) GetSortKey() []byte {
+	return []byte(p.PublicKey)
+}
+
+var _ HashSortable = ExecutorGasUsed{}
+
 type ExecutorGasUsed struct {
 	PublicKey string
 	Amount    math.Int
+}
+
+func (e ExecutorGasUsed) GetSortKey() []byte {
+	return []byte(e.PublicKey)
 }
 
 // NewGasMeter creates a new gas meter and incurs the base gas cost.
@@ -104,7 +118,7 @@ func (g *GasMeter) ConsumeTallyGas(amount uint64) bool {
 func (g *GasMeter) ConsumeExecGasForProxy(proxyPubkey, payoutAddr string, gasUsedPerExec uint64, replicationFactor uint16) {
 	amount := gasUsedPerExec * uint64(replicationFactor)
 
-	g.Proxies = append(g.Proxies, ProxyGasUsed{
+	g.proxies = append(g.proxies, ProxyGasUsed{
 		PayoutAddress: payoutAddr,
 		PublicKey:     proxyPubkey,
 		Amount:        math.NewIntFromUint64(amount),
@@ -127,7 +141,7 @@ func (g *GasMeter) ConsumeExecGasForProxy(proxyPubkey, payoutAddr string, gasUse
 // records the payout information. It returns true if the execution gas runs
 // out during the process.
 func (g *GasMeter) ConsumeExecGasForExecutor(executorPubKey string, amount uint64) {
-	g.Executors = append(g.Executors, ExecutorGasUsed{
+	g.executors = append(g.executors, ExecutorGasUsed{
 		PublicKey: executorPubKey,
 		Amount:    math.NewIntFromUint64(amount),
 	})
@@ -137,4 +151,24 @@ func (g *GasMeter) ConsumeExecGasForExecutor(executorPubKey string, amount uint6
 	} else {
 		g.execGasRemaining -= amount
 	}
+}
+
+// GetSortedProxies returns a list of proxies sorted by hash of their public
+// keys and (drID, height) entropy.
+func (g *GasMeter) GetSortedProxies(drID string, height int64) []ProxyGasUsed {
+	return HashSort(g.proxies, getEntropy(drID, height))
+}
+
+// GetSortedExecutors returns a list of executors sorted by hash of their public
+// keys and (drID, height) entropy.
+func (g *GasMeter) GetSortedExecutors(drID string, height int64) []ExecutorGasUsed {
+	return HashSort(g.executors, getEntropy(drID, height))
+}
+
+func getEntropy(drID string, height int64) []byte {
+	heightBytes := make([]byte, 8)
+	//nolint:gosec // G115: We shouldn't get negative block heights anyway.
+	binary.BigEndian.PutUint64(heightBytes, uint64(height))
+
+	return append([]byte(drID), heightBytes...)
 }

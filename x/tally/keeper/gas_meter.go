@@ -31,7 +31,7 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 	attrs = append(attrs, sdk.NewAttribute(types.AttributeTallyGas, strconv.FormatUint(gasMeter.TallyGasUsed(), 10)))
 
 	// Append distribution messages for data proxies.
-	for _, proxy := range gasMeter.Proxies {
+	for _, proxy := range gasMeter.GetSortedProxies(reqID, ctx.BlockHeight()) {
 		proxyDist := types.NewDataProxyReward(proxy.PublicKey, proxy.PayoutAddress, proxy.Amount, gasMeter.GasPrice())
 		dists = append(dists, proxyDist)
 		attrs = append(attrs, sdk.NewAttribute(types.AttributeDataProxyGas,
@@ -41,7 +41,7 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 	// Append distribution messages for executors, burning a portion of their
 	// payouts in case of a reduced payout scenario.
 	reducedPayoutBurn := math.ZeroInt()
-	for _, executor := range gasMeter.Executors {
+	for _, executor := range gasMeter.GetSortedExecutors(reqID, ctx.BlockHeight()) {
 		payoutAmt := executor.Amount
 		if gasMeter.ReducedPayout {
 			burnAmt := burnRatio.MulInt(executor.Amount).TruncateInt()

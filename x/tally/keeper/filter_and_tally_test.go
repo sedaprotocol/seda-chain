@@ -594,14 +594,14 @@ func TestExecutorPayout(t *testing.T) {
 			_, tallyRes := f.tallyKeeper.FilterAndTally(f.Context(), request, types.DefaultParams(), gasMeter)
 			require.NoError(t, err)
 
-			for _, exec := range gasMeter.Executors {
+			for _, exec := range gasMeter.GetSortedExecutors(request.ID, f.Context().BlockHeight()) {
 				require.Equal(t,
 					tt.expExecutorGas[exec.PublicKey].String(),
 					exec.Amount.String(),
 				)
 			}
 			require.Equal(t, tt.expReducedPayout, gasMeter.ReducedPayout)
-			for _, proxy := range gasMeter.Proxies {
+			for _, proxy := range gasMeter.GetSortedProxies(request.ID, f.Context().BlockHeight()) {
 				require.Equal(t,
 					tt.expProxyGas[proxy.PayoutAddress].String(),
 					proxy.Amount.String(),
