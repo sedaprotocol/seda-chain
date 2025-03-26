@@ -44,7 +44,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/zerolog v1.33.0
-	github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 v2.2.3
+	github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 v2.3.0-rc.2
 	github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c
 	github.com/spf13/cast v1.7.1
 	github.com/spf13/cobra v1.8.1
@@ -53,6 +53,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.4.0
 	golang.org/x/crypto v0.32.0
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	google.golang.org/genproto/googleapis/api v0.0.0-20241202173237-19429a94021a
 	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.4
@@ -223,7 +224,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.32.0 // indirect
 	go.opentelemetry.io/otel/trace v1.32.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
