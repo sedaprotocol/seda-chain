@@ -5,7 +5,6 @@ import (
 
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
@@ -28,8 +27,8 @@ import (
 var (
 	_ module.AppModuleBasic = AppModule{}
 
-	_ appmodule.AppModule   = AppModule{}
-	_ appmodule.HasServices = AppModule{}
+	_ appmodule.AppModule = AppModule{}
+	_ module.HasServices  = AppModule{}
 )
 
 // AppModuleBasic defines the basic application module used by the sub-vesting
@@ -100,9 +99,8 @@ func (am AppModule) IsOnePerModuleType() {}
 func (am AppModule) IsAppModule() {}
 
 // RegisterServices registers module services.
-func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
-	types.RegisterMsgServer(registrar, keeper.NewMsgServerImpl(am.accountKeeper, am.bankKeeper, am.stakingKeeper))
-	return nil
+func (am AppModule) RegisterServices(cfg module.Configurator) {
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.accountKeeper, am.bankKeeper, am.stakingKeeper))
 }
 
 // InitGenesis performs a no-op.

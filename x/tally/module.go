@@ -28,6 +28,7 @@ var (
 	_ appmodule.AppModule     = AppModule{}
 	_ appmodule.HasEndBlocker = AppModule{}
 	_ module.HasGenesis       = AppModule{}
+	_ module.HasServices      = AppModule{}
 )
 
 // ----------------------------------------------------------------------------

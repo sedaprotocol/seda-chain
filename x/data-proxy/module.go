@@ -23,8 +23,10 @@ import (
 
 var (
 	_ module.AppModuleBasic = AppModuleBasic{}
-	_ appmodule.AppModule   = AppModule{}
-	_ module.HasGenesis     = AppModule{}
+
+	_ appmodule.AppModule = AppModule{}
+	_ module.HasGenesis   = AppModule{}
+	_ module.HasServices  = AppModule{}
 )
 
 // ----------------------------------------------------------------------------

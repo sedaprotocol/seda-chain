@@ -12,7 +12,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing/types"
 )
 
-var _ module.AppModule = AppModule{}
+var (
+	_ module.AppModule   = AppModule{}
+	_ module.HasServices = AppModule{}
+)
 
 // ----------------------------------------------------------------------------
 // AppModule
