@@ -13,7 +13,7 @@ func TestExportGenesis(t *testing.T) {
 	gs := types.DefaultGenesisState()
 	gs.Params.FilterGasCostNone = 200_000
 	gs.Params.FilterGasCostMultiplierMode = 400_000
-	gs.Params.FilterGasCostMultiplierStdDev = 600_000
+	gs.Params.FilterGasCostMultiplierMAD = 600_000
 	f.tallyKeeper.SetParams(f.Context(), gs.Params)
 
 	err := types.ValidateGenesis(*gs)

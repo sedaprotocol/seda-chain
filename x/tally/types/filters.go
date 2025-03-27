@@ -5,12 +5,13 @@ import (
 	"encoding/binary"
 	"math"
 	"math/big"
+	"slices"
 )
 
 var (
 	_ Filter = &FilterNone{}
 	_ Filter = &FilterMode{}
-	_ Filter = &FilterStdDev{}
+	_ Filter = &FilterMAD{}
 )
 
 type Filter interface {
@@ -92,7 +93,8 @@ func (f FilterMode) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bo
 	return outliers, true
 }
 
-type FilterStdDev struct {
+// FilterMAD implements a Median Absolute Deviation filter.
+type FilterMAD struct {
 	sigmaMultiplier   SigmaMultiplier
 	dataPath          string // JSON path to reveal data
 	replicationFactor uint16
@@ -117,18 +119,17 @@ var (
 	maxUint256, _ = big.NewInt(0).SetString("115792089237316195423570985008687907853269984665640564039457584007913129639935", 10)
 )
 
-// NewFilterStdDev constructs a new FilterStdDev object given a
-// filter input.
-// Standard deviation filter input looks as follows:
+// NewFilterMAD constructs a Median Absolute Deviation filter given a filter
+// input in following format:
 // 0             1           9             10                 18 18+json_path_length
 // | filter_type | max_sigma | number_type | json_path_length | json_path |
-func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor uint16, gasMeter *GasMeter) (FilterStdDev, error) {
+func NewFilterMAD(input []byte, gasCostMultiplier uint64, replicationFactor uint16, gasMeter *GasMeter) (FilterMAD, error) {
 	outOfGas := gasMeter.ConsumeTallyGas(gasCostMultiplier * uint64(replicationFactor))
 	if outOfGas {
-		return FilterStdDev{}, ErrOutofTallyGas
+		return FilterMAD{}, ErrOutofTallyGas
 	}
 
-	var filter FilterStdDev
+	var filter FilterMAD
 	if len(input) < 18 {
 		return filter, ErrFilterInputTooShort.Wrapf("%d < %d", len(input), 18)
 	}
@@ -183,16 +184,17 @@ func NewFilterStdDev(input []byte, gasCostMultiplier uint64, replicationFactor u
 	return filter, nil
 }
 
-// ApplyFilter applies the Standard Deviation Filter and returns an
-// outlier list. A reveal is declared an outlier if it deviates from
-// the median by more than the sample standard deviation multiplied
-// by the given sigma multiplier value.
-func (f FilterStdDev) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bool) {
+// ApplyFilter applies the Median Absolute Deviation Filter and returns an
+// outlier list. A reveal is declared an outlier if it deviates from the median
+// by more than the median absolute deviation multiplied by the given sigma
+// multiplier value.
+func (f FilterMAD) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bool) {
 	dataList, _ := parseReveals(reveals, f.dataPath, errors)
 	return detectOutliersBigInt(dataList, f.sigmaMultiplier, errors, f.replicationFactor, f.minNumber, f.maxNumber)
 }
 
 func detectOutliersBigInt(dataList []string, sigmaMultiplier SigmaMultiplier, errors []bool, replicationFactor uint16, minNumber *big.Int, maxNumber *big.Int) ([]bool, bool) {
+	// Parse data list in strings into big Ints.
 	sum := new(big.Int)
 	nums := make([]*big.Int, 0, len(dataList))
 	corruptQueue := make([]int, 0, len(dataList)) // queue of corrupt indices in dataList
@@ -220,25 +222,13 @@ func detectOutliersBigInt(dataList []string, sigmaMultiplier SigmaMultiplier, er
 		return outliers, false
 	}
 
-	// Find sample standard deviation.
-	n := big.NewInt(int64(len(nums)))
-	mean := sum.Div(sum, n)
-
-	sumSquaredDiff := new(big.Int)
-	for _, num := range nums {
-		diff := new(big.Int).Sub(num, mean)
-		diff.Mul(diff, diff)
-		sumSquaredDiff.Add(sumSquaredDiff, diff)
+	median := getMedian(nums)
+	absDevs := make([]*big.Rat, len(nums))
+	for i, num := range nums {
+		absDevs[i] = new(big.Rat).Abs(new(big.Rat).Sub(new(big.Rat).SetInt(num), median))
 	}
-
-	maxDev := new(big.Rat)
-	if n.Cmp(big.NewInt(1)) > 0 {
-		variance := new(big.Int).Div(sumSquaredDiff, n.Sub(n, big.NewInt(1)))
-		stdDev := new(big.Int).Sqrt(variance)
-		maxDev.Mul(sigmaMultiplier.BigRat(), new(big.Rat).SetInt(stdDev))
-	} else {
-		maxDev.SetInt64(1) // doesn't matter what we set here
-	}
+	mad := getMedianRat(absDevs)
+	maxDev := new(big.Rat).Mul(sigmaMultiplier.BigRat(), mad)
 
 	// Fill out the outliers list.
 	var numsInd, nonOutlierCount int
@@ -247,7 +237,7 @@ func detectOutliersBigInt(dataList []string, sigmaMultiplier SigmaMultiplier, er
 			outliers[i] = true
 			corruptQueue = corruptQueue[1:]
 		} else {
-			if isWithinMaxDev(nums[numsInd], mean, maxDev) {
+			if isWithinMaxDev(nums[numsInd], median, maxDev) {
 				nonOutlierCount++
 			} else {
 				outliers[i] = true
@@ -266,8 +256,44 @@ func detectOutliersBigInt(dataList []string, sigmaMultiplier SigmaMultiplier, er
 
 // isWithinMaxDev returns true if the given number is within the given
 // deviation amount from the mean.
-func isWithinMaxDev(num, mean *big.Int, maxDev *big.Rat) bool {
-	diff := new(big.Int).Sub(num, mean)
-	absDiff := new(big.Rat).SetInt(new(big.Int).Abs(diff))
-	return maxDev.Cmp(absDiff) >= 0
+func isWithinMaxDev(num *big.Int, median, maxDev *big.Rat) bool {
+	diff := new(big.Rat).Sub(new(big.Rat).SetInt(num), median)
+	return maxDev.Cmp(new(big.Rat).Abs(diff)) >= 0
+}
+
+// getMedian returns the median of the given list of big.Ints.
+func getMedian(nums []*big.Int) *big.Rat {
+	sortNums := make([]*big.Int, len(nums))
+	copy(sortNums, nums)
+	slices.SortFunc(sortNums, func(a, b *big.Int) int {
+		return a.Cmp(b)
+	})
+
+	l := len(sortNums)
+	median := new(big.Rat)
+	if l%2 == 0 {
+		sum := new(big.Int).Add(sortNums[l/2-1], sortNums[l/2])
+		median.SetFrac(sum, big.NewInt(2))
+	} else {
+		median.SetInt(sortNums[l/2])
+	}
+	return median
+}
+
+func getMedianRat(nums []*big.Rat) *big.Rat {
+	sortNums := make([]*big.Rat, len(nums))
+	copy(sortNums, nums)
+	slices.SortFunc(sortNums, func(a, b *big.Rat) int {
+		return a.Cmp(b)
+	})
+
+	l := len(sortNums)
+	median := new(big.Rat)
+	if l%2 == 0 {
+		median.Add(sortNums[l/2-1], sortNums[l/2])
+		median.Quo(median, big.NewRat(2, 1))
+	} else {
+		median.Set(sortNums[l/2])
+	}
+	return median
 }

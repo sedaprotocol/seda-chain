@@ -16,9 +16,9 @@ message Params {
   // FilterGasCostMultiplierMode is the gas cost multiplier for a filter type
   // mode.
   uint64 filter_gas_cost_multiplier_mode = 3;
-  // FilterGasCostMultiplierStdDev is the gas cost multiplier for a filter type
-  // stddev.
-  uint64 filter_gas_cost_multiplier_std_dev = 4;
+  // FilterGasCostMAD is the gas cost multiplier for a filter type
+  // Median Absolute Deviation.
+  uint64 filter_gas_cost_multiplier_m_a_d = 4;
   // GasCostBase is the base gas cost for a data request.
   uint64 gas_cost_base = 5;
   // GasCostFallback is the gas cost incurred for data request execution when

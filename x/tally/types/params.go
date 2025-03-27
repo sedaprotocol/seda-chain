@@ -9,14 +9,14 @@ import (
 )
 
 const (
-	DefaultMaxResultSize                 = 1024
-	DefaultMaxTallyGasLimit              = 50_000_000_000_000
-	DefaultFilterGasCostNone             = 100_000
-	DefaultFilterGasCostMultiplierMode   = 100_000
-	DefaultFilterGasCostMultiplierStddev = 100_000
-	DefaultGasCostBase                   = 1_000_000_000_000
-	DefaultExecutionGasCostFallback      = 5_000_000_000_000
-	DefaultMaxTalliesPerBlock            = 100
+	DefaultMaxResultSize               = 1024
+	DefaultMaxTallyGasLimit            = 50_000_000_000_000
+	DefaultFilterGasCostNone           = 100_000
+	DefaultFilterGasCostMultiplierMode = 100_000
+	DefaultFilterGasCostMultiplierMAD  = 100_000
+	DefaultGasCostBase                 = 1_000_000_000_000
+	DefaultExecutionGasCostFallback    = 5_000_000_000_000
+	DefaultMaxTalliesPerBlock          = 100
 )
 
 var DefaultBurnRatio = math.LegacyNewDecWithPrec(2, 1)
@@ -24,15 +24,15 @@ var DefaultBurnRatio = math.LegacyNewDecWithPrec(2, 1)
 // DefaultParams returns default tally module parameters.
 func DefaultParams() Params {
 	return Params{
-		MaxResultSize:                 DefaultMaxResultSize,
-		MaxTallyGasLimit:              DefaultMaxTallyGasLimit,
-		FilterGasCostNone:             DefaultFilterGasCostNone,
-		FilterGasCostMultiplierMode:   DefaultFilterGasCostMultiplierMode,
-		FilterGasCostMultiplierStdDev: DefaultFilterGasCostMultiplierStddev,
-		GasCostBase:                   DefaultGasCostBase,
-		ExecutionGasCostFallback:      DefaultExecutionGasCostFallback,
-		BurnRatio:                     DefaultBurnRatio,
-		MaxTalliesPerBlock:            DefaultMaxTalliesPerBlock,
+		MaxResultSize:               DefaultMaxResultSize,
+		MaxTallyGasLimit:            DefaultMaxTallyGasLimit,
+		FilterGasCostNone:           DefaultFilterGasCostNone,
+		FilterGasCostMultiplierMode: DefaultFilterGasCostMultiplierMode,
+		FilterGasCostMultiplierMAD:  DefaultFilterGasCostMultiplierMAD,
+		GasCostBase:                 DefaultGasCostBase,
+		ExecutionGasCostFallback:    DefaultExecutionGasCostFallback,
+		BurnRatio:                   DefaultBurnRatio,
+		MaxTalliesPerBlock:          DefaultMaxTalliesPerBlock,
 	}
 }
 
@@ -50,8 +50,8 @@ func (p *Params) Validate() error {
 	if p.FilterGasCostMultiplierMode <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("filter gas cost (mode) must be greater than 0: %d", p.FilterGasCostMultiplierMode)
 	}
-	if p.FilterGasCostMultiplierStdDev <= 0 {
-		return sdkerrors.ErrInvalidRequest.Wrapf("filter gas cost (std dev) must be greater than 0: %d", p.FilterGasCostMultiplierStdDev)
+	if p.FilterGasCostMultiplierMAD <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("filter gas cost (MAD) must be greater than 0: %d", p.FilterGasCostMultiplierMAD)
 	}
 	if p.GasCostBase <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("base gas cost must be greater than 0: %d", p.GasCostBase)

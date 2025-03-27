@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -97,24 +98,43 @@ func TestFilterAndTally(t *testing.T) {
 			filterErr:         types.ErrNoBasicConsensus,
 		},
 		{
-			name:            "Standard deviation filter - One reveal missing",
+			name:            "MAD filter - One reveal missing without an outlier",
 			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
-			outliers:        []bool{false, false, false, false},
+			outliers:        []bool{false, false, false, false, false},                        // MaxDev = 1*1.5 = 1.5, Median = 5
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
 				"b": {ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
 				"c": {ExitCode: 0, Reveal: `{"result": {"text": 4}}`},
 				"d": {ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
+				"e": {ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
 			},
-			replicationFactor: 5,
+			replicationFactor: 6,
 			consensus:         true,
 			consPubKeys:       nil,
-			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierStdDev*5,
+			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMAD*6,
 			exitCode:          types.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
 		{
-			name:            "Standard deviation filter - Four reveals missing",
+			name:            "MAD filter - One outlier",
+			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
+			outliers:        []bool{false, false, false, false, true},                         // MaxDev = 1*1.5 = 1.5, Median = 5
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
+				"c": {ExitCode: 0, Reveal: `{"result": {"text": 4}}`},
+				"d": {ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
+				"e": {ExitCode: 0, Reveal: `{"result": {"text": 1}}`},
+			},
+			replicationFactor: 5,
+			consensus:         true,
+			consPubKeys:       nil,
+			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMAD*5,
+			exitCode:          types.TallyExitCodeExecError, // since tally program does not exist
+			filterErr:         nil,
+		},
+		{
+			name:            "MAD filter - Four reveals missing",
 			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
 			outliers:        nil,
 			reveals: map[string]types.RevealBody{
@@ -472,10 +492,10 @@ func TestExecutorPayout(t *testing.T) {
 			},
 		},
 		{
-			name:            "Standard deviation uint128 (1 reveal missing, consensus with 2 outliers, uniform gas reporting)",
+			name:            "MAD uint128 (1 reveal missing, consensus with 2 outliers, uniform gas reporting)",
 			tallyInputAsHex: "0200000000002DC6C005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 3, number_type = 0x05, json_path = $.result.text
-			reveals: map[string]types.RevealBody{ // mean = 416667, stddev = 75277
-				"a": {Reveal: `{"result": {"text": 200000, "number": 0}}`, GasUsed: 25000},
+			reveals: map[string]types.RevealBody{ // median = 400000, MAD = 50000
+				"a": {Reveal: `{"result": {"text": 300000, "number": 0}}`, GasUsed: 25000},
 				"b": {Reveal: `{"result": {"number": 700000, "number": 0}}`, GasUsed: 25000}, // corrupt
 				"c": {Reveal: `{"result": {"text": 400000, "number": 10}}`, GasUsed: 25000},
 				"d": {Reveal: `{"result": {"text": 400000, "number": 101}}`, GasUsed: 25000},
@@ -497,10 +517,10 @@ func TestExecutorPayout(t *testing.T) {
 			},
 		},
 		{
-			name:            "Standard deviation uint128 (1 reveal missing, consensus with 2 outliers, divergent gas reporting)",
+			name:            "MAD uint128 (1 reveal missing, consensus with 2 outliers, divergent gas reporting)",
 			tallyInputAsHex: "0200000000002DC6C005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 3, number_type = 0x05, json_path = $.result.text
-			reveals: map[string]types.RevealBody{ // mean = 416667, stddev = 75277
-				"a": {Reveal: `{"result": {"text": 200000, "number": 0}}`, GasUsed: 25000},
+			reveals: map[string]types.RevealBody{
+				"a": {Reveal: `{"result": {"text": 300000, "number": 0}}`, GasUsed: 25000},
 				"b": {Reveal: `{"result": {"number": 700000, "number": 0}}`, GasUsed: 27000}, // corrupt
 				"c": {Reveal: `{"result": {"text": 400000, "number": 10}}`, GasUsed: 21500},
 				"d": {Reveal: `{"result": {"text": 400000, "number": 101}}`, GasUsed: 29000},
@@ -522,10 +542,10 @@ func TestExecutorPayout(t *testing.T) {
 			},
 		},
 		{
-			name:            "Standard deviation uint128 (1 reveal missing, consensus with 2 outliers, divergent gas reporting)",
+			name:            "MAD uint128 (1 reveal missing, consensus with 2 outliers, divergent gas reporting)",
 			tallyInputAsHex: "0200000000002DC6C005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 3, number_type = 0x05, json_path = $.result.text
-			reveals: map[string]types.RevealBody{ // mean = 416667, stddev = 75277
-				"a": {Reveal: `{"result": {"text": 200000, "number": 0}}`, GasUsed: 25000},
+			reveals: map[string]types.RevealBody{
+				"a": {Reveal: `{"result": {"text": 300000, "number": 0}}`, GasUsed: 25000},
 				"b": {Reveal: `{"result": {"number": 700000, "number": 0}}`, GasUsed: 27000}, // corrupt
 				"c": {Reveal: `{"result": {"text": 400000, "number": 10}}`, GasUsed: 21500},
 				"d": {Reveal: `{"result": {"text": 400000, "number": 101}}`, GasUsed: 29000},
@@ -594,10 +614,13 @@ func TestExecutorPayout(t *testing.T) {
 			_, tallyRes := f.tallyKeeper.FilterAndTally(f.Context(), request, types.DefaultParams(), gasMeter)
 			require.NoError(t, err)
 
-			for _, exec := range gasMeter.GetSortedExecutors(request.ID, f.Context().BlockHeight()) {
+			execGasMeter := gasMeter.GetSortedExecutors(request.ID, f.Context().BlockHeight())
+			require.Equal(t, len(tt.expExecutorGas), len(execGasMeter))
+			for _, exec := range execGasMeter {
 				require.Equal(t,
 					tt.expExecutorGas[exec.PublicKey].String(),
 					exec.Amount.String(),
+					fmt.Sprintf("unexpected executor gas for %s", exec.PublicKey),
 				)
 			}
 			require.Equal(t, tt.expReducedPayout, gasMeter.ReducedPayout)

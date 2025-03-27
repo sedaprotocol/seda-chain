@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	filterTypeNone   byte = 0x00
-	filterTypeMode   byte = 0x01
-	filterTypeStdDev byte = 0x02
+	filterTypeNone byte = 0x00
+	filterTypeMode byte = 0x01
+	filterTypeMAD  byte = 0x02
 )
 
 type FilterResult struct {
@@ -104,8 +104,8 @@ func BuildFilter(filterInput string, replicationFactor uint16, params types.Para
 		filter, err = types.NewFilterNone(params.FilterGasCostNone, gasMeter)
 	case filterTypeMode:
 		filter, err = types.NewFilterMode(input, params.FilterGasCostMultiplierMode, replicationFactor, gasMeter)
-	case filterTypeStdDev:
-		filter, err = types.NewFilterStdDev(input, params.FilterGasCostMultiplierStdDev, replicationFactor, gasMeter)
+	case filterTypeMAD:
+		filter, err = types.NewFilterMAD(input, params.FilterGasCostMultiplierMAD, replicationFactor, gasMeter)
 	default:
 		return nil, types.ErrInvalidFilterType
 	}
