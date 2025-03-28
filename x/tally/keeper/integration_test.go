@@ -358,8 +358,7 @@ func (f *fixture) SetDataProxyConfig(proxyPubKey, payoutAddr string, proxyFee sd
 
 var setStakingConfigMsg = `{
 	"set_staking_config": {
-	  "minimum_stake_to_register": "1",
-	  "minimum_stake_for_committee_eligibility": "1",
+	  "minimum_stake": "1",
 	  "allowlist_enabled": true
 	}
   }`
