@@ -135,7 +135,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
-
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
@@ -257,13 +256,6 @@ type App struct {
 
 	// Cosmos SDK modules keepers
 	keepers.AppKeepers
-
-	// SEDA modules keepers
-	WasmStorageKeeper wasmstoragekeeper.Keeper
-	TallyKeeper       tallykeeper.Keeper
-	DataProxyKeeper   dataproxykeeper.Keeper
-	PubKeyKeeper      *pubkeykeeper.Keeper
-	BatchingKeeper    batchingkeeper.Keeper
 
 	// App-level pre-blocker (Note this cannot change consensus parameters)
 	preBlocker sdk.PreBlocker
@@ -640,7 +632,7 @@ func NewApp(
 		wasmtypes.MaxWasmSize = int(val) // default 819200 (800 * 1024)
 	}
 
-	contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
+	app.WasmContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
 
 	app.WasmStorageKeeper = *wasmstoragekeeper.NewKeeper(
 		appCodec,
@@ -650,7 +642,7 @@ func NewApp(
 		txConfig.TxDecoder(),
 		app.BankKeeper,
 		app.StakingKeeper,
-		contractKeeper,
+		app.WasmContractKeeper,
 	)
 
 	app.PubKeyKeeper = pubkeykeeper.NewKeeper(
@@ -677,7 +669,7 @@ func NewApp(
 		app.SlashingKeeper,
 		app.WasmStorageKeeper,
 		app.PubKeyKeeper,
-		contractKeeper,
+		app.WasmContractKeeper,
 		app.WasmKeeper,
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 	)
@@ -688,7 +680,7 @@ func NewApp(
 		app.WasmStorageKeeper,
 		app.BatchingKeeper,
 		app.DataProxyKeeper,
-		contractKeeper,
+		app.WasmContractKeeper,
 		app.WasmKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)

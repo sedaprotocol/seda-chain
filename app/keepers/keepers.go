@@ -2,6 +2,7 @@ package keepers
 
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
@@ -27,7 +28,12 @@ import (
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 
+	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
+	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
+	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
+	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
+	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 )
 
 type AppKeepers struct {
@@ -63,4 +69,14 @@ type AppKeepers struct {
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
+
+	// used by migration handler
+	WasmContractKeeper wasmtypes.ContractOpsKeeper
+
+	// SEDA modules keepers
+	WasmStorageKeeper wasmstoragekeeper.Keeper
+	TallyKeeper       tallykeeper.Keeper
+	DataProxyKeeper   dataproxykeeper.Keeper
+	PubKeyKeeper      *pubkeykeeper.Keeper
+	BatchingKeeper    batchingkeeper.Keeper
 }

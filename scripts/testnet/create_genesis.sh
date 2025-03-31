@@ -99,6 +99,9 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["slashing"]["params"]["sla
 cat $HOME/.sedad/config/genesis.json | jq '.consensus["params"]["block"]["max_gas"]="100000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 cat $HOME/.sedad/config/genesis.json | jq '.consensus["params"]["abci"]["vote_extensions_enable_height"]="100"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
+# pubkey params
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["pubkey"]["params"]["activation_block_delay"]="25"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+
 
 ###################################################
 ############# CREATE GENESIS ACCOUNTS #############
