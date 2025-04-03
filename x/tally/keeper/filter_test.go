@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"sort"
 	"testing"
 
@@ -876,20 +877,23 @@ func TestFilter(t *testing.T) {
 			filterInput, err := hex.DecodeString(tt.tallyInputAsHex)
 			require.NoError(t, err)
 
-			// For illustration
 			for i := 0; i < len(tt.reveals); i++ {
 				tt.reveals[i].Reveal = base64.StdEncoding.EncodeToString([]byte(tt.reveals[i].Reveal))
 			}
 
-			// Since ApplyFilter assumes the pubkeys are sorted.
+			reveals := make([]types.Reveal, len(tt.reveals))
 			for i := range tt.reveals {
 				sort.Strings(tt.reveals[i].ProxyPubKeys)
+				reveals[i] = types.Reveal{
+					Executor:   fmt.Sprintf("%d", i),
+					RevealBody: tt.reveals[i],
+				}
 			}
 
 			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
 
 			result, err := keeper.ExecuteFilter(
-				tt.reveals,
+				reveals,
 				base64.StdEncoding.EncodeToString(filterInput), uint16(len(tt.reveals)),
 				types.DefaultParams(),
 				gasMeter,
@@ -911,6 +915,7 @@ func TestFilter(t *testing.T) {
 }
 
 // TestFilterWildcard tests filters with JSON paths containing wildcard expressions.
+
 func TestFilterWildcard(t *testing.T) {
 	f := initFixture(t)
 
@@ -1013,20 +1018,23 @@ func TestFilterWildcard(t *testing.T) {
 			require.NoError(t, err)
 			filterInput = append(filterInput, []byte(tt.jsonPath)...)
 
-			// For illustration
 			for i := 0; i < len(tt.reveals); i++ {
 				tt.reveals[i].Reveal = base64.StdEncoding.EncodeToString([]byte(tt.reveals[i].Reveal))
 			}
 
-			// Since ApplyFilter assumes the pubkeys are sorted.
+			reveals := make([]types.Reveal, len(tt.reveals))
 			for i := range tt.reveals {
 				sort.Strings(tt.reveals[i].ProxyPubKeys)
+				reveals[i] = types.Reveal{
+					Executor:   fmt.Sprintf("%d", i),
+					RevealBody: tt.reveals[i],
+				}
 			}
 
 			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
 
 			result, err := keeper.ExecuteFilter(
-				tt.reveals,
+				reveals,
 				base64.StdEncoding.EncodeToString(filterInput), uint16(len(tt.reveals)),
 				types.DefaultParams(),
 				gasMeter,

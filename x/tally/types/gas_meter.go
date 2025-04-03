@@ -156,16 +156,16 @@ func (g *GasMeter) ConsumeExecGasForExecutor(executorPubKey string, amount uint6
 // GetSortedProxies returns a list of proxies sorted by hash of their public
 // keys and (drID, height) entropy.
 func (g *GasMeter) GetSortedProxies(drID string, height int64) []ProxyGasUsed {
-	return HashSort(g.proxies, getEntropy(drID, height))
+	return HashSort(g.proxies, GetEntropy(drID, height))
 }
 
 // GetSortedExecutors returns a list of executors sorted by hash of their public
 // keys and (drID, height) entropy.
 func (g *GasMeter) GetSortedExecutors(drID string, height int64) []ExecutorGasUsed {
-	return HashSort(g.executors, getEntropy(drID, height))
+	return HashSort(g.executors, GetEntropy(drID, height))
 }
 
-func getEntropy(drID string, height int64) []byte {
+func GetEntropy(drID string, height int64) []byte {
 	heightBytes := make([]byte, 8)
 	//nolint:gosec // G115: We shouldn't get negative block heights anyway.
 	binary.BigEndian.PutUint64(heightBytes, uint64(height))

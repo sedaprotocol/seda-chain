@@ -18,7 +18,7 @@ type dataAttributes struct {
 // It also updates the given errors list to indicate true for the items
 // that are corrupted. Note when an i-th reveal is corrupted, the i-th
 // item in the data list is left as an empty string.
-func parseReveals(reveals []RevealBody, dataPath string, errors []bool) ([]string, dataAttributes) {
+func parseReveals(reveals []Reveal, dataPath string, errors []bool) ([]string, dataAttributes) {
 	var parser gen.Parser
 	var maxFreq int
 	freq := make(map[string]int, len(reveals))

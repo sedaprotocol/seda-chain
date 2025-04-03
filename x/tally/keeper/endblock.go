@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -86,12 +85,10 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			types.MarkResultAsFallback(&dataResults[i], err)
 			continue
 		}
-
 		if contractQueryResponse.IsPaused {
 			types.MarkResultAsPaused(&dataResults[i])
 			continue
 		}
-
 		gasPrice, ok := math.NewIntFromString(req.GasPrice)
 		if !ok || !gasPrice.IsPositive() {
 			types.MarkResultAsFallback(&dataResults[i], fmt.Errorf("invalid gas price: %s", req.GasPrice))
@@ -99,6 +96,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 		}
 
 		gasMeter := types.NewGasMeter(req.TallyGasLimit, req.ExecGasLimit, params.MaxTallyGasLimit, gasPrice, params.GasCostBase)
+
 		if len(req.Commits) < int(req.ReplicationFactor) {
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
 			dataResults[i].ExitCode = types.TallyExitCodeNotEnoughCommits
@@ -181,23 +179,11 @@ type TallyResult struct {
 // FilterAndTally builds and applies filter, executes tally program, and
 // calculates canonical gas consumption.
 func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.Params, gasMeter *types.GasMeter) (FilterResult, TallyResult) {
-	// Sort the reveals by their keys (executors).
-	keys := make([]string, len(req.Reveals))
-	i := 0
-	for k := range req.Reveals {
-		keys[i] = k
-		i++
-	}
-	sort.Strings(keys)
-
-	reveals := make([]types.RevealBody, len(req.Reveals))
-	for i, k := range keys {
-		reveals[i] = req.Reveals[k]
-		sort.Strings(reveals[i].ProxyPubKeys)
-	}
+	reveals, executors, gasReports := req.SanitizeReveals(ctx.BlockHeight())
 
 	// Phase 1: Filtering
 	filterResult, filterErr := ExecuteFilter(reveals, req.ConsensusFilter, req.ReplicationFactor, params, gasMeter)
+	filterResult.Executors = executors
 	tallyResult := TallyResult{
 		Consensus:    filterResult.Consensus,
 		ProxyPubKeys: filterResult.ProxyPubKeys,
@@ -240,14 +226,10 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.
 		gasMeter.SetReducedPayoutMode()
 		fallthrough
 	default: // filterErr == ErrConsensusInError || filterErr == nil
-		gasReports := make([]uint64, len(reveals))
-		for i, reveal := range reveals {
-			gasReports[i] = reveal.GasUsed
-		}
 		if areGasReportsUniform(gasReports) {
-			MeterExecutorGasUniform(keys, gasReports[0], filterResult.Outliers, req.ReplicationFactor, gasMeter)
+			MeterExecutorGasUniform(reveals, gasReports[0], filterResult.Outliers, req.ReplicationFactor, gasMeter)
 		} else {
-			MeterExecutorGasDivergent(keys, gasReports, filterResult.Outliers, req.ReplicationFactor, gasMeter)
+			MeterExecutorGasDivergent(reveals, gasReports, filterResult.Outliers, req.ReplicationFactor, gasMeter)
 		}
 	}
 

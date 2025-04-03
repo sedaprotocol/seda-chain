@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"cosmossdk.io/math"
 
@@ -77,6 +78,40 @@ func (req *Request) ToResult(ctx types.Context) (result batchingtypes.DataResult
 	}
 
 	return result, encodingErr
+}
+
+// SanitizeReveals returns sanitized reveals, executors, and gas reports. The
+// three slices are sorted by executor with given entropies and have the same
+// ordering. Each reveal's reported proxy public keys are also sorted.
+func (req *Request) SanitizeReveals(height int64) ([]Reveal, []string, []uint64) {
+	reveals := make([]Reveal, len(req.Reveals))
+	i := 0
+	for executor, reveal := range req.Reveals {
+		reveals[i] = Reveal{Executor: executor, RevealBody: reveal}
+		sort.Strings(reveals[i].ProxyPubKeys)
+		i++
+	}
+
+	sortedReveals := HashSort(reveals, GetEntropy(req.ID, height))
+
+	executors := make([]string, len(sortedReveals))
+	gasReports := make([]uint64, len(sortedReveals))
+	for i, reveal := range sortedReveals {
+		executors[i] = reveal.Executor
+		gasReports[i] = reveal.GasUsed
+	}
+	return sortedReveals, executors, gasReports
+}
+
+var _ HashSortable = Reveal{}
+
+type Reveal struct {
+	Executor string // executor ID (hex-encoded public key)
+	RevealBody
+}
+
+func (r Reveal) GetSortKey() []byte {
+	return []byte(r.Executor)
 }
 
 type RevealBody struct {

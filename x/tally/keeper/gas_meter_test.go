@@ -171,7 +171,12 @@ func ReproductionTestReducedPayoutWithProxies(t *testing.T) {
 	gasMeter := types.NewGasMeter(150000000000000, 300000000000000, types.DefaultMaxTallyGasLimit, math.NewInt(100000), types.DefaultGasCostBase)
 	fixture.tallyKeeper.MeterProxyGas(fixture.Context(), []string{"020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0"}, 1, gasMeter)
 
-	keeper.MeterExecutorGasUniform([]string{"020c4fe9e5063e7b5051284423089682082cf085a3b8f9e86bdb30407d761efc49"}, 81644889168750, []bool{false}, 1, gasMeter)
+	keeper.MeterExecutorGasUniform(
+		[]types.Reveal{
+			{Executor: "020c4fe9e5063e7b5051284423089682082cf085a3b8f9e86bdb30407d761efc49"},
+		},
+		81644889168750, []bool{false}, 1, gasMeter,
+	)
 
 	require.Equalf(t, uint64(81644889168750), gasMeter.ExecutionGasUsed(), "expected exec gas used %d, got %d", 81644889168750, gasMeter.ExecutionGasUsed())
 	require.Equalf(t, uint64(1000000000000), gasMeter.TallyGasUsed(), "expected tally gas used %d, got %d", 1000000100000, gasMeter.TallyGasUsed())

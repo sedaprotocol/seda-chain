@@ -13,7 +13,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
-func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.RevealBody, gasMeter *types.GasMeter) (types.VMResult, error) {
+func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.Reveal, gasMeter *types.GasMeter) (types.VMResult, error) {
 	tallyProgram, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyProgramID)
 	if err != nil {
 		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrFindingTallyProgram, req)
@@ -71,7 +71,7 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterRe
 	return result, nil
 }
 
-func tallyVMArg(inputArgs []byte, reveals []types.RevealBody, outliers []bool) ([]string, error) {
+func tallyVMArg(inputArgs []byte, reveals []types.Reveal, outliers []bool) ([]string, error) {
 	arg := []string{hex.EncodeToString(inputArgs)}
 
 	r, err := json.Marshal(reveals)

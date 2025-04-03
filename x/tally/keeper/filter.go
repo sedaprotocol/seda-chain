@@ -13,9 +13,13 @@ const (
 	filterTypeMAD  byte = 0x02
 )
 
+// FilterResult is the result of filtering.
 type FilterResult struct {
-	Errors       []bool   // i-th item is true if i-th reveal is non-zero exit or corrupt
-	Outliers     []bool   // i-th item is non-zero if i-th reveal is an outlier
+	// Ordered results sorted by executor with entropy
+	Executors []string // list of executor identifiers
+	Errors    []bool   // i-th item is true if i-th reveal is non-zero exit or corrupt
+	Outliers  []bool   // i-th item is non-zero if i-th reveal is an outlier
+	// Consensus results
 	Consensus    bool     // whether consensus (either in data or in error) is reached
 	ProxyPubKeys []string // data proxy public keys in consensus
 }
@@ -44,7 +48,7 @@ func invertErrors(errors []bool) []bool {
 // the given reveals to determine consensus, proxy public keys in consensus, and
 // outliers. It assumes that the reveals are sorted by their keys and that their
 // proxy public keys are sorted.
-func ExecuteFilter(reveals []types.RevealBody, filterInput string, replicationFactor uint16, params types.Params, gasMeter *types.GasMeter) (FilterResult, error) {
+func ExecuteFilter(reveals []types.Reveal, filterInput string, replicationFactor uint16, params types.Params, gasMeter *types.GasMeter) (FilterResult, error) {
 	var res FilterResult
 	res.Errors = make([]bool, len(reveals))
 	res.Outliers = make([]bool, len(reveals))

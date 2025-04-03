@@ -33,21 +33,30 @@ func TestExecuteTallyProgram_RandomString(t *testing.T) {
 		PaybackAddress: base64.StdEncoding.EncodeToString([]byte("0x0")),
 	}, keeper.FilterResult{
 		Outliers: []bool{false, true, false},
-	}, []types.RevealBody{
+	}, []types.Reveal{
 		{
-			Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"one\"}")),
-			ProxyPubKeys: []string{},
-			GasUsed:      10,
+			Executor: "0",
+			RevealBody: types.RevealBody{
+				Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"one\"}")),
+				ProxyPubKeys: []string{},
+				GasUsed:      10,
+			},
 		},
 		{
-			Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"two\"}")),
-			ProxyPubKeys: []string{},
-			GasUsed:      10,
+			Executor: "1",
+			RevealBody: types.RevealBody{
+				Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"two\"}")),
+				ProxyPubKeys: []string{},
+				GasUsed:      10,
+			},
 		},
 		{
-			Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"three\"}")),
-			ProxyPubKeys: []string{},
-			GasUsed:      10,
+			Executor: "2",
+			RevealBody: types.RevealBody{
+				Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"three\"}")),
+				ProxyPubKeys: []string{},
+				GasUsed:      10,
+			},
 		},
 	}, gasMeter)
 
@@ -73,7 +82,7 @@ func TestExecuteTallyProgram_InvalidImports(t *testing.T) {
 		PaybackAddress: base64.StdEncoding.EncodeToString([]byte("0x0")),
 	}, keeper.FilterResult{
 		Outliers: []bool{},
-	}, []types.RevealBody{}, gasMeter)
+	}, []types.Reveal{}, gasMeter)
 
 	require.NoError(t, err)
 	require.NotEqual(t, uint32(0), vmRes.ExitCode)

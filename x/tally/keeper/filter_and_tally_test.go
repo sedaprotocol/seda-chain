@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"slices"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -27,7 +28,7 @@ func TestFilterAndTally(t *testing.T) {
 		name              string
 		tallyInputAsHex   string
 		outliers          []bool
-		reveals           map[string]types.RevealBody
+		reveals           []types.RevealBody
 		replicationFactor uint16
 		consensus         bool
 		consPubKeys       []string // expected proxy public keys in basic consensus
@@ -39,11 +40,11 @@ func TestFilterAndTally(t *testing.T) {
 			name:            "None filter - One reveal missing",
 			tallyInputAsHex: "00",
 			outliers:        []bool{false, false, false, false},
-			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				"d": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
 			},
 			replicationFactor: 5,
 			consensus:         true,
@@ -56,8 +57,8 @@ func TestFilterAndTally(t *testing.T) {
 			name:            "None filter - Four reveals missing",
 			tallyInputAsHex: "00",
 			outliers:        nil,
-			reveals: map[string]types.RevealBody{
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
 			},
 			replicationFactor: 5,
 			consensus:         false,
@@ -70,11 +71,11 @@ func TestFilterAndTally(t *testing.T) {
 			name:            "Mode filter - One reveal missing",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
 			outliers:        []bool{false, false, false, false},
-			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				"d": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
 			},
 			replicationFactor: 5,
 			consensus:         true,
@@ -87,8 +88,8 @@ func TestFilterAndTally(t *testing.T) {
 			name:            "Mode filter - Four reveals missing",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
 			outliers:        nil,
-			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
 			},
 			replicationFactor: 5,
 			consensus:         false,
@@ -101,12 +102,12 @@ func TestFilterAndTally(t *testing.T) {
 			name:            "MAD filter - One reveal missing without an outlier",
 			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
 			outliers:        []bool{false, false, false, false, false},                        // MaxDev = 1*1.5 = 1.5, Median = 5
-			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": 4}}`},
-				"d": {ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
-				"e": {ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": 4}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
 			},
 			replicationFactor: 6,
 			consensus:         true,
@@ -119,12 +120,12 @@ func TestFilterAndTally(t *testing.T) {
 			name:            "MAD filter - One outlier",
 			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
 			outliers:        []bool{false, false, false, false, true},                         // MaxDev = 1*1.5 = 1.5, Median = 5
-			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": 4}}`},
-				"d": {ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
-				"e": {ExitCode: 0, Reveal: `{"result": {"text": 1}}`},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": 4}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
+				{ExitCode: 0, Reveal: `{"result": {"text": 1}}`},
 			},
 			replicationFactor: 5,
 			consensus:         true,
@@ -137,8 +138,8 @@ func TestFilterAndTally(t *testing.T) {
 			name:            "MAD filter - Four reveals missing",
 			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
 			outliers:        nil,
-			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
+			reveals: []types.RevealBody{
+				{ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
 			},
 			replicationFactor: 5,
 			consensus:         false,
@@ -154,11 +155,15 @@ func TestFilterAndTally(t *testing.T) {
 			require.NoError(t, err)
 
 			reveals := make(map[string]types.RevealBody)
-			for k, v := range tt.reveals {
+			expectedOutliers := make(map[string]bool)
+			for i, v := range tt.reveals {
 				revealBody := v
 				revealBody.Reveal = base64.StdEncoding.EncodeToString([]byte(v.Reveal))
 				revealBody.GasUsed = v.GasUsed
-				reveals[k] = revealBody
+				reveals[fmt.Sprintf("%d", i)] = revealBody
+				if tt.outliers != nil {
+					expectedOutliers[fmt.Sprintf("%d", i)] = tt.outliers[i]
+				}
 			}
 
 			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
@@ -171,7 +176,14 @@ func TestFilterAndTally(t *testing.T) {
 			}, types.DefaultParams(), gasMeter)
 			require.NoError(t, err)
 
-			require.Equal(t, tt.outliers, filterRes.Outliers)
+			if tt.outliers == nil {
+				require.Nil(t, filterRes.Outliers)
+			} else {
+				for executor, outlier := range expectedOutliers {
+					index := slices.Index(filterRes.Executors, executor)
+					require.Equal(t, outlier, filterRes.Outliers[index])
+				}
+			}
 			require.Equal(t, tt.tallyGasUsed, gasMeter.TallyGasUsed())
 			require.Equal(t, tt.consensus, filterRes.Consensus)
 			require.Equal(t, tt.consensus, tallyRes.Consensus)
@@ -212,6 +224,7 @@ func TestExecutorPayout(t *testing.T) {
 		name              string
 		tallyInputAsHex   string
 		reveals           map[string]types.RevealBody
+		requestID         string
 		replicationFactor uint16
 		execGasLimit      uint64
 		expExecGasUsed    uint64
@@ -323,7 +336,7 @@ func TestExecutorPayout(t *testing.T) {
 			expReducedPayout: true,
 		},
 		{
-			name:            "Divergent gas reporting with shares (lowest_report*2 > median_report)",
+			name:            "Divergent gas reporting (low*2 > median)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
@@ -340,7 +353,68 @@ func TestExecutorPayout(t *testing.T) {
 			},
 		},
 		{
-			name:            "Divergent gas reporting without shares (lowest_report*2 < median_report)",
+			name:            "Divergent gas reporting with multiple lows (low*2 > median)",
+			tallyInputAsHex: "00",
+			reveals: map[string]types.RevealBody{
+				"lizard":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
+				"bonobo":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"penguin": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
+				"zebra":   {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
+				"lion":    {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
+			},
+			requestID:         "646174615F726571756573745F31",
+			replicationFactor: 5,
+			execGasLimit:      150000,
+			expExecGasUsed:    47727 + 25568*4,
+			expExecutorGas: map[string]math.Int{
+				"lizard":  math.NewInt(25568), // low
+				"bonobo":  math.NewInt(25568),
+				"penguin": math.NewInt(25568),
+				"zebra":   math.NewInt(25568),
+				"lion":    math.NewInt(47727), // low
+			},
+		},
+		{
+			name:            "Divergent gas reporting with multiple lows, different req ID (low*2 > median)",
+			tallyInputAsHex: "00",
+			reveals: map[string]types.RevealBody{
+				"lizard":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
+				"bonobo":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"penguin": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
+				"zebra":   {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
+				"lion":    {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
+			},
+			requestID:         "646174615F726571756573745F35",
+			replicationFactor: 5,
+			execGasLimit:      150000,
+			expExecGasUsed:    47727 + 25568*4,
+			expExecutorGas: map[string]math.Int{
+				"lizard":  math.NewInt(47727), // low
+				"bonobo":  math.NewInt(25568),
+				"penguin": math.NewInt(25568),
+				"zebra":   math.NewInt(25568),
+				"lion":    math.NewInt(25568), // low
+			},
+		},
+		{
+			name:            "Divergent gas reporting with multiple lows (low*2 > median, low is median)",
+			tallyInputAsHex: "00",
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
+				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 35000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      30000,
+			expExecGasUsed:    12000 + 6000*2,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(12000), // low
+				"b": math.NewInt(6000),  // low
+				"c": math.NewInt(6000),
+			},
+		},
+		{
+			name:            "Divergent gas reporting (low*2 < median)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
@@ -357,7 +431,45 @@ func TestExecutorPayout(t *testing.T) {
 			},
 		},
 		{
-			name:            "Divergent gas reporting without shares (lowest_report*2 == median_report)",
+			name:            "Divergent gas reporting with multiple lows (low*2 < median)",
+			tallyInputAsHex: "00",
+			reveals: map[string]types.RevealBody{
+				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
+				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 10000},
+				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
+			},
+			replicationFactor: 3,
+			execGasLimit:      50000,
+			expExecGasUsed:    12000 + 6000*2,
+			expExecutorGas: map[string]math.Int{
+				"a": math.NewInt(12000),
+				"b": math.NewInt(6000),
+				"c": math.NewInt(6000),
+			},
+		},
+		{
+			name:            "Divergent gas reporting (low*2 < median)",
+			tallyInputAsHex: "00",
+			reveals: map[string]types.RevealBody{
+				"zebra":   {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
+				"lizard":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 20000},
+				"bonobo":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 35000},
+				"penguin": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
+				"lion":    {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
+			},
+			replicationFactor: 5,
+			execGasLimit:      200000,
+			expExecGasUsed:    16000 + 28000*4,
+			expExecutorGas: map[string]math.Int{
+				"lizard":  math.NewInt(28000),
+				"bonobo":  math.NewInt(28000),
+				"penguin": math.NewInt(16000),
+				"zebra":   math.NewInt(28000),
+				"lion":    math.NewInt(28000),
+			},
+		},
+		{
+			name:            "Divergent gas reporting (lowest_report*2 == median_report)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
 				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 10000},
@@ -608,6 +720,9 @@ func TestExecutorPayout(t *testing.T) {
 				TallyGasLimit:     types.DefaultMaxTallyGasLimit,
 				ExecGasLimit:      tt.execGasLimit,
 				TallyProgramID:    hex.EncodeToString(tallyProgram.Hash),
+			}
+			if tt.requestID != "" {
+				request.ID = tt.requestID
 			}
 
 			gasMeter := types.NewGasMeter(request.TallyGasLimit, request.ExecGasLimit, types.DefaultMaxTallyGasLimit, gasPrice, types.DefaultGasCostBase)

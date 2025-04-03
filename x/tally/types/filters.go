@@ -19,7 +19,7 @@ type Filter interface {
 	// list, whose value at index i indicates whether i-th reveal is
 	// an outlier, and a boolean indicating whether consensus in reveal
 	// data has been reached.
-	ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bool)
+	ApplyFilter(reveals []Reveal, errors []bool) ([]bool, bool)
 }
 
 type FilterNone struct{}
@@ -34,7 +34,7 @@ func NewFilterNone(gasCost uint64, gasMeter *GasMeter) (FilterNone, error) {
 }
 
 // FilterNone declares all reveals as non-outliers.
-func (f FilterNone) ApplyFilter(reveals []RevealBody, _ []bool) ([]bool, bool) {
+func (f FilterNone) ApplyFilter(reveals []Reveal, _ []bool) ([]bool, bool) {
 	return make([]bool, len(reveals)), true
 }
 
@@ -78,7 +78,7 @@ func NewFilterMode(input []byte, gasCostMultiplier uint64, replicationFactor uin
 // A reveal is declared an outlier if it does not match the mode value.
 // If less than 2/3 of the reveals are non-outliers, "no consensus"
 // error is returned along with an outlier list.
-func (f FilterMode) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bool) {
+func (f FilterMode) ApplyFilter(reveals []Reveal, errors []bool) ([]bool, bool) {
 	dataList, dataAttrs := parseReveals(reveals, f.dataPath, errors)
 
 	outliers := make([]bool, len(reveals))
@@ -188,7 +188,7 @@ func NewFilterMAD(input []byte, gasCostMultiplier uint64, replicationFactor uint
 // outlier list. A reveal is declared an outlier if it deviates from the median
 // by more than the median absolute deviation multiplied by the given sigma
 // multiplier value.
-func (f FilterMAD) ApplyFilter(reveals []RevealBody, errors []bool) ([]bool, bool) {
+func (f FilterMAD) ApplyFilter(reveals []Reveal, errors []bool) ([]bool, bool) {
 	dataList, _ := parseReveals(reveals, f.dataPath, errors)
 	return detectOutliersBigInt(dataList, f.sigmaMultiplier, errors, f.replicationFactor, f.minNumber, f.maxNumber)
 }
