@@ -85,12 +85,12 @@ func FuzzGasMetering(f *testing.F) {
 
 		// Check executor gas used.
 		sumExec := math.NewInt(0)
-		for _, exec := range gasMeter.GetSortedExecutors("dummy-request-id", fixture.Context().BlockHeight()) {
+		for _, exec := range gasMeter.GetExecutorGasUsed() {
 			sumExec = sumExec.Add(exec.Amount)
 		}
 
 		// Check proxy gas used.
-		for _, proxy := range gasMeter.GetSortedProxies("dummy-request-id", fixture.Context().BlockHeight()) {
+		for _, proxy := range gasMeter.GetProxyGasUsed("dummy-request-id", fixture.Context().BlockHeight()) {
 			require.Equal(t,
 				expProxyGasUsed[proxy.PayoutAddress].String(),
 				proxy.Amount.String(),

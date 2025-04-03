@@ -729,7 +729,7 @@ func TestExecutorPayout(t *testing.T) {
 			_, tallyRes := f.tallyKeeper.FilterAndTally(f.Context(), request, types.DefaultParams(), gasMeter)
 			require.NoError(t, err)
 
-			execGasMeter := gasMeter.GetSortedExecutors(request.ID, f.Context().BlockHeight())
+			execGasMeter := gasMeter.GetExecutorGasUsed()
 			require.Equal(t, len(tt.expExecutorGas), len(execGasMeter))
 			for _, exec := range execGasMeter {
 				require.Equal(t,
@@ -739,7 +739,7 @@ func TestExecutorPayout(t *testing.T) {
 				)
 			}
 			require.Equal(t, tt.expReducedPayout, gasMeter.ReducedPayout)
-			for _, proxy := range gasMeter.GetSortedProxies(request.ID, f.Context().BlockHeight()) {
+			for _, proxy := range gasMeter.GetProxyGasUsed(request.ID, f.Context().BlockHeight()) {
 				require.Equal(t,
 					tt.expProxyGas[proxy.PayoutAddress].String(),
 					proxy.Amount.String(),
