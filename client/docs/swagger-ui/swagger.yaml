@@ -132,10 +132,20 @@ paths:
                       format: byte
       parameters:
         - name: batch_number
+          description: batch_number is used to query a specific batch.
           in: path
           required: true
           type: string
           format: uint64
+        - name: latest_signed
+          description: >-
+            latest_signed, if true, overrides the batch_number field and returns
+            the
+
+            latest signed batch.
+          in: query
+          required: false
+          type: boolean
       tags:
         - Query
   /seda-chain/batching/batch_for_height/{block_height}:
@@ -430,6 +440,12 @@ paths:
                   dr_id:
                     type: string
                     description: dr_id is the data request identifier.
+                  dr_block_height:
+                    type: string
+                    format: uint64
+                    description: >-
+                      dr_block_height is the height at which the data request
+                      was submitted.
                   version:
                     type: string
                     description: version is a semantic version string.
@@ -439,6 +455,14 @@ paths:
                     description: >-
                       block_height is the height at which the data request was
                       tallied.
+                  block_timestamp:
+                    type: string
+                    format: uint64
+                    description: >-
+                      block_timestamp is the unix timestamp in seconds of when
+                      the data request
+
+                      was tallied.
                   exit_code:
                     type: integer
                     format: int64
@@ -447,7 +471,6 @@ paths:
                       execution.
                   gas_used:
                     type: string
-                    format: uint64
                     description: gas_used is the gas used by the data request execution.
                   result:
                     type: string
@@ -479,6 +502,9 @@ paths:
                     format: uint64
                   data_request_id:
                     type: string
+                  data_request_height:
+                    type: string
+                    format: uint64
                 description: >-
                   BatchAssignment represents a batch assignment for genesis
                   export
@@ -512,6 +538,11 @@ paths:
           in: path
           required: true
           type: string
+        - name: data_request_height
+          in: query
+          required: false
+          type: string
+          format: uint64
       tags:
         - Query
   /seda-chain/data-proxy/data_proxy_config/{pub_key}:
@@ -612,6 +643,67 @@ paths:
           type: string
       tags:
         - Query
+  /seda-chain/data-proxy/params:
+    get:
+      summary: Params returns the total set of data proxy parameters.
+      operationId: DataProxyParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params defines the parameters of the module.
+                type: object
+                properties:
+                  min_fee_update_delay:
+                    type: integer
+                    format: int64
+                    description: >-
+                      min_fee_update_delay is the minimum number of blocks after
+                      which a fee
+
+                      update comes into effect.
+                  registration_fee:
+                    description: >-
+                      registration_fee is the fee incurred for registering a
+                      data proxy.
+
+                      This fee is burned.
+                    type: object
+                    properties:
+                      denom:
+                        type: string
+                      amount:
+                        type: string
+            description: >-
+              QueryParamsResponse is the response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
   /seda-chain/wasm-storage/core_contract_registry:
     get:
       summary: CoreContractRegistry returns the Core Contract Registry address.
@@ -625,98 +717,6 @@ paths:
               address:
                 type: string
             description: The response message for QueryCoreContractRegistry RPC.
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                    value:
-                      type: string
-                      format: byte
-      tags:
-        - Query
-  /seda-chain/wasm-storage/executor_wasm/{hash}:
-    get:
-      summary: ExecutorWasm returns an executor wasm given its hash.
-      operationId: ExecutorWasm
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              wasm:
-                type: object
-                properties:
-                  hash:
-                    type: string
-                    format: byte
-                  bytecode:
-                    type: string
-                    format: byte
-                  added_at:
-                    type: string
-                    format: date-time
-                description: ExecutorWasm is a wasm used by some component in the protocol.
-            description: The response message for QueryExecutorWasm RPC.
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                    value:
-                      type: string
-                      format: byte
-      parameters:
-        - name: hash
-          in: path
-          required: true
-          type: string
-      tags:
-        - Query
-  /seda-chain/wasm-storage/executor_wasms:
-    get:
-      summary: ExecutorWasms returns all executor wasms.
-      operationId: ExecutorWasms
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              list:
-                type: array
-                items:
-                  type: string
-            description: The response message for QueryExecutorWasms RPC.
         default:
           description: An unexpected error response.
           schema:
@@ -763,15 +763,6 @@ paths:
                   added_at:
                     type: string
                     format: date-time
-                  expiration_height:
-                    type: string
-                    format: int64
-                    description: >-
-                      ExpirationHeight represents the block height at which the
-                      oracle
-
-                      program will be pruned. The value of zero means no
-                      expiration.
                 description: OracleProgram is a wasm used for data request.
             description: The response message for QueryOracleProgram RPC.
         default:
@@ -925,6 +916,63 @@ paths:
           in: query
           required: false
           type: boolean
+      tags:
+        - Query
+  /seda-chain/wasm-storage/params:
+    get:
+      summary: Params returns the total set of wasm-storage parameters.
+      operationId: WasmStorageParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params defines the parameters of the module.
+                type: object
+                properties:
+                  max_wasm_size:
+                    type: string
+                    format: int64
+                    description: >-
+                      MaxWasmSize specifies the maximum allowed size of an
+                      unzipped oracle
+
+                      program.
+                  wasm_cost_per_byte:
+                    type: string
+                    format: uint64
+                    description: >-
+                      WasmCostPerByte is the cost per unzipped byte of uploading
+                      an oracle
+
+                      program in aseda.
+            description: >-
+              QueryParamsResponse is the response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
       tags:
         - Query
   /cosmos/auth/v1beta1/account_info/{address}:
@@ -32718,6 +32766,9 @@ definitions:
         format: uint64
       data_request_id:
         type: string
+      data_request_height:
+        type: string
+        format: uint64
     description: |-
       BatchAssignment represents a batch assignment for genesis export
       and import.
@@ -32742,6 +32793,10 @@ definitions:
       dr_id:
         type: string
         description: dr_id is the data request identifier.
+      dr_block_height:
+        type: string
+        format: uint64
+        description: dr_block_height is the height at which the data request was submitted.
       version:
         type: string
         description: version is a semantic version string.
@@ -32749,13 +32804,20 @@ definitions:
         type: string
         format: uint64
         description: block_height is the height at which the data request was tallied.
+      block_timestamp:
+        type: string
+        format: uint64
+        description: >-
+          block_timestamp is the unix timestamp in seconds of when the data
+          request
+
+          was tallied.
       exit_code:
         type: integer
         format: int64
         description: exit_code is the exit code of the tally wasm binary execution.
       gas_used:
         type: string
-        format: uint64
         description: gas_used is the gas used by the data request execution.
       result:
         type: string
@@ -33003,6 +33065,12 @@ definitions:
           dr_id:
             type: string
             description: dr_id is the data request identifier.
+          dr_block_height:
+            type: string
+            format: uint64
+            description: >-
+              dr_block_height is the height at which the data request was
+              submitted.
           version:
             type: string
             description: version is a semantic version string.
@@ -33010,13 +33078,20 @@ definitions:
             type: string
             format: uint64
             description: block_height is the height at which the data request was tallied.
+          block_timestamp:
+            type: string
+            format: uint64
+            description: >-
+              block_timestamp is the unix timestamp in seconds of when the data
+              request
+
+              was tallied.
           exit_code:
             type: integer
             format: int64
             description: exit_code is the exit code of the tally wasm binary execution.
           gas_used:
             type: string
-            format: uint64
             description: gas_used is the gas used by the data request execution.
           result:
             type: string
@@ -33044,6 +33119,9 @@ definitions:
             format: uint64
           data_request_id:
             type: string
+          data_request_height:
+            type: string
+            format: uint64
         description: |-
           BatchAssignment represents a batch assignment for genesis export
           and import.
@@ -33093,6 +33171,26 @@ definitions:
     description: |-
       FeeUpdate defines a new fee amount and the height at which it will take
       effect.
+  sedachain.data_proxy.v1.Params:
+    type: object
+    properties:
+      min_fee_update_delay:
+        type: integer
+        format: int64
+        description: |-
+          min_fee_update_delay is the minimum number of blocks after which a fee
+          update comes into effect.
+      registration_fee:
+        description: |-
+          registration_fee is the fee incurred for registering a data proxy.
+          This fee is burned.
+        type: object
+        properties:
+          denom:
+            type: string
+          amount:
+            type: string
+    description: Module parameters which can be changed through governance.
   sedachain.data_proxy.v1.ProxyConfig:
     type: object
     properties:
@@ -33191,19 +33289,32 @@ definitions:
                   into effect.
         description: ProxyConfig defines a data-proxy entry in the registry.
     description: The response message for QueryDataProxyConfig RPC method.
-  sedachain.wasm_storage.v1.ExecutorWasm:
+  sedachain.data_proxy.v1.QueryParamsResponse:
     type: object
     properties:
-      hash:
-        type: string
-        format: byte
-      bytecode:
-        type: string
-        format: byte
-      added_at:
-        type: string
-        format: date-time
-    description: ExecutorWasm is a wasm used by some component in the protocol.
+      params:
+        description: params defines the parameters of the module.
+        type: object
+        properties:
+          min_fee_update_delay:
+            type: integer
+            format: int64
+            description: >-
+              min_fee_update_delay is the minimum number of blocks after which a
+              fee
+
+              update comes into effect.
+          registration_fee:
+            description: |-
+              registration_fee is the fee incurred for registering a data proxy.
+              This fee is burned.
+            type: object
+            properties:
+              denom:
+                type: string
+              amount:
+                type: string
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
   sedachain.wasm_storage.v1.OracleProgram:
     type: object
     properties:
@@ -33216,44 +33327,29 @@ definitions:
       added_at:
         type: string
         format: date-time
-      expiration_height:
+    description: OracleProgram is a wasm used for data request.
+  sedachain.wasm_storage.v1.Params:
+    type: object
+    properties:
+      max_wasm_size:
         type: string
         format: int64
         description: |-
-          ExpirationHeight represents the block height at which the oracle
-          program will be pruned. The value of zero means no expiration.
-    description: OracleProgram is a wasm used for data request.
+          MaxWasmSize specifies the maximum allowed size of an unzipped oracle
+          program.
+      wasm_cost_per_byte:
+        type: string
+        format: uint64
+        description: |-
+          WasmCostPerByte is the cost per unzipped byte of uploading an oracle
+          program in aseda.
+    description: Params to define the max wasm size allowed.
   sedachain.wasm_storage.v1.QueryCoreContractRegistryResponse:
     type: object
     properties:
       address:
         type: string
     description: The response message for QueryCoreContractRegistry RPC.
-  sedachain.wasm_storage.v1.QueryExecutorWasmResponse:
-    type: object
-    properties:
-      wasm:
-        type: object
-        properties:
-          hash:
-            type: string
-            format: byte
-          bytecode:
-            type: string
-            format: byte
-          added_at:
-            type: string
-            format: date-time
-        description: ExecutorWasm is a wasm used by some component in the protocol.
-    description: The response message for QueryExecutorWasm RPC.
-  sedachain.wasm_storage.v1.QueryExecutorWasmsResponse:
-    type: object
-    properties:
-      list:
-        type: array
-        items:
-          type: string
-    description: The response message for QueryExecutorWasms RPC.
   sedachain.wasm_storage.v1.QueryOracleProgramResponse:
     type: object
     properties:
@@ -33269,12 +33365,6 @@ definitions:
           added_at:
             type: string
             format: date-time
-          expiration_height:
-            type: string
-            format: int64
-            description: |-
-              ExpirationHeight represents the block height at which the oracle
-              program will be pruned. The value of zero means no expiration.
         description: OracleProgram is a wasm used for data request.
     description: The response message for QueryOracleProgram RPC.
   sedachain.wasm_storage.v1.QueryOracleProgramsResponse:
@@ -33311,6 +33401,30 @@ definitions:
                    PageResponse page = 2;
            }
     description: The response message for QueryOraclePrograms RPC.
+  sedachain.wasm_storage.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params defines the parameters of the module.
+        type: object
+        properties:
+          max_wasm_size:
+            type: string
+            format: int64
+            description: >-
+              MaxWasmSize specifies the maximum allowed size of an unzipped
+              oracle
+
+              program.
+          wasm_cost_per_byte:
+            type: string
+            format: uint64
+            description: >-
+              WasmCostPerByte is the cost per unzipped byte of uploading an
+              oracle
+
+              program in aseda.
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
   cosmos.app.v1alpha1.Config:
     type: object
     properties:
