@@ -8,10 +8,10 @@ import (
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
+	cmtcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -40,6 +40,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	txmodule "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
@@ -210,7 +211,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig, basi
 	)
 
 	// add server commands
-	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
+	addServerCommands(rootCmd, newApp, app.DefaultNodeHome)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
@@ -218,6 +219,41 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig, basi
 		queryCommand(basicManager),
 		txCommand(basicManager),
 		keys.Commands(),
+	)
+}
+
+func addServerCommands(rootCmd *cobra.Command, appCreator servertypes.AppCreator, defaultNodeHome string) {
+	cometCmd := &cobra.Command{
+		Use:     "comet",
+		Aliases: []string{"cometbft", "tendermint"},
+		Short:   "CometBFT subcommands",
+	}
+
+	cometCmd.AddCommand(
+		server.ShowNodeIDCmd(),
+		server.ShowValidatorCmd(),
+		server.ShowAddressCmd(),
+		server.VersionCmd(),
+		cmtcmd.ResetAllCmd,
+		cmtcmd.ResetStateCmd,
+		server.BootstrapStateCmd(appCreator),
+	)
+
+	startCmd := server.StartCmd(appCreator, defaultNodeHome)
+	startCmd.Flags().Bool(crisis.FlagSkipGenesisInvariants, false, "Skip x/crisis invariants check on startup")
+
+	serverCmds := []*cobra.Command{
+		startCmd,
+		server.ExportCmd(appExport, defaultNodeHome),
+		server.NewRollbackCmd(appCreator, defaultNodeHome),
+		server.ModuleHashByHeightQuery(appCreator),
+	}
+	for i := range serverCmds {
+		serverCmds[i].Flags().Bool(utils.FlagAllowUnencryptedSedaKeys, false, "Allow an unencrypted SEDA key file")
+	}
+
+	rootCmd.AddCommand(
+		append([]*cobra.Command{cometCmd, version.NewVersionCommand()}, serverCmds...)...,
 	)
 }
 
@@ -266,30 +302,6 @@ func txCommand(_ module.BasicManager) *cobra.Command {
 	)
 
 	return cmd
-}
-
-func addModuleInitFlags(startCmd *cobra.Command) {
-	crisis.AddModuleInitFlags(startCmd)
-	startCmd.Flags().Bool(utils.FlagAllowUnencryptedSedaKeys, false, "Allow an unencrypted SEDA key file")
-}
-
-func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) { //nolint:unused // unused
-	set := func(s *pflag.FlagSet, key, val string) {
-		if f := s.Lookup(key); f != nil {
-			f.DefValue = val
-			err := f.Value.Set(val)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	for key, val := range defaults {
-		set(c.Flags(), key, val)
-		set(c.PersistentFlags(), key, val)
-	}
-	for _, c := range c.Commands() {
-		overwriteFlagDefaults(c, defaults)
-	}
 }
 
 // newApp creates a new Cosmos SDK app
