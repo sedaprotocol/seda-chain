@@ -82,9 +82,6 @@ var sedaPubKeyValidators = map[sedatypes.SEDAKeyIndex]pubKeyValidator{
 	},
 }
 
-// SEDAKeyFileName defines the SEDA key file name.
-const SEDAKeyFileName = "seda_keys.json"
-
 type sedaKeyFile struct {
 	ValidatorAddr sdk.ValAddress   `json:"validator_addr"`
 	Keys          []indexedPrivKey `json:"keys"`
@@ -133,12 +130,11 @@ func (k *indexedPrivKey) UnmarshalJSON(data []byte) error {
 // saveSEDAKeyFile saves a given list of indexedPrivKey in the directory
 // at dirPath. When encryptionKey is not empty, the file is encrypted
 // using the provided key and stored as base64 encoded.
-func saveSEDAKeyFile(keys []indexedPrivKey, valAddr sdk.ValAddress, dirPath string, encryptionKey string, forceKeyFile bool) error {
-	savePath := filepath.Join(dirPath, SEDAKeyFileName)
-	if SEDAKeyFileExists(dirPath) && !forceKeyFile {
-		return fmt.Errorf("SEDA key file already exists at %s", savePath)
+func saveSEDAKeyFile(keys []indexedPrivKey, valAddr sdk.ValAddress, filePath, encryptionKey string, forceKeyFile bool) error {
+	if cmtos.FileExists(filePath) && !forceKeyFile {
+		return fmt.Errorf("SEDA key file already exists at %s", filePath)
 	}
-	err := cmtos.EnsureDir(filepath.Dir(savePath), 0o700)
+	err := cmtos.EnsureDir(filepath.Dir(filePath), 0o700)
 	if err != nil {
 		return err
 	}
@@ -159,15 +155,11 @@ func saveSEDAKeyFile(keys []indexedPrivKey, valAddr sdk.ValAddress, dirPath stri
 		jsonBytes = []byte(base64.StdEncoding.EncodeToString(encryptedData))
 	}
 
-	err = os.WriteFile(savePath, jsonBytes, 0o600)
+	err = os.WriteFile(filePath, jsonBytes, 0o600)
 	if err != nil {
 		return fmt.Errorf("failed to write SEDA key file: %v", err)
 	}
 	return nil
-}
-
-func SEDAKeyFileExists(dirPath string) bool {
-	return cmtos.FileExists(filepath.Join(dirPath, SEDAKeyFileName))
 }
 
 // loadSEDAKeyFile loads the SEDA key file from the given path. When
@@ -228,7 +220,7 @@ func LoadSEDAPubKeys(loadPath string, encryptionKey string) ([]pubkeytypes.Index
 // the file is encrypted using the provided key and stored as base64
 // encoded. If forceKeyFile is true, the key file is overwritten if it
 // already exists.
-func GenerateSEDAKeys(valAddr sdk.ValAddress, dirPath string, encryptionKey string, forceKeyFile bool) ([]pubkeytypes.IndexedPubKey, error) {
+func GenerateSEDAKeys(valAddr sdk.ValAddress, filePath, encryptionKey string, forceKeyFile bool) ([]pubkeytypes.IndexedPubKey, error) {
 	privKeys := make([]indexedPrivKey, 0, len(sedaKeyGenerators))
 	pubKeys := make([]pubkeytypes.IndexedPubKey, 0, len(sedaKeyGenerators))
 	for keyIndex, generator := range sedaKeyGenerators {
@@ -247,7 +239,7 @@ func GenerateSEDAKeys(valAddr sdk.ValAddress, dirPath string, encryptionKey stri
 	}
 
 	// The key file is placed in the same directory as the validator key file.
-	err := saveSEDAKeyFile(privKeys, valAddr, dirPath, encryptionKey, forceKeyFile)
+	err := saveSEDAKeyFile(privKeys, valAddr, filePath, encryptionKey, forceKeyFile)
 	if err != nil {
 		return nil, err
 	}

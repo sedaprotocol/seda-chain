@@ -97,10 +97,10 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["slashing"]["params"]["sla
 
 # consensus params
 cat $HOME/.sedad/config/genesis.json | jq '.consensus["params"]["block"]["max_gas"]="100000000"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
-cat $HOME/.sedad/config/genesis.json | jq '.consensus["params"]["abci"]["vote_extensions_enable_height"]="100"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.consensus["params"]["abci"]["vote_extensions_enable_height"]="50"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 # pubkey params
-cat $HOME/.sedad/config/genesis.json | jq '.app_state["pubkey"]["params"]["activation_block_delay"]="25"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["pubkey"]["params"]["activation_block_delay"]="50"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
 
 ###################################################
@@ -154,7 +154,7 @@ if [ ${#MONIKERS[@]} -ne 0 ]; then
         # to output geneis file
         $LOCAL_BIN add-genesis-account $VALIDATOR_ADDRESS ${GENESIS_AMOUNT}seda
 
-        $LOCAL_BIN gentx ${MONIKERS[$i]} ${SELF_DELEGATION_AMOUNTS[$i]}seda --moniker=${MONIKERS[$i]} --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR --ip=${IPS[$i]} --chain-id $CHAIN_ID
+        $LOCAL_BIN gentx ${MONIKERS[$i]} ${SELF_DELEGATION_AMOUNTS[$i]}seda --moniker=${MONIKERS[$i]} --key-file-custom-encryption-key=true --keyring-backend=test --home $INDIVIDUAL_VAL_HOME_DIR --ip=${IPS[$i]} --chain-id $CHAIN_ID
 
         cp -a $INDIVIDUAL_VAL_CONFIG_DIR/gentx/. $GENTX_DIR
     done

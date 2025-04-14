@@ -11,6 +11,8 @@ import (
 	"github.com/bgentry/speakeasy"
 	"github.com/spf13/cobra"
 
+	cmtos "github.com/cometbft/cometbft/libs/os"
+
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +22,8 @@ import (
 )
 
 func LoadOrGenerateSEDAKeys(cmd *cobra.Command, valAddr sdk.ValAddress) ([]types.IndexedPubKey, error) {
-	serverCfg := server.GetServerContextFromCmd(cmd).Config
+	cfg := server.GetServerContextFromCmd(cmd)
+	sedaCfg := utils.GetSEDAConfig(cfg.Viper)
 
 	encryptionKeyEnv := utils.ReadSEDAKeyEncryptionKeyFromEnv()
 	useCustomEncryptionKey, err := cmd.Flags().GetBool(FlagEncryptionKey)
@@ -71,6 +74,8 @@ func LoadOrGenerateSEDAKeys(cmd *cobra.Command, valAddr sdk.ValAddress) ([]types
 			return nil, err
 		}
 	} else {
+		keyFile := filepath.Join(cfg.Config.RootDir, sedaCfg.SEDAKey)
+
 		encryptionKey, err = getSEDAKeysEncryptionKey(cmd, encryptionKey)
 		if err != nil {
 			return nil, err
@@ -81,7 +86,7 @@ func LoadOrGenerateSEDAKeys(cmd *cobra.Command, valAddr sdk.ValAddress) ([]types
 			return nil, err
 		}
 
-		if utils.SEDAKeyFileExists(filepath.Dir(serverCfg.PrivValidatorKeyFile())) && !forceKeyFile {
+		if cmtos.FileExists(keyFile) && !forceKeyFile {
 			reader := bufio.NewReader(os.Stdin)
 			overwrite, err := input.GetConfirmation("SEDA key file already exists, overwrite?", reader, os.Stderr)
 			if err != nil {
@@ -91,7 +96,7 @@ func LoadOrGenerateSEDAKeys(cmd *cobra.Command, valAddr sdk.ValAddress) ([]types
 			forceKeyFile = overwrite
 		}
 
-		pks, err = utils.GenerateSEDAKeys(valAddr, filepath.Dir(serverCfg.PrivValidatorKeyFile()), encryptionKey, forceKeyFile)
+		pks, err = utils.GenerateSEDAKeys(valAddr, keyFile, encryptionKey, forceKeyFile)
 		if err != nil {
 			return nil, err
 		}

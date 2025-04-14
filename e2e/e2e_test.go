@@ -1,7 +1,7 @@
 package e2e
 
 var (
-	runWasmStorageTest = false
+	runWasmStorageTest = true
 	runBatchingTest    = true
 )
 

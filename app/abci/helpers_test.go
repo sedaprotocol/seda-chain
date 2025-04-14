@@ -117,14 +117,15 @@ func (s *ABCITestSuite) SetupTest(mockBatchNumber uint64, isNewValidator []bool)
 		err := os.MkdirAll(dirPath, 0755)
 		s.Require().NoError(err)
 
-		vals[i].sedaPubKeys, err = utils.GenerateSEDAKeys(val.valAddr, dirPath, "", false)
+		keyfile := filepath.Join(dirPath, "seda_keys.json")
+		vals[i].sedaPubKeys, err = utils.GenerateSEDAKeys(val.valAddr, keyfile, "", false)
 		s.Require().NoError(err)
 
 		secp256k1PubKey := vals[i].sedaPubKeys[sedatypes.SEDAKeyIndexSecp256k1].PubKey
 		vals[i].ethAddr, err = utils.PubKeyToEthAddress(secp256k1PubKey)
 		s.Require().NoError(err)
 
-		vals[i].signer, err = utils.LoadSEDASigner(filepath.Join(dirPath, utils.SEDAKeyFileName), true)
+		vals[i].signer, err = utils.LoadSEDASigner(keyfile, true)
 		s.Require().NoError(err)
 
 		if isNewValidator != nil && isNewValidator[i] {

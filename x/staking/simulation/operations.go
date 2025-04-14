@@ -157,7 +157,7 @@ func SimulateMsgCreateSEDAValidator(
 			simtypes.RandomDecAmount(r, maxCommission),
 		)
 
-		sedaPubKeys, err := utils.GenerateSEDAKeys(address, "", "", true)
+		sedaPubKeys, err := utils.GenerateSEDAKeys(address, "seda_keys.json", "", true)
 		if err != nil {
 			return simtypes.NoOpMsg(sdktypes.ModuleName, msgType, "unable to generate SEDA keys"), nil, err
 		}

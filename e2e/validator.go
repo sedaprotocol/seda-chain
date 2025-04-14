@@ -238,7 +238,7 @@ func (v *validator) buildCreateValidatorMsg(amount sdk.Coin, valHomeDir string) 
 		return nil, err
 	}
 
-	sedaPubKeys, err := utils.GenerateSEDAKeys(sdk.ValAddress(valAddr), filepath.Join(valHomeDir, "config"), "", true)
+	sedaPubKeys, err := utils.GenerateSEDAKeys(sdk.ValAddress(valAddr), filepath.Join(valHomeDir, "config/seda_keys.json"), "", true)
 	if err != nil {
 		return nil, err
 	}

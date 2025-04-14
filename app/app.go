@@ -999,10 +999,12 @@ func NewApp(
 	app.SetEndBlocker(app.EndBlocker)
 
 	// Register ABCI handlers for batch signing.
-	pvKeyFile := filepath.Join(homePath, cast.ToString(appOpts.Get("priv_validator_key_file")))
-	signer, err := utils.LoadSEDASigner(filepath.Join(filepath.Dir(pvKeyFile), utils.SEDAKeyFileName), utils.ShouldAllowUnencryptedSedaKeys(appOpts))
+	sedaConfig := utils.GetSEDAConfig(appOpts)
+	signer, err := utils.LoadSEDASigner(filepath.Join(homePath, sedaConfig.SEDAKey), utils.ShouldAllowUnencryptedSedaKeys(appOpts))
 	if err != nil {
 		app.Logger().Error("error loading SEDA signer", "err", err)
+	} else {
+		app.Logger().Info("successfully loaded SEDA signer")
 	}
 
 	// Since in prior versions -1 would be written to the config file and

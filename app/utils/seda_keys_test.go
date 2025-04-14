@@ -42,13 +42,12 @@ func (s *SEDAKeysTestSuite) TestSEDAKeyEncryptionDecryption() {
 	require.NoError(s.T(), err)
 
 	tempDir := s.T().TempDir()
-	generatedKeys, err := utils.GenerateSEDAKeys(valAddr, tempDir, encryptionKey, false)
+	keyfilePath := filepath.Join(tempDir, "seda_keys.json")
+	generatedKeys, err := utils.GenerateSEDAKeys(valAddr, keyfilePath, encryptionKey, false)
 
 	s.Require().NoError(err)
 	s.Require().Equal(sedatypes.SEDAKeyIndex(generatedKeys[0].Index), sedatypes.SEDAKeyIndexSecp256k1)
 	s.Require().NotEmpty(generatedKeys[0].PubKey, "public key should not be empty")
-
-	keyfilePath := filepath.Join(tempDir, utils.SEDAKeyFileName)
 
 	invalidKey, err := utils.GenerateSEDAKeyEncryptionKey()
 	s.Require().NoError(err)
@@ -63,13 +62,13 @@ func (s *SEDAKeysTestSuite) TestSEDAKeyEncryptionDecryption() {
 
 func (s *SEDAKeysTestSuite) TestSEDAKeyDecryptionExistingFile() {
 	tempDir := s.T().TempDir()
-	err := os.WriteFile(filepath.Join(tempDir, utils.SEDAKeyFileName), []byte("kNYhCAjfN9BhJ46iYzJWCUXn9efOAGf30D81UjF5tRlRtdiziW1zGVK+6ehxeJXKcPAmWjQkTxAKcJv7ozAA0xdleR4yO6HakROtFRXlOBy3K9Fv6rkDfCmbIUUjOH9oGP2F5+ldKeE5030MOdNORWUKW7fIlnKUyBWTZfLSmsKi+iCaIyZ/bFh2+NDiESPHAYl+X8t+SKKy6MgAwarrW9W1/6enNLoVmF8dAJ1dhxeKyXF/aXWKR7HaMRwe7V1NjfnaFcI09CeibpWud9rYKhbjV3K0/RdBobjPTIHAnLd5erh/3eVo9RGm8bC8a97obKm68lDernSN9HvjoTO3QlvI0k7cVDAhiuphS4qlgjOVW+eWm+S5dlD2gpCExcmrqxbggLOtjoZbQyrKhQFmfn5UGonoDTSbwtbZZtvY1N48AVT4eueReBWumcipO0ViWnkxLNIJ8vFA"), 0o600)
+	err := os.WriteFile(filepath.Join(tempDir, "seda_keys.json"), []byte("kNYhCAjfN9BhJ46iYzJWCUXn9efOAGf30D81UjF5tRlRtdiziW1zGVK+6ehxeJXKcPAmWjQkTxAKcJv7ozAA0xdleR4yO6HakROtFRXlOBy3K9Fv6rkDfCmbIUUjOH9oGP2F5+ldKeE5030MOdNORWUKW7fIlnKUyBWTZfLSmsKi+iCaIyZ/bFh2+NDiESPHAYl+X8t+SKKy6MgAwarrW9W1/6enNLoVmF8dAJ1dhxeKyXF/aXWKR7HaMRwe7V1NjfnaFcI09CeibpWud9rYKhbjV3K0/RdBobjPTIHAnLd5erh/3eVo9RGm8bC8a97obKm68lDernSN9HvjoTO3QlvI0k7cVDAhiuphS4qlgjOVW+eWm+S5dlD2gpCExcmrqxbggLOtjoZbQyrKhQFmfn5UGonoDTSbwtbZZtvY1N48AVT4eueReBWumcipO0ViWnkxLNIJ8vFA"), 0o600)
 	s.Require().NoError(err)
 
-	_, err = utils.LoadSEDAPubKeys(filepath.Join(tempDir, utils.SEDAKeyFileName), "xmp1EDn7ndgZIdgwupJ9yfDWlSssubKpgo2ZHqjx+4w=")
+	_, err = utils.LoadSEDAPubKeys(filepath.Join(tempDir, "seda_keys.json"), "xmp1EDn7ndgZIdgwupJ9yfDWlSssubKpgo2ZHqjx+4w=")
 	s.Require().ErrorContains(err, "cipher: message authentication failed")
 
-	keys, err := utils.LoadSEDAPubKeys(filepath.Join(tempDir, utils.SEDAKeyFileName), "La1PSNwUBZXEoIQ1CM0VF+kRr9vqforxE97afYdTF+c=")
+	keys, err := utils.LoadSEDAPubKeys(filepath.Join(tempDir, "seda_keys.json"), "La1PSNwUBZXEoIQ1CM0VF+kRr9vqforxE97afYdTF+c=")
 	s.Require().NoError(err)
 	s.Require().Equal(hex.EncodeToString(keys[0].PubKey), "04be41e55492d9d823c435b6b6801413223b31fdfa0318d2dea51e1886215e8664e234c34afa7af32ec02a1d0289ce656bab3ed106646836c9d26ce35968b2ff68")
 }
@@ -79,13 +78,13 @@ func (s *SEDAKeysTestSuite) TestSEDAKeyWithoutEncryption() {
 	require.NoError(s.T(), err)
 
 	tempDir := s.T().TempDir()
-	generatedKeys, err := utils.GenerateSEDAKeys(valAddr, tempDir, "", false)
+	keyfilePath := filepath.Join(tempDir, "seda_keys.json")
+	generatedKeys, err := utils.GenerateSEDAKeys(valAddr, keyfilePath, "", false)
 
 	s.Require().NoError(err)
 	s.Require().Equal(sedatypes.SEDAKeyIndex(generatedKeys[0].Index), sedatypes.SEDAKeyIndexSecp256k1)
 	s.Require().NotEmpty(generatedKeys[0].PubKey, "public key should not be empty")
 
-	keyfilePath := filepath.Join(tempDir, utils.SEDAKeyFileName)
 	keys, err := os.ReadFile(keyfilePath)
 	s.Require().NoError(err)
 
