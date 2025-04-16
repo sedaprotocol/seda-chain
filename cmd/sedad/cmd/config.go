@@ -6,8 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
-	tmcfg "github.com/cometbft/cometbft/config"
 	"github.com/spf13/cobra"
+
+	cmtcfg "github.com/cometbft/cometbft/config"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -16,13 +17,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
 )
-
-// AppConfig defines the application configurations. It extends the default
-// Cosmos SDK server config with custom SEDA configurations.
-type AppConfig struct {
-	serverconfig.Config
-	SEDAConfig utils.SEDAConfig `mapstructure:"seda_config"`
-}
 
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
@@ -59,7 +53,7 @@ func initAppConfig() (string, interface{}) {
 	srvCfg.API.Address = "tcp://0.0.0.0:1317"
 	srvCfg.API.EnableUnsafeCORS = true
 
-	config := AppConfig{
+	config := utils.AppConfig{
 		Config:     *srvCfg,
 		SEDAConfig: utils.DefaultSEDAConfig(),
 	}
@@ -68,14 +62,12 @@ func initAppConfig() (string, interface{}) {
 	return template, config
 }
 
-// initTendermintConfig helps to override default Tendermint Config values.
-// return tmcfg.DefaultConfig if no custom configuration is required for the application.
-func initTendermintConfig() *tmcfg.Config {
-	cfg := tmcfg.DefaultConfig()
+// initCometConfig initializes and overrides default CometBFT configuration.
+func initCometConfig() *cmtcfg.Config {
+	cfg := cmtcfg.DefaultConfig()
 
 	// Log Settings
 	cfg.LogFormat = "json"
-	// cfg.LogLevel
 
 	// RPC Settings
 	cfg.RPC.ListenAddress = "tcp://0.0.0.0:26657"
@@ -93,7 +85,7 @@ func preUpgradeCmd() *cobra.Command {
 		Use:   "pre-upgrade",
 		Short: "Pre-upgrade command",
 		Long:  "Pre-upgrade command to migrate app.toml for v1.0.0 upgrade",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			serverCtx := server.GetServerContextFromCmd(cmd)
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			err := migrateAppConfig(serverCtx, clientCtx.HomeDir)
@@ -118,9 +110,11 @@ func migrateAppConfig(serverCtx *server.Context, rootDir string) error {
 		return fmt.Errorf("failed to parse %s: %w", appConfigPath, err)
 	}
 
-	newConfig := AppConfig{
+	defaultSedaConfig := utils.DefaultSEDAConfig()
+	defaultSedaConfig.AllowUnencryptedSEDAKeys = true
+	newConfig := utils.AppConfig{
 		Config:     *oldConfig,
-		SEDAConfig: utils.DefaultSEDAConfig(),
+		SEDAConfig: defaultSedaConfig,
 	}
 	serverconfig.SetConfigTemplate(serverconfig.DefaultConfigTemplate + utils.DefaultSEDATemplate)
 	serverconfig.WriteConfigFile(appConfigPath, newConfig)

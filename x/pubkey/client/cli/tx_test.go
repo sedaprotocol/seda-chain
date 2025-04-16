@@ -8,11 +8,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 
+	sdklog "cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -20,12 +23,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
-	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	testutilmod "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	"github.com/sedaprotocol/seda-chain/x/pubkey/client/cli"
 )
 
@@ -117,14 +121,26 @@ func (s *CLITestSuite) TestAddSEDAKeys() {
 	for _, tc := range testCases {
 		tc := tc
 		s.Run(tc.name, func() {
-			ctx := svrcmd.CreateExecuteContext(context.Background())
-			cmd.SetContext(ctx)
+			vpr := viper.New()
+			vpr.Set(utils.FlagEnableSEDASigner, true)
+			vpr.Set(utils.FlagSEDAKeyFile, "./config/seda_keys.json")
+			vpr.Set(utils.FlagAllowUnencryptedSEDAKeys, true)
+
+			ctx := context.Background()
+			srvCtx := server.NewContext(vpr, cmtcfg.DefaultConfig(), sdklog.NewLogger(os.Stdout))
+			ctx = context.WithValue(ctx, server.ServerContextKey, srvCtx)
+
 			cmd.SetArgs(tc.args)
+
+			_, out := testutil.ApplyMockIO(cmd)
+			s.baseCtx = s.baseCtx.WithOutput(out)
+			ctx = context.WithValue(ctx, client.ClientContextKey, s.baseCtx)
+			cmd.SetContext(ctx)
 
 			s.Require().NoError(client.SetCmdClientContextHandler(s.baseCtx, cmd))
 			s.saveDir = filepath.Dir(server.GetServerContextFromCmd(cmd).Config.PrivValidatorKeyFile())
 
-			out, err := clitestutil.ExecTestCLICmd(s.baseCtx, cmd, tc.args)
+			err := cmd.Execute()
 			if tc.expectErrMsg != "" {
 				s.Require().Error(err)
 				s.Require().Contains(out.String(), tc.expectErrMsg)

@@ -74,7 +74,7 @@ func BenchmarkSimulation(b *testing.B) {
 	appOptions := make(simtestutil.AppOptionsMap, 0)
 	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
-	appOptions[utils.FlagAllowUnencryptedSedaKeys] = "true"
+	appOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
 
 	bApp := app.NewApp(
 		logger,
@@ -137,7 +137,7 @@ func TestAppStateDeterminism(t *testing.T) {
 	)
 	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
-	appOptions[utils.FlagAllowUnencryptedSedaKeys] = "true"
+	appOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
 
 	for i := 0; i < numSeeds; i++ {
 		config.Seed = r.Int63()
@@ -230,7 +230,7 @@ func TestAppExportImport(t *testing.T) {
 	appOptions := make(simtestutil.AppOptionsMap, 0)
 	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
-	appOptions[utils.FlagAllowUnencryptedSedaKeys] = "true"
+	appOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
 
 	bApp := app.NewApp(
 		logger,
@@ -386,7 +386,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	appOptions := make(simtestutil.AppOptionsMap, 0)
 	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
-	appOptions[utils.FlagAllowUnencryptedSedaKeys] = "true"
+	appOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
 
 	bApp := app.NewApp(
 		logger,

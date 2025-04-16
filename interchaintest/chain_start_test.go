@@ -22,7 +22,7 @@ func TestChainStart(t *testing.T) {
 	numOfValidators := 2
 	numOfFullNodes := 0
 
-	chains := CreateChains(t, numOfValidators, numOfFullNodes)
+	chains := CreateChains(t, numOfValidators, numOfFullNodes, GetSEDAAppTomlOverrides())
 	ic, ctx, _, _ := BuildAllChains(t, chains)
 
 	chain := chains[0].(*cosmos.CosmosChain)

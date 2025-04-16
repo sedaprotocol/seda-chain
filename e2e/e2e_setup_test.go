@@ -31,6 +31,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
+	"github.com/sedaprotocol/seda-chain/app/utils"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
@@ -294,12 +295,14 @@ func (s *IntegrationTestSuite) initValidatorConfigs(c *chain) {
 		// set application configuration
 		appCfgPath := filepath.Join(val.configDir(), "config", "app.toml")
 
-		appConfig := srvconfig.DefaultConfig()
+		appConfig := utils.DefaultAppConfig()
 		appConfig.API.Enable = true
 		appConfig.MinGasPrices = fmt.Sprintf("%s%s", minGasPrice, asedaDenom)
 		appConfig.API.Address = "tcp://0.0.0.0:1317"
 
-		srvconfig.SetConfigTemplate(srvconfig.DefaultConfigTemplate)
+		appConfig.SEDAConfig.AllowUnencryptedSEDAKeys = true
+
+		srvconfig.SetConfigTemplate(srvconfig.DefaultConfigTemplate + utils.DefaultSEDATemplate)
 		srvconfig.WriteConfigFile(appCfgPath, appConfig)
 	}
 }

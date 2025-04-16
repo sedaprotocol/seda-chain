@@ -59,15 +59,20 @@ VALIDATOR2_APP_TOML=$HOME/.sedad/validator2/config/app.toml
 VALIDATOR3_APP_TOML=$HOME/.sedad/validator3/config/app.toml
 VALIDATOR4_APP_TOML=$HOME/.sedad/validator4/config/app.toml
 
+# validator1
+sed -i '' 's/allow-unencrypted-seda-keys = false/allow-unencrypted-seda-keys = true/' $VALIDATOR1_APP_TOML
 # validator2
 sed -i '' -E 's|tcp://0.0.0.0:1317|tcp://0.0.0.0:1316|g' $VALIDATOR2_APP_TOML # API server
 sed -i '' -E 's|0.0.0.0:9090|0.0.0.0:9088|g' $VALIDATOR2_APP_TOML # gRPC server
+sed -i '' 's/allow-unencrypted-seda-keys = false/allow-unencrypted-seda-keys = true/' $VALIDATOR2_APP_TOML
 # validator3
 sed -i '' -E 's|tcp://0.0.0.0:1317|tcp://0.0.0.0:1315|g' $VALIDATOR3_APP_TOML # API server
 sed -i '' -E 's|0.0.0.0:9090|0.0.0.0:9087|g' $VALIDATOR3_APP_TOML # gRPC server
+sed -i '' 's/allow-unencrypted-seda-keys = false/allow-unencrypted-seda-keys = true/' $VALIDATOR3_APP_TOML
 # validator4
 sed -i '' -E 's|tcp://0.0.0.0:1317|tcp://0.0.0.0:1314|g' $VALIDATOR4_APP_TOML # API server
 sed -i '' -E 's|0.0.0.0:9090|0.0.0.0:9086|g' $VALIDATOR4_APP_TOML # gRPC server
+sed -i '' 's/allow-unencrypted-seda-keys = false/allow-unencrypted-seda-keys = true/' $VALIDATOR4_APP_TOML
 
 # config.toml port key (validator1 uses default ports)
 # validator  ABCI , RPC  , P2P  , Prometheus
@@ -139,19 +144,19 @@ sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"${NODE1_ID}@localho
 # start all four validators
 tmux new-session -s validator1 -d 
 tmux send -t validator1 'BIN=./build/sedad' ENTER
-tmux send -t validator1 '$BIN start --home=$HOME/.sedad/validator1 --allow-unencrypted-seda-keys --log_level debug > val1_multi_local.log 2>&1 &' ENTER
+tmux send -t validator1 '$BIN start --home=$HOME/.sedad/validator1 --log_level debug > val1_multi_local.log 2>&1 &' ENTER
 
 tmux new-session -s validator2 -d 
 tmux send -t validator2 'BIN=./build/sedad' ENTER
-tmux send -t validator2 '$BIN start --home=$HOME/.sedad/validator2 --allow-unencrypted-seda-keys --log_level debug > val2_multi_local.log 2>&1 &' ENTER
+tmux send -t validator2 '$BIN start --home=$HOME/.sedad/validator2 --log_level debug > val2_multi_local.log 2>&1 &' ENTER
 
 tmux new-session -s validator3 -d 
 tmux send -t validator3 'BIN=./build/sedad' ENTER
-tmux send -t validator3 '$BIN start --home=$HOME/.sedad/validator3 --allow-unencrypted-seda-keys --log_level debug > val3_multi_local.log 2>&1 &' ENTER
+tmux send -t validator3 '$BIN start --home=$HOME/.sedad/validator3 --log_level debug > val3_multi_local.log 2>&1 &' ENTER
 
 tmux new-session -s validator4 -d 
 tmux send -t validator4 'BIN=./build/sedad' ENTER
-tmux send -t validator4 '$BIN start --home=$HOME/.sedad/validator4 --allow-unencrypted-seda-keys --log_level debug > val4_multi_local.log 2>&1 &' ENTER
+tmux send -t validator4 '$BIN start --home=$HOME/.sedad/validator4 --log_level debug > val4_multi_local.log 2>&1 &' ENTER
 
 echo "begin sending funds to validators 2, 3, & 4"
 sleep 10

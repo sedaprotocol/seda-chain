@@ -45,7 +45,7 @@ func LoadSEDASigner(keyFilePath string, allowUnencrypted bool) (SEDASigner, erro
 func loadSEDAKeys(keyFilePath string, allowUnencrypted bool) (keys sedaKeys, err error) {
 	encryptionKey := ReadSEDAKeyEncryptionKeyFromEnv()
 	if encryptionKey == "" && !allowUnencrypted {
-		panic(fmt.Sprintf("SEDA key encryption key is not set, set the %s environment variable or run with --%s", SEDAKeyEncryptionKeyEnvVar, FlagAllowUnencryptedSedaKeys))
+		panic(fmt.Sprintf("SEDA key encryption key is not set, set the %s environment variable or allow unencrypted key file in app.toml", SEDAKeyEncryptionKeyEnvVar))
 	}
 
 	keyFile, err := loadSEDAKeyFile(keyFilePath, encryptionKey)

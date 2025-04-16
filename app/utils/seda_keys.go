@@ -14,11 +14,9 @@ import (
 	"sort"
 
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/spf13/cast"
 
 	cmtos "github.com/cometbft/cometbft/libs/os"
 
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	sedatypes "github.com/sedaprotocol/seda-chain/types"
@@ -26,20 +24,9 @@ import (
 )
 
 const (
-	// FlagAllowUnencryptedSedaKeys is a flag that allows unencrypted SEDA keys.
-	FlagAllowUnencryptedSedaKeys = "allow-unencrypted-seda-keys"
-	// EnvAllowUnencryptedSedaKeys is an environment variable that allows unencrypted SEDA keys.
-	EnvAllowUnencryptedSedaKeys = "SEDA_ALLOW_UNENCRYPTED_KEYS"
 	// SEDAKeyEncryptionKeyEnvVar is the environment variable that should contain the SEDA key encryption key.
 	SEDAKeyEncryptionKeyEnvVar = "SEDA_KEYS_ENCRYPTION_KEY"
 )
-
-func ShouldAllowUnencryptedSedaKeys(appOpts servertypes.AppOptions) bool {
-	allowUnencryptedFlag := cast.ToBool(appOpts.Get(FlagAllowUnencryptedSedaKeys))
-	_, allowUnencryptedInEnv := os.LookupEnv(EnvAllowUnencryptedSedaKeys)
-
-	return allowUnencryptedFlag || allowUnencryptedInEnv
-}
 
 // ReadSEDAKeyEncryptionKeyFromEnv reads the SEDA key encryption key from
 // the environment variable. Returns an empty string if the environment

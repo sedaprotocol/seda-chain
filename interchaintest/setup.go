@@ -10,6 +10,7 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"github.com/strangelove-ventures/interchaintest/v8/testreporter"
+	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 
@@ -19,7 +20,7 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/types/module/testutil"
+	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
 	"github.com/sedaprotocol/seda-chain/interchaintest/types"
 )
@@ -88,7 +89,7 @@ var (
 
 // sedaEncoding registers the Juno specific module codecs so that the associated types and msgs
 // will be supported when writing to the blocksdb sqlite database.
-func sedaEncoding() *testutil.TestEncodingConfig {
+func sedaEncoding() *sdktestutil.TestEncodingConfig {
 	cfg := cosmos.DefaultEncoding()
 
 	// register custom types
@@ -122,15 +123,29 @@ func GetTestGenesis() []cosmos.GenesisKV {
 func GetSEDAConfig() ibc.ChainConfig {
 	cfg := SedaCfg
 	cfg.ModifyGenesis = cosmos.ModifyGenesis(GetTestGenesis())
+	cfg.ConfigFileOverrides = GetSEDAAppTomlOverrides()
 	return cfg
 }
 
+func GetSEDAAppTomlOverrides() map[string]any {
+	appTomlOverrides := make(testutil.Toml)
+
+	appTomlOverrides["seda.enable-seda-signer"] = true
+	appTomlOverrides["seda.seda-key-file"] = "./config/seda_keys.json"
+	appTomlOverrides["seda.allow-unencrypted-seda-keys"] = true
+
+	configFileOverrides := make(map[string]any)
+	configFileOverrides["config/app.toml"] = appTomlOverrides
+	return configFileOverrides
+}
+
 // CreateChains generates this branch's chain (ex: from the commit)
-func CreateChains(t *testing.T, numVals, numFullNodes int) []ibc.Chain {
+func CreateChains(t *testing.T, numVals, numFullNodes int, configFileOverrides map[string]any) []ibc.Chain {
 	t.Helper()
 	cfg := SedaCfg
 	cfg.ModifyGenesis = cosmos.ModifyGenesis(GetTestGenesis())
 	cfg.Images = []ibc.DockerImage{dockerImage}
+	cfg.ConfigFileOverrides = configFileOverrides
 	return CreateChainsWithCustomConfig(t, numVals, numFullNodes, cfg)
 }
 
@@ -157,8 +172,8 @@ func CreateChainsWithCustomConfig(t *testing.T, numVals, numFullNodes int, confi
 
 func BuildAllChains(t *testing.T, chains []ibc.Chain) (*interchaintest.Interchain, context.Context, *client.Client, string) {
 	t.Helper()
-	ic := interchaintest.NewInterchain()
 
+	ic := interchaintest.NewInterchain()
 	for _, chain := range chains {
 		ic = ic.AddChain(chain)
 	}
@@ -166,9 +181,9 @@ func BuildAllChains(t *testing.T, chains []ibc.Chain) (*interchaintest.Interchai
 	rep := testreporter.NewNopReporter()
 	eRep := rep.RelayerExecReporter(t)
 
-	ctx := context.Background()
 	client, network := interchaintest.DockerSetup(t)
 
+	ctx := context.Background()
 	err := ic.Build(ctx, eRep, interchaintest.InterchainBuildOptions{
 		TestName:         t.Name(),
 		Client:           client,

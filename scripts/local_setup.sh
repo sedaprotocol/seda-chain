@@ -74,8 +74,12 @@ cat $HOME/.sedad/config/genesis.json | jq '.app_state["pubkey"]["params"]["activ
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     sed -i '' 's/swagger = false/swagger = true/' $HOME/.sedad/config/app.toml
+    sed -i '' 's/allow-unencrypted-seda-keys = false/allow-unencrypted-seda-keys = true/' $HOME/.sedad/config/app.toml
 else
     sed 's/swagger = false/swagger = true/' $HOME/.sedad/config/app.toml > tmp
+    cat tmp > $HOME/.sedad/config/app.toml 
+    rm tmp
+    sed 's/allow-unencrypted-seda-keys = false/allow-unencrypted-seda-keys = true/' $HOME/.sedad/config/app.toml > tmp
     cat tmp > $HOME/.sedad/config/app.toml 
     rm tmp
 fi
@@ -98,4 +102,4 @@ $BIN gentx satoshi 10000000000000000seda --keyring-backend test --key-file-no-en
 $BIN collect-gentxs
 
 # start the chain
-$BIN start --log_level debug --allow-unencrypted-seda-keys 2>&1 | tee local_chain.log
+$BIN start --log_level debug 2>&1 | tee local_chain.log

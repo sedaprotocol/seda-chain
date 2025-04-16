@@ -135,6 +135,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
+
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
@@ -998,13 +999,22 @@ func NewApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 
-	// Register ABCI handlers for batch signing.
-	sedaConfig := utils.GetSEDAConfig(appOpts)
-	signer, err := utils.LoadSEDASigner(filepath.Join(homePath, sedaConfig.SEDAKey), utils.ShouldAllowUnencryptedSedaKeys(appOpts))
-	if err != nil {
-		app.Logger().Error("error loading SEDA signer", "err", err)
-	} else {
-		app.Logger().Info("successfully loaded SEDA signer")
+	isStart := utils.IsNodeStart(appOpts)
+
+	sedaConfig, err := utils.ReadSEDAConfigFromAppOpts(appOpts)
+	if isStart && err != nil {
+		panic("failed to read SEDA config: " + err.Error())
+	}
+
+	var signer utils.SEDASigner
+	if isStart && sedaConfig.EnableSEDASigner {
+		// Register ABCI handlers for batch signing.
+		signer, err = utils.LoadSEDASigner(filepath.Join(homePath, sedaConfig.SEDAKeyFile), sedaConfig.AllowUnencryptedSEDAKeys)
+		if err != nil {
+			app.Logger().Error("error loading SEDA signer", "err", err)
+		} else {
+			app.Logger().Info("successfully loaded SEDA signer")
+		}
 	}
 
 	// Since in prior versions -1 would be written to the config file and

@@ -80,11 +80,8 @@ func NewRootCmd() *cobra.Command {
 		map[int64]bool{},
 		app.DefaultNodeHome,
 		0,
-		simtestutil.AppOptionsMap{
-			// taken from simtestutil.NewAppOptionsWithFlagHome(tempDir())
-			sdkflags.FlagHome:                  tempDir(),
-			utils.FlagAllowUnencryptedSedaKeys: "true",
-		}, tempDir(),
+		simtestutil.NewAppOptionsWithFlagHome(tempDir()),
+		tempDir(),
 		baseapp.SetChainID("tempchainid"),
 	)
 	encodingConfig := app.EncodingConfig{
@@ -146,11 +143,9 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 
-			customAppTemplate, customAppConfig := initAppConfig()
-			customTMConfig := initTendermintConfig()
-			return server.InterceptConfigsPreRunHandler(
-				cmd, customAppTemplate, customAppConfig, customTMConfig,
-			)
+			appCfgTemplate, appCfg := initAppConfig()
+			cmtCfg := initCometConfig()
+			return server.InterceptConfigsPreRunHandler(cmd, appCfgTemplate, appCfg, cmtCfg)
 		},
 	}
 
@@ -240,17 +235,34 @@ func addServerCommands(rootCmd *cobra.Command, appCreator servertypes.AppCreator
 		server.BootstrapStateCmd(appCreator),
 	)
 
-	startCmd := server.StartCmd(appCreator, defaultNodeHome)
-	startCmd.Flags().Bool(crisis.FlagSkipGenesisInvariants, false, "Skip x/crisis invariants check on startup")
+	startCmd := server.StartCmdWithOptions(appCreator, defaultNodeHome,
+		server.StartCmdOptions{
+			AddFlags: func(cmd *cobra.Command) {
+				cmd.Flags().Bool(crisis.FlagSkipGenesisInvariants, false, "Skip x/crisis invariants check on startup")
+			},
+		},
+	)
+	// Overwrite PreRunE of start command to add config key for node start.
+	startCmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
+		serverCtx := server.GetServerContextFromCmd(cmd)
+
+		// Bind flags to the Context's Viper so the app construction can set
+		// options accordingly.
+		if err := serverCtx.Viper.BindPFlags(cmd.Flags()); err != nil {
+			return err
+		}
+
+		utils.SetNodeStart(serverCtx)
+
+		_, err := server.GetPruningOptionsFromFlags(serverCtx.Viper)
+		return err
+	}
 
 	serverCmds := []*cobra.Command{
 		startCmd,
 		server.ExportCmd(appExport, defaultNodeHome),
 		server.NewRollbackCmd(appCreator, defaultNodeHome),
 		server.ModuleHashByHeightQuery(appCreator),
-	}
-	for i := range serverCmds {
-		serverCmds[i].Flags().Bool(utils.FlagAllowUnencryptedSedaKeys, false, "Allow an unencrypted SEDA key file")
 	}
 
 	rootCmd.AddCommand(

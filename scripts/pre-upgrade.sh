@@ -15,7 +15,6 @@ export DAEMON_HOME=$HOME/.sedad
 export DAEMON_NAME=sedad
 export DAEMON_ALLOW_DOWNLOAD_BINARIES=false 
 export DAEMON_RESTART_AFTER_UPGRADE=true
-export SEDA_ALLOW_UNENCRYPTED_KEYS=true
 
 rm -rf ~/.sedad
 

@@ -30,7 +30,7 @@ func TestStateSync(t *testing.T) {
 	// snapshot-interval must be a multiple of pruning-keep-every
 	configFileOverrides := modifyAppToml(stateSyncSnapshotInterval)
 
-	chains := CreateChains(t, numOfValidators, numOfFullNodes)
+	chains := CreateChains(t, numOfValidators, numOfFullNodes, configFileOverrides)
 	chain := chains[0].(*cosmos.CosmosChain)
 
 	_, ctx, _, _ := BuildAllChains(t, chains)
@@ -88,6 +88,10 @@ func modifyAppToml(snapshotInterval int) map[string]any {
 	appTomlOverrides["pruning-keep-recent"] = snapshotInterval
 	appTomlOverrides["pruning-keep-every"] = snapshotInterval
 	appTomlOverrides["pruning-interval"] = snapshotInterval
+
+	appTomlOverrides["seda.enable-seda-signer"] = true
+	appTomlOverrides["seda.seda-key-file"] = "./config/seda_keys.json"
+	appTomlOverrides["seda.allow-unencrypted-seda-keys"] = true
 
 	configFileOverrides := make(map[string]any)
 	configFileOverrides["config/app.toml"] = appTomlOverrides
