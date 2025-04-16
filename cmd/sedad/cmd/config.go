@@ -1,10 +1,16 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	tmcfg "github.com/cometbft/cometbft/config"
+	"github.com/spf13/cobra"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
@@ -80,4 +86,43 @@ func initTendermintConfig() *tmcfg.Config {
 	cfg.Consensus.TimeoutCommit = time.Duration(7.5 * float64(time.Second))
 
 	return cfg
+}
+
+func preUpgradeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pre-upgrade",
+		Short: "Pre-upgrade command",
+		Long:  "Pre-upgrade command to migrate app.toml for v1.0.0 upgrade",
+		Run: func(cmd *cobra.Command, args []string) {
+			serverCtx := server.GetServerContextFromCmd(cmd)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			err := migrateAppConfig(serverCtx, clientCtx.HomeDir)
+			if err != nil {
+				os.Exit(30)
+			}
+			os.Exit(0)
+		},
+	}
+
+	return cmd
+}
+
+func migrateAppConfig(serverCtx *server.Context, rootDir string) error {
+	configPath := filepath.Join(rootDir, "config")
+	appConfigPath := filepath.Join(configPath, "app.toml")
+
+	serverconfig.SetConfigTemplate(serverconfig.DefaultConfigTemplate)
+	oldConfig := serverconfig.DefaultConfig()
+	err := serverCtx.Viper.Unmarshal(oldConfig)
+	if err != nil {
+		return fmt.Errorf("failed to parse %s: %w", appConfigPath, err)
+	}
+
+	newConfig := AppConfig{
+		Config:     *oldConfig,
+		SEDAConfig: utils.DefaultSEDAConfig(),
+	}
+	serverconfig.SetConfigTemplate(serverconfig.DefaultConfigTemplate + utils.DefaultSEDATemplate)
+	serverconfig.WriteConfigFile(appConfigPath, newConfig)
+	return nil
 }

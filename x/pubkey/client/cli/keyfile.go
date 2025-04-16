@@ -22,8 +22,8 @@ import (
 )
 
 func LoadOrGenerateSEDAKeys(cmd *cobra.Command, valAddr sdk.ValAddress) ([]types.IndexedPubKey, error) {
-	cfg := server.GetServerContextFromCmd(cmd)
-	sedaCfg := utils.GetSEDAConfig(cfg.Viper)
+	serverCtx := server.GetServerContextFromCmd(cmd)
+	sedaCfg := utils.GetSEDAConfig(serverCtx.Viper)
 
 	encryptionKeyEnv := utils.ReadSEDAKeyEncryptionKeyFromEnv()
 	useCustomEncryptionKey, err := cmd.Flags().GetBool(FlagEncryptionKey)
@@ -74,7 +74,7 @@ func LoadOrGenerateSEDAKeys(cmd *cobra.Command, valAddr sdk.ValAddress) ([]types
 			return nil, err
 		}
 	} else {
-		keyFile := filepath.Join(cfg.Config.RootDir, sedaCfg.SEDAKey)
+		keyFile := filepath.Join(serverCtx.Config.RootDir, sedaCfg.SEDAKey)
 
 		encryptionKey, err = getSEDAKeysEncryptionKey(cmd, encryptionKey)
 		if err != nil {

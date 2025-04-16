@@ -208,6 +208,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig, basi
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
 		confixcmd.ConfigCommand(),
+		preUpgradeCmd(),
 	)
 
 	// add server commands
