@@ -110,11 +110,13 @@ func migrateAppConfig(serverCtx *server.Context, rootDir string) error {
 		return fmt.Errorf("failed to parse %s: %w", appConfigPath, err)
 	}
 
-	defaultSedaConfig := utils.DefaultSEDAConfig()
-	defaultSedaConfig.AllowUnencryptedSEDAKeys = true
+	sedaConfig := utils.DefaultSEDAConfig()
+	// Allow unencrypted key file to to prevent panic in node startup until the
+	// key file is created.
+	sedaConfig.AllowUnencryptedSEDAKeys = true
 	newConfig := utils.AppConfig{
 		Config:     *oldConfig,
-		SEDAConfig: defaultSedaConfig,
+		SEDAConfig: sedaConfig,
 	}
 	serverconfig.SetConfigTemplate(serverconfig.DefaultConfigTemplate + utils.DefaultSEDATemplate)
 	serverconfig.WriteConfigFile(appConfigPath, newConfig)

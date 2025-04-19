@@ -118,7 +118,13 @@ func getSEDAKeysEncryptionKey(cmd *cobra.Command, encryptionKey string, allowUne
 		return "", err
 	}
 
-	if noEncryptionFlag || allowUnencrypted {
+	if noEncryptionFlag != allowUnencrypted {
+		return "", fmt.Errorf(
+			"inconsistency between --%s flag and app config %s: %v and %v, respectively",
+			FlagNoEncryption, utils.FlagAllowUnencryptedSEDAKeys,
+			noEncryptionFlag, allowUnencrypted,
+		)
+	} else if noEncryptionFlag && allowUnencrypted {
 		return "", nil
 	}
 
