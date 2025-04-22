@@ -42,6 +42,8 @@ $BIN keys add validator3 --keyring-backend=test --home=$HOME/.sedad/validator3
 $BIN keys add validator4 --keyring-backend=test --home=$HOME/.sedad/validator4
 
 # create validator node with tokens to transfer to the three other nodes
+sed -i '' 's/allow-unencrypted-seda-keys = false/allow-unencrypted-seda-keys = true/' $HOME/.sedad/validator1/config/app.toml
+
 $BIN add-genesis-account $($BIN keys show validator1 -a --keyring-backend=test --home=$HOME/.sedad/validator1) 100000000000000000000aseda --home=$HOME/.sedad/validator1
 $BIN gentx validator1 10000000000000000000aseda --keyring-backend=test --home=$HOME/.sedad/validator1 --key-file-no-encryption --chain-id=testing 
 $BIN collect-gentxs --home=$HOME/.sedad/validator1
@@ -54,13 +56,10 @@ $BIN collect-gentxs --home=$HOME/.sedad/validator1
 # validator4 1314, 9086
 
 # change app.toml values
-VALIDATOR1_APP_TOML=$HOME/.sedad/validator1/config/app.toml
 VALIDATOR2_APP_TOML=$HOME/.sedad/validator2/config/app.toml
 VALIDATOR3_APP_TOML=$HOME/.sedad/validator3/config/app.toml
 VALIDATOR4_APP_TOML=$HOME/.sedad/validator4/config/app.toml
 
-# validator1
-sed -i '' 's/allow-unencrypted-seda-keys = false/allow-unencrypted-seda-keys = true/' $VALIDATOR1_APP_TOML
 # validator2
 sed -i '' -E 's|tcp://0.0.0.0:1317|tcp://0.0.0.0:1316|g' $VALIDATOR2_APP_TOML # API server
 sed -i '' -E 's|0.0.0.0:9090|0.0.0.0:9088|g' $VALIDATOR2_APP_TOML # gRPC server
@@ -126,7 +125,7 @@ sed -i '' -E 's|tcp://0.0.0.0:26656|tcp://0.0.0.0:26647|g' $VALIDATOR4_CONFIG # 
 # modify genesis file
 jq '.consensus.params.block.max_gas="100000000"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
 jq '.consensus.params.abci.vote_extensions_enable_height = "10"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
-jq '.app_state["pubkey"]["params"]["activation_block_delay"]="25"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
+jq '.app_state["pubkey"]["params"]["activation_block_delay"]="15"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
 jq '.app_state["gov"]["voting_params"]["voting_period"]="30s"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
 jq '.app_state["gov"]["params"]["voting_period"]="30s"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
 jq '.app_state["gov"]["params"]["expedited_voting_period"]="15s"' $HOME/.sedad/validator1/config/genesis.json > temp.json && mv temp.json $HOME/.sedad/validator1/config/genesis.json
@@ -168,6 +167,7 @@ $BIN tx bank send validator1 $($BIN keys show validator4 -a --keyring-backend=te
 sleep 10
 
 echo "begin sending create validator txs"
+
 cat << EOF > validator2.json
 {
 	"pubkey": $($BIN tendermint show-validator --home=$HOME/.sedad/validator2),

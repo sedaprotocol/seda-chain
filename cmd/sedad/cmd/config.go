@@ -100,6 +100,11 @@ func preUpgradeCmd() *cobra.Command {
 }
 
 func migrateAppConfig(serverCtx *server.Context, rootDir string) error {
+	value := serverCtx.Viper.Get("seda")
+	if value == nil {
+		return nil // seda config already exists
+	}
+
 	configPath := filepath.Join(rootDir, "config")
 	appConfigPath := filepath.Join(configPath, "app.toml")
 

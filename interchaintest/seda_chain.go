@@ -32,10 +32,6 @@ func NewSEDAChain(cosmosChain *cosmos.CosmosChain, logger *zap.Logger) *SEDAChai
 	}
 }
 
-func (c *SEDAChain) Config() ibc.ChainConfig {
-	return c.CosmosChain.Config()
-}
-
 // Bootstraps the chain and starts it from genesis
 func (c *SEDAChain) Start(testName string, ctx context.Context, additionalGenesisWallets ...ibc.WalletAmount) error {
 	chainCfg := c.Config()

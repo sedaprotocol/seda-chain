@@ -28,17 +28,12 @@ func LoadOrGenerateSEDAKeys(cmd *cobra.Command, valAddr sdk.ValAddress) ([]types
 		return nil, err
 	}
 
-	encryptionKeyEnv := utils.ReadSEDAKeyEncryptionKeyFromEnv()
 	useCustomEncryptionKey, err := cmd.Flags().GetBool(FlagEncryptionKey)
 	if err != nil {
 		return nil, err
 	}
 
-	if useCustomEncryptionKey && encryptionKeyEnv != "" {
-		return nil, fmt.Errorf("both --%s flag and %s environment variable are set", FlagEncryptionKey, utils.SEDAKeyEncryptionKeyEnvVar)
-	}
-
-	encryptionKey := encryptionKeyEnv
+	encryptionKey := ""
 	if useCustomEncryptionKey {
 		customKey, err := speakeasy.FAsk(os.Stderr, "Enter the custom encryption key\n")
 		if err != nil {
