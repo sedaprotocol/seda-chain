@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/strangelove-ventures/interchaintest/v8"
-	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
@@ -25,13 +24,13 @@ func TestChainStart(t *testing.T) {
 	chains := CreateChains(t, numOfValidators, numOfFullNodes, GetSEDAAppTomlOverrides())
 	ic, ctx, _, _ := BuildAllChains(t, chains)
 
-	chain := chains[0].(*cosmos.CosmosChain)
+	chain := chains[0].(*SEDAChain)
 
 	userFunds := math.NewInt(10_000_000_000)
 	users := interchaintest.GetAndFundTestUsers(t, ctx, t.Name(), userFunds, chain)
 	chainUser := users[0]
 
-	conformance.CosmWasm(t, ctx, chain, chainUser)
+	conformance.CosmWasm(t, ctx, chain.CosmosChain, chainUser)
 
 	require.NotNil(t, ic)
 	require.NotNil(t, ctx)

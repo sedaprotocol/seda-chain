@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +30,7 @@ func TestStateSync(t *testing.T) {
 	configFileOverrides := modifyAppToml(stateSyncSnapshotInterval)
 
 	chains := CreateChains(t, numOfValidators, numOfFullNodes, configFileOverrides)
-	chain := chains[0].(*cosmos.CosmosChain)
+	chain := chains[0].(*SEDAChain)
 
 	_, ctx, _, _ := BuildAllChains(t, chains)
 

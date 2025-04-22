@@ -307,7 +307,7 @@ cover-html: test-unit-cover
 
 docker-build-e2e:
 	docker build \
-		-t sedaprotocol/sedad-e2e \
+		-t sedad-e2e \
 		-f dockerfiles/Dockerfile.e2e .
 
 .PHONY: cover-html run-tests $(TEST_TARGETS) test test-race docker-build-e2e

@@ -30,18 +30,18 @@ func TestSDKBoundaries(t *testing.T) {
 
 	tests := []boundarySpecs{
 		{
-			name: "sdk 47 <-> 50",
+			name: "SEDA Chain <-> SDK 47",
 			chainSpecs: []*interchaintest.ChainSpec{
-				{
-					Name:      "ibc-go-simd",
-					ChainName: "simd-47",
-					Version:   "v7.2.0", // sdk 0.47.3
-				},
 				{
 					Name:          SedaChainName,
 					ChainConfig:   GetSEDAConfig(),
 					NumValidators: &numVals,
 					NumFullNodes:  &numFullNodes,
+				},
+				{
+					Name:      "ibc-go-simd",
+					ChainName: "simd-47",
+					Version:   "v7.2.0", // sdk 0.47.3
 				},
 			},
 			relayerVersion: "colin-event-fix",
@@ -54,11 +54,16 @@ func TestSDKBoundaries(t *testing.T) {
 		t.Run(testname, func(t *testing.T) {
 			t.Parallel()
 
-			chains := interchaintest.CreateChainsWithChainSpecs(t, tt.chainSpecs)
+			logger := zaptest.NewLogger(t)
+			cf := interchaintest.NewBuiltinChainFactory(logger, tt.chainSpecs)
+
+			chains, err := cf.Chains(t.Name())
+			require.NoError(t, err)
+
+			sedaChain := NewSEDAChain(chains[0].(*cosmos.CosmosChain), logger)
+			counterpartyChain := chains[1].(*cosmos.CosmosChain)
 
 			client, network := interchaintest.DockerSetup(t)
-
-			chain, counterpartyChain := chains[0].(*cosmos.CosmosChain), chains[1].(*cosmos.CosmosChain)
 
 			const (
 				path        = "ibc-path"
@@ -79,11 +84,11 @@ func TestSDKBoundaries(t *testing.T) {
 			r := rf.Build(t, client, network)
 
 			ic := interchaintest.NewInterchain().
-				AddChain(chain).
+				AddChain(sedaChain).
 				AddChain(counterpartyChain).
 				AddRelayer(r, relayerName).
 				AddLink(interchaintest.InterchainLink{
-					Chain1:  chain,
+					Chain1:  sedaChain,
 					Chain2:  counterpartyChain,
 					Relayer: r,
 					Path:    path,
@@ -105,7 +110,7 @@ func TestSDKBoundaries(t *testing.T) {
 			})
 
 			// test IBC conformance
-			conformance.TestChainPair(t, ctx, client, network, chain, counterpartyChain, rf, rep, r, path)
+			conformance.TestChainPair(t, ctx, client, network, sedaChain, counterpartyChain, rf, rep, r, path)
 		})
 	}
 }

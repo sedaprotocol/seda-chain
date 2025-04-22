@@ -37,23 +37,25 @@ func TestInterchainAccounts(t *testing.T) {
 	ctx := context.Background()
 
 	// Get both chains
-	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
+	logger := zaptest.NewLogger(t)
+	cf := interchaintest.NewBuiltinChainFactory(logger, []*interchaintest.ChainSpec{
+		{
+			Name:        "seda",
+			ChainConfig: GetSEDAConfig(),
+		},
 		{
 			Name: "icad",
 			ChainConfig: ibc.ChainConfig{
 				Images: []ibc.DockerImage{{Repository: "ghcr.io/cosmos/ibc-go-icad", Version: "v0.1.7", UidGid: "1025:1025"}},
 			},
 		},
-		{
-			Name:        "seda",
-			ChainConfig: GetSEDAConfig(),
-		},
 	})
 
 	chains, err := cf.Chains(t.Name())
 	require.NoError(t, err)
 
-	icadChain, starsdChain := chains[0].(*cosmos.CosmosChain), chains[1].(*cosmos.CosmosChain)
+	sedaChain := NewSEDAChain(chains[0].(*cosmos.CosmosChain), logger)
+	icadChain := chains[1].(*cosmos.CosmosChain)
 
 	// Get a relayer instance
 	r := interchaintest.NewBuiltinRelayerFactory(
@@ -68,11 +70,11 @@ func TestInterchainAccounts(t *testing.T) {
 
 	ic := interchaintest.NewInterchain().
 		AddChain(icadChain).
-		AddChain(starsdChain).
+		AddChain(sedaChain).
 		AddRelayer(r, relayerName).
 		AddLink(interchaintest.InterchainLink{
 			Chain1:  icadChain,
-			Chain2:  starsdChain,
+			Chain2:  sedaChain,
 			Relayer: r,
 			Path:    pathName,
 		})
@@ -86,26 +88,26 @@ func TestInterchainAccounts(t *testing.T) {
 
 	// Fund a user account on chain1 and chain2
 	userFunds := math.NewInt(10_000_000_000)
-	users := interchaintest.GetAndFundTestUsers(t, ctx, t.Name(), userFunds, icadChain, starsdChain)
+	users := interchaintest.GetAndFundTestUsers(t, ctx, t.Name(), userFunds, icadChain, sedaChain)
 	icadUser := users[0]
 	starsdUser := users[1]
 
 	// Generate a new IBC path
-	err = r.GeneratePath(ctx, eRep, icadChain.Config().ChainID, starsdChain.Config().ChainID, pathName)
+	err = r.GeneratePath(ctx, eRep, icadChain.Config().ChainID, sedaChain.Config().ChainID, pathName)
 	require.NoError(t, err)
 
 	// Create new clients
 	err = r.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{TrustingPeriod: "330h"})
 	require.NoError(t, err)
 
-	err = testutil.WaitForBlocks(ctx, 2, icadChain, starsdChain)
+	err = testutil.WaitForBlocks(ctx, 2, icadChain, sedaChain)
 	require.NoError(t, err)
 
 	// Create a new connection
 	err = r.CreateConnections(ctx, eRep, pathName)
 	require.NoError(t, err)
 
-	err = testutil.WaitForBlocks(ctx, 2, icadChain, starsdChain)
+	err = testutil.WaitForBlocks(ctx, 2, icadChain, sedaChain)
 	require.NoError(t, err)
 
 	// Query for the newly created connection
@@ -143,7 +145,7 @@ func TestInterchainAccounts(t *testing.T) {
 
 	ir := cosmos.DefaultEncoding().InterfaceRegistry
 
-	c2h, err := starsdChain.Height(ctx)
+	c2h, err := sedaChain.Height(ctx)
 	require.NoError(t, err)
 
 	channelFound := func(found *chantypes.MsgChannelOpenConfirm) bool {
@@ -151,7 +153,7 @@ func TestInterchainAccounts(t *testing.T) {
 	}
 
 	// Wait for channel open confirm
-	_, err = cosmos.PollForMessage(ctx, starsdChain, ir,
+	_, err = cosmos.PollForMessage(ctx, sedaChain.CosmosChain, ir,
 		c2h, c2h+30, channelFound)
 	require.NoError(t, err)
 
@@ -169,29 +171,29 @@ func TestInterchainAccounts(t *testing.T) {
 	require.NotEmpty(t, icaAddr)
 
 	// Get initial account balances
-	starsdAddr := starsdUser.(*cosmos.CosmosWallet).FormattedAddressWithPrefix(starsdChain.Config().Bech32Prefix)
+	starsdAddr := starsdUser.(*cosmos.CosmosWallet).FormattedAddressWithPrefix(sedaChain.Config().Bech32Prefix)
 
-	starsdOrigBal, err := starsdChain.GetBalance(ctx, starsdAddr, starsdChain.Config().Denom)
+	starsdOrigBal, err := sedaChain.GetBalance(ctx, starsdAddr, sedaChain.Config().Denom)
 	require.NoError(t, err)
 
-	icaOrigBal, err := starsdChain.GetBalance(ctx, icaAddr, starsdChain.Config().Denom)
+	icaOrigBal, err := sedaChain.GetBalance(ctx, icaAddr, sedaChain.Config().Denom)
 	require.NoError(t, err)
 
 	// Send funds to ICA from user account on starsd
 	transferAmount := math.NewInt(1000)
 	transfer := ibc.WalletAmount{
 		Address: icaAddr,
-		Denom:   starsdChain.Config().Denom,
+		Denom:   sedaChain.Config().Denom,
 		Amount:  transferAmount,
 	}
-	err = starsdChain.SendFunds(ctx, starsdUser.KeyName(), transfer)
+	err = sedaChain.SendFunds(ctx, starsdUser.KeyName(), transfer)
 	require.NoError(t, err)
 
-	starsdBal, err := starsdChain.GetBalance(ctx, starsdAddr, starsdChain.Config().Denom)
+	starsdBal, err := sedaChain.GetBalance(ctx, starsdAddr, sedaChain.Config().Denom)
 	require.NoError(t, err)
 	require.Equal(t, starsdBal, starsdOrigBal.Sub(transferAmount))
 
-	icaBal, err := starsdChain.GetBalance(ctx, icaAddr, starsdChain.Config().Denom)
+	icaBal, err := sedaChain.GetBalance(ctx, icaAddr, sedaChain.Config().Denom)
 	require.NoError(t, err)
 	require.Equal(t, icaBal, icaOrigBal.Add(transferAmount))
 
@@ -202,7 +204,7 @@ func TestInterchainAccounts(t *testing.T) {
 		"to_address":   starsdAddr,
 		"amount": []map[string]any{
 			{
-				"denom":  starsdChain.Config().Denom,
+				"denom":  sedaChain.Config().Denom,
 				"amount": transferAmount.String(),
 			},
 		},
@@ -238,12 +240,12 @@ func TestInterchainAccounts(t *testing.T) {
 	require.NoError(t, err)
 
 	// Assert that the funds have been received by the user account on starsd
-	starsdBal, err = starsdChain.GetBalance(ctx, starsdAddr, starsdChain.Config().Denom)
+	starsdBal, err = sedaChain.GetBalance(ctx, starsdAddr, sedaChain.Config().Denom)
 	require.NoError(t, err)
 	require.Equal(t, starsdBal, starsdOrigBal)
 
 	// Assert that the funds have been removed from the ICA on chain2
-	icaBal, err = starsdChain.GetBalance(ctx, icaAddr, starsdChain.Config().Denom)
+	icaBal, err = sedaChain.GetBalance(ctx, icaAddr, sedaChain.Config().Denom)
 	require.NoError(t, err)
 	require.Equal(t, icaBal, icaOrigBal)
 }

@@ -43,7 +43,7 @@ func TestCoreSDKCommands(t *testing.T) {
 	cfg := GetSEDAConfig()
 
 	chains := CreateChainsWithCustomConfig(t, numVals, numFullNodes, cfg)
-	chain := chains[0].(*cosmos.CosmosChain)
+	chain := chains[0].(*SEDAChain).CosmosChain
 
 	ic, ctx, _, _ := BuildAllChains(t, chains)
 

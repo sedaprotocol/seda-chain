@@ -151,7 +151,9 @@ func CreateChains(t *testing.T, numVals, numFullNodes int, configFileOverrides m
 
 func CreateChainsWithCustomConfig(t *testing.T, numVals, numFullNodes int, config ibc.ChainConfig) []ibc.Chain {
 	t.Helper()
-	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
+
+	logger := zaptest.NewLogger(t)
+	cf := interchaintest.NewBuiltinChainFactory(logger, []*interchaintest.ChainSpec{
 		{
 			Name:          SedaCfg.Name,
 			ChainName:     SedaChainName,
@@ -166,7 +168,8 @@ func CreateChainsWithCustomConfig(t *testing.T, numVals, numFullNodes int, confi
 	chains, err := cf.Chains(t.Name())
 	require.NoError(t, err)
 
-	// chain := chains[0].(*cosmos.CosmosChain)
+	chains[0] = NewSEDAChain(chains[0].(*cosmos.CosmosChain), logger)
+
 	return chains
 }
 
@@ -174,7 +177,11 @@ func BuildAllChains(t *testing.T, chains []ibc.Chain) (*interchaintest.Interchai
 	t.Helper()
 
 	ic := interchaintest.NewInterchain()
-	for _, chain := range chains {
+
+	sedaChain := chains[0].(*SEDAChain)
+	ic = ic.AddChain(sedaChain)
+
+	for _, chain := range chains[1:] {
 		ic = ic.AddChain(chain)
 	}
 

@@ -18,8 +18,8 @@ import (
 	"cosmossdk.io/math"
 )
 
-// TestIBCTransfer spins up a Seda and Gaia network, initializes an IBC connection between them,
-// and sends an ICS20 token transfer from Seda->Gaia and then back from Gaia->Seda.
+// TestIBCTransfer spins up a SEDA and Gaia network, initializes an IBC connection between them,
+// and sends an ICS20 token transfer from SEDA->Gaia and then back from Gaia->SEDA.
 func TestIBCTransfer(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping in short mode")
@@ -47,8 +47,9 @@ func runIBCTransferTest(t *testing.T, counterpartyChainSpec *interchaintest.Chai
 	/* =================================================== */
 	/*                   CHAIN FACTORY                     */
 	/* =================================================== */
+	logger := zaptest.NewLogger(t)
 	cf := interchaintest.NewBuiltinChainFactory(
-		zaptest.NewLogger(t),
+		logger,
 		[]*interchaintest.ChainSpec{
 			{
 				Name:          SedaChainName,
@@ -62,7 +63,9 @@ func runIBCTransferTest(t *testing.T, counterpartyChainSpec *interchaintest.Chai
 	// Get chains from the chain factory
 	chains, err := cf.Chains(t.Name())
 	require.NoError(t, err)
-	sedaChain, counterpartyChain := chains[0].(*cosmos.CosmosChain), chains[1].(*cosmos.CosmosChain)
+
+	sedaChain := NewSEDAChain(chains[0].(*cosmos.CosmosChain), logger)
+	counterpartyChain := chains[1].(*cosmos.CosmosChain)
 
 	/* =================================================== */
 	/*                  RELAYER FACTORY                    */

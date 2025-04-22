@@ -49,7 +49,7 @@ func TestPacketForwardMiddleware(t *testing.T) {
 		rep                                    = testreporter.NewNopReporter()
 		eRep                                   = rep.RelayerExecReporter(t)
 		chainIDA, chainIDB, chainIDC, chainIDD = "chain-a", "chain-b", "chain-c", "chain-d"
-		chainA, chainB, chainC, chainD         *cosmos.CosmosChain
+		chainA, chainB, chainC, chainD         *SEDAChain
 	)
 
 	baseCfg := GetSEDAConfig()
@@ -66,7 +66,8 @@ func TestPacketForwardMiddleware(t *testing.T) {
 	baseCfg.ChainID = chainIDD
 	configD := baseCfg
 
-	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{
+	logger := zaptest.NewLogger(t)
+	cf := interchaintest.NewBuiltinChainFactory(logger, []*interchaintest.ChainSpec{
 		{
 			Name:          SedaChainName,
 			ChainConfig:   configA,
@@ -97,7 +98,10 @@ func TestPacketForwardMiddleware(t *testing.T) {
 	chains, err := cf.Chains(t.Name())
 	require.NoError(t, err)
 
-	chainA, chainB, chainC, chainD = chains[0].(*cosmos.CosmosChain), chains[1].(*cosmos.CosmosChain), chains[2].(*cosmos.CosmosChain), chains[3].(*cosmos.CosmosChain)
+	chainA = NewSEDAChain(chains[0].(*cosmos.CosmosChain), logger)
+	chainB = NewSEDAChain(chains[1].(*cosmos.CosmosChain), logger)
+	chainC = NewSEDAChain(chains[2].(*cosmos.CosmosChain), logger)
+	chainD = NewSEDAChain(chains[3].(*cosmos.CosmosChain), logger)
 
 	r := interchaintest.NewBuiltinRelayerFactory(
 		ibc.CosmosRly,

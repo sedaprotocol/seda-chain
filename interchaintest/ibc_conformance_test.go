@@ -37,8 +37,9 @@ func runConformanceTest(t *testing.T, counterpartyChainSpec *interchaintest.Chai
 	/* =================================================== */
 	/*                   CHAIN FACTORY                     */
 	/* =================================================== */
+	logger := zaptest.NewLogger(t)
 	cf := interchaintest.NewBuiltinChainFactory(
-		zaptest.NewLogger(t),
+		logger,
 		[]*interchaintest.ChainSpec{
 			{
 				Name:          SedaChainName,
@@ -52,7 +53,9 @@ func runConformanceTest(t *testing.T, counterpartyChainSpec *interchaintest.Chai
 	// Get chains from the chain factory
 	chains, err := cf.Chains(t.Name())
 	require.NoError(t, err)
-	sedaChain, counterpartyChain := chains[0].(*cosmos.CosmosChain), chains[1].(*cosmos.CosmosChain)
+
+	sedaChain := NewSEDAChain(chains[0].(*cosmos.CosmosChain), logger)
+	counterpartyChain := chains[1].(*cosmos.CosmosChain)
 
 	/* =================================================== */
 	/*                  RELAYER FACTORY                    */
