@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://seda.xyz/">
-    <img width="90%" alt="seda-chain" src="https://github.com/sedaprotocol/seda-content/blob/745098a5266da7c4ea8bf661275a37b1322e7cf7/public/images/footer/footer-image.png">
+    <img width="90%" alt="seda-chain" src="https://raw.githubusercontent.com/sedaprotocol/.github/refs/heads/main/images/banner.png">
   </a>
 </p>
 
