@@ -230,12 +230,27 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	err = f.executeReveals(stakers, revealMsgs)
 	require.NoError(t, err)
 
-	// Ensure the DR without commitments and the DR without reveals are timed out
-	for i := 0; i < defaultRevealTimeoutBlocks; i++ {
-		f.AddBlock()
-	}
-
 	f.pauseContract(t)
+
+	// Ensure the DR without commitments and the DR without reveals are timed out
+	for i := range defaultCommitTimeoutBlocks {
+		f.AddBlock()
+
+		// DRs in the reveal stage time out before DRs in the commit stage
+		if i == defaultRevealTimeoutBlocks-1 {
+			err = f.tallyKeeper.EndBlock(f.Context())
+			require.NoError(t, err)
+			require.NotContains(t, f.logBuf.String(), "ERR")
+
+			noRevealsResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), noRevealsDr.DrID)
+			require.NoError(t, err)
+			require.Equal(t, uint32(types.TallyExitCodeContractPaused), noRevealsResult.ExitCode)
+
+			resolvedResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), resolvedDr.DrID)
+			require.NoError(t, err)
+			require.Equal(t, uint32(types.TallyExitCodeContractPaused), resolvedResult.ExitCode)
+		}
+	}
 
 	err = f.tallyKeeper.EndBlock(f.Context())
 	require.NoError(t, err)
@@ -244,12 +259,4 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	noCommitsResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), noCommitsDr.DrID)
 	require.NoError(t, err)
 	require.Equal(t, uint32(types.TallyExitCodeContractPaused), noCommitsResult.ExitCode)
-
-	noRevealsResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), noRevealsDr.DrID)
-	require.NoError(t, err)
-	require.Equal(t, uint32(types.TallyExitCodeContractPaused), noRevealsResult.ExitCode)
-
-	resolvedResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), resolvedDr.DrID)
-	require.NoError(t, err)
-	require.Equal(t, uint32(types.TallyExitCodeContractPaused), resolvedResult.ExitCode)
 }

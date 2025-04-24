@@ -30,7 +30,8 @@ import (
 )
 
 const (
-	defaultRevealTimeoutBlocks = 10
+	defaultCommitTimeoutBlocks = 10
+	defaultRevealTimeoutBlocks = 5
 )
 
 type PostDataRequestResponse struct {
@@ -75,7 +76,12 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCo
 	require.NoError(t, err)
 
 	if timeout {
-		for i := 0; i < defaultRevealTimeoutBlocks; i++ {
+		timeoutBlocks := defaultCommitTimeoutBlocks
+		if numCommits == replicationFactor {
+			timeoutBlocks = defaultRevealTimeoutBlocks
+		}
+
+		for range timeoutBlocks {
 			f.AddBlock()
 		}
 	}

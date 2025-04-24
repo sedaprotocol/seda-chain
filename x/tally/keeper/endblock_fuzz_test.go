@@ -31,7 +31,6 @@ type fuzzCommitReveal struct {
 	reveal        string // base64-encoded
 	exitCode      byte
 	gasUsed       uint64
-	salt          string
 	proxyPubKeys  []string
 }
 
@@ -145,7 +144,12 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 	}
 
 	if timeout {
-		for i := 0; i < defaultRevealTimeoutBlocks; i++ {
+		timeoutBlocks := defaultCommitTimeoutBlocks
+		if len(revealMsgs) > 0 {
+			timeoutBlocks = defaultRevealTimeoutBlocks
+		}
+
+		for range timeoutBlocks {
 			f.AddBlock()
 		}
 	}
