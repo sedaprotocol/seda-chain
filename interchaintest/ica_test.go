@@ -69,8 +69,8 @@ func TestInterchainAccounts(t *testing.T) {
 	const relayerName = "relayer"
 
 	ic := interchaintest.NewInterchain().
-		AddChain(icadChain).
 		AddChain(sedaChain).
+		AddChain(icadChain).
 		AddRelayer(r, relayerName).
 		AddLink(interchaintest.InterchainLink{
 			Chain1:  icadChain,

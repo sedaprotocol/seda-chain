@@ -101,7 +101,7 @@ func preUpgradeCmd() *cobra.Command {
 
 func migrateAppConfig(serverCtx *server.Context, rootDir string) error {
 	value := serverCtx.Viper.Get("seda")
-	if value == nil {
+	if value != nil {
 		return nil // seda config already exists
 	}
 
@@ -116,9 +116,8 @@ func migrateAppConfig(serverCtx *server.Context, rootDir string) error {
 	}
 
 	sedaConfig := utils.DefaultSEDAConfig()
-	// Allow unencrypted key file to to prevent panic in node startup until the
-	// key file is created.
-	sedaConfig.AllowUnencryptedSEDAKeys = true
+	// SEDA signer is disabled to prevent panic in node startup after upgrade.
+	sedaConfig.EnableSEDASigner = false
 	newConfig := utils.AppConfig{
 		Config:     *oldConfig,
 		SEDAConfig: sedaConfig,

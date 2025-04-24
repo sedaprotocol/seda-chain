@@ -21,7 +21,7 @@ func TestChainStart(t *testing.T) {
 	numOfValidators := 2
 	numOfFullNodes := 0
 
-	chains := CreateChains(t, numOfValidators, numOfFullNodes, GetSEDAAppTomlOverrides())
+	chains := CreateChains(t, numOfValidators, numOfFullNodes, GetConfigFileOverrides())
 	ic, ctx, _, _ := BuildAllChains(t, chains)
 
 	chain := chains[0].(*SEDAChain)

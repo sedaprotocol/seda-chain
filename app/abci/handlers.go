@@ -95,6 +95,7 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 				h.logger.Error("failed to load signer to sign batch", "err", err)
 				return nil, err
 			}
+			h.logger.Info("signer has been reloaded successfully")
 		}
 
 		// Check if the validator was in the previous validator tree. If not,
@@ -124,7 +125,7 @@ func (h *Handlers) ExtendVoteHandler() sdk.ExtendVoteHandler {
 		}
 		err = h.signer.ReloadIfMismatch(valKeys.IndexedPubKeys)
 		if err != nil {
-			return nil, err
+			h.logger.Error("failed to reload signer despite mismatch")
 		}
 
 		h.logger.Debug(

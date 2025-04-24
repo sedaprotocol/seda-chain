@@ -1011,10 +1011,9 @@ func NewApp(
 		// Register ABCI handlers for batch signing.
 		signer, err = utils.LoadSEDASigner(filepath.Join(homePath, sedaConfig.SEDAKeyFile), sedaConfig.AllowUnencryptedSEDAKeys)
 		if err != nil {
-			app.Logger().Error("error loading SEDA signer", "err", err)
-		} else {
-			app.Logger().Info("successfully loaded SEDA signer")
+			panic(fmt.Errorf("error loading SEDA signer: %w", err))
 		}
+		app.Logger().Info("successfully loaded SEDA signer")
 	}
 
 	// Since in prior versions -1 would be written to the config file and

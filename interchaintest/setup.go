@@ -123,20 +123,28 @@ func GetTestGenesis() []cosmos.GenesisKV {
 func GetSEDAConfig() ibc.ChainConfig {
 	cfg := SedaCfg
 	cfg.ModifyGenesis = cosmos.ModifyGenesis(GetTestGenesis())
-	cfg.ConfigFileOverrides = GetSEDAAppTomlOverrides()
+	cfg.ConfigFileOverrides = GetConfigFileOverrides()
 	return cfg
 }
 
-func GetSEDAAppTomlOverrides() map[string]any {
+func GetConfigFileOverrides() map[string]any {
 	appTomlOverrides := make(testutil.Toml)
 
-	appTomlOverrides["seda.enable-seda-signer"] = true
+	appTomlOverrides["seda.enable-seda-signer"] = false
 	appTomlOverrides["seda.seda-key-file"] = "./config/seda_keys.json"
 	appTomlOverrides["seda.allow-unencrypted-seda-keys"] = true
 
 	configFileOverrides := make(map[string]any)
 	configFileOverrides["config/app.toml"] = appTomlOverrides
 	return configFileOverrides
+}
+
+func getSEDAAppTomlOverrides() map[string]any {
+	appTomlOverrides := make(testutil.Toml)
+	appTomlOverrides["seda.enable-seda-signer"] = false
+	appTomlOverrides["seda.seda-key-file"] = "./config/seda_keys.json"
+	appTomlOverrides["seda.allow-unencrypted-seda-keys"] = true
+	return appTomlOverrides
 }
 
 // CreateChains generates this branch's chain (ex: from the commit)

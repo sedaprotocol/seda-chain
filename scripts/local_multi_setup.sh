@@ -143,19 +143,16 @@ sed -i '' -E "s|persistent_peers = \"\"|persistent_peers = \"${NODE1_ID}@localho
 # start all four validators
 tmux new-session -s validator1 -d 
 tmux send -t validator1 'BIN=./build/sedad' ENTER
-tmux send -t validator1 '$BIN start --home=$HOME/.sedad/validator1 --log_level debug > val1_multi_local.log 2>&1 &' ENTER
+tmux send -t validator1 '$BIN start --home=$HOME/.sedad/validator1 > val1_multi_local.log 2>&1 &' ENTER
 
 tmux new-session -s validator2 -d 
 tmux send -t validator2 'BIN=./build/sedad' ENTER
-tmux send -t validator2 '$BIN start --home=$HOME/.sedad/validator2 --log_level debug > val2_multi_local.log 2>&1 &' ENTER
 
 tmux new-session -s validator3 -d 
 tmux send -t validator3 'BIN=./build/sedad' ENTER
-tmux send -t validator3 '$BIN start --home=$HOME/.sedad/validator3 --log_level debug > val3_multi_local.log 2>&1 &' ENTER
 
 tmux new-session -s validator4 -d 
 tmux send -t validator4 'BIN=./build/sedad' ENTER
-tmux send -t validator4 '$BIN start --home=$HOME/.sedad/validator4 --log_level debug > val4_multi_local.log 2>&1 &' ENTER
 
 echo "begin sending funds to validators 2, 3, & 4"
 sleep 10
@@ -185,6 +182,7 @@ cat << EOF > validator2.json
 EOF
 $BIN tx staking create-validator validator2.json --from=validator2 --keyring-backend=test --home=$HOME/.sedad/validator2 --broadcast-mode sync --chain-id=testing --node http://localhost:26657 --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7 --key-file-no-encryption
 rm validator2.json
+tmux send -t validator2 '$BIN start --home=$HOME/.sedad/validator2 --log_level debug > val2_multi_local.log 2>&1 &' ENTER
 
 cat << EOF > validator3.json
 {
@@ -203,6 +201,7 @@ cat << EOF > validator3.json
 EOF
 $BIN tx staking create-validator validator3.json --from=validator3 --keyring-backend=test --home=$HOME/.sedad/validator3 --broadcast-mode sync --chain-id=testing --node http://localhost:26657 --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7 --key-file-no-encryption
 rm validator3.json
+tmux send -t validator3 '$BIN start --home=$HOME/.sedad/validator3 --log_level debug > val3_multi_local.log 2>&1 &' ENTER
 
 cat << EOF > validator4.json
 {
@@ -221,6 +220,7 @@ cat << EOF > validator4.json
 EOF
 $BIN tx staking create-validator validator4.json --from=validator4 --keyring-backend=test --home=$HOME/.sedad/validator4 --broadcast-mode sync --chain-id=testing --node http://localhost:26657 --yes --gas-prices 10000000000aseda --gas auto --gas-adjustment 1.7 --key-file-no-encryption
 rm validator4.json
+tmux send -t validator4 '$BIN start --home=$HOME/.sedad/validator4 --log_level debug > val4_multi_local.log 2>&1 &' ENTER
 
 sleep 10
 echo "4 validators are up and running!"
