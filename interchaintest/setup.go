@@ -139,14 +139,6 @@ func GetConfigFileOverrides() map[string]any {
 	return configFileOverrides
 }
 
-func getSEDAAppTomlOverrides() map[string]any {
-	appTomlOverrides := make(testutil.Toml)
-	appTomlOverrides["seda.enable-seda-signer"] = false
-	appTomlOverrides["seda.seda-key-file"] = "./config/seda_keys.json"
-	appTomlOverrides["seda.allow-unencrypted-seda-keys"] = true
-	return appTomlOverrides
-}
-
 // CreateChains generates this branch's chain (ex: from the commit)
 func CreateChains(t *testing.T, numVals, numFullNodes int, configFileOverrides map[string]any) []ibc.Chain {
 	t.Helper()

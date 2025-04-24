@@ -88,10 +88,9 @@ func modifyAppToml(snapshotInterval int) map[string]any {
 	appTomlOverrides["pruning-keep-every"] = snapshotInterval
 	appTomlOverrides["pruning-interval"] = snapshotInterval
 
-	sedaAppTomlOverrides := getSEDAAppTomlOverrides()
-	for k, v := range sedaAppTomlOverrides {
-		appTomlOverrides[k] = v
-	}
+	appTomlOverrides["seda.enable-seda-signer"] = false
+	appTomlOverrides["seda.seda-key-file"] = "./config/seda_keys.json"
+	appTomlOverrides["seda.allow-unencrypted-seda-keys"] = true
 
 	configFileOverrides := make(map[string]any)
 	configFileOverrides["config/app.toml"] = appTomlOverrides

@@ -7,14 +7,16 @@ import (
 	"math"
 	"os"
 
-	sdkmath "cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/types"
 )
 
 const valKey = "validator"
@@ -33,7 +35,9 @@ func NewSEDAChain(cosmosChain *cosmos.CosmosChain, logger *zap.Logger) *SEDAChai
 }
 
 // Bootstraps the chain and starts it from genesis
-func (c *SEDAChain) Start(testName string, ctx context.Context, additionalGenesisWallets ...ibc.WalletAmount) error {
+//
+//revive:disable:context-as-argument
+func (c *SEDAChain) Start(_ string, ctx context.Context, additionalGenesisWallets ...ibc.WalletAmount) error {
 	chainCfg := c.Config()
 
 	decimalPow := int64(math.Pow10(int(*chainCfg.CoinDecimals)))
@@ -59,7 +63,7 @@ func (c *SEDAChain) Start(testName string, ctx context.Context, additionalGenesi
 	eg := new(errgroup.Group)
 	// Initialize config and sign gentx for each validator.
 	for _, v := range c.Validators {
-		v := v
+
 		v.Validator = true
 		eg.Go(func() error {
 			if err := v.InitFullNodeFiles(ctx); err != nil {
@@ -68,7 +72,7 @@ func (c *SEDAChain) Start(testName string, ctx context.Context, additionalGenesi
 			for configFile, modifiedConfig := range configFileOverrides {
 				modifiedToml, ok := modifiedConfig.(testutil.Toml)
 				if !ok {
-					return fmt.Errorf("Provided toml override for file %s is of type (%T). Expected (DecodedToml)", configFile, modifiedConfig)
+					return fmt.Errorf("provided toml override for file %s is of type (%T). Expected (DecodedToml)", configFile, modifiedConfig)
 				}
 				if err := testutil.ModifyTomlConfigFile(
 					ctx,
@@ -91,7 +95,7 @@ func (c *SEDAChain) Start(testName string, ctx context.Context, additionalGenesi
 
 	// Initialize config for each full node.
 	for _, n := range c.FullNodes {
-		n := n
+
 		n.Validator = false
 		eg.Go(func() error {
 			if err := n.InitFullNodeFiles(ctx); err != nil {
@@ -100,7 +104,7 @@ func (c *SEDAChain) Start(testName string, ctx context.Context, additionalGenesi
 			for configFile, modifiedConfig := range configFileOverrides {
 				modifiedToml, ok := modifiedConfig.(testutil.Toml)
 				if !ok {
-					return fmt.Errorf("Provided toml override for file %s is of type (%T). Expected (DecodedToml)", configFile, modifiedConfig)
+					return fmt.Errorf("provided toml override for file %s is of type (%T). Expected (DecodedToml)", configFile, modifiedConfig)
 				}
 				if err := testutil.ModifyTomlConfigFile(
 					ctx,
@@ -153,7 +157,6 @@ func (c *SEDAChain) Start(testName string, ctx context.Context, additionalGenesi
 	}
 
 	for _, wallet := range additionalGenesisWallets {
-
 		if err := validator0.AddGenesisAccount(ctx, wallet.Address, []types.Coin{{Denom: wallet.Denom, Amount: wallet.Amount}}); err != nil {
 			return err
 		}
@@ -187,7 +190,7 @@ func (c *SEDAChain) Start(testName string, ctx context.Context, additionalGenesi
 			zap.String("chain", exportGenesisChain),
 			zap.String("path", exportGenesis),
 		)
-		_ = os.WriteFile(exportGenesis, genbz, 0600)
+		_ = os.WriteFile(exportGenesis, genbz, 0o600)
 	}
 
 	chainNodes := c.Nodes()
@@ -225,7 +228,6 @@ func (c *SEDAChain) Start(testName string, ctx context.Context, additionalGenesi
 
 	eg, egCtx := errgroup.WithContext(ctx)
 	for _, n := range chainNodes {
-		n := n
 		eg.Go(func() error {
 			return n.CreateNodeContainer(egCtx)
 		})
@@ -238,7 +240,7 @@ func (c *SEDAChain) Start(testName string, ctx context.Context, additionalGenesi
 
 	eg, egCtx = errgroup.WithContext(ctx)
 	for _, n := range chainNodes {
-		n := n
+
 		c.log.Info("Starting container", zap.String("container", n.Name()))
 		eg.Go(func() error {
 			if err := n.SetPeers(egCtx, peers); err != nil {
