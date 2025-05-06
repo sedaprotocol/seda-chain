@@ -3,6 +3,7 @@ package base
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -31,26 +32,34 @@ func ExtractTransactionUpdates(ctx *types.BlockContext, cdc codec.Codec, logger 
 
 	timestamp := req.Time
 
+	logger.Debug(fmt.Sprintf("Number of transactions: %d", len(req.Txs)))
 	for index := range req.Txs {
 		txBytes := req.Txs[index]
 		txResult := res.TxResults[index]
 		txHash := strings.ToUpper(hex.EncodeToString(tmhash.Sum(txBytes)))
+		logger.Trace(fmt.Sprintf("Processing transaction [%d] hash: %s", index, txHash))
 
 		var tx tx.Tx
-		if err := cdc.Unmarshal(txBytes, &tx); err != nil {
+		// For some reason we sometimes get extended commit info that does serialise to a valid tx
+		// so we need the additional check on the body to ensure the tx is valid. :(
+		if err := cdc.Unmarshal(txBytes, &tx); err != nil || tx.Body == nil {
+			logger.Trace("Error unmarshalling transaction, checking if it's an extended commit info")
 			var extendedVotes abci.ExtendedCommitInfo
 			if err := json.Unmarshal(txBytes, &extendedVotes); err != nil {
+				logger.Trace("Error unmarshalling extended commit info")
 				return nil, err
 			}
 			logger.Trace("Skipping extended votes bytes")
 			continue
 		}
 
+		logger.Trace("Getting signers")
 		signersBytes, _, err := tx.GetSigners(cdc)
 		if err != nil {
 			return nil, err
 		}
 
+		logger.Trace("Creating signers")
 		signers := make([]string, 0, len(signersBytes))
 		for _, signerBytes := range signersBytes {
 			var signer sdk.AccAddress
@@ -75,7 +84,9 @@ func ExtractTransactionUpdates(ctx *types.BlockContext, cdc codec.Codec, logger 
 		}
 
 		messages = append(messages, types.NewMessage("tx", data, ctx))
+		logger.Trace(fmt.Sprintf("Transaction [%d] processed", index))
 	}
 
+	logger.Debug(fmt.Sprintf("Processed %d transactions", len(messages)))
 	return messages, nil
 }
