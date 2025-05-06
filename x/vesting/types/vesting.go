@@ -11,7 +11,7 @@ var (
 	_ authtypes.GenesisAccount    = (*ClawbackContinuousVestingAccount)(nil)
 )
 
-// NewContinuousVestingAccountRaw creates a new ContinuousVestingAccount object from BaseVestingAccount
+// NewClawbackContinuousVestingAccountRaw creates a new ContinuousVestingAccount object from BaseVestingAccount
 func NewClawbackContinuousVestingAccountRaw(bva *vestingtypes.BaseVestingAccount, startTime int64, funder string) *ClawbackContinuousVestingAccount {
 	continuousVestingAcc := vestingtypes.NewContinuousVestingAccountRaw(bva, startTime)
 	return &ClawbackContinuousVestingAccount{
