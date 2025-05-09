@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	sqsiface "github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 )
@@ -22,7 +23,7 @@ type SqsClient struct {
 	bucketName      string
 	queueURL        string
 	allowedMessages []string
-	sqsClient       *sqs.SQS
+	sqsClient       sqsiface.SQSAPI
 	s3Client        *s3.S3
 	logger          *log.Logger
 }

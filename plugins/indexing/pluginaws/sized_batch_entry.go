@@ -12,9 +12,20 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
+const MaxAttempts = 3
+
 type sizedBatchEntry struct {
-	size  int
-	entry *sqs.SendMessageBatchRequestEntry
+	deliveryAttempts int
+	size             int
+	entry            *sqs.SendMessageBatchRequestEntry
+}
+
+func (r *sizedBatchEntry) attemptsExceeded() bool {
+	return r.deliveryAttempts >= MaxAttempts
+}
+
+func (r *sizedBatchEntry) incrementAttempts() {
+	r.deliveryAttempts++
 }
 
 func newSizedBatchEntry(entry *sqs.SendMessageBatchRequestEntry) (*sizedBatchEntry, error) {
@@ -24,8 +35,9 @@ func newSizedBatchEntry(entry *sqs.SendMessageBatchRequestEntry) (*sizedBatchEnt
 	}
 
 	return &sizedBatchEntry{
-		size:  size,
-		entry: entry,
+		deliveryAttempts: 0,
+		size:             size,
+		entry:            entry,
 	}, nil
 }
 

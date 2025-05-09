@@ -66,7 +66,7 @@ func (p *IndexerPlugin) ListenFinalizeBlock(_ context.Context, req abci.RequestF
 	p.logger.Trace(fmt.Sprintf("[%d] Extracting block update.", req.Height))
 	blockMessage, err := base.ExtractBlockUpdate(p.block, req, res)
 	if err != nil {
-		p.logger.Error("Failed to extract block update", "error", err)
+		p.logger.Error("[ListenFinalizeBlock] Failed to extract block update", "error", err)
 		return err
 	}
 	messages = append(messages, blockMessage)
@@ -74,7 +74,7 @@ func (p *IndexerPlugin) ListenFinalizeBlock(_ context.Context, req abci.RequestF
 	p.logger.Trace(fmt.Sprintf("[%d] Extracting transaction updates.", req.Height))
 	txMessages, err := base.ExtractTransactionUpdates(p.block, p.cdc, p.logger, req, res)
 	if err != nil {
-		p.logger.Error("Failed to extract Tx updates", "error", err)
+		p.logger.Error("[ListenFinalizeBlock] Failed to extract Tx updates", "error", err)
 		return err
 	}
 	messages = append(messages, txMessages...)
@@ -82,6 +82,7 @@ func (p *IndexerPlugin) ListenFinalizeBlock(_ context.Context, req abci.RequestF
 
 	p.logger.Trace(fmt.Sprintf("[%d] Publishing messages to queue.", req.Height))
 	if err := p.publishToQueue(messages); err != nil {
+		p.logger.Error("[ListenFinalizeBlock] Failed to publish messages to queue", "error", err)
 		return err
 	}
 
@@ -120,7 +121,7 @@ func (p *IndexerPlugin) ListenCommit(_ context.Context, _ abci.ResponseCommit, c
 	for _, change := range changeSet {
 		message, err := p.extractUpdate(change)
 		if err != nil {
-			p.logger.Error("Failed to extract update", "error", err)
+			p.logger.Error("[ListenCommit] Failed to extract update", "error", err)
 			return err
 		}
 
@@ -131,6 +132,7 @@ func (p *IndexerPlugin) ListenCommit(_ context.Context, _ abci.ResponseCommit, c
 	}
 
 	if err := p.publishToQueue(messages); err != nil {
+		p.logger.Error("[ListenCommit] Failed to publish messages to queue", "error", err)
 		return err
 	}
 
