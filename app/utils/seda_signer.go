@@ -18,6 +18,7 @@ type SEDASigner interface {
 	Sign(input []byte, index sedatypes.SEDAKeyIndex) (signature []byte, err error)
 	ReloadIfMismatch(pubKeys []pubkeytypes.IndexedPubKey) error
 	IsLoaded() bool
+	GetPublicKeys() []pubkeytypes.IndexedPubKey
 }
 
 var _ SEDASigner = &sedaKeys{}
@@ -40,6 +41,15 @@ func LoadSEDASigner(keyFilePath string, allowUnencrypted bool) (SEDASigner, erro
 		return &keys, err
 	}
 	return &keys, nil
+}
+
+// LoadEmptySEDASigner returns an unloaded SEDASigner interface with
+// only the key file path set.
+func LoadEmptySEDASigner(keyFilePath string) SEDASigner {
+	return &sedaKeys{
+		keyPath:  keyFilePath,
+		isLoaded: false,
+	}
 }
 
 func loadSEDAKeys(keyFilePath string, allowUnencrypted bool) (keys sedaKeys, err error) {
@@ -126,6 +136,10 @@ func (s *sedaKeys) ReloadIfMismatch(pubKeys []pubkeytypes.IndexedPubKey) error {
 // IsLoaded returns true if the signer is loaded and ready for signing.
 func (s *sedaKeys) IsLoaded() bool {
 	return s.isLoaded
+}
+
+func (s *sedaKeys) GetPublicKeys() []pubkeytypes.IndexedPubKey {
+	return s.pubKeys
 }
 
 // Reload reloads the signer from the key file.

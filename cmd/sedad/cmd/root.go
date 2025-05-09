@@ -288,6 +288,7 @@ func queryCommand(_ module.BasicManager) *cobra.Command {
 		server.QueryBlocksCmd(),
 		authcmd.QueryTxCmd(),
 		server.QueryBlockResultsCmd(),
+		app.GetSEDASignerStatus(),
 	)
 
 	return cmd

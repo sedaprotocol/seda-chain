@@ -1,0 +1,47 @@
+syntax = "proto3";
+package sedachain.app.v1;
+
+import "google/api/annotations.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/app";
+
+// Query defines the gRPC querier service.
+service Query {
+  // SEDASignerStatus returns the status of the node's SEDA signer.
+  rpc SEDASignerStatus(QuerySEDASignerStatusRequest)
+      returns (QuerySEDASignerStatusResponse) {
+    option (google.api.http).get = "/seda-chain/pubkey/seda_signer";
+  }
+}
+
+// QuerySEDASignerStatusRequest is request type for the Query/SEDASignerStatus
+// RPC method.
+message QuerySEDASignerStatusRequest {}
+
+// QuerySEDASignerStatusResponse is response type for the Query/SEDASignerStatus
+// RPC method.
+message QuerySEDASignerStatusResponse {
+  // ValidatorAddress is the address of the validator loaded in the signer.
+  string validator_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
+  // SignerKeys is the list of keys loaded in the SEDA signer.
+  repeated SignerKey signer_keys = 2;
+}
+
+// SignerKey is a key loaded in the SEDA signer.
+message SignerKey {
+  // Index is the index of the SEDA key.
+  uint32 index = 1;
+  // IndexName is the name of the SEDA key.
+  string index_name = 2;
+  // IsActive indicates whether the given SEDA key index is active.
+  bool is_active = 3;
+  // PublicKey is the hex-encoded public key of the key loaded in
+  // the SEDA signer.
+  string public_key = 4
+      [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
+  // IsSynced indicates whether the keys loaded in the SEDA signer match
+  // the keys registered in the pubkey module.
+  bool is_synced = 5;
+}
