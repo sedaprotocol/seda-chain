@@ -13,7 +13,10 @@ import (
 )
 
 const (
-	MaxMessageBodyLengthBytes = 100_00 // ~100KB
+	// Roughly half the limit of SQS request size (256KiB)
+	// since we're not expecting many messages to be that large
+	// we want to leave room for other messages in the same batch
+	MaxMessageBodyLengthBytes = 120_000 // ~120KB
 )
 
 func (sc *SqsClient) uploadToS3(key string, body []byte, ctx *types.BlockContext) (*types.Message, error) {

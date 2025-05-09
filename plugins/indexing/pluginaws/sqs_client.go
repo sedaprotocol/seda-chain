@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	MaxAwsRequestLengthBytes = 262_144 // 256KB
+	MaxAwsRequestLengthBytes = 262_144 // 256KiB
 	MaxSQSBatchSize          = 10
 	NilString                = "nil"
 )
