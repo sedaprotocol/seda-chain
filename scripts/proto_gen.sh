@@ -16,4 +16,5 @@ done
 # move proto files to the right places
 cd ..
 cp -r github.com/sedaprotocol/seda-chain/x/* x/
+cp -r github.com/sedaprotocol/seda-chain/app/* app/
 rm -rf github.com

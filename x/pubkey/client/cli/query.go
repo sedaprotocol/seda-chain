@@ -11,7 +11,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
-// GetQueryCmd returns the CLI query commands for this module
+// GetQueryCmd returns the CLI query commands for this module.
 func GetQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,

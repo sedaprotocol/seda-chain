@@ -998,21 +998,24 @@ func NewApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 
-	isStart := utils.IsNodeStart(appOpts)
-
-	sedaConfig, err := utils.ReadSEDAConfigFromAppOpts(appOpts)
-	if isStart && err != nil {
-		panic("failed to read SEDA config: " + err.Error())
-	}
-
+	// Load SEDA signer.
 	var signer utils.SEDASigner
-	if isStart && sedaConfig.EnableSEDASigner {
-		// Register ABCI handlers for batch signing.
-		signer, err = utils.LoadSEDASigner(filepath.Join(homePath, sedaConfig.SEDAKeyFile), sedaConfig.AllowUnencryptedSEDAKeys)
+	if utils.IsNodeStart(appOpts) {
+		sedaConfig, err := utils.ReadSEDAConfigFromAppOpts(appOpts)
 		if err != nil {
-			panic(fmt.Errorf("error loading SEDA signer: %w", err))
+			panic(fmt.Errorf("failed to read SEDA config: %w", err))
 		}
-		app.Logger().Info("successfully loaded SEDA signer")
+
+		if sedaConfig.EnableSEDASigner {
+			signer, err = utils.LoadSEDASigner(filepath.Join(homePath, sedaConfig.SEDAKeyFile), sedaConfig.AllowUnencryptedSEDAKeys)
+			if err != nil {
+				panic(fmt.Errorf("error loading SEDA signer: %w", err))
+			}
+			app.Logger().Info("successfully loaded SEDA signer")
+		} else {
+			signer = utils.LoadEmptySEDASigner(filepath.Join(homePath, sedaConfig.SEDAKeyFile))
+		}
+		RegisterQueryServer(app.configurator.QueryServer(), NewQuerier(signer, app.PubKeyKeeper))
 	}
 
 	// Since in prior versions -1 would be written to the config file and
