@@ -24,15 +24,31 @@ import (
 )
 
 const (
-	// SEDAKeyEncryptionKeyEnvVar is the environment variable that should contain the SEDA key encryption key.
+	// SEDAKeyEncryptionKeyEnvVar is the environment variable that contains
+	// the encryption key to the SEDA key file.
 	SEDAKeyEncryptionKeyEnvVar = "SEDA_KEYS_ENCRYPTION_KEY"
+	// SEDAKeyEncryptionKeyFile is the environment variable that contains the
+	// path to the file that contains the encryption key to the SEDA key file.
+	SEDAKeyEncryptionKeyFile = "FILE__SEDA_KEYS_ENCRYPTION_KEY"
 )
 
-// ReadSEDAKeyEncryptionKeyFromEnv reads the SEDA key encryption key from
-// the environment variable. Returns an empty string if the environment
-// variable is not set.
+// ReadSEDAKeyEncryptionKeyFromEnv attempts to read an encryption key to the
+// SEDA key file from the environment variable. It returns an empty string if
+// no encryption key is found. We also allow users to specify a file that
+// contains an encryption key through an environment variable.
 func ReadSEDAKeyEncryptionKeyFromEnv() string {
-	return os.Getenv(SEDAKeyEncryptionKeyEnvVar)
+	keyFile := os.Getenv(SEDAKeyEncryptionKeyFile)
+	if keyFile != "" && cmtos.FileExists(keyFile) {
+		keyBytes, err := os.ReadFile(keyFile)
+		if err == nil {
+			return string(keyBytes)
+		}
+	}
+	key := os.Getenv(SEDAKeyEncryptionKeyEnvVar)
+	if key != "" {
+		return key
+	}
+	return ""
 }
 
 func GenerateSEDAKeyEncryptionKey() (string, error) {
