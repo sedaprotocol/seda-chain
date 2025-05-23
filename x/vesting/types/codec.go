@@ -12,7 +12,7 @@ import (
 )
 
 // RegisterLegacyAminoCodec registers the vesting interfaces and concrete types on the
-// provided LegacyAmino codec. These types are used for Amino JSON serialization
+// provided LegacyAmino codec. These types are used for Amino JSON serialization.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterInterface((*exported.VestingAccount)(nil), nil)
 	cdc.RegisterConcrete(&authvestingtypes.BaseVestingAccount{}, "cosmos-sdk/BaseVestingAccount", nil)
@@ -21,8 +21,8 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgCreateVestingAccount{}, "cosmos-sdk/MsgCreateVestingAccount")
 }
 
-// RegisterInterface associates protoName with AccountI and VestingAccount
-// Interfaces and creates a registry of it's concrete implementations
+// RegisterInterfaces associates protoName with AccountI and VestingAccount
+// Interfaces and creates a registry of it's concrete implementations.
 func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterInterface(
 		"cosmos.vesting.v1beta1.VestingAccount",
