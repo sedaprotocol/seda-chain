@@ -33,7 +33,7 @@ var Upgrade = upgrades.Upgrade{
 	},
 }
 
-//go:embed core_contract_b724e43847dc1155d774251e6d263dcef0ed4ebd.wasm
+//go:embed core_contract_502755530ab6348fb546b4be211d9dec3d04efb6.wasm
 var wasmCode []byte
 
 func CreateUpgradeHandler(
