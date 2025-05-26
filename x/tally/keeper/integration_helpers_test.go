@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	defaultCommitTimeoutBlocks = 10
+	defaultCommitTimeoutBlocks = 50
 	defaultRevealTimeoutBlocks = 5
 )
 
