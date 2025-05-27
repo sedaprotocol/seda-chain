@@ -2,6 +2,7 @@ package abci
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"math/big"
@@ -152,9 +153,9 @@ func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 				}
 				h.logger.Error(
 					"received vote extension even though we're skipping batching",
-					"request", req.ValidatorAddress,
+					"validator_address", hex.EncodeToString(req.ValidatorAddress),
 					"height", req.Height,
-					"vote_extension", req.VoteExtension,
+					"vote_extension", hex.EncodeToString(req.VoteExtension),
 				)
 				return &abcitypes.ResponseVerifyVoteExtension{Status: abcitypes.ResponseVerifyVoteExtension_REJECT}, nil
 			}
@@ -163,13 +164,19 @@ func (h *Handlers) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
 
 		err = h.verifyBatchSignatures(ctx, batch.BatchNumber, batch.BatchId, req.VoteExtension, req.ValidatorAddress)
 		if err != nil {
-			h.logger.Error("failed to verify batch signature", "req", req, "err", err)
+			h.logger.Error(
+				"failed to verify batch signature",
+				"validator_address", hex.EncodeToString(req.ValidatorAddress),
+				"height", req.Height,
+				"vote_extension", hex.EncodeToString(req.VoteExtension),
+				"err", err,
+			)
 			return &abcitypes.ResponseVerifyVoteExtension{Status: abcitypes.ResponseVerifyVoteExtension_REJECT}, err
 		}
 
 		h.logger.Debug(
 			"successfully verified signature",
-			"request", req.ValidatorAddress,
+			"request", hex.EncodeToString(req.ValidatorAddress),
 			"height", req.Height,
 			"batch_number", batch.BatchNumber,
 		)
