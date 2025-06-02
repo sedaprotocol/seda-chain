@@ -2,6 +2,8 @@ package keeper_test
 
 import (
 	"encoding/base64"
+	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,6 +11,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
@@ -167,6 +170,9 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, dataResults, *dataResult)
 
+	// Ensure the new DR gets a unique ID
+	f.AddBlock()
+
 	// Set max result size to 1024 and verify that the data request succeeds
 	params.MaxResultSize = 1024
 	msg = &types.MsgUpdateParams{
@@ -198,14 +204,95 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	require.Contains(t, dataResultsAfter, *dataResultAfter)
 }
 
+func TestEndBlock_ChunkedContractQuery(t *testing.T) {
+	f := initFixture(t)
+
+	// Create more data requests than the max number of data requests per query.
+	numDataRequests := tallykeeper.MaxDataRequestsPerQuery + 5
+
+	for range numDataRequests {
+		_, _ = f.commitRevealDataRequest(
+			t, 1, 1, 1, false,
+			commitRevealConfig{
+				requestHeight: 1,
+				requestMemo:   base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("memo-%d", rand.Uint64()))),
+				reveal:        base64.StdEncoding.EncodeToString([]byte("reveal")),
+			})
+	}
+
+	err := f.tallyKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
+	require.NoError(t, err)
+	require.Len(t, dataResults, int(numDataRequests))
+}
+
+func TestEndBlock_ChunkedContractQuery_MaxTalliesPerBlock(t *testing.T) {
+	f := initFixture(t)
+
+	// Create more data requests than the max number of data requests per query.
+	numDataRequests := tallykeeper.MaxDataRequestsPerQuery + 10
+
+	params := types.DefaultParams()
+	params.MaxTalliesPerBlock = numDataRequests
+	f.tallyKeeper.SetParams(f.Context(), params)
+
+	for range numDataRequests {
+		_, _ = f.commitRevealDataRequest(
+			t, 1, 1, 1, false,
+			commitRevealConfig{
+				requestHeight: 1,
+				requestMemo:   base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("memo-%d", rand.Uint64()))),
+				reveal:        base64.StdEncoding.EncodeToString([]byte("reveal")),
+			})
+	}
+
+	err := f.tallyKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
+	require.NoError(t, err)
+	require.Len(t, dataResults, int(numDataRequests))
+}
+
+func TestEndBlock_ChunkedContractQuery_LowMaxTalliesPerBlock(t *testing.T) {
+	f := initFixture(t)
+
+	// Create less data requests than the max number of data requests per query.
+	numDataRequests := tallykeeper.MaxDataRequestsPerQuery - 25
+
+	params := types.DefaultParams()
+	params.MaxTalliesPerBlock = 1
+	f.tallyKeeper.SetParams(f.Context(), params)
+
+	for range numDataRequests {
+		_, _ = f.commitRevealDataRequest(
+			t, 1, 1, 1, false,
+			commitRevealConfig{
+				requestHeight: 1,
+				requestMemo:   base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("memo-%d", rand.Uint64()))),
+				reveal:        base64.StdEncoding.EncodeToString([]byte("reveal")),
+			})
+	}
+
+	err := f.tallyKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
+	require.NoError(t, err)
+	require.Len(t, dataResults, 1)
+}
+
 func TestEndBlock_PausedContract(t *testing.T) {
 	f := initFixture(t)
 	stakers := f.addStakers(t, 5)
+	zeroHash := make([]byte, 32)
 
-	noCommitsDr, err := f.postDataRequest([]byte{}, []byte{}, base64.StdEncoding.EncodeToString([]byte("noCommits")), 1)
+	noCommitsDr, err := f.postDataRequest(zeroHash, zeroHash, base64.StdEncoding.EncodeToString([]byte("noCommits")), 1)
 	require.NoError(t, err)
 
-	noRevealsDr, err := f.postDataRequest([]byte{}, []byte{}, base64.StdEncoding.EncodeToString([]byte("noReveals")), 1)
+	noRevealsDr, err := f.postDataRequest(zeroHash, zeroHash, base64.StdEncoding.EncodeToString([]byte("noReveals")), 1)
 	require.NoError(t, err)
 
 	_, err = f.commitDataRequest(
@@ -216,7 +303,7 @@ func TestEndBlock_PausedContract(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	resolvedDr, err := f.postDataRequest([]byte{}, []byte{}, base64.StdEncoding.EncodeToString([]byte("resolved")), 1)
+	resolvedDr, err := f.postDataRequest(zeroHash, zeroHash, base64.StdEncoding.EncodeToString([]byte("resolved")), 1)
 	require.NoError(t, err)
 
 	revealMsgs, err := f.commitDataRequest(

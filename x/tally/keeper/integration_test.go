@@ -281,7 +281,7 @@ func initFixture(t testing.TB) *fixture {
 	// Upload, instantiate, and configure the Core Contract.
 	deployer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
-	int1e21, ok := math.NewIntFromString("1000000000000000000000")
+	int1e21, ok := math.NewIntFromString("10000000000000000000000000")
 	require.True(t, ok)
 	err = bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(bondDenom, int1e21)))
 	require.NoError(t, err)

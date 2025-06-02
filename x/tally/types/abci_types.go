@@ -17,8 +17,34 @@ import (
 )
 
 type ContractListResponse struct {
-	IsPaused     bool      `json:"is_paused"`
-	DataRequests []Request `json:"data_requests"`
+	IsPaused      bool          `json:"is_paused"`
+	DataRequests  []Request     `json:"data_requests"`
+	LastSeenIndex LastSeenIndex `json:"last_seen_index"`
+}
+
+// LastSeenIndex is a struct that contains the key of the last seen index in the data request
+// list in the contract. The exact type of the key is not important so we simply store is as a
+// string which can be used directly in the query.
+type LastSeenIndex struct {
+	index string
+}
+
+func (l *LastSeenIndex) UnmarshalJSON(data []byte) (err error) {
+	if data == nil || string(data) == "null" {
+		*l = LastSeenIndex{index: "null"}
+	} else {
+		*l = LastSeenIndex{index: string(data)}
+	}
+
+	return nil
+}
+
+func EmptyLastSeenIndex() LastSeenIndex {
+	return LastSeenIndex{index: "null"}
+}
+
+func (l *LastSeenIndex) String() string {
+	return l.index
 }
 
 type Request struct {

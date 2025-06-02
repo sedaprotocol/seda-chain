@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -16,6 +17,11 @@ import (
 
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
+)
+
+const (
+	// MaxDataRequestsPerQuery is the maximum number of data requests that will be retrieved in a single query.
+	MaxDataRequestsPerQuery = uint32(50)
 )
 
 func (k Keeper) EndBlock(ctx sdk.Context) error {
@@ -49,20 +55,9 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	}
 	tallyvm.TallyMaxBytes = uint(params.MaxResultSize)
 
-	// Fetch tally-ready data requests.
-	queryRes, err := k.wasmViewKeeper.QuerySmart(
-		ctx, coreContract,
-		[]byte(fmt.Sprintf(`{"get_data_requests_by_status":{"status": "tallying", "offset": 0, "limit": %d}}`, params.MaxTalliesPerBlock)),
-	)
+	contractQueryResponse, err := k.queryContract(ctx, coreContract, params.MaxTalliesPerBlock)
 	if err != nil {
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally-ready data requests", "err", err)
-		return nil
-	}
-
-	var contractQueryResponse types.ContractListResponse
-	err = json.Unmarshal(queryRes, &contractQueryResponse)
-	if err != nil {
-		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to unmarshal data requests contract response", "err", err)
 		return nil
 	}
 
@@ -163,6 +158,52 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	telemetry.SetGauge(float32(len(tallyList)), types.TelemetryKeyDataRequestsTallied)
 
 	return nil
+}
+
+// queryContract fetches tally-ready data requests from the core contract in batches while
+// keeping the interface consistent. This avoids problems where the contract runs out of memory
+// when we fetch the entire maxTalliesPerBlock in a single query.
+func (k Keeper) queryContract(ctx sdk.Context, coreContract sdk.AccAddress, maxTalliesPerBlock uint32) (*types.ContractListResponse, error) {
+	tallyList := make([]types.Request, 0, maxTalliesPerBlock)
+	lastSeenIndex := types.EmptyLastSeenIndex()
+	isPaused := false
+
+	for {
+		// The limit is the smaller value between the max number of data requests per query or
+		// the remaining number that still fits in the block tally limit.
+		//nolint:gosec // G115: the length of a list should never be negative.
+		limit := min(MaxDataRequestsPerQuery, maxTalliesPerBlock-uint32(len(tallyList)))
+
+		// Fetch tally-ready data requests.
+		queryRes, err := k.wasmViewKeeper.QuerySmart(
+			ctx, coreContract,
+			fmt.Appendf(nil, `{"get_data_requests_by_status":{"status": "tallying", "last_seen_index": %s, "limit": %d}}`, lastSeenIndex.String(), limit),
+		)
+		if err != nil {
+			return nil, errorsmod.Wrap(err, "failed to query contract")
+		}
+
+		var contractQueryResponse types.ContractListResponse
+		err = json.Unmarshal(queryRes, &contractQueryResponse)
+		if err != nil {
+			return nil, errorsmod.Wrap(err, "failed to unmarshal data requests contract response")
+		}
+
+		lastSeenIndex = contractQueryResponse.LastSeenIndex
+		isPaused = contractQueryResponse.IsPaused
+		tallyList = append(tallyList, contractQueryResponse.DataRequests...)
+
+		// Break if we've reached the max number of data requests or if the
+		// number of data requests returned is less than the limit.
+		if len(tallyList) >= int(maxTalliesPerBlock) || len(contractQueryResponse.DataRequests) < int(limit) {
+			break
+		}
+	}
+
+	return &types.ContractListResponse{
+		IsPaused:     isPaused,
+		DataRequests: tallyList,
+	}, nil
 }
 
 type TallyResult struct {
