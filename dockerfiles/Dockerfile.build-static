@@ -66,7 +66,8 @@ RUN ARCH=aarch64 && TALLYVM_VERSION=$(go list -m github.com/sedaprotocol/seda-wa
     wget https://github.com/sedaprotocol/seda-wasm-vm/releases/download/tallyvm%2F$TALLYVM_VERSION/libseda_tally_vm_muslc.$ARCH.a \
         -O /lib/libseda_tally_vm_muslc.a
 
-RUN wget https://musl.cc/aarch64-linux-musl-cross.tgz && \
+# RUN wget https://musl.cc/aarch64-linux-musl-cross.tgz && \
+RUN wget -O aarch64-linux-musl-cross.tgz https://aarch64-linux-musl-cross.s3.eu-west-2.amazonaws.com/aarch64-linux-musl-cross.tgz && \
     mkdir -p /aarch64-tools && \
     tar -xvf aarch64-linux-musl-cross.tgz -C /aarch64-tools --strip-components=1
 
