@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -266,4 +267,72 @@ func stringPtr(s string) *string {
 
 func boolPtr(b bool) *bool {
 	return &b
+}
+
+// regression test for bug encountered on testnet 30th June 2025
+func TestTakeBatch_SizeCalculation(t *testing.T) {
+	// Create entries with small message bodies but large attributes
+	entries := []*sizedBatchEntry{
+		{
+			deliveryAttempts: 0,
+			size:             50000,
+			entry: &sqs.SendMessageBatchRequestEntry{
+				Id:          stringPtr("test-0"),
+				MessageBody: aws.String("small body"),
+			},
+		},
+		{
+			deliveryAttempts: 0,
+			size:             50000,
+			entry: &sqs.SendMessageBatchRequestEntry{
+				Id:          stringPtr("test-1"),
+				MessageBody: aws.String("small body"),
+			},
+		},
+		{
+			deliveryAttempts: 0,
+			size:             50000,
+			entry: &sqs.SendMessageBatchRequestEntry{
+				Id:          stringPtr("test-2"),
+				MessageBody: aws.String("small body"),
+			},
+		},
+		{
+			deliveryAttempts: 0,
+			size:             50000,
+			entry: &sqs.SendMessageBatchRequestEntry{
+				Id:          stringPtr("test-3"),
+				MessageBody: aws.String("small body"),
+			},
+		},
+		{
+			deliveryAttempts: 0,
+			size:             50000,
+			entry: &sqs.SendMessageBatchRequestEntry{
+				Id:          stringPtr("test-4"),
+				MessageBody: aws.String("small body"),
+			},
+		},
+		{
+			deliveryAttempts: 0,
+			size:             50000,
+			entry: &sqs.SendMessageBatchRequestEntry{
+				Id:          stringPtr("test-5"),
+				MessageBody: aws.String("small body"),
+			},
+		},
+	}
+
+	// With the buggy implementation, takeBatch would include all 6 entries because
+	// it only looks at message body size and not the attributes
+	batch := takeBatch(entries)
+
+	// Calculate the actual size of the batch
+	totalSize := 0
+	for _, entry := range batch {
+		totalSize += entry.size
+	}
+
+	assert.LessOrEqual(t, totalSize, MaxAwsRequestLengthBytes,
+		"Batch total size should not exceed %d bytes, got %d", MaxAwsRequestLengthBytes, totalSize)
 }

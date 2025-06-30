@@ -51,13 +51,13 @@ func takeBatch(retryableEntries []*sizedBatchEntry) []*sizedBatchEntry {
 	batch := make([]*sizedBatchEntry, 0, MaxSQSBatchSize)
 
 	for _, retryableEntry := range retryableEntries {
-		nextSize := currentRequestSize + len(*retryableEntry.entry.MessageBody)
+		nextSize := currentRequestSize + retryableEntry.size
 		if len(batch) == MaxSQSBatchSize || nextSize > MaxAwsRequestLengthBytes {
 			return batch
 		}
 
 		batch = append(batch, retryableEntry)
-		currentRequestSize += len(*retryableEntry.entry.MessageBody)
+		currentRequestSize += retryableEntry.size
 	}
 
 	return batch
