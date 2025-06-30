@@ -27,6 +27,7 @@ const (
 func (k Keeper) EndBlock(ctx sdk.Context) error {
 	coreContract, err := k.wasmStorageKeeper.GetCoreContractAddr(ctx)
 	if err != nil {
+		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get core contract address", "err", err)
 		return nil
 	}
@@ -37,6 +38,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 
 	postRes, err := k.wasmKeeper.Sudo(ctx, coreContract, []byte(`{"expire_data_requests":{}}`))
 	if err != nil {
+		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to expire data requests", "err", err)
 		return nil
 	}
@@ -50,6 +52,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
+		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally params", "err", err)
 		return nil
 	}
@@ -57,6 +60,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 
 	contractQueryResponse, err := k.queryContract(ctx, coreContract, params.MaxTalliesPerBlock)
 	if err != nil {
+		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally-ready data requests", "err", err)
 		return nil
 	}
@@ -120,11 +124,13 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	// Notify the Core Contract of tally completion.
 	msg, err := types.MarshalSudoRemoveDataRequests(processedReqs)
 	if err != nil {
+		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to marshal sudo remove data requests", "err", err)
 		return nil
 	}
 	_, err = k.wasmKeeper.Sudo(ctx, coreContract, msg)
 	if err != nil {
+		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to notify core contract of tally completion", "err", err)
 		return nil
 	}
@@ -156,6 +162,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	}
 
 	telemetry.SetGauge(float32(len(tallyList)), types.TelemetryKeyDataRequestsTallied)
+	telemetry.SetGauge(0, types.TelemetryKeyDRFlowHalt)
 
 	return nil
 }
