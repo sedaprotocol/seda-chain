@@ -66,15 +66,7 @@ func CreateUpgradeHandler(
 			[]byte(fmt.Sprintf(`{
 				"token":"aseda",
 				"owner": "%s", 
-				"chain_id":"%s",
-				"staking_config": {
-					"minimum_stake": "10",
-					"allowlist_enabled": true
-				},
-				"timeout_config": {
-					"commit_timeout_in_blocks": 10,
-					"reveal_timeout_in_blocks": 5
-				}
+				"chain_id":"%s"
 			}`, securityGroupAddr, ctx.ChainID())),
 			"label", nil)
 		if err != nil {
