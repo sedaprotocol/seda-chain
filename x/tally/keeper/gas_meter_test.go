@@ -77,7 +77,7 @@ func FuzzGasMetering(f *testing.F) {
 				Reveals:           reveals,
 				ReplicationFactor: uint16(len(reveals)),
 				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-				GasPrice:          gasPriceStr,
+				PostedGasPrice:    gasPriceStr,
 				ExecGasLimit:      execGasLimit,
 				TallyGasLimit:     tallyGasLimit,
 				TallyProgramID:    hex.EncodeToString(tallyProgram.Hash),

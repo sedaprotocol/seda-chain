@@ -171,7 +171,7 @@ func TestFilterAndTally(t *testing.T) {
 				Reveals:           reveals,
 				ReplicationFactor: tt.replicationFactor,
 				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-				GasPrice:          "1000000000000000000", // 1e18
+				PostedGasPrice:    "1000000000000000000", // 1e18
 				ExecGasLimit:      100000,
 			}, types.DefaultParams(), gasMeter)
 			require.NoError(t, err)
@@ -716,7 +716,7 @@ func TestExecutorPayout(t *testing.T) {
 				Reveals:           reveals,
 				ReplicationFactor: tt.replicationFactor,
 				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-				GasPrice:          gasPriceStr,
+				PostedGasPrice:    gasPriceStr,
 				TallyGasLimit:     types.DefaultMaxTallyGasLimit,
 				ExecGasLimit:      tt.execGasLimit,
 				TallyProgramID:    hex.EncodeToString(tallyProgram.Hash),

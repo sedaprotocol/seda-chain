@@ -56,7 +56,7 @@ type Request struct {
 	TallyProgramID    string                `json:"tally_program_id"`
 	TallyInputs       string                `json:"tally_inputs"`
 	TallyGasLimit     uint64                `json:"tally_gas_limit"`
-	GasPrice          string                `json:"gas_price"`
+	PostedGasPrice    string                `json:"posted_gas_price"`
 	Memo              string                `json:"memo"`
 	PaybackAddress    string                `json:"payback_address"`
 	ReplicationFactor uint16                `json:"replication_factor"`

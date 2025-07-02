@@ -56,7 +56,7 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterRe
 		"TALLY_INPUTS":          req.TallyInputs,
 		"TALLY_PROGRAM_ID":      req.TallyProgramID,
 		"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", gasMeter.RemainingTallyGas()),
-		"DR_GAS_PRICE":          req.GasPrice,
+		"DR_GAS_PRICE":          req.PostedGasPrice,
 		"DR_MEMO":               req.Memo,
 		"DR_PAYBACK_ADDRESS":    paybackAddrHex,
 	})

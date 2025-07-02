@@ -16,7 +16,7 @@ type GasMeter struct {
 	execGasLimit         uint64
 	execGasRemaining     uint64
 	totalProxyGasPerExec uint64
-	gasPrice             math.Int // gas price for the request
+	postedGasPrice       math.Int // gas price as posted, can be higher than the GasPrice on the request
 }
 
 var _ HashSortable = ProxyGasUsed{}
@@ -43,13 +43,13 @@ func (e ExecutorGasUsed) GetSortKey() []byte {
 }
 
 // NewGasMeter creates a new gas meter and incurs the base gas cost.
-func NewGasMeter(tallyGasLimit, execGasLimit, maxTallyGasLimit uint64, gasPrice math.Int, baseGasCost uint64) *GasMeter {
+func NewGasMeter(tallyGasLimit, execGasLimit, maxTallyGasLimit uint64, postedGasPrice math.Int, baseGasCost uint64) *GasMeter {
 	gasMeter := &GasMeter{
 		tallyGasLimit:     min(tallyGasLimit, maxTallyGasLimit),
 		tallyGasRemaining: min(tallyGasLimit, maxTallyGasLimit),
 		execGasLimit:      execGasLimit,
 		execGasRemaining:  execGasLimit,
-		gasPrice:          gasPrice,
+		postedGasPrice:    postedGasPrice,
 	}
 
 	// For normal operations we first check if the gas limit is enough to cover
@@ -93,7 +93,7 @@ func (g GasMeter) RemainingExecGas() uint64 {
 }
 
 func (g GasMeter) GasPrice() math.Int {
-	return g.gasPrice
+	return g.postedGasPrice
 }
 
 func (g *GasMeter) SetReducedPayoutMode() {

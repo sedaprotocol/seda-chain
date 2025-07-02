@@ -88,13 +88,13 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 			types.MarkResultAsPaused(&dataResults[i])
 			continue
 		}
-		gasPrice, ok := math.NewIntFromString(req.GasPrice)
-		if !ok || !gasPrice.IsPositive() {
-			types.MarkResultAsFallback(&dataResults[i], fmt.Errorf("invalid gas price: %s", req.GasPrice))
+		postedGasPrice, ok := math.NewIntFromString(req.PostedGasPrice)
+		if !ok || !postedGasPrice.IsPositive() {
+			types.MarkResultAsFallback(&dataResults[i], fmt.Errorf("invalid gas price: %s", req.PostedGasPrice))
 			continue
 		}
 
-		gasMeter := types.NewGasMeter(req.TallyGasLimit, req.ExecGasLimit, params.MaxTallyGasLimit, gasPrice, params.GasCostBase)
+		gasMeter := types.NewGasMeter(req.TallyGasLimit, req.ExecGasLimit, params.MaxTallyGasLimit, postedGasPrice, params.GasCostBase)
 
 		if len(req.Commits) < int(req.ReplicationFactor) {
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
