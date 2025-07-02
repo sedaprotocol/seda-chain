@@ -234,7 +234,7 @@ func init() {
 	sdk.DefaultPowerReduction = sdkmath.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(appparams.SedaExponent), nil))
 
 	DefaultNodeHome = filepath.Join(userHomeDir, ".sedad")
-	tallyvm.LogDir = filepath.Join(DefaultNodeHome, "tally-logs")
+	tallyvm.TallyVmDir = filepath.Join(DefaultNodeHome, "tally-vm")
 }
 
 // App extends an ABCI application, but with most of its parameters exported.
