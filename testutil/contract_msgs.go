@@ -74,7 +74,7 @@ func PostDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string, 
 			"tally_gas_limit": 300000000000000,
 			"replication_factor": %d,
 			"consensus_filter": "AA==",
-			"gas_price": "1000",
+			"gas_price": "2000",
 			"memo": "%s"
 		  },
 		  "seda_payload": "",

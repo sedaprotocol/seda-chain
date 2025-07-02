@@ -77,7 +77,7 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 	require.NoError(t, err)
 
 	// Post a data request.
-	amount, ok := math.NewIntFromString("150000000000000000000")
+	amount, ok := math.NewIntFromString("200600000000000000000")
 	require.True(t, ok)
 	resJSON, err := f.contractKeeper.Execute(
 		f.Context(),

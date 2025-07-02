@@ -89,7 +89,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCo
 }
 
 func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) (PostDataRequestResponse, error) {
-	amount, ok := math.NewIntFromString("150000000000000000000")
+	amount, ok := math.NewIntFromString("200600000000000000000")
 	if !ok {
 		return PostDataRequestResponse{}, fmt.Errorf("failed to convert string to int")
 	}
