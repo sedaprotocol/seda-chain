@@ -11,11 +11,13 @@ import (
 	v019 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.9"
 	v1 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v1"
 	v1rc4 "github.com/sedaprotocol/seda-chain/app/upgrades/testnet/v1.0.0-rc.4"
+	v1rc6 "github.com/sedaprotocol/seda-chain/app/upgrades/testnet/v1.0.0-rc.6"
 )
 
 // Upgrades is a list of currently supported upgrades.
 var Upgrades = []upgrades.Upgrade{
 	v1rc4.Upgrade,
+	v1rc6.Upgrade,
 	v1.Upgrade,
 	v017.Upgrade,
 	v018.Upgrade,
