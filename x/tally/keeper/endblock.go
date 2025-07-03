@@ -79,18 +79,32 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	dataResults := make([]batchingtypes.DataResult, len(tallyList))
 
 	for i, req := range tallyList {
+		// Initialize the processedReqs map for each request with a full refund (no other distributions)
+		processedReqs[req.ID] = make([]types.Distribution, 0)
+
 		dataResults[i], err = req.ToResult(ctx)
 		if err != nil {
-			types.MarkResultAsFallback(&dataResults[i], err)
+			markResultErr := types.MarkResultAsFallback(&dataResults[i], err)
+			if markResultErr != nil {
+				return err
+			}
 			continue
 		}
+
 		if contractQueryResponse.IsPaused {
-			types.MarkResultAsPaused(&dataResults[i])
+			markResultErr := types.MarkResultAsPaused(&dataResults[i])
+			if markResultErr != nil {
+				return err
+			}
 			continue
 		}
+
 		postedGasPrice, ok := math.NewIntFromString(req.PostedGasPrice)
 		if !ok || !postedGasPrice.IsPositive() {
-			types.MarkResultAsFallback(&dataResults[i], fmt.Errorf("invalid gas price: %s", req.PostedGasPrice))
+			markResultErr := types.MarkResultAsFallback(&dataResults[i], fmt.Errorf("invalid gas price: %s", req.PostedGasPrice))
+			if markResultErr != nil {
+				return err
+			}
 			continue
 		}
 

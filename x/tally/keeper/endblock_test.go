@@ -11,6 +11,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
@@ -108,15 +109,22 @@ func TestEndBlock(t *testing.T) {
 				})
 
 			beforeBalance := f.bankKeeper.GetBalance(f.Context(), stakers[0].address, bondDenom)
+			posterBeforeBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
 
 			err = f.tallyKeeper.EndBlock(f.Context())
 			require.NoError(t, err)
 			require.NotContains(t, f.logBuf.String(), "ERR")
 
 			// TODO query get_staker pending_withdrawal and check diff
+			// Verify the staker did not pay for the transactions
 			afterBalance := f.bankKeeper.GetBalance(f.Context(), stakers[0].address, bondDenom)
 			diff := afterBalance.Sub(beforeBalance)
 			require.Equal(t, "0aseda", diff.String())
+
+			// Verify the poster paid for execution
+			afterPostBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
+			diff = afterPostBalance.Sub(posterBeforeBalance)
+			require.NotEqual(t, "0aseda", diff.String(), "Poster should have payed for execution")
 
 			dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
 			require.NoError(t, err)
@@ -289,6 +297,9 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	stakers := f.addStakers(t, 5)
 	zeroHash := make([]byte, 32)
 
+	// When the contract is paused the DR poster should get a full refund and end up with the same balance as before posting
+	beforeBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
+
 	noCommitsDr, err := f.postDataRequest(zeroHash, zeroHash, base64.StdEncoding.EncodeToString([]byte("noCommits")), 1)
 	require.NoError(t, err)
 
@@ -317,7 +328,12 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	err = f.executeReveals(stakers, revealMsgs)
 	require.NoError(t, err)
 
+	afterPostBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
+	require.True(t, afterPostBalance.IsLT(beforeBalance), "Poster should have escrowed funds")
+
 	f.pauseContract(t)
+
+	var noRevealsResult *batchingtypes.DataResult
 
 	// Ensure the DR without commitments and the DR without reveals are timed out
 	for i := range defaultCommitTimeoutBlocks {
@@ -329,7 +345,7 @@ func TestEndBlock_PausedContract(t *testing.T) {
 			require.NoError(t, err)
 			require.NotContains(t, f.logBuf.String(), "ERR")
 
-			noRevealsResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), noRevealsDr.DrID)
+			noRevealsResult, err = f.batchingKeeper.GetLatestDataResult(f.Context(), noRevealsDr.DrID)
 			require.NoError(t, err)
 			require.Equal(t, uint32(types.TallyExitCodeContractPaused), noRevealsResult.ExitCode)
 
@@ -345,5 +361,16 @@ func TestEndBlock_PausedContract(t *testing.T) {
 
 	noCommitsResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), noCommitsDr.DrID)
 	require.NoError(t, err)
+	require.NotEqual(t, "", noCommitsResult.Id, "Result ID should not be empty")
 	require.Equal(t, uint32(types.TallyExitCodeContractPaused), noCommitsResult.ExitCode)
+
+	// Ensure the DR without reveals was removed from the contract and not processed again
+	noRevealsResultAfterTimeout, err := f.batchingKeeper.GetLatestDataResult(f.Context(), noRevealsDr.DrID)
+	require.NoError(t, err)
+	require.Equal(t, int(noRevealsResultAfterTimeout.BlockHeight), int(noRevealsResult.BlockHeight), "Already resolved DR was processed again")
+
+	// Ensure the poster got a full refund for all the posted DRs.
+	afterProcessingBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
+	diff := afterProcessingBalance.Sub(beforeBalance)
+	require.Equal(t, "0aseda", diff.String())
 }
