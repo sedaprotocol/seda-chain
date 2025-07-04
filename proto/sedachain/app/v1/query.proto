@@ -35,8 +35,8 @@ message SignerKey {
   uint32 index = 1;
   // IndexName is the name of the SEDA key.
   string index_name = 2;
-  // IsActive indicates whether the given SEDA key index is active.
-  bool is_active = 3;
+  // IsProvingSchemeActive indicates whether the given SEDA key index is active.
+  bool is_proving_scheme_active = 3;
   // PublicKey is the hex-encoded public key of the key loaded in
   // the SEDA signer.
   string public_key = 4
