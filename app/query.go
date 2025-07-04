@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -45,19 +47,25 @@ func (q Querier) SEDASignerStatus(ctx context.Context, _ *QuerySEDASignerStatusR
 	for i, pk := range pubKeys {
 		index := sedatypes.SEDAKeyIndex(pk.Index)
 		registeredPubKey, err := q.pubKeyKeeper.GetValidatorKeyAtIndex(ctx, q.signer.GetValAddress(), index)
-		if err != nil {
+		if err != nil && !errors.Is(err, collections.ErrNotFound) {
 			return nil, err
 		}
+
 		isActive, err := q.pubKeyKeeper.IsProvingSchemeActivated(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 		if err != nil {
-			return nil, err
+			if errors.Is(err, collections.ErrNotFound) {
+				isActive = false
+			} else {
+				return nil, err
+			}
 		}
+
 		signerKeys[i] = &SignerKey{
-			Index:     pk.Index,
-			IndexName: index.String(),
-			IsActive:  isActive,
-			PublicKey: hex.EncodeToString(pk.PubKey),
-			IsSynced:  bytes.Equal(registeredPubKey, pk.PubKey),
+			Index:                 pk.Index,
+			IndexName:             index.String(),
+			IsProvingSchemeActive: isActive,
+			PublicKey:             hex.EncodeToString(pk.PubKey),
+			IsSynced:              bytes.Equal(registeredPubKey, pk.PubKey),
 		}
 	}
 
