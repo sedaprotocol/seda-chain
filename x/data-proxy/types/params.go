@@ -11,7 +11,7 @@ import (
 
 const (
 	MaxUpdatesPerBlock       int    = 25
-	DefaultMinFeeUpdateDelay uint32 = 86400 // Roughly 1 week with a ~7 sec block time
+	DefaultMinFeeUpdateDelay uint32 = 73750 // Roughly 1 week with a ~8.2 sec block time
 	LowestFeeUpdateDelay     uint32 = 1
 )
 
