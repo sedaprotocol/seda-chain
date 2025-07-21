@@ -72,7 +72,7 @@ func BenchmarkSimulation(b *testing.B) {
 	})
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = app.DefaultNodeHome
+	appOptions[flags.FlagHome] = b.TempDir()
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 	appOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
 
@@ -82,10 +82,8 @@ func BenchmarkSimulation(b *testing.B) {
 		nil,
 		true,
 		map[int64]bool{},
-		app.DefaultNodeHome,
 		0,
 		appOptions,
-		b.TempDir(),
 		baseapp.SetChainID(config.ChainID),
 	)
 	require.Equal(b, app.Name, bApp.Name())
@@ -135,7 +133,6 @@ func TestAppStateDeterminism(t *testing.T) {
 		appHashList          = make([]json.RawMessage, numTimesToRunPerSeed)
 		appOptions           = make(simtestutil.AppOptionsMap, 0)
 	)
-	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 	appOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
 
@@ -151,18 +148,17 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 			chainID := fmt.Sprintf("chain-id-%d-%d", i, j)
 			config.ChainID = chainID
-
 			db := dbm.NewMemDB()
+			appOptions[flags.FlagHome] = t.TempDir()
+
 			bApp := app.NewApp(
 				logger,
 				db,
 				nil,
 				true,
 				map[int64]bool{},
-				app.DefaultNodeHome,
 				simcli.FlagPeriodValue,
 				appOptions,
-				t.TempDir(),
 				fauxMerkleModeOpt,
 				baseapp.SetChainID(chainID),
 			)
@@ -228,7 +224,7 @@ func TestAppExportImport(t *testing.T) {
 	}()
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = app.DefaultNodeHome
+	appOptions[flags.FlagHome] = t.TempDir()
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 	appOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
 
@@ -238,10 +234,8 @@ func TestAppExportImport(t *testing.T) {
 		nil,
 		true,
 		map[int64]bool{},
-		app.DefaultNodeHome,
 		0,
 		appOptions,
-		t.TempDir(),
 		baseapp.SetChainID(config.ChainID),
 	)
 	require.Equal(t, app.Name, bApp.Name())
@@ -299,10 +293,8 @@ func TestAppExportImport(t *testing.T) {
 		nil,
 		true,
 		map[int64]bool{},
-		app.DefaultNodeHome,
 		0,
 		appOptions,
-		t.TempDir(),
 		baseapp.SetChainID(config.ChainID),
 	)
 	require.Equal(t, app.Name, bApp.Name())
@@ -384,7 +376,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	}()
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = app.DefaultNodeHome
+	appOptions[flags.FlagHome] = t.TempDir()
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 	appOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
 
@@ -394,10 +386,8 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		nil,
 		true,
 		map[int64]bool{},
-		app.DefaultNodeHome,
 		0,
 		appOptions,
-		t.TempDir(),
 		fauxMerkleModeOpt,
 		baseapp.SetChainID(config.ChainID),
 	)
@@ -461,10 +451,8 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		nil,
 		true,
 		map[int64]bool{},
-		app.DefaultNodeHome,
 		0,
 		appOptions,
-		t.TempDir(),
 		fauxMerkleModeOpt,
 		baseapp.SetChainID(config.ChainID),
 	)

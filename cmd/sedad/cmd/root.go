@@ -58,8 +58,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
 )
 
-const defaultWasmDir = "wasm"
-
 // NewRootCmd creates a new root command for a Cosmos SDK application
 func NewRootCmd() *cobra.Command {
 	cfg := sdk.GetConfig()
@@ -72,18 +70,22 @@ func NewRootCmd() *cobra.Command {
 	// "Pre-instantiate" the application for getting the injected/configured
 	// encoding configuration note, this is not necessary when using app wiring,
 	// as depinject can be directly used (see root_v2.go)
+	tempDir, err := os.MkdirTemp("", "tempchain")
+	if err != nil {
+		panic("failed to create temp dir: " + err.Error())
+	}
+	defer os.RemoveAll(tempDir)
 	tempApp := app.NewApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
 		nil,
 		true,
 		map[int64]bool{},
-		app.DefaultNodeHome,
 		0,
-		simtestutil.NewAppOptionsWithFlagHome(tempDir()),
-		tempDir(),
+		simtestutil.NewAppOptionsWithFlagHome(tempDir),
 		baseapp.SetChainID("tempchainid"),
 	)
+
 	encodingConfig := app.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
 		Marshaler:         tempApp.AppCodec(),
@@ -374,10 +376,8 @@ func newApp(
 		traceStore,
 		true,
 		skipUpgradeHeights,
-		cast.ToString(appOpts.Get(sdkflags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		appOpts,
-		defaultWasmDir,
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
@@ -415,10 +415,8 @@ func appExport(
 		traceStore,
 		height == -1, // -1: no height provided
 		map[int64]bool{},
-		homePath,
 		uint(1),
 		appOpts,
-		defaultWasmDir,
 	)
 
 	if height != -1 {
@@ -428,14 +426,4 @@ func appExport(
 	}
 
 	return app.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
-}
-
-var tempDir = func() string {
-	dir, err := os.MkdirTemp("", "tempchain")
-	if err != nil {
-		panic("failed to create temp dir: " + err.Error())
-	}
-	defer os.RemoveAll(dir)
-
-	return dir
 }
