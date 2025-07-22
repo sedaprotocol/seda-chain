@@ -22,7 +22,7 @@ jobs:
         with:
           go-version: 1.22.11
           check-latest: true
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           args: --timeout 10m --tests=false --exclude-dirs="e2e"
