@@ -1,0 +1,33 @@
+syntax = "proto3";
+package sedachain.core.v1;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/core/types";
+
+// Params defines the parameters for the core module.
+message Params {
+  // DataRequestConfig contains data request-related module parameters.
+  DataRequestConfig data_request_config = 1 [ (gogoproto.nullable) = false ];
+  // StakingConfig contains Overlay staking-related module parameters.
+  StakingConfig staking_config = 2 [ (gogoproto.nullable) = false ];
+}
+
+// DataRequestConfig contains data request-related module parameters.
+message DataRequestConfig {
+}
+
+// StakingConfig contains Overlay staking-related module parameters.
+message StakingConfig {
+  // MiminumStake is the minimum amount of SEDA tokens required to register as an Overlay.
+  string minimum_stake = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // AllowlistEnabled is a flag that indicates whether the allowlist is enabled.
+  bool allowlist_enabled = 2;
+}
