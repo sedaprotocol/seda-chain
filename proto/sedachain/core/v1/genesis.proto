@@ -1,0 +1,10 @@
+syntax = "proto3";
+package sedachain.core.v1;
+
+import "gogoproto/gogo.proto";
+import "sedachain/core/v1/core.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/core/types";
+
+// GenesisState defines core module's genesis state.
+message GenesisState { Params params = 1 [ (gogoproto.nullable) = false ]; }
