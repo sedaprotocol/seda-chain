@@ -142,6 +142,9 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	"github.com/sedaprotocol/seda-chain/x/core"
+	corekeeper "github.com/sedaprotocol/seda-chain/x/core/keeper"
+	coretypes "github.com/sedaprotocol/seda-chain/x/core/types"
 	dataproxy "github.com/sedaprotocol/seda-chain/x/data-proxy"
 	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
@@ -324,7 +327,7 @@ func NewApp(
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
 		crisistypes.StoreKey, wasmstoragetypes.StoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey,
-		batchingtypes.StoreKey, tallytypes.StoreKey,
+		batchingtypes.StoreKey, tallytypes.StoreKey, coretypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -685,6 +688,16 @@ func NewApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	app.CoreKeeper = corekeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[coretypes.StoreKey]),
+		app.WasmStorageKeeper,
+		app.BatchingKeeper,
+		app.WasmContractKeeper,
+		app.WasmKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: subject to change
+	)
+
 	// Create evidence router, add batching evidence route, seal it, and set it in the keeper.
 	evidenceRouter := evidencetypes.NewRouter()
 	evidenceRouter.AddRoute(batchingtypes.RouteBatchDoubleSign, batchingkeeper.NewBatchDoubleSignHandler(app.BatchingKeeper))
@@ -806,6 +819,7 @@ func NewApp(
 		dataproxy.NewAppModule(appCodec, app.DataProxyKeeper),
 		pubkey.NewAppModule(appCodec, app.PubKeyKeeper),
 		batching.NewAppModule(appCodec, app.BatchingKeeper),
+		core.NewAppModule(appCodec, app.CoreKeeper),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -865,6 +879,7 @@ func NewApp(
 		dataproxytypes.ModuleName,
 		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
+		coretypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -898,6 +913,7 @@ func NewApp(
 		dataproxytypes.ModuleName,
 		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
+		coretypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after sdkstaking so that pools are
@@ -937,6 +953,7 @@ func NewApp(
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
 		batchingtypes.ModuleName,
+		coretypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)
