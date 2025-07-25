@@ -29,6 +29,7 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
+	corekeeper "github.com/sedaprotocol/seda-chain/x/core/keeper"
 	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
@@ -76,6 +77,7 @@ type AppKeepers struct {
 	// SEDA modules keepers
 	WasmStorageKeeper wasmstoragekeeper.Keeper
 	TallyKeeper       tallykeeper.Keeper
+	CoreKeeper        corekeeper.Keeper
 	DataProxyKeeper   dataproxykeeper.Keeper
 	PubKeyKeeper      *pubkeykeeper.Keeper
 	BatchingKeeper    batchingkeeper.Keeper
