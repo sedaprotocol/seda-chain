@@ -59,7 +59,7 @@ func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid authority address: %s", msg.Authority)
 	}
 	if m.GetAuthority() != msg.Authority {
-		return nil, sdkerrors.ErrorInvalidSigner.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Authority)
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Authority)
 	}
 
 	if err := msg.Params.Validate(); err != nil {
