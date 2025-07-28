@@ -68,7 +68,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCo
 
 	drID := res.DrID
 
-	// The stakers commit and reveal.
+	// Stakers commit and reveal.
 	revealMsgs, err := f.commitDataRequest(stakers[:numCommits], res.Height, drID, config)
 	require.NoError(t, err)
 
@@ -96,7 +96,7 @@ func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMem
 	resJSON, err := f.contractKeeper.Execute(
 		f.Context(),
 		f.coreContractAddr,
-		f.deployer,
+		f.coreAuthority,
 		testutil.PostDataRequestMsg(execProgHash, tallyProgHash, requestMemo, replicationFactor),
 		sdk.NewCoins(sdk.NewCoin(bondDenom, amount)),
 	)
@@ -179,7 +179,7 @@ func (f *fixture) addStakers(t *testing.T, num int) []staker {
 		_, err := f.contractKeeper.Execute(
 			f.Context(),
 			f.coreContractAddr,
-			f.deployer,
+			f.coreAuthority,
 			testutil.AddToAllowListMsg(stakers[i].pubKey),
 			sdk.NewCoins(),
 		)
@@ -204,7 +204,7 @@ func (f *fixture) pauseContract(t *testing.T) {
 	_, err := f.contractKeeper.Execute(
 		f.Context(),
 		f.coreContractAddr,
-		f.deployer,
+		f.coreAuthority,
 		[]byte(`{"pause":{}}`),
 		sdk.NewCoins(),
 	)

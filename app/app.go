@@ -15,7 +15,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	wasmapp "github.com/CosmWasm/wasmd/app"
-	wasm "github.com/CosmWasm/wasmd/x/wasm"
+	sdkwasm "github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
@@ -160,6 +160,7 @@ import (
 	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
+	"github.com/sedaprotocol/seda-chain/x/wasm"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -194,7 +195,7 @@ var (
 		consensus.AppModuleBasic{},
 		circuit.AppModuleBasic{},
 		capability.AppModuleBasic{},
-		wasm.AppModuleBasic{},
+		sdkwasm.AppModuleBasic{},
 		ibc.AppModuleBasic{},
 		ibctm.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
@@ -579,7 +580,7 @@ func NewApp(
 	app.EvidenceKeeper = *evidenceKeeper
 
 	wasmDir := filepath.Join(homePath, "wasm")
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	wasmConfig, err := sdkwasm.ReadWasmConfig(appOpts)
 	if err != nil {
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
@@ -750,7 +751,7 @@ func NewApp(
 	/*                    WASM STACK                       */
 	/* =================================================== */
 	var wasmStack ibcporttypes.IBCModule
-	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
+	wasmStack = sdkwasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
 	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.IBCFeeKeeper)
 
 	/* =================================================== */
@@ -808,7 +809,7 @@ func NewApp(
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
 		circuit.NewAppModule(appCodec, app.CircuitKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
-		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), nil),
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), nil, app.WasmStorageKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		transfer.NewAppModule(app.TransferKeeper),

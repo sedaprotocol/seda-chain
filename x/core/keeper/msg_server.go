@@ -22,11 +22,11 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllowlist) (*types.MsgAddToAllowlistResponse, error) {
-	if m.GetAuthority() != msg.Authority {
-		return nil, sdkerrors.ErrorInvalidSigner.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Authority)
-	}
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if msg.Sender != m.GetAuthority() {
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Sender)
+	}
 
 	exists, err := m.Allowlist.Has(ctx, msg.PublicKey)
 	if err != nil {
@@ -59,7 +59,7 @@ func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid authority address: %s", msg.Authority)
 	}
 	if m.GetAuthority() != msg.Authority {
-		return nil, sdkerrors.ErrorInvalidSigner.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Authority)
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Authority)
 	}
 
 	if err := msg.Params.Validate(); err != nil {
