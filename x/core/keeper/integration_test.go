@@ -55,6 +55,9 @@ import (
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	"github.com/sedaprotocol/seda-chain/x/core"
+	"github.com/sedaprotocol/seda-chain/x/core/keeper"
+	"github.com/sedaprotocol/seda-chain/x/core/types"
 	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
@@ -62,8 +65,8 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally"
-	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
-	"github.com/sedaprotocol/seda-chain/x/tally/types"
+	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
+	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -80,16 +83,17 @@ type fixture struct {
 	txConfig          client.TxConfig
 	chainID           string
 	coreContractAddr  sdk.AccAddress
-	deployer          sdk.AccAddress
+	coreAuthority     sdk.AccAddress
 	accountKeeper     authkeeper.AccountKeeper
 	bankKeeper        bankkeeper.Keeper
 	stakingKeeper     stakingkeeper.Keeper
 	contractKeeper    wasmkeeper.PermissionedKeeper
 	wasmKeeper        wasmkeeper.Keeper
 	wasmStorageKeeper wasmstoragekeeper.Keeper
-	tallyKeeper       keeper.Keeper
-	tallyMsgServer    types.MsgServer
+	tallyKeeper       tallykeeper.Keeper
+	tallyMsgServer    tallytypes.MsgServer
 	batchingKeeper    batchingkeeper.Keeper
+	coreKeeper        keeper.Keeper
 	dataProxyKeeper   *dataproxykeeper.Keeper
 	wasmViewKeeper    wasmtypes.ViewKeeper
 	logBuf            *bytes.Buffer
@@ -105,11 +109,14 @@ func initFixture(t testing.TB) *fixture {
 
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, wasmstoragetypes.StoreKey,
-		wasmtypes.StoreKey, pubkeytypes.StoreKey, batchingtypes.StoreKey, types.StoreKey,
-		dataproxytypes.StoreKey,
+		wasmtypes.StoreKey, pubkeytypes.StoreKey, batchingtypes.StoreKey, tallytypes.StoreKey,
+		dataproxytypes.StoreKey, types.StoreKey,
 	)
 
-	mb := module.NewBasicManager(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}, wasm.AppModuleBasic{})
+	mb := module.NewBasicManager(
+		auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{},
+		wasm.AppModuleBasic{}, core.AppModuleBasic{},
+	)
 
 	interfaceRegistry := sdktestutil.CodecOptions{
 		AccAddressPrefix: params.Bech32PrefixAccAddr,
@@ -245,9 +252,9 @@ func initFixture(t testing.TB) *fixture {
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
 
-	tallyKeeper := keeper.NewKeeper(
+	tallyKeeper := tallykeeper.NewKeeper(
 		cdc,
-		runtime.NewKVStoreService(keys[types.StoreKey]),
+		runtime.NewKVStoreService(keys[tallytypes.StoreKey]),
 		wasmStorageKeeper,
 		batchingKeeper,
 		dataProxyKeeper,
@@ -256,39 +263,50 @@ func initFixture(t testing.TB) *fixture {
 		authority.String(),
 	)
 
-	tallyMsgServer := keeper.NewMsgServerImpl(tallyKeeper)
+	tallyMsgServer := tallykeeper.NewMsgServerImpl(tallyKeeper)
+
+	coreAuthority := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	coreKeeper := keeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(keys[types.StoreKey]),
+		*wasmStorageKeeper,
+		batchingKeeper,
+		contractKeeper,
+		wasmKeeper,
+		coreAuthority.String(),
+	)
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
 	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
 	tallyModule := tally.NewAppModule(cdc, tallyKeeper)
+	coreModule := core.NewAppModule(cdc, coreKeeper)
 
 	integrationApp := testutil.NewIntegrationApp(ctx, logger, keys, cdc, router, map[string]appmodule.AppModule{
 		authtypes.ModuleName:        authModule,
 		banktypes.ModuleName:        bankModule,
 		sdkstakingtypes.ModuleName:  stakingModule,
 		wasmstoragetypes.ModuleName: wasmStorageModule,
-		types.ModuleName:            tallyModule,
+		tallytypes.ModuleName:       tallyModule,
+		types.ModuleName:            coreModule,
 	})
 
 	// TODO: Check why IntegrationApp setup fails to initialize params.
 	bankKeeper.SetSendEnabled(ctx, "aseda", true)
 
-	err = tallyKeeper.SetParams(ctx, types.DefaultParams())
+	err = tallyKeeper.SetParams(ctx, tallytypes.DefaultParams())
 	require.NoError(t, err)
 
 	// Upload, instantiate, and configure the Core Contract.
-	deployer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-
 	int1e21, ok := math.NewIntFromString("10000000000000000000000000")
 	require.True(t, ok)
 	err = bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(bondDenom, int1e21)))
 	require.NoError(t, err)
-	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, deployer, sdk.NewCoins(sdk.NewCoin(bondDenom, int1e21)))
+	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, coreAuthority, sdk.NewCoins(sdk.NewCoin(bondDenom, int1e21)))
 	require.NoError(t, err)
 
-	codeID, _, err := contractKeeper.Create(ctx, deployer, testwasms.CoreContractWasm(), nil)
+	codeID, _, err := contractKeeper.Create(ctx, coreAuthority, testwasms.CoreContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -298,13 +316,13 @@ func initFixture(t testing.TB) *fixture {
 		ChainID string         `json:"chain_id"`
 	}{
 		Token:   "aseda",
-		Owner:   deployer,
+		Owner:   coreAuthority,
 		ChainID: chainID,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	coreContractAddr, _, err := contractKeeper.Instantiate(ctx, codeID, deployer, nil, initMsgBz, "Core Contract", sdk.NewCoins())
+	coreContractAddr, _, err := contractKeeper.Instantiate(ctx, codeID, coreAuthority, nil, initMsgBz, "Core Contract", sdk.NewCoins())
 	require.NoError(t, err)
 	require.NotEmpty(t, coreContractAddr)
 
@@ -314,7 +332,7 @@ func initFixture(t testing.TB) *fixture {
 	_, err = contractKeeper.Execute(
 		ctx,
 		coreContractAddr,
-		deployer,
+		coreAuthority,
 		[]byte(setStakingConfigMsg),
 		sdk.NewCoins(),
 	)
@@ -323,7 +341,7 @@ func initFixture(t testing.TB) *fixture {
 	return &fixture{
 		IntegationApp:     integrationApp,
 		chainID:           chainID,
-		deployer:          deployer,
+		coreAuthority:     coreAuthority,
 		cdc:               cdc,
 		txConfig:          txConfig,
 		coreContractAddr:  coreContractAddr,
@@ -336,6 +354,7 @@ func initFixture(t testing.TB) *fixture {
 		tallyKeeper:       tallyKeeper,
 		tallyMsgServer:    tallyMsgServer,
 		batchingKeeper:    batchingKeeper,
+		coreKeeper:        coreKeeper,
 		dataProxyKeeper:   dataProxyKeeper,
 		wasmViewKeeper:    wasmKeeper,
 		logBuf:            buf,
