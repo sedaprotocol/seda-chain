@@ -611,7 +611,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParamsErrors() {
 					MinFeeUpdateDelay: 8000,
 				},
 			},
-			wantErr: sdkerrors.ErrorInvalidSigner,
+			wantErr: sdkerrors.ErrUnauthorized,
 		},
 	}
 
