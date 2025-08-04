@@ -8,6 +8,7 @@ const (
 )
 
 var (
-	AllowListPrefix = collections.NewPrefix(0)
-	ParamsPrefix    = collections.NewPrefix(1)
+	AllowlistKey = collections.NewPrefix(0)
+	StakersKey   = collections.NewPrefix(1)
+	ParamsKey    = collections.NewPrefix(2)
 )
