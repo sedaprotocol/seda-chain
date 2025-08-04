@@ -18,26 +18,32 @@ import (
 type Keeper struct {
 	wasmStorageKeeper types.WasmStorageKeeper
 	batchingKeeper    types.BatchingKeeper
+	stakingKeeper     types.StakingKeeper
+	bankKeeper        types.BankKeeper
 	wasmKeeper        wasmtypes.ContractOpsKeeper
 	wasmViewKeeper    wasmtypes.ViewKeeper
 	authority         string
 
 	Schema    collections.Schema
 	Allowlist collections.KeySet[string]
+	Stakers   collections.Map[string, types.Staker]
 	Params    collections.Item[types.Params]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, wsk types.WasmStorageKeeper, bk types.BatchingKeeper, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper, authority string) Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, wsk types.WasmStorageKeeper, batk types.BatchingKeeper, sk types.StakingKeeper, bank types.BankKeeper, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper, authority string) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
 		wasmStorageKeeper: wsk,
-		batchingKeeper:    bk,
+		batchingKeeper:    batk,
+		stakingKeeper:     sk,
+		bankKeeper:        bank,
 		wasmKeeper:        wk,
 		wasmViewKeeper:    wvk,
 		authority:         authority,
-		Allowlist:         collections.NewKeySet(sb, types.AllowListPrefix, "allow_list", collections.StringKey),
-		Params:            collections.NewItem(sb, types.ParamsPrefix, "params", codec.CollValue[types.Params](cdc)),
+		Allowlist:         collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
+		Stakers:           collections.NewMap(sb, types.StakersKey, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
+		Params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
 
 	schema, err := sb.Build()
