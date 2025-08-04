@@ -4,6 +4,7 @@ package sedachain.core.v1;
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/core/types";
 
@@ -30,4 +31,20 @@ message StakingConfig {
   ];
   // AllowlistEnabled is a flag that indicates whether the allowlist is enabled.
   bool allowlist_enabled = 2;
+}
+
+message Staker {
+  string memo = 1;
+  repeated cosmos.base.v1beta1.Coin staked = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (amino.encoding) = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  repeated cosmos.base.v1beta1.Coin pending_withdrawal = 3 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (amino.encoding) = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }
