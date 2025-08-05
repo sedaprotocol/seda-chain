@@ -1,12 +1,27 @@
 syntax = "proto3";
 package sedachain.core.v1;
 
-import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/core/types";
+
+// Staker is an identity that has staked SEDA tokens to perform data request execution.
+message Staker {
+  string public_key = 1;
+  string memo = 2;
+  cosmos.base.v1beta1.Coin staked = 3 [ 
+    (gogoproto.nullable) = false, 
+    (amino.dont_omitempty) = true 
+  ];
+  cosmos.base.v1beta1.Coin pending_withdrawal = 4 [ 
+    (gogoproto.nullable) = false, 
+    (amino.dont_omitempty) = true 
+  ];
+  uint64 sequence_num = 5;
+}
 
 // Params defines the parameters for the core module.
 message Params {
@@ -31,20 +46,4 @@ message StakingConfig {
   ];
   // AllowlistEnabled is a flag that indicates whether the allowlist is enabled.
   bool allowlist_enabled = 2;
-}
-
-message Staker {
-  string memo = 1;
-  repeated cosmos.base.v1beta1.Coin staked = 2 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
-    (amino.encoding) = "legacy_coins",
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
-  repeated cosmos.base.v1beta1.Coin pending_withdrawal = 3 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
-    (amino.encoding) = "legacy_coins",
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
 }

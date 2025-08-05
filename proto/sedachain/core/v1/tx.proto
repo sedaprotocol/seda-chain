@@ -2,8 +2,10 @@ syntax = "proto3";
 package sedachain.core.v1;
 
 import "gogoproto/gogo.proto";
+import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/msg/v1/msg.proto";
+import "cosmos/base/v1beta1/coin.proto";
 import "sedachain/core/v1/core.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/core/types";
@@ -14,6 +16,9 @@ service Msg {
 
   // AddToAllowlist adds a new address to the allowlist.
   rpc AddToAllowlist(MsgAddToAllowlist) returns (MsgAddToAllowlistResponse);
+
+  // Stake adds a stake to the executor identity.
+  rpc Stake(MsgStake) returns (MsgStakeResponse);
 
   // The UpdateParams method updates the module's parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
@@ -29,6 +34,24 @@ message MsgAddToAllowlist {
 
 // The response message for the AddToAllowlist method.
 message MsgAddToAllowlistResponse {}
+
+// The request message for the Stake method.
+message MsgStake {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string public_key = 2;
+  string memo = 3;
+  // Proof is hex-encoded proof of the identity.
+  string proof = 4;
+  cosmos.base.v1beta1.Coin stake = 5 [ 
+    (gogoproto.nullable) = false, 
+    (amino.dont_omitempty) = true 
+  ];
+}
+
+// The response message for the Stake method.
+message MsgStakeResponse {}
 
 // The request message for the UpdateParams method.
 message MsgUpdateParams {
