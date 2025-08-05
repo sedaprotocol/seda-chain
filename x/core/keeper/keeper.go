@@ -17,6 +17,8 @@ import (
 type Keeper struct {
 	wasmStorageKeeper types.WasmStorageKeeper
 	batchingKeeper    types.BatchingKeeper
+	stakingKeeper     types.StakingKeeper
+	bankKeeper        types.BankKeeper
 	wasmKeeper        wasmtypes.ContractOpsKeeper
 	wasmViewKeeper    wasmtypes.ViewKeeper
 	authority         string
@@ -27,12 +29,14 @@ type Keeper struct {
 	Params    collections.Item[types.Params]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, wsk types.WasmStorageKeeper, bk types.BatchingKeeper, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper, authority string) Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, wsk types.WasmStorageKeeper, batk types.BatchingKeeper, sk types.StakingKeeper, bank types.BankKeeper, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper, authority string) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
 		wasmStorageKeeper: wsk,
-		batchingKeeper:    bk,
+		batchingKeeper:    batk,
+		stakingKeeper:     sk,
+		bankKeeper:        bank,
 		wasmKeeper:        wk,
 		wasmViewKeeper:    wvk,
 		authority:         authority,

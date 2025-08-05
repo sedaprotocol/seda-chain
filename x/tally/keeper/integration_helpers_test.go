@@ -28,6 +28,7 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
+	coretypes "github.com/sedaprotocol/seda-chain/x/core/types"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -243,12 +244,23 @@ func (f *fixture) addStakers(t testing.TB, num int) []staker {
 
 		f.initAccountWithCoins(t, stakers[i].address, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1e18))))
 
-		proof := f.generateStakeProof(t, stakers[i].key)
+		proof := f.generateStakeProof(t, stakers[i].key, 0)
 		_, err = f.contractKeeper.Execute(
 			f.Context(),
 			f.coreContractAddr,
 			stakers[i].address,
 			testutil.StakeMsg(stakers[i].pubKey, proof),
+			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+		)
+		require.NoError(t, err)
+
+		// To test sequence number.
+		proof2 := f.generateStakeProof(t, stakers[i].key, 1)
+		_, err = f.contractKeeper.Execute(
+			f.Context(),
+			f.coreContractAddr,
+			stakers[i].address,
+			testutil.StakeMsg(stakers[i].pubKey, proof2),
 			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 		)
 		require.NoError(t, err)
@@ -279,28 +291,11 @@ func (f *fixture) generateStakeProof(t testing.TB, signKey []byte) string {
 	memoBytes, err := base64.StdEncoding.DecodeString(memo)
 	require.NoError(t, err)
 
-	// Create slices for each component
-	stakeBytes := []byte("stake")
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(memoBytes)
-	memoHash := hasher.Sum(nil)
-
-	chainIDBytes := []byte(f.chainID)
-	contractAddrBytes := []byte(f.coreContractAddr.String())
-
-	sequenceBytes := make([]byte, 16)
-	// binary.BigEndian.PutUint64(sequenceBytes, sequence) // TODO
-
-	allBytes := append([]byte{}, stakeBytes...)
-	allBytes = append(allBytes, memoHash...)
-	allBytes = append(allBytes, chainIDBytes...)
-	allBytes = append(allBytes, contractAddrBytes...)
-	allBytes = append(allBytes, sequenceBytes...)
-
-	hasher.Reset()
-	hasher.Write(allBytes)
-	hash := hasher.Sum(nil)
+	msg := coretypes.MsgStake{
+		Memo: hex.EncodeToString(memoBytes),
+	}
+	hash, err := msg.ComputeStakeHash(f.coreContractAddr.String(), f.chainID, 0)
+	require.NoError(t, err)
 
 	proof, err := vrf.NewK256VRF().Prove(signKey, hash)
 	require.NoError(t, err)
