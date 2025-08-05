@@ -695,6 +695,8 @@ func NewApp(
 		runtime.NewKVStoreService(keys[coretypes.StoreKey]),
 		app.WasmStorageKeeper,
 		app.BatchingKeeper,
+		app.StakingKeeper,
+		app.BankKeeper,
 		app.WasmContractKeeper,
 		app.WasmKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: subject to change
