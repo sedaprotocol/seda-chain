@@ -20,7 +20,36 @@ import (
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-chain/app"
+	circuittypes "cosmossdk.io/x/circuit/types"
+	evidencetypes "cosmossdk.io/x/evidence/types"
+	"cosmossdk.io/x/feegrant"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/cosmos/cosmos-sdk/x/group"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
+	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
+	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
+	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
+	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
+
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/auth"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/bank"
@@ -175,7 +204,39 @@ func main() {
 		logger.Fatal("failed to create interface registry", err)
 	}
 	std.RegisterInterfaces(interfaceRegistry)
-	app.ModuleBasics.RegisterInterfaces(interfaceRegistry)
+	// Rather than relying on the app module we manually register the interfaces for all modules,
+	// as this significantly reduces the size of the binary.
+	// genutil doesn't have any interfaces to register
+	authtypes.RegisterInterfaces(interfaceRegistry)
+	authz.RegisterInterfaces(interfaceRegistry)
+	vestingtypes.RegisterInterfaces(interfaceRegistry)
+	banktypes.RegisterInterfaces(interfaceRegistry)
+	feegrant.RegisterInterfaces(interfaceRegistry)
+	group.RegisterInterfaces(interfaceRegistry)
+	govtypesv1.RegisterInterfaces(interfaceRegistry)
+	govtypesv1beta1.RegisterInterfaces(interfaceRegistry)
+	minttypes.RegisterInterfaces(interfaceRegistry)
+	slashingtypes.RegisterInterfaces(interfaceRegistry)
+	distrtypes.RegisterInterfaces(interfaceRegistry)
+	stakingtypes.RegisterInterfaces(interfaceRegistry)
+	upgradetypes.RegisterInterfaces(interfaceRegistry)
+	evidencetypes.RegisterInterfaces(interfaceRegistry)
+	consensustypes.RegisterInterfaces(interfaceRegistry)
+	circuittypes.RegisterInterfaces(interfaceRegistry)
+	// capability doesn't have any interfaces to register
+	wasmtypes.RegisterInterfaces(interfaceRegistry)
+	ibctypes.RegisterInterfaces(interfaceRegistry)
+	ibctm.RegisterInterfaces(interfaceRegistry)
+	ibcfee.RegisterInterfaces(interfaceRegistry)
+	ibctransfertypes.RegisterInterfaces(interfaceRegistry)
+	pubkeytypes.RegisterInterfaces(interfaceRegistry)
+	icatypes.RegisterInterfaces(interfaceRegistry)
+	crisistypes.RegisterInterfaces(interfaceRegistry)
+	packetforwardtypes.RegisterInterfaces(interfaceRegistry)
+	wasmstoragetypes.RegisterInterfaces(interfaceRegistry)
+	tallytypes.RegisterInterfaces(interfaceRegistry)
+	dataproxytypes.RegisterInterfaces(interfaceRegistry)
+	batchingtypes.RegisterInterfaces(interfaceRegistry)
 
 	sqsClient, err := pluginaws.NewSqsClient(logger)
 	if err != nil {
