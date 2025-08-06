@@ -20,6 +20,43 @@ message Staker {
   uint64 sequence_num = 5;
 }
 
+message DataRequest {
+  string id = 1;
+  string version = 2;
+  string exec_program_id = 3;
+  bytes exec_inputs = 4;
+  uint64 exec_gas_limit = 5;
+  string tally_program_id = 6;
+  bytes tally_inputs = 7;
+  uint64 tally_gas_limit = 8;
+  uint32 replication_factor = 9;
+  bytes consensus_filter = 10;
+  string gas_price = 11 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  bytes memo = 12;
+  bytes payback_address = 13;
+  bytes seda_payload = 14;
+  uint64 height = 15;
+  string posted_gas_price = 16 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // Commits is a map from staker public keys to their commitments.
+  map<string, bytes> commits = 17;
+  // Reveals is a map from staker public keys to placeholder booleans.
+  map<string, bool> reveals = 18;
+  string poster = 19;
+  cosmos.base.v1beta1.Coin escrow = 20
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  uint64 timeout_height = 21;
+}
+
 // Params defines the parameters for the core module.
 message Params {
   DataRequestConfig data_request_config = 1 [ (gogoproto.nullable) = false ];
