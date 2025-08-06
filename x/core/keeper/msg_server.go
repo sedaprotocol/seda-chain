@@ -44,14 +44,8 @@ func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllo
 		return nil, err
 	}
 
-	// TODO: add event
-	// Ok(Response::new().add_attribute("action", "add-to-allowlist").add_event(
-	// 	Event::new("seda-contract").add_attributes([
-	// 		("version", CONTRACT_VERSION.to_string()),
-	// 		("identity", self.public_key),
-	// 		("action", "allowlist-add".to_string()),
-	// 	]),
-	// ))
+	// TODO Add events
+
 	return &types.MsgAddToAllowlistResponse{}, nil
 }
 

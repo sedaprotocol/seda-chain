@@ -8,19 +8,53 @@ import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/core/types";
 
-// Staker is an identity that has staked SEDA tokens to perform data request execution.
+// Staker is an identity that has staked SEDA tokens to perform data request
+// execution.
 message Staker {
   string public_key = 1;
   string memo = 2;
-  cosmos.base.v1beta1.Coin staked = 3 [ 
-    (gogoproto.nullable) = false, 
-    (amino.dont_omitempty) = true 
-  ];
-  cosmos.base.v1beta1.Coin pending_withdrawal = 4 [ 
-    (gogoproto.nullable) = false, 
-    (amino.dont_omitempty) = true 
-  ];
+  cosmos.base.v1beta1.Coin staked = 3
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  cosmos.base.v1beta1.Coin pending_withdrawal = 4
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
   uint64 sequence_num = 5;
+}
+
+message DataRequest {
+  string id = 1;
+  string version = 2;
+  string exec_program_id = 3;
+  bytes exec_inputs = 4;
+  uint64 exec_gas_limit = 5;
+  string tally_program_id = 6;
+  bytes tally_inputs = 7;
+  uint64 tally_gas_limit = 8;
+  uint32 replication_factor = 9;
+  bytes consensus_filter = 10;
+  string gas_price = 11 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  bytes memo = 12;
+  bytes payback_address = 13;
+  bytes seda_payload = 14;
+  uint64 height = 15;
+  string posted_gas_price = 16 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // Commits is a map from staker public keys to their commitments.
+  map<string, bytes> commits = 17;
+  // Reveals is a map from staker public keys to placeholder booleans.
+  map<string, bool> reveals = 18;
+  string poster = 19;
+  cosmos.base.v1beta1.Coin escrow = 20
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  uint64 timeout_height = 21;
 }
 
 // Params defines the parameters for the core module.
@@ -31,13 +65,37 @@ message Params {
   StakingConfig staking_config = 2 [ (gogoproto.nullable) = false ];
 }
 
-// DataRequestConfig contains data request-related module parameters.
+// DataRequestConfig defines the configuration for data requests
 message DataRequestConfig {
+  // Number of blocks after which a data request is timed out while waiting
+  // for commits.
+  uint32 commit_timeout_in_blocks = 1;
+  // Number of blocks after which a data request is timed out while waiting
+  // for reveals.
+  uint32 reveal_timeout_in_blocks = 2;
+  // Delay in blocks before the backup executors are allowed to start executing
+  // the data request.
+  uint32 backup_delay_in_blocks = 3;
+  // Maximum size of all the reveals in a data request.
+  uint32 dr_reveal_size_limit_in_bytes = 4;
+  // Maximum size of the input for the execution program.
+  uint32 exec_input_limit_in_bytes = 5;
+  // Maximum size of the input for the tally program.
+  uint32 tally_input_limit_in_bytes = 6;
+  // Maximum size of the consensus filter.
+  uint32 consensus_filter_limit_in_bytes = 7;
+  // Maximum size of the memo.
+  uint32 memo_limit_in_bytes = 8;
+  // Maximum size of the payback address.
+  uint32 payback_address_limit_in_bytes = 9;
+  // Maximum size of the SEDA payload.
+  uint32 seda_payload_limit_in_bytes = 10;
 }
 
 // StakingConfig contains Overlay staking-related module parameters.
 message StakingConfig {
-  // MiminumStake is the minimum amount of SEDA tokens required to register as an Overlay.
+  // MiminumStake is the minimum amount of SEDA tokens required to register as
+  // an Overlay.
   string minimum_stake = 1 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
