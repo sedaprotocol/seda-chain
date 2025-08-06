@@ -3,9 +3,126 @@ package types
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"math/big"
 
+	"cosmossdk.io/math"
 	"golang.org/x/crypto/sha3"
 )
+
+const (
+	MinExecGasLimit      uint64 = 10_000_000_000_000 // 10 teraGas
+	MinTallyGasLimit     uint64 = 10_000_000_000_000 // 10 teraGas
+	MaxReplicationFactor int    = 100
+)
+
+var MinGasPrice = math.NewInt(2_000)
+
+func isBigIntUint128(x *big.Int) bool {
+	return x.Sign() >= 0 && x.BitLen() <= 128
+}
+
+func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
+	if m.ReplicationFactor == 0 {
+		return ErrZeroReplicationFactor
+	}
+
+	if !isBigIntUint128(m.GasPrice.BigInt()) {
+		return ErrGasPriceTooHigh
+	}
+	if m.GasPrice.LT(MinGasPrice) {
+		return ErrGasPriceTooLow.Wrapf("%s < %s", m.GasPrice, MinGasPrice)
+	}
+	if m.ExecGasLimit < MinExecGasLimit {
+		return ErrExecGasLimitTooLow.Wrapf("%s < %s", m.ExecGasLimit, MinExecGasLimit)
+	}
+	if m.TallyGasLimit < MinTallyGasLimit {
+		return ErrTallyGasLimitTooLow.Wrapf("%s < %s", m.TallyGasLimit, MinTallyGasLimit)
+	}
+
+	if len(m.ExecProgramId) != 64 {
+		return ErrInvalidLengthExecProgramID.Wrapf("given ID is %d characters long", len(m.ExecProgramId))
+	}
+	if len(m.TallyProgramId) != 64 {
+		return ErrInvalidLengthTallyProgramID.Wrapf("given ID is %d characters long", len(m.TallyProgramId))
+	}
+
+	// TODO
+	// // Ensure the version only consists of Major.Minor.Patch
+	// if !self.posted_dr.version.pre.is_empty() || !self.posted_dr.version.build.is_empty() {
+	// 	return Err(ContractError::DataRequestVersionInvalid);
+	// }
+
+	if len(m.ExecInputs) > int(config.ExecInputLimitInBytes) {
+		return ErrExecInputLimitExceeded.Wrapf("%d bytes > %d bytes", len(m.ExecInputs), config.ExecInputLimitInBytes)
+	}
+	if len(m.TallyInputs) > int(config.TallyInputLimitInBytes) {
+		return ErrTallyInputLimitExceeded.Wrapf("%d bytes > %d bytes", len(m.TallyInputs), config.TallyInputLimitInBytes)
+	}
+	if len(m.ConsensusFilter) > int(config.ConsensusFilterLimitInBytes) {
+		return ErrConsensusFilterLimitExceeded.Wrapf("%d bytes > %d bytes", len(m.ConsensusFilter), config.ConsensusFilterLimitInBytes)
+	}
+	if len(m.Memo) > int(config.MemoLimitInBytes) {
+		return ErrMemoLimitExceeded.Wrapf("%d bytes > %d bytes", len(m.Memo), config.MemoLimitInBytes)
+	}
+	if len(m.PaybackAddress) > int(config.PaybackAddressLimitInBytes) {
+		return ErrPaybackAddressLimitExceeded.Wrapf("%d bytes > %d bytes", len(m.PaybackAddress), config.PaybackAddressLimitInBytes)
+	}
+	if len(m.SedaPayload) > int(config.SedaPayloadLimitInBytes) {
+		return ErrSedaPayloadLimitExceeded.Wrapf("%d bytes > %d bytes", len(m.SedaPayload), config.SedaPayloadLimitInBytes)
+	}
+
+	return nil
+}
+
+// TryHash returns the hex-encoded hash of the data request.
+func (m *MsgPostDataRequest) TryHash() (string, error) {
+	execProgramIdBytes, err := hex.DecodeString(m.ExecProgramId)
+	if err != nil {
+		return "", err
+	}
+	tallyProgramIdBytes, err := hex.DecodeString(m.TallyProgramId)
+	if err != nil {
+		return "", err
+	}
+
+	execInputsHasher := sha3.NewLegacyKeccak256()
+	execInputsHasher.Write(m.ExecInputs)
+	execInputsHash := execInputsHasher.Sum(nil)
+
+	tallyInputsHasher := sha3.NewLegacyKeccak256()
+	tallyInputsHasher.Write(m.TallyInputs)
+	tallyInputsHash := tallyInputsHasher.Sum(nil)
+
+	consensusFilterHasher := sha3.NewLegacyKeccak256()
+	consensusFilterHasher.Write(m.ConsensusFilter)
+	consensusFilterHash := consensusFilterHasher.Sum(nil)
+
+	memoHasher := sha3.NewLegacyKeccak256()
+	memoHasher.Write(m.Memo)
+	memoHash := memoHasher.Sum(nil)
+
+	execGasLimitBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(execGasLimitBytes, m.ExecGasLimit)
+	tallyGasLimitBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(tallyGasLimitBytes, m.TallyGasLimit)
+	replicationFactorBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(replicationFactorBytes, uint16(m.ReplicationFactor))
+
+	dataRequestHasher := sha3.NewLegacyKeccak256()
+	dataRequestHasher.Write([]byte(m.Version))
+	dataRequestHasher.Write(execProgramIdBytes)
+	dataRequestHasher.Write(execInputsHash)
+	dataRequestHasher.Write(execGasLimitBytes)
+	dataRequestHasher.Write(tallyProgramIdBytes)
+	dataRequestHasher.Write(tallyInputsHash)
+	dataRequestHasher.Write(tallyGasLimitBytes)
+	dataRequestHasher.Write(replicationFactorBytes)
+	dataRequestHasher.Write(consensusFilterHash)
+	dataRequestHasher.Write(m.GasPrice.BigInt().Bytes())
+	dataRequestHasher.Write(memoHash)
+
+	return hex.EncodeToString(dataRequestHasher.Sum(nil)), nil
+}
 
 // TODO Remove contractAddr
 func (m MsgStake) ComputeStakeHash(contractAddr, chainID string, sequenceNum uint64) ([]byte, error) {
