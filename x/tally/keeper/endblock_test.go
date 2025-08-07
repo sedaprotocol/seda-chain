@@ -315,7 +315,7 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = f.commitDataRequest(
-		stakers[:1], noRevealsDr.Height, noRevealsDr.DrID,
+		t, stakers[:1], noRevealsDr.Height, noRevealsDr.DrID,
 		commitRevealConfig{
 			requestHeight: 1,
 			reveal:        base64.StdEncoding.EncodeToString([]byte("sike")),
@@ -326,7 +326,7 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	require.NoError(t, err)
 
 	revealMsgs, err := f.commitDataRequest(
-		stakers[:1], resolvedDr.Height, resolvedDr.DrID,
+		t, stakers[:1], resolvedDr.Height, resolvedDr.DrID,
 		commitRevealConfig{
 			requestHeight: 1,
 			reveal:        base64.StdEncoding.EncodeToString([]byte("sike")),
