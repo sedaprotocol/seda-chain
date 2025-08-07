@@ -8,6 +8,7 @@ import (
 	vrf "github.com/sedaprotocol/vrf-go"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -54,7 +55,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 
 	// Verify stake proof.
 	var sequenceNum uint64
-	var isExistingStaker bool
+	var isExistingStaker bool // for later use
 	staker, err := m.Stakers.Get(ctx, msg.PublicKey)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
@@ -65,7 +66,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 		isExistingStaker = true
 	}
 
-	hash, err := msg.ComputeStakeHash("", ctx.ChainID(), sequenceNum)
+	hash, err := msg.StakeHash("", ctx.ChainID(), sequenceNum)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +98,6 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 		}
 	}
 
-	minStake := params.StakingConfig.MinimumStake
 	denom, err := m.stakingKeeper.BondDenom(ctx)
 	if err != nil {
 		return nil, err
@@ -108,17 +108,17 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 
 	// Check stake amount and save the staker.
 	if isExistingStaker {
-		staker.Staked = staker.Staked.Add(msg.Stake)
+		staker.Staked = staker.Staked.Add(msg.Stake.Amount)
 		staker.Memo = msg.Memo
 	} else {
-		if msg.Stake.Amount.LT(minStake) {
-			return nil, types.ErrInsufficientStake.Wrapf("%s is less than minimum stake %s", msg.Stake.Amount, minStake)
+		if msg.Stake.Amount.LT(params.StakingConfig.MinimumStake) {
+			return nil, types.ErrInsufficientStake.Wrapf("%s < %s", msg.Stake.Amount, params.StakingConfig.MinimumStake)
 		}
 		staker = types.Staker{
 			PublicKey:         msg.PublicKey,
 			Memo:              msg.Memo,
-			Staked:            msg.Stake,
-			PendingWithdrawal: sdk.NewInt64Coin(denom, 0),
+			Staked:            msg.Stake.Amount,
+			PendingWithdrawal: math.NewInt(0),
 			SequenceNum:       sequenceNum,
 		}
 	}

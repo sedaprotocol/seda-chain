@@ -24,4 +24,7 @@ var (
 	ErrSedaPayloadLimitExceeded     = errors.Register("core", 18, "seda payload limit exceeded")
 	ErrReplicationFactorTooHigh     = errors.Register("core", 19, "replication factor is too high")
 	ErrDataRequestAlreadyExists     = errors.Register("core", 20, "data request already exists")
+	ErrNotCommitting                = errors.Register("core", 21, "data request is not in committing state")
+	ErrAlreadyCommitted             = errors.Register("core", 22, "commit under given public key already exists")
+	ErrCommitTimeout                = errors.Register("core", 23, "commit timeout")
 )

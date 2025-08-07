@@ -13,13 +13,20 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/core/types";
 message Staker {
   string public_key = 1;
   string memo = 2;
-  cosmos.base.v1beta1.Coin staked = 3
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
-  cosmos.base.v1beta1.Coin pending_withdrawal = 4
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  string staked = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string pending_withdrawal = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
   uint64 sequence_num = 5;
 }
 
+//
 message DataRequest {
   string id = 1;
   string version = 2;
@@ -55,6 +62,15 @@ message DataRequest {
   cosmos.base.v1beta1.Coin escrow = 20
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
   uint64 timeout_height = 21;
+  DataRequestStatus status = 22;
+}
+
+enum DataRequestStatus {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  DATA_REQUEST_COMMITTING = 0;
+  DATA_REQUEST_REVEALING = 1;
+  DATA_REQUEST_TALLYING = 2;
 }
 
 // Params defines the parameters for the core module.
