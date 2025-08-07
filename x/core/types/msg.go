@@ -21,6 +21,8 @@ func isBigIntUint128(x *big.Int) bool {
 	return x.Sign() >= 0 && x.BitLen() <= 128
 }
 
+// Validate validates the PostDataRequest message based on the given data
+// request configurations.
 func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 	if m.ReplicationFactor == 0 {
 		return ErrZeroReplicationFactor
@@ -74,8 +76,9 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 	return nil
 }
 
-// TryHash returns the hex-encoded hash of the data request.
-func (m *MsgPostDataRequest) TryHash() (string, error) {
+// Hash returns the hex-encoded hash of the PostDataRequest message to be used
+// as the data request ID.
+func (m *MsgPostDataRequest) Hash() (string, error) {
 	execProgramIdBytes, err := hex.DecodeString(m.ExecProgramId)
 	if err != nil {
 		return "", err
@@ -125,7 +128,8 @@ func (m *MsgPostDataRequest) TryHash() (string, error) {
 }
 
 // TODO Remove contractAddr
-func (m MsgStake) ComputeStakeHash(contractAddr, chainID string, sequenceNum uint64) ([]byte, error) {
+// StakeHash computes the stake hash.
+func (m MsgStake) StakeHash(contractAddr, chainID string, sequenceNum uint64) ([]byte, error) {
 	memoBytes, err := hex.DecodeString(m.Memo)
 	if err != nil {
 		return nil, err
@@ -144,6 +148,24 @@ func (m MsgStake) ComputeStakeHash(contractAddr, chainID string, sequenceNum uin
 	allBytes = append(allBytes, []byte(chainID)...)
 	allBytes = append(allBytes, []byte(contractAddr)...)
 	allBytes = append(allBytes, seqBytes...)
+
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(allBytes)
+	return hasher.Sum(nil), nil
+}
+
+// TODO Remove contractAddr
+// CommitHash computes the commit hash.
+func (m MsgCommit) CommitHash(contractAddr, chainID string, drHeight uint64) ([]byte, error) {
+	drHeightBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(drHeightBytes, drHeight)
+
+	allBytes := append([]byte{}, []byte("commit_data_result")...)
+	allBytes = append(allBytes, []byte(m.DrId)...)
+	allBytes = append(allBytes, drHeightBytes...)
+	allBytes = append(allBytes, m.Commitment...)
+	allBytes = append(allBytes, []byte(chainID)...)
+	allBytes = append(allBytes, []byte(contractAddr)...)
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)

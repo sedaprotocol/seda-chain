@@ -70,7 +70,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCo
 	drID := res.DrID
 
 	// The stakers commit and reveal.
-	revealMsgs, err := f.commitDataRequest(stakers[:numCommits], res.Height, drID, config)
+	revealMsgs, err := f.commitDataRequest(t, stakers[:numCommits], res.Height, drID, config)
 	require.NoError(t, err)
 
 	err = f.executeReveals(stakers, revealMsgs[:numReveals])
@@ -115,7 +115,7 @@ func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMem
 
 // commitDataRequest executes a commit for each of the given stakers and
 // returns a list of corresponding reveal messages.
-func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID string, config commitRevealConfig) ([][]byte, error) {
+func (f *fixture) commitDataRequest(t *testing.T, stakers []staker, height uint64, drID string, config commitRevealConfig) ([][]byte, error) {
 	revealBody := types.RevealBody{
 		RequestID:    drID,
 		Reveal:       config.reveal,
@@ -131,7 +131,7 @@ func (f *fixture) commitDataRequest(stakers []staker, height uint64, drID string
 			return nil, err
 		}
 
-		proof, err := f.generateCommitProof(stakers[i].key, drID, commitment, height)
+		proof, err := f.generateCommitProof(t, stakers[i].key, drID, commitment, height)
 		if err != nil {
 			return nil, err
 		}
@@ -233,7 +233,7 @@ func (f *fixture) generateStakeProof(t *testing.T, signKey []byte, seqNum uint64
 	msg := coretypes.MsgStake{
 		Memo: hex.EncodeToString(memoBytes),
 	}
-	hash, err := msg.ComputeStakeHash(f.coreContractAddr.String(), f.chainID, seqNum)
+	hash, err := msg.StakeHash(f.coreContractAddr.String(), f.chainID, seqNum)
 	require.NoError(t, err)
 
 	proof, err := vrf.NewK256VRF().Prove(signKey, hash)
@@ -241,27 +241,13 @@ func (f *fixture) generateStakeProof(t *testing.T, signKey []byte, seqNum uint64
 	return hex.EncodeToString(proof)
 }
 
-func (f *fixture) generateCommitProof(signKey []byte, drID, commitment string, drHeight uint64) (string, error) {
-	commitBytes := []byte("commit_data_result")
-	drIDBytes := []byte(drID)
-
-	drHeightBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(drHeightBytes, drHeight)
-
-	commitmentBytes := []byte(commitment)
-	chainIDBytes := []byte(f.chainID)
-	contractAddrBytes := []byte(f.coreContractAddr.String())
-
-	allBytes := append([]byte{}, commitBytes...)
-	allBytes = append(allBytes, drIDBytes...)
-	allBytes = append(allBytes, drHeightBytes...)
-	allBytes = append(allBytes, commitmentBytes...)
-	allBytes = append(allBytes, chainIDBytes...)
-	allBytes = append(allBytes, contractAddrBytes...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	hash := hasher.Sum(nil)
+func (f *fixture) generateCommitProof(t *testing.T, signKey []byte, drID, commitment string, drHeight uint64) (string, error) {
+	msg := coretypes.MsgCommit{
+		DrId:       drID,
+		Commitment: commitment,
+	}
+	hash, err := msg.CommitHash(f.coreContractAddr.String(), f.chainID, drHeight)
+	require.NoError(t, err)
 
 	proof, err := vrf.NewK256VRF().Prove(signKey, hash)
 	if err != nil {
