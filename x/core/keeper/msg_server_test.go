@@ -328,7 +328,7 @@ func (s *KeeperTestSuite) TestMsgServer_Stake() {
 				staker, err := s.keeper.Stakers.Get(s.ctx, validPublicKey)
 				s.Require().NoError(err)
 				expectedTotal := validStake.Amount.Add(secondStake.Amount)
-				s.Require().Equal(expectedTotal, staker.Staked.Amount)
+				s.Require().Equal(expectedTotal, staker.Staked)
 				s.Require().Equal(secondMsg.Memo, staker.Memo) // Memo should be updated
 			},
 		},
@@ -354,7 +354,7 @@ func (s *KeeperTestSuite) TestMsgServer_Stake() {
 			s.Require().NoError(err)
 			s.Require().Equal(tt.msg.PublicKey, staker.PublicKey)
 			s.Require().Equal(tt.msg.Memo, staker.Memo)
-			s.Require().Equal(tt.msg.Stake, staker.Staked)
+			s.Require().Equal(tt.msg.Stake.Amount, staker.Staked)
 
 			if tt.postRun != nil {
 				tt.postRun()

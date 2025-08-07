@@ -114,7 +114,7 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 		revealMsg, commitment, revealProof, err := f.createRevealMsg(stakers[i], revealBody)
 		require.NoError(t, err)
 
-		commitProof, err := f.generateCommitProof(stakers[i].key, drID, commitment, res.Height)
+		commitProof, err := f.generateCommitProof(t, stakers[i].key, drID, commitment, res.Height)
 		require.NoError(t, err)
 
 		commitMsg := testutil.CommitMsg(drID, commitment, stakers[i].pubKey, commitProof, 0)
