@@ -30,12 +30,10 @@ type Keeper struct {
 	Params    collections.Item[types.Params]
 
 	DataRequests collections.Map[string, types.DataRequest]
-	committing   collections.KeySet[DataRequestIndex]
-	// revealing
-	// tallying
-
-	// timeoutQueue is a map from timeout heights to data request IDs.
-	timeoutQueue collections.Map[int64, string]
+	committing   collections.KeySet[types.DataRequestIndex]
+	revealing    collections.KeySet[types.DataRequestIndex]
+	tallying     collections.KeySet[types.DataRequestIndex]
+	timeoutQueue collections.KeySet[collections.Pair[uint64, string]]
 }
 
 func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, wsk types.WasmStorageKeeper, batk types.BatchingKeeper, sk types.StakingKeeper, bank types.BankKeeper, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper, authority string) Keeper {
@@ -50,11 +48,13 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, ws
 		wasmViewKeeper:    wvk,
 		authority:         authority,
 		Allowlist:         collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
-		Stakers:           collections.NewMap(sb, types.StakersKey, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
+		Stakers:           collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
 		Params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
-		DataRequests:      collections.NewMap(sb, types.DataRequestsKey, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
-		committing:        collections.NewKeySet(sb, types.CommittingKey, "committing", collcodec.NewBytesKey[DataRequestIndex]()),
-		timeoutQueue:      collections.NewMap(sb, types.TimeoutQueueKey, "timeout_queue", collections.Int64Key, collections.StringValue),
+		DataRequests:      collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
+		committing:        collections.NewKeySet(sb, types.CommittingKeyPrefix, "committing", collcodec.NewBytesKey[types.DataRequestIndex]()),
+		revealing:         collections.NewKeySet(sb, types.RevealingKeyPrefix, "revealing", collcodec.NewBytesKey[types.DataRequestIndex]()),
+		tallying:          collections.NewKeySet(sb, types.TallyingKeyPrefix, "tallying", collcodec.NewBytesKey[types.DataRequestIndex]()),
+		timeoutQueue:      collections.NewKeySet(sb, types.TimeoutQueueKeyPrefix, "timeout_queue", collections.PairKeyCodec(collections.Uint64Key, collections.StringKey)),
 	}
 
 	schema, err := sb.Build()
@@ -63,6 +63,37 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, ws
 	}
 	k.Schema = schema
 	return k
+}
+
+func (k Keeper) UpdateDataRequestTimeout(ctx sdk.Context, drID string, oldTimeoutHeight, newTimeoutHeight uint64) error {
+	exists, err := k.timeoutQueue.Has(ctx, collections.Join(oldTimeoutHeight, drID))
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("data request %s not found in timeout queue", drID)
+	}
+	err = k.timeoutQueue.Remove(ctx, collections.Join(oldTimeoutHeight, drID))
+	if err != nil {
+		return err
+	}
+	return k.timeoutQueue.Set(ctx, collections.Join(newTimeoutHeight, drID))
+}
+
+func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return types.Params{}, err
+	}
+	return params, nil
+}
+
+func (k Keeper) GetDataRequestConfig(ctx sdk.Context) (types.DataRequestConfig, error) {
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return types.DataRequestConfig{}, err
+	}
+	return params.DataRequestConfig, nil
 }
 
 func (k Keeper) GetAuthority() string {

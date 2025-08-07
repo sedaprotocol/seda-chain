@@ -2,26 +2,28 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/x/core/types"
+	vrf "github.com/sedaprotocol/vrf-go"
 )
 
 func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostDataRequest) (*types.MsgPostDataRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	params, err := m.Params.Get(ctx)
+	drConfig, err := m.GetDataRequestConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := msg.Validate(params.DataRequestConfig); err != nil {
+	if err := msg.Validate(drConfig); err != nil {
 		return nil, err
 	}
 
-	// TODO Separately store the stakers count?
 	count, err := m.GetStakersCount(ctx)
 	if err != nil {
 		return nil, err
@@ -31,7 +33,7 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		return nil, types.ErrReplicationFactorTooHigh.Wrapf("%d > %d", msg.ReplicationFactor, maxRF)
 	}
 
-	drID, err := msg.TryHash()
+	drID, err := msg.Hash()
 	if err != nil {
 		return nil, err
 	}
@@ -88,19 +90,20 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		Reveals:           make(map[string]bool),
 		Poster:            msg.Sender,
 		Escrow:            msg.Funds,
-		TimeoutHeight:     uint64(ctx.BlockHeight()) + uint64(params.DataRequestConfig.CommitTimeoutInBlocks),
+		TimeoutHeight:     uint64(ctx.BlockHeight()) + uint64(drConfig.CommitTimeoutInBlocks),
+		Status:            types.DATA_REQUEST_COMMITTING,
 	}
 	err = m.DataRequests.Set(ctx, drID, dr)
 	if err != nil {
 		return nil, err
 	}
 
-	err = m.AddToCommitting(ctx, NewDataRequestIndex(drID, dr.PostedGasPrice, dr.Height))
+	err = m.AddToCommitting(ctx, dr.Index())
 	if err != nil {
 		return nil, err
 	}
 
-	err = m.timeoutQueue.Set(ctx, int64(dr.TimeoutHeight), drID)
+	err = m.timeoutQueue.Set(ctx, collections.Join(dr.TimeoutHeight, drID))
 	if err != nil {
 		return nil, err
 	}
@@ -111,4 +114,92 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		DrId:   drID,
 		Height: dr.Height,
 	}, nil
+}
+
+func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.MsgCommitResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params, err := m.GetParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+	dr, err := m.DataRequests.Get(ctx, msg.DrId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify the data request status.
+	if dr.Status != types.DATA_REQUEST_COMMITTING {
+		return nil, types.ErrNotCommitting
+	}
+	if _, ok := dr.Commits[msg.PublicKey]; ok {
+		return nil, types.ErrAlreadyCommitted
+	}
+	if dr.TimeoutHeight <= uint64(ctx.BlockHeight()) {
+		return nil, types.ErrCommitTimeout
+	}
+
+	// Verify the staker.
+	staker, err := m.Stakers.Get(ctx, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	if staker.Staked.LT(params.StakingConfig.MinimumStake) {
+		return nil, types.ErrInsufficientStake.Wrapf("%s < %s", staker.Staked, params.StakingConfig.MinimumStake)
+	}
+
+	// Verify the proof.
+	hash, err := msg.CommitHash("", ctx.ChainID(), dr.Height)
+	if err != nil {
+		return nil, err
+	}
+	publicKey, err := hex.DecodeString(msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	proof, err := hex.DecodeString(msg.Proof)
+	if err != nil {
+		return nil, err
+	}
+	_, err = vrf.NewK256VRF().Verify(publicKey, proof, hash)
+	if err != nil {
+		return nil, types.ErrInvalidStakeProof.Wrapf(err.Error())
+	}
+
+	// Add the commitment and start reveal phase if the data request is ready.
+	commitment, err := hex.DecodeString(msg.Commitment)
+	if err != nil {
+		return nil, err
+	}
+	dr.Commits[msg.PublicKey] = commitment
+
+	if len(dr.Commits) >= int(dr.ReplicationFactor) {
+		dr.Status = types.DATA_REQUEST_REVEALING
+
+		newTimeoutHeight := dr.TimeoutHeight + uint64(params.DataRequestConfig.RevealTimeoutInBlocks)
+		err = m.UpdateDataRequestTimeout(ctx, msg.DrId, dr.TimeoutHeight, newTimeoutHeight)
+		if err != nil {
+			return nil, err
+		}
+		dr.TimeoutHeight = newTimeoutHeight
+
+		err = m.CommittingToRevealing(ctx, dr.Index())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = m.DataRequests.Set(ctx, msg.DrId, dr)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO Refund (ref https://github.com/sedaprotocol/seda-chain/pull/527)
+
+	// TODO emit events
+
+	return &types.MsgCommitResponse{}, nil
+}
+
+func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.MsgRevealResponse, error) {
+	return &types.MsgRevealResponse{}, nil
 }
