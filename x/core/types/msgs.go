@@ -1,9 +1,11 @@
 package types
 
 import (
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"math/big"
+	"strings"
 
 	"cosmossdk.io/math"
 	"golang.org/x/crypto/sha3"
@@ -76,9 +78,9 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 	return nil
 }
 
-// Hash returns the hex-encoded hash of the PostDataRequest message to be used
+// MsgHash returns the hex-encoded hash of the PostDataRequest message to be used
 // as the data request ID.
-func (m *MsgPostDataRequest) Hash() (string, error) {
+func (m *MsgPostDataRequest) MsgHash() (string, error) {
 	execProgramIdBytes, err := hex.DecodeString(m.ExecProgramId)
 	if err != nil {
 		return "", err
@@ -129,7 +131,7 @@ func (m *MsgPostDataRequest) Hash() (string, error) {
 
 // TODO Remove contractAddr
 // StakeHash computes the stake hash.
-func (m MsgStake) StakeHash(contractAddr, chainID string, sequenceNum uint64) ([]byte, error) {
+func (m MsgStake) MsgHash(contractAddr, chainID string, sequenceNum uint64) ([]byte, error) {
 	memoBytes, err := hex.DecodeString(m.Memo)
 	if err != nil {
 		return nil, err
@@ -146,7 +148,7 @@ func (m MsgStake) StakeHash(contractAddr, chainID string, sequenceNum uint64) ([
 	allBytes := append([]byte{}, []byte("stake")...)
 	allBytes = append(allBytes, memoHash...)
 	allBytes = append(allBytes, []byte(chainID)...)
-	allBytes = append(allBytes, []byte(contractAddr)...)
+	// allBytes = append(allBytes, []byte(contractAddr)...) // TODO Do not include contractAddr
 	allBytes = append(allBytes, seqBytes...)
 
 	hasher := sha3.NewLegacyKeccak256()
@@ -156,7 +158,7 @@ func (m MsgStake) StakeHash(contractAddr, chainID string, sequenceNum uint64) ([
 
 // TODO Remove contractAddr
 // CommitHash computes the commit hash.
-func (m MsgCommit) CommitHash(contractAddr, chainID string, drHeight uint64) ([]byte, error) {
+func (m MsgCommit) MsgHash(contractAddr, chainID string, drHeight uint64) ([]byte, error) {
 	drHeightBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(drHeightBytes, drHeight)
 
@@ -165,9 +167,85 @@ func (m MsgCommit) CommitHash(contractAddr, chainID string, drHeight uint64) ([]
 	allBytes = append(allBytes, drHeightBytes...)
 	allBytes = append(allBytes, m.Commitment...)
 	allBytes = append(allBytes, []byte(chainID)...)
-	allBytes = append(allBytes, []byte(contractAddr)...)
+	// allBytes = append(allBytes, []byte(contractAddr)...) // TODO Do not include contractAddr
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
+	return hasher.Sum(nil), nil
+}
+
+// TODO Remove contractAddr
+func (m MsgReveal) MsgHash(contractAddr, chainID string) ([]byte, error) {
+	revealBodyHash, err := m.RevealBody.RevealBodyHash()
+	if err != nil {
+		return nil, err
+	}
+
+	allBytes := append([]byte("reveal_data_result"), revealBodyHash...)
+	allBytes = append(allBytes, []byte(chainID)...)
+	// allBytes = append(allBytes, []byte(contractAddr)...)
+
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(allBytes)
+	return hasher.Sum(nil), nil
+}
+
+// RevealHash computes a hash of reveal contents to be used as a commitment
+// by the executors.
+func (m MsgReveal) RevealHash() ([]byte, error) {
+	revealBodyHash, err := m.RevealBody.RevealBodyHash()
+	if err != nil {
+		return nil, err
+	}
+
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write([]byte("reveal_message"))
+	hasher.Write(revealBodyHash)
+	hasher.Write([]byte(m.PublicKey))
+	hasher.Write([]byte(m.Proof))
+	hasher.Write([]byte(strings.Join(m.Stderr, "")))
+	hasher.Write([]byte(strings.Join(m.Stdout, "")))
+
+	return hasher.Sum(nil), nil
+}
+
+func (rb RevealBody) RevealBodyHash() ([]byte, error) {
+	revealHasher := sha3.NewLegacyKeccak256()
+	revealBytes, err := base64.StdEncoding.DecodeString(rb.Reveal)
+	if err != nil {
+		return nil, err
+	}
+	revealHasher.Write(revealBytes)
+	revealHash := revealHasher.Sum(nil)
+
+	hasher := sha3.NewLegacyKeccak256()
+
+	idBytes, err := hex.DecodeString(rb.DrId)
+	if err != nil {
+		return nil, err
+	}
+	hasher.Write(idBytes)
+
+	reqHeightBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(reqHeightBytes, rb.DrBlockHeight)
+	hasher.Write(reqHeightBytes)
+
+	// TODO RevealBody validator should bind rb.ExitCode value?
+	hasher.Write([]byte{byte(rb.ExitCode)})
+
+	gasUsedBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(gasUsedBytes, rb.GasUsed)
+	hasher.Write(gasUsedBytes)
+
+	hasher.Write(revealHash)
+
+	proxyPubKeyHasher := sha3.NewLegacyKeccak256()
+	for _, key := range rb.ProxyPublicKeys {
+		keyHasher := sha3.NewLegacyKeccak256()
+		keyHasher.Write([]byte(key))
+		proxyPubKeyHasher.Write(keyHasher.Sum(nil))
+	}
+	hasher.Write(proxyPubKeyHasher.Sum(nil))
+
 	return hasher.Sum(nil), nil
 }

@@ -69,7 +69,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof", 19990),
+					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&wasmtypes.MsgExecuteContract{
@@ -87,13 +87,13 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof", 19990),
+					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof2", 20202),
+					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof2"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 			},
@@ -105,7 +105,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof", 19990),
+					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&wasmtypes.MsgExecuteContract{
@@ -134,13 +134,13 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof", 19990),
+					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id_2", "commitment", "public_key", "proof", 10101),
+					Msg:      testutil.CommitMsg("dr_id_2", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 			},
@@ -152,7 +152,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof", 19990),
+					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&wasmstoragetypes.MsgStoreOracleProgram{
@@ -163,7 +163,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id_2", "commitment", "public_key", "proof", 10101),
+					Msg:      testutil.CommitMsg("dr_id_2", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 			},
@@ -175,7 +175,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof", 19990),
+					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&wasmtypes.MsgExecuteContract{
@@ -219,7 +219,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof", 19990),
+					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 			},

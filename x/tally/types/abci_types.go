@@ -141,12 +141,12 @@ func (r Reveal) GetSortKey() []byte {
 }
 
 type RevealBody struct {
-	RequestID          string   `json:"dr_id"`
-	RequestBlockHeight uint64   `json:"dr_block_height"`
-	ExitCode           byte     `json:"exit_code"`
-	GasUsed            uint64   `json:"gas_used"`
-	Reveal             string   `json:"reveal"` // base64-encoded string
-	ProxyPubKeys       []string `json:"proxy_public_keys"`
+	DrID          string   `json:"dr_id"`
+	DrBlockHeight uint64   `json:"dr_block_height"`
+	ExitCode      byte     `json:"exit_code"`
+	GasUsed       uint64   `json:"gas_used"`
+	Reveal        string   `json:"reveal"` // base64-encoded string
+	ProxyPubKeys  []string `json:"proxy_public_keys"`
 }
 
 func (u *RevealBody) MarshalJSON() ([]byte, error) {

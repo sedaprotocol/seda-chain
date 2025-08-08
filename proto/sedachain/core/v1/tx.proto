@@ -117,7 +117,7 @@ message MsgReveal {
   option (cosmos.msg.v1.signer) = "sender";
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  string reveal_body = 2; // TODO
+  RevealBody reveal_body = 2;
   string public_key = 3;
   string proof = 4;
   repeated string stderr = 5;

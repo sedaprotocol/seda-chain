@@ -9,15 +9,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cometbft/cometbft/crypto/secp256k1"
 	vrf "github.com/sedaprotocol/vrf-go"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/cometbft/cometbft/crypto/secp256k1"
+
 	"cosmossdk.io/math"
-
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -25,8 +24,9 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
-	coretypes "github.com/sedaprotocol/seda-chain/x/core/types"
-	"github.com/sedaprotocol/seda-chain/x/tally/types"
+	"github.com/sedaprotocol/seda-chain/x/core/types"
+	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
+	"github.com/sedaprotocol/seda-chain/x/wasm"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -34,11 +34,6 @@ const (
 	defaultCommitTimeoutBlocks = 50
 	defaultRevealTimeoutBlocks = 5
 )
-
-type PostDataRequestResponse struct {
-	DrID   string `json:"dr_id"`
-	Height uint64 `json:"height"`
-}
 
 type commitRevealConfig struct {
 	requestHeight uint64
@@ -89,40 +84,42 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCo
 	return res.DrID, stakers
 }
 
-func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) (PostDataRequestResponse, error) {
+func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) (*wasm.PostRequestResponsePayload, error) {
 	amount, ok := math.NewIntFromString("200600000000000000000")
 	if !ok {
-		return PostDataRequestResponse{}, fmt.Errorf("failed to convert string to int")
+		return nil, fmt.Errorf("failed to convert string to int")
 	}
-	resJSON, err := f.contractKeeper.Execute(
-		f.Context(),
-		f.coreContractAddr,
-		f.deployer,
+
+	resBytes, err := f.executeCoreContract(
+		f.deployer.String(),
 		testutil.PostDataRequestMsg(execProgHash, tallyProgHash, requestMemo, replicationFactor),
 		sdk.NewCoins(sdk.NewCoin(bondDenom, amount)),
 	)
 	if err != nil {
-		return PostDataRequestResponse{}, err
+		return nil, err
 	}
 
-	var res PostDataRequestResponse
-	err = json.Unmarshal(resJSON, &res)
-	if err != nil {
-		return PostDataRequestResponse{}, err
+	var wasmRes wasmtypes.MsgExecuteContractResponse
+	if err := wasmRes.Unmarshal(resBytes); err != nil {
+		return nil, err
 	}
-	return res, nil
+	var postRes wasm.PostRequestResponsePayload
+	err = json.Unmarshal(wasmRes.Data, &postRes)
+	if err != nil {
+		return nil, err
+	}
+	return &postRes, nil
 }
 
 // commitDataRequest executes a commit for each of the given stakers and
 // returns a list of corresponding reveal messages.
 func (f *fixture) commitDataRequest(t *testing.T, stakers []staker, height uint64, drID string, config commitRevealConfig) ([][]byte, error) {
-	revealBody := types.RevealBody{
-		DrID:          drID,
-		DrBlockHeight: height,
-		Reveal:        config.reveal,
-		GasUsed:       config.gasUsed,
-		ExitCode:      config.exitCode,
-		ProxyPubKeys:  config.proxyPubKeys,
+	revealBody := tallytypes.RevealBody{
+		DrID:         drID,
+		Reveal:       config.reveal,
+		GasUsed:      config.gasUsed,
+		ExitCode:     config.exitCode,
+		ProxyPubKeys: config.proxyPubKeys,
 	}
 
 	var revealMsgs [][]byte
@@ -178,36 +175,20 @@ func (f *fixture) addStakers(t *testing.T, num int) []staker {
 			address: privKey.PubKey().Address().Bytes(),
 		}
 
-		_, err := f.contractKeeper.Execute(
-			f.Context(),
-			f.coreContractAddr,
-			f.deployer,
-			testutil.AddToAllowListMsg(stakers[i].pubKey),
-			sdk.NewCoins(),
-		)
+		// Add to allowlist.
+		_, err := f.executeCoreContract(f.deployer.String(), testutil.AddToAllowListMsg(stakers[i].pubKey), sdk.NewCoins())
 		require.NoError(t, err)
 
-		f.initAccountWithCoins(t, stakers[i].address, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1e18))))
+		// Stake.
+		f.initAccountWithCoins(t, stakers[i].address, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1e19))))
 
 		proof := f.generateStakeProof(t, stakers[i].key, 0)
-		_, err = f.contractKeeper.Execute(
-			f.Context(),
-			f.coreContractAddr,
-			stakers[i].address,
-			testutil.StakeMsg(stakers[i].pubKey, proof),
-			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-		)
+		_, err = f.executeCoreContract(sdk.AccAddress(stakers[i].address).String(), testutil.StakeMsg(stakers[i].pubKey, proof), sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1000000000000000000))))
 		require.NoError(t, err)
 
-		// To test sequence number.
+		// Another stake to test sequence number.
 		proof2 := f.generateStakeProof(t, stakers[i].key, 1)
-		_, err = f.contractKeeper.Execute(
-			f.Context(),
-			f.coreContractAddr,
-			stakers[i].address,
-			testutil.StakeMsg(stakers[i].pubKey, proof2),
-			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-		)
+		_, err = f.executeCoreContract(sdk.AccAddress(stakers[i].address).String(), testutil.StakeMsg(stakers[i].pubKey, proof2), sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(3))))
 		require.NoError(t, err)
 	}
 	return stakers
@@ -231,7 +212,7 @@ func (f *fixture) generateStakeProof(t *testing.T, signKey []byte, seqNum uint64
 	memoBytes, err := base64.StdEncoding.DecodeString(memo)
 	require.NoError(t, err)
 
-	msg := coretypes.MsgStake{
+	msg := types.MsgStake{
 		Memo: hex.EncodeToString(memoBytes),
 	}
 	hash, err := msg.MsgHash(f.coreContractAddr.String(), f.chainID, seqNum)
@@ -243,7 +224,7 @@ func (f *fixture) generateStakeProof(t *testing.T, signKey []byte, seqNum uint64
 }
 
 func (f *fixture) generateCommitProof(t *testing.T, signKey []byte, drID, commitment string, drHeight uint64) (string, error) {
-	msg := coretypes.MsgCommit{
+	msg := types.MsgCommit{
 		DrId:       drID,
 		Commitment: commitment,
 	}
@@ -254,7 +235,6 @@ func (f *fixture) generateCommitProof(t *testing.T, signKey []byte, drID, commit
 	if err != nil {
 		return "", err
 	}
-
 	return hex.EncodeToString(proof), nil
 }
 
@@ -268,7 +248,7 @@ func (f *fixture) initAccountWithCoins(t *testing.T, addr sdk.AccAddress, coins 
 // generateRevealBodyHash generates the hash of a given reveal body.
 // Since the RevealBody type in the tally module does not include the
 // salt field, the salt must be provided separately.
-func (f *fixture) generateRevealBodyHash(rb types.RevealBody) ([]byte, error) {
+func (f *fixture) generateRevealBodyHash(rb tallytypes.RevealBody) ([]byte, error) {
 	revealHasher := sha3.NewLegacyKeccak256()
 	revealBytes, err := base64.StdEncoding.DecodeString(rb.Reveal)
 	if err != nil {
@@ -310,7 +290,7 @@ func (f *fixture) generateRevealBodyHash(rb types.RevealBody) ([]byte, error) {
 
 // createRevealMsg constructs and returns a reveal message and its corresponding
 // commitment and proof.
-func (f *fixture) createRevealMsg(staker staker, revealBody types.RevealBody) ([]byte, string, string, error) {
+func (f *fixture) createRevealMsg(staker staker, revealBody tallytypes.RevealBody) ([]byte, string, string, error) {
 	revealBodyHash, err := f.generateRevealBodyHash(revealBody)
 	if err != nil {
 		return nil, "", "", err
@@ -349,7 +329,7 @@ func generateRevealProof(signKey []byte, revealBodyHash []byte, chainID, coreCon
 
 	allBytes := append(revealBytes, revealBodyHash...)
 	allBytes = append(allBytes, []byte(chainID)...)
-	allBytes = append(allBytes, []byte(coreContractAddr)...)
+	// allBytes = append(allBytes, []byte(coreContractAddr)...)
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
@@ -398,16 +378,30 @@ func (f *fixture) executeCommitReveal(sender sdk.AccAddress, msg []byte, gasLimi
 	}
 
 	// Execute the message.
-	_, err = f.contractKeeper.Execute(
-		f.Context(),
-		f.coreContractAddr,
-		sender,
-		msg,
-		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-	)
+	_, err = f.executeCoreContract(sender.String(), msg, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))))
 	if err != nil {
 		return err
 	}
 	f.SetInfiniteGasMeter()
 	return nil
+}
+
+func (f *fixture) executeCoreContract(sender string, msg []byte, funds sdk.Coins) ([]byte, error) {
+	execMsg := &wasmtypes.MsgExecuteContract{
+		Sender:   sender,
+		Contract: f.coreContractAddr.String(),
+		Msg:      msg,
+		Funds:    funds,
+	}
+
+	handler := f.router.Handler(execMsg)
+	if handler == nil {
+		return nil, fmt.Errorf("failed to find handler for message type %T", execMsg)
+	}
+
+	result, err := handler(f.Context(), execMsg)
+	if err != nil {
+		return nil, err
+	}
+	return result.Data, nil
 }

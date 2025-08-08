@@ -66,7 +66,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 		isExistingStaker = true
 	}
 
-	hash, err := msg.StakeHash("", ctx.ChainID(), sequenceNum)
+	hash, err := msg.MsgHash("", ctx.ChainID(), sequenceNum)
 	if err != nil {
 		return nil, err
 	}
@@ -84,11 +84,11 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 	}
 
 	// Verify that the staker is allowlisted if allowlist is enabled.
-	params, err := m.Params.Get(ctx)
+	stakingConfig, err := m.GetStakingConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if params.StakingConfig.AllowlistEnabled {
+	if stakingConfig.AllowlistEnabled {
 		allowlisted, err := m.Allowlist.Has(ctx, msg.PublicKey)
 		if err != nil {
 			return nil, err
@@ -111,8 +111,8 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 		staker.Staked = staker.Staked.Add(msg.Stake.Amount)
 		staker.Memo = msg.Memo
 	} else {
-		if msg.Stake.Amount.LT(params.StakingConfig.MinimumStake) {
-			return nil, types.ErrInsufficientStake.Wrapf("%s < %s", msg.Stake.Amount, params.StakingConfig.MinimumStake)
+		if msg.Stake.Amount.LT(stakingConfig.MinimumStake) {
+			return nil, types.ErrInsufficientStake.Wrapf("%s < %s", msg.Stake.Amount, stakingConfig.MinimumStake)
 		}
 		staker = types.Staker{
 			PublicKey:         msg.PublicKey,
@@ -156,7 +156,7 @@ func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 	if err := msg.Params.Validate(); err != nil {
 		return nil, err
 	}
-	if err := m.Params.Set(ctx, msg.Params); err != nil {
+	if err := m.SetParams(ctx, msg.Params); err != nil {
 		return nil, err
 	}
 

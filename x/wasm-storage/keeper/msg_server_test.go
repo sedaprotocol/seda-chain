@@ -474,11 +474,11 @@ func generateTxBytes(t *testing.T, txConfig client.TxConfig, coreContract string
 			if isLastMsgReveal {
 				msg = testutil.RevealMsg("drID", "reveal", "pubKey", "proof", []string{}, 0, 99, 777)
 			} else {
-				msg = testutil.CommitMsg("drID", "commitment", "pubKey", "proof", 777)
+				msg = testutil.CommitMsg("drID", "commitment", "pubKey", "proof")
 			}
 		} else {
 			if i%2 == 0 {
-				msg = testutil.CommitMsg(fmt.Sprintf("drID%d", i), "commitment", fmt.Sprintf("pubKey%d", i), "proof", 777)
+				msg = testutil.CommitMsg(fmt.Sprintf("drID%d", i), "commitment", fmt.Sprintf("pubKey%d", i), "proof")
 			} else {
 				msg = testutil.RevealMsg(fmt.Sprintf("drID%d", i), "reveal", fmt.Sprintf("pubKey%d", i), "proof", []string{}, 0, 99, 777)
 			}
