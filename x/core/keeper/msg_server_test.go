@@ -18,7 +18,7 @@ func TestStakeProof(t *testing.T) {
 		Proof: "032c74385c590d76e1a6e15364f515f0ae38ba61077c276dcf6aea4a810a36e4988a32cccfd9b08c8ab74f3e4e6dbb6f8e600364432bb166361018f45b817b350b30ae352b7131ab267dffcd643057c483",
 	}
 
-	hash, err := msg.StakeHash("seda1nr9t0fe333uql6hh4k8h9qs8mzstjr4qsea3y5smyrd2ptqpt85sev3d8l", chainID, seqNum)
+	hash, err := msg.MsgHash("seda1nr9t0fe333uql6hh4k8h9qs8mzstjr4qsea3y5smyrd2ptqpt85sev3d8l", chainID, seqNum)
 	require.NoError(t, err)
 	publicKey, err := hex.DecodeString(msg.PublicKey)
 	require.NoError(t, err)

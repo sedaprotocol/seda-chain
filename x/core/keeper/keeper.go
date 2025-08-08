@@ -27,7 +27,7 @@ type Keeper struct {
 	Schema    collections.Schema
 	Allowlist collections.KeySet[string]
 	Stakers   collections.Map[string, types.Staker]
-	Params    collections.Item[types.Params]
+	params    collections.Item[types.Params]
 
 	DataRequests collections.Map[string, types.DataRequest]
 	committing   collections.KeySet[types.DataRequestIndex]
@@ -49,7 +49,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, ws
 		authority:         authority,
 		Allowlist:         collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
 		Stakers:           collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
-		Params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
+		params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		DataRequests:      collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
 		committing:        collections.NewKeySet(sb, types.CommittingKeyPrefix, "committing", collcodec.NewBytesKey[types.DataRequestIndex]()),
 		revealing:         collections.NewKeySet(sb, types.RevealingKeyPrefix, "revealing", collcodec.NewBytesKey[types.DataRequestIndex]()),
@@ -81,19 +81,31 @@ func (k Keeper) UpdateDataRequestTimeout(ctx sdk.Context, drID string, oldTimeou
 }
 
 func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
-	params, err := k.Params.Get(ctx)
+	params, err := k.params.Get(ctx)
 	if err != nil {
 		return types.Params{}, err
 	}
 	return params, nil
 }
 
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	return k.params.Set(ctx, params)
+}
+
 func (k Keeper) GetDataRequestConfig(ctx sdk.Context) (types.DataRequestConfig, error) {
-	params, err := k.Params.Get(ctx)
+	params, err := k.GetParams(ctx)
 	if err != nil {
 		return types.DataRequestConfig{}, err
 	}
 	return params.DataRequestConfig, nil
+}
+
+func (k Keeper) GetStakingConfig(ctx sdk.Context) (types.StakingConfig, error) {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return types.StakingConfig{}, err
+	}
+	return params.StakingConfig, nil
 }
 
 func (k Keeper) GetAuthority() string {

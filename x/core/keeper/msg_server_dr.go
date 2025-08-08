@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 
@@ -33,7 +34,7 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		return nil, types.ErrReplicationFactorTooHigh.Wrapf("%d > %d", msg.ReplicationFactor, maxRF)
 	}
 
-	drID, err := msg.Hash()
+	drID, err := msg.MsgHash()
 	if err != nil {
 		return nil, err
 	}
@@ -86,12 +87,12 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		SedaPayload:       msg.SedaPayload,
 		Height:            uint64(ctx.BlockHeight()),
 		PostedGasPrice:    msg.GasPrice,
-		Commits:           make(map[string][]byte),
-		Reveals:           make(map[string]bool),
 		Poster:            msg.Sender,
 		Escrow:            msg.Funds,
 		TimeoutHeight:     uint64(ctx.BlockHeight()) + uint64(drConfig.CommitTimeoutInBlocks),
 		Status:            types.DATA_REQUEST_COMMITTING,
+		// Commits:           make(map[string][]byte), // Dropped by proto anyways
+		// Reveals:           make(map[string]bool), // Dropped by proto anyways
 	}
 	err = m.DataRequests.Set(ctx, drID, dr)
 	if err != nil {
@@ -148,7 +149,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	}
 
 	// Verify the proof.
-	hash, err := msg.CommitHash("", ctx.ChainID(), dr.Height)
+	hash, err := msg.MsgHash("", ctx.ChainID(), dr.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +163,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	}
 	_, err = vrf.NewK256VRF().Verify(publicKey, proof, hash)
 	if err != nil {
-		return nil, types.ErrInvalidStakeProof.Wrapf(err.Error())
+		return nil, types.ErrInvalidCommitProof.Wrapf(err.Error())
 	}
 
 	// Add the commitment and start reveal phase if the data request is ready.
@@ -170,7 +171,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	if err != nil {
 		return nil, err
 	}
-	dr.Commits[msg.PublicKey] = commitment
+	dr.AddCommit(msg.PublicKey, commitment)
 
 	if len(dr.Commits) >= int(dr.ReplicationFactor) {
 		dr.Status = types.DATA_REQUEST_REVEALING
@@ -201,5 +202,81 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 }
 
 func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.MsgRevealResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Check the status of the data request.
+	dr, err := m.DataRequests.Get(ctx, msg.RevealBody.DrId)
+	if err != nil {
+		return nil, err
+	}
+	if dr.Status != types.DATA_REQUEST_REVEALING {
+		return nil, types.ErrRevealNotStarted
+	}
+	if dr.TimeoutHeight <= uint64(ctx.BlockHeight()) {
+		return nil, types.ErrDataRequestExpired.Wrapf("reveal phase expired at height %d", dr.TimeoutHeight)
+	}
+	if dr.HasRevealed(msg.PublicKey) {
+		return nil, types.ErrAlreadyRevealed
+	}
+
+	commit, exists := dr.GetCommit(msg.PublicKey)
+	if !exists {
+		return nil, types.ErrNotCommitted
+	}
+
+	// Check reveal size limit.
+	drConfig, err := m.GetDataRequestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	revealSizeLimit := drConfig.DrRevealSizeLimitInBytes / dr.ReplicationFactor
+	if len(msg.RevealBody.Reveal) > int(revealSizeLimit) {
+		return nil, types.ErrRevealTooBig.Wrapf("%d bytes > %d bytes", len(msg.RevealBody.Reveal), revealSizeLimit)
+	}
+
+	// Verify against the stored commit.
+	expectedCommit, err := msg.RevealHash()
+	if err != nil {
+		return nil, err
+	}
+	if !bytes.Equal(commit, expectedCommit) {
+		return nil, types.ErrRevealMismatch
+	}
+
+	// TODO move to msg.Validate()
+	for _, key := range msg.RevealBody.ProxyPublicKeys {
+		_, err := hex.DecodeString(key)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Verify the reveal proof.
+	publicKey, err := hex.DecodeString(msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	proof, err := hex.DecodeString(msg.Proof)
+	if err != nil {
+		return nil, err
+	}
+	revealHash, err := msg.MsgHash("", ctx.ChainID())
+	if err != nil {
+		return nil, err
+	}
+	_, err = vrf.NewK256VRF().Verify(publicKey, proof, revealHash)
+	if err != nil {
+		return nil, types.ErrInvalidRevealProof.Wrapf(err.Error())
+	}
+
+	// Add reveal to data request state.
+	dr.MarkAsRevealed(msg.PublicKey)
+	err = m.DataRequests.Set(ctx, msg.RevealBody.DrId, dr)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Add refund logic
+	// TODO: Add events
 	return &types.MsgRevealResponse{}, nil
 }
