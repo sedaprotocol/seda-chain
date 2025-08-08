@@ -9,27 +9,24 @@ import (
 	"strings"
 	"testing"
 
+	vrf "github.com/sedaprotocol/vrf-go"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/sha3"
-	"golang.org/x/exp/rand"
 
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-
 	"cosmossdk.io/math"
-
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
-	vrf "github.com/sedaprotocol/vrf-go"
-
 	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
-	coretypes "github.com/sedaprotocol/seda-chain/x/core/types"
-	"github.com/sedaprotocol/seda-chain/x/tally/types"
+	"github.com/sedaprotocol/seda-chain/x/core/types"
+	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
+	"github.com/sedaprotocol/seda-chain/x/wasm"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -37,11 +34,6 @@ const (
 	defaultCommitTimeoutBlocks = 50
 	defaultRevealTimeoutBlocks = 5
 )
-
-type PostDataRequestResponse struct {
-	DrID   string `json:"dr_id"`
-	Height uint64 `json:"height"`
-}
 
 type commitRevealConfig struct {
 	requestHeight uint64
@@ -52,36 +44,19 @@ type commitRevealConfig struct {
 	exitCode      byte
 }
 
-func (f *fixture) uploadOraclePrograms(t testing.TB) {
-	for _, op := range testwasms.TestWasms {
-		execProgram := wasmstoragetypes.NewOracleProgram(op, f.Context().BlockTime())
-		err := f.wasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
-		require.NoError(t, err)
-	}
-}
+// commitRevealDataRequest simulates stakers committing and revealing
+// for a data request. It returns the data request ID.
+func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCommits, numReveals int, timeout bool, config commitRevealConfig) (string, []staker) {
+	stakers := f.addStakers(t, 5)
 
-// executeDataRequestFlow posts a data request using the deployer account and
-// executes given numbers of commits and reveals for the request using the
-// stakers accounts. It returns the data request ID.
-func (f *fixture) executeDataRequestFlow(
-	t testing.TB,
-	execProgramBytes, tallyProgramBytes []byte,
-	replicationFactor, numCommits, numReveals int, timeout bool,
-	config commitRevealConfig,
-) string {
-	var execProgram, tallyProgram wasmstoragetypes.OracleProgram
-	if execProgramBytes != nil {
-		execProgram = wasmstoragetypes.NewOracleProgram(execProgramBytes, f.Context().BlockTime())
-	} else {
-		randIndex := rand.Intn(len(testwasms.TestWasms))
-		execProgram = wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
-	}
-	if tallyProgramBytes != nil {
-		tallyProgram = wasmstoragetypes.NewOracleProgram(tallyProgramBytes, f.Context().BlockTime())
-	} else {
-		randIndex := rand.Intn(len(testwasms.TestWasms))
-		tallyProgram = wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
-	}
+	// Upload data request and tally oracle programs.
+	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm(), f.Context().BlockTime())
+	err := f.wasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
+	require.NoError(t, err)
+
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm2(), f.Context().BlockTime())
+	err = f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
+	require.NoError(t, err)
 
 	// Post a data request.
 	res, err := f.postDataRequest(execProgram.Hash, tallyProgram.Hash, config.requestMemo, replicationFactor)
@@ -90,14 +65,10 @@ func (f *fixture) executeDataRequestFlow(
 	drID := res.DrID
 
 	// The stakers commit and reveal.
-<<<<<<< HEAD
-	revealMsgs, err := f.commitDataRequest(f.stakers[:numCommits], res.Height, drID, config)
-=======
 	revealMsgs, err := f.commitDataRequest(t, stakers[:numCommits], res.Height, drID, config)
->>>>>>> 1b0fe91 (feat(x/core): Commit tx except fee refund)
 	require.NoError(t, err)
 
-	err = f.executeReveals(f.stakers, revealMsgs[:numReveals])
+	err = f.executeReveals(stakers, revealMsgs[:numReveals])
 	require.NoError(t, err)
 
 	if timeout {
@@ -110,79 +81,45 @@ func (f *fixture) executeDataRequestFlow(
 			f.AddBlock()
 		}
 	}
-	return res.DrID
+	return res.DrID, stakers
 }
 
-// executeDataRequestFlowWithTallyTestItem posts a data request using the deployer
-// account and executes a commit and reveal for the request using a staker account.
-// It then returns the data request ID and the randomly selected TallyTestItem,
-// which contains the expected tally execution results.
-func (f *fixture) executeDataRequestFlowWithTallyTestItem(t testing.TB, entropy []byte) (string, testwasms.TallyTestItem) {
-	randIndex := rand.Intn(len(testwasms.TestWasms))
-	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
-
-	randIndex = rand.Intn(len(testwasms.TallyTestItems))
-	testItem := testwasms.TallyTestItems[randIndex]
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testItem.TallyProgram, f.Context().BlockTime())
-
-	config := commitRevealConfig{
-		requestHeight: 1,
-		requestMemo:   base64.StdEncoding.EncodeToString(entropy),
-		reveal:        testItem.Reveal,
-		proxyPubKeys:  []string{},
-		gasUsed:       testItem.GasUsed,
-	}
-
-	// Post a data request.
-	res, err := f.postDataRequest(execProgram.Hash, tallyProgram.Hash, config.requestMemo, 1)
-	require.NoError(t, err)
-
-	drID := res.DrID
-
-	// The stakers commit and reveal.
-	revealMsgs, err := f.commitDataRequest(f.stakers[:1], res.Height, drID, config)
-	require.NoError(t, err)
-
-	err = f.executeReveals(f.stakers, revealMsgs[:1])
-	require.NoError(t, err)
-
-	return res.DrID, testItem
-}
-
-func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) (PostDataRequestResponse, error) {
+func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) (*wasm.PostRequestResponsePayload, error) {
 	amount, ok := math.NewIntFromString("200600000000000000000")
 	if !ok {
-		return PostDataRequestResponse{}, fmt.Errorf("failed to convert string to int")
+		return nil, fmt.Errorf("failed to convert string to int")
 	}
-	resJSON, err := f.contractKeeper.Execute(
-		f.Context(),
-		f.coreContractAddr,
-		f.deployer,
+
+	resBytes, err := f.executeCoreContract(
+		f.deployer.String(),
 		testutil.PostDataRequestMsg(execProgHash, tallyProgHash, requestMemo, replicationFactor),
 		sdk.NewCoins(sdk.NewCoin(bondDenom, amount)),
 	)
 	if err != nil {
-		return PostDataRequestResponse{}, err
+		return nil, err
 	}
 
-	var res PostDataRequestResponse
-	err = json.Unmarshal(resJSON, &res)
-	if err != nil {
-		return PostDataRequestResponse{}, err
+	var wasmRes wasmtypes.MsgExecuteContractResponse
+	if err := wasmRes.Unmarshal(resBytes); err != nil {
+		return nil, err
 	}
-	return res, nil
+	var postRes wasm.PostRequestResponsePayload
+	err = json.Unmarshal(wasmRes.Data, &postRes)
+	if err != nil {
+		return nil, err
+	}
+	return &postRes, nil
 }
 
 // commitDataRequest executes a commit for each of the given stakers and
 // returns a list of corresponding reveal messages.
 func (f *fixture) commitDataRequest(t *testing.T, stakers []staker, height uint64, drID string, config commitRevealConfig) ([][]byte, error) {
-	revealBody := types.RevealBody{
-		DrID:          drID,
-		DrBlockHeight: height,
-		Reveal:        config.reveal,
-		GasUsed:       config.gasUsed,
-		ExitCode:      config.exitCode,
-		ProxyPubKeys:  config.proxyPubKeys,
+	revealBody := tallytypes.RevealBody{
+		DrID:         drID,
+		Reveal:       config.reveal,
+		GasUsed:      config.gasUsed,
+		ExitCode:     config.exitCode,
+		ProxyPubKeys: config.proxyPubKeys,
 	}
 
 	var revealMsgs [][]byte
@@ -228,7 +165,7 @@ type staker struct {
 
 // addStakers generates stakers and adds them to the allowlist. The
 // stakers subsequently send their stakes to the core contract.
-func (f *fixture) addStakers(t testing.TB, num int) []staker {
+func (f *fixture) addStakers(t *testing.T, num int) []staker {
 	stakers := make([]staker, num)
 	for i := 0; i < num; i++ {
 		privKey := secp256k1.GenPrivKey()
@@ -238,44 +175,26 @@ func (f *fixture) addStakers(t testing.TB, num int) []staker {
 			address: privKey.PubKey().Address().Bytes(),
 		}
 
-		_, err := f.contractKeeper.Execute(
-			f.Context(),
-			f.coreContractAddr,
-			f.deployer,
-			testutil.AddToAllowListMsg(stakers[i].pubKey),
-			sdk.NewCoins(),
-		)
+		// Add to allowlist.
+		_, err := f.executeCoreContract(f.deployer.String(), testutil.AddToAllowListMsg(stakers[i].pubKey), sdk.NewCoins())
 		require.NoError(t, err)
 
-		f.initAccountWithCoins(t, stakers[i].address, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1e18))))
+		// Stake.
+		f.initAccountWithCoins(t, stakers[i].address, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1e19))))
 
 		proof := f.generateStakeProof(t, stakers[i].key, 0)
-		_, err = f.contractKeeper.Execute(
-			f.Context(),
-			f.coreContractAddr,
-			stakers[i].address,
-			testutil.StakeMsg(stakers[i].pubKey, proof),
-			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-		)
+		_, err = f.executeCoreContract(sdk.AccAddress(stakers[i].address).String(), testutil.StakeMsg(stakers[i].pubKey, proof), sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1000000000000000000))))
 		require.NoError(t, err)
 
-		// To test sequence number.
+		// Another stake to test sequence number.
 		proof2 := f.generateStakeProof(t, stakers[i].key, 1)
-		_, err = f.contractKeeper.Execute(
-			f.Context(),
-			f.coreContractAddr,
-			stakers[i].address,
-			testutil.StakeMsg(stakers[i].pubKey, proof2),
-			sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-		)
+		_, err = f.executeCoreContract(sdk.AccAddress(stakers[i].address).String(), testutil.StakeMsg(stakers[i].pubKey, proof2), sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(3))))
 		require.NoError(t, err)
 	}
-
-	f.stakers = stakers
 	return stakers
 }
 
-func (f *fixture) pauseContract(t testing.TB) {
+func (f *fixture) pauseContract(t *testing.T) {
 	_, err := f.contractKeeper.Execute(
 		f.Context(),
 		f.coreContractAddr,
@@ -288,15 +207,12 @@ func (f *fixture) pauseContract(t testing.TB) {
 
 // generateStakeProof generates a proof for a stake message given a
 // base64-encoded memo.
-func (f *fixture) generateStakeProof(t testing.TB, signKey []byte) string {
-	// TODO
-	// var sequence uint64 = 0
-
+func (f *fixture) generateStakeProof(t *testing.T, signKey []byte, seqNum uint64) string {
 	memo := "YWRkcmVzcw=="
 	memoBytes, err := base64.StdEncoding.DecodeString(memo)
 	require.NoError(t, err)
 
-	msg := coretypes.MsgStake{
+	msg := types.MsgStake{
 		Memo: hex.EncodeToString(memoBytes),
 	}
 	hash, err := msg.MsgHash(f.coreContractAddr.String(), f.chainID, seqNum)
@@ -308,7 +224,7 @@ func (f *fixture) generateStakeProof(t testing.TB, signKey []byte) string {
 }
 
 func (f *fixture) generateCommitProof(t *testing.T, signKey []byte, drID, commitment string, drHeight uint64) (string, error) {
-	msg := coretypes.MsgCommit{
+	msg := types.MsgCommit{
 		DrId:       drID,
 		Commitment: commitment,
 	}
@@ -319,11 +235,10 @@ func (f *fixture) generateCommitProof(t *testing.T, signKey []byte, drID, commit
 	if err != nil {
 		return "", err
 	}
-
 	return hex.EncodeToString(proof), nil
 }
 
-func (f *fixture) initAccountWithCoins(t testing.TB, addr sdk.AccAddress, coins sdk.Coins) {
+func (f *fixture) initAccountWithCoins(t *testing.T, addr sdk.AccAddress, coins sdk.Coins) {
 	err := f.bankKeeper.MintCoins(f.Context(), minttypes.ModuleName, coins)
 	require.NoError(t, err)
 	err = f.bankKeeper.SendCoinsFromModuleToAccount(f.Context(), minttypes.ModuleName, addr, coins)
@@ -333,7 +248,7 @@ func (f *fixture) initAccountWithCoins(t testing.TB, addr sdk.AccAddress, coins 
 // generateRevealBodyHash generates the hash of a given reveal body.
 // Since the RevealBody type in the tally module does not include the
 // salt field, the salt must be provided separately.
-func (f *fixture) generateRevealBodyHash(rb types.RevealBody) ([]byte, error) {
+func (f *fixture) generateRevealBodyHash(rb tallytypes.RevealBody) ([]byte, error) {
 	revealHasher := sha3.NewLegacyKeccak256()
 	revealBytes, err := base64.StdEncoding.DecodeString(rb.Reveal)
 	if err != nil {
@@ -375,7 +290,7 @@ func (f *fixture) generateRevealBodyHash(rb types.RevealBody) ([]byte, error) {
 
 // createRevealMsg constructs and returns a reveal message and its corresponding
 // commitment and proof.
-func (f *fixture) createRevealMsg(staker staker, revealBody types.RevealBody) ([]byte, string, string, error) {
+func (f *fixture) createRevealMsg(staker staker, revealBody tallytypes.RevealBody) ([]byte, string, string, error) {
 	revealBodyHash, err := f.generateRevealBodyHash(revealBody)
 	if err != nil {
 		return nil, "", "", err
@@ -414,7 +329,7 @@ func generateRevealProof(signKey []byte, revealBodyHash []byte, chainID, coreCon
 
 	allBytes := append(revealBytes, revealBodyHash...)
 	allBytes = append(allBytes, []byte(chainID)...)
-	allBytes = append(allBytes, []byte(coreContractAddr)...)
+	// allBytes = append(allBytes, []byte(coreContractAddr)...)
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
@@ -463,16 +378,30 @@ func (f *fixture) executeCommitReveal(sender sdk.AccAddress, msg []byte, gasLimi
 	}
 
 	// Execute the message.
-	_, err = f.contractKeeper.Execute(
-		f.Context(),
-		f.coreContractAddr,
-		sender,
-		msg,
-		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
-	)
+	_, err = f.executeCoreContract(sender.String(), msg, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))))
 	if err != nil {
 		return err
 	}
 	f.SetInfiniteGasMeter()
 	return nil
+}
+
+func (f *fixture) executeCoreContract(sender string, msg []byte, funds sdk.Coins) ([]byte, error) {
+	execMsg := &wasmtypes.MsgExecuteContract{
+		Sender:   sender,
+		Contract: f.coreContractAddr.String(),
+		Msg:      msg,
+		Funds:    funds,
+	}
+
+	handler := f.router.Handler(execMsg)
+	if handler == nil {
+		return nil, fmt.Errorf("failed to find handler for message type %T", execMsg)
+	}
+
+	result, err := handler(f.Context(), execMsg)
+	if err != nil {
+		return nil, err
+	}
+	return result.Data, nil
 }

@@ -73,6 +73,15 @@ enum DataRequestStatus {
   DATA_REQUEST_TALLYING = 2;
 }
 
+message RevealBody {
+  string dr_id = 1;
+  uint64 dr_block_height = 2;
+  uint32 exit_code = 3;
+  uint64 gas_used = 4;
+  string reveal = 5;
+  repeated string proxy_public_keys = 6;
+}
+
 // Params defines the parameters for the core module.
 message Params {
   // DataRequestConfig contains data request-related module parameters.
