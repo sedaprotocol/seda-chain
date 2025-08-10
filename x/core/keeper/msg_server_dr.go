@@ -244,7 +244,7 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 	}
 
 	// TODO move to msg.Validate()
-	for _, key := range msg.RevealBody.ProxyPublicKeys {
+	for _, key := range msg.RevealBody.ProxyPubKeys {
 		_, err := hex.DecodeString(key)
 		if err != nil {
 			return nil, err

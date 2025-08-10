@@ -50,17 +50,17 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/bank"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/base"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/batching"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/core"
 	dataproxy "github.com/sedaprotocol/seda-chain/plugins/indexing/data-proxy"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 	oracleprogram "github.com/sedaprotocol/seda-chain/plugins/indexing/oracle-program"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pluginaws"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pubkey"
-	"github.com/sedaprotocol/seda-chain/plugins/indexing/tally"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	coretypes "github.com/sedaprotocol/seda-chain/x/core/types"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
-	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -137,8 +137,8 @@ func (p *IndexerPlugin) extractUpdate(change *storetypes.StoreKVPair) (*types.Me
 		return batching.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	case oracleprogram.StoreKey:
 		return oracleprogram.ExtractUpdate(p.block, p.cdc, p.logger, change)
-	case tally.StoreKey:
-		return tally.ExtractUpdate(p.block, p.cdc, p.logger, change)
+	case core.StoreKey:
+		return core.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	default:
 		return nil, nil
 	}
@@ -235,7 +235,7 @@ func main() {
 	crisistypes.RegisterInterfaces(interfaceRegistry)
 	packetforwardtypes.RegisterInterfaces(interfaceRegistry)
 	wasmstoragetypes.RegisterInterfaces(interfaceRegistry)
-	tallytypes.RegisterInterfaces(interfaceRegistry)
+	coretypes.RegisterInterfaces(interfaceRegistry)
 	dataproxytypes.RegisterInterfaces(interfaceRegistry)
 	batchingtypes.RegisterInterfaces(interfaceRegistry)
 

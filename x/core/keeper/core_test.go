@@ -51,7 +51,7 @@ func TestEndBlock(t *testing.T) {
 			beforeBalance := f.bankKeeper.GetBalance(f.Context(), stakers[0].address, bondDenom)
 			posterBeforeBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
 
-			err = f.tallyKeeper.EndBlock(f.Context())
+			err = f.keeper.EndBlock(f.Context())
 			require.NoError(t, err)
 			require.NotContains(t, f.logBuf.String(), "ERR")
 

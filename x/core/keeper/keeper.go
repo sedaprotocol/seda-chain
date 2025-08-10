@@ -18,6 +18,7 @@ import (
 type Keeper struct {
 	wasmStorageKeeper types.WasmStorageKeeper
 	batchingKeeper    types.BatchingKeeper
+	dataProxyKeeper   types.DataProxyKeeper
 	stakingKeeper     types.StakingKeeper
 	bankKeeper        types.BankKeeper
 	wasmKeeper        wasmtypes.ContractOpsKeeper
@@ -36,12 +37,24 @@ type Keeper struct {
 	timeoutQueue collections.KeySet[collections.Pair[uint64, string]]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, wsk types.WasmStorageKeeper, batk types.BatchingKeeper, sk types.StakingKeeper, bank types.BankKeeper, wk wasmtypes.ContractOpsKeeper, wvk wasmtypes.ViewKeeper, authority string) Keeper {
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeService storetypes.KVStoreService,
+	wsk types.WasmStorageKeeper,
+	batk types.BatchingKeeper,
+	dpk types.DataProxyKeeper,
+	sk types.StakingKeeper,
+	bank types.BankKeeper,
+	wk wasmtypes.ContractOpsKeeper,
+	wvk wasmtypes.ViewKeeper,
+	authority string,
+) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
 		wasmStorageKeeper: wsk,
 		batchingKeeper:    batk,
+		dataProxyKeeper:   dpk,
 		stakingKeeper:     sk,
 		bankKeeper:        bank,
 		wasmKeeper:        wk,
@@ -106,6 +119,14 @@ func (k Keeper) GetStakingConfig(ctx sdk.Context) (types.StakingConfig, error) {
 		return types.StakingConfig{}, err
 	}
 	return params.StakingConfig, nil
+}
+
+func (k Keeper) GetTallyConfig(ctx sdk.Context) (types.TallyConfig, error) {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return types.TallyConfig{}, err
+	}
+	return params.TallyConfig, nil
 }
 
 func (k Keeper) GetAuthority() string {

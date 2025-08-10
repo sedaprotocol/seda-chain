@@ -37,10 +37,10 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 		return ErrGasPriceTooLow.Wrapf("%s < %s", m.GasPrice, MinGasPrice)
 	}
 	if m.ExecGasLimit < MinExecGasLimit {
-		return ErrExecGasLimitTooLow.Wrapf("%s < %s", m.ExecGasLimit, MinExecGasLimit)
+		return ErrExecGasLimitTooLow.Wrapf("%d < %d", m.ExecGasLimit, MinExecGasLimit)
 	}
 	if m.TallyGasLimit < MinTallyGasLimit {
-		return ErrTallyGasLimitTooLow.Wrapf("%s < %s", m.TallyGasLimit, MinTallyGasLimit)
+		return ErrTallyGasLimitTooLow.Wrapf("%d < %d", m.TallyGasLimit, MinTallyGasLimit)
 	}
 
 	if len(m.ExecProgramId) != 64 {
@@ -240,7 +240,7 @@ func (rb RevealBody) RevealBodyHash() ([]byte, error) {
 	hasher.Write(revealHash)
 
 	proxyPubKeyHasher := sha3.NewLegacyKeccak256()
-	for _, key := range rb.ProxyPublicKeys {
+	for _, key := range rb.ProxyPubKeys {
 		keyHasher := sha3.NewLegacyKeccak256()
 		keyHasher.Write([]byte(key))
 		proxyPubKeyHasher.Write(keyHasher.Sum(nil))

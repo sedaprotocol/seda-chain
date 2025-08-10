@@ -1076,7 +1076,7 @@ func _Msg_Reveal_Handler(srv interface{}, ctx context.Context, dec func(interfac
 		FullMethod: "/sedachain.core.v1.Msg/Reveal",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-    		return srv.(MsgServer).Reveal(ctx, req.(*MsgReveal))
+		return srv.(MsgServer).Reveal(ctx, req.(*MsgReveal))
 	}
 	return interceptor(ctx, in, info, handler)
 }

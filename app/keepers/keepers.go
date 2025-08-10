@@ -32,7 +32,6 @@ import (
 	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
-	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/wasm"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 )
@@ -76,7 +75,6 @@ type AppKeepers struct {
 
 	// SEDA modules keepers
 	WasmStorageKeeper wasmstoragekeeper.Keeper
-	TallyKeeper       tallykeeper.Keeper
 	CoreKeeper        corekeeper.Keeper
 	DataProxyKeeper   dataproxykeeper.Keeper
 	PubKeyKeeper      *pubkeykeeper.Keeper
