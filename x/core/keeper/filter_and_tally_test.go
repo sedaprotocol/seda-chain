@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
+	"github.com/sedaprotocol/seda-chain/x/core/types"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
-	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -21,8 +21,9 @@ func TestFilterAndTally(t *testing.T) {
 	f := initFixture(t)
 
 	defaultParams := types.DefaultParams()
-	err := f.tallyKeeper.SetParams(f.Context(), defaultParams)
+	err := f.keeper.SetParams(f.Context(), defaultParams)
 	require.NoError(t, err)
+	tallyConfig := defaultParams.TallyConfig
 
 	tests := []struct {
 		name              string
@@ -49,7 +50,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostNone,
+			tallyGasUsed:      tallyConfig.GasCostBase + tallyConfig.FilterGasCostNone,
 			exitCode:          types.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -63,7 +64,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			tallyGasUsed:      defaultParams.GasCostBase,
+			tallyGasUsed:      tallyConfig.GasCostBase,
 			exitCode:          types.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -80,7 +81,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMode*5,
+			tallyGasUsed:      tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*5,
 			exitCode:          types.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -94,7 +95,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			tallyGasUsed:      defaultParams.GasCostBase,
+			tallyGasUsed:      tallyConfig.GasCostBase,
 			exitCode:          types.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -112,7 +113,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 6,
 			consensus:         true,
 			consPubKeys:       nil,
-			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMAD*6,
+			tallyGasUsed:      tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*6,
 			exitCode:          types.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -130,7 +131,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         true,
 			consPubKeys:       nil,
-			tallyGasUsed:      defaultParams.GasCostBase + defaultParams.FilterGasCostMultiplierMAD*5,
+			tallyGasUsed:      tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*5,
 			exitCode:          types.TallyExitCodeExecError, // since tally program does not exist
 			filterErr:         nil,
 		},
@@ -144,7 +145,7 @@ func TestFilterAndTally(t *testing.T) {
 			replicationFactor: 5,
 			consensus:         false,
 			consPubKeys:       nil,
-			tallyGasUsed:      defaultParams.GasCostBase,
+			tallyGasUsed:      tallyConfig.GasCostBase,
 			exitCode:          types.TallyExitCodeFilterError,
 			filterErr:         types.ErrNoBasicConsensus,
 		},
@@ -167,13 +168,13 @@ func TestFilterAndTally(t *testing.T) {
 			}
 
 			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
-			filterRes, tallyRes := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
+			filterRes, tallyRes := f.keeper.FilterAndTally(f.Context(), types.Request{
 				Reveals:           reveals,
 				ReplicationFactor: tt.replicationFactor,
 				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
 				PostedGasPrice:    "1000000000000000000", // 1e18
 				ExecGasLimit:      100000,
-			}, types.DefaultParams(), gasMeter)
+			}, types.DefaultParams().TallyConfig, gasMeter)
 			require.NoError(t, err)
 
 			if tt.outliers == nil {
@@ -206,8 +207,8 @@ func TestFilterAndTally(t *testing.T) {
 func TestExecutorPayout(t *testing.T) {
 	f := initFixture(t)
 
-	defaultParams := types.DefaultParams()
-	err := f.tallyKeeper.SetParams(f.Context(), defaultParams)
+	tallyConfig := types.DefaultParams()
+	err := f.keeper.SetParams(f.Context(), tallyConfig)
 	require.NoError(t, err)
 
 	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm2(), f.Context().BlockTime())
@@ -726,7 +727,7 @@ func TestExecutorPayout(t *testing.T) {
 			}
 
 			gasMeter := types.NewGasMeter(request.TallyGasLimit, request.ExecGasLimit, types.DefaultMaxTallyGasLimit, gasPrice, types.DefaultGasCostBase)
-			_, tallyRes := f.tallyKeeper.FilterAndTally(f.Context(), request, types.DefaultParams(), gasMeter)
+			_, tallyRes := f.keeper.FilterAndTally(f.Context(), request, types.DefaultParams().TallyConfig, gasMeter)
 			require.NoError(t, err)
 
 			execGasMeter := gasMeter.GetExecutorGasUsed()

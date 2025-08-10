@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/sedaprotocol/seda-chain/x/tally/types"
+	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
 const (
@@ -48,7 +48,7 @@ func invertErrors(errors []bool) []bool {
 // the given reveals to determine consensus, proxy public keys in consensus, and
 // outliers. It assumes that the reveals are sorted by their keys and that their
 // proxy public keys are sorted.
-func ExecuteFilter(reveals []types.Reveal, filterInput string, replicationFactor uint16, params types.Params, gasMeter *types.GasMeter) (FilterResult, error) {
+func ExecuteFilter(reveals []types.Reveal, filterInput string, replicationFactor uint16, params types.TallyConfig, gasMeter *types.GasMeter) (FilterResult, error) {
 	var res FilterResult
 	res.Errors = make([]bool, len(reveals))
 	res.Outliers = make([]bool, len(reveals))
@@ -93,7 +93,7 @@ func ExecuteFilter(reveals []types.Reveal, filterInput string, replicationFactor
 }
 
 // BuildFilter builds a filter based on the requestor-provided input.
-func BuildFilter(filterInput string, replicationFactor uint16, params types.Params, gasMeter *types.GasMeter) (types.Filter, error) {
+func BuildFilter(filterInput string, replicationFactor uint16, params types.TallyConfig, gasMeter *types.GasMeter) (types.Filter, error) {
 	input, err := base64.StdEncoding.DecodeString(filterInput)
 	if err != nil {
 		return nil, err

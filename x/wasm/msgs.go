@@ -8,7 +8,6 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	coretypes "github.com/sedaprotocol/seda-chain/x/core/types"
-	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
 func base64ToHex(base64Str string) (string, error) {
@@ -151,23 +150,23 @@ func (m CommitDataResultMsg) EncodeToSdkMsg(sender string) (sdk.Msg, error) {
 }
 
 type RevealDataResultMsg struct {
-	RevealBody tallytypes.RevealBody `json:"reveal_body"`
-	PublicKey  string                `json:"public_key"`
-	Proof      string                `json:"proof"`
-	Stderr     []string              `json:"stderr"`
-	Stdout     []string              `json:"stdout"`
+	RevealBody coretypes.RevealBody `json:"reveal_body"`
+	PublicKey  string               `json:"public_key"`
+	Proof      string               `json:"proof"`
+	Stderr     []string             `json:"stderr"`
+	Stdout     []string             `json:"stdout"`
 }
 
 func (m RevealDataResultMsg) EncodeToSdkMsg(sender string) (sdk.Msg, error) {
 	return &coretypes.MsgReveal{
 		Sender: sender, // TODO ensure security
 		RevealBody: &coretypes.RevealBody{
-			DrId:            m.RevealBody.DrID,
-			DrBlockHeight:   m.RevealBody.DrBlockHeight,
-			ExitCode:        uint32(m.RevealBody.ExitCode),
-			GasUsed:         m.RevealBody.GasUsed,
-			Reveal:          m.RevealBody.Reveal,
-			ProxyPublicKeys: m.RevealBody.ProxyPubKeys,
+			DrId:          m.RevealBody.DrId,
+			DrBlockHeight: m.RevealBody.DrBlockHeight,
+			ExitCode:      uint32(m.RevealBody.ExitCode),
+			GasUsed:       m.RevealBody.GasUsed,
+			Reveal:        m.RevealBody.Reveal,
+			ProxyPubKeys:  m.RevealBody.ProxyPubKeys,
 		},
 		PublicKey: m.PublicKey,
 		Proof:     m.Proof,

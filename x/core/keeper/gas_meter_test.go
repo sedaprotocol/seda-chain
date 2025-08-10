@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
-	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
-	"github.com/sedaprotocol/seda-chain/x/tally/types"
+	"github.com/sedaprotocol/seda-chain/x/core/keeper"
+	"github.com/sedaprotocol/seda-chain/x/core/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -21,7 +21,7 @@ func FuzzGasMetering(f *testing.F) {
 
 	// Prepare fixed parameters of the fuzz test.
 	defaultParams := types.DefaultParams()
-	err := fixture.tallyKeeper.SetParams(fixture.Context(), defaultParams)
+	err := fixture.keeper.SetParams(fixture.Context(), defaultParams)
 	require.NoError(f, err)
 
 	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm2(), fixture.Context().BlockTime())
@@ -71,7 +71,7 @@ func FuzzGasMetering(f *testing.F) {
 
 		gasMeter := types.NewGasMeter(tallyGasLimit, execGasLimit, types.DefaultMaxTallyGasLimit, gasPrice, types.DefaultGasCostBase)
 
-		fixture.tallyKeeper.FilterAndTally(
+		fixture.keeper.FilterAndTally(
 			fixture.Context(),
 			types.Request{
 				Reveals:           reveals,
@@ -81,7 +81,7 @@ func FuzzGasMetering(f *testing.F) {
 				ExecGasLimit:      execGasLimit,
 				TallyGasLimit:     tallyGasLimit,
 				TallyProgramID:    hex.EncodeToString(tallyProgram.Hash),
-			}, types.DefaultParams(), gasMeter)
+			}, types.DefaultParams().TallyConfig, gasMeter)
 
 		// Check executor gas used.
 		sumExec := math.NewInt(0)
@@ -105,7 +105,7 @@ func FuzzGasMetering(f *testing.F) {
 		tallySum = tallySum.Add(math.NewIntFromUint64(gasMeter.RemainingTallyGas()))
 		require.Equal(t, tallySum.String(), strconv.FormatUint(tallyGasLimit, 10))
 
-		dists := fixture.tallyKeeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+		dists := fixture.keeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
 		require.Len(t, dists, 13)
 
 		totalDist := math.NewInt(0)
@@ -130,7 +130,7 @@ func FuzzGasMetering(f *testing.F) {
 		require.True(t, totalGasPayed.LTE(sumExec.Add((tallySum))), "total gas payed is not less than or equal to the sum of exec and tally gas used")
 
 		gasMeter.SetReducedPayoutMode()
-		distsReduced := fixture.tallyKeeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+		distsReduced := fixture.keeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
 		totalDistReduced := math.NewInt(0)
 		burnReduced := math.NewInt(0)
 		for _, dist := range distsReduced {
@@ -169,7 +169,7 @@ func ReproductionTestReducedPayoutWithProxies(t *testing.T) {
 
 	// Scenario: 4 data proxy calls (3 to the same proxy, 1 to a different proxy), replication factor = 1.
 	gasMeter := types.NewGasMeter(150000000000000, 300000000000000, types.DefaultMaxTallyGasLimit, math.NewInt(100000), types.DefaultGasCostBase)
-	fixture.tallyKeeper.MeterProxyGas(fixture.Context(), []string{"020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0"}, 1, gasMeter)
+	fixture.keeper.MeterProxyGas(fixture.Context(), []string{"020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0"}, 1, gasMeter)
 
 	keeper.MeterExecutorGasUniform(
 		[]types.Reveal{
@@ -181,7 +181,7 @@ func ReproductionTestReducedPayoutWithProxies(t *testing.T) {
 	require.Equalf(t, uint64(81644889168750), gasMeter.ExecutionGasUsed(), "expected exec gas used %d, got %d", 81644889168750, gasMeter.ExecutionGasUsed())
 	require.Equalf(t, uint64(1000000000000), gasMeter.TallyGasUsed(), "expected tally gas used %d, got %d", 1000000100000, gasMeter.TallyGasUsed())
 
-	dists := fixture.tallyKeeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+	dists := fixture.keeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
 
 	require.Len(t, dists, 6)
 
@@ -199,7 +199,7 @@ func ReproductionTestReducedPayoutWithProxies(t *testing.T) {
 	require.Equalf(t, uint64(81644889168750), gasMeter.ExecutionGasUsed(), "expected exec gas used %d, got %d", 81644889168750, gasMeter.ExecutionGasUsed())
 	require.Equalf(t, uint64(1000000000000), gasMeter.TallyGasUsed(), "expected tally gas used %d, got %d", 1000000100000, gasMeter.TallyGasUsed())
 
-	distsReduced := fixture.tallyKeeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+	distsReduced := fixture.keeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
 
 	require.Equal(t, "1132895783375000000", distsReduced[0].Burn.Amount.String(), "Burn amount is incorrect")
 	require.Equal(t, "10000000000000", distsReduced[1].DataProxyReward.Amount.String(), "Data proxy 2 (...dec) did not receive correct payout")

@@ -10,7 +10,7 @@ import (
 
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
 
-	"github.com/sedaprotocol/seda-chain/x/tally/types"
+	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
 func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.Reveal, gasMeter *types.GasMeter) (types.VMResult, error) {

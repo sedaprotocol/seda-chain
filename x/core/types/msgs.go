@@ -240,7 +240,7 @@ func (rb RevealBody) RevealBodyHash() ([]byte, error) {
 	hasher.Write(revealHash)
 
 	proxyPubKeyHasher := sha3.NewLegacyKeccak256()
-	for _, key := range rb.ProxyPublicKeys {
+	for _, key := range rb.ProxyPubKeys {
 		keyHasher := sha3.NewLegacyKeccak256()
 		keyHasher.Write([]byte(key))
 		proxyPubKeyHasher.Write(keyHasher.Sum(nil))

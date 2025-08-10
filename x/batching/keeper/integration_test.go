@@ -49,16 +49,11 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
-	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
-	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 	"github.com/sedaprotocol/seda-chain/x/pubkey"
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
-	"github.com/sedaprotocol/seda-chain/x/tally"
-	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
-	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetestutil "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper/testutil"
@@ -80,7 +75,6 @@ type fixture struct {
 	contractKeeper    wasmkeeper.PermissionedKeeper
 	wasmKeeper        wasmkeeper.Keeper
 	wasmStorageKeeper wasmstoragekeeper.Keeper
-	tallyKeeper       tallykeeper.Keeper
 	pubKeyKeeper      pubkeykeeper.Keeper
 	batchingKeeper    batchingkeeper.Keeper
 	mockViewKeeper    *wasmstoragetestutil.MockViewKeeper
@@ -94,7 +88,7 @@ func initFixture(tb testing.TB) *fixture {
 
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, sdkstakingtypes.StoreKey, wasmstoragetypes.StoreKey,
-		wasmtypes.StoreKey, pubkeytypes.StoreKey, tallytypes.StoreKey, types.StoreKey, slashingtypes.StoreKey,
+		wasmtypes.StoreKey, pubkeytypes.StoreKey, types.StoreKey, slashingtypes.StoreKey,
 	)
 	cdc := moduletestutil.MakeTestEncodingConfig(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}).Codec
 
@@ -212,13 +206,6 @@ func initFixture(tb testing.TB) *fixture {
 	)
 	stakingKeeper.SetPubKeyKeeper(pubKeyKeeper)
 
-	dataProxyKeeper := dataproxykeeper.NewKeeper(
-		cdc,
-		runtime.NewKVStoreService(keys[dataproxytypes.StoreKey]),
-		bankKeeper,
-		authtypes.NewModuleAddress("gov").String(),
-	)
-
 	batchingKeeper := batchingkeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[types.StoreKey]),
@@ -231,22 +218,10 @@ func initFixture(tb testing.TB) *fixture {
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
 
-	tallyKeeper := tallykeeper.NewKeeper(
-		cdc,
-		runtime.NewKVStoreService(keys[tallytypes.StoreKey]),
-		wasmStorageKeeper,
-		batchingKeeper,
-		dataProxyKeeper,
-		contractKeeper,
-		viewKeeper,
-		authority.String(),
-	)
-
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
 	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
-	tallyModule := tally.NewAppModule(cdc, tallyKeeper)
 	pubKeyModule := pubkey.NewAppModule(cdc, pubKeyKeeper)
 	batchingModule := batching.NewAppModule(cdc, batchingKeeper)
 
@@ -255,7 +230,6 @@ func initFixture(tb testing.TB) *fixture {
 		banktypes.ModuleName:        bankModule,
 		sdkstakingtypes.ModuleName:  stakingModule,
 		wasmstoragetypes.ModuleName: wasmStorageModule,
-		tallytypes.ModuleName:       tallyModule,
 		pubkeytypes.ModuleName:      pubKeyModule,
 		types.ModuleName:            batchingModule,
 	})
@@ -270,7 +244,6 @@ func initFixture(tb testing.TB) *fixture {
 		contractKeeper:    *contractKeeper,
 		wasmKeeper:        wasmKeeper,
 		wasmStorageKeeper: *wasmStorageKeeper,
-		tallyKeeper:       tallyKeeper,
 		pubKeyKeeper:      *pubKeyKeeper,
 		batchingKeeper:    batchingKeeper,
 		mockViewKeeper:    viewKeeper,

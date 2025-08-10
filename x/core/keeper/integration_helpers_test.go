@@ -25,7 +25,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/core/types"
-	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	"github.com/sedaprotocol/seda-chain/x/wasm"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -114,11 +113,11 @@ func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMem
 // commitDataRequest executes a commit for each of the given stakers and
 // returns a list of corresponding reveal messages.
 func (f *fixture) commitDataRequest(t *testing.T, stakers []staker, height uint64, drID string, config commitRevealConfig) ([][]byte, error) {
-	revealBody := tallytypes.RevealBody{
-		DrID:         drID,
+	revealBody := types.RevealBody{
+		DrId:         drID,
 		Reveal:       config.reveal,
 		GasUsed:      config.gasUsed,
-		ExitCode:     config.exitCode,
+		ExitCode:     uint32(config.exitCode),
 		ProxyPubKeys: config.proxyPubKeys,
 	}
 
@@ -248,7 +247,7 @@ func (f *fixture) initAccountWithCoins(t *testing.T, addr sdk.AccAddress, coins 
 // generateRevealBodyHash generates the hash of a given reveal body.
 // Since the RevealBody type in the tally module does not include the
 // salt field, the salt must be provided separately.
-func (f *fixture) generateRevealBodyHash(rb tallytypes.RevealBody) ([]byte, error) {
+func (f *fixture) generateRevealBodyHash(rb types.RevealBody) ([]byte, error) {
 	revealHasher := sha3.NewLegacyKeccak256()
 	revealBytes, err := base64.StdEncoding.DecodeString(rb.Reveal)
 	if err != nil {
@@ -259,7 +258,7 @@ func (f *fixture) generateRevealBodyHash(rb tallytypes.RevealBody) ([]byte, erro
 
 	hasher := sha3.NewLegacyKeccak256()
 
-	idBytes, err := hex.DecodeString(rb.DrID)
+	idBytes, err := hex.DecodeString(rb.DrId)
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +268,7 @@ func (f *fixture) generateRevealBodyHash(rb tallytypes.RevealBody) ([]byte, erro
 	binary.BigEndian.PutUint64(reqHeightBytes, rb.DrBlockHeight)
 	hasher.Write(reqHeightBytes)
 
-	hasher.Write([]byte{rb.ExitCode})
+	hasher.Write([]byte{byte(rb.ExitCode)})
 
 	gasUsedBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(gasUsedBytes, rb.GasUsed)
@@ -290,7 +289,7 @@ func (f *fixture) generateRevealBodyHash(rb tallytypes.RevealBody) ([]byte, erro
 
 // createRevealMsg constructs and returns a reveal message and its corresponding
 // commitment and proof.
-func (f *fixture) createRevealMsg(staker staker, revealBody tallytypes.RevealBody) ([]byte, string, string, error) {
+func (f *fixture) createRevealMsg(staker staker, revealBody types.RevealBody) ([]byte, string, string, error) {
 	revealBodyHash, err := f.generateRevealBodyHash(revealBody)
 	if err != nil {
 		return nil, "", "", err
@@ -301,12 +300,12 @@ func (f *fixture) createRevealMsg(staker staker, revealBody tallytypes.RevealBod
 	}
 
 	msg := testutil.RevealMsg(
-		revealBody.DrID,
+		revealBody.DrId,
 		revealBody.Reveal,
 		staker.pubKey,
 		proof,
 		revealBody.ProxyPubKeys,
-		revealBody.ExitCode,
+		byte(revealBody.ExitCode),
 		revealBody.DrBlockHeight,
 		revealBody.GasUsed,
 	)

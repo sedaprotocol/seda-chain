@@ -79,18 +79,17 @@ message RevealBody {
   uint32 exit_code = 3;
   uint64 gas_used = 4;
   string reveal = 5;
-  repeated string proxy_public_keys = 6;
+  repeated string proxy_pub_keys = 6;
 }
 
 // Params defines the parameters for the core module.
 message Params {
-  // DataRequestConfig contains data request-related module parameters.
   DataRequestConfig data_request_config = 1 [ (gogoproto.nullable) = false ];
-  // StakingConfig contains Overlay staking-related module parameters.
   StakingConfig staking_config = 2 [ (gogoproto.nullable) = false ];
+  TallyConfig tally_config = 3 [ (gogoproto.nullable) = false ];
 }
 
-// DataRequestConfig defines the configuration for data requests
+// DataRequestConfig defines data request-related parameters.
 message DataRequestConfig {
   // Number of blocks after which a data request is timed out while waiting
   // for commits.
@@ -117,7 +116,7 @@ message DataRequestConfig {
   uint32 seda_payload_limit_in_bytes = 10;
 }
 
-// StakingConfig contains Overlay staking-related module parameters.
+// StakingConfig defines staking-related parameters.
 message StakingConfig {
   // MiminumStake is the minimum amount of SEDA tokens required to register as
   // an Overlay.
@@ -129,4 +128,35 @@ message StakingConfig {
   ];
   // AllowlistEnabled is a flag that indicates whether the allowlist is enabled.
   bool allowlist_enabled = 2;
+}
+
+// TallyConfig definfes tally-related parameters.
+message TallyConfig {
+  // MaxTallyGasLimit is the maximum gas limit for a tally request.
+  uint64 max_tally_gas_limit = 1;
+  // FilterGasCostNone is the gas cost for a filter type none.
+  uint64 filter_gas_cost_none = 2;
+  // FilterGasCostMultiplierMode is the gas cost multiplier for a filter type
+  // mode.
+  uint64 filter_gas_cost_multiplier_mode = 3;
+  // FilterGasCostMAD is the gas cost multiplier for a filter type
+  // Median Absolute Deviation.
+  uint64 filter_gas_cost_multiplier_m_a_d = 4;
+  // GasCostBase is the base gas cost for a data request.
+  uint64 gas_cost_base = 5;
+  // GasCostFallback is the gas cost incurred for data request execution when
+  // even basic consensus has not been reached.
+  uint64 execution_gas_cost_fallback = 6;
+  // BurnRatio is the ratio of the gas cost to be burned in case of reduced
+  // payout scenarios.
+  string burn_ratio = 7 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (amino.dont_omitempty) = true,
+    (gogoproto.nullable) = false
+  ];
+  // MaxResultSize is the maximum size of the result of a data request in bytes.
+  uint32 max_result_size = 8;
+  // MaxTalliesPerBlock specifies the maximum number of tallies per block.
+  uint32 max_tallies_per_block = 9;
 }
