@@ -155,9 +155,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/slashing"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
-	"github.com/sedaprotocol/seda-chain/x/tally"
-	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
-	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
 	"github.com/sedaprotocol/seda-chain/x/wasm"
@@ -205,7 +202,6 @@ var (
 		crisis.AppModuleBasic{},
 		packetforward.AppModuleBasic{},
 		wasmstorage.AppModuleBasic{},
-		tally.AppModuleBasic{},
 		dataproxy.AppModuleBasic{},
 		batching.AppModuleBasic{},
 		core.AppModuleBasic{},
@@ -331,7 +327,7 @@ func NewApp(
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
 		crisistypes.StoreKey, wasmstoragetypes.StoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey,
-		batchingtypes.StoreKey, tallytypes.StoreKey, coretypes.StoreKey,
+		batchingtypes.StoreKey, coretypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -689,22 +685,12 @@ func NewApp(
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 	)
 
-	app.TallyKeeper = tallykeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[tallytypes.StoreKey]),
-		app.WasmStorageKeeper,
-		app.BatchingKeeper,
-		app.DataProxyKeeper,
-		app.WasmContractKeeper,
-		app.WasmKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
 	app.CoreKeeper = corekeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[coretypes.StoreKey]),
 		app.WasmStorageKeeper,
 		app.BatchingKeeper,
+		app.DataProxyKeeper,
 		app.StakingKeeper,
 		app.BankKeeper,
 		app.WasmContractKeeper,
@@ -829,7 +815,6 @@ func NewApp(
 		ibctm.AppModule{},
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
 		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
-		tally.NewAppModule(appCodec, app.TallyKeeper),
 		dataproxy.NewAppModule(appCodec, app.DataProxyKeeper),
 		pubkey.NewAppModule(appCodec, app.PubKeyKeeper),
 		batching.NewAppModule(appCodec, app.BatchingKeeper),
@@ -889,11 +874,10 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 		// custom modules
 		wasmstoragetypes.ModuleName,
-		tallytypes.ModuleName,
+		coretypes.ModuleName,
 		dataproxytypes.ModuleName,
 		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
-		coretypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -923,11 +907,10 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 		// custom modules
 		wasmstoragetypes.ModuleName,
-		tallytypes.ModuleName,
+		coretypes.ModuleName,
 		dataproxytypes.ModuleName,
 		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
-		coretypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after sdkstaking so that pools are
@@ -964,10 +947,9 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 		// custom modules (except pubkey)
 		wasmstoragetypes.ModuleName,
-		tallytypes.ModuleName,
+		coretypes.ModuleName,
 		dataproxytypes.ModuleName,
 		batchingtypes.ModuleName,
-		coretypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)
@@ -981,7 +963,8 @@ func NewApp(
 	if err != nil {
 		panic(err)
 	}
-	app.setupUpgrades()
+	// TODO Re-enable upgrades
+	// app.setupUpgrades()
 
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.mm.Modules))
 	reflectionSvc, err := runtimeservices.NewReflectionService()

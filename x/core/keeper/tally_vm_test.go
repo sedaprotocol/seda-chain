@@ -12,8 +12,8 @@ import (
 	"cosmossdk.io/math"
 
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
-	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
-	"github.com/sedaprotocol/seda-chain/x/tally/types"
+	"github.com/sedaprotocol/seda-chain/x/core/keeper"
+	"github.com/sedaprotocol/seda-chain/x/core/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
 )
@@ -27,7 +27,7 @@ func TestExecuteTallyProgram_RandomString(t *testing.T) {
 	f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 
 	gasMeter := types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1)
-	vmRes, err := f.tallyKeeper.ExecuteTallyProgram(f.Context(), types.Request{
+	vmRes, err := f.keeper.ExecuteTallyProgram(f.Context(), types.Request{
 		TallyProgramID: hex.EncodeToString(tallyProgram.Hash),
 		TallyInputs:    base64.StdEncoding.EncodeToString([]byte("hello")),
 		PaybackAddress: base64.StdEncoding.EncodeToString([]byte("0x0")),
@@ -76,7 +76,7 @@ func TestExecuteTallyProgram_InvalidImports(t *testing.T) {
 	f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 
 	gasMeter := types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1)
-	vmRes, err := f.tallyKeeper.ExecuteTallyProgram(f.Context(), types.Request{
+	vmRes, err := f.keeper.ExecuteTallyProgram(f.Context(), types.Request{
 		TallyProgramID: hex.EncodeToString(tallyProgram.Hash),
 		TallyInputs:    base64.StdEncoding.EncodeToString([]byte("hello")),
 		PaybackAddress: base64.StdEncoding.EncodeToString([]byte("0x0")),

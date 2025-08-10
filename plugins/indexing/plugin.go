@@ -26,12 +26,12 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/bank"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/base"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/batching"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/core"
 	dataproxy "github.com/sedaprotocol/seda-chain/plugins/indexing/data-proxy"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 	oracleprogram "github.com/sedaprotocol/seda-chain/plugins/indexing/oracle-program"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pluginaws"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pubkey"
-	"github.com/sedaprotocol/seda-chain/plugins/indexing/tally"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
@@ -107,8 +107,8 @@ func (p *IndexerPlugin) extractUpdate(change *storetypes.StoreKVPair) (*types.Me
 		return batching.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	case oracleprogram.StoreKey:
 		return oracleprogram.ExtractUpdate(p.block, p.cdc, p.logger, change)
-	case tally.StoreKey:
-		return tally.ExtractUpdate(p.block, p.cdc, p.logger, change)
+	case core.StoreKey:
+		return core.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	default:
 		return nil, nil
 	}

@@ -16,7 +16,7 @@ import (
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
 
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
-	"github.com/sedaprotocol/seda-chain/x/tally/types"
+	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
 const (
@@ -50,7 +50,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 // ProcessTallies fetches from the core contract the list of requests
 // to be tallied and then goes through it to filter and tally.
 func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) error {
-	params, err := k.GetParams(ctx)
+	params, err := k.GetTallyConfig(ctx)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally params", "err", err)
@@ -240,7 +240,7 @@ type TallyResult struct {
 
 // FilterAndTally builds and applies filter, executes tally program, and
 // calculates canonical gas consumption.
-func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.Params, gasMeter *types.GasMeter) (FilterResult, TallyResult) {
+func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.TallyConfig, gasMeter *types.GasMeter) (FilterResult, TallyResult) {
 	reveals, executors, gasReports := req.SanitizeReveals(ctx.BlockHeight())
 
 	// Phase 1: Filtering

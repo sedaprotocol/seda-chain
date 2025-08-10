@@ -1,4 +1,4 @@
-package tally
+package core
 
 import (
 	"bytes"
@@ -9,20 +9,20 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
-	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
+	coretypes "github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
-const StoreKey = tallytypes.StoreKey
+const StoreKey = coretypes.StoreKey
 
-type Params tallytypes.Params
+type Params coretypes.Params
 
 func (p Params) MarshalJSON() ([]byte, error) {
 	return types.MarshalJSJSON(p)
 }
 
 func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger, change *storetypes.StoreKVPair) (*types.Message, error) {
-	if _, found := bytes.CutPrefix(change.Key, tallytypes.ParamsPrefix); found {
-		val, err := codec.CollValue[tallytypes.Params](cdc).Decode(change.Value)
+	if _, found := bytes.CutPrefix(change.Key, coretypes.ParamsKey); found {
+		val, err := codec.CollValue[coretypes.Params](cdc).Decode(change.Value)
 		if err != nil {
 			return nil, err
 		}
@@ -31,7 +31,7 @@ func ExtractUpdate(ctx *types.BlockContext, cdc codec.Codec, logger *log.Logger,
 			ModuleName string `json:"moduleName"`
 			Params     Params `json:"params"`
 		}{
-			ModuleName: "tally",
+			ModuleName: "core",
 			Params:     Params(val),
 		}
 
