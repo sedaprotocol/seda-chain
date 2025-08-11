@@ -896,8 +896,9 @@ func TestFilter(t *testing.T) {
 
 			result, err := keeper.ExecuteFilter(
 				reveals,
-				base64.StdEncoding.EncodeToString(filterInput), uint16(len(tt.reveals)),
-				types.DefaultParams().TallyConfig,
+				filterInput,
+				uint16(len(tt.reveals)),
+				tallyConfig,
 				gasMeter,
 			)
 			require.ErrorIs(t, err, tt.wantErr)
@@ -1039,7 +1040,8 @@ func TestFilterWildcard(t *testing.T) {
 
 			result, err := keeper.ExecuteFilter(
 				reveals,
-				base64.StdEncoding.EncodeToString(filterInput), uint16(len(tt.reveals)),
+				filterInput,
+				uint16(len(tt.reveals)),
 				tallyConfig,
 				gasMeter,
 			)

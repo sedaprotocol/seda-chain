@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"encoding/base64"
 	"encoding/hex"
 	"strconv"
 	"testing"
@@ -68,19 +67,31 @@ func FuzzGasMetering(f *testing.F) {
 			"i": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g8, ProxyPubKeys: proxyPubKeys},
 			"j": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g9, ProxyPubKeys: proxyPubKeys},
 		}
+		revealsMap := map[string]bool{
+			"a": true,
+			"b": true,
+			"c": true,
+			"d": true,
+			"e": true,
+			"f": true,
+			"g": true,
+			"h": true,
+			"i": true,
+			"j": true,
+		}
 
 		gasMeter := types.NewGasMeter(tallyGasLimit, execGasLimit, types.DefaultMaxTallyGasLimit, gasPrice, types.DefaultGasCostBase)
 
 		fixture.keeper.FilterAndTally(
 			fixture.Context(),
-			types.Request{
-				Reveals:           reveals,
-				ReplicationFactor: uint16(len(reveals)),
-				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-				PostedGasPrice:    gasPriceStr,
+			types.DataRequest{
+				Reveals:           revealsMap,
+				ReplicationFactor: uint32(len(reveals)),
+				ConsensusFilter:   filterInput,
+				PostedGasPrice:    gasPrice,
 				ExecGasLimit:      execGasLimit,
 				TallyGasLimit:     tallyGasLimit,
-				TallyProgramID:    hex.EncodeToString(tallyProgram.Hash),
+				TallyProgramId:    hex.EncodeToString(tallyProgram.Hash),
 			}, types.DefaultParams().TallyConfig, gasMeter)
 
 		// Check executor gas used.

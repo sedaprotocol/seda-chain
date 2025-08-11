@@ -13,33 +13,21 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
-func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.Reveal, gasMeter *types.GasMeter) (types.VMResult, error) {
-	tallyProgram, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyProgramID)
+func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, dr types.DataRequest, filterResult FilterResult, reveals []types.Reveal, gasMeter *types.GasMeter) (types.VMResult, error) {
+	tallyProgram, err := k.wasmStorageKeeper.GetOracleProgram(ctx, dr.TallyProgramId)
 	if err != nil {
-		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrFindingTallyProgram, req)
-	}
-	tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
-	if err != nil {
-		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingTallyInputs, req)
+		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrFindingTallyProgram, dr.Id)
 	}
 
-	// Convert base64-encoded payback address to hex encoding that
-	// the tally VM expects.
-	decodedBytes, err := base64.StdEncoding.DecodeString(req.PaybackAddress)
+	args, err := tallyVMArg(dr.TallyInputs, reveals, filterResult.Outliers)
 	if err != nil {
-		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingPaybackAddress, req)
-	}
-	paybackAddrHex := hex.EncodeToString(decodedBytes)
-
-	args, err := tallyVMArg(tallyInputs, reveals, filterResult.Outliers)
-	if err != nil {
-		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, req)
+		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, dr.Id)
 	}
 
 	k.Logger(ctx).Info(
 		"executing tally VM",
-		"request_id", req.ID,
-		"tally_program_id", req.TallyProgramID,
+		"request_id", dr.Id,
+		"tally_program_id", dr.TallyProgramId,
 		"consensus", filterResult.Consensus,
 		"arguments", args,
 	)
@@ -48,24 +36,24 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterRe
 		"VM_MODE":               "tally",
 		"CONSENSUS":             fmt.Sprintf("%v", filterResult.Consensus),
 		"BLOCK_HEIGHT":          fmt.Sprintf("%d", ctx.BlockHeight()),
-		"DR_ID":                 req.ID,
-		"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", req.ReplicationFactor),
-		"EXEC_PROGRAM_ID":       req.ExecProgramID,
-		"EXEC_INPUTS":           req.ExecInputs,
-		"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", req.ExecGasLimit),
-		"TALLY_INPUTS":          req.TallyInputs,
-		"TALLY_PROGRAM_ID":      req.TallyProgramID,
-		"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", gasMeter.RemainingTallyGas()),
-		"DR_GAS_PRICE":          req.PostedGasPrice,
-		"DR_MEMO":               req.Memo,
-		"DR_PAYBACK_ADDRESS":    paybackAddrHex,
+		"DR_ID":                 dr.Id,
+		"DR_REPLICATION_FACTOR": fmt.Sprintf("%d", dr.ReplicationFactor),
+		"EXEC_PROGRAM_ID":       dr.ExecProgramId,
+		"EXEC_INPUTS":           base64.StdEncoding.EncodeToString(dr.ExecInputs), // vm expects base64-encoded string
+		"EXEC_GAS_LIMIT":        fmt.Sprintf("%d", dr.ExecGasLimit),
+		"TALLY_INPUTS":          base64.StdEncoding.EncodeToString(dr.TallyInputs), // vm expects base64-encoded string
+		"TALLY_PROGRAM_ID":      dr.TallyProgramId,
+		"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%d", gasMeter.RemainingTallyGas()),
+		"DR_GAS_PRICE":          dr.PostedGasPrice.String(),
+		"DR_MEMO":               base64.StdEncoding.EncodeToString(dr.Memo), // vm expects base64-encoded string
+		"DR_PAYBACK_ADDRESS":    hex.EncodeToString(dr.PaybackAddress),      // vm expects hex string
 	})
 
 	gasMeter.ConsumeTallyGas(vmRes.GasUsed)
 
 	result := types.MapVMResult(vmRes)
 	if result.ExitCode != 0 {
-		k.Logger(ctx).Error("tally vm exit message", "request_id", req.ID, "exit_message", result.ExitMessage)
+		k.Logger(ctx).Error("tally vm exit message", "request_id", dr.Id, "exit_message", result.ExitMessage)
 	}
 
 	return result, nil

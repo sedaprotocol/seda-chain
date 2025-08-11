@@ -87,6 +87,7 @@ type fixture struct {
 	accountKeeper     authkeeper.AccountKeeper
 	bankKeeper        bankkeeper.Keeper
 	stakingKeeper     stakingkeeper.Keeper
+	pubKeyKeeper      *pubkeykeeper.Keeper
 	contractKeeper    sdkwasmkeeper.PermissionedKeeper
 	wasmKeeper        sdkwasmkeeper.Keeper
 	wasmStorageKeeper wasmstoragekeeper.Keeper
@@ -294,6 +295,16 @@ func initFixture(t testing.TB) *fixture {
 	err = coreKeeper.SetParams(ctx, coretypes.DefaultParams())
 	require.NoError(t, err)
 
+	err = pubKeyKeeper.SetProvingScheme(
+		ctx,
+		pubkeytypes.ProvingScheme{
+			Index:            0, // SEDA Key Index for Secp256k1
+			IsActivated:      true,
+			ActivationHeight: ctx.BlockHeight(),
+		},
+	)
+	require.NoError(t, err)
+
 	// Upload, instantiate, and configure the Core Contract.
 	int1e21, ok := math.NewIntFromString("10000000000000000000000000")
 	require.True(t, ok)
@@ -336,6 +347,7 @@ func initFixture(t testing.TB) *fixture {
 		accountKeeper:     accountKeeper,
 		bankKeeper:        bankKeeper,
 		stakingKeeper:     *stakingKeeper,
+		pubKeyKeeper:      pubKeyKeeper,
 		contractKeeper:    *contractKeeper,
 		wasmKeeper:        *wasmKeeper.Keeper,
 		wasmStorageKeeper: *wasmStorageKeeper,

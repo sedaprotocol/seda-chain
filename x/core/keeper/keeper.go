@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"sort"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
@@ -31,6 +32,7 @@ type Keeper struct {
 	params    collections.Item[types.Params]
 
 	DataRequests collections.Map[string, types.DataRequest]
+	revealBodies collections.Map[collections.Pair[string, string], types.RevealBody]
 	committing   collections.KeySet[types.DataRequestIndex]
 	revealing    collections.KeySet[types.DataRequestIndex]
 	tallying     collections.KeySet[types.DataRequestIndex]
@@ -64,6 +66,7 @@ func NewKeeper(
 		Stakers:           collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
 		params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		DataRequests:      collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
+		revealBodies:      collections.NewMap(sb, types.RevealsKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
 		committing:        collections.NewKeySet(sb, types.CommittingKeyPrefix, "committing", collcodec.NewBytesKey[types.DataRequestIndex]()),
 		revealing:         collections.NewKeySet(sb, types.RevealingKeyPrefix, "revealing", collcodec.NewBytesKey[types.DataRequestIndex]()),
 		tallying:          collections.NewKeySet(sb, types.TallyingKeyPrefix, "tallying", collcodec.NewBytesKey[types.DataRequestIndex]()),
@@ -76,6 +79,50 @@ func NewKeeper(
 	}
 	k.Schema = schema
 	return k
+}
+
+func (k Keeper) GetRevealBody(ctx sdk.Context, drID string, executor string) (types.RevealBody, error) {
+	return k.revealBodies.Get(ctx, collections.Join(drID, executor))
+}
+
+func (k Keeper) SetRevealBody(ctx sdk.Context, drID string, executor string, revealBody types.RevealBody) error {
+	return k.revealBodies.Set(ctx, collections.Join(drID, executor), revealBody)
+}
+
+// LoadRevealsSorted returns reveals, executors, and gas reports sorted in a
+// deterministically random order. The reveals are retrieved based on the given
+// map of executors, and each reveal's reported proxy public keys are sorted.
+func (k Keeper) LoadRevealsSorted(ctx sdk.Context, drID string, revealsMap map[string]bool) ([]types.Reveal, []string, []uint64) {
+	reveals := make([]types.Reveal, len(revealsMap))
+	i := 0
+	for executor := range revealsMap {
+		revealBody, err := k.GetRevealBody(ctx, drID, executor)
+		if err != nil {
+			// TODO Proper error handling
+			return nil, nil, nil
+		}
+		reveals[i] = types.Reveal{Executor: executor, RevealBody: revealBody}
+		sort.Strings(reveals[i].ProxyPubKeys)
+		i++
+	}
+
+	sortedReveals := types.HashSort(reveals, types.GetEntropy(drID, ctx.BlockHeight()))
+
+	executors := make([]string, len(sortedReveals))
+	gasReports := make([]uint64, len(sortedReveals))
+	for i, reveal := range sortedReveals {
+		executors[i] = reveal.Executor
+		gasReports[i] = reveal.GasUsed
+	}
+	return sortedReveals, executors, gasReports
+}
+
+func (k Keeper) RemoveFromTimeoutQueue(ctx sdk.Context, drID string, timeoutHeight uint64) error {
+	err := k.timeoutQueue.Remove(ctx, collections.Join(timeoutHeight, drID))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (k Keeper) UpdateDataRequestTimeout(ctx sdk.Context, drID string, oldTimeoutHeight, newTimeoutHeight uint64) error {

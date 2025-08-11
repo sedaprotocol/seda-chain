@@ -79,7 +79,8 @@ message RevealBody {
   uint32 exit_code = 3;
   uint64 gas_used = 4;
   string reveal = 5;
-  repeated string proxy_pub_keys = 6;
+  repeated string proxy_pub_keys = 6
+      [ (gogoproto.jsontag) = "proxy_public_keys" ];
 }
 
 // Params defines the parameters for the core module.
