@@ -15,6 +15,7 @@ import (
 // a data request.
 func TestDataRequestFlow(t *testing.T) {
 	f := initFixture(t)
+	stakers := f.addStakers(t, 5)
 
 	tests := []struct {
 		name              string
@@ -42,14 +43,15 @@ func TestDataRequestFlow(t *testing.T) {
 			require.NoError(t, err)
 
 			drID, stakers := f.commitRevealDataRequest(
-				t, tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout,
+				t, stakers, tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout,
 				commitRevealConfig{
 					requestHeight: 1,
 					requestMemo:   tt.memo,
 					reveal:        base64.StdEncoding.EncodeToString([]byte("reveal")),
 					proxyPubKeys:  proxyPubKeys,
 					gasUsed:       150000000000000000,
-				})
+				},
+			)
 
 			beforeBalance := f.bankKeeper.GetBalance(f.Context(), stakers[0].address, bondDenom)
 			posterBeforeBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
