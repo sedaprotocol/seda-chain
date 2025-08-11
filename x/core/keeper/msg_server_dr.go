@@ -268,8 +268,12 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 		return nil, types.ErrInvalidRevealProof.Wrapf(err.Error())
 	}
 
-	revealsCount := dr.MarkAsRevealed(msg.PublicKey)
-	if revealsCount >= int(dr.ReplicationFactor) {
+	if dr.Reveals == nil {
+		dr.Reveals = make(map[string]*types.RevealBody)
+	}
+	dr.Reveals[msg.PublicKey] = msg.RevealBody
+	// revealsCount := dr.MarkAsRevealed(msg.PublicKey)
+	if len(dr.Reveals) >= int(dr.ReplicationFactor) {
 		dr.Status = types.DATA_REQUEST_TALLYING
 
 		err = m.RemoveFromTimeoutQueue(ctx, dr.Id, dr.TimeoutHeight)
@@ -283,10 +287,10 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 		}
 	}
 
-	err = m.SetRevealBody(ctx, dr.Id, msg.PublicKey, *msg.RevealBody)
-	if err != nil {
-		return nil, err
-	}
+	// err = m.SetRevealBody(ctx, dr.Id, msg.PublicKey, *msg.RevealBody)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	err = m.DataRequests.Set(ctx, msg.RevealBody.DrId, dr)
 	if err != nil {
 		return nil, err

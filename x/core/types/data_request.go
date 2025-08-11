@@ -41,15 +41,15 @@ func (dr DataRequest) GetCommit(publicKey string) ([]byte, bool) {
 	return commit, exists
 }
 
-// MarkAsRevealed adds the given public key to the data request's reveals map
-// and returns the count of reveals.
-func (dr *DataRequest) MarkAsRevealed(publicKey string) int {
-	if dr.Reveals == nil {
-		dr.Reveals = make(map[string]bool)
-	}
-	dr.Reveals[publicKey] = true
-	return len(dr.Reveals)
-}
+// // MarkAsRevealed adds the given public key to the data request's reveals map
+// // and returns the count of reveals.
+// func (dr *DataRequest) MarkAsRevealed(publicKey string) int {
+// 	if dr.Reveals == nil {
+// 		dr.Reveals = make(map[string]bool)
+// 	}
+// 	dr.Reveals[publicKey] = true
+// 	return len(dr.Reveals)
+// }
 
 func (dr DataRequest) HasRevealed(publicKey string) bool {
 	if dr.Reveals == nil {

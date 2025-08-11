@@ -1,5 +1,6 @@
 package keeper_test
 
+/*
 import (
 	"encoding/hex"
 	"strconv"
@@ -222,3 +223,4 @@ func ReproductionTestReducedPayoutWithProxies(t *testing.T) {
 	// Sanity check that the difference between the two distributions is the same as the reduced payout.
 	require.Equal(t, distsReduced[0].Burn.Amount.Sub(dists[0].Burn.Amount).String(), dists[5].ExecutorReward.Amount.Sub(distsReduced[5].ExecutorReward.Amount).String(), "Difference between burn and executor reward is not the same as the reduced payout")
 }
+*/

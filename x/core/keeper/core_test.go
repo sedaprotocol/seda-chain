@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -40,6 +41,11 @@ func TestDataRequestFlow(t *testing.T) {
 			proxyPubKeys := []string{"03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0"}
 			err := f.SetDataProxyConfig(proxyPubKeys[0], "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f", sdk.NewCoin(bondDenom, math.NewInt(1000000000000000000)))
 			require.NoError(t, err)
+
+			start := time.Now()
+			defer func() {
+				t.Logf("Test execution time: %v", time.Since(start))
+			}()
 
 			drID, stakers := f.commitRevealDataRequest(
 				t, tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout,

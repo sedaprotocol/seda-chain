@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -180,7 +181,23 @@ type TallyResult struct {
 // FilterAndTally builds and applies filter, executes tally program, and
 // calculates canonical gas consumption.
 func (k Keeper) FilterAndTally(ctx sdk.Context, dr types.DataRequest, params types.TallyConfig, gasMeter *types.GasMeter) (FilterResult, TallyResult) {
-	reveals, executors, gasReports := k.LoadRevealsSorted(ctx, dr.Id, dr.Reveals)
+	// reveals, executors, gasReports := k.LoadRevealsSorted(ctx, dr.Id, dr.Reveals)
+	unsortedReveals := make([]types.Reveal, len(dr.Reveals))
+	i := 0
+	for executor, revealBody := range dr.Reveals {
+		unsortedReveals[i] = types.Reveal{Executor: executor, RevealBody: *revealBody}
+		sort.Strings(unsortedReveals[i].ProxyPubKeys)
+		i++
+	}
+
+	reveals := types.HashSort(unsortedReveals, types.GetEntropy(dr.Id, ctx.BlockHeight()))
+
+	executors := make([]string, len(reveals))
+	gasReports := make([]uint64, len(reveals))
+	for i, reveal := range reveals {
+		executors[i] = reveal.Executor
+		gasReports[i] = reveal.GasUsed
+	}
 
 	// Phase 1: Filtering
 	filterResult, filterErr := ExecuteFilter(reveals, dr.ConsensusFilter, uint16(dr.ReplicationFactor), params, gasMeter)

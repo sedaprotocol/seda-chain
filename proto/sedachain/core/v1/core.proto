@@ -57,7 +57,7 @@ message DataRequest {
   // Commits is a map from staker public keys to their commitments.
   map<string, bytes> commits = 17;
   // Reveals is a map from staker public keys to placeholder booleans.
-  map<string, bool> reveals = 18;
+  map<string, RevealBody> reveals = 18;
   string poster = 19;
   cosmos.base.v1beta1.Coin escrow = 20
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
