@@ -155,24 +155,34 @@ func TestFilterAndTally(t *testing.T) {
 			filterInput, err := hex.DecodeString(tt.tallyInputAsHex)
 			require.NoError(t, err)
 
+			drID := "id"
+
 			reveals := make(map[string]types.RevealBody)
+			revealsMap := make(map[string]bool)
 			expectedOutliers := make(map[string]bool)
 			for i, v := range tt.reveals {
+				executor := fmt.Sprintf("%d", i)
+				revealsMap[executor] = true
+
 				revealBody := v
 				revealBody.Reveal = base64.StdEncoding.EncodeToString([]byte(v.Reveal))
 				revealBody.GasUsed = v.GasUsed
-				reveals[fmt.Sprintf("%d", i)] = revealBody
+				reveals[executor] = revealBody
 				if tt.outliers != nil {
-					expectedOutliers[fmt.Sprintf("%d", i)] = tt.outliers[i]
+					expectedOutliers[executor] = tt.outliers[i]
 				}
+
+				err = f.keeper.SetRevealBody(f.Context(), drID, executor, revealBody)
+				require.NoError(t, err)
 			}
 
 			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
-			filterRes, tallyRes := f.keeper.FilterAndTally(f.Context(), types.Request{
-				Reveals:           reveals,
-				ReplicationFactor: tt.replicationFactor,
-				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-				PostedGasPrice:    "1000000000000000000", // 1e18
+			filterRes, tallyRes := f.keeper.FilterAndTally(f.Context(), types.DataRequest{
+				Id:                drID,
+				Reveals:           revealsMap,
+				ReplicationFactor: uint32(tt.replicationFactor),
+				ConsensusFilter:   filterInput,
+				PostedGasPrice:    math.NewInt(1e18),
 				ExecGasLimit:      100000,
 			}, types.DefaultParams().TallyConfig, gasMeter)
 			require.NoError(t, err)
@@ -226,7 +236,7 @@ func TestExecutorPayout(t *testing.T) {
 		tallyInputAsHex   string
 		reveals           map[string]types.RevealBody
 		requestID         string
-		replicationFactor uint16
+		replicationFactor uint32
 		execGasLimit      uint64
 		expExecGasUsed    uint64
 		expReducedPayout  bool
@@ -688,12 +698,16 @@ func TestExecutorPayout(t *testing.T) {
 			exp21, ok := math.NewIntFromString("1000000000000000000000") // 1e21
 			require.True(t, ok)
 			proxyFee := sdk.NewCoin(bondDenom, exp21)
-			reveals := make(map[string]types.RevealBody)
+			revealsMap := make(map[string]bool)
 			for k, v := range tt.reveals {
+				revealsMap[k] = true
+
 				revealBody := v
 				revealBody.Reveal = base64.StdEncoding.EncodeToString([]byte(v.Reveal))
 				revealBody.GasUsed = v.GasUsed
-				reveals[k] = revealBody
+
+				err = f.keeper.SetRevealBody(f.Context(), tt.requestID, k, revealBody)
+				require.NoError(t, err)
 
 				for _, pk := range v.ProxyPubKeys {
 					pkBytes, err := hex.DecodeString(pk)
@@ -713,22 +727,21 @@ func TestExecutorPayout(t *testing.T) {
 			gasPrice, ok := math.NewIntFromString(gasPriceStr)
 			require.True(t, ok)
 
-			request := types.Request{
-				Reveals:           reveals,
+			request := types.DataRequest{
+				Reveals:           revealsMap,
 				ReplicationFactor: tt.replicationFactor,
-				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-				PostedGasPrice:    gasPriceStr,
+				ConsensusFilter:   filterInput,
+				PostedGasPrice:    gasPrice,
 				TallyGasLimit:     types.DefaultMaxTallyGasLimit,
 				ExecGasLimit:      tt.execGasLimit,
-				TallyProgramID:    hex.EncodeToString(tallyProgram.Hash),
+				TallyProgramId:    hex.EncodeToString(tallyProgram.Hash),
 			}
 			if tt.requestID != "" {
-				request.ID = tt.requestID
+				request.Id = tt.requestID
 			}
 
 			gasMeter := types.NewGasMeter(request.TallyGasLimit, request.ExecGasLimit, types.DefaultMaxTallyGasLimit, gasPrice, types.DefaultGasCostBase)
 			_, tallyRes := f.keeper.FilterAndTally(f.Context(), request, types.DefaultParams().TallyConfig, gasMeter)
-			require.NoError(t, err)
 
 			execGasMeter := gasMeter.GetExecutorGasUsed()
 			require.Equal(t, len(tt.expExecutorGas), len(execGasMeter))
@@ -740,7 +753,7 @@ func TestExecutorPayout(t *testing.T) {
 				)
 			}
 			require.Equal(t, tt.expReducedPayout, gasMeter.ReducedPayout)
-			for _, proxy := range gasMeter.GetProxyGasUsed(request.ID, f.Context().BlockHeight()) {
+			for _, proxy := range gasMeter.GetProxyGasUsed(request.Id, f.Context().BlockHeight()) {
 				require.Equal(t,
 					tt.expProxyGas[proxy.PayoutAddress].String(),
 					proxy.Amount.String(),

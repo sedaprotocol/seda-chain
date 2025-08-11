@@ -65,7 +65,7 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 
 // MeterProxyGas computes and records the gas consumption of data proxies given
 // proxy public keys in basic consensus and the request's replication factor.
-func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicationFactor uint16, gasMeter *types.GasMeter) {
+func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicationFactor uint64, gasMeter *types.GasMeter) {
 	if len(proxyPubKeys) == 0 || gasMeter.RemainingExecGas() == 0 {
 		return
 	}
@@ -87,9 +87,9 @@ func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicatio
 		gasUsedPerExecInt := proxyConfig.Fee.Amount.Quo(gasMeter.GasPrice())
 		var gasUsedPerExec uint64
 		if gasUsedPerExecInt.IsUint64() {
-			gasUsedPerExec = min(gasUsedPerExecInt.Uint64(), gasMeter.RemainingExecGas()/uint64(replicationFactor))
+			gasUsedPerExec = min(gasUsedPerExecInt.Uint64(), gasMeter.RemainingExecGas()/replicationFactor)
 		} else {
-			gasUsedPerExec = min(stdmath.MaxUint64, gasMeter.RemainingExecGas()/uint64(replicationFactor))
+			gasUsedPerExec = min(stdmath.MaxUint64, gasMeter.RemainingExecGas()/replicationFactor)
 		}
 
 		gasMeter.ConsumeExecGasForProxy(pubKey, proxyConfig.PayoutAddress, gasUsedPerExec, replicationFactor)
@@ -99,7 +99,7 @@ func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicatio
 // MeterExecutorGasFallback computes and records the gas consumption of committers
 // of a data request when basic consensus has not been reached. If checkReveal is
 // set to true, it will only consume gas for committers that have also revealed.
-func MeterExecutorGasFallback(req types.Request, gasCostFallback uint64, gasMeter *types.GasMeter) {
+func MeterExecutorGasFallback(req types.DataRequest, gasCostFallback uint64, gasMeter *types.GasMeter) {
 	if len(req.Commits) == 0 || gasMeter.RemainingExecGas() == 0 {
 		return
 	}
@@ -132,9 +132,9 @@ func MeterExecutorGasFallback(req types.Request, gasCostFallback uint64, gasMete
 // when their gas reports are uniformly at "gasReport". If a non-nil outliers
 // slice is provided, no gas consumption will be recorded for the executors
 // specified as outliers.
-func MeterExecutorGasUniform(reveals []types.Reveal, gasReport uint64, outliers []bool, replicationFactor uint16, gasMeter *types.GasMeter) {
+func MeterExecutorGasUniform(reveals []types.Reveal, gasReport uint64, outliers []bool, replicationFactor uint64, gasMeter *types.GasMeter) {
 	executorGasReport := gasMeter.CorrectExecGasReportWithProxyGas(gasReport)
-	gasUsed := min(executorGasReport, gasMeter.RemainingExecGas()/uint64(replicationFactor))
+	gasUsed := min(executorGasReport, gasMeter.RemainingExecGas()/replicationFactor)
 	for i, r := range reveals {
 		if outliers != nil && outliers[i] {
 			continue
@@ -146,21 +146,21 @@ func MeterExecutorGasUniform(reveals []types.Reveal, gasReport uint64, outliers 
 // MeterExecutorGasDivergent computes and records the gas consumption of executors
 // when their gas reports are divergent. If a non-nil outliers slice is provided,
 // no gas consumption will be recorded for the executors specified as outliers.
-func MeterExecutorGasDivergent(reveals []types.Reveal, gasReports []uint64, outliers []bool, replicationFactor uint16, gasMeter *types.GasMeter) {
+func MeterExecutorGasDivergent(reveals []types.Reveal, gasReports []uint64, outliers []bool, replicationFactor uint64, gasMeter *types.GasMeter) {
 	var lowestReport uint64
 	var lowestReporterIndex int
 	adjGasReports := make([]uint64, len(gasReports))
 	for i, gasReport := range gasReports {
 		executorGasReport := gasMeter.CorrectExecGasReportWithProxyGas(gasReport)
-		adjGasReports[i] = min(executorGasReport, gasMeter.RemainingExecGas()/uint64(replicationFactor))
+		adjGasReports[i] = min(executorGasReport, gasMeter.RemainingExecGas()/replicationFactor)
 		if i == 0 || adjGasReports[i] < lowestReport {
 			lowestReporterIndex = i
 			lowestReport = adjGasReports[i]
 		}
 	}
 	medianGasUsed := median(adjGasReports)
-	totalGasUsed := math.NewIntFromUint64(medianGasUsed*uint64(replicationFactor-1) + min(lowestReport*2, medianGasUsed))
-	totalShares := math.NewIntFromUint64(medianGasUsed * uint64(replicationFactor-1)).Add(math.NewIntFromUint64(lowestReport * 2))
+	totalGasUsed := math.NewIntFromUint64(medianGasUsed*(replicationFactor-1) + min(lowestReport*2, medianGasUsed))
+	totalShares := math.NewIntFromUint64(medianGasUsed * (replicationFactor - 1)).Add(math.NewIntFromUint64(lowestReport * 2))
 	var lowestGasUsed, regGasUsed uint64
 	if totalShares.IsZero() {
 		lowestGasUsed = 0

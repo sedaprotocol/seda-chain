@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/base64"
 	"fmt"
 
 	"github.com/sedaprotocol/seda-chain/x/core/types"
@@ -48,7 +47,7 @@ func invertErrors(errors []bool) []bool {
 // the given reveals to determine consensus, proxy public keys in consensus, and
 // outliers. It assumes that the reveals are sorted by their keys and that their
 // proxy public keys are sorted.
-func ExecuteFilter(reveals []types.Reveal, filterInput string, replicationFactor uint16, params types.TallyConfig, gasMeter *types.GasMeter) (FilterResult, error) {
+func ExecuteFilter(reveals []types.Reveal, filterInput []byte, replicationFactor uint16, params types.TallyConfig, gasMeter *types.GasMeter) (FilterResult, error) {
 	var res FilterResult
 	res.Errors = make([]bool, len(reveals))
 	res.Outliers = make([]bool, len(reveals))
@@ -93,23 +92,20 @@ func ExecuteFilter(reveals []types.Reveal, filterInput string, replicationFactor
 }
 
 // BuildFilter builds a filter based on the requestor-provided input.
-func BuildFilter(filterInput string, replicationFactor uint16, params types.TallyConfig, gasMeter *types.GasMeter) (types.Filter, error) {
-	input, err := base64.StdEncoding.DecodeString(filterInput)
-	if err != nil {
-		return nil, err
-	}
-	if len(input) == 0 {
+func BuildFilter(filterInput []byte, replicationFactor uint16, params types.TallyConfig, gasMeter *types.GasMeter) (types.Filter, error) {
+	if len(filterInput) == 0 {
 		return nil, types.ErrInvalidFilterType
 	}
 
 	var filter types.Filter
-	switch input[0] {
+	var err error
+	switch filterInput[0] {
 	case filterTypeNone:
 		filter, err = types.NewFilterNone(params.FilterGasCostNone, gasMeter)
 	case filterTypeMode:
-		filter, err = types.NewFilterMode(input, params.FilterGasCostMultiplierMode, replicationFactor, gasMeter)
+		filter, err = types.NewFilterMode(filterInput, params.FilterGasCostMultiplierMode, replicationFactor, gasMeter)
 	case filterTypeMAD:
-		filter, err = types.NewFilterMAD(input, params.FilterGasCostMultiplierMAD, replicationFactor, gasMeter)
+		filter, err = types.NewFilterMAD(filterInput, params.FilterGasCostMultiplierMAD, replicationFactor, gasMeter)
 	default:
 		return nil, types.ErrInvalidFilterType
 	}

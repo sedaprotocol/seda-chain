@@ -115,8 +115,8 @@ func (g *GasMeter) ConsumeTallyGas(amount uint64) bool {
 // ConsumeExecGasForProxy consumes execution gas for data proxy payout and records
 // the payout information. It returns true if the execution gas runs out during
 // the process.
-func (g *GasMeter) ConsumeExecGasForProxy(proxyPubkey, payoutAddr string, gasUsedPerExec uint64, replicationFactor uint16) {
-	amount := gasUsedPerExec * uint64(replicationFactor)
+func (g *GasMeter) ConsumeExecGasForProxy(proxyPubkey, payoutAddr string, gasUsedPerExec, replicationFactor uint64) {
+	amount := gasUsedPerExec * replicationFactor
 
 	g.proxies = append(g.proxies, ProxyGasUsed{
 		PayoutAddress: payoutAddr,
