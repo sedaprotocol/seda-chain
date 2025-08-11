@@ -65,7 +65,7 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 
 // MeterProxyGas computes and records the gas consumption of data proxies given
 // proxy public keys in basic consensus and the request's replication factor.
-func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicationFactor uint16, gasMeter *types.GasMeter) {
+func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicationFactor uint64, gasMeter *types.GasMeter) {
 	if len(proxyPubKeys) == 0 || gasMeter.RemainingExecGas() == 0 {
 		return
 	}
@@ -88,9 +88,9 @@ func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicatio
 		gasUsedPerExecInt := proxyConfig.Fee.Amount.Quo(gasMeter.GasPrice())
 		var gasUsedPerExec uint64
 		if gasUsedPerExecInt.IsUint64() {
-			gasUsedPerExec = min(gasUsedPerExecInt.Uint64(), gasMeter.RemainingExecGas()/uint64(replicationFactor))
+			gasUsedPerExec = min(gasUsedPerExecInt.Uint64(), gasMeter.RemainingExecGas()/replicationFactor)
 		} else {
-			gasUsedPerExec = min(stdmath.MaxUint64, gasMeter.RemainingExecGas()/uint64(replicationFactor))
+			gasUsedPerExec = min(stdmath.MaxUint64, gasMeter.RemainingExecGas()/replicationFactor)
 		}
 
 		gasMeter.ConsumeExecGasForProxy(pubKey, proxyConfig.PayoutAddress, gasUsedPerExec, replicationFactor)
@@ -100,7 +100,7 @@ func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicatio
 // MeterExecutorGasFallback computes and records the gas consumption of committers
 // of a data request when basic consensus has not been reached. If checkReveal is
 // set to true, it will only consume gas for committers that have also revealed.
-func MeterExecutorGasFallback(req types.Request, gasCostFallback uint64, gasMeter *types.GasMeter) {
+func MeterExecutorGasFallback(req types.DataRequest, gasCostFallback uint64, gasMeter *types.GasMeter) {
 	if len(req.Commits) == 0 || gasMeter.RemainingExecGas() == 0 {
 		return
 	}

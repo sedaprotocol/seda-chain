@@ -28,12 +28,12 @@ message Staker {
 
 //
 message DataRequest {
-  string id = 1;
+  string i_d = 1 [ (gogoproto.jsontag) = "id" ];
   string version = 2;
-  string exec_program_id = 3;
+  string exec_program_i_d = 3 [ (gogoproto.jsontag) = "exec_program_id" ];
   bytes exec_inputs = 4;
   uint64 exec_gas_limit = 5;
-  string tally_program_id = 6;
+  string tally_program_i_d = 6 [ (gogoproto.jsontag) = "tally_program_id" ];
   bytes tally_inputs = 7;
   uint64 tally_gas_limit = 8;
   uint32 replication_factor = 9;
@@ -79,7 +79,8 @@ message RevealBody {
   uint32 exit_code = 3;
   uint64 gas_used = 4;
   string reveal = 5;
-  repeated string proxy_pub_keys = 6;
+  repeated string proxy_pub_keys = 6
+      [ (gogoproto.jsontag) = "proxy_public_keys" ];
 }
 
 // Params defines the parameters for the core module.

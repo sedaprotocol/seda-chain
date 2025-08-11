@@ -14,7 +14,7 @@ import (
 )
 
 type TallyParallelExecItem struct {
-	Request   types.Request
+	Request   types.DataRequest
 	GasMeter  *types.GasMeter
 	Reveals   []types.Reveal
 	Outliers  []bool
@@ -25,7 +25,7 @@ type TallyParallelExecItem struct {
 	TallyExecErr error
 }
 
-func NewTallyParallelExecItem(index int, req types.Request, gasMeter *types.GasMeter, reveals []types.Reveal, outliers []bool, consensus bool) TallyParallelExecItem {
+func NewTallyParallelExecItem(index int, req types.DataRequest, gasMeter *types.GasMeter, reveals []types.Reveal, outliers []bool, consensus bool) TallyParallelExecItem {
 	return TallyParallelExecItem{
 		Index:     index,
 		Request:   req,
@@ -68,22 +68,7 @@ func (k Keeper) ExecuteTallyProgramsParallel(ctx sdk.Context, items []TallyParal
 			continue
 		}
 
-		input, err := base64.StdEncoding.DecodeString(items[i].Request.TallyInputs)
-		if err != nil {
-			items[i].TallyExecErr = err
-			k.Logger(ctx).Error(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrDecodingTallyInputs)
-			continue
-		}
-
-		// Convert base64 payback address to hex that tally VM expects.
-		paybackAddrBytes, err := base64.StdEncoding.DecodeString(items[i].Request.PaybackAddress)
-		if err != nil {
-			items[i].TallyExecErr = err
-			k.Logger(ctx).Error(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrDecodingPaybackAddress)
-			continue
-		}
-
-		arg, err := tallyVMArg(input, items[i].Reveals, items[i].Outliers)
+		arg, err := tallyVMArg(items[i].Request.TallyInputs, items[i].Reveals, items[i].Outliers)
 		if err != nil {
 			items[i].TallyExecErr = err
 			k.Logger(ctx).Error(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrConstructingTallyVMArgs)
@@ -99,14 +84,14 @@ func (k Keeper) ExecuteTallyProgramsParallel(ctx sdk.Context, items []TallyParal
 			"DR_ID":                 items[i].Request.ID,
 			"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", items[i].Request.ReplicationFactor),
 			"EXEC_PROGRAM_ID":       items[i].Request.ExecProgramID,
-			"EXEC_INPUTS":           items[i].Request.ExecInputs,
+			"EXEC_INPUTS":           base64.StdEncoding.EncodeToString(items[i].Request.ExecInputs),
 			"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", items[i].Request.ExecGasLimit),
-			"TALLY_INPUTS":          items[i].Request.TallyInputs,
+			"TALLY_INPUTS":          base64.StdEncoding.EncodeToString(items[i].Request.TallyInputs),
 			"TALLY_PROGRAM_ID":      items[i].Request.TallyProgramID,
 			"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", items[i].GasMeter.RemainingTallyGas()),
-			"DR_GAS_PRICE":          items[i].Request.PostedGasPrice,
-			"DR_MEMO":               items[i].Request.Memo,
-			"DR_PAYBACK_ADDRESS":    hex.EncodeToString(paybackAddrBytes),
+			"DR_GAS_PRICE":          items[i].Request.PostedGasPrice.String(),
+			"DR_MEMO":               base64.StdEncoding.EncodeToString(items[i].Request.Memo),
+			"DR_PAYBACK_ADDRESS":    hex.EncodeToString(items[i].Request.PaybackAddress),
 		})
 
 		k.Logger(ctx).Debug(

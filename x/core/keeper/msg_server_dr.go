@@ -71,12 +71,12 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 	}
 
 	dr := types.DataRequest{
-		Id:                drID,
+		ID:                drID,
 		Version:           msg.Version,
-		ExecProgramId:     msg.ExecProgramId,
+		ExecProgramID:     msg.ExecProgramId,
 		ExecInputs:        msg.ExecInputs,
 		ExecGasLimit:      msg.ExecGasLimit,
-		TallyProgramId:    msg.TallyProgramId,
+		TallyProgramID:    msg.TallyProgramId,
 		TallyInputs:       msg.TallyInputs,
 		TallyGasLimit:     msg.TallyGasLimit,
 		ReplicationFactor: msg.ReplicationFactor,
@@ -195,8 +195,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	}
 
 	// TODO Refund (ref https://github.com/sedaprotocol/seda-chain/pull/527)
-
-	// TODO emit events
+	// TODO Emit events
 
 	return &types.MsgCommitResponse{}, nil
 }
@@ -269,14 +268,32 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 		return nil, types.ErrInvalidRevealProof.Wrapf(err.Error())
 	}
 
-	// Add reveal to data request state.
-	dr.MarkAsRevealed(msg.PublicKey)
+	revealsCount := dr.MarkAsRevealed(msg.PublicKey)
+	if revealsCount >= int(dr.ReplicationFactor) {
+		dr.Status = types.DATA_REQUEST_TALLYING
+
+		err = m.RemoveFromTimeoutQueue(ctx, dr.ID, dr.TimeoutHeight)
+		if err != nil {
+			return nil, err
+		}
+
+		err = m.RevealingToTallying(ctx, dr.Index())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = m.SetRevealBody(ctx, dr.ID, msg.PublicKey, *msg.RevealBody)
+	if err != nil {
+		return nil, err
+	}
 	err = m.DataRequests.Set(ctx, msg.RevealBody.DrId, dr)
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO: Add refund logic
-	// TODO: Add events
+	// TODO Emit events
+
 	return &types.MsgRevealResponse{}, nil
 }

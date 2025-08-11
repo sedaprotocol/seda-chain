@@ -1,14 +1,10 @@
 package keeper
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
-
-	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,31 +21,34 @@ const (
 )
 
 func (k Keeper) EndBlock(ctx sdk.Context) error {
-	coreContract, err := k.wasmStorageKeeper.GetCoreContractAddr(ctx)
-	if err != nil {
-		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
-		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get core contract address", "err", err)
-		return nil
-	}
-	if coreContract == nil {
-		k.Logger(ctx).Info("skipping tally end block - core contract has not been registered")
-		return nil
-	}
-
-	postRes, err := k.wasmKeeper.Sudo(ctx, coreContract, []byte(`{"expire_data_requests":{}}`))
+	// TODO Memory considerations (Check old queryContract with params.MaxTalliesPerBlock)
+	err := k.ExpireDataRequests(ctx)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to expire data requests", "err", err)
 		return nil
 	}
-	k.Logger(ctx).Debug("sudo expire_data_requests", "res", postRes)
 
-	return k.Tally(ctx, coreContract)
+	return k.Tally(ctx)
 }
 
-// Tally fetches from the Core Contract a list of tally-ready requests, tallies
-// them, reports results to the contract, and stores results for batching.
-func (k Keeper) Tally(ctx sdk.Context, coreContract sdk.AccAddress) error {
+// Tally fetches from a list of tally-ready requests, tallies them, reports
+// results to the contract, and stores results for batching.
+func (k Keeper) Tally(ctx sdk.Context) error {
+	drIDs, err := k.GetTallyingDataRequestIDs(ctx)
+	if err != nil {
+		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
+		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tallying data request IDs", "err", err)
+		return nil
+	}
+
+	tallyLen := len(drIDs)
+	if tallyLen == 0 {
+		k.Logger(ctx).Debug("no tally-ready data requests - skipping tally process")
+		return nil
+	}
+	k.Logger(ctx).Info("non-empty tally list - starting tally process")
+
 	params, err := k.GetTallyConfig(ctx)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
@@ -58,40 +57,14 @@ func (k Keeper) Tally(ctx sdk.Context, coreContract sdk.AccAddress) error {
 	}
 	tallyvm.TallyMaxBytes = uint(params.MaxResultSize)
 
-	contractQueryResponse, err := k.queryContract(ctx, coreContract, params.MaxTalliesPerBlock)
-	if err != nil {
-		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
-		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally-ready data requests", "err", err)
-		return nil
-	}
-
-	tallyList := contractQueryResponse.DataRequests
-	if len(tallyList) == 0 {
-		k.Logger(ctx).Debug("no tally-ready data requests - skipping tally process")
-		return nil
-	}
-	k.Logger(ctx).Info("non-empty tally list - starting tally process")
-
-	tallyResults, dataResults, processedReqs, err := k.ProcessTallies(ctx, tallyList, params, contractQueryResponse.IsPaused)
+	tallyResults, dataResults, _, err := k.ProcessTallies(ctx, drIDs, params, false)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to tally data requests", "err", err)
 		return nil
 	}
 
-	// Notify the Core Contract of tally completion.
-	msg, err := types.MarshalSudoRemoveDataRequests(processedReqs)
-	if err != nil {
-		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
-		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to marshal sudo remove data requests", "err", err)
-		return nil
-	}
-	_, err = k.wasmKeeper.Sudo(ctx, coreContract, msg)
-	if err != nil {
-		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
-		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to notify core contract of tally completion", "err", err)
-		return nil
-	}
+	// TODO remove_requests.rs
 
 	// Store the data results for batching.
 	for i := range dataResults {
@@ -119,7 +92,7 @@ func (k Keeper) Tally(ctx sdk.Context, coreContract sdk.AccAddress) error {
 		)
 	}
 
-	telemetry.SetGauge(float32(len(tallyList)), types.TelemetryKeyDataRequestsTallied)
+	telemetry.SetGauge(float32(tallyLen), types.TelemetryKeyDataRequestsTallied)
 	telemetry.SetGauge(0, types.TelemetryKeyDRFlowHalt)
 
 	return nil
@@ -129,65 +102,66 @@ func (k Keeper) Tally(ctx sdk.Context, coreContract sdk.AccAddress) error {
 // of requests: Filtering -> VM execution -> Gas metering and distributions.
 // It returns the tally results, data results, processed list of requests
 // expected by the Core Contract, and an error.
-func (k Keeper) ProcessTallies(ctx sdk.Context, tallyList []types.Request, params types.TallyConfig, isPaused bool) ([]TallyResult, []batchingtypes.DataResult, map[string][]types.Distribution, error) {
+func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, params types.TallyConfig, isPaused bool) ([]TallyResult, []batchingtypes.DataResult, map[string][]types.Distribution, error) {
 	// tallyResults and dataResults have the same indexing.
-	tallyResults := make([]TallyResult, len(tallyList))
-	dataResults := make([]batchingtypes.DataResult, len(tallyList))
+	tallyResults := make([]TallyResult, len(drIDs))
+	dataResults := make([]batchingtypes.DataResult, len(drIDs))
 
 	processedReqs := make(map[string][]types.Distribution)
 	tallyExecItems := []TallyParallelExecItem{}
 
 	var err error
-	for i, req := range tallyList {
+	for i, id := range drIDs {
+		dr, err := k.DataRequests.Get(ctx, id)
+		if err != nil {
+			telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
+			k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to retrieve data request", "err", err)
+			return nil, nil, nil, err
+		}
+
+		dataResults[i] = batchingtypes.DataResult{
+			DrId: dr.ID,
+			//nolint:gosec // G115: Block height is never negative.
+			DrBlockHeight: uint64(dr.Height),
+			Version:       dr.Version,
+			//nolint:gosec // G115: Block height is never negative.
+			BlockHeight: uint64(ctx.BlockHeight()),
+			//nolint:gosec // G115: Timestamp is never negative.
+			BlockTimestamp: uint64(ctx.BlockTime().Unix()),
+		}
+
+		// TODO Add pausability
+		// if isPaused {
+		// 	markResultErr := MarkResultAsPaused(&dataResults[i], &tallyResults[i])
+		// 	if markResultErr != nil {
+		// 		return nil, nil, nil, err
+		// 	}
+		// 	continue
+		// }
+
 		// Initialize the processedReqs map for each request with a full refund (no other distributions)
-		processedReqs[req.ID] = make([]types.Distribution, 0)
+		processedReqs[dr.ID] = make([]types.Distribution, 0)
 
 		tallyResults[i] = TallyResult{
-			ID:                req.ID,
-			Height:            req.Height,
-			ReplicationFactor: req.ReplicationFactor,
+			ID:                dr.ID,
+			Height:            dr.Height,
+			ReplicationFactor: uint16(dr.ReplicationFactor),
 		}
 
-		dataResults[i], err = req.ToResult(ctx)
-		if err != nil {
-			markResultErr := MarkResultAsFallback(&dataResults[i], &tallyResults[i], err)
-			if markResultErr != nil {
-				return nil, nil, nil, err
-			}
-			continue
-		}
-
-		if isPaused {
-			markResultErr := MarkResultAsPaused(&dataResults[i], &tallyResults[i])
-			if markResultErr != nil {
-				return nil, nil, nil, err
-			}
-			continue
-		}
-
-		postedGasPrice, ok := math.NewIntFromString(req.PostedGasPrice)
-		if !ok || !postedGasPrice.IsPositive() {
-			markResultErr := MarkResultAsFallback(&dataResults[i], &tallyResults[i], fmt.Errorf("invalid gas price: %s", req.PostedGasPrice))
-			if markResultErr != nil {
-				return nil, nil, nil, err
-			}
-			continue
-		}
-
-		gasMeter := types.NewGasMeter(req.TallyGasLimit, req.ExecGasLimit, params.MaxTallyGasLimit, postedGasPrice, params.GasCostBase)
+		gasMeter := types.NewGasMeter(dr.TallyGasLimit, dr.ExecGasLimit, params.MaxTallyGasLimit, dr.PostedGasPrice, params.GasCostBase)
 
 		// Phase 1: Filtering
-		if len(req.Commits) < int(req.ReplicationFactor) {
+		if len(dr.Commits) < int(dr.ReplicationFactor) {
 			tallyResults[i].FilterResult = FilterResult{Error: types.ErrFilterDidNotRun}
-			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
+			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", dr.ReplicationFactor, len(dr.Commits)))
 			dataResults[i].ExitCode = types.TallyExitCodeNotEnoughCommits
 
-			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
+			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", dr.ID)
 
-			MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
+			MeterExecutorGasFallback(dr, params.ExecutionGasCostFallback, gasMeter)
 		} else {
-			reveals, executors, gasReports := req.SanitizeReveals(ctx.BlockHeight())
-			filterResult, filterErr := ExecuteFilter(reveals, req.ConsensusFilter, req.ReplicationFactor, params, gasMeter)
+			reveals, executors, gasReports := k.LoadRevealsSorted(ctx, dr.ID, dr.Reveals)
+			filterResult, filterErr := ExecuteFilter(reveals, dr.ConsensusFilter, uint16(dr.ReplicationFactor), params, gasMeter)
 
 			filterResult.Error = filterErr
 			filterResult.Executors = executors
@@ -199,7 +173,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, tallyList []types.Request, param
 
 			if filterErr == nil {
 				// Execute tally VM for this request.
-				tallyExecItems = append(tallyExecItems, NewTallyParallelExecItem(i, req, gasMeter, reveals, filterResult.Outliers, filterResult.Consensus))
+				tallyExecItems = append(tallyExecItems, NewTallyParallelExecItem(i, dr, gasMeter, reveals, filterResult.Outliers, filterResult.Consensus))
 			} else {
 				// Skip tally execution.
 				dataResults[i].Result = []byte(filterErr.Error())
@@ -210,7 +184,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, tallyList []types.Request, param
 				}
 
 				if errors.Is(filterErr, types.ErrNoBasicConsensus) {
-					MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
+					MeterExecutorGasFallback(dr, params.ExecutionGasCostFallback, gasMeter)
 				} else if errors.Is(filterErr, types.ErrInvalidFilterInput) || errors.Is(filterErr, types.ErrNoConsensus) {
 					gasMeter.SetReducedPayoutMode()
 				}
@@ -259,7 +233,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, tallyList []types.Request, param
 		// Calculate data proxy and executor gas consumptions if basic consensus
 		// was reached.
 		if !errors.Is(filterErr, types.ErrNoBasicConsensus) && !errors.Is(filterErr, types.ErrFilterDidNotRun) {
-			k.MeterProxyGas(ctx, tr.FilterResult.ProxyPubKeys, tr.ReplicationFactor, tr.GasMeter)
+			k.MeterProxyGas(ctx, tr.FilterResult.ProxyPubKeys, uint64(tr.ReplicationFactor), tr.GasMeter)
 
 			if areGasReportsUniform(tr.GasReports) {
 				tr.MeterExecutorGasUniform()
@@ -289,52 +263,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, tallyList []types.Request, param
 	return tallyResults, dataResults, processedReqs, nil
 }
 
-// queryContract fetches tally-ready data requests from the core contract in batches while
-// keeping the interface consistent. This avoids problems where the contract runs out of memory
-// when we fetch the entire maxTalliesPerBlock in a single query.
-func (k Keeper) queryContract(ctx sdk.Context, coreContract sdk.AccAddress, maxTalliesPerBlock uint32) (*types.ContractListResponse, error) {
-	tallyList := make([]types.Request, 0, maxTalliesPerBlock)
-	lastSeenIndex := types.EmptyLastSeenIndex()
-	isPaused := false
-
-	for {
-		// The limit is the smaller value between the max number of data requests per query or
-		// the remaining number that still fits in the block tally limit.
-		//nolint:gosec // G115: the length of a list should never be negative.
-		limit := min(MaxDataRequestsPerQuery, maxTalliesPerBlock-uint32(len(tallyList)))
-
-		// Fetch tally-ready data requests.
-		queryRes, err := k.wasmViewKeeper.QuerySmart(
-			ctx, coreContract,
-			fmt.Appendf(nil, `{"get_data_requests_by_status":{"status": "tallying", "last_seen_index": %s, "limit": %d}}`, lastSeenIndex.String(), limit),
-		)
-		if err != nil {
-			return nil, errorsmod.Wrap(err, "failed to query contract")
-		}
-
-		var contractQueryResponse types.ContractListResponse
-		err = json.Unmarshal(queryRes, &contractQueryResponse)
-		if err != nil {
-			return nil, errorsmod.Wrap(err, "failed to unmarshal data requests contract response")
-		}
-
-		lastSeenIndex = contractQueryResponse.LastSeenIndex
-		isPaused = contractQueryResponse.IsPaused
-		tallyList = append(tallyList, contractQueryResponse.DataRequests...)
-
-		// Break if we've reached the max number of data requests or if the
-		// number of data requests returned is less than the limit.
-		if len(tallyList) >= int(maxTalliesPerBlock) || len(contractQueryResponse.DataRequests) < int(limit) {
-			break
-		}
-	}
-
-	return &types.ContractListResponse{
-		IsPaused:     isPaused,
-		DataRequests: tallyList,
-	}, nil
-}
-
 // areGasReportsUniform returns true if the gas reports of the given reveals are
 // uniform.
 func areGasReportsUniform(reports []uint64) bool {
@@ -348,4 +276,11 @@ func areGasReportsUniform(reports []uint64) bool {
 		}
 	}
 	return true
+}
+
+// logErrAndRet logs the base error along with the request ID for
+// debugging and returns the registered error.
+func (k Keeper) logErrAndRet(ctx sdk.Context, baseErr, registeredErr error, drID string) error {
+	k.Logger(ctx).Debug(baseErr.Error(), "request_id", drID, "error", registeredErr)
+	return registeredErr
 }

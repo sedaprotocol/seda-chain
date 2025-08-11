@@ -10,6 +10,10 @@ import (
 // | posted_gas_price | height | dr_id |
 type DataRequestIndex []byte
 
+func (i DataRequestIndex) DrID() string {
+	return string(i[24:])
+}
+
 func (dr DataRequest) Index() DataRequestIndex {
 	// Treat gasPrice as a 128-bit unsigned integer.
 	priceBytes := make([]byte, 16)
@@ -18,7 +22,7 @@ func (dr DataRequest) Index() DataRequestIndex {
 	heightBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(heightBytes, dr.Height)
 
-	drIDBytes := []byte(dr.Id)
+	drIDBytes := []byte(dr.ID) // TODO or convert hex to bytes?
 	return append(append(priceBytes, heightBytes...), drIDBytes...)
 }
 
@@ -37,11 +41,14 @@ func (dr DataRequest) GetCommit(publicKey string) ([]byte, bool) {
 	return commit, exists
 }
 
-func (dr *DataRequest) MarkAsRevealed(publicKey string) {
+// MarkAsRevealed adds the given public key to the data request's reveals map
+// and returns the count of reveals.
+func (dr *DataRequest) MarkAsRevealed(publicKey string) int {
 	if dr.Reveals == nil {
 		dr.Reveals = make(map[string]bool)
 	}
 	dr.Reveals[publicKey] = true
+	return len(dr.Reveals)
 }
 
 func (dr DataRequest) HasRevealed(publicKey string) bool {
