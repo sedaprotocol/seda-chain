@@ -20,6 +20,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	vrf "github.com/sedaprotocol/vrf-go"
@@ -41,12 +42,14 @@ type PostDataRequestResponse struct {
 }
 
 type commitRevealConfig struct {
-	requestHeight uint64
-	requestMemo   string
-	reveal        []byte
-	proxyPubKeys  []string
-	gasUsed       uint64
-	exitCode      byte
+	requestHeight  uint64
+	requestMemo    string
+	reveal         []byte
+	proxyPubKeys   []string
+	gasUsed        uint64
+	exitCode       byte
+	commitGasLimit uint64 // defaults to 100000 if not set or set to 0
+	revealGasLimit uint64 // defaults to 100000 if not set or set to 0
 }
 
 func (f *fixture) uploadOraclePrograms(t testing.TB) {
@@ -66,6 +69,7 @@ func (f *fixture) executeDataRequestFlow(
 	replicationFactor, numCommits, numReveals int, timeout bool,
 	config commitRevealConfig,
 ) string {
+	// To get program IDs
 	var execProgram, tallyProgram wasmstoragetypes.OracleProgram
 	if execProgramBytes != nil {
 		execProgram = wasmstoragetypes.NewOracleProgram(execProgramBytes, f.Context().BlockTime())
@@ -90,7 +94,7 @@ func (f *fixture) executeDataRequestFlow(
 	revealMsgs, err := f.commitDataRequest(t, f.stakers[:numCommits], res.Height, drID, config)
 	require.NoError(t, err)
 
-	err = f.executeReveals(t, f.stakers, revealMsgs[:numReveals])
+	err = f.executeReveals(t, f.stakers[:numReveals], revealMsgs[:numReveals], config)
 	require.NoError(t, err)
 
 	if timeout {
@@ -136,7 +140,7 @@ func (f *fixture) executeDataRequestFlowWithTallyTestItem(t testing.TB, entropy 
 	revealMsgs, err := f.commitDataRequest(t, f.stakers[:1], res.Height, drID, config)
 	require.NoError(t, err)
 
-	err = f.executeReveals(t, f.stakers, revealMsgs[:1])
+	err = f.executeReveals(t, f.stakers, revealMsgs[:1], config)
 	require.NoError(t, err)
 
 	return res.DrID, testItem
@@ -161,6 +165,11 @@ func (f *fixture) postDataRequest(t testing.TB, execProgHash, tallyProgHash []by
 // commitDataRequest executes a commit for each of the given stakers and
 // returns a list of corresponding reveal messages.
 func (f *fixture) commitDataRequest(t testing.TB, stakers []staker, height uint64, drID string, config commitRevealConfig) ([][]byte, error) {
+	commitGasLimit := config.commitGasLimit
+	if config.commitGasLimit == 0 {
+		commitGasLimit = 100000
+	}
+
 	revealBody := types.RevealBody{
 		DrID:         drID,
 		Reveal:       config.reveal,
@@ -178,7 +187,7 @@ func (f *fixture) commitDataRequest(t testing.TB, stakers []staker, height uint6
 		require.NoError(t, err)
 
 		commitMsg := testutil.CommitMsg(drID, commitment, stakers[i].pubKey, proof)
-		err = f.executeCommitReveal(t, stakers[i].address, commitMsg, 500000)
+		err = f.executeCommitReveal(t, stakers[i].address, commitMsg, commitGasLimit)
 		require.NoError(t, err)
 
 		revealMsgs = append(revealMsgs, revealMsg)
@@ -188,9 +197,16 @@ func (f *fixture) commitDataRequest(t testing.TB, stakers []staker, height uint6
 }
 
 // executeReveals executes a list of reveal messages.
-func (f *fixture) executeReveals(t testing.TB, stakers []staker, revealMsgs [][]byte) error {
+func (f *fixture) executeReveals(t testing.TB, stakers []staker, revealMsgs [][]byte, config commitRevealConfig) error {
+	revealGasLimit := config.revealGasLimit
+	if config.revealGasLimit == 0 {
+		revealGasLimit = 100000
+	}
+
+	require.Equal(t, len(stakers), len(revealMsgs))
+
 	for i := 0; i < len(revealMsgs); i++ {
-		err := f.executeCommitReveal(t, stakers[i].address, revealMsgs[i], 500000)
+		err := f.executeCommitReveal(t, stakers[i].address, revealMsgs[i], revealGasLimit)
 		require.NoError(t, err)
 	}
 	return nil
@@ -200,6 +216,14 @@ type staker struct {
 	key     []byte
 	pubKey  string
 	address []byte
+}
+
+func (f *fixture) mintCoinsForAccount(t testing.TB, address sdk.AccAddress, sedaAmount uint64) {
+	amount := math.NewIntFromUint64(sedaAmount).Mul(math.NewInt(1e18))
+	err := f.bankKeeper.MintCoins(f.Context(), minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(bondDenom, amount)))
+	require.NoError(t, err)
+	err = f.bankKeeper.SendCoinsFromModuleToAccount(f.Context(), minttypes.ModuleName, address, sdk.NewCoins(sdk.NewCoin(bondDenom, amount)))
+	require.NoError(t, err)
 }
 
 // addStakers generates stakers and adds them to the allowlist. The
@@ -213,6 +237,8 @@ func (f *fixture) addStakers(t testing.TB, num int) []staker {
 			pubKey:  hex.EncodeToString(privKey.PubKey().Bytes()),
 			address: privKey.PubKey().Address().Bytes(),
 		}
+
+		f.mintCoinsForAccount(t, stakers[i].address, 100)
 
 		// Add to allowlist.
 		f.executeCoreContract(
@@ -350,6 +376,9 @@ func generateRevealProof(t testing.TB, signKey []byte, revealBodyHash []byte, ch
 // executeCommitReveal executes a commit msg or a reveal msg with the required
 // context.
 func (f *fixture) executeCommitReveal(t testing.TB, sender sdk.AccAddress, msg []byte, gasLimit uint64) error {
+	f.SetBasicGasMeter(gasLimit)
+
+	// Set tx bytes in context to test refund tx fee.
 	contractMsg := wasmtypes.MsgExecuteContract{
 		Sender:   sdk.AccAddress(sender).String(),
 		Contract: f.coreContractAddr.String(),
@@ -357,7 +386,7 @@ func (f *fixture) executeCommitReveal(t testing.TB, sender sdk.AccAddress, msg [
 		Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 	}
 
-	fee := sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(gasLimit*1e10)))
+	fee := sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(gasLimit).Mul(math.NewInt(1e10))))
 	txf := tx.Factory{}.
 		WithChainID(f.chainID).
 		WithTxConfig(f.txConfig).
@@ -371,12 +400,11 @@ func (f *fixture) executeCommitReveal(t testing.TB, sender sdk.AccAddress, msg [
 	require.NoError(t, err)
 
 	f.SetContextTxBytes(txBytes)
-	f.SetBasicGasMeter(gasLimit)
 
-	// TODO reactivate once refund is implemented
 	// Transfer the fee to the fee collector.
-	// err = f.bankKeeper.SendCoinsFromAccountToModule(f.Context(), sender, authtypes.FeeCollectorName, fee)
-	// require.NoError(t, err)
+	// This simulates the ante handler DeductFees.
+	err = f.bankKeeper.SendCoinsFromAccountToModule(f.Context(), sender, authtypes.FeeCollectorName, fee)
+	require.NoError(t, err)
 
 	// Execute the message.
 	f.executeCoreContract(t, sender.String(), msg, sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))))

@@ -27,6 +27,9 @@ type Keeper struct {
 	wasmViewKeeper    wasmtypes.ViewKeeper
 	authority         string
 
+	feeCollectorName string
+	txDecoder        sdk.TxDecoder
+
 	Schema collections.Schema
 
 	// Staking-related states:
@@ -61,6 +64,8 @@ func NewKeeper(
 	wk wasmtypes.ContractOpsKeeper,
 	wvk wasmtypes.ViewKeeper,
 	authority string,
+	feeCollectorName string,
+	txDecoder sdk.TxDecoder,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
@@ -73,6 +78,8 @@ func NewKeeper(
 		wasmKeeper:          wk,
 		wasmViewKeeper:      wvk,
 		authority:           authority,
+		feeCollectorName:    feeCollectorName,
+		txDecoder:           txDecoder,
 		allowlist:           collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
 		stakers:             collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
 		dataRequests:        collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
@@ -105,7 +112,7 @@ func (k Keeper) LoadRevealsSorted(ctx sdk.Context, drID string, revealsMap map[s
 		revealBody, err := k.GetRevealBody(ctx, drID, executor)
 		if err != nil {
 			// TODO Proper error handling
-			return nil, nil, nil
+			panic(err)
 		}
 		reveals[i] = types.Reveal{Executor: executor, RevealBody: revealBody}
 		sort.Strings(reveals[i].ProxyPubKeys)
