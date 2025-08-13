@@ -64,29 +64,41 @@ message MsgStakeResponse {}
 message MsgPostDataRequest {
   option (cosmos.msg.v1.signer) = "sender";
 
+  // Poster of the data request
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  // Funds attached to the data request posting.
+  // Funds attached to the data request posting
   cosmos.base.v1beta1.Coin funds = 2
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  // Semantic versioning
   string version = 3;
-  // Hex-encoded ID (hash) of the execution program.
+  // Hex-encoded ID (hash) of the execution program
   string exec_program_id = 4;
+  // Inputs for the execution program
   bytes exec_inputs = 5;
+  // Gas limit for execution program execution
   uint64 exec_gas_limit = 6;
-  // Hex-encoded ID (hash) of the tally program.
+  // Hex-encoded ID (hash) of the tally program
   string tally_program_id = 7;
+  // Inputs for the tally program
   bytes tally_inputs = 8;
+  // Gas limit for tally program execution
   uint64 tally_gas_limit = 9;
+  // Number of required data request executors (used as uint16)
   uint32 replication_factor = 10;
+  // Specifications for the filter process
   bytes consensus_filter = 11;
+  // Amount of SEDA tokens per unit gas (used as uint128)
   string gas_price = 12 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+  // Public information attached to the data request
   bytes memo = 13;
-  bytes seda_payload = 14;
+  // Set by SEDA Protocol (e.g. OEV-enabled data requests)
+  bytes s_e_d_a_payload = 14;
+  // Set by the relayer
   bytes payback_address = 15;
 }
 
@@ -104,7 +116,7 @@ message MsgCommit {
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string dr_id = 2;
-  string commitment = 3;
+  string commit = 3;
   string public_key = 4;
   string proof = 5;
 }

@@ -26,11 +26,11 @@ func (dr DataRequest) Index() DataRequestIndex {
 	return append(append(priceBytes, heightBytes...), drIDBytes...)
 }
 
-func (dr *DataRequest) AddCommit(publicKey string, commitment []byte) {
+func (dr *DataRequest) AddCommit(publicKey string, commit []byte) {
 	if dr.Commits == nil {
 		dr.Commits = make(map[string][]byte)
 	}
-	dr.Commits[publicKey] = commitment
+	dr.Commits[publicKey] = commit
 }
 
 func (dr DataRequest) GetCommit(publicKey string) ([]byte, bool) {

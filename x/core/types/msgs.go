@@ -9,6 +9,9 @@ import (
 
 	"cosmossdk.io/math"
 	"golang.org/x/crypto/sha3"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
@@ -26,16 +29,25 @@ func isBigIntUint128(x *big.Int) bool {
 // Validate validates the PostDataRequest message based on the given data
 // request configurations.
 func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf(err.Error())
+	}
+
 	if m.ReplicationFactor == 0 {
 		return ErrZeroReplicationFactor
 	}
+	if m.ReplicationFactor > uint32(^uint16(0)) {
+		return ErrReplicationFactorNotUint16.Wrapf("%d > %d", m.ReplicationFactor, uint16(^uint16(0)))
+	}
 
+	if m.GasPrice.IsNegative() || m.GasPrice.LT(MinGasPrice) {
+		return ErrGasPriceTooLow.Wrapf("%s < %s", m.GasPrice, MinGasPrice)
+	}
 	if !isBigIntUint128(m.GasPrice.BigInt()) {
 		return ErrGasPriceTooHigh
 	}
-	if m.GasPrice.LT(MinGasPrice) {
-		return ErrGasPriceTooLow.Wrapf("%s < %s", m.GasPrice, MinGasPrice)
-	}
+
 	if m.ExecGasLimit < MinExecGasLimit {
 		return ErrExecGasLimitTooLow.Wrapf("%d < %d", m.ExecGasLimit, MinExecGasLimit)
 	}
@@ -43,6 +55,12 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 		return ErrTallyGasLimitTooLow.Wrapf("%d < %d", m.TallyGasLimit, MinTallyGasLimit)
 	}
 
+	if _, err := hex.DecodeString(m.ExecProgramId); err != nil {
+		return ErrInvalidExecProgramID
+	}
+	if _, err := hex.DecodeString(m.TallyProgramId); err != nil {
+		return ErrInvalidTallyProgramID
+	}
 	if len(m.ExecProgramId) != 64 {
 		return ErrInvalidLengthExecProgramID.Wrapf("given ID is %d characters long", len(m.ExecProgramId))
 	}
@@ -71,8 +89,8 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 	if len(m.PaybackAddress) > int(config.PaybackAddressLimitInBytes) {
 		return ErrPaybackAddressLimitExceeded.Wrapf("%d bytes > %d bytes", len(m.PaybackAddress), config.PaybackAddressLimitInBytes)
 	}
-	if len(m.SedaPayload) > int(config.SedaPayloadLimitInBytes) {
-		return ErrSedaPayloadLimitExceeded.Wrapf("%d bytes > %d bytes", len(m.SedaPayload), config.SedaPayloadLimitInBytes)
+	if len(m.SEDAPayload) > int(config.SEDAPayloadLimitInBytes) {
+		return ErrSEDAPayloadLimitExceeded.Wrapf("%d bytes > %d bytes", len(m.SEDAPayload), config.SEDAPayloadLimitInBytes)
 	}
 
 	return nil
@@ -145,10 +163,10 @@ func (m MsgStake) MsgHash(contractAddr, chainID string, sequenceNum uint64) ([]b
 	seqBytes := make([]byte, 16)
 	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
 
-	allBytes := append([]byte{}, []byte("stake")...)
+	allBytes := append([]byte{}, "stake"...)
 	allBytes = append(allBytes, memoHash...)
-	allBytes = append(allBytes, []byte(chainID)...)
-	// allBytes = append(allBytes, []byte(contractAddr)...) // TODO Do not include contractAddr
+	allBytes = append(allBytes, chainID...)
+	// allBytes = append(allBytes, contractAddr...) // TODO Do not include contractAddr
 	allBytes = append(allBytes, seqBytes...)
 
 	hasher := sha3.NewLegacyKeccak256()
@@ -162,12 +180,12 @@ func (m MsgCommit) MsgHash(contractAddr, chainID string, drHeight uint64) ([]byt
 	drHeightBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(drHeightBytes, drHeight)
 
-	allBytes := append([]byte{}, []byte("commit_data_result")...)
-	allBytes = append(allBytes, []byte(m.DrId)...)
+	allBytes := append([]byte{}, "commit_data_result"...)
+	allBytes = append(allBytes, m.DrId...)
 	allBytes = append(allBytes, drHeightBytes...)
-	allBytes = append(allBytes, m.Commitment...)
-	allBytes = append(allBytes, []byte(chainID)...)
-	// allBytes = append(allBytes, []byte(contractAddr)...) // TODO Do not include contractAddr
+	allBytes = append(allBytes, m.Commit...)
+	allBytes = append(allBytes, chainID...)
+	// allBytes = append(allBytes, contractAddr...) // TODO Do not include contractAddr
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
@@ -182,16 +200,16 @@ func (m MsgReveal) MsgHash(contractAddr, chainID string) ([]byte, error) {
 	}
 
 	allBytes := append([]byte("reveal_data_result"), revealBodyHash...)
-	allBytes = append(allBytes, []byte(chainID)...)
-	// allBytes = append(allBytes, []byte(contractAddr)...)
+	allBytes = append(allBytes, chainID...)
+	// allBytes = append(allBytes, contractAddr...)
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
 	return hasher.Sum(nil), nil
 }
 
-// RevealHash computes a hash of reveal contents to be used as a commitment
-// by the executors.
+// RevealHash computes the hash of the reveal contents. This hash is used by
+// executors as their commit value.
 func (m MsgReveal) RevealHash() ([]byte, error) {
 	revealBodyHash, err := m.RevealBody.RevealBodyHash()
 	if err != nil {

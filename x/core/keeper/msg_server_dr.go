@@ -5,13 +5,13 @@ import (
 	"context"
 	"encoding/hex"
 
-	"cosmossdk.io/collections"
+	vrf "github.com/sedaprotocol/vrf-go"
+
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/x/core/types"
-	vrf "github.com/sedaprotocol/vrf-go"
 )
 
 func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostDataRequest) (*types.MsgPostDataRequestResponse, error) {
@@ -61,11 +61,12 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		return nil, sdkerrors.ErrInsufficientFunds.Wrapf("required: %s, got %s", requiredFunds, msg.GasPrice)
 	}
 
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
-	err = m.bankKeeper.SendCoinsFromAccountToModule(ctx, senderAddr, types.ModuleName, sdk.NewCoins(msg.Funds))
+	err = m.bankKeeper.SendCoinsFromAccountToModule(
+		ctx,
+		sdk.MustAccAddressFromBech32(msg.Sender), // already validated in msg.Validate()
+		types.ModuleName,
+		sdk.NewCoins(msg.Funds),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +85,9 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		GasPrice:          msg.GasPrice,
 		Memo:              msg.Memo,
 		PaybackAddress:    msg.PaybackAddress,
-		SedaPayload:       msg.SedaPayload,
+		SEDAPayload:       msg.SEDAPayload,
 		Height:            uint64(ctx.BlockHeight()),
-		PostedGasPrice:    msg.GasPrice,
+		PostedGasPrice:    postedGasPrice,
 		Poster:            msg.Sender,
 		Escrow:            msg.Funds.Amount,
 		TimeoutHeight:     uint64(ctx.BlockHeight()) + uint64(drConfig.CommitTimeoutInBlocks),
@@ -94,17 +95,16 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		// Commits:           make(map[string][]byte), // Dropped by proto anyways
 		// Reveals:           make(map[string]bool), // Dropped by proto anyways
 	}
+
 	err = m.SetDataRequest(ctx, dr)
 	if err != nil {
 		return nil, err
 	}
-
 	err = m.AddToCommitting(ctx, dr.Index())
 	if err != nil {
 		return nil, err
 	}
-
-	err = m.timeoutQueue.Set(ctx, collections.Join(dr.TimeoutHeight, drID))
+	err = m.AddToTimeoutQueue(ctx, drID, dr.TimeoutHeight)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	}
 
 	// Verify the staker.
-	staker, err := m.Stakers.Get(ctx, msg.PublicKey)
+	staker, err := m.GetStaker(ctx, msg.PublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -166,12 +166,12 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 		return nil, types.ErrInvalidCommitProof.Wrapf(err.Error())
 	}
 
-	// Add the commitment and start reveal phase if the data request is ready.
-	commitment, err := hex.DecodeString(msg.Commitment)
+	// Store the commit and start reveal phase if the data request is ready.
+	commit, err := hex.DecodeString(msg.Commit)
 	if err != nil {
 		return nil, err
 	}
-	dr.AddCommit(msg.PublicKey, commitment)
+	dr.AddCommit(msg.PublicKey, commit)
 
 	if len(dr.Commits) >= int(dr.ReplicationFactor) {
 		dr.Status = types.DATA_REQUEST_REVEALING
@@ -283,7 +283,7 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 		}
 	}
 
-	err = m.SetRevealBody(ctx, dr.ID, msg.PublicKey, *msg.RevealBody)
+	err = m.SetRevealBody(ctx, msg.PublicKey, *msg.RevealBody)
 	if err != nil {
 		return nil, err
 	}
