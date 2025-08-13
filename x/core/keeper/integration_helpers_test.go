@@ -265,8 +265,8 @@ func (f *fixture) generateStakeProof(t testing.TB, signKey []byte, seqNum uint64
 
 func (f *fixture) generateCommitProof(t testing.TB, signKey []byte, drID, commitment string, drHeight uint64) (string, error) {
 	msg := types.MsgCommit{
-		DrId:       drID,
-		Commitment: commitment,
+		DrId:   drID,
+		Commit: commitment,
 	}
 	hash, err := msg.MsgHash(f.coreContractAddr.String(), f.chainID, drHeight)
 	require.NoError(t, err)

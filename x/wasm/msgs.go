@@ -127,7 +127,7 @@ func (m PostDataRequestMsg) EncodeToSdkMsg(sender string, funds sdk.Coin) (sdk.M
 		ConsensusFilter:   consensusFilter,
 		GasPrice:          gasPriceInt,
 		Memo:              memo,
-		SedaPayload:       sedaPayload,
+		SEDAPayload:       sedaPayload,
 		PaybackAddress:    paybackAddress,
 	}, nil
 }
@@ -141,11 +141,11 @@ type CommitDataResultMsg struct {
 
 func (m CommitDataResultMsg) EncodeToSdkMsg(sender string) (sdk.Msg, error) {
 	return &coretypes.MsgCommit{
-		Sender:     sender, // TODO ensure security
-		DrId:       m.DrID,
-		Commitment: m.Commitment,
-		PublicKey:  m.PublicKey,
-		Proof:      m.Proof,
+		Sender:    sender, // TODO ensure security
+		DrId:      m.DrID,
+		Commit:    m.Commitment,
+		PublicKey: m.PublicKey,
+		Proof:     m.Proof,
 	}, nil
 }
 

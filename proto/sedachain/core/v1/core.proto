@@ -26,49 +26,71 @@ message Staker {
   uint64 sequence_num = 5;
 }
 
-//
+// DataRequest is a data request object.
 message DataRequest {
+  // Hex-encoded ID of the data request
   string id = 1;
+  // Semantic versioning
   string version = 2;
+  // Hex-encoded ID (hash) of the execution program
   string exec_program_id = 3;
+  // Inputs for the execution program
   bytes exec_inputs = 4;
+  // Gas limit for execution program execution
   uint64 exec_gas_limit = 5;
+  // Hex-encoded ID (hash) of the tally program
   string tally_program_id = 6;
+  // Inputs for the tally program
   bytes tally_inputs = 7;
+  // Gas limit for tally program execution
   uint64 tally_gas_limit = 8;
+  // Number of required data request executors (used as uint16)
   uint32 replication_factor = 9;
+  // Specifications for the filter process
   bytes consensus_filter = 10;
+  // Amount of SEDA tokens per unit gas (used as uint128)
   string gas_price = 11 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+  // Public information attached to the data request
   bytes memo = 12;
+  // Set by the relayer
   bytes payback_address = 13;
-  bytes seda_payload = 14;
+  // Set by SEDA Protocol (e.g. OEV-enabled data requests)
+  bytes s_e_d_a_payload = 14;
+  // Height of the data request posting
   uint64 height = 15;
+  // Actual gas price derived by dividing attached funds by the total gas limit
+  // (may be higher than the minimum gas price)
   string posted_gas_price = 16 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
-  // Commits is a map from staker public keys to their commitments.
+  // Map from staker public keys to commits.
   map<string, bytes> commits = 17;
-  // Reveals is a map from staker public keys to placeholder booleans.
+  // Map from staker public keys to placeholder booleans.
   map<string, bool> reveals = 18;
+  // Poster of the data request (Bech32 string)
   string poster = 19;
+  // Funds escrowed for the data request
   string escrow = 20 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+  // Timeout height of the data request
   uint64 timeout_height = 21;
+  // Status of the data request
   DataRequestStatus status = 22;
 }
 
+// DataRequestStatus is the status of a data request.
 enum DataRequestStatus {
   option (gogoproto.goproto_enum_prefix) = false;
 
@@ -77,6 +99,7 @@ enum DataRequestStatus {
   DATA_REQUEST_TALLYING = 2;
 }
 
+// RevealBody is the content of a reveal.
 message RevealBody {
   string dr_id = 1;
   uint64 dr_block_height = 2;
@@ -118,7 +141,7 @@ message DataRequestConfig {
   // Maximum size of the payback address.
   uint32 payback_address_limit_in_bytes = 9;
   // Maximum size of the SEDA payload.
-  uint32 seda_payload_limit_in_bytes = 10;
+  uint32 s_e_d_a_payload_limit_in_bytes = 10;
 }
 
 // StakingConfig defines staking-related parameters.

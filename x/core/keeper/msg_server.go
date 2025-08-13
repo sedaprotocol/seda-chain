@@ -32,7 +32,7 @@ func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllo
 		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Sender)
 	}
 
-	exists, err := m.Allowlist.Has(ctx, msg.PublicKey)
+	exists, err := m.isAllowlisted(ctx, msg.PublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllo
 		return nil, types.ErrAlreadyAllowlisted
 	}
 
-	err = m.Allowlist.Set(ctx, msg.PublicKey)
+	err = m.addToAllowlist(ctx, msg.PublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 	// Verify stake proof.
 	var sequenceNum uint64
 	var isExistingStaker bool // for later use
-	staker, err := m.Stakers.Get(ctx, msg.PublicKey)
+	staker, err := m.GetStaker(ctx, msg.PublicKey)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			return nil, err
@@ -89,7 +89,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 		return nil, err
 	}
 	if stakingConfig.AllowlistEnabled {
-		allowlisted, err := m.Allowlist.Has(ctx, msg.PublicKey)
+		allowlisted, err := m.isAllowlisted(ctx, msg.PublicKey)
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +133,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 	}
 
 	staker.SequenceNum = sequenceNum + 1
-	err = m.Stakers.Set(ctx, msg.PublicKey, staker)
+	err = m.SetStaker(ctx, staker)
 	if err != nil {
 		return nil, err
 	}
