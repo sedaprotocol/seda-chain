@@ -122,17 +122,3 @@ func NewExecutorReward(identity string, amount, gasPrice math.Int) Distribution 
 		},
 	}
 }
-
-func MarshalSudoRemoveDataRequests(processedReqs map[string][]Distribution) ([]byte, error) {
-	return json.Marshal(struct {
-		SudoRemoveDataRequests struct {
-			Requests map[string][]Distribution `json:"requests"`
-		} `json:"remove_data_requests"`
-	}{
-		SudoRemoveDataRequests: struct {
-			Requests map[string][]Distribution `json:"requests"`
-		}{
-			Requests: processedReqs,
-		},
-	})
-}

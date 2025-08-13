@@ -59,8 +59,12 @@ message DataRequest {
   // Reveals is a map from staker public keys to placeholder booleans.
   map<string, bool> reveals = 18;
   string poster = 19;
-  cosmos.base.v1beta1.Coin escrow = 20
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  string escrow = 20 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
   uint64 timeout_height = 21;
   DataRequestStatus status = 22;
 }

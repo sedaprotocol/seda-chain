@@ -38,7 +38,7 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 	if err != nil {
 		return nil, err
 	}
-	exists, err := m.DataRequests.Has(ctx, drID)
+	exists, err := m.HasDataRequest(ctx, drID)
 	if err != nil {
 		return nil, err
 	}
@@ -88,13 +88,13 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		Height:            uint64(ctx.BlockHeight()),
 		PostedGasPrice:    msg.GasPrice,
 		Poster:            msg.Sender,
-		Escrow:            msg.Funds,
+		Escrow:            msg.Funds.Amount,
 		TimeoutHeight:     uint64(ctx.BlockHeight()) + uint64(drConfig.CommitTimeoutInBlocks),
 		Status:            types.DATA_REQUEST_COMMITTING,
 		// Commits:           make(map[string][]byte), // Dropped by proto anyways
 		// Reveals:           make(map[string]bool), // Dropped by proto anyways
 	}
-	err = m.DataRequests.Set(ctx, drID, dr)
+	err = m.SetDataRequest(ctx, dr)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	if err != nil {
 		return nil, err
 	}
-	dr, err := m.DataRequests.Get(ctx, msg.DrId)
+	dr, err := m.GetDataRequest(ctx, msg.DrId)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 		}
 	}
 
-	err = m.DataRequests.Set(ctx, msg.DrId, dr)
+	err = m.SetDataRequest(ctx, dr)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Check the status of the data request.
-	dr, err := m.DataRequests.Get(ctx, msg.RevealBody.DrId)
+	dr, err := m.GetDataRequest(ctx, msg.RevealBody.DrId)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +287,7 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 	if err != nil {
 		return nil, err
 	}
-	err = m.DataRequests.Set(ctx, msg.RevealBody.DrId, dr)
+	err = m.SetDataRequest(ctx, dr)
 	if err != nil {
 		return nil, err
 	}

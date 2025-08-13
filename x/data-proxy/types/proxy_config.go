@@ -1,6 +1,8 @@
 package types
 
-import sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+import (
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+)
 
 const (
 	MaxMemoLength    = 3000

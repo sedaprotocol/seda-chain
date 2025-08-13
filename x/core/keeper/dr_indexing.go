@@ -42,6 +42,10 @@ func (k Keeper) RevealingToTallying(ctx sdk.Context, index types.DataRequestInde
 	return k.tallying.Set(ctx, index)
 }
 
+func (k Keeper) RemoveFromTallying(ctx sdk.Context, index types.DataRequestIndex) error {
+	return k.tallying.Remove(ctx, index)
+}
+
 func (k Keeper) GetTallyingDataRequestIDs(ctx sdk.Context) ([]string, error) {
 	iter, err := k.tallying.Iterate(ctx, nil)
 	if err != nil {

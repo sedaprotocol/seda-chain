@@ -31,7 +31,7 @@ type Keeper struct {
 	Stakers   collections.Map[string, types.Staker]
 	params    collections.Item[types.Params]
 
-	DataRequests collections.Map[string, types.DataRequest]
+	dataRequests collections.Map[string, types.DataRequest]
 	revealBodies collections.Map[collections.Pair[string, string], types.RevealBody]
 	committing   collections.KeySet[types.DataRequestIndex]
 	revealing    collections.KeySet[types.DataRequestIndex]
@@ -65,7 +65,7 @@ func NewKeeper(
 		Allowlist:         collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
 		Stakers:           collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
 		params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
-		DataRequests:      collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
+		dataRequests:      collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
 		revealBodies:      collections.NewMap(sb, types.RevealsKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
 		committing:        collections.NewKeySet(sb, types.CommittingKeyPrefix, "committing", collcodec.NewBytesKey[types.DataRequestIndex]()),
 		revealing:         collections.NewKeySet(sb, types.RevealingKeyPrefix, "revealing", collcodec.NewBytesKey[types.DataRequestIndex]()),
@@ -81,12 +81,50 @@ func NewKeeper(
 	return k
 }
 
+// GetDataRequest retrieves a data request given its hex-encoded ID.
+func (k Keeper) GetDataRequest(ctx sdk.Context, id string) (types.DataRequest, error) {
+	return k.dataRequests.Get(ctx, id)
+}
+
+// HasDataRequest checks if a data request exists given its hex-encoded ID.
+func (k Keeper) HasDataRequest(ctx sdk.Context, id string) (bool, error) {
+	return k.dataRequests.Has(ctx, id)
+}
+
+// SetDataRequest stores a data request in the store.
+func (k Keeper) SetDataRequest(ctx sdk.Context, dr types.DataRequest) error {
+	return k.dataRequests.Set(ctx, dr.Id, dr)
+}
+
+// RemoveDataRequest removes a data request given its hex-encoded ID.
+func (k Keeper) RemoveDataRequest(ctx sdk.Context, id string) error {
+	return k.dataRequests.Remove(ctx, id)
+}
+
 func (k Keeper) GetRevealBody(ctx sdk.Context, drID string, executor string) (types.RevealBody, error) {
 	return k.revealBodies.Get(ctx, collections.Join(drID, executor))
 }
 
 func (k Keeper) SetRevealBody(ctx sdk.Context, drID string, executor string, revealBody types.RevealBody) error {
 	return k.revealBodies.Set(ctx, collections.Join(drID, executor), revealBody)
+}
+
+// RemoveRevealBodies removes reveal bodies corresponding to a given data request.
+func (k Keeper) RemoveRevealBodies(ctx sdk.Context, drID string) error {
+	iter, err := k.revealBodies.Iterate(ctx, collections.NewPrefixedPairRange[string, string](drID))
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key, err := iter.Key()
+		if err != nil {
+			return err
+		}
+		k.revealBodies.Remove(ctx, collections.Join(drID, key.K2()))
+	}
+	return nil
 }
 
 // LoadRevealsSorted returns reveals, executors, and gas reports sorted in a

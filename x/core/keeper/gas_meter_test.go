@@ -131,7 +131,7 @@ func FuzzGasMetering(f *testing.F) {
 		tallySum = tallySum.Add(math.NewIntFromUint64(gasMeter.RemainingTallyGas()))
 		require.Equal(t, tallySum.String(), strconv.FormatUint(tallyGasLimit, 10))
 
-		dists := fixture.keeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+		dists := fixture.keeper.GetGasMeterResults(fixture.Context(), gasMeter, "drID", 1, types.DefaultBurnRatio)
 		require.Len(t, dists, 13)
 
 		totalDist := math.NewInt(0)
@@ -156,7 +156,7 @@ func FuzzGasMetering(f *testing.F) {
 		require.True(t, totalGasPayed.LTE(sumExec.Add((tallySum))), "total gas paid is not less than or equal to the sum of exec and tally gas used")
 
 		gasMeter.SetReducedPayoutMode()
-		distsReduced := fixture.keeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+		distsReduced := fixture.keeper.GetGasMeterResults(fixture.Context(), gasMeter, "drID", 1, types.DefaultBurnRatio)
 		totalDistReduced := math.NewInt(0)
 		burnReduced := math.NewInt(0)
 		for _, dist := range distsReduced {
@@ -216,7 +216,7 @@ func TestReducedPayoutWithProxies(t *testing.T) {
 	require.Equalf(t, uint64(81644889168750), gasMeter.ExecutionGasUsed(), "expected exec gas used %d, got %d", 81644889168750, gasMeter.ExecutionGasUsed())
 	require.Equalf(t, uint64(1000000000000), gasMeter.TallyGasUsed(), "expected tally gas used %d, got %d", 1000000100000, gasMeter.TallyGasUsed())
 
-	dists := fixture.keeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+	dists := fixture.keeper.GetGasMeterResults(fixture.Context(), gasMeter, "drID", 1, types.DefaultBurnRatio)
 
 	require.Len(t, dists, 6)
 
@@ -246,7 +246,7 @@ func TestReducedPayoutWithProxies(t *testing.T) {
 	require.Equalf(t, uint64(81644889168750), gasMeter.ExecutionGasUsed(), "expected exec gas used %d, got %d", 81644889168750, gasMeter.ExecutionGasUsed())
 	require.Equalf(t, uint64(1000000000000), gasMeter.TallyGasUsed(), "expected tally gas used %d, got %d", 1000000100000, gasMeter.TallyGasUsed())
 
-	distsReduced := fixture.keeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
+	distsReduced := fixture.keeper.GetGasMeterResults(fixture.Context(), gasMeter, "drID", 1, types.DefaultBurnRatio)
 
 	require.Equal(t, "1132895783375000000", distsReduced[0].Burn.Amount.String(), "Burn amount is incorrect")
 
