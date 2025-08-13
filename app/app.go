@@ -694,7 +694,9 @@ func NewApp(
 		app.BankKeeper,
 		app.WasmContractKeeper,
 		app.WasmKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: subject to change
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authtypes.FeeCollectorName,
+		txConfig.TxDecoder(),
 	)
 
 	// Create evidence router, add batching evidence route, seal it, and set it in the keeper.
@@ -984,23 +986,20 @@ func NewApp(
 	app.MountMemoryStores(memKeys)
 
 	// initialize BaseApp
-	anteHandler, err := NewAnteHandler(
-		HandlerOptions{
-			HandlerOptions: wasmapp.HandlerOptions{
-				HandlerOptions: ante.HandlerOptions{
-					AccountKeeper:   app.AccountKeeper,
-					BankKeeper:      app.BankKeeper,
-					SignModeHandler: txConfig.SignModeHandler(),
-					FeegrantKeeper:  app.FeeGrantKeeper,
-					SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
-				},
-				IBCKeeper:             app.IBCKeeper,
-				WasmConfig:            &wasmConfig,
-				WasmKeeper:            app.WasmKeeper.Keeper,
-				TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
-				CircuitKeeper:         &app.CircuitKeeper,
+	anteHandler, err := wasmapp.NewAnteHandler(
+		wasmapp.HandlerOptions{
+			HandlerOptions: ante.HandlerOptions{
+				AccountKeeper:   app.AccountKeeper,
+				BankKeeper:      app.BankKeeper,
+				SignModeHandler: txConfig.SignModeHandler(),
+				FeegrantKeeper:  app.FeeGrantKeeper,
+				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 			},
-			WasmStorageKeeper: app.WasmStorageKeeper,
+			IBCKeeper:             app.IBCKeeper,
+			WasmConfig:            &wasmConfig,
+			WasmKeeper:            app.WasmKeeper.Keeper,
+			TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+			CircuitKeeper:         &app.CircuitKeeper,
 		},
 	)
 	if err != nil {

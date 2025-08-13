@@ -23,10 +23,9 @@ type RevealDataResult struct {
 	PublicKey string `json:"public_key"`
 }
 
-// ExtractCommitRevealMsgInfo checks if the message is a commit or reveal to the
-// Core Contract. If it is, it returns a string of the form "drID,publicKey,isReveal"
-// and true. If it is not a commit or reveal to the Core Contract, it will return
-// an empty string and false.
+// ExtractCommitRevealMsgInfo checks if the message is a commit or a reveal.
+// If it is, the function returns a string of the form "drID,publicKey,isReveal"
+// and true. If it is not, the function returns an empty string and false.
 func ExtractCommitRevealMsgInfo(coreContract string, msg sdk.Msg) (string, bool) {
 	var drID, publicKey string
 	var isReveal bool
@@ -47,13 +46,26 @@ func ExtractCommitRevealMsgInfo(coreContract string, msg sdk.Msg) (string, bool)
 			drID = contractMsg.DrID
 			publicKey = contractMsg.PublicKey
 			isReveal = false
+
 		case RevealDataResult:
 			drID = contractMsg.RevealBody.DrID
 			publicKey = contractMsg.PublicKey
 			isReveal = true
+
 		default:
 			return "", false
 		}
+
+	case *MsgCommit:
+		drID = msg.DrID
+		publicKey = msg.PublicKey
+		isReveal = false
+
+	case *MsgReveal:
+		drID = msg.RevealBody.DrID
+		publicKey = msg.PublicKey
+		isReveal = true
+
 	default:
 		return "", false
 	}
