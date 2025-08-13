@@ -26,7 +26,7 @@ func (k Keeper) ExpireDataRequests(ctx sdk.Context) error {
 		}
 
 		// Update data request status to tallying.
-		dr, err := k.DataRequests.Get(ctx, drID)
+		dr, err := k.GetDataRequest(ctx, drID)
 		if err != nil {
 			return err
 		}
@@ -37,7 +37,7 @@ func (k Keeper) ExpireDataRequests(ctx sdk.Context) error {
 		if err != nil {
 			return err
 		}
-		err = k.DataRequests.Set(ctx, drID, dr)
+		err = k.SetDataRequest(ctx, dr)
 		if err != nil {
 			return err
 		}

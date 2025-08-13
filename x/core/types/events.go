@@ -1,8 +1,9 @@
 package types
 
 const (
-	EventTypeTallyCompletion = "tally_completion"
-	EventTypeGasMeter        = "gas_calculation"
+	EventTypeTallyCompletion   = "tally_completion"
+	EventTypeGasMeter          = "gas_calculation"
+	EventTypeRemoveDataRequest = "seda-remove-dr"
 
 	AttributeDataRequestID     = "dr_id"
 	AttributeDataRequestHeight = "dr_height"

@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"encoding/base64"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -65,18 +64,12 @@ func TestDataRequestFlow(t *testing.T) {
 			// Verify the staker did not pay for the transactions
 			afterBalance := f.bankKeeper.GetBalance(f.Context(), stakers[0].address, bondDenom)
 			diff := afterBalance.Sub(beforeBalance)
-
-			// TODO Re-enable
-			fmt.Println("diff", diff.String())
-			// require.Equal(t, "0aseda", diff.String())
+			require.Equal(t, "0aseda", diff.String())
 
 			// Verify the poster paid for execution
 			afterPostBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
 			diff = afterPostBalance.Sub(posterBeforeBalance)
-
-			// TODO Re-enable
-			fmt.Println("diff", diff.String())
-			// require.NotEqual(t, "0aseda", diff.String(), "Poster should have payed for execution")
+			require.NotEqual(t, "0aseda", diff.String(), "Poster should have payed for execution")
 
 			dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
 			require.NoError(t, err)
