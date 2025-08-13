@@ -270,6 +270,8 @@ func initFixture(t testing.TB) *fixture {
 		contractKeeper,
 		wasmKeeper,
 		deployer.String(),
+		authtypes.FeeCollectorName,
+		txConfig.TxDecoder(),
 	)
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)

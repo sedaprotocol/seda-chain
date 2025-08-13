@@ -194,7 +194,11 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 		return nil, err
 	}
 
-	// TODO Refund (ref https://github.com/sedaprotocol/seda-chain/pull/527)
+	err = m.RefundTxFee(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO Emit events
 
 	return &types.MsgCommitResponse{}, nil
@@ -292,7 +296,11 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 		return nil, err
 	}
 
-	// TODO: Add refund logic
+	err = m.RefundTxFee(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO Emit events
 
 	return &types.MsgRevealResponse{}, nil
