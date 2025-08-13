@@ -26,17 +26,31 @@ type Keeper struct {
 	wasmViewKeeper    wasmtypes.ViewKeeper
 	authority         string
 
-	Schema    collections.Schema
-	Allowlist collections.KeySet[string]
-	Stakers   collections.Map[string, types.Staker]
-	params    collections.Item[types.Params]
+	Schema collections.Schema
 
+	// Staking-related states:
+	// allowlist is an owner-controlled allowlist of staker public keys.
+	allowlist collections.KeySet[string]
+	// stakers is a map of staker public keys to staker objects.
+	stakers collections.Map[string, types.Staker]
+
+	// Data request-related states:
+	// dataRequests is a map of data request IDs to data request objects.
 	dataRequests collections.Map[string, types.DataRequest]
+	// revealBodies is a map of data request IDs and executor public keys to reveal bodies.
 	revealBodies collections.Map[collections.Pair[string, string], types.RevealBody]
-	committing   collections.KeySet[types.DataRequestIndex]
-	revealing    collections.KeySet[types.DataRequestIndex]
-	tallying     collections.KeySet[types.DataRequestIndex]
+	// committing is a set of data request indices that are being committed.
+	committing collections.KeySet[types.DataRequestIndex]
+	// revealing is a set of data request indices that are being revealed.
+	revealing collections.KeySet[types.DataRequestIndex]
+	// tallying is a set of data request indices that are being tallied.
+	tallying collections.KeySet[types.DataRequestIndex]
+	// timeoutQueue is a queue of data request IDs and their timeout heights.
 	timeoutQueue collections.KeySet[collections.Pair[uint64, string]]
+
+	// Parameter state:
+	// params defines the core module parameters.
+	params collections.Item[types.Params]
 }
 
 func NewKeeper(
@@ -62,15 +76,15 @@ func NewKeeper(
 		wasmKeeper:        wk,
 		wasmViewKeeper:    wvk,
 		authority:         authority,
-		Allowlist:         collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
-		Stakers:           collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
-		params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
+		allowlist:         collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
+		stakers:           collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
 		dataRequests:      collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
-		revealBodies:      collections.NewMap(sb, types.RevealsKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
+		revealBodies:      collections.NewMap(sb, types.RevealBodiesKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
 		committing:        collections.NewKeySet(sb, types.CommittingKeyPrefix, "committing", collcodec.NewBytesKey[types.DataRequestIndex]()),
 		revealing:         collections.NewKeySet(sb, types.RevealingKeyPrefix, "revealing", collcodec.NewBytesKey[types.DataRequestIndex]()),
 		tallying:          collections.NewKeySet(sb, types.TallyingKeyPrefix, "tallying", collcodec.NewBytesKey[types.DataRequestIndex]()),
 		timeoutQueue:      collections.NewKeySet(sb, types.TimeoutQueueKeyPrefix, "timeout_queue", collections.PairKeyCodec(collections.Uint64Key, collections.StringKey)),
+		params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
 
 	schema, err := sb.Build()
@@ -101,12 +115,14 @@ func (k Keeper) RemoveDataRequest(ctx sdk.Context, id string) error {
 	return k.dataRequests.Remove(ctx, id)
 }
 
+// GetRevealBody retrieves a reveal body given a data request ID and an executor.
 func (k Keeper) GetRevealBody(ctx sdk.Context, drID string, executor string) (types.RevealBody, error) {
 	return k.revealBodies.Get(ctx, collections.Join(drID, executor))
 }
 
-func (k Keeper) SetRevealBody(ctx sdk.Context, drID string, executor string, revealBody types.RevealBody) error {
-	return k.revealBodies.Set(ctx, collections.Join(drID, executor), revealBody)
+// SetRevealBody stores a reveal body in the store.
+func (k Keeper) SetRevealBody(ctx sdk.Context, executor string, revealBody types.RevealBody) error {
+	return k.revealBodies.Set(ctx, collections.Join(revealBody.DrId, executor), revealBody)
 }
 
 // RemoveRevealBodies removes reveal bodies corresponding to a given data request.
@@ -155,29 +171,7 @@ func (k Keeper) LoadRevealsSorted(ctx sdk.Context, drID string, revealsMap map[s
 	return sortedReveals, executors, gasReports
 }
 
-func (k Keeper) RemoveFromTimeoutQueue(ctx sdk.Context, drID string, timeoutHeight uint64) error {
-	err := k.timeoutQueue.Remove(ctx, collections.Join(timeoutHeight, drID))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (k Keeper) UpdateDataRequestTimeout(ctx sdk.Context, drID string, oldTimeoutHeight, newTimeoutHeight uint64) error {
-	exists, err := k.timeoutQueue.Has(ctx, collections.Join(oldTimeoutHeight, drID))
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return fmt.Errorf("data request %s not found in timeout queue", drID)
-	}
-	err = k.timeoutQueue.Remove(ctx, collections.Join(oldTimeoutHeight, drID))
-	if err != nil {
-		return err
-	}
-	return k.timeoutQueue.Set(ctx, collections.Join(newTimeoutHeight, drID))
-}
-
+// GetParams retrieves the core module parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 	params, err := k.params.Get(ctx)
 	if err != nil {
@@ -186,6 +180,7 @@ func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 	return params, nil
 }
 
+// SetParams stores the core module parameters.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 	return k.params.Set(ctx, params)
 }

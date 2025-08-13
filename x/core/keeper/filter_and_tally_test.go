@@ -165,6 +165,7 @@ func TestFilterAndTally(t *testing.T) {
 				revealsMap[executor] = true
 
 				revealBody := v
+				revealBody.DrId = drID
 				revealBody.Reveal = base64.StdEncoding.EncodeToString([]byte(v.Reveal))
 				revealBody.GasUsed = v.GasUsed
 				reveals[executor] = revealBody
@@ -172,7 +173,7 @@ func TestFilterAndTally(t *testing.T) {
 					expectedOutliers[executor] = tt.outliers[i]
 				}
 
-				err = f.keeper.SetRevealBody(f.Context(), drID, executor, revealBody)
+				err = f.keeper.SetRevealBody(f.Context(), executor, revealBody)
 				require.NoError(t, err)
 			}
 
@@ -703,10 +704,11 @@ func TestExecutorPayout(t *testing.T) {
 				revealsMap[k] = true
 
 				revealBody := v
+				revealBody.DrId = tt.requestID
 				revealBody.Reveal = base64.StdEncoding.EncodeToString([]byte(v.Reveal))
 				revealBody.GasUsed = v.GasUsed
 
-				err = f.keeper.SetRevealBody(f.Context(), tt.requestID, k, revealBody)
+				err = f.keeper.SetRevealBody(f.Context(), k, revealBody)
 				require.NoError(t, err)
 
 				for _, pk := range v.ProxyPubKeys {

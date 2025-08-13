@@ -26,7 +26,7 @@ const (
 	DefaultConsensusFilterLimitInBytes uint32 = 512   // 512 B
 	DefaultMemoLimitInBytes            uint32 = 512   // 512 B
 	DefaultPaybackAddressLimitInBytes  uint32 = 128   // 128 B
-	DefaultSedaPayloadLimitInBytes     uint32 = 512   // 512 B
+	DefaultSEDAPayloadLimitInBytes     uint32 = 512   // 512 B
 
 	// TallyConfig
 	DefaultMaxResultSize               = 1024
@@ -52,7 +52,7 @@ func DefaultParams() Params {
 			ConsensusFilterLimitInBytes: DefaultConsensusFilterLimitInBytes,
 			MemoLimitInBytes:            DefaultMemoLimitInBytes,
 			PaybackAddressLimitInBytes:  DefaultPaybackAddressLimitInBytes,
-			SedaPayloadLimitInBytes:     DefaultSedaPayloadLimitInBytes,
+			SEDAPayloadLimitInBytes:     DefaultSEDAPayloadLimitInBytes,
 		},
 		StakingConfig: StakingConfig{
 			MinimumStake:     DefaultMinimumStake,

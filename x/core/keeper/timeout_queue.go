@@ -1,10 +1,40 @@
 package keeper
 
 import (
+	"fmt"
+
+	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
+
+func (k Keeper) AddToTimeoutQueue(ctx sdk.Context, drID string, timeoutHeight uint64) error {
+	return k.timeoutQueue.Set(ctx, collections.Join(timeoutHeight, drID))
+}
+
+func (k Keeper) RemoveFromTimeoutQueue(ctx sdk.Context, drID string, timeoutHeight uint64) error {
+	err := k.timeoutQueue.Remove(ctx, collections.Join(timeoutHeight, drID))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (k Keeper) UpdateDataRequestTimeout(ctx sdk.Context, drID string, oldTimeoutHeight, newTimeoutHeight uint64) error {
+	exists, err := k.timeoutQueue.Has(ctx, collections.Join(oldTimeoutHeight, drID))
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("data request %s not found in timeout queue", drID)
+	}
+	err = k.timeoutQueue.Remove(ctx, collections.Join(oldTimeoutHeight, drID))
+	if err != nil {
+		return err
+	}
+	return k.timeoutQueue.Set(ctx, collections.Join(newTimeoutHeight, drID))
+}
 
 func (k Keeper) ExpireDataRequests(ctx sdk.Context) error {
 	iter, err := k.timeoutQueue.Iterate(ctx, nil)
