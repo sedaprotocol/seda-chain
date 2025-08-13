@@ -78,6 +78,8 @@ func (s *KeeperTestSuite) SetupTest() {
 		nil, // wasmKeeper
 		nil, // wasmViewKeeper
 		s.authority,
+		authtypes.FeeCollectorName,
+		encCfg.TxConfig.TxDecoder(),
 	)
 
 	s.ctx = testCtx.Ctx.WithChainID("seda-1-testnet")

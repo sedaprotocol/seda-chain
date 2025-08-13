@@ -225,14 +225,17 @@ func initFixture(tb testing.TB) *fixture {
 	pubKeyModule := pubkey.NewAppModule(cdc, pubKeyKeeper)
 	batchingModule := batching.NewAppModule(cdc, batchingKeeper)
 
-	integrationApp := testutil.NewIntegrationApp(ctx, logger, keys, cdc, router, map[string]appmodule.AppModule{
-		authtypes.ModuleName:        authModule,
-		banktypes.ModuleName:        bankModule,
-		sdkstakingtypes.ModuleName:  stakingModule,
-		wasmstoragetypes.ModuleName: wasmStorageModule,
-		pubkeytypes.ModuleName:      pubKeyModule,
-		types.ModuleName:            batchingModule,
-	})
+	integrationApp := testutil.NewIntegrationApp(
+		ctx, logger, keys, cdc, router,
+		map[string]appmodule.AppModule{
+			authtypes.ModuleName:        authModule,
+			banktypes.ModuleName:        bankModule,
+			sdkstakingtypes.ModuleName:  stakingModule,
+			wasmstoragetypes.ModuleName: wasmStorageModule,
+			pubkeytypes.ModuleName:      pubKeyModule,
+			types.ModuleName:            batchingModule,
+		},
+	)
 
 	return &fixture{
 		IntegationApp:     integrationApp,
