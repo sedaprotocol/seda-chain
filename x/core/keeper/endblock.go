@@ -47,30 +47,27 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 	}
 	k.Logger(ctx).Info("non-empty tally list - starting tally process")
 
-	params, err := k.GetTallyConfig(ctx)
+	params, err := k.GetParams(ctx)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally params", "err", err)
 		return nil
 	}
-	tallyvm.TallyMaxBytes = uint(params.MaxResultSize)
+	tallyConfig := params.TallyConfig
+	tallyvm.TallyMaxBytes = uint(tallyConfig.MaxResultSize)
 
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
-	processedReqs := make(map[string][]types.Distribution)
 	tallyResults := make([]TallyResult, tallyLen)
 	dataResults := make([]batchingtypes.DataResult, tallyLen)
 
 	for i, id := range drIDs {
-		dr, err := k.DataRequests.Get(ctx, id)
+		dr, err := k.GetDataRequest(ctx, id)
 		if err != nil {
 			telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 			k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to retrieve data request", "err", err)
 			return nil
 		}
-
-		// Initialize the processedReqs map for each request with a full refund (no other distributions)
-		processedReqs[dr.Id] = make([]types.Distribution, 0)
 
 		dataResults[i] = batchingtypes.DataResult{
 			DrId:          dr.Id,
@@ -91,16 +88,16 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 		// 	continue
 		// }
 
-		gasMeter := types.NewGasMeter(dr.TallyGasLimit, dr.ExecGasLimit, params.MaxTallyGasLimit, dr.PostedGasPrice, params.GasCostBase)
+		gasMeter := types.NewGasMeter(dr.TallyGasLimit, dr.ExecGasLimit, tallyConfig.MaxTallyGasLimit, dr.PostedGasPrice, tallyConfig.GasCostBase)
 
 		if len(dr.Commits) < int(dr.ReplicationFactor) {
 			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", dr.ReplicationFactor, len(dr.Commits)))
 			dataResults[i].ExitCode = types.TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", dr.Id)
 
-			MeterExecutorGasFallback(dr, params.ExecutionGasCostFallback, gasMeter)
+			MeterExecutorGasFallback(dr, tallyConfig.ExecutionGasCostFallback, gasMeter)
 		} else {
-			_, tallyResults[i] = k.FilterAndTally(ctx, dr, params, gasMeter)
+			_, tallyResults[i] = k.FilterAndTally(ctx, dr, tallyConfig, gasMeter)
 			dataResults[i].Result = tallyResults[i].Result
 			dataResults[i].ExitCode = tallyResults[i].ExitCode
 			dataResults[i].Consensus = tallyResults[i].Consensus
@@ -109,7 +106,24 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			k.Logger(ctx).Debug("tally result", "request_id", dr.Id, "tally_result", tallyResults[i])
 		}
 
-		processedReqs[dr.Id] = k.DistributionsFromGasMeter(ctx, dr.Id, dr.Height, gasMeter, params.BurnRatio)
+		distributions := k.GetGasMeterResults(ctx, gasMeter, dr.Id, dr.Height, tallyConfig.BurnRatio)
+		err = k.ProcessDistributions(ctx, distributions, &dr, params.StakingConfig.MinimumStake)
+		if err != nil {
+			return err
+		}
+
+		err = k.RemoveFromTallying(ctx, dr.Index())
+		if err != nil {
+			return err
+		}
+		err = k.RemoveRevealBodies(ctx, dr.Id)
+		if err != nil {
+			return err
+		}
+		err = k.RemoveDataRequest(ctx, dr.Id)
+		if err != nil {
+			return err
+		}
 
 		dataResults[i].GasUsed = gasMeter.TotalGasUsed()
 		dataResults[i].Id, err = dataResults[i].TryHash()
@@ -117,22 +131,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			return err
 		}
 	}
-
-	// TODO remove_requests.rs
-
-	// // Notify the Core Contract of tally completion.
-	// msg, err := types.MarshalSudoRemoveDataRequests(processedReqs)
-	// if err != nil {
-	// 	telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
-	// 	k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to marshal sudo remove data requests", "err", err)
-	// 	return nil
-	// }
-	// _, err = k.wasmKeeper.Sudo(ctx, coreContract, msg)
-	// if err != nil {
-	// 	telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
-	// 	k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to notify core contract of tally completion", "err", err)
-	// 	return nil
-	// }
 
 	// Store the data results for batching.
 	for i := range dataResults {

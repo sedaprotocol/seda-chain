@@ -220,7 +220,7 @@ var (
 		icatypes.ModuleName:            nil,
 		wasmtypes.ModuleName:           {authtypes.Burner},
 		dataproxytypes.ModuleName:      {authtypes.Burner},
-		coretypes.ModuleName:           nil,
+		coretypes.ModuleName:           {authtypes.Burner},
 	}
 )
 
