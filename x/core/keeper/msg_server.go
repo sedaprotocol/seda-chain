@@ -5,12 +5,13 @@ import (
 	"encoding/hex"
 	"errors"
 
-	vrf "github.com/sedaprotocol/vrf-go"
-
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	vrf "github.com/sedaprotocol/vrf-go"
 
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
@@ -80,7 +81,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 	}
 	_, err = vrf.NewK256VRF().Verify(publicKey, proof, hash)
 	if err != nil {
-		return nil, types.ErrInvalidStakeProof.Wrapf(err.Error())
+		return nil, types.ErrInvalidStakeProof.Wrapf("%s", err.Error())
 	}
 
 	// Verify that the staker is allowlisted if allowlist is enabled.

@@ -10,6 +10,7 @@ import (
 	collcodec "cosmossdk.io/collections/codec"
 	storetypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -46,7 +47,7 @@ type Keeper struct {
 	// tallying is a set of data request indices that are being tallied.
 	tallying collections.KeySet[types.DataRequestIndex]
 	// timeoutQueue is a queue of data request IDs and their timeout heights.
-	timeoutQueue collections.KeySet[collections.Pair[uint64, string]]
+	timeoutQueue collections.KeySet[collections.Pair[int64, string]]
 
 	// Parameter state:
 	// params defines the core module parameters.
@@ -83,7 +84,7 @@ func NewKeeper(
 		committing:        collections.NewKeySet(sb, types.CommittingKeyPrefix, "committing", collcodec.NewBytesKey[types.DataRequestIndex]()),
 		revealing:         collections.NewKeySet(sb, types.RevealingKeyPrefix, "revealing", collcodec.NewBytesKey[types.DataRequestIndex]()),
 		tallying:          collections.NewKeySet(sb, types.TallyingKeyPrefix, "tallying", collcodec.NewBytesKey[types.DataRequestIndex]()),
-		timeoutQueue:      collections.NewKeySet(sb, types.TimeoutQueueKeyPrefix, "timeout_queue", collections.PairKeyCodec(collections.Uint64Key, collections.StringKey)),
+		timeoutQueue:      collections.NewKeySet(sb, types.TimeoutQueueKeyPrefix, "timeout_queue", collections.PairKeyCodec(collections.Int64Key, collections.StringKey)),
 		params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
 
@@ -107,7 +108,7 @@ func (k Keeper) HasDataRequest(ctx sdk.Context, id string) (bool, error) {
 
 // SetDataRequest stores a data request in the store.
 func (k Keeper) SetDataRequest(ctx sdk.Context, dr types.DataRequest) error {
-	return k.dataRequests.Set(ctx, dr.Id, dr)
+	return k.dataRequests.Set(ctx, dr.ID, dr)
 }
 
 // RemoveDataRequest removes a data request given its hex-encoded ID.
@@ -138,7 +139,10 @@ func (k Keeper) RemoveRevealBodies(ctx sdk.Context, drID string) error {
 		if err != nil {
 			return err
 		}
-		k.revealBodies.Remove(ctx, collections.Join(drID, key.K2()))
+		err = k.revealBodies.Remove(ctx, collections.Join(drID, key.K2()))
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -120,7 +120,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, params types.Par
 		dataResults[i] = batchingtypes.DataResult{
 			DrId: dr.ID,
 			//nolint:gosec // G115: Block height is never negative.
-			DrBlockHeight: uint64(dr.Height),
+			DrBlockHeight: uint64(dr.PostedHeight),
 			Version:       dr.Version,
 			//nolint:gosec // G115: Block height is never negative.
 			BlockHeight: uint64(ctx.BlockHeight()),
@@ -139,7 +139,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, params types.Par
 
 		tallyResults[i] = TallyResult{
 			ID:                dr.ID,
-			Height:            dr.Height,
+			Height:            uint64(dr.PostedHeight),
 			ReplicationFactor: uint16(dr.ReplicationFactor),
 		}
 

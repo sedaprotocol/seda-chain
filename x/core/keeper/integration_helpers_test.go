@@ -63,7 +63,7 @@ func (f *fixture) commitRevealDataRequest(t testing.TB, stakers []staker, replic
 	drID := res.DrID
 
 	// The stakers commit and reveal.
-	revealMsgs, err := f.commitDataRequest(t, stakers[:numCommits], res.Height, drID, config)
+	revealMsgs, err := f.commitDataRequest(t, stakers[:numCommits], int64(res.Height), drID, config)
 	require.NoError(t, err)
 
 	err = f.executeReveals(stakers, revealMsgs[:numReveals])
@@ -105,7 +105,7 @@ func (f *fixture) commitRevealDataRequests(t testing.TB, stakers []staker, repli
 		drID := res.DrID
 
 		// The stakers commit and reveal.
-		revealMsgs, err := f.commitDataRequest(t, stakers[:numCommits], res.Height, drID, config)
+		revealMsgs, err := f.commitDataRequest(t, stakers[:numCommits], int64(res.Height), drID, config)
 		require.NoError(t, err)
 
 		err = f.executeReveals(stakers, revealMsgs[:numReveals])
@@ -153,7 +153,7 @@ func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMem
 
 // commitDataRequest executes a commit for each of the given stakers and
 // returns a list of corresponding reveal messages.
-func (f *fixture) commitDataRequest(t testing.TB, stakers []staker, height uint64, drID string, config commitRevealConfig) ([][]byte, error) {
+func (f *fixture) commitDataRequest(t testing.TB, stakers []staker, height int64, drID string, config commitRevealConfig) ([][]byte, error) {
 	revealBody := types.RevealBody{
 		DrId:         drID,
 		Reveal:       config.reveal,
@@ -263,7 +263,7 @@ func (f *fixture) generateStakeProof(t testing.TB, signKey []byte, seqNum uint64
 	return hex.EncodeToString(proof)
 }
 
-func (f *fixture) generateCommitProof(t testing.TB, signKey []byte, drID, commitment string, drHeight uint64) (string, error) {
+func (f *fixture) generateCommitProof(t testing.TB, signKey []byte, drID, commitment string, drHeight int64) (string, error) {
 	msg := types.MsgCommit{
 		DrId:   drID,
 		Commit: commitment,

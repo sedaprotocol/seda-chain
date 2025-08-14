@@ -107,7 +107,7 @@ message MsgPostDataRequestResponse {
   // DrId is the hex-encoded ID of the data request.
   string dr_id = 1;
   // Height is the block height at which the data request was posted.
-  uint64 height = 2;
+  int64 height = 2;
 }
 
 // The request message for the Commit method.

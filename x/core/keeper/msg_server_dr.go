@@ -5,11 +5,12 @@ import (
 	"context"
 	"encoding/hex"
 
-	vrf "github.com/sedaprotocol/vrf-go"
-
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	vrf "github.com/sedaprotocol/vrf-go"
 
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
@@ -30,7 +31,7 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		return nil, err
 	}
 	maxRF := min(count, types.MaxReplicationFactor)
-	if msg.ReplicationFactor > uint32(maxRF) {
+	if msg.ReplicationFactor > maxRF {
 		return nil, types.ErrReplicationFactorTooHigh.Wrapf("%d > %d", msg.ReplicationFactor, maxRF)
 	}
 
@@ -86,11 +87,11 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		Memo:              msg.Memo,
 		PaybackAddress:    msg.PaybackAddress,
 		SEDAPayload:       msg.SEDAPayload,
-		Height:            uint64(ctx.BlockHeight()),
+		PostedHeight:      ctx.BlockHeight(),
 		PostedGasPrice:    postedGasPrice,
 		Poster:            msg.Sender,
 		Escrow:            msg.Funds.Amount,
-		TimeoutHeight:     uint64(ctx.BlockHeight()) + uint64(drConfig.CommitTimeoutInBlocks),
+		TimeoutHeight:     ctx.BlockHeight() + int64(drConfig.CommitTimeoutInBlocks),
 		Status:            types.DATA_REQUEST_COMMITTING,
 		// Commits:           make(map[string][]byte), // Dropped by proto anyways
 		// Reveals:           make(map[string]bool), // Dropped by proto anyways
@@ -113,7 +114,7 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 
 	return &types.MsgPostDataRequestResponse{
 		DrId:   drID,
-		Height: dr.Height,
+		Height: dr.PostedHeight,
 	}, nil
 }
 
@@ -135,7 +136,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	if _, ok := dr.Commits[msg.PublicKey]; ok {
 		return nil, types.ErrAlreadyCommitted
 	}
-	if dr.TimeoutHeight <= uint64(ctx.BlockHeight()) {
+	if dr.TimeoutHeight <= ctx.BlockHeight() {
 		return nil, types.ErrCommitTimeout
 	}
 
@@ -149,7 +150,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	}
 
 	// Verify the proof.
-	hash, err := msg.MsgHash("", ctx.ChainID(), dr.Height)
+	hash, err := msg.MsgHash("", ctx.ChainID(), dr.PostedHeight)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +164,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	}
 	_, err = vrf.NewK256VRF().Verify(publicKey, proof, hash)
 	if err != nil {
-		return nil, types.ErrInvalidCommitProof.Wrapf(err.Error())
+		return nil, types.ErrInvalidCommitProof.Wrapf("%s", err.Error())
 	}
 
 	// Store the commit and start reveal phase if the data request is ready.
@@ -176,7 +177,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	if len(dr.Commits) >= int(dr.ReplicationFactor) {
 		dr.Status = types.DATA_REQUEST_REVEALING
 
-		newTimeoutHeight := dr.TimeoutHeight + uint64(params.DataRequestConfig.RevealTimeoutInBlocks)
+		newTimeoutHeight := dr.TimeoutHeight + int64(params.DataRequestConfig.RevealTimeoutInBlocks)
 		err = m.UpdateDataRequestTimeout(ctx, msg.DrId, dr.TimeoutHeight, newTimeoutHeight)
 		if err != nil {
 			return nil, err
@@ -211,7 +212,7 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 	if dr.Status != types.DATA_REQUEST_REVEALING {
 		return nil, types.ErrRevealNotStarted
 	}
-	if dr.TimeoutHeight <= uint64(ctx.BlockHeight()) {
+	if dr.TimeoutHeight <= ctx.BlockHeight() {
 		return nil, types.ErrDataRequestExpired.Wrapf("reveal phase expired at height %d", dr.TimeoutHeight)
 	}
 	if dr.HasRevealed(msg.PublicKey) {
@@ -265,7 +266,7 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 	}
 	_, err = vrf.NewK256VRF().Verify(publicKey, proof, revealHash)
 	if err != nil {
-		return nil, types.ErrInvalidRevealProof.Wrapf(err.Error())
+		return nil, types.ErrInvalidRevealProof.Wrapf("%s", err.Error())
 	}
 
 	revealsCount := dr.MarkAsRevealed(msg.PublicKey)

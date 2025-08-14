@@ -806,7 +806,7 @@ func NewApp(
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
 		circuit.NewAppModule(appCodec, app.CircuitKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
-		wasm.NewAppModule(appCodec, app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), nil, app.WasmStorageKeeper),
+		wasm.NewAppModule(appCodec, app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), nil),
 		ibc.NewAppModule(app.IBCKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		transfer.NewAppModule(app.TransferKeeper),

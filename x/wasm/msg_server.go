@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -103,8 +104,9 @@ func (m msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 			return nil, err
 		}
 		contractRes := &PostRequestResponsePayload{
-			DrID:   res.DrId,
-			Height: res.Height,
+			DrID: res.DrId,
+			//nolint:gosec // G115: Block height is never negative.
+			Height: uint64(res.Height),
 		}
 		returnData, err = json.Marshal(contractRes)
 		if err != nil {
