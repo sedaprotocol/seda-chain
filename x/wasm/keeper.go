@@ -4,10 +4,12 @@ import (
 	"context"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+//nolint:revive
 type WasmStorageKeeper interface {
 	GetCoreContractAddr(ctx context.Context) (sdk.AccAddress, error)
 }

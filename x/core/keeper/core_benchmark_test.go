@@ -21,22 +21,20 @@ func BenchmarkDataRequestFlow(b *testing.B) {
 	stakers := f.addStakers(b, 5)
 
 	tt := struct {
-		name              string
 		replicationFactor int
 		numCommits        int
 		numReveals        int
 		timeout           bool
-		expExitCode       uint32
 	}{
-		name:              "full single commit-reveal",
 		replicationFactor: 1,
 		numCommits:        1,
 		numReveals:        1,
 		timeout:           false,
-		expExitCode:       0,
 	}
 
-	for b.Loop() {
+	// b.Loop() is not supported in go 1.23
+	// for b.Loop() {
+	for range b.N {
 		f.commitRevealDataRequests(
 			b, stakers, tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout,
 			commitRevealConfig{

@@ -14,10 +14,10 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
-func (k Keeper) GetGasMeterResults(ctx sdk.Context, gasMeter *types.GasMeter, drID string, drHeight uint64, burnRatio math.LegacyDec) []types.Distribution {
+func (k Keeper) GetGasMeterResults(ctx sdk.Context, gasMeter *types.GasMeter, drID string, drHeight int64, burnRatio math.LegacyDec) []types.Distribution {
 	attrs := []sdk.Attribute{
 		sdk.NewAttribute(types.AttributeDataRequestID, drID),
-		sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatUint(drHeight, 10)),
+		sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatInt(drHeight, 10)),
 		sdk.NewAttribute(types.AttributeReducedPayout, strconv.FormatBool(gasMeter.ReducedPayout)),
 	}
 

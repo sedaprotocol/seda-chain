@@ -61,8 +61,8 @@ message DataRequest {
   bytes payback_address = 13;
   // Set by SEDA Protocol (e.g. OEV-enabled data requests)
   bytes s_e_d_a_payload = 14;
-  // Height of the data request posting
-  uint64 height = 15;
+  // Height at which the data request was posted
+  int64 posted_height = 15;
   // Actual gas price derived by dividing attached funds by the total gas limit
   // (may be higher than the minimum gas price)
   string posted_gas_price = 16 [
@@ -85,7 +85,7 @@ message DataRequest {
     (amino.dont_omitempty) = true
   ];
   // Timeout height of the data request
-  uint64 timeout_height = 21;
+  int64 timeout_height = 21;
   // Status of the data request
   DataRequestStatus status = 22;
 }

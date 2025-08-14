@@ -7,8 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"cosmossdk.io/collections"
 	"github.com/spf13/cobra"
+
+	"cosmossdk.io/collections"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

@@ -6,7 +6,9 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	coretypes "github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
@@ -76,7 +78,7 @@ type PostedDR struct {
 	TallyProgramID    string `json:"tally_program_id"`
 	TallyInputs       string `json:"tally_inputs"`
 	TallyGasLimit     uint64 `json:"tally_gas_limit"`
-	ReplicationFactor int    `json:"replication_factor"`
+	ReplicationFactor uint16 `json:"replication_factor"`
 	ConsensusFilter   string `json:"consensus_filter"`
 	GasPrice          string `json:"gas_price"`
 	Memo              string `json:"memo"`
@@ -163,7 +165,7 @@ func (m RevealDataResultMsg) EncodeToSdkMsg(sender string) (sdk.Msg, error) {
 		RevealBody: &coretypes.RevealBody{
 			DrId:          m.RevealBody.DrId,
 			DrBlockHeight: m.RevealBody.DrBlockHeight,
-			ExitCode:      uint32(m.RevealBody.ExitCode),
+			ExitCode:      m.RevealBody.ExitCode,
 			GasUsed:       m.RevealBody.GasUsed,
 			Reveal:        m.RevealBody.Reveal,
 			ProxyPubKeys:  m.RevealBody.ProxyPubKeys,

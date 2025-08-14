@@ -7,8 +7,9 @@ import (
 	"math/big"
 	"strings"
 
-	"cosmossdk.io/math"
 	"golang.org/x/crypto/sha3"
+
+	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -17,7 +18,7 @@ import (
 const (
 	MinExecGasLimit      uint64 = 10_000_000_000_000 // 10 teraGas
 	MinTallyGasLimit     uint64 = 10_000_000_000_000 // 10 teraGas
-	MaxReplicationFactor int    = 100
+	MaxReplicationFactor uint32 = 100
 )
 
 var MinGasPrice = math.NewInt(2_000)
@@ -31,14 +32,14 @@ func isBigIntUint128(x *big.Int) bool {
 func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 	_, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
-		return sdkerrors.ErrInvalidAddress.Wrapf(err.Error())
+		return sdkerrors.ErrInvalidAddress.Wrapf("%s", err.Error())
 	}
 
 	if m.ReplicationFactor == 0 {
 		return ErrZeroReplicationFactor
 	}
 	if m.ReplicationFactor > uint32(^uint16(0)) {
-		return ErrReplicationFactorNotUint16.Wrapf("%d > %d", m.ReplicationFactor, uint16(^uint16(0)))
+		return ErrReplicationFactorNotUint16
 	}
 
 	if m.GasPrice.IsNegative() || m.GasPrice.LT(MinGasPrice) {
@@ -99,11 +100,11 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 // MsgHash returns the hex-encoded hash of the PostDataRequest message to be used
 // as the data request ID.
 func (m *MsgPostDataRequest) MsgHash() (string, error) {
-	execProgramIdBytes, err := hex.DecodeString(m.ExecProgramId)
+	execProgramIDBytes, err := hex.DecodeString(m.ExecProgramId)
 	if err != nil {
 		return "", err
 	}
-	tallyProgramIdBytes, err := hex.DecodeString(m.TallyProgramId)
+	tallyProgramIDBytes, err := hex.DecodeString(m.TallyProgramId)
 	if err != nil {
 		return "", err
 	}
@@ -129,14 +130,15 @@ func (m *MsgPostDataRequest) MsgHash() (string, error) {
 	tallyGasLimitBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(tallyGasLimitBytes, m.TallyGasLimit)
 	replicationFactorBytes := make([]byte, 2)
+	//nolint:gosec // G115: No overflow guaranteed by validation logic.
 	binary.BigEndian.PutUint16(replicationFactorBytes, uint16(m.ReplicationFactor))
 
 	dataRequestHasher := sha3.NewLegacyKeccak256()
 	dataRequestHasher.Write([]byte(m.Version))
-	dataRequestHasher.Write(execProgramIdBytes)
+	dataRequestHasher.Write(execProgramIDBytes)
 	dataRequestHasher.Write(execInputsHash)
 	dataRequestHasher.Write(execGasLimitBytes)
-	dataRequestHasher.Write(tallyProgramIdBytes)
+	dataRequestHasher.Write(tallyProgramIDBytes)
 	dataRequestHasher.Write(tallyInputsHash)
 	dataRequestHasher.Write(tallyGasLimitBytes)
 	dataRequestHasher.Write(replicationFactorBytes)
@@ -149,7 +151,7 @@ func (m *MsgPostDataRequest) MsgHash() (string, error) {
 
 // TODO Remove contractAddr
 // StakeHash computes the stake hash.
-func (m MsgStake) MsgHash(contractAddr, chainID string, sequenceNum uint64) ([]byte, error) {
+func (m MsgStake) MsgHash(_, chainID string, sequenceNum uint64) ([]byte, error) {
 	memoBytes, err := hex.DecodeString(m.Memo)
 	if err != nil {
 		return nil, err
@@ -176,9 +178,10 @@ func (m MsgStake) MsgHash(contractAddr, chainID string, sequenceNum uint64) ([]b
 
 // TODO Remove contractAddr
 // CommitHash computes the commit hash.
-func (m MsgCommit) MsgHash(contractAddr, chainID string, drHeight uint64) ([]byte, error) {
+func (m MsgCommit) MsgHash(_, chainID string, drHeight int64) ([]byte, error) {
 	drHeightBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(drHeightBytes, drHeight)
+	//nolint:gosec // G115: Block height is never negative.
+	binary.BigEndian.PutUint64(drHeightBytes, uint64(drHeight))
 
 	allBytes := append([]byte{}, "commit_data_result"...)
 	allBytes = append(allBytes, m.DrId...)
@@ -193,7 +196,7 @@ func (m MsgCommit) MsgHash(contractAddr, chainID string, drHeight uint64) ([]byt
 }
 
 // TODO Remove contractAddr
-func (m MsgReveal) MsgHash(contractAddr, chainID string) ([]byte, error) {
+func (m MsgReveal) MsgHash(_, chainID string) ([]byte, error) {
 	revealBodyHash, err := m.RevealBody.RevealBodyHash()
 	if err != nil {
 		return nil, err

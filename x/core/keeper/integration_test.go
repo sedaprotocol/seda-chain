@@ -276,7 +276,7 @@ func initFixture(t testing.TB) *fixture {
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
 	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
-	wasmModule := wasm.NewAppModule(cdc, wasmKeeper, stakingKeeper, accountKeeper, bankKeeper, router, nil, wasmStorageKeeper)
+	wasmModule := wasm.NewAppModule(cdc, wasmKeeper, stakingKeeper, accountKeeper, bankKeeper, router, nil)
 	coreModule := core.NewAppModule(cdc, coreKeeper)
 
 	integrationApp := testutil.NewIntegrationApp(ctx, logger, keys, cdc, router, map[string]appmodule.AppModule{

@@ -70,12 +70,13 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 		}
 
 		dataResults[i] = batchingtypes.DataResult{
-			DrId:          dr.Id,
-			DrBlockHeight: dr.Height,
+			DrId: dr.Id,
+			//nolint:gosec // G115: Block height is never negative.
+			DrBlockHeight: uint64(dr.PostedHeight),
 			Version:       dr.Version,
-			//nolint:gosec // G115: We shouldn't get negative block heights.
+			//nolint:gosec // G115: Block height is never negative.
 			BlockHeight: uint64(ctx.BlockHeight()),
-			//nolint:gosec // G115: We shouldn't get negative timestamps.
+			//nolint:gosec // G115: Timestamp is never negative.
 			BlockTimestamp: uint64(ctx.BlockTime().Unix()),
 		}
 
@@ -106,7 +107,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			k.Logger(ctx).Debug("tally result", "request_id", dr.Id, "tally_result", tallyResults[i])
 		}
 
-		distributions := k.GetGasMeterResults(ctx, gasMeter, dr.Id, dr.Height, tallyConfig.BurnRatio)
+		distributions := k.GetGasMeterResults(ctx, gasMeter, dr.Id, dr.PostedHeight, tallyConfig.BurnRatio)
 		err = k.ProcessDistributions(ctx, distributions, &dr, params.StakingConfig.MinimumStake)
 		if err != nil {
 			return err
@@ -181,6 +182,7 @@ func (k Keeper) FilterAndTally(ctx sdk.Context, dr types.DataRequest, params typ
 	reveals, executors, gasReports := k.LoadRevealsSorted(ctx, dr.Id, dr.Reveals)
 
 	// Phase 1: Filtering
+	//nolint:gosec // G115: No overflow guaranteed by validation logic.
 	filterResult, filterErr := ExecuteFilter(reveals, dr.ConsensusFilter, uint16(dr.ReplicationFactor), params, gasMeter)
 	filterResult.Executors = executors
 	tallyResult := TallyResult{

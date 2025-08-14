@@ -4,16 +4,17 @@ import (
 	"fmt"
 
 	"cosmossdk.io/collections"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
-func (k Keeper) AddToTimeoutQueue(ctx sdk.Context, drID string, timeoutHeight uint64) error {
+func (k Keeper) AddToTimeoutQueue(ctx sdk.Context, drID string, timeoutHeight int64) error {
 	return k.timeoutQueue.Set(ctx, collections.Join(timeoutHeight, drID))
 }
 
-func (k Keeper) RemoveFromTimeoutQueue(ctx sdk.Context, drID string, timeoutHeight uint64) error {
+func (k Keeper) RemoveFromTimeoutQueue(ctx sdk.Context, drID string, timeoutHeight int64) error {
 	err := k.timeoutQueue.Remove(ctx, collections.Join(timeoutHeight, drID))
 	if err != nil {
 		return err
@@ -21,7 +22,7 @@ func (k Keeper) RemoveFromTimeoutQueue(ctx sdk.Context, drID string, timeoutHeig
 	return nil
 }
 
-func (k Keeper) UpdateDataRequestTimeout(ctx sdk.Context, drID string, oldTimeoutHeight, newTimeoutHeight uint64) error {
+func (k Keeper) UpdateDataRequestTimeout(ctx sdk.Context, drID string, oldTimeoutHeight, newTimeoutHeight int64) error {
 	exists, err := k.timeoutQueue.Has(ctx, collections.Join(oldTimeoutHeight, drID))
 	if err != nil {
 		return err
@@ -51,7 +52,7 @@ func (k Keeper) ExpireDataRequests(ctx sdk.Context) error {
 		timeoutHeight := key.K1()
 		drID := key.K2()
 
-		if timeoutHeight > uint64(ctx.BlockHeight()) {
+		if timeoutHeight > ctx.BlockHeight() {
 			break
 		}
 

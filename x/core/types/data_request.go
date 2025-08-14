@@ -20,7 +20,8 @@ func (dr DataRequest) Index() DataRequestIndex {
 	dr.PostedGasPrice.BigInt().FillBytes(priceBytes)
 
 	heightBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(heightBytes, dr.Height)
+	//nolint:gosec // G115: Block height is never negative.
+	binary.BigEndian.PutUint64(heightBytes, uint64(dr.PostedHeight))
 
 	drIDBytes := []byte(dr.Id) // TODO or convert hex to bytes?
 	return append(append(priceBytes, heightBytes...), drIDBytes...)

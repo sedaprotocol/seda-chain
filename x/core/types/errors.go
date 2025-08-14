@@ -24,7 +24,7 @@ var (
 	ErrMemoLimitExceeded            = errors.Register("core", 18, "memo limit exceeded")
 	ErrPaybackAddressLimitExceeded  = errors.Register("core", 19, "payback address limit exceeded")
 	ErrSEDAPayloadLimitExceeded     = errors.Register("core", 20, "SEDA payload limit exceeded")
-	ErrReplicationFactorNotUint16   = errors.Register("core", 21, "replication factor is not a uint16 number")
+	ErrReplicationFactorNotUint16   = errors.Register("core", 21, "replication factor must fit within 16 bits (unsigned)")
 	ErrReplicationFactorTooHigh     = errors.Register("core", 22, "replication factor is too high")
 	ErrDataRequestAlreadyExists     = errors.Register("core", 23, "data request already exists")
 	ErrNotCommitting                = errors.Register("core", 24, "data request is not in committing state")
