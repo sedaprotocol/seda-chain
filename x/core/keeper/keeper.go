@@ -7,7 +7,7 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"cosmossdk.io/collections"
-	collcodec "cosmossdk.io/collections/codec"
+	collcdc "cosmossdk.io/collections/codec"
 	storetypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 
@@ -40,12 +40,8 @@ type Keeper struct {
 	dataRequests collections.Map[string, types.DataRequest]
 	// revealBodies is a map of data request IDs and executor public keys to reveal bodies.
 	revealBodies collections.Map[collections.Pair[string, string], types.RevealBody]
-	// committing is a set of data request indices that are being committed.
-	committing collections.KeySet[types.DataRequestIndex]
-	// revealing is a set of data request indices that are being revealed.
-	revealing collections.KeySet[types.DataRequestIndex]
-	// tallying is a set of data request indices that are being tallied.
-	tallying collections.KeySet[types.DataRequestIndex]
+	// dataRequestIndexing is a set of data request indices under different statuses.
+	dataRequestIndexing collections.KeySet[collections.Pair[types.DataRequestStatus, types.DataRequestIndex]]
 	// timeoutQueue is a queue of data request IDs and their timeout heights.
 	timeoutQueue collections.KeySet[collections.Pair[int64, string]]
 
@@ -69,23 +65,21 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
-		wasmStorageKeeper: wsk,
-		batchingKeeper:    batk,
-		dataProxyKeeper:   dpk,
-		stakingKeeper:     sk,
-		bankKeeper:        bank,
-		wasmKeeper:        wk,
-		wasmViewKeeper:    wvk,
-		authority:         authority,
-		allowlist:         collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
-		stakers:           collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
-		dataRequests:      collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
-		revealBodies:      collections.NewMap(sb, types.RevealBodiesKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
-		committing:        collections.NewKeySet(sb, types.CommittingKeyPrefix, "committing", collcodec.NewBytesKey[types.DataRequestIndex]()),
-		revealing:         collections.NewKeySet(sb, types.RevealingKeyPrefix, "revealing", collcodec.NewBytesKey[types.DataRequestIndex]()),
-		tallying:          collections.NewKeySet(sb, types.TallyingKeyPrefix, "tallying", collcodec.NewBytesKey[types.DataRequestIndex]()),
-		timeoutQueue:      collections.NewKeySet(sb, types.TimeoutQueueKeyPrefix, "timeout_queue", collections.PairKeyCodec(collections.Int64Key, collections.StringKey)),
-		params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
+		wasmStorageKeeper:   wsk,
+		batchingKeeper:      batk,
+		dataProxyKeeper:     dpk,
+		stakingKeeper:       sk,
+		bankKeeper:          bank,
+		wasmKeeper:          wk,
+		wasmViewKeeper:      wvk,
+		authority:           authority,
+		allowlist:           collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
+		stakers:             collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
+		dataRequests:        collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
+		revealBodies:        collections.NewMap(sb, types.RevealBodiesKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
+		dataRequestIndexing: collections.NewKeySet(sb, types.DrIndexingKeyPrefix, "data_request_indexing", collections.PairKeyCodec(collcdc.NewInt32Key[types.DataRequestStatus](), collcdc.NewBytesKey[types.DataRequestIndex]())),
+		timeoutQueue:        collections.NewKeySet(sb, types.TimeoutQueueKeyPrefix, "timeout_queue", collections.PairKeyCodec(collections.Int64Key, collections.StringKey)),
+		params:              collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
 
 	schema, err := sb.Build()

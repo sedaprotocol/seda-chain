@@ -188,10 +188,12 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, params types.Par
 
 		tallyResults[i].GasMeter = gasMeter
 
-		err = k.RemoveFromTallying(ctx, dr.Index())
+		err = k.UpdateDataRequestIndexing(ctx, dr.Index(), dr.Status, types.DATA_REQUEST_STATUS_UNSPECIFIED)
 		if err != nil {
 			return nil, nil, err
 		}
+		// TODO double check
+		// dr.Status = types.DATA_REQUEST_STATUS_UNSPECIFIED
 		err = k.RemoveRevealBodies(ctx, dr.ID)
 		if err != nil {
 			return nil, nil, err
@@ -199,7 +201,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, params types.Par
 		err = k.RemoveDataRequest(ctx, dr.ID)
 		if err != nil {
 			return nil, nil, err
-
 		}
 	}
 

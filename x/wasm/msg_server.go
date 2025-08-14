@@ -43,7 +43,8 @@ func (m msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 		return m.MsgServer.ExecuteContract(goCtx, msg)
 	}
 
-	if err := msg.ValidateBasic(); err != nil {
+	err = msg.ValidateBasic()
+	if err != nil {
 		return nil, err
 	}
 
