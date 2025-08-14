@@ -113,10 +113,12 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			return err
 		}
 
-		err = k.RemoveFromTallying(ctx, dr.Index())
+		err = k.UpdateDataRequestIndexing(ctx, dr.Index(), dr.Status, types.DATA_REQUEST_STATUS_UNSPECIFIED)
 		if err != nil {
 			return err
 		}
+		dr.Status = types.DATA_REQUEST_STATUS_UNSPECIFIED
+
 		err = k.RemoveRevealBodies(ctx, dr.Id)
 		if err != nil {
 			return err
