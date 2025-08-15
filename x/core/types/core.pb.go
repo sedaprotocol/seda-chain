@@ -346,12 +346,18 @@ func (m *DataRequest) GetStatus() DataRequestStatus {
 
 // RevealBody is the content of a reveal.
 type RevealBody struct {
-	DrId          string   `protobuf:"bytes,1,opt,name=dr_id,json=drId,proto3" json:"dr_id,omitempty"`
-	DrBlockHeight uint64   `protobuf:"varint,2,opt,name=dr_block_height,json=drBlockHeight,proto3" json:"dr_block_height,omitempty"`
-	ExitCode      uint32   `protobuf:"varint,3,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
-	GasUsed       uint64   `protobuf:"varint,4,opt,name=gas_used,json=gasUsed,proto3" json:"gas_used,omitempty"`
-	Reveal        string   `protobuf:"bytes,5,opt,name=reveal,proto3" json:"reveal,omitempty"`
-	ProxyPubKeys  []string `protobuf:"bytes,6,rep,name=proxy_pub_keys,json=proxyPubKeys,proto3" json:"proxy_public_keys"`
+	// Hex-encoded ID of the data request
+	DrId string `protobuf:"bytes,1,opt,name=dr_id,json=drId,proto3" json:"dr_id,omitempty"`
+	// Block height of the data request posting
+	DrBlockHeight uint64 `protobuf:"varint,2,opt,name=dr_block_height,json=drBlockHeight,proto3" json:"dr_block_height,omitempty"`
+	// Exit code of the data request execution (used as uint8)
+	ExitCode uint32 `protobuf:"varint,3,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
+	// Gas used by the data request execution
+	GasUsed uint64 `protobuf:"varint,4,opt,name=gas_used,json=gasUsed,proto3" json:"gas_used,omitempty"`
+	// Contents of the reveal
+	Reveal []byte `protobuf:"bytes,5,opt,name=reveal,proto3" json:"reveal,omitempty"`
+	// List of data proxy public keys used
+	ProxyPubKeys []string `protobuf:"bytes,6,rep,name=proxy_pub_keys,json=proxyPubKeys,proto3" json:"proxy_public_keys"`
 }
 
 func (m *RevealBody) Reset()         { *m = RevealBody{} }
@@ -415,11 +421,11 @@ func (m *RevealBody) GetGasUsed() uint64 {
 	return 0
 }
 
-func (m *RevealBody) GetReveal() string {
+func (m *RevealBody) GetReveal() []byte {
 	if m != nil {
 		return m.Reveal
 	}
-	return ""
+	return nil
 }
 
 func (m *RevealBody) GetProxyPubKeys() []string {
@@ -855,7 +861,7 @@ var fileDescriptor_0152bc97eaf51aad = []byte{
 	0xee, 0x9e, 0x4d, 0x23, 0xb0, 0xaa, 0x6f, 0xa9, 0x17, 0xb5, 0x25, 0x6a, 0x22, 0xb0, 0x0b, 0x59,
 	0x7a, 0xc1, 0x62, 0xec, 0x72, 0x8f, 0xaa, 0x7a, 0x55, 0x70, 0xd6, 0x25, 0xb0, 0xcf, 0x3d, 0x8a,
 	0xee, 0x80, 0xbc, 0x25, 0x38, 0x11, 0xd4, 0x53, 0x25, 0x29, 0xed, 0xac, 0x8d, 0x88, 0x38, 0x11,
-	0xd4, 0x93, 0x29, 0xd4, 0xd9, 0x54, 0x75, 0x28, 0xeb, 0x98, 0x11, 0xfa, 0x31, 0x14, 0xc7, 0x11,
+	0xd4, 0x93, 0x29, 0xd4, 0xd9, 0x54, 0x75, 0x28, 0xef, 0x98, 0x11, 0xfa, 0x31, 0x14, 0xc7, 0x11,
 	0xbf, 0x98, 0xe0, 0x71, 0x32, 0x94, 0x3d, 0x44, 0xd8, 0x99, 0x5a, 0x6a, 0x2f, 0xdb, 0xde, 0xbe,
 	0xba, 0xac, 0x96, 0x67, 0x16, 0xd3, 0x60, 0x84, 0x93, 0x57, 0xd0, 0x71, 0x32, 0xfc, 0x9c, 0x4e,
 	0x44, 0xfd, 0x3f, 0x16, 0x64, 0x8e, 0x49, 0x44, 0x02, 0x81, 0x9e, 0xc3, 0xa6, 0x47, 0x62, 0x82,
@@ -901,7 +907,7 @@ var fileDescriptor_0152bc97eaf51aad = []byte{
 	0x5f, 0x55, 0xac, 0xdf, 0xbe, 0xae, 0xac, 0x7c, 0xf5, 0xba, 0xb2, 0xf2, 0xf7, 0xd7, 0x95, 0x95,
 	0xe7, 0xcd, 0x11, 0x8b, 0x4f, 0x93, 0x61, 0xc3, 0xe5, 0x41, 0x53, 0x76, 0x05, 0xf5, 0xd9, 0xe5,
 	0x72, 0x5f, 0x0d, 0x1e, 0xea, 0xcf, 0xbd, 0x0b, 0xfd, 0xc1, 0x17, 0x4f, 0xc6, 0x54, 0x0c, 0x33,
-	0xca, 0xe3, 0xe3, 0xff, 0x05, 0x00, 0x00, 0xff, 0xff, 0x33, 0xce, 0x19, 0xc1, 0x0f, 0x0e, 0x00,
+	0xca, 0xe3, 0xe3, 0xff, 0x05, 0x00, 0x00, 0xff, 0xff, 0xac, 0xcf, 0x38, 0x82, 0x0f, 0x0e, 0x00,
 	0x00,
 }
 
@@ -2956,7 +2962,7 @@ func (m *RevealBody) Unmarshal(dAtA []byte) error {
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Reveal", wireType)
 			}
-			var stringLen uint64
+			var byteLen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowCore
@@ -2966,23 +2972,25 @@ func (m *RevealBody) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				byteLen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if byteLen < 0 {
 				return ErrInvalidLengthCore
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + byteLen
 			if postIndex < 0 {
 				return ErrInvalidLengthCore
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Reveal = string(dAtA[iNdEx:postIndex])
+			m.Reveal = append(m.Reveal[:0], dAtA[iNdEx:postIndex]...)
+			if m.Reveal == nil {
+				m.Reveal = []byte{}
+			}
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {

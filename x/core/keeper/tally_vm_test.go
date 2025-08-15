@@ -31,6 +31,7 @@ func TestExecuteTallyProgram_RandomString(t *testing.T) {
 
 	execItems := []keeper.TallyParallelExecItem{
 		{
+<<<<<<< HEAD
 			Request: types.DataRequest{
 				TallyProgramId: hex.EncodeToString(tallyProgram.Hash),
 				TallyInputs:    []byte("hello"),
@@ -61,11 +62,38 @@ func TestExecuteTallyProgram_RandomString(t *testing.T) {
 						GasUsed:      10,
 					},
 				},
+=======
+			Executor: "0",
+			RevealBody: types.RevealBody{
+				Reveal:       []byte("{\"value\":\"one\"}"),
+				ProxyPubKeys: []string{},
+				GasUsed:      10,
+			},
+		},
+		{
+			Executor: "1",
+			RevealBody: types.RevealBody{
+				Reveal:       []byte("{\"value\":\"two\"}"),
+				ProxyPubKeys: []string{},
+				GasUsed:      10,
+>>>>>>> 7f9067a (chore(x/core): addressing review comments)
 			},
 			Outliers: []bool{false, true, false},
 			GasMeter: types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1),
 		},
+<<<<<<< HEAD
 	}
+=======
+		{
+			Executor: "2",
+			RevealBody: types.RevealBody{
+				Reveal:       []byte("{\"value\":\"three\"}"),
+				ProxyPubKeys: []string{},
+				GasUsed:      10,
+			},
+		},
+	}, gasMeter)
+>>>>>>> 7f9067a (chore(x/core): addressing review comments)
 
 	vmRes := f.keeper.ExecuteTallyProgramsParallel(f.Context(), execItems)
 	require.NoError(t, execItems[0].TallyExecErr)

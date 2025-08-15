@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/base64"
 	"encoding/json"
 
 	"cosmossdk.io/math"
@@ -21,17 +20,12 @@ func (r Reveal) GetSortKey() []byte {
 }
 
 func (u *RevealBody) MarshalJSON() ([]byte, error) {
-	revealBytes, err := base64.StdEncoding.DecodeString(u.Reveal)
-	if err != nil {
-		return nil, err
-	}
-
 	type Alias RevealBody
 	return json.Marshal(&struct {
 		Reveal []int `json:"reveal"`
 		*Alias
 	}{
-		Reveal: bytesToIntSlice(revealBytes),
+		Reveal: bytesToIntSlice(u.Reveal),
 		Alias:  (*Alias)(u),
 	})
 }

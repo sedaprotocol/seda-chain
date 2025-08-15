@@ -38,7 +38,7 @@ const (
 type commitRevealConfig struct {
 	requestHeight uint64
 	requestMemo   string
-	reveal        string
+	reveal        string // base64 string (TODO: change to []byte)
 	proxyPubKeys  []string
 	gasUsed       uint64
 	exitCode      byte
@@ -154,9 +154,14 @@ func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMem
 // commitDataRequest executes a commit for each of the given stakers and
 // returns a list of corresponding reveal messages.
 func (f *fixture) commitDataRequest(t testing.TB, stakers []staker, height int64, drID string, config commitRevealConfig) ([][]byte, error) {
+	revealBytes, err := base64.StdEncoding.DecodeString(config.reveal)
+	if err != nil {
+		return nil, err
+	}
+
 	revealBody := types.RevealBody{
 		DrId:         drID,
-		Reveal:       config.reveal,
+		Reveal:       revealBytes,
 		GasUsed:      config.gasUsed,
 		ExitCode:     uint32(config.exitCode),
 		ProxyPubKeys: config.proxyPubKeys,
@@ -290,11 +295,7 @@ func (f *fixture) initAccountWithCoins(t testing.TB, addr sdk.AccAddress, coins 
 // salt field, the salt must be provided separately.
 func (f *fixture) generateRevealBodyHash(rb types.RevealBody) ([]byte, error) {
 	revealHasher := sha3.NewLegacyKeccak256()
-	revealBytes, err := base64.StdEncoding.DecodeString(rb.Reveal)
-	if err != nil {
-		return nil, err
-	}
-	revealHasher.Write(revealBytes)
+	revealHasher.Write(rb.Reveal)
 	revealHash := revealHasher.Sum(nil)
 
 	hasher := sha3.NewLegacyKeccak256()
@@ -342,7 +343,7 @@ func (f *fixture) createRevealMsg(staker staker, revealBody types.RevealBody) ([
 
 	msg := testutil.RevealMsg(
 		revealBody.DrId,
-		revealBody.Reveal,
+		base64.StdEncoding.EncodeToString(revealBody.Reveal),
 		staker.pubKey,
 		proof,
 		revealBody.ProxyPubKeys,

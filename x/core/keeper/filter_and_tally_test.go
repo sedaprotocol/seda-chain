@@ -2,7 +2,6 @@ package keeper_test
 
 /* Turned off until x/core endblock implementation is complete
 import (
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"slices"
@@ -45,10 +44,10 @@ func TestFilterAndTally(t *testing.T) {
 			tallyInputAsHex: "00",
 			outliers:        []bool{false, false, false, false},
 			reveals: []types.RevealBody{
-				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`)},
 			},
 			replicationFactor: 5,
 			consensus:         true,
@@ -62,7 +61,7 @@ func TestFilterAndTally(t *testing.T) {
 			tallyInputAsHex: "00",
 			outliers:        nil,
 			reveals: []types.RevealBody{
-				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`)},
 			},
 			replicationFactor: 5,
 			consensus:         false,
@@ -76,10 +75,10 @@ func TestFilterAndTally(t *testing.T) {
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
 			outliers:        []bool{false, false, false, false},
 			reveals: []types.RevealBody{
-				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`)},
 			},
 			replicationFactor: 5,
 			consensus:         true,
@@ -93,7 +92,7 @@ func TestFilterAndTally(t *testing.T) {
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // json_path = $.result.text
 			outliers:        nil,
 			reveals: []types.RevealBody{
-				{ExitCode: 0, Reveal: `{"result": {"text": "A"}}`},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`)},
 			},
 			replicationFactor: 5,
 			consensus:         false,
@@ -107,11 +106,11 @@ func TestFilterAndTally(t *testing.T) {
 			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
 			outliers:        []bool{false, false, false, false, false},                        // MaxDev = 1*1.5 = 1.5, Median = 5
 			reveals: []types.RevealBody{
-				{ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": 4}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": 5}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": 6}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": 4}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": 6}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": 5}}`)},
 			},
 			replicationFactor: 6,
 			consensus:         true,
@@ -125,11 +124,11 @@ func TestFilterAndTally(t *testing.T) {
 			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
 			outliers:        []bool{false, false, false, false, true},                         // MaxDev = 1*1.5 = 1.5, Median = 5
 			reveals: []types.RevealBody{
-				{ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": 4}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": 6}}`},
-				{ExitCode: 0, Reveal: `{"result": {"text": 1}}`},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": 5}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": 6}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": 4}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": 6}}`)},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": 1}}`)},
 			},
 			replicationFactor: 5,
 			consensus:         true,
@@ -143,7 +142,7 @@ func TestFilterAndTally(t *testing.T) {
 			tallyInputAsHex: "02000000000016E36001000000000000000D242E726573756C742E74657874", // max_sigma = 1.5, number_type = int64, json_path = $.result.text
 			outliers:        nil,
 			reveals: []types.RevealBody{
-				{ExitCode: 0, Reveal: `{"result": {"text": 5}}`},
+				{ExitCode: 0, Reveal: []byte(`{"result": {"text": 5}}`)},
 			},
 			replicationFactor: 5,
 			consensus:         false,
@@ -170,7 +169,7 @@ func TestFilterAndTally(t *testing.T) {
 
 				revealBody := v
 				revealBody.DrId = drID
-				revealBody.Reveal = base64.StdEncoding.EncodeToString([]byte(v.Reveal))
+				revealBody.Reveal = v.Reveal
 				revealBody.GasUsed = v.GasUsed
 				reveals[executor] = revealBody
 				if tt.outliers != nil {
@@ -270,9 +269,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Uniform gas reporting",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
+				"c": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
@@ -287,9 +286,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Uniform gas reporting beyond execGasLimit",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
+				"c": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      60000,
@@ -304,9 +303,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Uniform gas reporting (consensus with 1 outlier)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 30000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
+				"c": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 30000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
@@ -320,9 +319,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Uniform gas reporting (mode consensus in error)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 1, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
-				"b": {ExitCode: 1, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 30000},
+				"a": {ExitCode: 1, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
+				"b": {ExitCode: 1, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
+				"c": {ExitCode: 1, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 30000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
@@ -337,9 +336,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Uniform gas reporting (mode no consensus)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 20000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 20000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 20000},
+				"c": {ExitCode: 1, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 20000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      60000,
@@ -355,9 +354,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Uniform gas reporting with low gas limit (mode no consensus)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 20000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 20000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 20000},
+				"c": {ExitCode: 1, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 20000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      1000,
@@ -373,9 +372,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting (low*2 > median)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 28000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
+				"c": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 32000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
@@ -390,11 +389,11 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting with multiple lows (low*2 > median)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
-				"lizard":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
-				"bonobo":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
-				"penguin": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
-				"zebra":   {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
-				"lion":    {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
+				"lizard":  {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 28000},
+				"bonobo":  {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
+				"penguin": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 32000},
+				"zebra":   {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 32000},
+				"lion":    {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 28000},
 			},
 			requestID:         "646174615F726571756573745F31",
 			replicationFactor: 5,
@@ -412,11 +411,11 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting with multiple lows, different req ID (low*2 > median)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
-				"lizard":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
-				"bonobo":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 30000},
-				"penguin": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
-				"zebra":   {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
-				"lion":    {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
+				"lizard":  {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 28000},
+				"bonobo":  {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 30000},
+				"penguin": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 32000},
+				"zebra":   {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 32000},
+				"lion":    {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 28000},
 			},
 			requestID:         "646174615F726571756573745F35",
 			replicationFactor: 5,
@@ -434,9 +433,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting with multiple lows (low*2 > median, low is median)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 35000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 8000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 8000},
+				"c": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 35000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      30000,
@@ -451,9 +450,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting (low*2 < median)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 20000},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 35000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 8000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 20000},
+				"c": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 35000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
@@ -468,9 +467,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting with multiple lows (low*2 < median)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 10000},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 8000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 10000},
+				"c": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 8000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      50000,
@@ -485,11 +484,11 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting (low*2 < median)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
-				"zebra":   {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 32000},
-				"lizard":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 20000},
-				"bonobo":  {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 35000},
-				"penguin": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
-				"lion":    {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 28000},
+				"zebra":   {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 32000},
+				"lizard":  {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 20000},
+				"bonobo":  {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 35000},
+				"penguin": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 8000},
+				"lion":    {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 28000},
 			},
 			replicationFactor: 5,
 			execGasLimit:      200000,
@@ -506,9 +505,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting (lowest_report*2 == median_report)",
 			tallyInputAsHex: "00",
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 10000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 20000},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 35000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 10000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 20000},
+				"c": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 35000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
@@ -523,9 +522,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting (mode no consensus)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 8000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 20000},
+				"c": {ExitCode: 1, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 35000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
@@ -541,9 +540,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting with low gas limit and no shares (mode no consensus)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 1},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 1},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 20000},
+				"c": {ExitCode: 1, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 35000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      1000,
@@ -559,9 +558,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting with low gas limit and shares (mode no consensus)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 8000},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 20000},
+				"c": {ExitCode: 1, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 35000},
 			},
 			replicationFactor: 3,
 			execGasLimit:      1000,
@@ -577,9 +576,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting (mode no consensus, with 1 proxy)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{ // (7000, 19000, 34000) after subtracting proxy gas
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{pubKeys[0]}},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{pubKeys[0]}},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{pubKeys[0]}},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 8000, ProxyPubKeys: []string{pubKeys[0]}},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 20000, ProxyPubKeys: []string{pubKeys[0]}},
+				"c": {ExitCode: 1, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 35000, ProxyPubKeys: []string{pubKeys[0]}},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
@@ -598,9 +597,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting (consensus with 1 outlier, with 2 proxies)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{ // (6000, 18000, 33000) after subtracting proxy gas
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
-				"c": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{pubKeys[0]}},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 8000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 20000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
+				"c": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 35000, ProxyPubKeys: []string{pubKeys[0]}},
 			},
 			replicationFactor: 3,
 			execGasLimit:      90000,
@@ -619,9 +618,9 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "Divergent gas reporting with low gas limit (mode no consensus, with 2 proxies)",
 			tallyInputAsHex: "01000000000000000D242E726573756C742E74657874", // mode, json_path = $.result.text
 			reveals: map[string]types.RevealBody{ // (0, 0, 0) after subtracting proxy gas and considering gas limit
-				"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: 8000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
-				"b": {ExitCode: 0, Reveal: `{"result": {"text": "B"}}`, GasUsed: 20000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
-				"c": {ExitCode: 1, Reveal: `{"result": {"text": "B"}}`, GasUsed: 35000, ProxyPubKeys: []string{pubKeys[0]}},
+				"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: 8000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
+				"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 20000, ProxyPubKeys: []string{pubKeys[0], pubKeys[1]}},
+				"c": {ExitCode: 1, Reveal: []byte(`{"result": {"text": "B"}}`), GasUsed: 35000, ProxyPubKeys: []string{pubKeys[0]}},
 			},
 			replicationFactor: 3,
 			execGasLimit:      1000,
@@ -641,14 +640,14 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "MAD uint128 (1 reveal missing, consensus with 2 outliers, uniform gas reporting)",
 			tallyInputAsHex: "0200000000002DC6C005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 3, number_type = 0x05, json_path = $.result.text
 			reveals: map[string]types.RevealBody{ // median = 400000, MAD = 50000
-				"a": {Reveal: `{"result": {"text": 300000, "number": 0}}`, GasUsed: 25000},
-				"b": {Reveal: `{"result": {"number": 700000, "number": 0}}`, GasUsed: 25000}, // corrupt
-				"c": {Reveal: `{"result": {"text": 400000, "number": 10}}`, GasUsed: 25000},
-				"d": {Reveal: `{"result": {"text": 400000, "number": 101}}`, GasUsed: 25000},
-				"e": {Reveal: `{"result": {"text": 400000, "number": 0}}`, GasUsed: 25000},
-				"f": {Reveal: `{"result": {"text": 340282366920938463463374607431768211456, "number": 0}}`, GasUsed: 25000}, // overflow
-				"g": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 25000},
-				"h": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 25000},
+				"a": {Reveal: []byte(`{"result": {"text": 300000, "number": 0}}`), GasUsed: 25000},
+				"b": {Reveal: []byte(`{"result": {"number": 700000, "number": 0}}`), GasUsed: 25000}, // corrupt
+				"c": {Reveal: []byte(`{"result": {"text": 400000, "number": 10}}`), GasUsed: 25000},
+				"d": {Reveal: []byte(`{"result": {"text": 400000, "number": 101}}`), GasUsed: 25000},
+				"e": {Reveal: []byte(`{"result": {"text": 400000, "number": 0}}`), GasUsed: 25000},
+				"f": {Reveal: []byte(`{"result": {"text": 340282366920938463463374607431768211456, "number": 0}}`), GasUsed: 25000}, // overflow
+				"g": {Reveal: []byte(`{"result": {"text": 500000, "number": 0}}`), GasUsed: 25000},
+				"h": {Reveal: []byte(`{"result": {"text": 500000, "number": 0}}`), GasUsed: 25000},
 			},
 			replicationFactor: 9,
 			execGasLimit:      900000,
@@ -666,14 +665,14 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "MAD uint128 (1 reveal missing, consensus with 2 outliers, divergent gas reporting)",
 			tallyInputAsHex: "0200000000002DC6C005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 3, number_type = 0x05, json_path = $.result.text
 			reveals: map[string]types.RevealBody{
-				"a": {Reveal: `{"result": {"text": 300000, "number": 0}}`, GasUsed: 25000},
-				"b": {Reveal: `{"result": {"number": 700000, "number": 0}}`, GasUsed: 27000}, // corrupt
-				"c": {Reveal: `{"result": {"text": 400000, "number": 10}}`, GasUsed: 21500},
-				"d": {Reveal: `{"result": {"text": 400000, "number": 101}}`, GasUsed: 29000},
-				"e": {Reveal: `{"result": {"text": 400000, "number": 0}}`, GasUsed: 35000},
-				"f": {Reveal: `{"result": {"text": 340282366920938463463374607431768211456, "number": 0}}`, GasUsed: 400}, // overflow
-				"g": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 29800},
-				"h": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 25000},
+				"a": {Reveal: []byte(`{"result": {"text": 300000, "number": 0}}`), GasUsed: 25000},
+				"b": {Reveal: []byte(`{"result": {"number": 700000, "number": 0}}`), GasUsed: 27000}, // corrupt
+				"c": {Reveal: []byte(`{"result": {"text": 400000, "number": 10}}`), GasUsed: 21500},
+				"d": {Reveal: []byte(`{"result": {"text": 400000, "number": 101}}`), GasUsed: 29000},
+				"e": {Reveal: []byte(`{"result": {"text": 400000, "number": 0}}`), GasUsed: 35000},
+				"f": {Reveal: []byte(`{"result": {"text": 340282366920938463463374607431768211456, "number": 0}}`), GasUsed: 400}, // overflow
+				"g": {Reveal: []byte(`{"result": {"text": 500000, "number": 0}}`), GasUsed: 29800},
+				"h": {Reveal: []byte(`{"result": {"text": 500000, "number": 0}}`), GasUsed: 25000},
 			},
 			replicationFactor: 9,
 			execGasLimit:      900000,
@@ -691,14 +690,14 @@ func TestExecutorPayout(t *testing.T) {
 			name:            "MAD uint128 (1 reveal missing, consensus with 2 outliers, divergent gas reporting)",
 			tallyInputAsHex: "0200000000002DC6C005000000000000000D242E726573756C742E74657874", // sigma_multiplier = 3, number_type = 0x05, json_path = $.result.text
 			reveals: map[string]types.RevealBody{
-				"a": {Reveal: `{"result": {"text": 300000, "number": 0}}`, GasUsed: 25000},
-				"b": {Reveal: `{"result": {"number": 700000, "number": 0}}`, GasUsed: 27000}, // corrupt
-				"c": {Reveal: `{"result": {"text": 400000, "number": 10}}`, GasUsed: 21500},
-				"d": {Reveal: `{"result": {"text": 400000, "number": 101}}`, GasUsed: 29000},
-				"e": {Reveal: `{"result": {"text": 400000, "number": 0}}`, GasUsed: 35000},
-				"f": {Reveal: `{"result": {"text": 340282366920938463463374607431768211456, "number": 0}}`, GasUsed: 29800}, // overflow
-				"g": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 400},
-				"h": {Reveal: `{"result": {"text": 500000, "number": 0}}`, GasUsed: 25000},
+				"a": {Reveal: []byte(`{"result": {"text": 300000, "number": 0}}`), GasUsed: 25000},
+				"b": {Reveal: []byte(`{"result": {"number": 700000, "number": 0}}`), GasUsed: 27000}, // corrupt
+				"c": {Reveal: []byte(`{"result": {"text": 400000, "number": 10}}`), GasUsed: 21500},
+				"d": {Reveal: []byte(`{"result": {"text": 400000, "number": 101}}`), GasUsed: 29000},
+				"e": {Reveal: []byte(`{"result": {"text": 400000, "number": 0}}`), GasUsed: 35000},
+				"f": {Reveal: []byte(`{"result": {"text": 340282366920938463463374607431768211456, "number": 0}}`), GasUsed: 29800}, // overflow
+				"g": {Reveal: []byte(`{"result": {"text": 500000, "number": 0}}`), GasUsed: 400},
+				"h": {Reveal: []byte(`{"result": {"text": 500000, "number": 0}}`), GasUsed: 25000},
 			},
 			replicationFactor: 9,
 			execGasLimit:      900000,
@@ -728,7 +727,7 @@ func TestExecutorPayout(t *testing.T) {
 
 				revealBody := v
 				revealBody.DrId = tt.requestID
-				revealBody.Reveal = base64.StdEncoding.EncodeToString([]byte(v.Reveal))
+				revealBody.Reveal = v.Reveal
 				revealBody.GasUsed = v.GasUsed
 
 				err = f.keeper.SetRevealBody(f.Context(), k, revealBody)

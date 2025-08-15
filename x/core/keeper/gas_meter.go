@@ -71,11 +71,14 @@ func (k Keeper) ProcessDistributions(ctx sdk.Context, tr *TallyResult, minimumSt
 		return err
 	}
 
-	remainingEscrow := tr.GasMeter.GetEscrow()
-
 	// TODO Events
-	var amount math.Int
+	remainingEscrow := tr.GasMeter.GetEscrow()
 	for _, dist := range dists {
+		if !remainingEscrow.IsPositive() {
+			break
+		}
+		amount := math.ZeroInt()
+
 		switch {
 		case dist.Burn != nil:
 			amount = math.MinInt(dist.Burn.Amount, remainingEscrow)
