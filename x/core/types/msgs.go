@@ -1,13 +1,13 @@
 package types
 
 import (
-	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"math/big"
 	"strings"
 
 	"golang.org/x/crypto/sha3"
+	"golang.org/x/mod/semver"
 
 	"cosmossdk.io/math"
 
@@ -38,6 +38,7 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 	if m.ReplicationFactor == 0 {
 		return ErrZeroReplicationFactor
 	}
+	// Ensure that the replication factor fits within 16 bits (unsigned).
 	if m.ReplicationFactor > uint32(^uint16(0)) {
 		return ErrReplicationFactorNotUint16
 	}
@@ -69,11 +70,9 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 		return ErrInvalidLengthTallyProgramID.Wrapf("given ID is %d characters long", len(m.TallyProgramId))
 	}
 
-	// TODO
-	// // Ensure the version only consists of Major.Minor.Patch
-	// if !self.posted_dr.version.pre.is_empty() || !self.posted_dr.version.build.is_empty() {
-	// 	return Err(ContractError::DataRequestVersionInvalid);
-	// }
+	if !semver.IsValid("v"+m.Version) || semver.Prerelease("v"+m.Version) != "" || semver.Build("v"+m.Version) != "" {
+		return ErrInvalidVersion.Wrapf("%s", m.Version)
+	}
 
 	if len(m.ExecInputs) > int(config.ExecInputLimitInBytes) {
 		return ErrExecInputLimitExceeded.Wrapf("%d bytes > %d bytes", len(m.ExecInputs), config.ExecInputLimitInBytes)
@@ -147,6 +146,28 @@ func (m *MsgPostDataRequest) MsgHash() (string, error) {
 	dataRequestHasher.Write(memoHash)
 
 	return hex.EncodeToString(dataRequestHasher.Sum(nil)), nil
+}
+
+// Validate validates the PostDataRequest message based on the given data
+// request configurations.
+func (m MsgReveal) Validate(config DataRequestConfig, replicationFactor uint32) error {
+	// Ensure that the exit code fits within 8 bits (unsigned).
+	if m.RevealBody.ExitCode > uint32(^uint8(0)) {
+		return ErrInvalidRevealExitCode
+	}
+
+	revealSizeLimit := config.DrRevealSizeLimitInBytes / replicationFactor
+	if len(m.RevealBody.Reveal) > int(revealSizeLimit) {
+		return ErrRevealTooBig.Wrapf("%d bytes > %d bytes", len(m.RevealBody.Reveal), revealSizeLimit)
+	}
+
+	for _, key := range m.RevealBody.ProxyPubKeys {
+		_, err := hex.DecodeString(key)
+		if err != nil {
+			return ErrInvalidProxyPublicKey.Wrapf("%s", err.Error())
+		}
+	}
+	return nil
 }
 
 // TODO Remove contractAddr
@@ -232,11 +253,7 @@ func (m MsgReveal) RevealHash() ([]byte, error) {
 
 func (rb RevealBody) RevealBodyHash() ([]byte, error) {
 	revealHasher := sha3.NewLegacyKeccak256()
-	revealBytes, err := base64.StdEncoding.DecodeString(rb.Reveal)
-	if err != nil {
-		return nil, err
-	}
-	revealHasher.Write(revealBytes)
+	revealHasher.Write(rb.Reveal)
 	revealHash := revealHasher.Sum(nil)
 
 	hasher := sha3.NewLegacyKeccak256()

@@ -58,10 +58,10 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 
 	// Loop through the list to apply filter, execute tally, and post
 	// execution result.
-	tallyResults := make([]TallyResult, tallyLen)
-	dataResults := make([]batchingtypes.DataResult, tallyLen)
+	var tallyResult TallyResult
+	var dataResult batchingtypes.DataResult
 
-	for i, id := range drIDs {
+	for _, id := range drIDs {
 		dr, err := k.GetDataRequest(ctx, id)
 		if err != nil {
 			telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
@@ -69,7 +69,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			return nil
 		}
 
-		dataResults[i] = batchingtypes.DataResult{
+		dataResult = batchingtypes.DataResult{
 			DrId: dr.Id,
 			//nolint:gosec // G115: Block height is never negative.
 			DrBlockHeight: uint64(dr.PostedHeight),
@@ -92,19 +92,19 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 		gasMeter := types.NewGasMeter(dr.TallyGasLimit, dr.ExecGasLimit, tallyConfig.MaxTallyGasLimit, dr.PostedGasPrice, tallyConfig.GasCostBase)
 
 		if len(dr.Commits) < int(dr.ReplicationFactor) {
-			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", dr.ReplicationFactor, len(dr.Commits)))
-			dataResults[i].ExitCode = types.TallyExitCodeNotEnoughCommits
+			dataResult.Result = []byte(fmt.Sprintf("need %d commits; received %d", dr.ReplicationFactor, len(dr.Commits)))
+			dataResult.ExitCode = types.TallyExitCodeNotEnoughCommits
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", dr.Id)
 
 			MeterExecutorGasFallback(dr, tallyConfig.ExecutionGasCostFallback, gasMeter)
 		} else {
-			_, tallyResults[i] = k.FilterAndTally(ctx, dr, tallyConfig, gasMeter)
-			dataResults[i].Result = tallyResults[i].Result
-			dataResults[i].ExitCode = tallyResults[i].ExitCode
-			dataResults[i].Consensus = tallyResults[i].Consensus
+			_, tallyResult = k.FilterAndTally(ctx, dr, tallyConfig, gasMeter)
+			dataResult.Result = tallyResult.Result
+			dataResult.ExitCode = tallyResult.ExitCode
+			dataResult.Consensus = tallyResult.Consensus
 
 			k.Logger(ctx).Info("completed tally", "request_id", dr.Id)
-			k.Logger(ctx).Debug("tally result", "request_id", dr.Id, "tally_result", tallyResults[i])
+			k.Logger(ctx).Debug("tally result", "request_id", dr.Id, "tally_result", tallyResult)
 		}
 
 		distributions := k.GetGasMeterResults(ctx, gasMeter, dr.Id, dr.PostedHeight, tallyConfig.BurnRatio)
@@ -128,35 +128,33 @@ func (k Keeper) ProcessTallies(ctx sdk.Context) error {
 			return err
 		}
 
-		dataResults[i].GasUsed = gasMeter.TotalGasUsed()
-		dataResults[i].Id, err = dataResults[i].TryHash()
+		dataResult.GasUsed = gasMeter.TotalGasUsed()
+		dataResult.Id, err = dataResult.TryHash()
 		if err != nil {
 			return err
 		}
-	}
 
-	// Store the data results for batching.
-	for i := range dataResults {
-		err := k.batchingKeeper.SetDataResultForBatching(ctx, dataResults[i])
+		// Store the data results for batching.
+		err = k.batchingKeeper.SetDataResultForBatching(ctx, dataResult)
 		// If writing to the store fails we should stop the node to prevent acting on invalid state.
 		if err != nil {
 			k.Logger(ctx).Error("failed to store data result for batching", "err", err)
 			return err
 		}
 
-		k.Logger(ctx).Info("tally flow completed", "request_id", dataResults[i].DrId)
+		k.Logger(ctx).Info("tally flow completed", "request_id", dataResult.DrId)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeTallyCompletion,
-				sdk.NewAttribute(types.AttributeDataResultID, dataResults[i].Id),
-				sdk.NewAttribute(types.AttributeDataRequestID, dataResults[i].DrId),
-				sdk.NewAttribute(types.AttributeTypeConsensus, strconv.FormatBool(dataResults[i].Consensus)),
-				sdk.NewAttribute(types.AttributeTallyVMStdOut, strings.Join(tallyResults[i].StdOut, "\n")),
-				sdk.NewAttribute(types.AttributeTallyVMStdErr, strings.Join(tallyResults[i].StdErr, "\n")),
-				sdk.NewAttribute(types.AttributeExecGasUsed, fmt.Sprintf("%v", tallyResults[i].ExecGasUsed)),
-				sdk.NewAttribute(types.AttributeTallyGasUsed, fmt.Sprintf("%v", tallyResults[i].TallyGasUsed)),
-				sdk.NewAttribute(types.AttributeTallyExitCode, fmt.Sprintf("%02x", dataResults[i].ExitCode)),
-				sdk.NewAttribute(types.AttributeProxyPubKeys, strings.Join(tallyResults[i].ProxyPubKeys, "\n")),
+				sdk.NewAttribute(types.AttributeDataResultID, dataResult.Id),
+				sdk.NewAttribute(types.AttributeDataRequestID, dataResult.DrId),
+				sdk.NewAttribute(types.AttributeTypeConsensus, strconv.FormatBool(dataResult.Consensus)),
+				sdk.NewAttribute(types.AttributeTallyVMStdOut, strings.Join(tallyResult.StdOut, "\n")),
+				sdk.NewAttribute(types.AttributeTallyVMStdErr, strings.Join(tallyResult.StdErr, "\n")),
+				sdk.NewAttribute(types.AttributeExecGasUsed, fmt.Sprintf("%v", tallyResult.ExecGasUsed)),
+				sdk.NewAttribute(types.AttributeTallyGasUsed, fmt.Sprintf("%v", tallyResult.TallyGasUsed)),
+				sdk.NewAttribute(types.AttributeTallyExitCode, fmt.Sprintf("%02x", dataResult.ExitCode)),
+				sdk.NewAttribute(types.AttributeProxyPubKeys, strings.Join(tallyResult.ProxyPubKeys, "\n")),
 			),
 		)
 	}

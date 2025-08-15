@@ -75,17 +75,62 @@ func DefaultParams() Params {
 
 // ValidateBasic performs basic validation on core module parameters.
 func (p *Params) Validate() error {
-	err := p.TallyConfig.Validate()
+	err := p.DataRequestConfig.Validate()
 	if err != nil {
 		return err
 	}
-
-	// TODO: Add validation for other configs
-
+	err = p.StakingConfig.Validate()
+	if err != nil {
+		return err
+	}
+	err = p.TallyConfig.Validate()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-// ValidateBasic performs basic validation on tally module parameters.
+func (dc *DataRequestConfig) Validate() error {
+	if dc.CommitTimeoutInBlocks <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("commit timeout must be greater than 0: %d blocks", dc.CommitTimeoutInBlocks)
+	}
+	if dc.RevealTimeoutInBlocks <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("reveal timeout must be greater than 0: %d blocks", dc.RevealTimeoutInBlocks)
+	}
+	if dc.BackupDelayInBlocks <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("backup delay must be greater than 0: %d blocks", dc.BackupDelayInBlocks)
+	}
+	if dc.DrRevealSizeLimitInBytes <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("reveal size limit must be greater than 0: %d bytes", dc.DrRevealSizeLimitInBytes)
+	}
+	if dc.ExecInputLimitInBytes <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("exec input limit must be greater than 0: %d bytes", dc.ExecInputLimitInBytes)
+	}
+	if dc.TallyInputLimitInBytes <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("tally input limit must be greater than 0: %d bytes", dc.TallyInputLimitInBytes)
+	}
+	if dc.ConsensusFilterLimitInBytes <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("consensus filter limit must be greater than 0: %d bytes", dc.ConsensusFilterLimitInBytes)
+	}
+	if dc.MemoLimitInBytes <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("memo limit must be greater than 0: %d bytes", dc.MemoLimitInBytes)
+	}
+	if dc.PaybackAddressLimitInBytes <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("payback address limit must be greater than 0: %d bytes", dc.PaybackAddressLimitInBytes)
+	}
+	if dc.SEDAPayloadLimitInBytes <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("SEDA payload limit must be greater than 0: %d bytes", dc.SEDAPayloadLimitInBytes)
+	}
+	return nil
+}
+
+func (sc *StakingConfig) Validate() error {
+	if !sc.MinimumStake.IsPositive() {
+		return sdkerrors.ErrInvalidRequest.Wrapf("minimum stake must be positive: %s", sc.MinimumStake)
+	}
+	return nil
+}
+
 func (tc *TallyConfig) Validate() error {
 	if tc.MaxResultSize <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("max result size must be greater than 0: %d", tc.MaxResultSize)
@@ -107,6 +152,9 @@ func (tc *TallyConfig) Validate() error {
 	}
 	if tc.ExecutionGasCostFallback <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("execution gas cost fallback must be greater than 0: %d", tc.ExecutionGasCostFallback)
+	}
+	if tc.MaxTalliesPerBlock <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("max tallies per block must be greater than 0: %d", tc.MaxTalliesPerBlock)
 	}
 	return validateBurnRatio(tc.BurnRatio)
 }

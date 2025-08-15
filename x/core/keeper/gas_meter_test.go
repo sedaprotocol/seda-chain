@@ -56,16 +56,16 @@ func FuzzGasMetering(f *testing.F) {
 		t.Log(g0, g1, g2, g3, g4, g5, g6, g7, g8, g9)
 
 		reveals := map[string]types.RevealBody{
-			"a": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g0, ProxyPubKeys: proxyPubKeys},
-			"b": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g1, ProxyPubKeys: proxyPubKeys},
-			"c": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g2, ProxyPubKeys: proxyPubKeys},
-			"d": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g3, ProxyPubKeys: proxyPubKeys},
-			"e": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g4, ProxyPubKeys: proxyPubKeys},
-			"f": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g5, ProxyPubKeys: proxyPubKeys},
-			"g": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g6, ProxyPubKeys: proxyPubKeys},
-			"h": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g7, ProxyPubKeys: proxyPubKeys},
-			"i": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g8, ProxyPubKeys: proxyPubKeys},
-			"j": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g9, ProxyPubKeys: proxyPubKeys},
+			"a": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: g0, ProxyPubKeys: proxyPubKeys},
+			"b": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: g1, ProxyPubKeys: proxyPubKeys},
+			"c": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: g2, ProxyPubKeys: proxyPubKeys},
+			"d": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: g3, ProxyPubKeys: proxyPubKeys},
+			"e": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: g4, ProxyPubKeys: proxyPubKeys},
+			"f": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: g5, ProxyPubKeys: proxyPubKeys},
+			"g": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: g6, ProxyPubKeys: proxyPubKeys},
+			"h": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: g7, ProxyPubKeys: proxyPubKeys},
+			"i": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: g8, ProxyPubKeys: proxyPubKeys},
+			"j": {ExitCode: 0, Reveal: []byte(`{"result": {"text": "A"}}`), GasUsed: g9, ProxyPubKeys: proxyPubKeys},
 		}
 		revealsMap := map[string]bool{
 			"a": true,

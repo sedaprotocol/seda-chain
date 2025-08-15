@@ -69,11 +69,14 @@ func (k Keeper) ProcessDistributions(ctx sdk.Context, dists []types.Distribution
 		return err
 	}
 
-	remainingEscrow := dr.Escrow
-
 	// TODO Events
-	var amount math.Int
+	remainingEscrow := dr.Escrow
 	for _, dist := range dists {
+		if !remainingEscrow.IsPositive() {
+			break
+		}
+		amount := math.ZeroInt()
+
 		switch {
 		case dist.Burn != nil:
 			amount = math.MinInt(dist.Burn.Amount, remainingEscrow)
@@ -120,7 +123,7 @@ func (k Keeper) ProcessDistributions(ctx sdk.Context, dists []types.Distribution
 	}
 
 	// Refund the poster.
-	if !dr.Escrow.IsZero() {
+	if dr.Escrow.IsPositive() {
 		poster, err := sdk.AccAddressFromBech32(dr.Poster)
 		if err != nil {
 			// Should not be reachable because the address has been validated.

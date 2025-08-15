@@ -22,7 +22,8 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 	if err != nil {
 		return nil, err
 	}
-	if err := msg.Validate(drConfig); err != nil {
+	err = msg.Validate(drConfig)
+	if err != nil {
 		return nil, err
 	}
 
@@ -225,14 +226,13 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 		return nil, types.ErrNotCommitted
 	}
 
-	// Check reveal size limit.
 	drConfig, err := m.GetDataRequestConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
-	revealSizeLimit := drConfig.DrRevealSizeLimitInBytes / dr.ReplicationFactor
-	if len(msg.RevealBody.Reveal) > int(revealSizeLimit) {
-		return nil, types.ErrRevealTooBig.Wrapf("%d bytes > %d bytes", len(msg.RevealBody.Reveal), revealSizeLimit)
+	err = msg.Validate(drConfig, dr.ReplicationFactor)
+	if err != nil {
+		return nil, err
 	}
 
 	// Verify against the stored commit.
@@ -242,14 +242,6 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 	}
 	if !bytes.Equal(commit, expectedCommit) {
 		return nil, types.ErrRevealMismatch
-	}
-
-	// TODO move to msg.Validate()
-	for _, key := range msg.RevealBody.ProxyPubKeys {
-		_, err := hex.DecodeString(key)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	// Verify the reveal proof.

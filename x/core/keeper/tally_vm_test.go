@@ -37,7 +37,7 @@ func TestExecuteTallyProgram_RandomString(t *testing.T) {
 		{
 			Executor: "0",
 			RevealBody: types.RevealBody{
-				Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"one\"}")),
+				Reveal:       []byte("{\"value\":\"one\"}"),
 				ProxyPubKeys: []string{},
 				GasUsed:      10,
 			},
@@ -45,7 +45,7 @@ func TestExecuteTallyProgram_RandomString(t *testing.T) {
 		{
 			Executor: "1",
 			RevealBody: types.RevealBody{
-				Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"two\"}")),
+				Reveal:       []byte("{\"value\":\"two\"}"),
 				ProxyPubKeys: []string{},
 				GasUsed:      10,
 			},
@@ -53,7 +53,7 @@ func TestExecuteTallyProgram_RandomString(t *testing.T) {
 		{
 			Executor: "2",
 			RevealBody: types.RevealBody{
-				Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"three\"}")),
+				Reveal:       []byte("{\"value\":\"three\"}"),
 				ProxyPubKeys: []string{},
 				GasUsed:      10,
 			},

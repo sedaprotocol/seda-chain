@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/base64"
 	"slices"
 
 	"github.com/ohler55/ojg/gen"
@@ -29,12 +28,7 @@ func parseReveals(reveals []Reveal, dataPath string, errors []bool) ([]string, d
 			continue
 		}
 
-		revealBytes, err := base64.StdEncoding.DecodeString(r.Reveal)
-		if err != nil {
-			errors[i] = true
-			continue
-		}
-		obj, err := parser.Parse(revealBytes)
+		obj, err := parser.Parse(r.Reveal)
 		if err != nil {
 			errors[i] = true
 			continue

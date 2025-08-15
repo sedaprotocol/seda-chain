@@ -11,6 +11,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 	validProgramID := "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 	validConfig := DefaultParams().DataRequestConfig
 	validSender := "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f"
+	validVersion := "1.0.0"
 
 	tests := []struct {
 		name    string
@@ -28,6 +29,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 					require.True(t, ok)
 					return max
 				}(),
+				Version:         validVersion,
 				ExecGasLimit:    MinExecGasLimit,
 				TallyGasLimit:   MinTallyGasLimit,
 				ExecProgramId:   validProgramID,
@@ -48,6 +50,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				Sender:            validSender,
 				ReplicationFactor: 0,
 				GasPrice:          MinGasPrice,
+				Version:           validVersion,
 				ExecGasLimit:      MinExecGasLimit,
 				TallyGasLimit:     MinTallyGasLimit,
 				ExecProgramId:     validProgramID,
@@ -62,6 +65,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				Sender:            validSender,
 				ReplicationFactor: 65536, // exceeds uint16
 				GasPrice:          MinGasPrice,
+				Version:           validVersion,
 				ExecGasLimit:      MinExecGasLimit,
 				TallyGasLimit:     MinTallyGasLimit,
 				ExecProgramId:     validProgramID,
@@ -76,6 +80,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				Sender:            validSender,
 				ReplicationFactor: 5,
 				GasPrice:          MinGasPrice.Sub(math.NewInt(1)),
+				Version:           validVersion,
 				ExecGasLimit:      MinExecGasLimit,
 				TallyGasLimit:     MinTallyGasLimit,
 				ExecProgramId:     validProgramID,
@@ -94,6 +99,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 					require.True(t, ok)
 					return max
 				}(),
+				Version:        validVersion,
 				ExecGasLimit:   MinExecGasLimit,
 				TallyGasLimit:  MinTallyGasLimit,
 				ExecProgramId:  validProgramID,
@@ -108,6 +114,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				Sender:            validSender,
 				ReplicationFactor: 5,
 				GasPrice:          MinGasPrice,
+				Version:           validVersion,
 				ExecGasLimit:      MinExecGasLimit - 1,
 				TallyGasLimit:     MinTallyGasLimit,
 				ExecProgramId:     validProgramID,
@@ -122,6 +129,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				Sender:            validSender,
 				ReplicationFactor: 5,
 				GasPrice:          MinGasPrice,
+				Version:           validVersion,
 				ExecGasLimit:      MinExecGasLimit,
 				TallyGasLimit:     MinTallyGasLimit - 1,
 				ExecProgramId:     validProgramID,
@@ -136,6 +144,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				Sender:            validSender,
 				ReplicationFactor: 5,
 				GasPrice:          MinGasPrice,
+				Version:           validVersion,
 				ExecGasLimit:      MinExecGasLimit,
 				TallyGasLimit:     MinTallyGasLimit,
 				ExecProgramId:     "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdefa",
@@ -150,6 +159,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				Sender:            validSender,
 				ReplicationFactor: 5,
 				GasPrice:          MinGasPrice,
+				Version:           validVersion,
 				ExecGasLimit:      MinExecGasLimit,
 				TallyGasLimit:     MinTallyGasLimit,
 				ExecProgramId:     validProgramID,
@@ -164,6 +174,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				Sender:            validSender,
 				ReplicationFactor: 5,
 				GasPrice:          MinGasPrice,
+				Version:           validVersion,
 				ExecGasLimit:      MinExecGasLimit,
 				TallyGasLimit:     MinTallyGasLimit,
 				ExecProgramId:     validProgramID,
@@ -171,6 +182,21 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 			},
 			config:  validConfig,
 			wantErr: ErrInvalidLengthTallyProgramID,
+		},
+		{
+			name: "invalid version",
+			msg: MsgPostDataRequest{
+				Sender:            validSender,
+				ReplicationFactor: 5,
+				GasPrice:          MinGasPrice,
+				Version:           "1.0.0-alpha.1",
+				ExecGasLimit:      MinExecGasLimit,
+				TallyGasLimit:     MinTallyGasLimit,
+				ExecProgramId:     validProgramID,
+				TallyProgramId:    validProgramID,
+			},
+			config:  validConfig,
+			wantErr: ErrInvalidVersion,
 		},
 	}
 

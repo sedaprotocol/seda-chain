@@ -108,11 +108,17 @@ enum DataRequestStatus {
 
 // RevealBody is the content of a reveal.
 message RevealBody {
+  // Hex-encoded ID of the data request
   string dr_id = 1;
+  // Block height of the data request posting
   uint64 dr_block_height = 2;
+  // Exit code of the data request execution (used as uint8)
   uint32 exit_code = 3;
+  // Gas used by the data request execution
   uint64 gas_used = 4;
-  string reveal = 5;
+  // Contents of the reveal
+  bytes reveal = 5;
+  // List of data proxy public keys used
   repeated string proxy_pub_keys = 6
       [ (gogoproto.jsontag) = "proxy_public_keys" ];
 }
