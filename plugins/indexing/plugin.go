@@ -33,7 +33,7 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/cosmos/cosmos-sdk/x/group"
+	sdkgroup "github.com/cosmos/cosmos-sdk/x/group"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -56,6 +56,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/base"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/batching"
 	dataproxy "github.com/sedaprotocol/seda-chain/plugins/indexing/data-proxy"
+	"github.com/sedaprotocol/seda-chain/plugins/indexing/group"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 	oracleprogram "github.com/sedaprotocol/seda-chain/plugins/indexing/oracle-program"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pluginaws"
@@ -125,6 +126,8 @@ func (p *IndexerPlugin) extractUpdate(change *storetypes.StoreKVPair) (*types.Me
 		return bank.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	case auth.StoreKey:
 		return auth.ExtractUpdate(p.block, p.cdc, p.logger, change)
+	case group.StoreKey:
+		return group.ExtractUpdate(p.block, p.cdc, p.logger, change)
 	// Enable when indexer supports these messages
 	// case staking.StoreKey:
 	// 	return staking.ExtractUpdate(p.block, p.cdc, p.logger, change)
@@ -212,7 +215,7 @@ func main() {
 	vestingtypes.RegisterInterfaces(interfaceRegistry)
 	banktypes.RegisterInterfaces(interfaceRegistry)
 	feegrant.RegisterInterfaces(interfaceRegistry)
-	group.RegisterInterfaces(interfaceRegistry)
+	sdkgroup.RegisterInterfaces(interfaceRegistry)
 	govtypesv1.RegisterInterfaces(interfaceRegistry)
 	govtypesv1beta1.RegisterInterfaces(interfaceRegistry)
 	minttypes.RegisterInterfaces(interfaceRegistry)

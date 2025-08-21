@@ -102,4 +102,4 @@ $BIN gentx satoshi 10000000000000000seda --keyring-backend test --key-file-no-en
 $BIN collect-gentxs
 
 # start the chain
-$BIN start --log_level debug 2>&1 | tee local_chain.log
+$BIN start --log_level info 2>&1 | tee local_chain.log

@@ -1,0 +1,19 @@
+{
+	"members": [
+		{
+			"address": "seda1nlrapyqc7x4a6yhdjf32tdvm2ycdk8wn6m8ggu",
+			"weight": "10",
+			"metadata": "president"
+		},
+		{
+			"address": "seda1zh9pfxahlh8kfd2w2w5gwkvvd60egymt7a3q2y",
+			"weight": "5",
+			"metadata": "vice president"
+		},
+		{
+			"address": "seda1egfy8k7l2hpxluedqchwakrpujqckkenrdhfjx",
+			"weight": "5",
+			"metadata": "rice president"
+		}
+	]
+}
