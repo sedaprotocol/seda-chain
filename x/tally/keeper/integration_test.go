@@ -81,6 +81,7 @@ type fixture struct {
 	chainID           string
 	coreContractAddr  sdk.AccAddress
 	deployer          sdk.AccAddress
+	stakers           []staker
 	accountKeeper     authkeeper.AccountKeeper
 	bankKeeper        bankkeeper.Keeper
 	stakingKeeper     stakingkeeper.Keeper
@@ -320,7 +321,7 @@ func initFixture(t testing.TB) *fixture {
 	)
 	require.NoError(t, err)
 
-	return &fixture{
+	f := fixture{
 		IntegationApp:     integrationApp,
 		chainID:           chainID,
 		deployer:          deployer,
@@ -340,6 +341,10 @@ func initFixture(t testing.TB) *fixture {
 		wasmViewKeeper:    wasmKeeper,
 		logBuf:            buf,
 	}
+
+	f.addStakers(t, 5)
+	f.uploadOraclePrograms(t)
+	return &f
 }
 
 func (f *fixture) SetDataProxyConfig(proxyPubKey, payoutAddr string, proxyFee sdk.Coin) error {

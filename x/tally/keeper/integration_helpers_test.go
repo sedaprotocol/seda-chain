@@ -13,6 +13,7 @@ import (
 	vrf "github.com/sedaprotocol/vrf-go"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/sha3"
+	"golang.org/x/exp/rand"
 
 	"cosmossdk.io/math"
 
@@ -48,19 +49,54 @@ type commitRevealConfig struct {
 	exitCode      byte
 }
 
+var oraclePrograms [][]byte = [][]byte{
+	testwasms.SampleTallyWasm(),
+	testwasms.SampleTallyWasm2(),
+	testwasms.RandomStringTallyWasm(),
+	testwasms.InvalidImportWasm(),
+	testwasms.ChaosDrWasm(),
+	testwasms.DataProxyWasm(),
+	testwasms.HttpHeavyWasm(),
+	testwasms.LongHttpWasm(),
+	testwasms.MaxDrWasm(),
+	testwasms.MaxResultWasm(),
+	testwasms.MemoryWasm(),
+	testwasms.MockApiWasm(),
+	testwasms.PriceFeedWasm(),
+	testwasms.RandomNumberWasm(),
+}
+
+func (f *fixture) uploadOraclePrograms(t testing.TB) {
+	for _, prog := range oraclePrograms {
+		execProgram := wasmstoragetypes.NewOracleProgram(prog, f.Context().BlockTime())
+		err := f.wasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
+		require.NoError(t, err)
+	}
+}
+
 // commitRevealDataRequest simulates stakers committing and revealing
 // for a data request. It returns the data request ID.
-func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCommits, numReveals int, timeout bool, config commitRevealConfig) (string, []staker) {
-	stakers := f.addStakers(t, 5)
-
-	// Upload data request and tally oracle programs.
-	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm(), f.Context().BlockTime())
-	err := f.wasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
-	require.NoError(t, err)
-
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm2(), f.Context().BlockTime())
-	err = f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
-	require.NoError(t, err)
+func (f *fixture) commitRevealDataRequest(
+	t testing.TB,
+	execProgramBytes, tallyProgramBytes []byte,
+	replicationFactor, numCommits, numReveals int, timeout bool,
+	config commitRevealConfig,
+) string {
+	var execProgram, tallyProgram wasmstoragetypes.OracleProgram
+	if execProgramBytes != nil {
+		execProgram = wasmstoragetypes.NewOracleProgram(execProgramBytes, f.Context().BlockTime())
+	} else {
+		randIndex := rand.Intn(len(oraclePrograms))
+		t.Logf("using execution program at index: %d", randIndex)
+		execProgram = wasmstoragetypes.NewOracleProgram(oraclePrograms[randIndex], f.Context().BlockTime())
+	}
+	if tallyProgramBytes != nil {
+		tallyProgram = wasmstoragetypes.NewOracleProgram(tallyProgramBytes, f.Context().BlockTime())
+	} else {
+		randIndex := rand.Intn(len(oraclePrograms))
+		t.Logf("using tally program at index: %d", randIndex)
+		tallyProgram = wasmstoragetypes.NewOracleProgram(oraclePrograms[randIndex], f.Context().BlockTime())
+	}
 
 	// Post a data request.
 	res, err := f.postDataRequest(execProgram.Hash, tallyProgram.Hash, config.requestMemo, replicationFactor)
@@ -69,10 +105,10 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCo
 	drID := res.DrID
 
 	// The stakers commit and reveal.
-	revealMsgs, err := f.commitDataRequest(stakers[:numCommits], res.Height, drID, config)
+	revealMsgs, err := f.commitDataRequest(f.stakers[:numCommits], res.Height, drID, config)
 	require.NoError(t, err)
 
-	err = f.executeReveals(stakers, revealMsgs[:numReveals])
+	err = f.executeReveals(f.stakers, revealMsgs[:numReveals])
 	require.NoError(t, err)
 
 	if timeout {
@@ -85,7 +121,7 @@ func (f *fixture) commitRevealDataRequest(t *testing.T, replicationFactor, numCo
 			f.AddBlock()
 		}
 	}
-	return res.DrID, stakers
+	return res.DrID
 }
 
 func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) (PostDataRequestResponse, error) {
@@ -166,7 +202,7 @@ type staker struct {
 
 // addStakers generates stakers and adds them to the allowlist. The
 // stakers subsequently send their stakes to the core contract.
-func (f *fixture) addStakers(t *testing.T, num int) []staker {
+func (f *fixture) addStakers(t testing.TB, num int) []staker {
 	stakers := make([]staker, num)
 	for i := 0; i < num; i++ {
 		privKey := secp256k1.GenPrivKey()
@@ -197,10 +233,12 @@ func (f *fixture) addStakers(t *testing.T, num int) []staker {
 		)
 		require.NoError(t, err)
 	}
+
+	f.stakers = stakers
 	return stakers
 }
 
-func (f *fixture) pauseContract(t *testing.T) {
+func (f *fixture) pauseContract(t testing.TB) {
 	_, err := f.contractKeeper.Execute(
 		f.Context(),
 		f.coreContractAddr,
@@ -213,7 +251,7 @@ func (f *fixture) pauseContract(t *testing.T) {
 
 // generateStakeProof generates a proof for a stake message given a
 // base64-encoded memo.
-func (f *fixture) generateStakeProof(t *testing.T, signKey []byte) string {
+func (f *fixture) generateStakeProof(t testing.TB, signKey []byte) string {
 	// TODO
 	// var sequence uint64 = 0
 
@@ -279,7 +317,7 @@ func (f *fixture) generateCommitProof(signKey []byte, drID, commitment string, d
 	return hex.EncodeToString(proof), nil
 }
 
-func (f *fixture) initAccountWithCoins(t *testing.T, addr sdk.AccAddress, coins sdk.Coins) {
+func (f *fixture) initAccountWithCoins(t testing.TB, addr sdk.AccAddress, coins sdk.Coins) {
 	err := f.bankKeeper.MintCoins(f.Context(), minttypes.ModuleName, coins)
 	require.NoError(t, err)
 	err = f.bankKeeper.SendCoinsFromModuleToAccount(f.Context(), minttypes.ModuleName, addr, coins)
