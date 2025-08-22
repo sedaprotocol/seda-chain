@@ -256,3 +256,5 @@ require (
 replace github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 
 replace github.com/cosmos/rosetta => github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529
+
+replace github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 => github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 v2.5.1-0.20250814184430-451516f324a9

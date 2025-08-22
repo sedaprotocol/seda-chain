@@ -11,7 +11,6 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
@@ -892,7 +891,7 @@ func TestFilter(t *testing.T) {
 
 			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
 
-			result, err := keeper.ExecuteFilter(
+			result, err := types.ExecuteFilter(
 				reveals,
 				base64.StdEncoding.EncodeToString(filterInput), uint16(len(tt.reveals)),
 				types.DefaultParams(),
@@ -1033,7 +1032,7 @@ func TestFilterWildcard(t *testing.T) {
 
 			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
 
-			result, err := keeper.ExecuteFilter(
+			result, err := types.ExecuteFilter(
 				reveals,
 				base64.StdEncoding.EncodeToString(filterInput), uint16(len(tt.reveals)),
 				types.DefaultParams(),

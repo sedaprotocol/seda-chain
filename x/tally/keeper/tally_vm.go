@@ -13,62 +13,112 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
-func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, req types.Request, filterResult FilterResult, reveals []types.Reveal, gasMeter *types.GasMeter) (types.VMResult, error) {
-	tallyProgram, err := k.wasmStorageKeeper.GetOracleProgram(ctx, req.TallyProgramID)
-	if err != nil {
-		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrFindingTallyProgram, req)
+type TallyParallelExecItem struct {
+	Request   types.Request
+	GasMeter  *types.GasMeter
+	Reveals   []types.Reveal
+	Outliers  []bool
+	Consensus bool
+	// Index is the corresponding index in tallyResults and dataResults arrays.
+	Index int
+	// If TallyExecErr is not nil, the item was not executed due to this error.
+	TallyExecErr error
+}
+
+func NewTallyParallelExecItem(index int, req types.Request, gasMeter *types.GasMeter, reveals []types.Reveal, outliers []bool, consensus bool) TallyParallelExecItem {
+	return TallyParallelExecItem{
+		Index:     index,
+		Request:   req,
+		GasMeter:  gasMeter,
+		Reveals:   reveals,
+		Outliers:  outliers,
+		Consensus: consensus,
 	}
-	tallyInputs, err := base64.StdEncoding.DecodeString(req.TallyInputs)
-	if err != nil {
-		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingTallyInputs, req)
-	}
+}
 
-	// Convert base64-encoded payback address to hex encoding that
-	// the tally VM expects.
-	decodedBytes, err := base64.StdEncoding.DecodeString(req.PaybackAddress)
-	if err != nil {
-		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrDecodingPaybackAddress, req)
-	}
-	paybackAddrHex := hex.EncodeToString(decodedBytes)
-
-	args, err := tallyVMArg(tallyInputs, reveals, filterResult.Outliers)
-	if err != nil {
-		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, req)
-	}
-
-	k.Logger(ctx).Info(
-		"executing tally VM",
-		"request_id", req.ID,
-		"tally_program_id", req.TallyProgramID,
-		"consensus", filterResult.Consensus,
-		"arguments", args,
-	)
-
-	vmRes := tallyvm.ExecuteTallyVm(tallyProgram.Bytecode, args, map[string]string{
-		"VM_MODE":               "tally",
-		"CONSENSUS":             fmt.Sprintf("%v", filterResult.Consensus),
-		"BLOCK_HEIGHT":          fmt.Sprintf("%d", ctx.BlockHeight()),
-		"DR_ID":                 req.ID,
-		"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", req.ReplicationFactor),
-		"EXEC_PROGRAM_ID":       req.ExecProgramID,
-		"EXEC_INPUTS":           req.ExecInputs,
-		"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", req.ExecGasLimit),
-		"TALLY_INPUTS":          req.TallyInputs,
-		"TALLY_PROGRAM_ID":      req.TallyProgramID,
-		"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", gasMeter.RemainingTallyGas()),
-		"DR_GAS_PRICE":          req.PostedGasPrice,
-		"DR_MEMO":               req.Memo,
-		"DR_PAYBACK_ADDRESS":    paybackAddrHex,
-	})
-
-	gasMeter.ConsumeTallyGas(vmRes.GasUsed)
-
-	result := types.MapVMResult(vmRes)
-	if result.ExitCode != 0 {
-		k.Logger(ctx).Error("tally vm exit message", "request_id", req.ID, "exit_message", result.ExitMessage)
+func (k Keeper) BatchExecuteTallyProgramsParallel(ctx sdk.Context, tallyExecItems []TallyParallelExecItem) []tallyvm.VmResult {
+	batchSize := 25
+	var vmResults []tallyvm.VmResult
+	for i := 0; i*batchSize < len(tallyExecItems); i++ {
+		end := min((i+1)*batchSize, len(tallyExecItems))
+		vmRes := k.ExecuteTallyProgramsParallel(ctx, tallyExecItems[i*batchSize:end])
+		vmResults = append(vmResults, vmRes...)
 	}
 
-	return result, nil
+	return vmResults
+}
+
+// ExecuteTallyProgramParallel executes tally programs in parallel given a slice
+// of TallyParallelExecItems that contain execution information.
+// If an item is not executed due to an error, the error is recorded in the item.
+// This method returns a slice of VM execution results of the items that are
+// executed in order.
+func (k Keeper) ExecuteTallyProgramsParallel(ctx sdk.Context, items []TallyParallelExecItem) []tallyvm.VmResult {
+	programs := make([][]byte, 0, len(items))
+	args := make([][]string, 0, len(items))
+	envs := make([]map[string]string, 0, len(items))
+
+	for i := range items {
+		program, err := k.wasmStorageKeeper.GetOracleProgram(ctx, items[i].Request.TallyProgramID)
+		if err != nil {
+			items[i].TallyExecErr = err
+			k.Logger(ctx).Debug(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrFindingTallyProgram)
+			continue
+		}
+
+		input, err := base64.StdEncoding.DecodeString(items[i].Request.TallyInputs)
+		if err != nil {
+			items[i].TallyExecErr = err
+			k.Logger(ctx).Debug(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrDecodingTallyInputs)
+			continue
+		}
+
+		// Convert base64 payback address to hex that tally VM expects.
+		paybackAddrBytes, err := base64.StdEncoding.DecodeString(items[i].Request.PaybackAddress)
+		if err != nil {
+			items[i].TallyExecErr = err
+			k.Logger(ctx).Debug(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrDecodingPaybackAddress)
+			continue
+		}
+
+		arg, err := tallyVMArg(input, items[i].Reveals, items[i].Outliers)
+		if err != nil {
+			items[i].TallyExecErr = err
+			k.Logger(ctx).Debug(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrConstructingTallyVMArgs)
+			continue
+		}
+
+		programs = append(programs, program.Bytecode)
+		args = append(args, arg)
+		envs = append(envs, map[string]string{
+			"VM_MODE":               "tally",
+			"CONSENSUS":             fmt.Sprintf("%v", items[i].Consensus),
+			"BLOCK_HEIGHT":          fmt.Sprintf("%d", ctx.BlockHeight()),
+			"DR_ID":                 items[i].Request.ID,
+			"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", items[i].Request.ReplicationFactor),
+			"EXEC_PROGRAM_ID":       items[i].Request.ExecProgramID,
+			"EXEC_INPUTS":           items[i].Request.ExecInputs,
+			"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", items[i].Request.ExecGasLimit),
+			"TALLY_INPUTS":          items[i].Request.TallyInputs,
+			"TALLY_PROGRAM_ID":      items[i].Request.TallyProgramID,
+			"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", items[i].GasMeter.RemainingTallyGas()),
+			"DR_GAS_PRICE":          items[i].Request.PostedGasPrice,
+			"DR_MEMO":               items[i].Request.Memo,
+			"DR_PAYBACK_ADDRESS":    hex.EncodeToString(paybackAddrBytes),
+		})
+
+		k.Logger(ctx).Info(
+			"executing tally VM",
+			"request_id", items[i].Request.ID,
+			"tally_program_id", items[i].Request.TallyProgramID,
+			"consensus", items[i].Consensus,
+			"arguments", args,
+		)
+	}
+	if len(programs) == 0 {
+		return []tallyvm.VmResult{}
+	}
+	return tallyvm.ExecuteMultipleFromC(programs, args, envs)
 }
 
 func tallyVMArg(inputArgs []byte, reveals []types.Reveal, outliers []bool) ([]string, error) {

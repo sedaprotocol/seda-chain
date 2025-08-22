@@ -28,7 +28,7 @@ type FilterNone struct{}
 func NewFilterNone(gasCost uint64, gasMeter *GasMeter) (FilterNone, error) {
 	outOfGas := gasMeter.ConsumeTallyGas(gasCost)
 	if outOfGas {
-		return FilterNone{}, ErrOutofTallyGas
+		return FilterNone{}, ErrOutOfTallyGas
 	}
 	return FilterNone{}, nil
 }
@@ -51,7 +51,7 @@ type FilterMode struct {
 func NewFilterMode(input []byte, gasCostMultiplier uint64, replicationFactor uint16, gasMeter *GasMeter) (FilterMode, error) {
 	outOfGas := gasMeter.ConsumeTallyGas(gasCostMultiplier * uint64(replicationFactor))
 	if outOfGas {
-		return FilterMode{}, ErrOutofTallyGas
+		return FilterMode{}, ErrOutOfTallyGas
 	}
 
 	var filter FilterMode
@@ -126,7 +126,7 @@ var (
 func NewFilterMAD(input []byte, gasCostMultiplier uint64, replicationFactor uint16, gasMeter *GasMeter) (FilterMAD, error) {
 	outOfGas := gasMeter.ConsumeTallyGas(gasCostMultiplier * uint64(replicationFactor))
 	if outOfGas {
-		return FilterMAD{}, ErrOutofTallyGas
+		return FilterMAD{}, ErrOutOfTallyGas
 	}
 
 	var filter FilterMAD

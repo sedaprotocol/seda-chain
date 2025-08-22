@@ -64,7 +64,7 @@ func BenchmarkDataRequestFlow(b *testing.B) {
 		// unbatchedResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
 		// require.NoError(b, err)
 		// fmt.Println("unbatchedResults", len(unbatchedResults))
-		// fmt.Println("unbatchedResults", unbatchedResults[0])
+		// fmt.Println("unbatchedResults", unbatchedResults[582])
 
 		f.AddBlock()
 	}

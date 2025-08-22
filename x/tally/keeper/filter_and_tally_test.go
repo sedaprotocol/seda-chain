@@ -1,6 +1,5 @@
 package keeper_test
 
-/*
 import (
 	"encoding/base64"
 	"encoding/hex"
@@ -156,6 +155,7 @@ func TestFilterAndTally(t *testing.T) {
 			require.NoError(t, err)
 
 			reveals := make(map[string]types.RevealBody)
+			commits := make(map[string][]byte)
 			expectedOutliers := make(map[string]bool)
 			for i, v := range tt.reveals {
 				revealBody := v
@@ -167,16 +167,35 @@ func TestFilterAndTally(t *testing.T) {
 				}
 			}
 
-			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
-			filterRes, tallyRes := f.tallyKeeper.FilterAndTally(f.Context(), types.Request{
-				Reveals:           reveals,
-				ReplicationFactor: tt.replicationFactor,
-				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-				PostedGasPrice:    "1000000000000000000", // 1e18
-				ExecGasLimit:      100000,
-			}, types.DefaultParams(), gasMeter)
+			// To avoid commit timeout (no other effect intended)
+			for i := range tt.replicationFactor {
+				commits[fmt.Sprintf("executor-%d", i)] = []byte{}
+			}
+
+			tallyRes, dataRes, processedReqs, err := f.tallyKeeper.ProcessTallies(
+				f.Context(),
+				[]types.Request{
+					{
+						Commits:           commits,
+						Reveals:           reveals,
+						ReplicationFactor: tt.replicationFactor,
+						ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
+						PostedGasPrice:    "1000000000000000000", // 1e18
+						ExecGasLimit:      100000,
+						TallyGasLimit:     1e13,
+						// TallyProgramID: hex.EncodeToString(tallyProgram.Hash), // skip tally program execution
+					},
+				},
+				types.DefaultParams(), false)
 			require.NoError(t, err)
 
+			require.Equal(t, 1, len(tallyRes))
+			require.Equal(t, 1, len(dataRes))
+			require.Equal(t, 1, len(processedReqs))
+
+			gasMeter := tallyRes[0].GasMeter
+
+			filterRes := tallyRes[0].FilterResult
 			if tt.outliers == nil {
 				require.Nil(t, filterRes.Outliers)
 			} else {
@@ -187,17 +206,17 @@ func TestFilterAndTally(t *testing.T) {
 			}
 			require.Equal(t, tt.tallyGasUsed, gasMeter.TallyGasUsed())
 			require.Equal(t, tt.consensus, filterRes.Consensus)
-			require.Equal(t, tt.consensus, tallyRes.Consensus)
-			require.Equal(t, tt.exitCode, tallyRes.ExitCode)
+			require.Equal(t, tt.consensus, dataRes[0].Consensus)
+			require.Equal(t, tt.exitCode, dataRes[0].ExitCode)
 			if tt.filterErr != nil {
-				require.Equal(t, []byte(tt.filterErr.Error()), tallyRes.Result)
+				require.Equal(t, []byte(tt.filterErr.Error()), dataRes[0].Result)
 			}
 
 			if tt.consPubKeys == nil {
-				require.Nil(t, nil, tallyRes.ProxyPubKeys)
+				require.Nil(t, nil, filterRes.ProxyPubKeys)
 			} else {
 				for _, pk := range tt.consPubKeys {
-					require.Contains(t, tallyRes.ProxyPubKeys, pk)
+					require.Contains(t, filterRes.ProxyPubKeys, pk)
 				}
 			}
 		})
@@ -688,6 +707,7 @@ func TestExecutorPayout(t *testing.T) {
 			exp21, ok := math.NewIntFromString("1000000000000000000000") // 1e21
 			require.True(t, ok)
 			proxyFee := sdk.NewCoin(bondDenom, exp21)
+			commits := make(map[string][]byte)
 			reveals := make(map[string]types.RevealBody)
 			for k, v := range tt.reveals {
 				revealBody := v
@@ -709,15 +729,17 @@ func TestExecutorPayout(t *testing.T) {
 				}
 			}
 
-			gasPriceStr := "1000000000000000000" // 1e18
-			gasPrice, ok := math.NewIntFromString(gasPriceStr)
-			require.True(t, ok)
+			// To avoid commit timeout (no other effect intended)
+			for i := range tt.replicationFactor {
+				commits[fmt.Sprintf("executor-%d", i)] = []byte{}
+			}
 
 			request := types.Request{
+				Commits:           commits,
 				Reveals:           reveals,
 				ReplicationFactor: tt.replicationFactor,
 				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-				PostedGasPrice:    gasPriceStr,
+				PostedGasPrice:    "1000000000000000000", // 1e18
 				TallyGasLimit:     types.DefaultMaxTallyGasLimit,
 				ExecGasLimit:      tt.execGasLimit,
 				TallyProgramID:    hex.EncodeToString(tallyProgram.Hash),
@@ -726,9 +748,14 @@ func TestExecutorPayout(t *testing.T) {
 				request.ID = tt.requestID
 			}
 
-			gasMeter := types.NewGasMeter(request.TallyGasLimit, request.ExecGasLimit, types.DefaultMaxTallyGasLimit, gasPrice, types.DefaultGasCostBase)
-			_, tallyRes := f.tallyKeeper.FilterAndTally(f.Context(), request, types.DefaultParams(), gasMeter)
+			tallyRes, dataRes, processedReqs, err := f.tallyKeeper.ProcessTallies(f.Context(), []types.Request{request}, types.DefaultParams(), false)
 			require.NoError(t, err)
+
+			require.Equal(t, 1, len(tallyRes))
+			require.Equal(t, 1, len(dataRes))
+			require.Equal(t, 1, len(processedReqs))
+
+			gasMeter := tallyRes[0].GasMeter
 
 			execGasMeter := gasMeter.GetExecutorGasUsed()
 			require.Equal(t, len(tt.expExecutorGas), len(execGasMeter))
@@ -746,9 +773,8 @@ func TestExecutorPayout(t *testing.T) {
 					proxy.Amount.String(),
 				)
 			}
-			require.Equal(t, tt.expExecGasUsed, tallyRes.ExecGasUsed)
+			require.Equal(t, tt.expExecGasUsed, tallyRes[0].ExecGasUsed)
 			require.Equal(t, tt.expExecGasUsed, gasMeter.ExecutionGasUsed())
 		})
 	}
 }
-*/

@@ -30,7 +30,7 @@ var (
 	httpHeavyWasm []byte
 
 	//go:embed long-http.wasm
-	longHttpWasm []byte
+	longHTTPWasm []byte
 
 	//go:embed max-dr.wasm
 	maxDrWasm []byte
@@ -42,7 +42,7 @@ var (
 	memoryWasm []byte
 
 	//go:embed mock-api.wasm
-	mockApiWasm []byte
+	mockAPIWasm []byte
 
 	//go:embed price-feed.wasm
 	priceFeedWasm []byte
@@ -104,12 +104,12 @@ func DataProxyWasm() []byte {
 	return dataProxyWasm
 }
 
-func HttpHeavyWasm() []byte {
+func HTTPHeavyWasm() []byte {
 	return httpHeavyWasm
 }
 
-func LongHttpWasm() []byte {
-	return longHttpWasm
+func LongHTTPWasm() []byte {
+	return longHTTPWasm
 }
 
 func MaxDrWasm() []byte {
@@ -124,8 +124,8 @@ func MemoryWasm() []byte {
 	return memoryWasm
 }
 
-func MockApiWasm() []byte {
-	return mockApiWasm
+func MockAPIWasm() []byte {
+	return mockAPIWasm
 }
 
 func PriceFeedWasm() []byte {

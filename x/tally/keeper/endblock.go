@@ -44,12 +44,12 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 	}
 	k.Logger(ctx).Debug("sudo expire_data_requests", "res", postRes)
 
-	return k.ProcessTallies(ctx, coreContract)
+	return k.Tally(ctx, coreContract)
 }
 
-// ProcessTallies fetches from the core contract the list of requests
-// to be tallied and then goes through it to filter and tally.
-func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) error {
+// Tally fetches from the Core Contract a list of tally-ready requests, tallies
+// them, reports results to the contract, and stores results for batching.
+func (k Keeper) Tally(ctx sdk.Context, coreContract sdk.AccAddress) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
@@ -72,67 +72,11 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	}
 	k.Logger(ctx).Info("non-empty tally list - starting tally process")
 
-	// Loop through the list to apply filter, execute tally, and post
-	// execution result.
-	processedReqs := make(map[string][]types.Distribution)
-	tallyResults := make([]TallyResult, len(tallyList))
-	dataResults := make([]batchingtypes.DataResult, len(tallyList))
-
-	for i, req := range tallyList {
-		// Initialize the processedReqs map for each request with a full refund (no other distributions)
-		processedReqs[req.ID] = make([]types.Distribution, 0)
-
-		dataResults[i], err = req.ToResult(ctx)
-		if err != nil {
-			markResultErr := types.MarkResultAsFallback(&dataResults[i], err)
-			if markResultErr != nil {
-				return err
-			}
-			continue
-		}
-
-		if contractQueryResponse.IsPaused {
-			markResultErr := types.MarkResultAsPaused(&dataResults[i])
-			if markResultErr != nil {
-				return err
-			}
-			continue
-		}
-
-		postedGasPrice, ok := math.NewIntFromString(req.PostedGasPrice)
-		if !ok || !postedGasPrice.IsPositive() {
-			markResultErr := types.MarkResultAsFallback(&dataResults[i], fmt.Errorf("invalid gas price: %s", req.PostedGasPrice))
-			if markResultErr != nil {
-				return err
-			}
-			continue
-		}
-
-		gasMeter := types.NewGasMeter(req.TallyGasLimit, req.ExecGasLimit, params.MaxTallyGasLimit, postedGasPrice, params.GasCostBase)
-
-		if len(req.Commits) < int(req.ReplicationFactor) {
-			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
-			dataResults[i].ExitCode = types.TallyExitCodeNotEnoughCommits
-			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
-
-			MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
-		} else {
-			_, tallyResults[i] = k.FilterAndTally(ctx, req, params, gasMeter)
-			dataResults[i].Result = tallyResults[i].Result
-			dataResults[i].ExitCode = tallyResults[i].ExitCode
-			dataResults[i].Consensus = tallyResults[i].Consensus
-
-			k.Logger(ctx).Info("completed tally", "request_id", req.ID)
-			k.Logger(ctx).Debug("tally result", "request_id", req.ID, "tally_result", tallyResults[i])
-		}
-
-		processedReqs[req.ID] = k.DistributionsFromGasMeter(ctx, req.ID, req.Height, gasMeter, params.BurnRatio)
-
-		dataResults[i].GasUsed = gasMeter.TotalGasUsed()
-		dataResults[i].Id, err = dataResults[i].TryHash()
-		if err != nil {
-			return err
-		}
+	tallyResults, dataResults, processedReqs, err := k.ProcessTallies(ctx, tallyList, params, contractQueryResponse.IsPaused)
+	if err != nil {
+		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
+		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to tally data requests", "err", err)
+		return nil
 	}
 
 	// Notify the Core Contract of tally completion.
@@ -170,7 +114,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 				sdk.NewAttribute(types.AttributeExecGasUsed, fmt.Sprintf("%v", tallyResults[i].ExecGasUsed)),
 				sdk.NewAttribute(types.AttributeTallyGasUsed, fmt.Sprintf("%v", tallyResults[i].TallyGasUsed)),
 				sdk.NewAttribute(types.AttributeTallyExitCode, fmt.Sprintf("%02x", dataResults[i].ExitCode)),
-				sdk.NewAttribute(types.AttributeProxyPubKeys, strings.Join(tallyResults[i].ProxyPubKeys, "\n")),
+				sdk.NewAttribute(types.AttributeProxyPubKeys, strings.Join(tallyResults[i].FilterResult.ProxyPubKeys, "\n")),
 			),
 		)
 	}
@@ -179,6 +123,168 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, coreContract sdk.AccAddress) err
 	telemetry.SetGauge(0, types.TelemetryKeyDRFlowHalt)
 
 	return nil
+}
+
+// ProcessTallies performs the three phases of the tally process given a list
+// of requests: Filtering -> VM execution -> Gas metering and distributions.
+// It returns the tally results, data results, processed list of requests
+// expected by the Core Contract, and an error.
+func (k Keeper) ProcessTallies(ctx sdk.Context, tallyList []types.Request, params types.Params, isPaused bool) ([]types.TallyResult, []batchingtypes.DataResult, map[string][]types.Distribution, error) {
+	// tallyResults and dataResults have the same indexing.
+	tallyResults := make([]types.TallyResult, len(tallyList))
+	dataResults := make([]batchingtypes.DataResult, len(tallyList))
+
+	processedReqs := make(map[string][]types.Distribution)
+	tallyExecItems := []TallyParallelExecItem{}
+
+	var err error
+	for i, req := range tallyList {
+		// Initialize the processedReqs map for each request with a full refund (no other distributions)
+		processedReqs[req.ID] = make([]types.Distribution, 0)
+
+		tallyResults[i] = types.TallyResult{
+			ID:                req.ID,
+			Height:            req.Height,
+			ReplicationFactor: req.ReplicationFactor,
+		}
+
+		dataResults[i], err = req.ToResult(ctx)
+		if err != nil {
+			markResultErr := types.MarkResultAsFallback(&dataResults[i], &tallyResults[i], err)
+			if markResultErr != nil {
+				return nil, nil, nil, err
+			}
+			continue
+		}
+
+		if isPaused {
+			markResultErr := types.MarkResultAsPaused(&dataResults[i], &tallyResults[i])
+			if markResultErr != nil {
+				return nil, nil, nil, err
+			}
+			continue
+		}
+
+		postedGasPrice, ok := math.NewIntFromString(req.PostedGasPrice)
+		if !ok || !postedGasPrice.IsPositive() {
+			markResultErr := types.MarkResultAsFallback(&dataResults[i], &tallyResults[i], fmt.Errorf("invalid gas price: %s", req.PostedGasPrice))
+			if markResultErr != nil {
+				return nil, nil, nil, err
+			}
+			continue
+		}
+
+		gasMeter := types.NewGasMeter(req.TallyGasLimit, req.ExecGasLimit, params.MaxTallyGasLimit, postedGasPrice, params.GasCostBase)
+
+		// Phase 1: Filtering
+		if len(req.Commits) < int(req.ReplicationFactor) {
+			tallyResults[i].FilterResult = types.FilterResult{Error: types.ErrFilterDidNotRun}
+			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", req.ReplicationFactor, len(req.Commits)))
+			dataResults[i].ExitCode = types.TallyExitCodeNotEnoughCommits
+
+			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", req.ID)
+
+			MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
+		} else {
+			reveals, executors, gasReports := req.SanitizeReveals(ctx.BlockHeight())
+			filterResult, filterErr := types.ExecuteFilter(reveals, req.ConsensusFilter, req.ReplicationFactor, params, gasMeter)
+
+			filterResult.Error = filterErr
+			filterResult.Executors = executors
+
+			tallyResults[i].Reveals = reveals
+			tallyResults[i].GasReports = gasReports
+			tallyResults[i].FilterResult = filterResult
+			dataResults[i].Consensus = filterResult.Consensus
+
+			if filterErr == nil {
+				// Execute tally VM for this request.
+				tallyExecItems = append(tallyExecItems, NewTallyParallelExecItem(i, req, gasMeter, reveals, filterResult.Outliers, filterResult.Consensus))
+			} else {
+				// Skip tally execution.
+				dataResults[i].Result = []byte(filterErr.Error())
+				if errors.Is(filterErr, types.ErrInvalidFilterInput) {
+					dataResults[i].ExitCode = types.TallyExitCodeInvalidFilterInput
+				} else {
+					dataResults[i].ExitCode = types.TallyExitCodeFilterError
+				}
+
+				if errors.Is(filterErr, types.ErrNoBasicConsensus) {
+					MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
+				} else if errors.Is(filterErr, types.ErrInvalidFilterInput) || errors.Is(filterErr, types.ErrNoConsensus) {
+					gasMeter.SetReducedPayoutMode()
+				}
+			}
+		}
+
+		tallyResults[i].GasMeter = gasMeter
+	}
+
+	// Phase 2: Parallel execution of tally VM
+	if len(tallyExecItems) > 0 {
+		// Execute in batches:
+		vmResults := k.BatchExecuteTallyProgramsParallel(ctx, tallyExecItems)
+
+		// Populate tallyResults and dataResults with the results of the execution.
+		vmResultIndex := 0
+		for i := range tallyExecItems {
+			if tallyExecItems[i].TallyExecErr == nil {
+				tallyExecItems[i].GasMeter.ConsumeTallyGas(vmResults[vmResultIndex].GasUsed)
+
+				result := types.MapVMResult(vmResults[vmResultIndex])
+				if result.ExitCode != 0 {
+					k.Logger(ctx).Error("tally vm exit message", "request_id", tallyExecItems[i].Request.ID, "exit_message", result.ExitMessage)
+				}
+
+				resultIndex := tallyExecItems[i].Index
+				tallyResults[resultIndex].StdOut = result.Stdout
+				tallyResults[resultIndex].StdErr = result.Stderr
+				dataResults[resultIndex].Result = result.Result
+				dataResults[resultIndex].ExitCode = result.ExitCode
+				vmResultIndex++
+			} else {
+				resultIndex := tallyExecItems[i].Index
+				tallyResults[resultIndex].GasMeter.SetReducedPayoutMode()
+				dataResults[resultIndex].Result = []byte(tallyExecItems[i].TallyExecErr.Error())
+				dataResults[resultIndex].ExitCode = types.TallyExitCodeExecError
+			}
+		}
+	}
+
+	// Phase 3: Gas metering and distributions
+	for i, tr := range tallyResults {
+		filterErr := tr.FilterResult.Error
+
+		// Calculate data proxy and executor gas consumptions if basic consensus
+		// was reached.
+		if !errors.Is(filterErr, types.ErrNoBasicConsensus) && !errors.Is(filterErr, types.ErrFilterDidNotRun) {
+			k.MeterProxyGas(ctx, tr.FilterResult.ProxyPubKeys, tr.ReplicationFactor, tr.GasMeter)
+
+			if areGasReportsUniform(tr.GasReports) {
+				tr.MeterExecutorGasUniform()
+			} else {
+				tr.MeterExecutorGasDivergent()
+			}
+		}
+
+		if tr.GasMeter != nil {
+			tallyResults[i].TallyGasUsed = tr.GasMeter.TallyGasUsed()
+			tallyResults[i].ExecGasUsed = tr.GasMeter.ExecutionGasUsed()
+
+			processedReqs[tr.ID] = k.DistributionsFromGasMeter(ctx, tr.ID, tr.Height, tr.GasMeter, params.BurnRatio)
+			dataResults[i].GasUsed = tr.GasMeter.TotalGasUsed()
+		}
+
+		dataResults[i].Id, err = dataResults[i].TryHash()
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		k.Logger(ctx).Info("completed tally", "request_id", tr.ID)
+		k.Logger(ctx).Debug("tally result", "request_id", tr.ID, "tally_result", tr)
+	}
+
+	return tallyResults, dataResults, processedReqs, nil
 }
 
 // queryContract fetches tally-ready data requests from the core contract in batches while
@@ -227,82 +333,17 @@ func (k Keeper) queryContract(ctx sdk.Context, coreContract sdk.AccAddress, maxT
 	}, nil
 }
 
-type TallyResult struct {
-	Consensus    bool
-	StdOut       []string
-	StdErr       []string
-	Result       []byte
-	ExitCode     uint32
-	ExecGasUsed  uint64
-	TallyGasUsed uint64
-	ProxyPubKeys []string // data proxy pubkeys in basic consensus
-}
-
-// FilterAndTally builds and applies filter, executes tally program, and
-// calculates canonical gas consumption.
-func (k Keeper) FilterAndTally(ctx sdk.Context, req types.Request, params types.Params, gasMeter *types.GasMeter) (FilterResult, TallyResult) {
-	reveals, executors, gasReports := req.SanitizeReveals(ctx.BlockHeight())
-
-	// Phase 1: Filtering
-	filterResult, filterErr := ExecuteFilter(reveals, req.ConsensusFilter, req.ReplicationFactor, params, gasMeter)
-	filterResult.Executors = executors
-	tallyResult := TallyResult{
-		Consensus:    filterResult.Consensus,
-		ProxyPubKeys: filterResult.ProxyPubKeys,
+// areGasReportsUniform returns true if the gas reports of the given reveals are
+// uniform.
+func areGasReportsUniform(reports []uint64) bool {
+	if len(reports) <= 1 {
+		return true
 	}
-
-	// Phase 2: Tally Program Execution
-	var vmRes types.VMResult
-	var tallyErr error
-	if filterErr == nil {
-		vmRes, tallyErr = k.ExecuteTallyProgram(ctx, req, filterResult, reveals, gasMeter)
-		if tallyErr != nil {
-			tallyResult.Result = []byte(tallyErr.Error())
-			tallyResult.ExitCode = types.TallyExitCodeExecError
-		} else {
-			tallyResult.Result = vmRes.Result
-			tallyResult.ExitCode = vmRes.ExitCode
-			tallyResult.StdOut = vmRes.Stdout
-			tallyResult.StdErr = vmRes.Stderr
-		}
-	} else {
-		tallyResult.Result = []byte(filterErr.Error())
-		if errors.Is(filterErr, types.ErrInvalidFilterInput) {
-			tallyResult.ExitCode = types.TallyExitCodeInvalidFilterInput
-		} else {
-			tallyResult.ExitCode = types.TallyExitCodeFilterError
+	firstGas := reports[0]
+	for i := 1; i < len(reports); i++ {
+		if reports[i] != firstGas {
+			return false
 		}
 	}
-
-	// Phase 3: Calculate data proxy and executor gas consumption.
-	// Calculate data proxy gas consumption if basic consensus was reached.
-	if filterErr == nil || !errors.Is(filterErr, types.ErrNoBasicConsensus) {
-		k.MeterProxyGas(ctx, tallyResult.ProxyPubKeys, req.ReplicationFactor, gasMeter)
-	}
-
-	// Calculate executor gas consumption.
-	switch {
-	case errors.Is(filterErr, types.ErrNoBasicConsensus):
-		MeterExecutorGasFallback(req, params.ExecutionGasCostFallback, gasMeter)
-	case errors.Is(filterErr, types.ErrInvalidFilterInput) || errors.Is(filterErr, types.ErrNoConsensus) || tallyErr != nil:
-		gasMeter.SetReducedPayoutMode()
-		fallthrough
-	default: // filterErr == ErrConsensusInError || filterErr == nil
-		if areGasReportsUniform(gasReports) {
-			MeterExecutorGasUniform(reveals, gasReports[0], filterResult.Outliers, req.ReplicationFactor, gasMeter)
-		} else {
-			MeterExecutorGasDivergent(reveals, gasReports, filterResult.Outliers, req.ReplicationFactor, gasMeter)
-		}
-	}
-
-	tallyResult.TallyGasUsed = gasMeter.TallyGasUsed()
-	tallyResult.ExecGasUsed = gasMeter.ExecutionGasUsed()
-	return filterResult, tallyResult
-}
-
-// logErrAndRet logs the base error along with the request ID for
-// debugging and returns the registered error.
-func (k Keeper) logErrAndRet(ctx sdk.Context, baseErr, registeredErr error, req types.Request) error {
-	k.Logger(ctx).Debug(baseErr.Error(), "request_id", req.ID, "error", registeredErr)
-	return registeredErr
+	return true
 }

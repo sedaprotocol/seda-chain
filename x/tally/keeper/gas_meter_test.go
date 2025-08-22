@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
-	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -27,10 +27,6 @@ func FuzzGasMetering(f *testing.F) {
 	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm2(), fixture.Context().BlockTime())
 	err = fixture.wasmStorageKeeper.OracleProgram.Set(fixture.Context(), tallyProgram.Hash, tallyProgram)
 	require.NoError(f, err)
-
-	gasPriceStr := "1000000000000000000" // 1e18
-	gasPrice, ok := math.NewIntFromString(gasPriceStr)
-	require.True(f, ok)
 
 	filterInput, err := hex.DecodeString("01000000000000000D242E726573756C742E74657874") // mode, json_path = $.result.text
 	require.NoError(f, err)
@@ -69,19 +65,33 @@ func FuzzGasMetering(f *testing.F) {
 			"j": {ExitCode: 0, Reveal: `{"result": {"text": "A"}}`, GasUsed: g9, ProxyPubKeys: proxyPubKeys},
 		}
 
-		gasMeter := types.NewGasMeter(tallyGasLimit, execGasLimit, types.DefaultMaxTallyGasLimit, gasPrice, types.DefaultGasCostBase)
+		// To avoid commit timeout (no other effect intended)
+		commits := make(map[string][]byte)
+		for i := range len(reveals) {
+			commits[fmt.Sprintf("executor-%d", i)] = []byte{}
+		}
 
-		fixture.tallyKeeper.FilterAndTally(
+		tallyRes, dataRes, processedReqs, err := fixture.tallyKeeper.ProcessTallies(
 			fixture.Context(),
-			types.Request{
+			[]types.Request{types.Request{
+				Commits:           commits,
 				Reveals:           reveals,
 				ReplicationFactor: uint16(len(reveals)),
 				ConsensusFilter:   base64.StdEncoding.EncodeToString(filterInput),
-				PostedGasPrice:    gasPriceStr,
+				PostedGasPrice:    "1000000000000000000",
 				ExecGasLimit:      execGasLimit,
 				TallyGasLimit:     tallyGasLimit,
 				TallyProgramID:    hex.EncodeToString(tallyProgram.Hash),
-			}, types.DefaultParams(), gasMeter)
+			}},
+			types.DefaultParams(), false,
+		)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, len(tallyRes))
+		require.Equal(t, 1, len(dataRes))
+		require.Equal(t, 1, len(processedReqs))
+
+		gasMeter := tallyRes[0].GasMeter
 
 		// Check executor gas used.
 		sumExec := math.NewInt(0)
@@ -158,25 +168,34 @@ func FuzzGasMetering(f *testing.F) {
 }
 
 // Encountered this scenario on a testnet.
-func ReproductionTestReducedPayoutWithProxies(t *testing.T) {
+func TestReducedPayoutWithProxies(t *testing.T) {
 	fixture := initFixture(t)
 
 	// Set up data proxies.
-	err := fixture.SetDataProxyConfig("03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f", sdk.NewCoin(bondDenom, math.NewInt(1000000000000000000)))
+	proxyPubKey1, proxyPubKey2 := "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec"
+	proxyPayoutAddr1, proxyPayoutAddr2 := "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f", "seda149sewl80wccuzhhukxgn2jg4kcun02d8qclwkt"
+	err := fixture.SetDataProxyConfig(proxyPubKey1, proxyPayoutAddr1, sdk.NewCoin(bondDenom, math.NewInt(1000000000000000000)))
 	require.NoError(t, err)
-	err = fixture.SetDataProxyConfig("020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec", "seda149sewl80wccuzhhukxgn2jg4kcun02d8qclwkt", sdk.NewCoin(bondDenom, math.NewInt(10000000000000)))
+	err = fixture.SetDataProxyConfig(proxyPubKey2, proxyPayoutAddr2, sdk.NewCoin(bondDenom, math.NewInt(10000000000000)))
 	require.NoError(t, err)
 
 	// Scenario: 4 data proxy calls (3 to the same proxy, 1 to a different proxy), replication factor = 1.
 	gasMeter := types.NewGasMeter(150000000000000, 300000000000000, types.DefaultMaxTallyGasLimit, math.NewInt(100000), types.DefaultGasCostBase)
 	fixture.tallyKeeper.MeterProxyGas(fixture.Context(), []string{"020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0"}, 1, gasMeter)
 
-	keeper.MeterExecutorGasUniform(
-		[]types.Reveal{
+	tallyRes := types.TallyResult{
+		Reveals: []types.Reveal{
 			{Executor: "020c4fe9e5063e7b5051284423089682082cf085a3b8f9e86bdb30407d761efc49"},
 		},
-		81644889168750, []bool{false}, 1, gasMeter,
-	)
+		GasMeter:   gasMeter,
+		GasReports: []uint64{81644889168750},
+		FilterResult: types.FilterResult{
+			ProxyPubKeys: []string{proxyPubKey1, proxyPubKey2},
+			Outliers:     []bool{false},
+		},
+		ReplicationFactor: 1,
+	}
+	tallyRes.MeterExecutorGasUniform()
 
 	require.Equalf(t, uint64(81644889168750), gasMeter.ExecutionGasUsed(), "expected exec gas used %d, got %d", 81644889168750, gasMeter.ExecutionGasUsed())
 	require.Equalf(t, uint64(1000000000000), gasMeter.TallyGasUsed(), "expected tally gas used %d, got %d", 1000000100000, gasMeter.TallyGasUsed())
@@ -186,10 +205,22 @@ func ReproductionTestReducedPayoutWithProxies(t *testing.T) {
 	require.Len(t, dists, 6)
 
 	require.Equal(t, "100000000000000000", dists[0].Burn.Amount.String(), "Burn amount is incorrect")
-	require.Equal(t, "10000000000000", dists[1].DataProxyReward.Amount.String(), "Data proxy 2 (...dec) did not receive correct payout")
+	require.Equal(t, "1000000000000000000", dists[1].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, proxyPubKey1, dists[1].DataProxyReward.PublicKey, "Data proxy 1 (...2b0) did not receive correct public key")
+	require.Equal(t, proxyPayoutAddr1, dists[1].DataProxyReward.PayoutAddress, "Data proxy 1 (...2b0) did not receive correct payout address")
+
 	require.Equal(t, "1000000000000000000", dists[2].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, proxyPubKey1, dists[2].DataProxyReward.PublicKey, "Data proxy 1 (...2b0) did not receive correct public key")
+	require.Equal(t, proxyPayoutAddr1, dists[2].DataProxyReward.PayoutAddress, "Data proxy 1 (...2b0) did not receive correct payout address")
+
 	require.Equal(t, "1000000000000000000", dists[3].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
-	require.Equal(t, "1000000000000000000", dists[4].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, proxyPubKey1, dists[3].DataProxyReward.PublicKey, "Data proxy 1 (...2b0) did not receive correct public key")
+	require.Equal(t, proxyPayoutAddr1, dists[3].DataProxyReward.PayoutAddress, "Data proxy 1 (...2b0) did not receive correct payout address")
+
+	require.Equal(t, "10000000000000", dists[4].DataProxyReward.Amount.String(), "Data proxy 2 (...dec) did not receive correct payout")
+	require.Equal(t, proxyPubKey2, dists[4].DataProxyReward.PublicKey, "Data proxy 2 (...dec) did not receive correct public key")
+	require.Equal(t, proxyPayoutAddr2, dists[4].DataProxyReward.PayoutAddress, "Data proxy 2 (...dec) did not receive correct payout address")
+
 	require.Equal(t, "5164478916875000000", dists[5].ExecutorReward.Amount.String(), "Executor did not receive correct payout")
 
 	// Test with reduced payout mode.
@@ -202,10 +233,23 @@ func ReproductionTestReducedPayoutWithProxies(t *testing.T) {
 	distsReduced := fixture.tallyKeeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
 
 	require.Equal(t, "1132895783375000000", distsReduced[0].Burn.Amount.String(), "Burn amount is incorrect")
-	require.Equal(t, "10000000000000", distsReduced[1].DataProxyReward.Amount.String(), "Data proxy 2 (...dec) did not receive correct payout")
+
+	require.Equal(t, "1000000000000000000", distsReduced[1].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, proxyPubKey1, distsReduced[1].DataProxyReward.PublicKey, "Data proxy 1 (...2b0) did not receive correct public key")
+	require.Equal(t, proxyPayoutAddr1, distsReduced[1].DataProxyReward.PayoutAddress, "Data proxy 1 (...2b0) did not receive correct payout address")
+
 	require.Equal(t, "1000000000000000000", distsReduced[2].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, proxyPubKey1, distsReduced[2].DataProxyReward.PublicKey, "Data proxy 1 (...2b0) did not receive correct public key")
+	require.Equal(t, proxyPayoutAddr1, distsReduced[2].DataProxyReward.PayoutAddress, "Data proxy 1 (...2b0) did not receive correct payout address")
+
 	require.Equal(t, "1000000000000000000", distsReduced[3].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
-	require.Equal(t, "1000000000000000000", distsReduced[4].DataProxyReward.Amount.String(), "Data proxy 1 (...2b0) did not receive correct payout")
+	require.Equal(t, proxyPubKey1, distsReduced[3].DataProxyReward.PublicKey, "Data proxy 1 (...2b0) did not receive correct public key")
+	require.Equal(t, proxyPayoutAddr1, distsReduced[3].DataProxyReward.PayoutAddress, "Data proxy 1 (...2b0) did not receive correct payout address")
+
+	require.Equal(t, "10000000000000", distsReduced[4].DataProxyReward.Amount.String(), "Data proxy 2 (...dec) did not receive correct payout")
+	require.Equal(t, proxyPubKey2, distsReduced[4].DataProxyReward.PublicKey, "Data proxy 2 (...dec) did not receive correct public key")
+	require.Equal(t, proxyPayoutAddr2, distsReduced[4].DataProxyReward.PayoutAddress, "Data proxy 2 (...dec) did not receive correct payout address")
+
 	require.Equal(t, "4131583133500000000", distsReduced[5].ExecutorReward.Amount.String(), "Executor did not receive correct reduced payout")
 
 	// Sanity check that the difference between the two distributions is the same as the reduced payout.

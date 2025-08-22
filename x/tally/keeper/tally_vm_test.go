@@ -26,43 +26,50 @@ func TestExecuteTallyProgram_RandomString(t *testing.T) {
 	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.RandomStringTallyWasm(), f.Context().BlockTime())
 	f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 
-	gasMeter := types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1)
-	vmRes, err := f.tallyKeeper.ExecuteTallyProgram(f.Context(), types.Request{
-		TallyProgramID: hex.EncodeToString(tallyProgram.Hash),
-		TallyInputs:    base64.StdEncoding.EncodeToString([]byte("hello")),
-		PaybackAddress: base64.StdEncoding.EncodeToString([]byte("0x0")),
-	}, keeper.FilterResult{
-		Outliers: []bool{false, true, false},
-	}, []types.Reveal{
+	execItems := []keeper.TallyParallelExecItem{
 		{
-			Executor: "0",
-			RevealBody: types.RevealBody{
-				Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"one\"}")),
-				ProxyPubKeys: []string{},
-				GasUsed:      10,
+			Request: types.Request{
+				TallyProgramID: hex.EncodeToString(tallyProgram.Hash),
+				TallyInputs:    base64.StdEncoding.EncodeToString([]byte("hello")),
+				PaybackAddress: base64.StdEncoding.EncodeToString([]byte("0x0")),
 			},
-		},
-		{
-			Executor: "1",
-			RevealBody: types.RevealBody{
-				Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"two\"}")),
-				ProxyPubKeys: []string{},
-				GasUsed:      10,
+			Reveals: []types.Reveal{
+				{
+					Executor: "0",
+					RevealBody: types.RevealBody{
+						Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"one\"}")),
+						ProxyPubKeys: []string{},
+						GasUsed:      10,
+					},
+				},
+				{
+					Executor: "1",
+					RevealBody: types.RevealBody{
+						Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"two\"}")),
+						ProxyPubKeys: []string{},
+						GasUsed:      10,
+					},
+				},
+				{
+					Executor: "2",
+					RevealBody: types.RevealBody{
+						Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"three\"}")),
+						ProxyPubKeys: []string{},
+						GasUsed:      10,
+					},
+				},
 			},
+			Outliers: []bool{false, true, false},
+			GasMeter: types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1),
 		},
-		{
-			Executor: "2",
-			RevealBody: types.RevealBody{
-				Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"three\"}")),
-				ProxyPubKeys: []string{},
-				GasUsed:      10,
-			},
-		},
-	}, gasMeter)
+	}
 
-	require.NoError(t, err)
-	require.Equal(t, uint32(0), vmRes.ExitCode)
-	require.Equal(t, "one,three", string(vmRes.Result))
+	vmRes := f.tallyKeeper.ExecuteTallyProgramsParallel(f.Context(), execItems)
+	require.NoError(t, execItems[0].TallyExecErr)
+	require.Equal(t, 1, len(vmRes))
+
+	require.NotEqual(t, uint32(0), vmRes[0].ExitInfo.ExitCode)
+	require.Contains(t, "one,three", string(*vmRes[0].Result))
 }
 
 // TestExecuteTallyProgram_InvalidImports tests that when the tally vm returns a non-zero
@@ -75,18 +82,25 @@ func TestExecuteTallyProgram_InvalidImports(t *testing.T) {
 	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.InvalidImportWasm(), f.Context().BlockTime())
 	f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
 
-	gasMeter := types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1)
-	vmRes, err := f.tallyKeeper.ExecuteTallyProgram(f.Context(), types.Request{
-		TallyProgramID: hex.EncodeToString(tallyProgram.Hash),
-		TallyInputs:    base64.StdEncoding.EncodeToString([]byte("hello")),
-		PaybackAddress: base64.StdEncoding.EncodeToString([]byte("0x0")),
-	}, keeper.FilterResult{
-		Outliers: []bool{},
-	}, []types.Reveal{}, gasMeter)
+	execItems := []keeper.TallyParallelExecItem{
+		{
+			Request: types.Request{
+				TallyProgramID: hex.EncodeToString(tallyProgram.Hash),
+				TallyInputs:    base64.StdEncoding.EncodeToString([]byte("hello")),
+				PaybackAddress: base64.StdEncoding.EncodeToString([]byte("0x0")),
+			},
+			Reveals:  []types.Reveal{},
+			Outliers: []bool{},
+			GasMeter: types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1),
+		},
+	}
 
-	require.NoError(t, err)
-	require.NotEqual(t, uint32(0), vmRes.ExitCode)
-	require.Contains(t, string(vmRes.Result), "\"seda_v1\".\"this_does_not_exist\"")
+	vmRes := f.tallyKeeper.ExecuteTallyProgramsParallel(f.Context(), execItems)
+	require.NoError(t, execItems[0].TallyExecErr)
+	require.Equal(t, 1, len(vmRes))
+
+	require.NotEqual(t, uint32(0), vmRes[0].ExitInfo.ExitCode)
+	require.Contains(t, "\"seda_v1\".\"this_does_not_exist\"", string(*vmRes[0].Result))
 }
 
 // TestTallyVM tests tally VM using a sample tally wasm that performs

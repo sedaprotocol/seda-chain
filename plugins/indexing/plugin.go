@@ -8,23 +8,30 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
 	"github.com/cosmos/gogoproto/proto"
+
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
+	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 
 	streamingabci "cosmossdk.io/store/streaming/abci"
 	storetypes "cosmossdk.io/store/types"
+	circuittypes "cosmossdk.io/x/circuit/types"
+	evidencetypes "cosmossdk.io/x/evidence/types"
+	"cosmossdk.io/x/feegrant"
 	"cosmossdk.io/x/tx/signing"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	circuittypes "cosmossdk.io/x/circuit/types"
-	evidencetypes "cosmossdk.io/x/evidence/types"
-	"cosmossdk.io/x/feegrant"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -37,18 +44,6 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
-	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
-	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
-	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
-	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
-	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/auth"
@@ -62,6 +57,12 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pubkey"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/tally"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
+	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
+	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
+	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 var _ storetypes.ABCIListener = &IndexerPlugin{}
