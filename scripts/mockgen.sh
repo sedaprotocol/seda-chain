@@ -23,4 +23,5 @@ $mockgen_cmd -source=app/abci/expected_keepers.go -package testutil -destination
 $mockgen_cmd -source=app/ante.go -package testutil -destination=app/testutil/expected_keepers_mock.go
 $mockgen_cmd -source=app/utils/seda_keys.go -package testutil -destination=app/abci/testutil/seda_keys_mock.go
 $mockgen_cmd -source=x/data-proxy/types/expected_keepers.go -package testutil -destination=x/data-proxy/keeper/testutil/expected_keepers_mock.go
+$mockgen_cmd -source=x/sophon/types/expected_keepers.go -package testutil -destination=x/sophon/keeper/testutil/expected_keepers_mock.go
 $mockgen_cmd -source=$GOPATH/pkg/mod/github.com/aws/aws-sdk-go@v1.55.5/service/sqs/sqsiface/interface.go -package testutil -destination=plugins/indexing/pluginaws/testutil/sqs_client_mock.go
