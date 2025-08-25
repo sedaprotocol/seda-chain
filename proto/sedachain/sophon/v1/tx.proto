@@ -1,0 +1,308 @@
+syntax = "proto3";
+package sedachain.sophon.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
+import "sedachain/sophon/v1/sophon.proto";
+import "amino/amino.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/sophon/types";
+
+// Msg service defines the sophon tx gRPC methods.
+service Msg {
+  // Registers a new sophon entry in the registry.
+  rpc RegisterSophon(MsgRegisterSophon) returns (MsgRegisterSophonResponse);
+
+  // Edits an existing sophon.
+  rpc EditSophon(MsgEditSophon) returns (MsgEditSophonResponse);
+
+  // Transfers the ownership of a sophon.
+  rpc TransferOwnership(MsgTransferOwnership)
+      returns (MsgTransferOwnershipResponse);
+
+  // Accepts the ownership of a sophon.
+  rpc AcceptOwnership(MsgAcceptOwnership) returns (MsgAcceptOwnershipResponse);
+
+  // Cancels the ownership transfer of a sophon.
+  rpc CancelOwnershipTransfer(MsgCancelOwnershipTransfer)
+      returns (MsgCancelOwnershipTransferResponse);
+
+  // Adds a user to a sophon.
+  rpc AddUser(MsgAddUser) returns (MsgAddUserResponse);
+
+  // Top up a user's credits.
+  rpc TopUpUser(MsgTopUpUser) returns (MsgTopUpUserResponse);
+
+  // Expire a user's credits.
+  rpc ExpireCredits(MsgExpireCredits) returns (MsgExpireCreditsResponse);
+
+  // Settle a sophon's credits.
+  rpc SettleCredits(MsgSettleCredits) returns (MsgSettleCreditsResponse);
+
+  // Submits reports for a sophon.
+  rpc SubmitReports(MsgSubmitReports) returns (MsgSubmitReportsResponse);
+
+  // Used to update the modules parameters through the authority.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+}
+
+// All data required for a new sophon.
+message MsgRegisterSophon {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "seda/sophon/MsgRegisterSophon";
+
+  // authority is the address that controls the module.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // admin_address defines the address that can perform administrative actions
+  // on the sophon.
+  string admin_address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // The public key of the Sophon used to verify signed requests as a hex
+  // string.
+  string public_key = 3;
+
+  // memo defines an optional string which is not used by the protocol.
+  string memo = 4;
+}
+
+// MsgRegisterSophonResponse is the response type for the Msg/RegisterSophon
+message MsgRegisterSophonResponse {}
+
+// Allows the owner to edit the sophon.
+message MsgEditSophon {
+  option (cosmos.msg.v1.signer) = "owner_address";
+  option (amino.name) = "seda/sophon/MsgEditSophon";
+
+  // this should match the owner_address in the sophon info
+  string owner_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the sophon as a hex string
+  string sophon_public_key = 2;
+
+  // [optional] the new admin address of the sophon
+  string new_admin_address = 3 [
+    (cosmos_proto.scalar) = "cosmos.AddressString",
+    (amino.dont_omitempty) = false
+  ];
+
+  // [optional] the new address of the sophon
+  string new_address = 4 [
+    (cosmos_proto.scalar) = "cosmos.AddressString",
+    (amino.dont_omitempty) = false
+  ];
+
+  // [optional] the new public key of the sophon as a hex string
+  string new_public_key = 5 [ (amino.dont_omitempty) = true ];
+
+  // [optional] the new memo of the sophon
+  string new_memo = 6 [ (amino.dont_omitempty) = true ];
+}
+
+// MsgEditSophonResponse is the response type for the Msg/EditSophon RPC method.
+message MsgEditSophonResponse {}
+
+// Allows the owner to transfer the ownership of the sophon to a new address.
+message MsgTransferOwnership {
+  option (cosmos.msg.v1.signer) = "owner_address";
+  option (amino.name) = "seda/sophon/MsgTransferOwnership";
+
+  // this should match the owner_address in the sophon info
+  string owner_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the sophon as a hex string
+  string sophon_public_key = 2;
+
+  // the new owner address of the sophon
+  string new_owner_address = 3
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// MsgTransferOwnershipResponse is the response type for the
+// Msg/TransferOwnership RPC method.
+message MsgTransferOwnershipResponse {}
+
+// Allows the new owner to accept the ownership of the sophon.
+message MsgAcceptOwnership {
+  option (cosmos.msg.v1.signer) = "new_owner_address";
+  option (amino.name) = "seda/sophon/MsgAcceptOwnership";
+
+  // the address that is accepting the ownership
+  string new_owner_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the sophon as a hex string
+  string sophon_public_key = 2;
+}
+
+// MsgAcceptOwnershipResponse is the response type for the
+// Msg/AcceptOwnership RPC method.
+message MsgAcceptOwnershipResponse {}
+
+// Allows the owner to cancel the ownership transfer of the sophon.
+message MsgCancelOwnershipTransfer {
+  option (cosmos.msg.v1.signer) = "owner_address";
+  option (amino.name) = "seda/sophon/MsgCancelOwnershipTransfer";
+
+  // the address that is cancelling the ownership transfer
+  string owner_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the sophon as a hex string
+  string sophon_public_key = 2;
+}
+
+// MsgCancelOwnershipTransferResponse is the response type for the
+// Msg/CancelOwnershipTransfer RPC method.
+message MsgCancelOwnershipTransferResponse {}
+
+// Allows the admin to add a user to the sophon.
+message MsgAddUser {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (amino.name) = "seda/sophon/MsgAddUser";
+
+  // the address that is adding the user
+  string admin_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the sophon as a hex string
+  string sophon_public_key = 2;
+
+  // the identifier of the user
+  string identifier = 3;
+
+  // the amount of credits the user has initially
+  string initial_credits = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgAddUserResponse is the response type for the Msg/AddUser RPC method.
+message MsgAddUserResponse {}
+
+// Allows the admin to top up a user's credits.
+message MsgTopUpUser {
+  option (amino.name) = "seda/sophon/MsgTopUpUser";
+
+  // the public key of the sophon as a hex string
+  string sophon_public_key = 1;
+
+  // the identifier of the user
+  string identifier = 2;
+
+  // the amount of credits to top up
+  string amount = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgTopUpUserResponse is the response type for the Msg/TopUpUser RPC method.
+message MsgTopUpUserResponse {}
+
+// SettleType defines the type of settle (withdraw or burn)
+enum SettleType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // An unspecified settle type which will throw an error.
+  SETTLE_TYPE_UNSPECIFIED = 0;
+
+  // Withdraw the credits to the admin address.
+  SETTLE_TYPE_WITHDRAW = 1;
+
+  // Burn the credits.
+  SETTLE_TYPE_BURN = 2;
+}
+
+// Allows the admin to settle the credits of the sophon.
+message MsgSettleCredits {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (amino.name) = "seda/sophon/MsgSettleCredits";
+
+  string admin_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the sophon as a hex string
+  string sophon_public_key = 2;
+
+  // the type of settle
+  SettleType settle_type = 3;
+
+  // the amount of credits to settle
+  string amount = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgSettleCreditsResponse is the response type for the Msg/SettleCredits RPC
+// method.
+message MsgSettleCreditsResponse {
+  // The amount of credits that were settled.
+  string amount = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Allows the admin to expire the credits of a user.
+message MsgExpireCredits {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (amino.name) = "seda/sophon/MsgExpireCredits";
+
+  string admin_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the sophon as a hex string
+  string sophon_public_key = 2;
+
+  // the identifier of the user
+  string user_id = 3;
+
+  // the amount of credits to expire
+  string amount = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgExpireCreditsResponse is the response type for the Msg/ExpireCredits RPC
+// method.
+message MsgExpireCreditsResponse {}
+
+// Allows the sophon to submit reports for a user.
+message MsgSubmitReports {
+  option (cosmos.msg.v1.signer) = "address";
+  option (amino.name) = "seda/sophon/MsgSubmitReports";
+
+  // the address of the sophon
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the sophon
+  bytes sophon_public_key = 2;
+
+  // the reports to process
+  repeated UserReport reports = 3;
+}
+
+// MsgSubmitReportsResponse is the response type for the Msg/SubmitReports RPC
+// method.
+message MsgSubmitReportsResponse {}
+
+// The request message for the UpdateParams method.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "seda/sophon/MsgUpdateParams";
+
+  // authority is the address that controls the module.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  Params params = 2 [ (gogoproto.nullable) = false ];
+}
+
+// MsgUpdateParamsResponse is the response type for the Msg/UpdateParams RPC
+// method.
+message MsgUpdateParamsResponse {}
