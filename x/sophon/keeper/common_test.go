@@ -15,6 +15,7 @@ import (
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
@@ -26,14 +27,15 @@ import (
 
 type KeeperTestSuite struct {
 	suite.Suite
-	ctx         sdk.Context
-	keeper      *keeper.Keeper
-	bankKeeper  *testutil.MockBankKeeper
-	cdc         codec.Codec
-	msgSrvr     types.MsgServer
-	queryClient types.QueryClient
-	serverCtx   *server.Context
-	authority   string
+	ctx           sdk.Context
+	keeper        *keeper.Keeper
+	bankKeeper    *testutil.MockBankKeeper
+	accountKeeper *testutil.MockAccountKeeper
+	cdc           codec.Codec
+	msgSrvr       types.MsgServer
+	queryClient   types.QueryClient
+	serverCtx     *server.Context
+	authority     string
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -61,15 +63,21 @@ func (s *KeeperTestSuite) SetupTest() {
 
 	ctrl := gomock.NewController(t)
 	s.bankKeeper = testutil.NewMockBankKeeper(ctrl)
+	s.accountKeeper = testutil.NewMockAccountKeeper(ctrl)
+
+	// Ensure the keeper can be created
+	s.accountKeeper.EXPECT().AddressCodec().Return(authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()))
+	s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(authtypes.NewModuleAddress(types.ModuleName))
 
 	s.keeper = keeper.NewKeeper(
 		encCfg.Codec,
 		runtime.NewKVStoreService(key),
 		s.bankKeeper,
+		s.accountKeeper,
 		s.authority,
 	)
-	// Testvectors are generated for seda-1-testvectors
-	s.ctx = testCtx.Ctx.WithChainID("seda-1-testvectors")
+
+	s.ctx = testCtx.Ctx.WithChainID("test-chain")
 	s.cdc = encCfg.Codec
 	s.serverCtx = server.NewDefaultContext()
 

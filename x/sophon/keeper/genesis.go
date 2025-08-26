@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"cosmossdk.io/collections"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/sophon/types"
@@ -12,7 +14,33 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 		panic(err)
 	}
 
-	panic("not implemented")
+	err := k.setCurrentSophonID(ctx, data.StartingSophonId)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, sophonInfo := range data.SophonInfos {
+		if err := k.SetSophonInfo(ctx, sophonInfo.PublicKey, sophonInfo); err != nil {
+			panic(err)
+		}
+	}
+
+	for _, sophonUser := range data.SophonUsers {
+		if err := k.SetSophonUser(ctx, sophonUser.SophonId, sophonUser.User.UserId, *sophonUser.User); err != nil {
+			panic(err)
+		}
+	}
+
+	for _, transfer := range data.Transfers {
+		address, err := sdk.AccAddressFromBech32(transfer.NewOwnerAddress)
+		if err != nil {
+			panic(err)
+		}
+
+		if err := k.SetSophonTransfer(ctx, transfer.SophonId, address.Bytes()); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // ExportGenesis extracts all data from store to genesis state.
@@ -25,5 +53,40 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	}
 	gs.Params = params
 
-	panic("not implemented")
+	gs.StartingSophonId, err = k.sophonID.Peek(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	err = k.sophonInfo.Walk(ctx, nil, func(_ []byte, value types.SophonInfo) (stop bool, err error) {
+		gs.SophonInfos = append(gs.SophonInfos, value)
+		return false, nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	err = k.sophonUser.Walk(ctx, nil, func(key collections.Pair[uint64, []byte], value types.SophonUser) (stop bool, err error) {
+		gs.SophonUsers = append(gs.SophonUsers, types.UserWithSophonId{
+			SophonId: key.K1(),
+			User:     &value,
+		})
+		return false, nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	err = k.sophonTransfer.Walk(ctx, nil, func(key collections.Pair[uint64, []byte]) (stop bool, err error) {
+		gs.Transfers = append(gs.Transfers, types.SophonTransferOwnership{
+			SophonId:        key.K1(),
+			NewOwnerAddress: sdk.AccAddress(key.K2()).String(),
+		})
+		return false, nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return gs
 }
