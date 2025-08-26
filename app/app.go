@@ -149,6 +149,9 @@ import (
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/slashing"
+	sophon "github.com/sedaprotocol/seda-chain/x/sophon"
+	sophonkeeper "github.com/sedaprotocol/seda-chain/x/sophon/keeper"
+	sophontypes "github.com/sedaprotocol/seda-chain/x/sophon/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally"
@@ -203,6 +206,7 @@ var (
 		tally.AppModuleBasic{},
 		dataproxy.AppModuleBasic{},
 		batching.AppModuleBasic{},
+		sophon.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -218,6 +222,7 @@ var (
 		icatypes.ModuleName:            nil,
 		wasmtypes.ModuleName:           {authtypes.Burner},
 		dataproxytypes.ModuleName:      {authtypes.Burner},
+		sophontypes.ModuleName:         {authtypes.Burner},
 	}
 )
 
@@ -324,7 +329,7 @@ func NewApp(
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
 		crisistypes.StoreKey, wasmstoragetypes.StoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey,
-		batchingtypes.StoreKey, tallytypes.StoreKey,
+		batchingtypes.StoreKey, tallytypes.StoreKey, sophontypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -662,6 +667,15 @@ func NewApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	app.SophonKeeper = *sophonkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[sophontypes.StoreKey]),
+		app.BankKeeper,
+		app.AccountKeeper,
+		// TODO: replace with the security group address
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	app.BatchingKeeper = batchingkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[batchingtypes.StoreKey]),
@@ -804,6 +818,7 @@ func NewApp(
 		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
 		tally.NewAppModule(appCodec, app.TallyKeeper),
 		dataproxy.NewAppModule(appCodec, app.DataProxyKeeper),
+		sophon.NewAppModule(appCodec, app.SophonKeeper),
 		pubkey.NewAppModule(appCodec, app.PubKeyKeeper),
 		batching.NewAppModule(appCodec, app.BatchingKeeper),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
@@ -863,6 +878,7 @@ func NewApp(
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
+		sophontypes.ModuleName,
 		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
 	)
@@ -896,6 +912,7 @@ func NewApp(
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
+		sophontypes.ModuleName,
 		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
 	)
@@ -937,6 +954,7 @@ func NewApp(
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
 		batchingtypes.ModuleName,
+		sophontypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)

@@ -4,23 +4,26 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewGenesisState(params Params, sophonInfos []SophonInfo, sophonUsers []UserWithSophonId) GenesisState {
+func NewGenesisState(params Params, sophonInfos []SophonInfo, sophonUsers []UserWithSophonId, transfers []SophonTransferOwnership) GenesisState {
 	return GenesisState{
 		Params:      params,
 		SophonInfos: sophonInfos,
 		SophonUsers: sophonUsers,
+		Transfers:   transfers,
 	}
 }
 
 func DefaultGenesisState() *GenesisState {
-	state := NewGenesisState(DefaultParams(), []SophonInfo{}, []UserWithSophonId{})
+	state := NewGenesisState(DefaultParams(), []SophonInfo{}, []UserWithSophonId{}, []SophonTransferOwnership{})
 	return &state
 }
 
 func ValidateGenesis(data GenesisState) error {
-	sophonInfos := make(map[uint64]SophonInfo)
+	sophonInfos := make(map[uint64]any)
 
 	for _, sophonInfo := range data.SophonInfos {
 		if err := sophonInfo.ValidateBasic(); err != nil {
@@ -41,8 +44,9 @@ func ValidateGenesis(data GenesisState) error {
 	}
 
 	for _, transfer := range data.Transfers {
-		if len(transfer.NewOwnerAddress) == 0 {
-			return fmt.Errorf("empty new owner address in transfers")
+		_, err := sdk.AccAddressFromBech32(transfer.NewOwnerAddress)
+		if err != nil {
+			return errorsmod.Wrap(err, "invalid address in transfers")
 		}
 
 		if _, ok := sophonInfos[transfer.SophonId]; !ok {

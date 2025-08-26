@@ -5,5 +5,13 @@ import (
 )
 
 func (s *SophonUser) ValidateBasic() error {
-	return fmt.Errorf("not implemented")
+	if len(s.UserId) == 0 {
+		return fmt.Errorf("user id is empty")
+	}
+
+	if s.Credits.IsNil() {
+		return fmt.Errorf("credits is nil")
+	}
+
+	return nil
 }
