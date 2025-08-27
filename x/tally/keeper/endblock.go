@@ -222,8 +222,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, tallyList []types.Request, param
 
 	// Phase 2: Parallel execution of tally VM
 	if len(tallyExecItems) > 0 {
-		// Execute in batches:
-		vmResults := k.BatchExecuteTallyProgramsParallel(ctx, tallyExecItems)
+		vmResults := k.ExecuteTallyProgramsParallel(ctx, tallyExecItems)
 
 		// Populate tallyResults and dataResults with the results of the execution.
 		vmResultIndex := 0

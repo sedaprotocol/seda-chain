@@ -36,6 +36,8 @@ func NewTallyParallelExecItem(index int, req types.Request, gasMeter *types.GasM
 	}
 }
 
+// BatchExecuteTallyProgramsParallel executes ExecuteTallyProgramsParallel in
+// batches. The batch size is currently set to 25.
 func (k Keeper) BatchExecuteTallyProgramsParallel(ctx sdk.Context, tallyExecItems []TallyParallelExecItem) []tallyvm.VmResult {
 	batchSize := 25
 	var vmResults []tallyvm.VmResult
@@ -62,14 +64,14 @@ func (k Keeper) ExecuteTallyProgramsParallel(ctx sdk.Context, items []TallyParal
 		program, err := k.wasmStorageKeeper.GetOracleProgram(ctx, items[i].Request.TallyProgramID)
 		if err != nil {
 			items[i].TallyExecErr = err
-			k.Logger(ctx).Debug(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrFindingTallyProgram)
+			k.Logger(ctx).Error(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrFindingTallyProgram)
 			continue
 		}
 
 		input, err := base64.StdEncoding.DecodeString(items[i].Request.TallyInputs)
 		if err != nil {
 			items[i].TallyExecErr = err
-			k.Logger(ctx).Debug(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrDecodingTallyInputs)
+			k.Logger(ctx).Error(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrDecodingTallyInputs)
 			continue
 		}
 
@@ -77,14 +79,14 @@ func (k Keeper) ExecuteTallyProgramsParallel(ctx sdk.Context, items []TallyParal
 		paybackAddrBytes, err := base64.StdEncoding.DecodeString(items[i].Request.PaybackAddress)
 		if err != nil {
 			items[i].TallyExecErr = err
-			k.Logger(ctx).Debug(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrDecodingPaybackAddress)
+			k.Logger(ctx).Error(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrDecodingPaybackAddress)
 			continue
 		}
 
 		arg, err := tallyVMArg(input, items[i].Reveals, items[i].Outliers)
 		if err != nil {
 			items[i].TallyExecErr = err
-			k.Logger(ctx).Debug(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrConstructingTallyVMArgs)
+			k.Logger(ctx).Error(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrConstructingTallyVMArgs)
 			continue
 		}
 
@@ -107,18 +109,17 @@ func (k Keeper) ExecuteTallyProgramsParallel(ctx sdk.Context, items []TallyParal
 			"DR_PAYBACK_ADDRESS":    hex.EncodeToString(paybackAddrBytes),
 		})
 
-		k.Logger(ctx).Info(
+		k.Logger(ctx).Debug(
 			"executing tally VM",
 			"request_id", items[i].Request.ID,
 			"tally_program_id", items[i].Request.TallyProgramID,
-			"consensus", items[i].Consensus,
-			"arguments", args,
 		)
 	}
 	if len(programs) == 0 {
 		return []tallyvm.VmResult{}
 	}
-	return tallyvm.ExecuteMultipleFromC(programs, args, envs)
+
+	return tallyvm.ExecuteMultipleFromCParallel(programs, args, envs)
 }
 
 func tallyVMArg(inputArgs []byte, reveals []types.Reveal, outliers []bool) ([]string, error) {
