@@ -58,13 +58,6 @@ func BenchmarkDataRequestFlow(b *testing.B) {
 		b.StartTimer()
 		err = f.tallyKeeper.EndBlock(f.Context())
 		require.NoError(b, err)
-		// err = f.batchingKeeper.EndBlock(f.Context())
-		// require.NoError(b, err)
-
-		// unbatchedResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
-		// require.NoError(b, err)
-		// fmt.Println("unbatchedResults", len(unbatchedResults))
-		// fmt.Println("unbatchedResults", unbatchedResults[582])
 
 		f.AddBlock()
 	}
