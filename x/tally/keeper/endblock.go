@@ -266,6 +266,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, tallyList []types.Request, param
 			}
 		}
 
+		// GasMeter may not have been initialized in some cases.
 		if tr.GasMeter != nil {
 			tallyResults[i].TallyGasUsed = tr.GasMeter.TallyGasUsed()
 			tallyResults[i].ExecGasUsed = tr.GasMeter.ExecutionGasUsed()

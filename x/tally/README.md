@@ -6,7 +6,16 @@ Primarily, the tally module aggregates the Oracle Program execution results repo
 ## Tally Flow
 ```mermaid
 flowchart TD
-    A["2/3 agree on<br>(exec_success,<br>proxy_pubkeys)?"]
+    A0["Is request valid?"]
+    A0 --> |"ErrFilterDidNotRun"| Z
+    A0 --> |Yes| A1
+    A1["Is contract paused?"]
+    A1 --> |"ErrFilterDidNotRun"| Z
+    A1 --> |No| A2
+    A2["Number of<br>commits meets RF?"]
+    A2 --> |"ErrFilterDidNotRun"| G1
+    A2 --> |Yes| A
+    A["Do 2/3 agree on<br>(exec_success,<br>proxy_pubkeys)?"]
     A -->|"ErrNoBasicConsensus<br>(outliers=nil)"| G1["fallback gas to committers"]
     A --->|Yes| C
     C["BuildFilter<br>(based on<br> requestor-provided input)"]
@@ -17,8 +26,8 @@ flowchart TD
     D --->|"ErrConsensusInError<br>(>2/3 error)"| G2
     D ----->|"Consensus<br>(<=1/3 outlier)"| F["TallyVM Execution"]
     R ---> G2
-    F ---> |Error|R
-    F -----> |NoError|G2["meter proxy gas"]
+    F ---> |TallyExecErr|R
+    F -----> |NoTallyExecErr|G2["meter proxy gas"]
     G2 ---> G3["meter executor gas"]
     G1  ----> Z(("Done"))
     G3  ----> Z(("Done"))
