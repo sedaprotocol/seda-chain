@@ -3,7 +3,10 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 
+	"cosmossdk.io/collections"
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -75,8 +78,76 @@ func (m msgServer) RegisterSophon(goCtx context.Context, msg *types.MsgRegisterS
 	return &types.MsgRegisterSophonResponse{}, nil
 }
 
-func (m msgServer) EditSophon(_ context.Context, _ *types.MsgEditSophon) (*types.MsgEditSophonResponse, error) {
-	panic("not implemented")
+func (m msgServer) EditSophon(goCtx context.Context, msg *types.MsgEditSophon) (*types.MsgEditSophonResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	pubKeyBytes, err := hex.DecodeString(msg.SophonPublicKey)
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "invalid hex in pubkey: %s", msg.SophonPublicKey)
+	}
+
+	sophonInfo, err := m.GetSophonInfo(ctx, pubKeyBytes)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, sdkerrors.ErrNotFound.Wrapf("sophon not found for %s", msg.SophonPublicKey)
+		}
+		return nil, err
+	}
+
+	if sophonInfo.OwnerAddress != msg.OwnerAddress {
+		return nil, sdkerrors.ErrorInvalidSigner.Wrapf("unauthorized owner; expected %s, got %s", sophonInfo.OwnerAddress, msg.OwnerAddress)
+	}
+
+	// Update fields if provided
+	if msg.NewAdminAddress != types.DoNotModifyField {
+		sophonInfo.AdminAddress = msg.NewAdminAddress
+	}
+
+	if msg.NewAddress != types.DoNotModifyField {
+		sophonInfo.Address = msg.NewAddress
+	}
+
+	if msg.NewMemo != types.DoNotModifyField {
+		sophonInfo.Memo = msg.NewMemo
+	}
+
+	if msg.NewPublicKey != types.DoNotModifyField {
+		pubKeyBytes, err := hex.DecodeString(msg.NewPublicKey)
+		if err != nil {
+			return nil, errorsmod.Wrapf(err, "invalid hex in new public key: %s", msg.NewPublicKey)
+		}
+
+		// Delete old storage
+		err = m.DeleteSophonInfo(ctx, sophonInfo.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+
+		// Set new public key
+		sophonInfo.PublicKey = pubKeyBytes
+	}
+
+	err = m.SetSophonInfo(ctx, sophonInfo.PublicKey, sophonInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	pubKey := hex.EncodeToString(pubKeyBytes)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeEditSophon,
+			sdk.NewAttribute(types.AttributeSophonPubKey, pubKey),
+			sdk.NewAttribute(types.AttributeOwnerAddress, sophonInfo.OwnerAddress),
+			sdk.NewAttribute(types.AttributeAdminAddress, sophonInfo.AdminAddress),
+			sdk.NewAttribute(types.AttributeAddress, sophonInfo.Address),
+			sdk.NewAttribute(types.AttributeMemo, sophonInfo.Memo),
+			sdk.NewAttribute(types.AttributeBalance, sophonInfo.Balance.String()),
+			sdk.NewAttribute(types.AttributeUsedCredits, sophonInfo.UsedCredits.String()),
+		),
+	)
+
+	return &types.MsgEditSophonResponse{}, nil
 }
 
 func (m msgServer) TransferOwnership(_ context.Context, _ *types.MsgTransferOwnership) (*types.MsgTransferOwnershipResponse, error) {

@@ -81,6 +81,10 @@ func (k Keeper) SetSophonInfo(ctx sdk.Context, pubKey []byte, sophonInfo types.S
 	return k.sophonInfo.Set(ctx, pubKey, sophonInfo)
 }
 
+func (k Keeper) DeleteSophonInfo(ctx sdk.Context, pubKey []byte) error {
+	return k.sophonInfo.Remove(ctx, pubKey)
+}
+
 // CreateSophonInfo creates a new SophonInfo for a given public key, meant to
 // be used for creating a new Sophon.
 func (k Keeper) CreateSophonInfo(ctx sdk.Context, pubKey []byte, sophonInput types.SophonInputs) (types.SophonInfo, error) {

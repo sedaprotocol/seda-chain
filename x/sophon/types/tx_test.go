@@ -125,3 +125,131 @@ func (s *TypesTestSuite) TestMsgRegisterSophon_ValidateBasic() {
 		})
 	}
 }
+
+func (s *TypesTestSuite) TestMsgEditSophon_ValidateBasic() {
+	tests := []struct {
+		name    string
+		msg     *types.MsgEditSophon
+		wantErr error
+	}{
+		{
+			name: "Update admin address",
+			msg: &types.MsgEditSophon{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewAdminAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				SophonPublicKey: types.DoNotModifyField,
+				NewAddress:      types.DoNotModifyField,
+				NewMemo:         types.DoNotModifyField,
+				NewPublicKey:    types.DoNotModifyField,
+			},
+		},
+		{
+			name: "Update admin address and memo",
+			msg: &types.MsgEditSophon{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewAdminAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				SophonPublicKey: types.DoNotModifyField,
+				NewAddress:      types.DoNotModifyField,
+				NewMemo:         "This is a sweet sophon",
+				NewPublicKey:    types.DoNotModifyField,
+			},
+		},
+		{
+			name: "No updates",
+			msg: &types.MsgEditSophon{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewAdminAddress: types.DoNotModifyField,
+				SophonPublicKey: types.DoNotModifyField,
+				NewAddress:      types.DoNotModifyField,
+				NewMemo:         types.DoNotModifyField,
+				NewPublicKey:    types.DoNotModifyField,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "Invalid owner address",
+			msg: &types.MsgEditSophon{
+				OwnerAddress:    "invalid",
+				NewAdminAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				SophonPublicKey: types.DoNotModifyField,
+				NewAddress:      types.DoNotModifyField,
+				NewMemo:         types.DoNotModifyField,
+				NewPublicKey:    types.DoNotModifyField,
+			},
+			wantErr: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "Invalid admin address",
+			msg: &types.MsgEditSophon{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewAdminAddress: "invalid",
+				SophonPublicKey: types.DoNotModifyField,
+				NewAddress:      types.DoNotModifyField,
+				NewMemo:         types.DoNotModifyField,
+				NewPublicKey:    types.DoNotModifyField,
+			},
+			wantErr: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "Invalid address",
+			msg: &types.MsgEditSophon{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewAdminAddress: types.DoNotModifyField,
+				SophonPublicKey: types.DoNotModifyField,
+				NewAddress:      "invalid",
+				NewMemo:         types.DoNotModifyField,
+				NewPublicKey:    types.DoNotModifyField,
+			},
+			wantErr: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "Invalid memo",
+			msg: &types.MsgEditSophon{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewAdminAddress: types.DoNotModifyField,
+				SophonPublicKey: types.DoNotModifyField,
+				NewAddress:      types.DoNotModifyField,
+				NewMemo:         strings.Repeat("a", 3001),
+				NewPublicKey:    types.DoNotModifyField,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "Empty public key",
+			msg: &types.MsgEditSophon{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewAdminAddress: types.DoNotModifyField,
+				SophonPublicKey: types.DoNotModifyField,
+				NewAddress:      types.DoNotModifyField,
+				NewMemo:         types.DoNotModifyField,
+				NewPublicKey:    "",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "Invalid public key",
+			msg: &types.MsgEditSophon{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewAdminAddress: types.DoNotModifyField,
+				SophonPublicKey: types.DoNotModifyField,
+				NewAddress:      types.DoNotModifyField,
+				NewMemo:         types.DoNotModifyField,
+				NewPublicKey:    "not valid hex",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+	}
+
+	for _, test := range tests {
+		s.Run(test.name, func() {
+			err := test.msg.ValidateBasic()
+
+			if test.wantErr != nil {
+				s.Require().ErrorIs(err, test.wantErr)
+				return
+			}
+
+			s.Require().NoError(err)
+		})
+	}
+}
