@@ -42,7 +42,53 @@ func (m *MsgRegisterSophon) ValidateBasic() error {
 }
 
 func (m *MsgEditSophon) ValidateBasic() error {
-	return fmt.Errorf("not implemented")
+	if _, err := sdk.AccAddressFromBech32(m.OwnerAddress); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid owner address: %s", m.OwnerAddress)
+	}
+
+	hasChanges := false
+	if m.NewAdminAddress != DoNotModifyField {
+		hasChanges = true
+
+		if _, err := sdk.AccAddressFromBech32(m.NewAdminAddress); err != nil {
+			return sdkerrors.ErrInvalidAddress.Wrapf("invalid admin address: %s", m.NewAdminAddress)
+		}
+	}
+
+	if m.NewAddress != DoNotModifyField {
+		hasChanges = true
+
+		if _, err := sdk.AccAddressFromBech32(m.NewAddress); err != nil {
+			return sdkerrors.ErrInvalidAddress.Wrapf("invalid address: %s", m.NewAddress)
+		}
+	}
+
+	if m.NewPublicKey != DoNotModifyField {
+		hasChanges = true
+
+		if len(m.NewPublicKey) == 0 {
+			return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
+		}
+
+		_, err := hex.DecodeString(m.NewPublicKey)
+		if err != nil {
+			return sdkerrors.ErrInvalidRequest.Wrapf("invalid hex in pubkey: %s", m.NewPublicKey)
+		}
+	}
+
+	if m.NewMemo != DoNotModifyField {
+		hasChanges = true
+
+		if err := ValidateMemo(m.NewMemo); err != nil {
+			return err
+		}
+	}
+
+	if !hasChanges {
+		return sdkerrors.ErrInvalidRequest.Wrap("no changes provided")
+	}
+
+	return nil
 }
 
 func (m *MsgTransferOwnership) ValidateBasic() error {
