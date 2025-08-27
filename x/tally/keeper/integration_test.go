@@ -47,7 +47,7 @@ import (
 	sdkstakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v3"
 
 	"github.com/sedaprotocol/seda-chain/app"
 	"github.com/sedaprotocol/seda-chain/app/params"

@@ -11,7 +11,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2"
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v3"
 
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 )
