@@ -276,7 +276,7 @@ func generatePubKeys(t *testing.T, num int) [][]byte {
 		if err != nil {
 			panic(fmt.Sprintf("failed to generate secp256k1 private key: %v", err))
 		}
-		pubKeys = append(pubKeys, elliptic.Marshal(privKey.PublicKey, privKey.PublicKey.X, privKey.PublicKey.Y))
+		pubKeys = append(pubKeys, elliptic.Marshal(privKey.PublicKey, privKey.X, privKey.Y))
 	}
 	return pubKeys
 }

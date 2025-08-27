@@ -7,9 +7,11 @@ import (
 	"strconv"
 	"testing"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
@@ -73,7 +75,7 @@ func FuzzGasMetering(f *testing.F) {
 
 		tallyRes, dataRes, processedReqs, err := fixture.tallyKeeper.ProcessTallies(
 			fixture.Context(),
-			[]types.Request{types.Request{
+			[]types.Request{{
 				Commits:           commits,
 				Reveals:           reveals,
 				ReplicationFactor: uint16(len(reveals)),
@@ -137,7 +139,7 @@ func FuzzGasMetering(f *testing.F) {
 
 		totalGasPayed := totalDist.Quo(gasMeter.GasPrice())
 
-		require.True(t, totalGasPayed.LTE(sumExec.Add((tallySum))), "total gas payed is not less than or equal to the sum of exec and tally gas used")
+		require.True(t, totalGasPayed.LTE(sumExec.Add((tallySum))), "total gas paid is not less than or equal to the sum of exec and tally gas used")
 
 		gasMeter.SetReducedPayoutMode()
 		distsReduced := fixture.tallyKeeper.DistributionsFromGasMeter(fixture.Context(), "1", 1, gasMeter, types.DefaultBurnRatio)
@@ -158,7 +160,7 @@ func FuzzGasMetering(f *testing.F) {
 
 		totalGasPayedReduced := totalDistReduced.Quo(gasMeter.GasPrice())
 
-		require.Equal(t, totalGasPayedReduced.String(), totalGasPayed.String(), "total gas payed in reduced mode is not equal to the total gas payed in normal mode")
+		require.Equal(t, totalGasPayedReduced.String(), totalGasPayed.String(), "total gas paid in reduced mode is not equal to the total gas paid in normal mode")
 		if totalExecDist.Equal(math.NewInt(0)) {
 			require.True(t, burnReduced.Equal(burn), "burn amount in reduced mode is not equal to the burn amount in normal mode when there is no exec gas used")
 		} else {

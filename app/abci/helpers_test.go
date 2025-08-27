@@ -19,6 +19,9 @@ import (
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
+	protoio "github.com/cosmos/gogoproto/io"
+	"github.com/cosmos/gogoproto/proto"
+
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
 	"cosmossdk.io/core/header"
@@ -30,8 +33,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	protoio "github.com/cosmos/gogoproto/io"
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/sedaprotocol/seda-chain/app/abci"
 	"github.com/sedaprotocol/seda-chain/app/abci/testutil"
@@ -42,9 +43,7 @@ import (
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
-var (
-	chainID = "seda-abci-test"
-)
+var chainID = "seda-abci-test"
 
 type testValidator struct {
 	consAddr    sdk.ConsAddress
@@ -114,7 +113,7 @@ func (s *ABCITestSuite) SetupTest(mockBatchNumber uint64, isNewValidator []bool)
 	tmpDir := s.T().TempDir()
 	for i, val := range vals {
 		dirPath := filepath.Join(tmpDir, fmt.Sprintf("%d", i))
-		err := os.MkdirAll(dirPath, 0755)
+		err := os.MkdirAll(dirPath, 0o755)
 		s.Require().NoError(err)
 
 		keyfile := filepath.Join(dirPath, "seda_keys.json")

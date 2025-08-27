@@ -4,9 +4,10 @@ import (
 	"encoding/hex"
 	"strings"
 
+	"go.uber.org/mock/gomock"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"go.uber.org/mock/gomock"
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/x/data-proxy/types"

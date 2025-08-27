@@ -17,18 +17,18 @@ import (
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	sdkstakingtestutil "github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	sdktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -70,7 +70,7 @@ func generatePubKeys(num int) [][]byte {
 		if err != nil {
 			panic(fmt.Sprintf("failed to generate secp256k1 private key: %v", err))
 		}
-		pubKeys = append(pubKeys, elliptic.Marshal(privKey.PublicKey, privKey.PublicKey.X, privKey.PublicKey.Y))
+		pubKeys = append(pubKeys, elliptic.Marshal(privKey.PublicKey, privKey.X, privKey.Y))
 	}
 	return pubKeys
 }
@@ -320,7 +320,6 @@ func (s *MsgServerTestSuite) TestMsgServer() {
 		},
 	}
 	for _, tc := range testCases {
-		tc := tc
 		s.Run(tc.name, func() {
 			s.accountKeeper.EXPECT().AddressCodec().Return(address.NewBech32Codec("seda")).AnyTimes()
 			s.bankKeeper.EXPECT().DelegateCoinsFromAccountToModule(gomock.Any(), sdk.AccAddress(tc.address), sdktypes.NotBondedPoolName, gomock.Any()).AnyTimes()

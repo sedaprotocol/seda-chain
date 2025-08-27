@@ -3,8 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
 func TestExportGenesis(t *testing.T) {

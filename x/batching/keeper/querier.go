@@ -31,15 +31,15 @@ func (q Querier) Batch(c context.Context, req *types.QueryBatchRequest) (*types.
 	var batch types.Batch
 	var err error
 	if req.LatestSigned {
-		batch, err = q.Keeper.GetLatestSignedBatch(ctx)
+		batch, err = q.GetLatestSignedBatch(ctx)
 	} else {
-		batch, err = q.Keeper.GetBatchByBatchNumber(ctx, req.BatchNumber)
+		batch, err = q.GetBatchByBatchNumber(ctx, req.BatchNumber)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := q.Keeper.GetBatchData(ctx, batch.BatchNumber)
+	data, err := q.GetBatchData(ctx, batch.BatchNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (q Querier) Batch(c context.Context, req *types.QueryBatchRequest) (*types.
 
 func (q Querier) BatchForHeight(c context.Context, req *types.QueryBatchForHeightRequest) (*types.QueryBatchForHeightResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	batch, err := q.Keeper.GetBatchForHeight(ctx, req.BlockHeight)
+	batch, err := q.GetBatchForHeight(ctx, req.BlockHeight)
 	if err != nil {
 		return nil, err
 	}
@@ -93,9 +93,9 @@ func (q Querier) DataResult(c context.Context, req *types.QueryDataResultRequest
 	var dataResult *types.DataResult
 	var err error
 	if req.DataRequestHeight == 0 {
-		dataResult, err = q.Keeper.GetLatestDataResult(ctx, req.DataRequestId)
+		dataResult, err = q.GetLatestDataResult(ctx, req.DataRequestId)
 	} else {
-		dataResult, err = q.Keeper.GetDataResult(ctx, req.DataRequestId, req.DataRequestHeight)
+		dataResult, err = q.GetDataResult(ctx, req.DataRequestId, req.DataRequestHeight)
 	}
 
 	if err != nil {
@@ -109,7 +109,7 @@ func (q Querier) DataResult(c context.Context, req *types.QueryDataResultRequest
 		DataResult: dataResult,
 	}
 
-	batchNum, err := q.Keeper.GetBatchAssignment(ctx, req.DataRequestId, dataResult.DrBlockHeight)
+	batchNum, err := q.GetBatchAssignment(ctx, req.DataRequestId, dataResult.DrBlockHeight)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			return nil, err

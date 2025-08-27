@@ -3,12 +3,13 @@ package app
 import (
 	"testing"
 
-	"cosmossdk.io/math"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
+	"cosmossdk.io/math"
 
 	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -25,13 +26,11 @@ import (
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-var (
-	testAddrs = []sdk.AccAddress{
-		sdk.AccAddress([]byte("to0_________________")),
-		sdk.AccAddress([]byte("to1_________________")),
-		sdk.AccAddress([]byte("to2_________________")),
-	}
-)
+var testAddrs = []sdk.AccAddress{
+	sdk.AccAddress([]byte("to0_________________")),
+	sdk.AccAddress([]byte("to1_________________")),
+	sdk.AccAddress([]byte("to2_________________")),
+}
 
 // mockAnteHandler implements a simple AnteHandler for testing
 func mockAnteHandler(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {

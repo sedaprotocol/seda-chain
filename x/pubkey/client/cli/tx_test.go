@@ -119,7 +119,6 @@ func (s *CLITestSuite) TestAddSEDAKeys() {
 		},
 	}
 	for _, tc := range testCases {
-		tc := tc
 		s.Run(tc.name, func() {
 			vpr := viper.New()
 			vpr.Set(utils.FlagEnableSEDASigner, true)

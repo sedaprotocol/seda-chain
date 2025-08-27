@@ -4,8 +4,9 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/math"
 )
 
 func TestDecodeFilterInput(t *testing.T) {

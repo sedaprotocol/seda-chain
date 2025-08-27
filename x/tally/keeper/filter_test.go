@@ -925,7 +925,7 @@ func TestFilterWildcard(t *testing.T) {
 	tests := []struct {
 		name           string
 		filterInputHex string // filter input without JSON path as hex
-		jsonPath       string // JSON path, if applicable (separated to accomodate odd length byte slices)
+		jsonPath       string // JSON path, if applicable (separated to accommodate odd length byte slices)
 		outliers       []bool
 		reveals        []types.RevealBody
 		consensus      bool

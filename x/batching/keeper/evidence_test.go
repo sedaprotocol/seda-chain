@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"testing"
 
-	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
+
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/ethereum/go-ethereum/crypto"
+
+	sdkstakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"

@@ -1,82 +1,95 @@
+version: "2"
 run:
-  tests: true
-  # timeout for analysis, e.g. 30s, 5m, default is 1m
-  timeout: 5m
-
+  tests: false
+  timeout: 10m
 linters:
-  disable-all: true
+  default: none
   enable:
     - bodyclose
+    - copyloopvar
     - dogsled
     - errcheck
     - goconst
     - gocritic
-    - gci
-    - gofumpt
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - misspell
+    - nolintlint
     - prealloc
     - revive
-    - copyloopvar
     - staticcheck
-    - stylecheck
-    - typecheck
     - thelper
     - unconvert
-    - unused
     - unparam
-    - misspell
-    - nolintlint
-
+    - unused
+  settings:
+    dogsled:
+      max-blank-identifiers: 3
+    nolintlint:
+      require-explanation: false
+      require-specific: false
+      allow-unused: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - gosec
+        text: Use of weak random number generator
+      - linters:
+          - golint
+        text: comment on exported var
+      - linters:
+          - golint
+        text: don't use an underscore in package name
+      - linters:
+          - staticcheck
+        text: 'ST1003:'
+      - linters:
+          - staticcheck
+        text: 'ST1016:'
+      - linters:
+          - staticcheck
+        path: legacy
+        text: 'SA1019:'
+      - linters:
+        - revive
+        text: 'var-naming: avoid meaningless package names'
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - e2e/
 issues:
-  fix: true
-  exclude-rules:
-    - text: "Use of weak random number generator"
-      linters:
-        - gosec
-    - text: "comment on exported var"
-      linters:
-        - golint
-    - text: "don't use an underscore in package name"
-      linters:
-        - golint
-    - text: "ST1003:"
-      linters:
-        - stylecheck
-    # FIXME: Disabled until golangci-lint updates stylecheck with this fix:
-    # https://github.com/dominikh/go-tools/issues/389
-    - text: "ST1016:"
-      linters:
-        - stylecheck
-    - path: "legacy"
-      text: "SA1019:"
-      linters:
-        - staticcheck
-
   max-issues-per-linter: 10000
   max-same-issues: 10000
-
-linters-settings:
-  gci:
-    custom-order: true
-    sections:
-      - standard # Standard section: captures all standard packages.
-      - default # Default section: contains all imports that could not be matched to another section type.
-      - prefix(github.com/cometbft/cometbft)
-      - prefix(github.com/CosmWasm)
-      - prefix(github.com/cosmos)
-      - prefix(github.com/cosmos/ibc)
-      - prefix(cosmossdk.io)
-      - prefix(github.com/cosmos/cosmos-sdk)
-      - prefix(github.com/sedaprotocol)
-      - prefix(github.com/sedaprotocol/seda-chain)
-    skip-generated: false
-  dogsled:
-    max-blank-identifiers: 3
-  nolintlint:
-    allow-unused: true
-    require-explanation: false
-    require-specific: false
+  fix: true
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/cometbft/cometbft)
+        - prefix(github.com/CosmWasm)
+        - prefix(github.com/cosmos)
+        - prefix(github.com/cosmos/ibc)
+        - prefix(cosmossdk.io)
+        - prefix(github.com/cosmos/cosmos-sdk)
+        - prefix(github.com/sedaprotocol)
+        - prefix(github.com/sedaprotocol/seda-chain)
+      custom-order: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

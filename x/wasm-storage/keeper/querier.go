@@ -24,7 +24,7 @@ func NewQuerierImpl(keeper Keeper) types.QueryServer {
 
 func (q Querier) OracleProgram(c context.Context, req *types.QueryOracleProgramRequest) (*types.QueryOracleProgramResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	program, err := q.Keeper.GetOracleProgram(ctx, req.Hash)
+	program, err := q.GetOracleProgram(ctx, req.Hash)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (q Querier) OraclePrograms(c context.Context, req *types.QueryOracleProgram
 
 func (q Querier) CoreContractRegistry(c context.Context, _ *types.QueryCoreContractRegistryRequest) (*types.QueryCoreContractRegistryResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	coreAddress, err := q.Keeper.GetCoreContractAddr(ctx)
+	coreAddress, err := q.GetCoreContractAddr(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (q Querier) CoreContractRegistry(c context.Context, _ *types.QueryCoreContr
 
 func (q Querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	params, err := q.Keeper.GetParams(ctx)
+	params, err := q.GetParams(ctx)
 	if err != nil {
 		return nil, err
 	}

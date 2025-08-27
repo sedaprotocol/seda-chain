@@ -9,20 +9,22 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cometbft/cometbft/crypto/secp256k1"
-	vrf "github.com/sedaprotocol/vrf-go"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/sha3"
 	"golang.org/x/exp/rand"
 
-	"cosmossdk.io/math"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
+	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
+	vrf "github.com/sedaprotocol/vrf-go"
 
 	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"

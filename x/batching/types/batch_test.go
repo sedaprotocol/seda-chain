@@ -4,8 +4,9 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/sedaprotocol/seda-chain/x/batching/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
 // TestComputeBatchID tests batch ID computation based on a sample batch

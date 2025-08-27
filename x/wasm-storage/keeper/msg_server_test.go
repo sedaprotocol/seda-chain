@@ -6,24 +6,23 @@ import (
 	"math"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/exp/rand"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	"github.com/ethereum/go-ethereum/crypto"
-
-	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/testutil"
@@ -31,13 +30,11 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
-var (
-	testAddrs = []sdk.AccAddress{
-		sdk.AccAddress([]byte("to0_________________")),
-		sdk.AccAddress([]byte("to1_________________")),
-		sdk.AccAddress([]byte("to2_________________")),
-	}
-)
+var testAddrs = []sdk.AccAddress{
+	sdk.AccAddress([]byte("to0_________________")),
+	sdk.AccAddress([]byte("to1_________________")),
+	sdk.AccAddress([]byte("to2_________________")),
+}
 
 func (s *KeeperTestSuite) TestStoreOracleProgram() {
 	regWasm := testwasms.SampleTallyWasm()

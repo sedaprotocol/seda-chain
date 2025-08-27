@@ -25,7 +25,7 @@ func (s *KeeperTestSuite) generatePubKeysAndValAddrs(num int) ([][]byte, []sdk.V
 		if err != nil {
 			panic(fmt.Sprintf("failed to generate secp256k1 private key: %v", err))
 		}
-		pubKeys = append(pubKeys, elliptic.Marshal(privKey.PublicKey, privKey.PublicKey.X, privKey.PublicKey.Y))
+		pubKeys = append(pubKeys, elliptic.Marshal(privKey.PublicKey, privKey.X, privKey.Y))
 
 		valAddrs = append(valAddrs, sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()))
 	}

@@ -11,11 +11,12 @@ import (
 
 	"cosmossdk.io/math"
 
+	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v3"
+
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
-	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v3"
 )
 
 // The name only refers to the oracle program playground name, there is not actually a

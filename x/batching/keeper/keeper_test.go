@@ -6,9 +6,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	storetypes "cosmossdk.io/store/types"
-
 	"cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"

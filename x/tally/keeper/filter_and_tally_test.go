@@ -7,9 +7,11 @@ import (
 	"slices"
 	"testing"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"

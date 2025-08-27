@@ -16,7 +16,7 @@ type Querier struct {
 
 func (q Querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	params, err := q.Keeper.GetParams(ctx)
+	params, err := q.GetParams(ctx)
 	if err != nil {
 		return nil, err
 	}

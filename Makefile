@@ -147,11 +147,11 @@ fmt:
 ###############################################################################
 
 lint-install:
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
 lint:
 	@echo "--> Running linter"
-	@./scripts/go-lint-all.bash --timeout=15m
+	@golangci-lint run
 
 .PHONY: lint lint-install
 

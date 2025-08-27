@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
@@ -125,7 +126,7 @@ func TestEndBlock(t *testing.T) {
 			// Verify the poster paid for execution
 			afterPostBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
 			diff = afterPostBalance.Sub(posterBeforeBalance)
-			require.NotEqual(t, "0aseda", diff.String(), "Poster should have payed for execution")
+			require.NotEqual(t, "0aseda", diff.String(), "Poster should have paid for execution")
 
 			dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
 			require.NoError(t, err)

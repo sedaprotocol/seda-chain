@@ -3,9 +3,10 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
 
 	storetypes "cosmossdk.io/store/types"
 

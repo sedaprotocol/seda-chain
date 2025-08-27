@@ -125,7 +125,7 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 		if err != nil {
 			panic(fmt.Sprintf("failed to generate secp256k1 private key: %v", err))
 		}
-		pubKeys[i] = elliptic.Marshal(privKey.PublicKey, privKey.PublicKey.X, privKey.PublicKey.Y)
+		pubKeys[i] = elliptic.Marshal(privKey.PublicKey, privKey.X, privKey.Y)
 
 		valTokens := sdk.TokensFromConsensusPower(powers[i], sdk.DefaultPowerReduction)
 		valCreateMsg, err := sdkstakingtypes.NewMsgCreateValidator(
@@ -141,7 +141,7 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 		require.NoError(t, err)
 		require.NotNil(t, res)
 
-		_, err = f.stakingKeeper.Keeper.EndBlocker(ctx)
+		_, err = f.stakingKeeper.EndBlocker(ctx)
 		require.NoError(t, err)
 
 		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, sedatypes.SEDAKeyIndexSecp256k1, pubKeys[i])
@@ -763,13 +763,13 @@ func addBatchSigningValidatorsFromTestData(t *testing.T, f *fixture, testData []
 		require.NoError(t, err)
 		require.NotNil(t, res)
 
-		_, err = f.stakingKeeper.Keeper.EndBlocker(ctx)
+		_, err = f.stakingKeeper.EndBlocker(ctx)
 		require.NoError(t, err)
 
 		// We assume that the validator index is the same as the wallet index.
 		privKey, err := ethcrypto.HexToECDSA(wallets[i].PrivateKey[2:])
 		require.NoError(t, err)
-		pk := elliptic.Marshal(privKey.PublicKey, privKey.PublicKey.X, privKey.PublicKey.Y)
+		pk := elliptic.Marshal(privKey.PublicKey, privKey.X, privKey.Y)
 
 		err = f.pubKeyKeeper.SetValidatorKeyAtIndex(ctx, valAddr, sedatypes.SEDAKeyIndexSecp256k1, pk)
 		require.NoError(t, err)
