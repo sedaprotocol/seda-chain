@@ -46,7 +46,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/zerolog v1.33.0
-	github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 v2.5.0
+	github.com/sedaprotocol/seda-wasm-vm/tallyvm/v3 v3.0.0-dev.1
 	github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c
 	github.com/spf13/cast v1.7.1
 	github.com/spf13/cobra v1.8.1
@@ -256,5 +256,3 @@ require (
 replace github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 
 replace github.com/cosmos/rosetta => github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529
-
-replace github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 => github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 v2.5.1-0.20250814184430-451516f324a9
