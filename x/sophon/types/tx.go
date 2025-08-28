@@ -180,7 +180,24 @@ func (m *MsgAddUser) ValidateBasic() error {
 }
 
 func (m *MsgRemoveUser) ValidateBasic() error {
-	return fmt.Errorf("not implemented")
+	if _, err := sdk.AccAddressFromBech32(m.AdminAddress); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid admin address: %s", m.AdminAddress)
+	}
+
+	if len(m.SophonPublicKey) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
+	}
+
+	_, err := hex.DecodeString(m.SophonPublicKey)
+	if err != nil {
+		return sdkerrors.ErrInvalidRequest.Wrapf("invalid hex in pubkey: %s", m.SophonPublicKey)
+	}
+
+	if len(m.UserId) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("user id is empty")
+	}
+
+	return nil
 }
 
 func (m *MsgTopUpUser) ValidateBasic() error {
