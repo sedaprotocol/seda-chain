@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"strconv"
 
 	"cosmossdk.io/collections"
 	errorsmod "cosmossdk.io/errors"
@@ -53,7 +54,7 @@ func (m msgServer) TransferOwnership(goCtx context.Context, msg *types.MsgTransf
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeTransferOwnership,
-			sdk.NewAttribute(types.AttributeSophonPubKey, msg.SophonPublicKey),
+			sdk.NewAttribute(types.AttributeSophonID, strconv.FormatUint(sophonInfo.Id, 10)),
 			sdk.NewAttribute(types.AttributeOwnerAddress, msg.OwnerAddress),
 			sdk.NewAttribute(types.AttributeNewOwnerAddress, msg.NewOwnerAddress),
 		),
@@ -105,10 +106,10 @@ func (m msgServer) AcceptOwnership(goCtx context.Context, msg *types.MsgAcceptOw
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeAcceptOwnership,
-			sdk.NewAttribute(types.AttributeSophonPubKey, msg.SophonPublicKey),
+			sdk.NewAttribute(types.AttributeSophonID, strconv.FormatUint(sophonInfo.Id, 10)),
 			sdk.NewAttribute(types.AttributeOwnerAddress, msg.NewOwnerAddress),
 		),
-		createSophonEvent(types.EventTypeUpdateSophon, sophonInfo),
+		createSophonEvent(sophonInfo),
 	})
 
 	return &types.MsgAcceptOwnershipResponse{}, nil
@@ -150,7 +151,7 @@ func (m msgServer) CancelOwnershipTransfer(goCtx context.Context, msg *types.Msg
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeCancelOwnershipTransfer,
-			sdk.NewAttribute(types.AttributeSophonPubKey, msg.SophonPublicKey),
+			sdk.NewAttribute(types.AttributeSophonID, strconv.FormatUint(sophonInfo.Id, 10)),
 		),
 	})
 

@@ -45,8 +45,16 @@ func (s *SophonInfo) ValidateBasic() error {
 		return fmt.Errorf("balance is nil")
 	}
 
+	if s.Balance.IsNegative() {
+		return fmt.Errorf("balance is negative")
+	}
+
 	if s.UsedCredits.IsNil() {
 		return fmt.Errorf("used credits is nil")
+	}
+
+	if s.UsedCredits.IsNegative() {
+		return fmt.Errorf("used credits is negative")
 	}
 
 	return nil

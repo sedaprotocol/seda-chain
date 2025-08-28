@@ -31,6 +31,7 @@ type KeeperTestSuite struct {
 	keeper        *keeper.Keeper
 	bankKeeper    *testutil.MockBankKeeper
 	accountKeeper *testutil.MockAccountKeeper
+	stakingKeeper *testutil.MockStakingKeeper
 	cdc           codec.Codec
 	msgSrvr       types.MsgServer
 	queryClient   types.QueryClient
@@ -64,16 +65,19 @@ func (s *KeeperTestSuite) SetupTest() {
 	ctrl := gomock.NewController(t)
 	s.bankKeeper = testutil.NewMockBankKeeper(ctrl)
 	s.accountKeeper = testutil.NewMockAccountKeeper(ctrl)
+	s.stakingKeeper = testutil.NewMockStakingKeeper(ctrl)
 
 	// Ensure the keeper can be created
 	s.accountKeeper.EXPECT().AddressCodec().Return(authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()))
 	s.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(authtypes.NewModuleAddress(types.ModuleName))
+	s.stakingKeeper.EXPECT().BondDenom(gomock.Any()).Return("aseda", nil).AnyTimes()
 
 	s.keeper = keeper.NewKeeper(
 		encCfg.Codec,
 		runtime.NewKVStoreService(key),
 		s.bankKeeper,
 		s.accountKeeper,
+		s.stakingKeeper,
 		s.authority,
 	)
 

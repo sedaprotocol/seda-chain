@@ -20,3 +20,7 @@ type AccountKeeper interface {
 	GetModuleAddress(name string) sdk.AccAddress
 	GetModuleAccount(ctx context.Context, moduleName string) sdk.ModuleAccountI
 }
+
+type StakingKeeper interface {
+	BondDenom(ctx context.Context) (string, error)
+}

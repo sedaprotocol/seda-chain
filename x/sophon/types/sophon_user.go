@@ -13,5 +13,9 @@ func (s *SophonUser) ValidateBasic() error {
 		return fmt.Errorf("credits is nil")
 	}
 
+	if s.Credits.IsNegative() {
+		return fmt.Errorf("credits is negative")
+	}
+
 	return nil
 }

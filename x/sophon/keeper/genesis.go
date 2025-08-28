@@ -66,7 +66,7 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 		panic(err)
 	}
 
-	err = k.sophonUser.Walk(ctx, nil, func(key collections.Pair[uint64, []byte], value types.SophonUser) (stop bool, err error) {
+	err = k.sophonUser.Walk(ctx, nil, func(key collections.Pair[uint64, string], value types.SophonUser) (stop bool, err error) {
 		gs.SophonUsers = append(gs.SophonUsers, types.UserWithSophonId{
 			SophonId: key.K1(),
 			User:     &value,

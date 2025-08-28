@@ -151,6 +151,35 @@ func (m *MsgCancelOwnershipTransfer) ValidateBasic() error {
 }
 
 func (m *MsgAddUser) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.AdminAddress); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid admin address: %s", m.AdminAddress)
+	}
+
+	if len(m.SophonPublicKey) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
+	}
+
+	_, err := hex.DecodeString(m.SophonPublicKey)
+	if err != nil {
+		return sdkerrors.ErrInvalidRequest.Wrapf("invalid hex in pubkey: %s", m.SophonPublicKey)
+	}
+
+	if len(m.UserId) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("user id is empty")
+	}
+
+	if m.InitialCredits.IsNil() {
+		return sdkerrors.ErrInvalidRequest.Wrap("initial credits is nil")
+	}
+
+	if m.InitialCredits.IsNegative() {
+		return sdkerrors.ErrInvalidRequest.Wrap("initial credits is negative")
+	}
+
+	return nil
+}
+
+func (m *MsgRemoveUser) ValidateBasic() error {
 	return fmt.Errorf("not implemented")
 }
 
@@ -167,6 +196,7 @@ func (m *MsgSettleCredits) ValidateBasic() error {
 }
 
 func (m *MsgSubmitReports) ValidateBasic() error {
+	// TODO: Deduplicate validation logic (hex strings, credits)
 	return fmt.Errorf("not implemented")
 }
 
