@@ -137,6 +137,10 @@ func (k Keeper) SetSophonUser(ctx sdk.Context, sophonID uint64, userID string, s
 	return k.sophonUser.Set(ctx, collections.Join(sophonID, userID), sophonUser)
 }
 
+func (k Keeper) DeleteSophonUser(ctx sdk.Context, sophonID uint64, userID string) error {
+	return k.sophonUser.Remove(ctx, collections.Join(sophonID, userID))
+}
+
 func (k Keeper) GetSophonUser(ctx sdk.Context, sophonID uint64, userID string) (result types.SophonUser, err error) {
 	sophonUser, err := k.sophonUser.Get(ctx, collections.Join(sophonID, userID))
 	if err != nil {

@@ -9,6 +9,7 @@ const (
 	EventTypeAcceptOwnership         = "accept_ownership"
 	EventTypeCancelOwnershipTransfer = "cancel_ownership_transfer"
 	EventTypeAddUser                 = "add_user"
+	EventTypeRemoveUser              = "remove_user"
 
 	AttributeSophonPubKey    = "sophon_pub_key"
 	AttributeSophonID        = "sophon_id"
