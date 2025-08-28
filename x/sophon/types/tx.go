@@ -92,15 +92,62 @@ func (m *MsgEditSophon) ValidateBasic() error {
 }
 
 func (m *MsgTransferOwnership) ValidateBasic() error {
-	return fmt.Errorf("not implemented")
+	if _, err := sdk.AccAddressFromBech32(m.OwnerAddress); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid owner address: %s", m.OwnerAddress)
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.NewOwnerAddress); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid new owner address: %s", m.NewOwnerAddress)
+	}
+
+	if m.NewOwnerAddress == m.OwnerAddress {
+		return sdkerrors.ErrInvalidRequest.Wrapf("new owner address is the same as the current owner address")
+	}
+
+	if len(m.SophonPublicKey) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
+	}
+
+	_, err := hex.DecodeString(m.SophonPublicKey)
+	if err != nil {
+		return sdkerrors.ErrInvalidRequest.Wrapf("invalid hex in pubkey: %s", m.SophonPublicKey)
+	}
+
+	return nil
 }
 
 func (m *MsgAcceptOwnership) ValidateBasic() error {
-	return fmt.Errorf("not implemented")
+	if _, err := sdk.AccAddressFromBech32(m.NewOwnerAddress); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid new owner address: %s", m.NewOwnerAddress)
+	}
+
+	if len(m.SophonPublicKey) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
+	}
+
+	_, err := hex.DecodeString(m.SophonPublicKey)
+	if err != nil {
+		return sdkerrors.ErrInvalidRequest.Wrapf("invalid hex in pubkey: %s", m.SophonPublicKey)
+	}
+
+	return nil
 }
 
 func (m *MsgCancelOwnershipTransfer) ValidateBasic() error {
-	return fmt.Errorf("not implemented")
+	if _, err := sdk.AccAddressFromBech32(m.OwnerAddress); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid owner address: %s", m.OwnerAddress)
+	}
+
+	if len(m.SophonPublicKey) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
+	}
+
+	_, err := hex.DecodeString(m.SophonPublicKey)
+	if err != nil {
+		return sdkerrors.ErrInvalidRequest.Wrapf("invalid hex in pubkey: %s", m.SophonPublicKey)
+	}
+
+	return nil
 }
 
 func (m *MsgAddUser) ValidateBasic() error {

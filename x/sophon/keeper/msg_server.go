@@ -1,9 +1,11 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"errors"
+	"strconv"
 
 	"cosmossdk.io/collections"
 	errorsmod "cosmossdk.io/errors"
@@ -47,7 +49,7 @@ func (m msgServer) RegisterSophon(goCtx context.Context, msg *types.MsgRegisterS
 		return nil, types.ErrAlreadyExists
 	}
 
-	sophonInfo := types.SophonInputs{
+	sophonInputs := types.SophonInputs{
 		OwnerAddress: msg.OwnerAddress,
 		AdminAddress: msg.AdminAddress,
 		Address:      msg.Address,
@@ -57,23 +59,12 @@ func (m msgServer) RegisterSophon(goCtx context.Context, msg *types.MsgRegisterS
 		UsedCredits:  math.NewInt(0),
 	}
 
-	_, err = m.Keeper.CreateSophonInfo(ctx, pubKeyBytes, sophonInfo)
+	sophonInfo, err := m.Keeper.CreateSophonInfo(ctx, pubKeyBytes, sophonInputs)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeRegisterSophon,
-			sdk.NewAttribute(types.AttributeSophonPubKey, msg.PublicKey),
-			sdk.NewAttribute(types.AttributeOwnerAddress, msg.OwnerAddress),
-			sdk.NewAttribute(types.AttributeAdminAddress, msg.AdminAddress),
-			sdk.NewAttribute(types.AttributeAddress, msg.Address),
-			sdk.NewAttribute(types.AttributeMemo, msg.Memo),
-			sdk.NewAttribute(types.AttributeBalance, sophonInfo.Balance.String()),
-			sdk.NewAttribute(types.AttributeUsedCredits, sophonInfo.UsedCredits.String()),
-		),
-	})
+	ctx.EventManager().EmitEvent(createSophonEvent(types.EventTypeRegisterSophon, sophonInfo))
 
 	return &types.MsgRegisterSophonResponse{}, nil
 }
@@ -132,34 +123,154 @@ func (m msgServer) EditSophon(goCtx context.Context, msg *types.MsgEditSophon) (
 		return nil, err
 	}
 
-	pubKey := hex.EncodeToString(pubKeyBytes)
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeEditSophon,
-			sdk.NewAttribute(types.AttributeSophonPubKey, pubKey),
-			sdk.NewAttribute(types.AttributeOwnerAddress, sophonInfo.OwnerAddress),
-			sdk.NewAttribute(types.AttributeAdminAddress, sophonInfo.AdminAddress),
-			sdk.NewAttribute(types.AttributeAddress, sophonInfo.Address),
-			sdk.NewAttribute(types.AttributeMemo, sophonInfo.Memo),
-			sdk.NewAttribute(types.AttributeBalance, sophonInfo.Balance.String()),
-			sdk.NewAttribute(types.AttributeUsedCredits, sophonInfo.UsedCredits.String()),
-		),
-	)
+	ctx.EventManager().EmitEvent(createSophonEvent(types.EventTypeUpdateSophon, sophonInfo))
 
 	return &types.MsgEditSophonResponse{}, nil
 }
 
-func (m msgServer) TransferOwnership(_ context.Context, _ *types.MsgTransferOwnership) (*types.MsgTransferOwnershipResponse, error) {
-	panic("not implemented")
+func (m msgServer) TransferOwnership(goCtx context.Context, msg *types.MsgTransferOwnership) (*types.MsgTransferOwnershipResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	pubKeyBytes, err := hex.DecodeString(msg.SophonPublicKey)
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "invalid hex in pubkey: %s", msg.SophonPublicKey)
+	}
+
+	sophonInfo, err := m.GetSophonInfo(ctx, pubKeyBytes)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, sdkerrors.ErrNotFound.Wrapf("sophon not found for %s", msg.SophonPublicKey)
+		}
+		return nil, err
+	}
+
+	if sophonInfo.OwnerAddress != msg.OwnerAddress {
+		return nil, sdkerrors.ErrorInvalidSigner.Wrapf("unauthorized owner; expected %s, got %s", sophonInfo.OwnerAddress, msg.OwnerAddress)
+	}
+
+	newOwnerAddress, err := sdk.AccAddressFromBech32(msg.NewOwnerAddress)
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid new owner address: %s", msg.NewOwnerAddress)
+	}
+
+	transferAddress, err := m.GetSophonTransfer(ctx, sophonInfo.Id)
+	if err != nil {
+		return nil, err
+	}
+	if transferAddress != nil {
+		return nil, sdkerrors.ErrInvalidRequest.Wrapf("there is already a pending ownership transfer for %s", msg.NewOwnerAddress)
+	}
+
+	err = m.SetSophonTransfer(ctx, sophonInfo.Id, newOwnerAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeTransferOwnership,
+			sdk.NewAttribute(types.AttributeSophonPubKey, msg.SophonPublicKey),
+			sdk.NewAttribute(types.AttributeOwnerAddress, msg.OwnerAddress),
+			sdk.NewAttribute(types.AttributeNewOwnerAddress, msg.NewOwnerAddress),
+		),
+	})
+
+	return &types.MsgTransferOwnershipResponse{}, nil
 }
 
-func (m msgServer) AcceptOwnership(_ context.Context, _ *types.MsgAcceptOwnership) (*types.MsgAcceptOwnershipResponse, error) {
-	panic("not implemented")
+func (m msgServer) AcceptOwnership(goCtx context.Context, msg *types.MsgAcceptOwnership) (*types.MsgAcceptOwnershipResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	pubKeyBytes, err := hex.DecodeString(msg.SophonPublicKey)
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "invalid hex in pubkey: %s", msg.SophonPublicKey)
+	}
+
+	sophonInfo, err := m.GetSophonInfo(ctx, pubKeyBytes)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, sdkerrors.ErrNotFound.Wrapf("sophon not found for %s", msg.SophonPublicKey)
+		}
+		return nil, err
+	}
+
+	newOwnerAddress, err := sdk.AccAddressFromBech32(msg.NewOwnerAddress)
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid new owner address: %s", msg.NewOwnerAddress)
+	}
+
+	transferAddress, err := m.GetSophonTransfer(ctx, sophonInfo.Id)
+	if err != nil {
+		return nil, err
+	}
+	if transferAddress == nil || !bytes.Equal(transferAddress, newOwnerAddress) {
+		return nil, sdkerrors.ErrNotFound.Wrapf("there is no pending ownership transfer for %s", msg.NewOwnerAddress)
+	}
+
+	err = m.DeleteSophonTransfer(ctx, sophonInfo.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	sophonInfo.OwnerAddress = msg.NewOwnerAddress
+	err = m.SetSophonInfo(ctx, sophonInfo.PublicKey, sophonInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeAcceptOwnership,
+			sdk.NewAttribute(types.AttributeSophonPubKey, msg.SophonPublicKey),
+			sdk.NewAttribute(types.AttributeOwnerAddress, msg.NewOwnerAddress),
+		),
+		createSophonEvent(types.EventTypeUpdateSophon, sophonInfo),
+	})
+
+	return &types.MsgAcceptOwnershipResponse{}, nil
 }
 
-func (m msgServer) CancelOwnershipTransfer(_ context.Context, _ *types.MsgCancelOwnershipTransfer) (*types.MsgCancelOwnershipTransferResponse, error) {
-	panic("not implemented")
+func (m msgServer) CancelOwnershipTransfer(goCtx context.Context, msg *types.MsgCancelOwnershipTransfer) (*types.MsgCancelOwnershipTransferResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	pubKeyBytes, err := hex.DecodeString(msg.SophonPublicKey)
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "invalid hex in pubkey: %s", msg.SophonPublicKey)
+	}
+
+	sophonInfo, err := m.GetSophonInfo(ctx, pubKeyBytes)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, sdkerrors.ErrNotFound.Wrapf("sophon not found for %s", msg.SophonPublicKey)
+		}
+		return nil, err
+	}
+
+	if sophonInfo.OwnerAddress != msg.OwnerAddress {
+		return nil, sdkerrors.ErrorInvalidSigner.Wrapf("unauthorized owner; expected %s, got %s", sophonInfo.OwnerAddress, msg.OwnerAddress)
+	}
+
+	transferAddress, err := m.GetSophonTransfer(ctx, sophonInfo.Id)
+	if err != nil {
+		return nil, err
+	}
+	if transferAddress == nil {
+		return nil, sdkerrors.ErrNotFound.Wrapf("there is no pending ownership transfer for %s", msg.SophonPublicKey)
+	}
+
+	err = m.DeleteSophonTransfer(ctx, sophonInfo.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCancelOwnershipTransfer,
+			sdk.NewAttribute(types.AttributeSophonPubKey, msg.SophonPublicKey),
+		),
+	})
+
+	return &types.MsgCancelOwnershipTransferResponse{}, nil
 }
 
 func (m msgServer) AddUser(_ context.Context, _ *types.MsgAddUser) (*types.MsgAddUserResponse, error) {
@@ -200,4 +311,18 @@ func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 	}
 
 	return &types.MsgUpdateParamsResponse{}, nil
+}
+
+func createSophonEvent(eventType string, sophonInfo types.SophonInfo) sdk.Event {
+	return sdk.NewEvent(
+		eventType,
+		sdk.NewAttribute(types.AttributeSophonPubKey, hex.EncodeToString(sophonInfo.PublicKey)),
+		sdk.NewAttribute(types.AttributeSophonID, strconv.FormatUint(sophonInfo.Id, 10)),
+		sdk.NewAttribute(types.AttributeOwnerAddress, sophonInfo.OwnerAddress),
+		sdk.NewAttribute(types.AttributeAdminAddress, sophonInfo.AdminAddress),
+		sdk.NewAttribute(types.AttributeAddress, sophonInfo.Address),
+		sdk.NewAttribute(types.AttributeMemo, sophonInfo.Memo),
+		sdk.NewAttribute(types.AttributeBalance, sophonInfo.Balance.String()),
+		sdk.NewAttribute(types.AttributeUsedCredits, sophonInfo.UsedCredits.String()),
+	)
 }

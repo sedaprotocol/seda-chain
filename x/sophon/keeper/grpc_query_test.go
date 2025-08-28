@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/sedaprotocol/seda-chain/x/sophon/types"
@@ -65,4 +66,53 @@ func (s *KeeperTestSuite) TestQuerier_SophonInfo() {
 			s.Require().Equal(tt.sophonInfo, res.Info)
 		})
 	}
+}
+
+func (s *KeeperTestSuite) TestQuerier_SophonTransfer() {
+	pubKeyHex := "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3"
+	pubKey, err := hex.DecodeString(pubKeyHex)
+	s.Require().NoError(err)
+
+	newOwnerAddress := "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5"
+	newOwnerAddressBz, err := sdk.AccAddressFromBech32(newOwnerAddress)
+	s.Require().NoError(err)
+
+	s.Run("No registered sophon", func() {
+		res, err := s.queryClient.SophonTransfer(s.ctx, &types.QuerySophonTransferRequest{SophonPubKey: pubKeyHex})
+		s.Require().ErrorIs(err, sdkerrors.ErrNotFound)
+		s.Require().Nil(res)
+	})
+
+	s.Run("Pending sophon transfer", func() {
+		sophonInfo, err := s.keeper.CreateSophonInfo(s.ctx, pubKey, types.SophonInputs{
+			OwnerAddress: "owner",
+			AdminAddress: "admin",
+			Address:      "address",
+			PublicKey:    pubKey,
+			Memo:         "memo",
+		})
+		s.Require().NoError(err)
+
+		err = s.keeper.SetSophonTransfer(s.ctx, sophonInfo.Id, newOwnerAddressBz)
+		s.Require().NoError(err)
+		res, err := s.queryClient.SophonTransfer(s.ctx, &types.QuerySophonTransferRequest{SophonPubKey: pubKeyHex})
+		s.Require().NoError(err)
+		s.Require().NotNil(res)
+		s.Require().Equal(newOwnerAddress, res.NewOwnerAddress)
+	})
+
+	s.Run("No pending transfer", func() {
+		_, err := s.keeper.CreateSophonInfo(s.ctx, pubKey, types.SophonInputs{
+			OwnerAddress: "owner",
+			AdminAddress: "admin",
+			Address:      "address",
+			PublicKey:    pubKey,
+			Memo:         "memo",
+		})
+		s.Require().NoError(err)
+
+		res, err := s.queryClient.SophonTransfer(s.ctx, &types.QuerySophonTransferRequest{SophonPubKey: pubKeyHex})
+		s.Require().ErrorIs(err, sdkerrors.ErrNotFound)
+		s.Require().Nil(res)
+	})
 }

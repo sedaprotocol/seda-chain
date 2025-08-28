@@ -39,6 +39,36 @@ func (q Querier) SophonInfo(c context.Context, req *types.QuerySophonInfoRequest
 	return &types.QuerySophonInfoResponse{Info: &result}, nil
 }
 
+func (q Querier) SophonTransfer(c context.Context, req *types.QuerySophonTransferRequest) (*types.QuerySophonTransferResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	pubKeyBytes, err := hex.DecodeString(req.SophonPubKey)
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "invalid hex in pubkey: %s", req.SophonPubKey)
+	}
+
+	sophonInfo, err := q.GetSophonInfo(ctx, pubKeyBytes)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, sdkerrors.ErrNotFound.Wrapf("no sophon registered for %s", req.SophonPubKey)
+		}
+
+		return nil, err
+	}
+
+	transferAddress, err := q.GetSophonTransfer(ctx, sophonInfo.Id)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, sdkerrors.ErrNotFound.Wrapf("no sophon transfer pending for %s", req.SophonPubKey)
+		}
+
+		return nil, err
+	}
+
+	newOwnerAddress := sdk.AccAddress(transferAddress).String()
+
+	return &types.QuerySophonTransferResponse{NewOwnerAddress: newOwnerAddress}, nil
+}
+
 func (q Querier) SophonUsers(_ context.Context, _ *types.QuerySophonUsersRequest) (*types.QuerySophonUsersResponse, error) {
 	panic("not implemented")
 }

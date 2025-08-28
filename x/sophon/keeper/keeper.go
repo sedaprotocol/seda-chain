@@ -26,7 +26,7 @@ type Keeper struct {
 	sophonID       collections.Sequence
 	sophonInfo     collections.Map[[]byte, types.SophonInfo]
 	sophonUser     collections.Map[collections.Pair[uint64, []byte], types.SophonUser]
-	sophonTransfer collections.KeySet[collections.Pair[uint64, []byte]]
+	sophonTransfer collections.Map[uint64, []byte]
 }
 
 func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, bk types.BankKeeper, ak types.AccountKeeper, authority string) *Keeper {
@@ -47,7 +47,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, bk
 		sophonID:       collections.NewSequence(sb, types.SophonIDKey, "sophon_id"),
 		sophonInfo:     collections.NewMap(sb, types.SophonInfoKey, "sophon_info", collections.BytesKey, codec.CollValue[types.SophonInfo](cdc)),
 		sophonUser:     collections.NewMap(sb, types.SophonUserKey, "sophon_user", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.SophonUser](cdc)),
-		sophonTransfer: collections.NewKeySet(sb, types.SophonTransferKey, "sophon_transfer", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey)),
+		sophonTransfer: collections.NewMap(sb, types.SophonTransferKey, "sophon_transfer", collections.Uint64Key, collections.BytesValue),
 	}
 
 	schema, err := sb.Build()
@@ -146,12 +146,16 @@ func (k Keeper) GetSophonUserByPubKey(ctx sdk.Context, sophonPubKey []byte, user
 	return k.GetSophonUser(ctx, sophonInfo.Id, userID)
 }
 
-func (k Keeper) HasSophonTransfer(ctx sdk.Context, sophonID uint64, address []byte) (bool, error) {
-	return k.sophonTransfer.Has(ctx, collections.Join(sophonID, address))
+func (k Keeper) GetSophonTransfer(ctx sdk.Context, sophonID uint64) ([]byte, error) {
+	return k.sophonTransfer.Get(ctx, sophonID)
 }
 
 func (k Keeper) SetSophonTransfer(ctx sdk.Context, sophonID uint64, address []byte) error {
-	return k.sophonTransfer.Set(ctx, collections.Join(sophonID, address))
+	return k.sophonTransfer.Set(ctx, sophonID, address)
+}
+
+func (k Keeper) DeleteSophonTransfer(ctx sdk.Context, sophonID uint64) error {
+	return k.sophonTransfer.Remove(ctx, sophonID)
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

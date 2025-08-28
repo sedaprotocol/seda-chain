@@ -16,6 +16,14 @@ service Query {
     option (google.api.http).get = "/seda-chain/sophon/info/{sophon_pub_key}";
   }
 
+  // SophonTransfer returns a sophon transfer when given its public key as a
+  // hex encoded string.
+  rpc SophonTransfer(QuerySophonTransferRequest)
+      returns (QuerySophonTransferResponse) {
+    option (google.api.http).get =
+        "/seda-chain/sophon/transfer/{sophon_pub_key}";
+  }
+
   // SophonUsers returns a paginated list of Sophon users when given its public
   // key as a hex encoded string.
   rpc SophonUsers(QuerySophonUsersRequest) returns (QuerySophonUsersResponse) {
@@ -51,6 +59,15 @@ message QuerySophonInfoRequest {
 
 // The response message for QuerySophonInfo RPC method.
 message QuerySophonInfoResponse { SophonInfo info = 1; }
+
+// The request message for QuerySophonTransfer RPC method.
+message QuerySophonTransferRequest {
+  // A hex encoded string of the public key of the sophon.
+  string sophon_pub_key = 1;
+}
+
+// The response message for QuerySophonTransfer RPC method.
+message QuerySophonTransferResponse { string new_owner_address = 1; }
 
 // The request message for QuerySophonUsers RPC method.
 message QuerySophonUsersRequest {
