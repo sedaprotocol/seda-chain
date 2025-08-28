@@ -31,6 +31,9 @@ service Msg {
   // Adds a user to a sophon.
   rpc AddUser(MsgAddUser) returns (MsgAddUserResponse);
 
+  // Removes a user from a sophon.
+  rpc RemoveUser(MsgRemoveUser) returns (MsgRemoveUserResponse);
+
   // Top up a user's credits.
   rpc TopUpUser(MsgTopUpUser) returns (MsgTopUpUserResponse);
 
@@ -174,7 +177,7 @@ message MsgAddUser {
   string sophon_public_key = 2;
 
   // the identifier of the user
-  string identifier = 3;
+  string user_id = 3;
 
   // the amount of credits the user has initially
   string initial_credits = 4 [
@@ -187,6 +190,24 @@ message MsgAddUser {
 // MsgAddUserResponse is the response type for the Msg/AddUser RPC method.
 message MsgAddUserResponse {}
 
+// Allows the admin to remove a user from the sophon.
+message MsgRemoveUser {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (amino.name) = "seda/sophon/MsgRemoveUser";
+
+  // the address that is removing the user
+  string admin_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the sophon as a hex string
+  string sophon_public_key = 2;
+
+  // the identifier of the user
+  string user_id = 3;
+}
+
+// MsgRemoveUserResponse is the response type for the Msg/RemoveUser RPC method.
+message MsgRemoveUserResponse {}
+
 // Allows the admin to top up a user's credits.
 message MsgTopUpUser {
   option (amino.name) = "seda/sophon/MsgTopUpUser";
@@ -195,7 +216,7 @@ message MsgTopUpUser {
   string sophon_public_key = 1;
 
   // the identifier of the user
-  string identifier = 2;
+  string user_id = 2;
 
   // the amount of credits to top up
   string amount = 3 [

@@ -48,7 +48,7 @@ message SophonInfo {
 // A user of a Sophon.
 message SophonUser {
   // The identifier of the user, should be unique for a Sophon.
-  bytes user_id = 1;
+  string user_id = 1;
 
   // The amount of credits the user has.
   string credits = 2 [
@@ -61,7 +61,7 @@ message SophonUser {
 // A report of a user's usage of the sophon.
 message UserReport {
   // The identifier of the user.
-  bytes user_id = 1;
+  string user_id = 1;
 
   // The amount of credits the user has used. Includes the computation credits
   // AND the data proxy credits.

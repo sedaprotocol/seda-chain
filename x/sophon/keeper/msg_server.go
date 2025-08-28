@@ -63,7 +63,13 @@ func (m msgServer) RegisterSophon(goCtx context.Context, msg *types.MsgRegisterS
 		return nil, err
 	}
 
-	ctx.EventManager().EmitEvent(createSophonEvent(types.EventTypeRegisterSophon, sophonInfo))
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeRegisterSophon,
+			sdk.NewAttribute(types.AttributeSophonID, strconv.FormatUint(sophonInfo.Id, 10)),
+		),
+		createSophonEvent(sophonInfo),
+	})
 
 	return &types.MsgRegisterSophonResponse{}, nil
 }
@@ -122,21 +128,15 @@ func (m msgServer) EditSophon(goCtx context.Context, msg *types.MsgEditSophon) (
 		return nil, err
 	}
 
-	ctx.EventManager().EmitEvent(createSophonEvent(types.EventTypeUpdateSophon, sophonInfo))
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeUpdateSophon,
+			sdk.NewAttribute(types.AttributeSophonID, strconv.FormatUint(sophonInfo.Id, 10)),
+		),
+		createSophonEvent(sophonInfo),
+	})
 
 	return &types.MsgEditSophonResponse{}, nil
-}
-
-func (m msgServer) AddUser(_ context.Context, _ *types.MsgAddUser) (*types.MsgAddUserResponse, error) {
-	panic("not implemented")
-}
-
-func (m msgServer) TopUpUser(_ context.Context, _ *types.MsgTopUpUser) (*types.MsgTopUpUserResponse, error) {
-	panic("not implemented")
-}
-
-func (m msgServer) ExpireCredits(_ context.Context, _ *types.MsgExpireCredits) (*types.MsgExpireCreditsResponse, error) {
-	panic("not implemented")
 }
 
 func (m msgServer) SettleCredits(_ context.Context, _ *types.MsgSettleCredits) (*types.MsgSettleCreditsResponse, error) {
@@ -167,9 +167,9 @@ func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 	return &types.MsgUpdateParamsResponse{}, nil
 }
 
-func createSophonEvent(eventType string, sophonInfo types.SophonInfo) sdk.Event {
+func createSophonEvent(sophonInfo types.SophonInfo) sdk.Event {
 	return sdk.NewEvent(
-		eventType,
+		types.EventTypeSophon,
 		sdk.NewAttribute(types.AttributeSophonPubKey, hex.EncodeToString(sophonInfo.PublicKey)),
 		sdk.NewAttribute(types.AttributeSophonID, strconv.FormatUint(sophonInfo.Id, 10)),
 		sdk.NewAttribute(types.AttributeOwnerAddress, sophonInfo.OwnerAddress),

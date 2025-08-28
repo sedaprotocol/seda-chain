@@ -16,6 +16,7 @@ import (
 type Keeper struct {
 	bankKeeper    types.BankKeeper
 	accountKeeper types.AccountKeeper
+	stakingKeeper types.StakingKeeper
 
 	// authority is the address capable of executing MsgUpdateParams. Typically, this should be the gov module address.
 	// Initially this will be the SEDA security group address.
@@ -25,11 +26,18 @@ type Keeper struct {
 	params         collections.Item[types.Params]
 	sophonID       collections.Sequence
 	sophonInfo     collections.Map[[]byte, types.SophonInfo]
-	sophonUser     collections.Map[collections.Pair[uint64, []byte], types.SophonUser]
+	sophonUser     collections.Map[collections.Pair[uint64, string], types.SophonUser]
 	sophonTransfer collections.Map[uint64, []byte]
 }
 
-func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, bk types.BankKeeper, ak types.AccountKeeper, authority string) *Keeper {
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeService storetypes.KVStoreService,
+	bk types.BankKeeper,
+	ak types.AccountKeeper,
+	sk types.StakingKeeper,
+	authority string,
+) *Keeper {
 	if _, err := ak.AddressCodec().StringToBytes(authority); err != nil {
 		panic("authority is not a valid acc address")
 	}
@@ -43,10 +51,11 @@ func NewKeeper(cdc codec.BinaryCodec, storeService storetypes.KVStoreService, bk
 		authority:      authority,
 		bankKeeper:     bk,
 		accountKeeper:  ak,
+		stakingKeeper:  sk,
 		params:         collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		sophonID:       collections.NewSequence(sb, types.SophonIDKey, "sophon_id"),
 		sophonInfo:     collections.NewMap(sb, types.SophonInfoKey, "sophon_info", collections.BytesKey, codec.CollValue[types.SophonInfo](cdc)),
-		sophonUser:     collections.NewMap(sb, types.SophonUserKey, "sophon_user", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.SophonUser](cdc)),
+		sophonUser:     collections.NewMap(sb, types.SophonUserKey, "sophon_user", collections.PairKeyCodec(collections.Uint64Key, collections.StringKey), codec.CollValue[types.SophonUser](cdc)),
 		sophonTransfer: collections.NewMap(sb, types.SophonTransferKey, "sophon_transfer", collections.Uint64Key, collections.BytesValue),
 	}
 
@@ -120,15 +129,15 @@ func (k Keeper) GetSophonInfo(ctx sdk.Context, pubKey []byte) (result types.Soph
 	return sophonInfo, nil
 }
 
-func (k Keeper) HasSophonUser(ctx sdk.Context, sophonID uint64, userID []byte) (bool, error) {
+func (k Keeper) HasSophonUser(ctx sdk.Context, sophonID uint64, userID string) (bool, error) {
 	return k.sophonUser.Has(ctx, collections.Join(sophonID, userID))
 }
 
-func (k Keeper) SetSophonUser(ctx sdk.Context, sophonID uint64, userID []byte, sophonUser types.SophonUser) error {
+func (k Keeper) SetSophonUser(ctx sdk.Context, sophonID uint64, userID string, sophonUser types.SophonUser) error {
 	return k.sophonUser.Set(ctx, collections.Join(sophonID, userID), sophonUser)
 }
 
-func (k Keeper) GetSophonUser(ctx sdk.Context, sophonID uint64, userID []byte) (result types.SophonUser, err error) {
+func (k Keeper) GetSophonUser(ctx sdk.Context, sophonID uint64, userID string) (result types.SophonUser, err error) {
 	sophonUser, err := k.sophonUser.Get(ctx, collections.Join(sophonID, userID))
 	if err != nil {
 		return types.SophonUser{}, err
@@ -137,7 +146,7 @@ func (k Keeper) GetSophonUser(ctx sdk.Context, sophonID uint64, userID []byte) (
 	return sophonUser, nil
 }
 
-func (k Keeper) GetSophonUserByPubKey(ctx sdk.Context, sophonPubKey []byte, userID []byte) (result types.SophonUser, err error) {
+func (k Keeper) GetSophonUserByPubKey(ctx sdk.Context, sophonPubKey []byte, userID string) (result types.SophonUser, err error) {
 	sophonInfo, err := k.GetSophonInfo(ctx, sophonPubKey)
 	if err != nil {
 		return types.SophonUser{}, err

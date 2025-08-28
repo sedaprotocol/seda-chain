@@ -3,6 +3,7 @@ package types_test
 import (
 	"strings"
 
+	"cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/sedaprotocol/seda-chain/x/sophon/types"
 )
@@ -422,6 +423,98 @@ func (s *TypesTestSuite) TestMsgCancelOwnershipTransfer_ValidateBasic() {
 			msg: &types.MsgCancelOwnershipTransfer{
 				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 				SophonPublicKey: "",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+	}
+
+	for _, test := range tests {
+		s.Run(test.name, func() {
+			err := test.msg.ValidateBasic()
+
+			if test.wantErr != nil {
+				s.Require().ErrorIs(err, test.wantErr)
+				return
+			}
+
+			s.Require().NoError(err)
+		})
+	}
+}
+
+func (s *TypesTestSuite) TestMsgAddUser_ValidateBasic() {
+	pubKeyHex := "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3"
+
+	tests := []struct {
+		name    string
+		msg     *types.MsgAddUser
+		wantErr error
+	}{
+		{
+			name: "valid",
+			msg: &types.MsgAddUser{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "user_1",
+				InitialCredits:  math.NewInt(1000000000000000000),
+				SophonPublicKey: pubKeyHex,
+			},
+		},
+		{
+			name: "invalid admin address",
+			msg: &types.MsgAddUser{
+				AdminAddress:    "invalid",
+				UserId:          "user_1",
+				InitialCredits:  math.NewInt(1000000000000000000),
+				SophonPublicKey: pubKeyHex,
+			},
+			wantErr: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "empty sophon public key",
+			msg: &types.MsgAddUser{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "user_1",
+				InitialCredits:  math.NewInt(1000000000000000000),
+				SophonPublicKey: "",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "invalid sophon public key",
+			msg: &types.MsgAddUser{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "user_1",
+				InitialCredits:  math.NewInt(1000000000000000000),
+				SophonPublicKey: "not valid hex",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "empty user id",
+			msg: &types.MsgAddUser{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "",
+				InitialCredits:  math.NewInt(1000000000000000000),
+				SophonPublicKey: pubKeyHex,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "negative initial credits",
+			msg: &types.MsgAddUser{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "user_1",
+				InitialCredits:  math.NewInt(-1),
+				SophonPublicKey: pubKeyHex,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "nil initial credits",
+			msg: &types.MsgAddUser{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "user_1",
+				SophonPublicKey: pubKeyHex,
 			},
 			wantErr: sdkerrors.ErrInvalidRequest,
 		},

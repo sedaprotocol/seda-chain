@@ -78,7 +78,7 @@ func (s *KeeperTestSuite) TestExportImportGenesis() {
 		}, sophonInfo)
 
 		for user := range 10 {
-			sophonUser, err := s.keeper.GetSophonUser(s.ctx, uint64(sophonId), fmt.Appendf(nil, "user_%d", user))
+			sophonUser, err := s.keeper.GetSophonUser(s.ctx, uint64(sophonId), fmt.Sprintf("user_%d", user))
 			s.Require().NoError(err)
 			s.Require().Equal(mockSophonUser(user), sophonUser)
 		}
@@ -109,8 +109,8 @@ func mockSophonInfo(sophonId int) types.SophonInputs {
 
 func mockSophonUser(userId int) types.SophonUser {
 	return types.SophonUser{
-		UserId:  fmt.Appendf(nil, "user_%d", userId),
-		Credits: math.NewInt(int64(userId-1) * 100),
+		UserId:  fmt.Sprintf("user_%d", userId),
+		Credits: math.NewInt(int64(userId+1) * 100),
 	}
 }
 

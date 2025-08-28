@@ -672,6 +672,7 @@ func NewApp(
 		runtime.NewKVStoreService(keys[sophontypes.StoreKey]),
 		app.BankKeeper,
 		app.AccountKeeper,
+		app.StakingKeeper,
 		// TODO: replace with the security group address
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
