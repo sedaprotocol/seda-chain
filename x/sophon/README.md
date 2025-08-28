@@ -62,7 +62,7 @@ This flow enables fast off-chain execution while maintaining economic incentives
 0x01                       -> sophon_id_sequence
 0x02 | pub_key             -> sophon_info
 0x03 | sophon_id | user_id -> sophon_user
-0x04 | sophon_id | address -> transfer (set)
+0x04 | sophon_id           -> pending_owner_address
 ```
 
 We use the `sophon_id` for the SophonUser key to make public key rotation for the Sophon easier. Now only the SophonInfo has to be moved to a new store entry and we don't need to iterate over all the users to update them. Since most queries and transactions that use the SophonUser also require the SophonInfo this does not introduce unnecessary store access.

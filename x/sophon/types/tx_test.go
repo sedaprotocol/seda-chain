@@ -253,3 +253,190 @@ func (s *TypesTestSuite) TestMsgEditSophon_ValidateBasic() {
 		})
 	}
 }
+
+func (s *TypesTestSuite) TestMsgTransferOwnership_ValidateBasic() {
+	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+
+	tests := []struct {
+		name    string
+		msg     *types.MsgTransferOwnership
+		wantErr error
+	}{
+		{
+			name: "valid",
+			msg: &types.MsgTransferOwnership{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewOwnerAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				SophonPublicKey: pubKeyHex,
+			},
+		},
+		{
+			name: "new owner address is the same as the current owner address",
+			msg: &types.MsgTransferOwnership{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewOwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKeyHex,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "invalid owner address",
+			msg: &types.MsgTransferOwnership{
+				OwnerAddress:    "invalid",
+				NewOwnerAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				SophonPublicKey: pubKeyHex,
+			},
+			wantErr: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid new owner address",
+			msg: &types.MsgTransferOwnership{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewOwnerAddress: "invalid",
+				SophonPublicKey: pubKeyHex,
+			},
+			wantErr: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid sophon public key",
+			msg: &types.MsgTransferOwnership{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewOwnerAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				SophonPublicKey: "not valid hex",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "empty sophon public key",
+			msg: &types.MsgTransferOwnership{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewOwnerAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				SophonPublicKey: "",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+	}
+
+	for _, test := range tests {
+		s.Run(test.name, func() {
+			err := test.msg.ValidateBasic()
+
+			if test.wantErr != nil {
+				s.Require().ErrorIs(err, test.wantErr)
+				return
+			}
+
+			s.Require().NoError(err)
+		})
+	}
+}
+
+func (s *TypesTestSuite) TestMsgAcceptOwnership_ValidateBasic() {
+	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+
+	tests := []struct {
+		name    string
+		msg     *types.MsgAcceptOwnership
+		wantErr error
+	}{
+		{
+			name: "valid",
+			msg: &types.MsgAcceptOwnership{
+				NewOwnerAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				SophonPublicKey: pubKeyHex,
+			},
+		},
+		{
+			name: "invalid new owner address",
+			msg: &types.MsgAcceptOwnership{
+				NewOwnerAddress: "invalid",
+				SophonPublicKey: pubKeyHex,
+			},
+			wantErr: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid sophon public key",
+			msg: &types.MsgAcceptOwnership{
+				NewOwnerAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				SophonPublicKey: "not valid hex",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "empty sophon public key",
+			msg: &types.MsgAcceptOwnership{
+				NewOwnerAddress: "seda1wyzxdtpl0c99c92n397r3drlhj09qfjvf6teyh",
+				SophonPublicKey: "",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+	}
+
+	for _, test := range tests {
+		s.Run(test.name, func() {
+			err := test.msg.ValidateBasic()
+
+			if test.wantErr != nil {
+				s.Require().ErrorIs(err, test.wantErr)
+				return
+			}
+
+			s.Require().NoError(err)
+		})
+	}
+}
+
+func (s *TypesTestSuite) TestMsgCancelOwnershipTransfer_ValidateBasic() {
+	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+
+	tests := []struct {
+		name    string
+		msg     *types.MsgCancelOwnershipTransfer
+		wantErr error
+	}{
+		{
+			name: "valid",
+			msg: &types.MsgCancelOwnershipTransfer{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKeyHex,
+			},
+		},
+		{
+			name: "invalid owner address",
+			msg: &types.MsgCancelOwnershipTransfer{
+				OwnerAddress:    "invalid",
+				SophonPublicKey: pubKeyHex,
+			},
+			wantErr: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid sophon public key",
+			msg: &types.MsgCancelOwnershipTransfer{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: "not valid hex",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "empty sophon public key",
+			msg: &types.MsgCancelOwnershipTransfer{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: "",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+	}
+
+	for _, test := range tests {
+		s.Run(test.name, func() {
+			err := test.msg.ValidateBasic()
+
+			if test.wantErr != nil {
+				s.Require().ErrorIs(err, test.wantErr)
+				return
+			}
+
+			s.Require().NoError(err)
+		})
+	}
+}

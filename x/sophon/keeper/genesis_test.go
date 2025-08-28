@@ -85,9 +85,9 @@ func (s *KeeperTestSuite) TestExportImportGenesis() {
 	}
 
 	for transfer := range 2 {
-		hasTransfer, err := s.keeper.HasSophonTransfer(s.ctx, uint64(transfer), mockSophonTransferAddress(transfer))
+		transferAddress, err := s.keeper.GetSophonTransfer(s.ctx, uint64(transfer))
 		s.Require().NoError(err)
-		s.Require().True(hasTransfer, "transfer %d should exist", transfer)
+		s.Require().Equal(mockSophonTransferAddress(transfer), transferAddress)
 	}
 }
 

@@ -77,10 +77,10 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 		panic(err)
 	}
 
-	err = k.sophonTransfer.Walk(ctx, nil, func(key collections.Pair[uint64, []byte]) (stop bool, err error) {
+	err = k.sophonTransfer.Walk(ctx, nil, func(key uint64, value []byte) (stop bool, err error) {
 		gs.Transfers = append(gs.Transfers, types.SophonTransferOwnership{
-			SophonId:        key.K1(),
-			NewOwnerAddress: sdk.AccAddress(key.K2()).String(),
+			SophonId:        key,
+			NewOwnerAddress: sdk.AccAddress(value).String(),
 		})
 		return false, nil
 	})
