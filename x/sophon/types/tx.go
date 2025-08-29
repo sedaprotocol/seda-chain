@@ -29,6 +29,10 @@ func (m *MsgRegisterSophon) ValidateBasic() error {
 		return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
 	}
 
+	if len(m.PublicKey) > MaxPublicKeyLength {
+		return sdkerrors.ErrInvalidRequest.Wrapf("public key is too long; got: %d, max < %d", len(m.PublicKey), MaxPublicKeyLength)
+	}
+
 	_, err := hex.DecodeString(m.PublicKey)
 	if err != nil {
 		return sdkerrors.ErrInvalidRequest.Wrapf("invalid hex in pubkey: %s", m.PublicKey)
@@ -68,6 +72,10 @@ func (m *MsgEditSophon) ValidateBasic() error {
 
 		if len(m.NewPublicKey) == 0 {
 			return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
+		}
+
+		if len(m.NewPublicKey) > MaxPublicKeyLength {
+			return sdkerrors.ErrInvalidRequest.Wrapf("public key is too long; got: %d, max < %d", len(m.NewPublicKey), MaxPublicKeyLength)
 		}
 
 		_, err := hex.DecodeString(m.NewPublicKey)
@@ -168,6 +176,10 @@ func (m *MsgAddUser) ValidateBasic() error {
 		return sdkerrors.ErrInvalidRequest.Wrap("user id is empty")
 	}
 
+	if len(m.UserId) > MaxUserIDLength {
+		return sdkerrors.ErrInvalidRequest.Wrapf("user id is too long; got: %d, max < %d", len(m.UserId), MaxUserIDLength)
+	}
+
 	if m.InitialCredits.IsNil() {
 		return sdkerrors.ErrInvalidRequest.Wrap("initial credits is nil")
 	}
@@ -186,6 +198,10 @@ func (m *MsgRemoveUser) ValidateBasic() error {
 
 	if len(m.SophonPublicKey) == 0 {
 		return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
+	}
+
+	if len(m.SophonPublicKey) > MaxPublicKeyLength {
+		return sdkerrors.ErrInvalidRequest.Wrapf("public key is too long; got: %d, max < %d", len(m.SophonPublicKey), MaxPublicKeyLength)
 	}
 
 	_, err := hex.DecodeString(m.SophonPublicKey)
@@ -213,7 +229,7 @@ func (m *MsgSettleCredits) ValidateBasic() error {
 }
 
 func (m *MsgSubmitReports) ValidateBasic() error {
-	// TODO: Deduplicate validation logic (hex strings, credits)
+	// TODO: Deduplicate validation logic (hex strings, credits), move everything to msg handler
 	return fmt.Errorf("not implemented")
 }
 

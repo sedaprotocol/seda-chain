@@ -9,7 +9,7 @@ import (
 )
 
 func (s *TypesTestSuite) TestMsgRegisterSophon_ValidateBasic() {
-	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+	pubKeyHex := "02095af5db08cef43871a4aa48a80bdddc5249e4234e7432c3d7eca14f31261b10"
 
 	tests := []struct {
 		name    string
@@ -83,6 +83,18 @@ func (s *TypesTestSuite) TestMsgRegisterSophon_ValidateBasic() {
 				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 				Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 				PublicKey:    "",
+				Memo:         "This is a sweet sophon",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "public key too long",
+			msg: &types.MsgRegisterSophon{
+				Authority:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				OwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PublicKey:    strings.Repeat("0", types.MaxPublicKeyLength+1),
 				Memo:         "This is a sweet sophon",
 			},
 			wantErr: sdkerrors.ErrInvalidRequest,
@@ -216,6 +228,18 @@ func (s *TypesTestSuite) TestMsgEditSophon_ValidateBasic() {
 			wantErr: sdkerrors.ErrInvalidRequest,
 		},
 		{
+			name: "public key too long",
+			msg: &types.MsgEditSophon{
+				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				NewAdminAddress: types.DoNotModifyField,
+				SophonPublicKey: types.DoNotModifyField,
+				NewAddress:      types.DoNotModifyField,
+				NewMemo:         types.DoNotModifyField,
+				NewPublicKey:    strings.Repeat("0", types.MaxPublicKeyLength+1),
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
 			name: "Empty public key",
 			msg: &types.MsgEditSophon{
 				OwnerAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
@@ -256,7 +280,7 @@ func (s *TypesTestSuite) TestMsgEditSophon_ValidateBasic() {
 }
 
 func (s *TypesTestSuite) TestMsgTransferOwnership_ValidateBasic() {
-	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+	pubKeyHex := "02095af5db08cef43871a4aa48a80bdddc5249e4234e7432c3d7eca14f31261b10"
 
 	tests := []struct {
 		name    string
@@ -333,7 +357,7 @@ func (s *TypesTestSuite) TestMsgTransferOwnership_ValidateBasic() {
 }
 
 func (s *TypesTestSuite) TestMsgAcceptOwnership_ValidateBasic() {
-	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+	pubKeyHex := "02095af5db08cef43871a4aa48a80bdddc5249e4234e7432c3d7eca14f31261b10"
 
 	tests := []struct {
 		name    string
@@ -388,7 +412,7 @@ func (s *TypesTestSuite) TestMsgAcceptOwnership_ValidateBasic() {
 }
 
 func (s *TypesTestSuite) TestMsgCancelOwnershipTransfer_ValidateBasic() {
-	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+	pubKeyHex := "02095af5db08cef43871a4aa48a80bdddc5249e4234e7432c3d7eca14f31261b10"
 
 	tests := []struct {
 		name    string
@@ -486,6 +510,16 @@ func (s *TypesTestSuite) TestMsgAddUser_ValidateBasic() {
 				UserId:          "user_1",
 				InitialCredits:  math.NewInt(1000000000000000000),
 				SophonPublicKey: "not valid hex",
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "user id too long",
+			msg: &types.MsgAddUser{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          strings.Repeat("0", types.MaxUserIDLength+1),
+				InitialCredits:  math.NewInt(1000000000000000000),
+				SophonPublicKey: pubKeyHex,
 			},
 			wantErr: sdkerrors.ErrInvalidRequest,
 		},

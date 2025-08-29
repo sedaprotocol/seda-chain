@@ -11,7 +11,7 @@ import (
 )
 
 func (s *KeeperTestSuite) TestMsgServer_RegisterSophon() {
-	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+	pubKeyHex := "02095af5db08cef43871a4aa48a80bdddc5249e4234e7432c3d7eca14f31261b10"
 	pubKey, err := hex.DecodeString(pubKeyHex)
 	s.Require().NoError(err)
 
@@ -93,7 +93,7 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterSophon() {
 }
 
 func (s *KeeperTestSuite) TestMsgServer_RegisterSophon_AlreadyExists() {
-	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+	pubKeyHex := "02095af5db08cef43871a4aa48a80bdddc5249e4234e7432c3d7eca14f31261b10"
 
 	s.Run("Sophon already exists", func() {
 		_, err := s.msgSrvr.RegisterSophon(s.ctx, &types.MsgRegisterSophon{
@@ -119,7 +119,7 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterSophon_AlreadyExists() {
 }
 
 func (s *KeeperTestSuite) TestMsgServer_EditSophon() {
-	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+	pubKeyHex := "02095af5db08cef43871a4aa48a80bdddc5249e4234e7432c3d7eca14f31261b10"
 	pubKey, err := hex.DecodeString(pubKeyHex)
 	s.Require().NoError(err)
 
