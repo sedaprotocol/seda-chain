@@ -35,6 +35,36 @@ const (
 	defaultRevealTimeoutBlocks = 5
 )
 
+type PostDataRequestResponse struct {
+	DrID   string `json:"dr_id"`
+	Height uint64 `json:"height"`
+}
+
+var oraclePrograms [][]byte = [][]byte{
+	testwasms.SampleTallyWasm(),
+	testwasms.SampleTallyWasm2(),
+	testwasms.RandomStringTallyWasm(),
+	testwasms.InvalidImportWasm(),
+	testwasms.ChaosDrWasm(),
+	testwasms.DataProxyWasm(),
+	testwasms.HTTPHeavyWasm(),
+	testwasms.LongHTTPWasm(),
+	testwasms.MaxDrWasm(),
+	testwasms.MaxResultWasm(),
+	testwasms.MemoryWasm(),
+	testwasms.MockAPIWasm(),
+	testwasms.PriceFeedWasm(),
+	testwasms.RandomNumberWasm(),
+}
+
+func (f *fixture) uploadOraclePrograms(t testing.TB) {
+	for _, prog := range oraclePrograms {
+		execProgram := wasmstoragetypes.NewOracleProgram(prog, f.Context().BlockTime())
+		err := f.wasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
+		require.NoError(t, err)
+	}
+}
+
 type commitRevealConfig struct {
 	requestHeight uint64
 	requestMemo   string
@@ -46,15 +76,27 @@ type commitRevealConfig struct {
 
 // commitRevealDataRequest simulates stakers committing and revealing
 // for a data request. It returns the data request ID.
-func (f *fixture) commitRevealDataRequest(t testing.TB, stakers []staker, replicationFactor, numCommits, numReveals int, timeout bool, config commitRevealConfig) (string, []staker) {
-	// Upload data request and tally oracle programs.
-	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm(), f.Context().BlockTime())
-	err := f.wasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
-	require.NoError(t, err)
-
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm2(), f.Context().BlockTime())
-	err = f.wasmStorageKeeper.OracleProgram.Set(f.Context(), tallyProgram.Hash, tallyProgram)
-	require.NoError(t, err)
+func (f *fixture) commitRevealDataRequest(
+	t testing.TB,
+	execProgramBytes, tallyProgramBytes []byte,
+	replicationFactor, numCommits, numReveals int, timeout bool,
+	config commitRevealConfig,
+) string {
+	var execProgram, tallyProgram wasmstoragetypes.OracleProgram
+	if execProgramBytes != nil {
+		execProgram = wasmstoragetypes.NewOracleProgram(execProgramBytes, f.Context().BlockTime())
+	} else {
+		randIndex := rand.Intn(len(oraclePrograms))
+		// t.Logf("using execution program at index: %d", randIndex)
+		execProgram = wasmstoragetypes.NewOracleProgram(oraclePrograms[randIndex], f.Context().BlockTime())
+	}
+	if tallyProgramBytes != nil {
+		tallyProgram = wasmstoragetypes.NewOracleProgram(tallyProgramBytes, f.Context().BlockTime())
+	} else {
+		randIndex := rand.Intn(len(oraclePrograms))
+		// t.Logf("using tally program at index: %d", randIndex)
+		tallyProgram = wasmstoragetypes.NewOracleProgram(oraclePrograms[randIndex], f.Context().BlockTime())
+	}
 
 	// Post a data request.
 	res, err := f.postDataRequest(execProgram.Hash, tallyProgram.Hash, config.requestMemo, replicationFactor)
@@ -63,10 +105,10 @@ func (f *fixture) commitRevealDataRequest(t testing.TB, stakers []staker, replic
 	drID := res.DrID
 
 	// The stakers commit and reveal.
-	revealMsgs, err := f.commitDataRequest(t, stakers[:numCommits], int64(res.Height), drID, config)
+	revealMsgs, err := f.commitDataRequest(t, f.stakers[:numCommits], int64(res.Height), drID, config)
 	require.NoError(t, err)
 
-	err = f.executeReveals(stakers, revealMsgs[:numReveals])
+	err = f.executeReveals(f.stakers, revealMsgs[:numReveals])
 	require.NoError(t, err)
 
 	if timeout {
@@ -79,7 +121,7 @@ func (f *fixture) commitRevealDataRequest(t testing.TB, stakers []staker, replic
 			f.AddBlock()
 		}
 	}
-	return res.DrID, stakers
+	return res.DrID
 }
 
 func (f *fixture) commitRevealDataRequests(t testing.TB, stakers []staker, replicationFactor, numCommits, numReveals int, timeout bool, config commitRevealConfig) {
@@ -236,6 +278,8 @@ func (f *fixture) addStakers(t testing.TB, num int) []staker {
 		_, err = f.executeCoreContract(sdk.AccAddress(stakers[i].address).String(), testutil.StakeMsg(stakers[i].pubKey, proof2), sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(3))))
 		require.NoError(t, err)
 	}
+
+	f.stakers = stakers
 	return stakers
 }
 

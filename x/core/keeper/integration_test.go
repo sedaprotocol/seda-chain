@@ -83,6 +83,7 @@ type fixture struct {
 	chainID           string
 	coreContractAddr  sdk.AccAddress
 	deployer          sdk.AccAddress
+	stakers           []staker
 	keeper            *keeper.Keeper
 	accountKeeper     authkeeper.AccountKeeper
 	bankKeeper        bankkeeper.Keeper
@@ -361,6 +362,9 @@ func initFixture(t testing.TB) *fixture {
 
 	_, err = f.executeCoreContract(f.deployer.String(), []byte(setStakingConfigMsg), sdk.NewCoins())
 	require.NoError(t, err)
+
+	f.addStakers(t, 5)
+	f.uploadOraclePrograms(t)
 
 	return f
 }

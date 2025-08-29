@@ -24,12 +24,10 @@ func (k Keeper) ExecuteTallyProgram(ctx sdk.Context, dr types.DataRequest, filte
 		return types.VMResult{}, k.logErrAndRet(ctx, err, types.ErrConstructingTallyVMArgs, dr.Id)
 	}
 
-	k.Logger(ctx).Info(
+	k.Logger(ctx).Debug(
 		"executing tally VM",
 		"request_id", dr.Id,
 		"tally_program_id", dr.TallyProgramId,
-		"consensus", filterResult.Consensus,
-		"arguments", args,
 	)
 
 	vmRes := tallyvm.ExecuteTallyVm(tallyProgram.Bytecode, args, map[string]string{

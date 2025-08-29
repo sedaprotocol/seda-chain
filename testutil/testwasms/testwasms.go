@@ -19,6 +19,36 @@ var (
 
 	//go:embed sample_tally_2.wasm
 	sampleTallyWasm2 []byte
+
+	//go:embed chaos-dr.wasm
+	chaosDrWasm []byte
+
+	//go:embed data-proxy.wasm
+	dataProxyWasm []byte
+
+	//go:embed http-heavy.wasm
+	httpHeavyWasm []byte
+
+	//go:embed long-http.wasm
+	longHTTPWasm []byte
+
+	//go:embed max-dr.wasm
+	maxDrWasm []byte
+
+	//go:embed max-result.wasm
+	maxResultWasm []byte
+
+	//go:embed memory.wasm
+	memoryWasm []byte
+
+	//go:embed mock-api.wasm
+	mockAPIWasm []byte
+
+	//go:embed price-feed.wasm
+	priceFeedWasm []byte
+
+	//go:embed random-number.wasm
+	randomNumberWasm []byte
 )
 
 func CoreContractWasm() []byte {
@@ -64,4 +94,44 @@ func ReflectWasmFileName() string {
 
 func CoreContractWasmFileName() string {
 	return "core_contract.wasm"
+}
+
+func ChaosDrWasm() []byte {
+	return chaosDrWasm
+}
+
+func DataProxyWasm() []byte {
+	return dataProxyWasm
+}
+
+func HTTPHeavyWasm() []byte {
+	return httpHeavyWasm
+}
+
+func LongHTTPWasm() []byte {
+	return longHTTPWasm
+}
+
+func MaxDrWasm() []byte {
+	return maxDrWasm
+}
+
+func MaxResultWasm() []byte {
+	return maxResultWasm
+}
+
+func MemoryWasm() []byte {
+	return memoryWasm
+}
+
+func MockAPIWasm() []byte {
+	return mockAPIWasm
+}
+
+func PriceFeedWasm() []byte {
+	return priceFeedWasm
+}
+
+func RandomNumberWasm() []byte {
+	return randomNumberWasm
 }
