@@ -283,7 +283,36 @@ func (m *MsgExpireUserCredits) ValidateBasic() error {
 }
 
 func (m *MsgSettleCredits) ValidateBasic() error {
-	return fmt.Errorf("not implemented")
+	if _, err := sdk.AccAddressFromBech32(m.AdminAddress); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid admin address: %s", m.AdminAddress)
+	}
+
+	if len(m.SophonPublicKey) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
+	}
+
+	if len(m.SophonPublicKey) > MaxPublicKeyLength {
+		return sdkerrors.ErrInvalidRequest.Wrapf("public key is too long; got: %d, max < %d", len(m.SophonPublicKey), MaxPublicKeyLength)
+	}
+
+	_, err := hex.DecodeString(m.SophonPublicKey)
+	if err != nil {
+		return sdkerrors.ErrInvalidRequest.Wrapf("invalid hex in pubkey: %s", m.SophonPublicKey)
+	}
+
+	if m.Amount.IsNil() {
+		return sdkerrors.ErrInvalidRequest.Wrap("amount is nil")
+	}
+
+	if !m.Amount.IsPositive() {
+		return sdkerrors.ErrInvalidRequest.Wrap("amount is not positive")
+	}
+
+	if m.SettleType == SETTLE_TYPE_UNSPECIFIED {
+		return sdkerrors.ErrInvalidRequest.Wrap("invalid settle type")
+	}
+
+	return nil
 }
 
 func (m *MsgSubmitReports) ValidateBasic() error {

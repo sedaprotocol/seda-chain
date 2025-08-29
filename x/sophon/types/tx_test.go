@@ -839,3 +839,113 @@ func (s *TypesTestSuite) TestMsgExpireUserCredits_ValidateBasic() {
 		})
 	}
 }
+
+func (s *TypesTestSuite) TestMsgSettleCredits_ValidateBasic() {
+	pubKeyHex := "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3"
+
+	tests := []struct {
+		name    string
+		msg     *types.MsgSettleCredits
+		wantErr error
+	}{
+		{
+			name: "valid withdraw",
+			msg: &types.MsgSettleCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKeyHex,
+				Amount:          math.NewInt(1000000000000000000),
+				SettleType:      types.SETTLE_TYPE_WITHDRAW,
+			},
+		},
+		{
+			name: "valid burn",
+			msg: &types.MsgSettleCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKeyHex,
+				Amount:          math.NewInt(50000000000),
+				SettleType:      types.SETTLE_TYPE_BURN,
+			},
+		},
+		{
+			name: "invalid settle type",
+			msg: &types.MsgSettleCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKeyHex,
+				Amount:          math.NewInt(50000000000),
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "invalid admin address",
+			msg: &types.MsgSettleCredits{
+				AdminAddress:    "invalid",
+				SophonPublicKey: pubKeyHex,
+				Amount:          math.NewInt(1000000000000000000),
+				SettleType:      types.SETTLE_TYPE_WITHDRAW,
+			},
+			wantErr: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "empty sophon public key",
+			msg: &types.MsgSettleCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: "",
+				Amount:          math.NewInt(1000000000000000000),
+				SettleType:      types.SETTLE_TYPE_WITHDRAW,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "invalid sophon public key",
+			msg: &types.MsgSettleCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: "not valid hex",
+				Amount:          math.NewInt(1000000000000000000),
+				SettleType:      types.SETTLE_TYPE_WITHDRAW,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "negative amount",
+			msg: &types.MsgSettleCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKeyHex,
+				Amount:          math.NewInt(-1),
+				SettleType:      types.SETTLE_TYPE_BURN,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "nil amount",
+			msg: &types.MsgSettleCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKeyHex,
+				SettleType:      types.SETTLE_TYPE_BURN,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "zero amount",
+			msg: &types.MsgSettleCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKeyHex,
+				Amount:          math.NewInt(0),
+				SettleType:      types.SETTLE_TYPE_BURN,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+	}
+
+	for _, test := range tests {
+		s.Run(test.name, func() {
+			err := test.msg.ValidateBasic()
+
+			if test.wantErr != nil {
+				s.Require().ErrorIs(err, test.wantErr)
+				return
+			}
+
+			s.Require().NoError(err)
+		})
+	}
+}
