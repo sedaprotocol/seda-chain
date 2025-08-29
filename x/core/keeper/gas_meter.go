@@ -123,13 +123,13 @@ func (k Keeper) ProcessDistributions(ctx sdk.Context, dists []types.Distribution
 	}
 
 	// Refund the poster.
-	if dr.Escrow.IsPositive() {
+	if remainingEscrow.IsPositive() {
 		poster, err := sdk.AccAddressFromBech32(dr.Poster)
 		if err != nil {
 			// Should not be reachable because the address has been validated.
 			return err
 		}
-		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, poster, sdk.NewCoins(sdk.NewCoin(denom, dr.Escrow)))
+		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, poster, sdk.NewCoins(sdk.NewCoin(denom, remainingEscrow)))
 		if err != nil {
 			return err
 		}
