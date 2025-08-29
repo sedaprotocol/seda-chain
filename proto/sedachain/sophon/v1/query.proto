@@ -58,7 +58,9 @@ message QuerySophonInfoRequest {
 }
 
 // The response message for QuerySophonInfo RPC method.
-message QuerySophonInfoResponse { SophonInfo info = 1; }
+message QuerySophonInfoResponse {
+  SophonInfo info = 1 [ (gogoproto.nullable) = false ];
+}
 
 // The request message for QuerySophonTransfer RPC method.
 message QuerySophonTransferRequest {
@@ -81,7 +83,7 @@ message QuerySophonUsersRequest {
 // The response message for QuerySophonUsers RPC method.
 message QuerySophonUsersResponse {
   // users are the users of the sophon with given sophon_pub_key.
-  repeated SophonUser users = 1;
+  repeated SophonUser users = 1 [ (gogoproto.nullable) = false ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -97,7 +99,9 @@ message QuerySophonUserRequest {
 }
 
 // The response message for QuerySophonUser RPC method.
-message QuerySophonUserResponse { SophonUser user = 1; }
+message QuerySophonUserResponse {
+  SophonUser user = 1 [ (gogoproto.nullable) = false ];
+}
 
 // The request message for QuerySophonEligibility RPC method.
 message QuerySophonEligibilityRequest {
@@ -111,7 +115,7 @@ message QuerySophonEligibilityRequest {
 message QuerySophonEligibilityResponse {
   bool eligible = 1;
 
-  string balance = 2;
+  string unspent_balance = 2;
 }
 
 // The request message for QueryParams RPC method.
