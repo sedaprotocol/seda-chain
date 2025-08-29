@@ -167,7 +167,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddUser_AlreadyExists() {
 		UserId:          "user1",
 		InitialCredits:  math.NewInt(10000),
 	})
-	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
+	s.Require().ErrorIs(err, types.ErrUserAlreadyExists)
 }
 
 func (s *KeeperTestSuite) TestMsgServer_RemoveUser() {
@@ -357,20 +357,6 @@ func (s *KeeperTestSuite) TestMsgServer_TopUpUser() {
 				UserId:          userId,
 				Amount:          math.NewInt(10_000_000),
 			},
-			expectedInfo: &types.SophonInfo{
-				Id:           0,
-				OwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
-				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
-				Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
-				PublicKey:    pubKey,
-				Memo:         "",
-				Balance:      math.NewInt(10_000_000),
-				UsedCredits:  math.NewInt(0),
-			},
-			expectedUser: &types.SophonUser{
-				UserId:  userId,
-				Credits: math.NewInt(10_000_000),
-			},
 			wantErr: sdkerrors.ErrInsufficientFunds,
 			mockSetup: func() {
 				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(sdkerrors.ErrInsufficientFunds)
@@ -463,5 +449,165 @@ func (s *KeeperTestSuite) TestMsgServer_TopUpUser() {
 		sophonUser, err := s.keeper.GetSophonUser(s.ctx, sophonInfo.Id, userId)
 		s.Require().NoError(err)
 		s.Require().Equal(math.NewInt(20_000_000_000_000), sophonUser.Credits)
+	})
+}
+
+func (s *KeeperTestSuite) TestMsgServer_ExpireUserCredits() {
+	adminAddress := "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5"
+	userId := "user1"
+	pubKeyHex := "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3"
+	pubKey, err := hex.DecodeString(pubKeyHex)
+	s.Require().NoError(err)
+
+	initialCredits := math.NewInt(10_000_000_000_000)
+
+	tests := []struct {
+		name         string
+		msg          *types.MsgExpireUserCredits
+		expectedInfo *types.SophonInfo
+		expectedUser *types.SophonUser
+		wantErr      error
+	}{
+		{
+			name: "Happy path full amount",
+			msg: &types.MsgExpireUserCredits{
+				AdminAddress:    adminAddress,
+				SophonPublicKey: pubKeyHex,
+				UserId:          userId,
+				Amount:          initialCredits,
+			},
+			expectedInfo: &types.SophonInfo{
+				Id:           0,
+				OwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PublicKey:    pubKey,
+				Memo:         "",
+				Balance:      initialCredits,
+				UsedCredits:  initialCredits,
+			},
+			expectedUser: &types.SophonUser{
+				UserId:  userId,
+				Credits: math.NewInt(0),
+			},
+		},
+		{
+			name: "Happy path with partial amount",
+			msg: &types.MsgExpireUserCredits{
+				AdminAddress:    adminAddress,
+				SophonPublicKey: pubKeyHex,
+				UserId:          userId,
+				Amount:          initialCredits.Quo(math.NewInt(2)),
+			},
+			expectedInfo: &types.SophonInfo{
+				Id:           0,
+				OwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PublicKey:    pubKey,
+				Memo:         "",
+				Balance:      initialCredits,
+				UsedCredits:  initialCredits.Quo(math.NewInt(2)),
+			},
+			expectedUser: &types.SophonUser{
+				UserId:  userId,
+				Credits: initialCredits.Quo(math.NewInt(2)),
+			},
+		},
+		{
+			name: "Not enough balance",
+			msg: &types.MsgExpireUserCredits{
+				AdminAddress:    adminAddress,
+				SophonPublicKey: pubKeyHex,
+				UserId:          userId,
+				Amount:          initialCredits.Add(math.NewInt(1)),
+			},
+			wantErr: types.ErrInsufficientCredits,
+		},
+	}
+
+	for _, test := range tests {
+		s.Run(test.name, func() {
+
+			s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+			_, err := s.msgSrvr.RegisterSophon(s.ctx, &types.MsgRegisterSophon{
+				Authority:    s.keeper.GetAuthority(),
+				OwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PublicKey:    pubKeyHex,
+				Memo:         "",
+			})
+			s.Require().NoError(err)
+
+			_, err = s.msgSrvr.AddUser(s.ctx, &types.MsgAddUser{
+				AdminAddress:    adminAddress,
+				SophonPublicKey: pubKeyHex,
+				UserId:          userId,
+				InitialCredits:  initialCredits,
+			})
+			s.Require().NoError(err)
+
+			response, err := s.msgSrvr.ExpireUserCredits(s.ctx, test.msg)
+			if test.wantErr != nil {
+				s.Require().ErrorIs(err, test.wantErr)
+				s.Require().Nil(response)
+				return
+			}
+			s.Require().NoError(err)
+
+			sophonInfo, err := s.keeper.GetSophonInfo(s.ctx, pubKey)
+			s.Require().NoError(err)
+			s.Require().Equal(test.expectedInfo, &sophonInfo)
+
+			sophonUser, err := s.keeper.GetSophonUser(s.ctx, sophonInfo.Id, test.msg.UserId)
+			s.Require().NoError(err)
+			s.Require().Equal(test.expectedUser, &sophonUser)
+		})
+	}
+
+	s.Run("Consecutive expire credits", func() {
+		s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+		_, err := s.msgSrvr.RegisterSophon(s.ctx, &types.MsgRegisterSophon{
+			Authority:    s.keeper.GetAuthority(),
+			OwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			PublicKey:    pubKeyHex,
+			Memo:         "",
+		})
+		s.Require().NoError(err)
+
+		_, err = s.msgSrvr.AddUser(s.ctx, &types.MsgAddUser{
+			AdminAddress:    adminAddress,
+			SophonPublicKey: pubKeyHex,
+			UserId:          userId,
+			InitialCredits:  initialCredits,
+		})
+		s.Require().NoError(err)
+
+		msg := &types.MsgExpireUserCredits{
+			AdminAddress:    adminAddress,
+			SophonPublicKey: pubKeyHex,
+			UserId:          userId,
+			Amount:          math.NewInt(5),
+		}
+
+		_, err = s.msgSrvr.ExpireUserCredits(s.ctx, msg)
+		s.Require().NoError(err)
+
+		_, err = s.msgSrvr.ExpireUserCredits(s.ctx, msg)
+		s.Require().NoError(err)
+
+		sophonInfo, err := s.keeper.GetSophonInfo(s.ctx, pubKey)
+		s.Require().NoError(err)
+		s.Require().Equal(initialCredits, sophonInfo.Balance)
+		s.Require().Equal(math.NewInt(10), sophonInfo.UsedCredits)
+
+		sophonUser, err := s.keeper.GetSophonUser(s.ctx, sophonInfo.Id, userId)
+		s.Require().NoError(err)
+		s.Require().Equal(initialCredits.Sub(math.NewInt(10)), sophonUser.Credits)
 	})
 }

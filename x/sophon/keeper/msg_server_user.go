@@ -44,7 +44,7 @@ func (m msgServer) AddUser(goCtx context.Context, msg *types.MsgAddUser) (*types
 		return nil, err
 	}
 	if hasSophonUser {
-		return nil, sdkerrors.ErrInvalidRequest.Wrapf("user already exists for %s", msg.UserId)
+		return nil, types.ErrUserAlreadyExists.Wrapf("user already exists for %s", msg.UserId)
 	}
 
 	sophonUser := types.SophonUser{
@@ -218,8 +218,64 @@ func (m msgServer) TopUpUser(goCtx context.Context, msg *types.MsgTopUpUser) (*t
 	return &types.MsgTopUpUserResponse{}, nil
 }
 
-func (m msgServer) ExpireCredits(_ context.Context, _ *types.MsgExpireCredits) (*types.MsgExpireCreditsResponse, error) {
-	panic("not implemented")
+func (m msgServer) ExpireUserCredits(goCtx context.Context, msg *types.MsgExpireUserCredits) (*types.MsgExpireUserCreditsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	pubKeyBytes, err := hex.DecodeString(msg.SophonPublicKey)
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "invalid hex in pubkey: %s", msg.SophonPublicKey)
+	}
+
+	sophonInfo, err := m.GetSophonInfo(ctx, pubKeyBytes)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, sdkerrors.ErrNotFound.Wrapf("sophon not found for %s", msg.SophonPublicKey)
+		}
+		return nil, err
+	}
+
+	if sophonInfo.AdminAddress != msg.AdminAddress {
+		return nil, sdkerrors.ErrorInvalidSigner.Wrapf("unauthorized admin; expected %s, got %s", sophonInfo.AdminAddress, msg.AdminAddress)
+	}
+
+	sophonUser, err := m.GetSophonUser(ctx, sophonInfo.Id, msg.UserId)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, sdkerrors.ErrNotFound.Wrapf("user does not exist for %s", msg.UserId)
+		}
+		return nil, err
+	}
+
+	if sophonUser.Credits.LT(msg.Amount) {
+		return nil, types.ErrInsufficientCredits.Wrapf("user does not have enough credits; requested %s, available %s", msg.Amount.String(), sophonUser.Credits.String())
+	}
+
+	sophonInfo.UsedCredits = sophonInfo.UsedCredits.Add(msg.Amount)
+
+	err = m.SetSophonInfo(ctx, pubKeyBytes, sophonInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	sophonUser.Credits = sophonUser.Credits.Sub(msg.Amount)
+
+	err = m.SetSophonUser(ctx, sophonInfo.Id, msg.UserId, sophonUser)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeExpireUserCredits,
+			sdk.NewAttribute(types.AttributeSophonID, strconv.FormatUint(sophonInfo.Id, 10)),
+			sdk.NewAttribute(types.AttributeSophonPubKey, msg.SophonPublicKey),
+			sdk.NewAttribute(types.AttributeUserID, msg.UserId),
+		),
+		createSophonEvent(sophonInfo),
+		createUserEvent(msg.SophonPublicKey, sophonInfo.Id, sophonUser),
+	})
+
+	return &types.MsgExpireUserCreditsResponse{}, nil
 }
 
 func createUserEvent(sophonPubKey string, sophonID uint64, user types.SophonUser) sdk.Event {

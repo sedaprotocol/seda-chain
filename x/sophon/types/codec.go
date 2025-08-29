@@ -17,7 +17,7 @@ func RegisterLegacyCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgAddUser{}, "seda/sophon/MsgAddUser")
 	legacy.RegisterAminoMsg(cdc, &MsgTopUpUser{}, "seda/sophon/MsgTopUpUser")
 	legacy.RegisterAminoMsg(cdc, &MsgSettleCredits{}, "seda/sophon/MsgSettleCredits")
-	legacy.RegisterAminoMsg(cdc, &MsgExpireCredits{}, "seda/sophon/MsgExpireCredits")
+	legacy.RegisterAminoMsg(cdc, &MsgExpireUserCredits{}, "seda/sophon/MsgExpireUserCredits")
 	legacy.RegisterAminoMsg(cdc, &MsgSubmitReports{}, "seda/sophon/MsgSubmitReports")
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, "seda/sophon/MsgUpdateParams")
 }
@@ -32,7 +32,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgAddUser{},
 		&MsgTopUpUser{},
 		&MsgSettleCredits{},
-		&MsgExpireCredits{},
+		&MsgExpireUserCredits{},
 		&MsgSubmitReports{},
 		&MsgUpdateParams{},
 	)

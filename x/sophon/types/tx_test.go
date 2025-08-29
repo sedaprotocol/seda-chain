@@ -737,3 +737,105 @@ func (s *TypesTestSuite) TestMsgTopUpUser_ValidateBasic() {
 		})
 	}
 }
+
+func (s *TypesTestSuite) TestMsgExpireUserCredits_ValidateBasic() {
+	pubKeyHex := "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3"
+
+	tests := []struct {
+		name    string
+		msg     *types.MsgExpireUserCredits
+		wantErr error
+	}{
+		{
+			name: "valid",
+			msg: &types.MsgExpireUserCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "user_1",
+				SophonPublicKey: pubKeyHex,
+				Amount:          math.NewInt(1000000000000000000),
+			},
+		},
+		{
+			name: "invalid admin address",
+			msg: &types.MsgExpireUserCredits{
+				AdminAddress:    "invalid",
+				UserId:          "user_1",
+				SophonPublicKey: pubKeyHex,
+				Amount:          math.NewInt(1000000000000000000),
+			},
+			wantErr: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "empty sophon public key",
+			msg: &types.MsgExpireUserCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "user_1",
+				SophonPublicKey: "",
+				Amount:          math.NewInt(1000000000000000000),
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "invalid sophon public key",
+			msg: &types.MsgExpireUserCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "user_1",
+				SophonPublicKey: "not valid hex",
+				Amount:          math.NewInt(1000000000000000000),
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "empty user id",
+			msg: &types.MsgExpireUserCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "",
+				SophonPublicKey: pubKeyHex,
+				Amount:          math.NewInt(1000000000000000000),
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "negative amount",
+			msg: &types.MsgExpireUserCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "user_1",
+				SophonPublicKey: pubKeyHex,
+				Amount:          math.NewInt(-1),
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "nil amount",
+			msg: &types.MsgExpireUserCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "user_1",
+				SophonPublicKey: pubKeyHex,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "zero amount",
+			msg: &types.MsgExpireUserCredits{
+				AdminAddress:    "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				UserId:          "user_1",
+				SophonPublicKey: pubKeyHex,
+				Amount:          math.NewInt(0),
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+	}
+
+	for _, test := range tests {
+		s.Run(test.name, func() {
+			err := test.msg.ValidateBasic()
+
+			if test.wantErr != nil {
+				s.Require().ErrorIs(err, test.wantErr)
+				return
+			}
+
+			s.Require().NoError(err)
+		})
+	}
+}

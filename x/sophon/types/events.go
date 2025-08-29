@@ -11,6 +11,7 @@ const (
 	EventTypeAddUser                 = "add_user"
 	EventTypeRemoveUser              = "remove_user"
 	EventTypeTopUpUser               = "top_up_user"
+	EventTypeExpireUserCredits       = "expire_credits"
 
 	AttributeSophonPubKey    = "sophon_pub_key"
 	AttributeSophonID        = "sophon_id"
