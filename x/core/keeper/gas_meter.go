@@ -125,7 +125,7 @@ func (k Keeper) ProcessDistributions(ctx sdk.Context, tr *TallyResult, minimumSt
 	}
 
 	// Refund the poster.
-	if !remainingEscrow.IsZero() {
+	if remainingEscrow.IsPositive() {
 		poster, err := sdk.AccAddressFromBech32(tr.GasMeter.GetPoster())
 		if err != nil {
 			// Should not be reachable because the address has been validated.
