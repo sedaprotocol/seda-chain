@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	MaxMemoLength    = 3000
-	DoNotModifyField = "[do-not-modify]"
+	MaxMemoLength      = 3000
+	MaxPublicKeyLength = 66
+	DoNotModifyField   = "[do-not-modify]"
 )
 
 func ValidateMemo(memo string) error {
@@ -39,6 +40,10 @@ func (s *SophonInfo) ValidateBasic() error {
 
 	if len(s.PublicKey) == 0 {
 		return fmt.Errorf("public key is empty")
+	}
+
+	if len(s.PublicKey) > MaxPublicKeyLength {
+		return fmt.Errorf("public key is too long; got: %d, max < %d", len(s.PublicKey), MaxPublicKeyLength)
 	}
 
 	if s.Balance.IsNil() {
