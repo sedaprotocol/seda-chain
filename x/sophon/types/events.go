@@ -12,6 +12,7 @@ const (
 	EventTypeRemoveUser              = "remove_user"
 	EventTypeTopUpUser               = "top_up_user"
 	EventTypeExpireUserCredits       = "expire_credits"
+	EventTypeSettleCredits           = "settle_credits"
 
 	AttributeSophonPubKey    = "sophon_pub_key"
 	AttributeSophonID        = "sophon_id"
@@ -26,4 +27,5 @@ const (
 	//nolint:gosec // G101: These are not sensitive values
 	AttributeInitialCredits = "user_initial_credits"
 	AttributeCredits        = "credits"
+	AttributeSettleType     = "settle_type"
 )

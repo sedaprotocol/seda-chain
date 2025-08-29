@@ -139,14 +139,6 @@ func (m msgServer) EditSophon(goCtx context.Context, msg *types.MsgEditSophon) (
 	return &types.MsgEditSophonResponse{}, nil
 }
 
-func (m msgServer) SettleCredits(_ context.Context, _ *types.MsgSettleCredits) (*types.MsgSettleCreditsResponse, error) {
-	panic("not implemented")
-}
-
-func (m msgServer) SubmitReports(_ context.Context, _ *types.MsgSubmitReports) (*types.MsgSubmitReportsResponse, error) {
-	panic("not implemented")
-}
-
 func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
