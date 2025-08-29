@@ -217,7 +217,36 @@ func (m *MsgRemoveUser) ValidateBasic() error {
 }
 
 func (m *MsgTopUpUser) ValidateBasic() error {
-	return fmt.Errorf("not implemented")
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", m.Sender)
+	}
+
+	if len(m.SophonPublicKey) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
+	}
+
+	if len(m.SophonPublicKey) > MaxPublicKeyLength {
+		return sdkerrors.ErrInvalidRequest.Wrapf("public key is too long; got: %d, max < %d", len(m.SophonPublicKey), MaxPublicKeyLength)
+	}
+
+	_, err := hex.DecodeString(m.SophonPublicKey)
+	if err != nil {
+		return sdkerrors.ErrInvalidRequest.Wrapf("invalid hex in pubkey: %s", m.SophonPublicKey)
+	}
+
+	if len(m.UserId) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("user id is empty")
+	}
+
+	if m.Amount.IsNil() {
+		return sdkerrors.ErrInvalidRequest.Wrap("amount is nil")
+	}
+
+	if !m.Amount.IsPositive() {
+		return sdkerrors.ErrInvalidRequest.Wrap("amount is not positive")
+	}
+
+	return nil
 }
 
 func (m *MsgExpireCredits) ValidateBasic() error {

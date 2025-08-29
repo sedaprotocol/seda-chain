@@ -287,3 +287,181 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveUser() {
 		})
 	}
 }
+
+func (s *KeeperTestSuite) TestMsgServer_TopUpUser() {
+	adminAddress := "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5"
+	userId := "user1"
+	pubKeyHex := "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3"
+	pubKey, err := hex.DecodeString(pubKeyHex)
+	s.Require().NoError(err)
+
+	tests := []struct {
+		name         string
+		msg          *types.MsgTopUpUser
+		expectedInfo *types.SophonInfo
+		expectedUser *types.SophonUser
+		wantErr      error
+		mockSetup    func()
+	}{
+		{
+			name: "Happy path",
+			msg: &types.MsgTopUpUser{
+				Sender:          adminAddress,
+				SophonPublicKey: pubKeyHex,
+				UserId:          userId,
+				Amount:          math.NewInt(10_000_000_000_000),
+			},
+			expectedInfo: &types.SophonInfo{
+				Id:           0,
+				OwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PublicKey:    pubKey,
+				Memo:         "",
+				Balance:      math.NewInt(10_000_000_000_000),
+				UsedCredits:  math.NewInt(0),
+			},
+			expectedUser: &types.SophonUser{
+				UserId:  userId,
+				Credits: math.NewInt(10_000_000_000_000),
+			},
+		},
+		{
+			name: "Happy path with low amount",
+			msg: &types.MsgTopUpUser{
+				Sender:          adminAddress,
+				SophonPublicKey: pubKeyHex,
+				UserId:          userId,
+				Amount:          math.NewInt(1),
+			},
+			expectedInfo: &types.SophonInfo{
+				Id:           0,
+				OwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PublicKey:    pubKey,
+				Memo:         "",
+				Balance:      math.NewInt(1),
+				UsedCredits:  math.NewInt(0),
+			},
+			expectedUser: &types.SophonUser{
+				UserId:  userId,
+				Credits: math.NewInt(1),
+			},
+		},
+		{
+			name: "Not enough balance",
+			msg: &types.MsgTopUpUser{
+				Sender:          adminAddress,
+				SophonPublicKey: pubKeyHex,
+				UserId:          userId,
+				Amount:          math.NewInt(10_000_000),
+			},
+			expectedInfo: &types.SophonInfo{
+				Id:           0,
+				OwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PublicKey:    pubKey,
+				Memo:         "",
+				Balance:      math.NewInt(10_000_000),
+				UsedCredits:  math.NewInt(0),
+			},
+			expectedUser: &types.SophonUser{
+				UserId:  userId,
+				Credits: math.NewInt(10_000_000),
+			},
+			wantErr: sdkerrors.ErrInsufficientFunds,
+			mockSetup: func() {
+				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(sdkerrors.ErrInsufficientFunds)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		s.Run(test.name, func() {
+			if test.mockSetup != nil {
+				test.mockSetup()
+			} else {
+				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			}
+
+			_, err := s.msgSrvr.RegisterSophon(s.ctx, &types.MsgRegisterSophon{
+				Authority:    s.keeper.GetAuthority(),
+				OwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				PublicKey:    pubKeyHex,
+				Memo:         "",
+			})
+			s.Require().NoError(err)
+
+			_, err = s.msgSrvr.AddUser(s.ctx, &types.MsgAddUser{
+				AdminAddress:    adminAddress,
+				SophonPublicKey: pubKeyHex,
+				UserId:          userId,
+				InitialCredits:  math.NewInt(0),
+			})
+			s.Require().NoError(err)
+
+			response, err := s.msgSrvr.TopUpUser(s.ctx, test.msg)
+			if test.wantErr != nil {
+				s.Require().ErrorIs(err, test.wantErr)
+				s.Require().Nil(response)
+				return
+			}
+			s.Require().NoError(err)
+
+			sophonInfo, err := s.keeper.GetSophonInfo(s.ctx, pubKey)
+			s.Require().NoError(err)
+			s.Require().Equal(test.expectedInfo, &sophonInfo)
+
+			sophonUser, err := s.keeper.GetSophonUser(s.ctx, sophonInfo.Id, test.msg.UserId)
+			s.Require().NoError(err)
+			s.Require().Equal(test.expectedUser, &sophonUser)
+		})
+	}
+
+	s.Run("Consecutive top ups", func() {
+		s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(2)
+
+		_, err := s.msgSrvr.RegisterSophon(s.ctx, &types.MsgRegisterSophon{
+			Authority:    s.keeper.GetAuthority(),
+			OwnerAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			AdminAddress: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			Address:      "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+			PublicKey:    pubKeyHex,
+			Memo:         "",
+		})
+		s.Require().NoError(err)
+
+		_, err = s.msgSrvr.AddUser(s.ctx, &types.MsgAddUser{
+			AdminAddress:    adminAddress,
+			SophonPublicKey: pubKeyHex,
+			UserId:          userId,
+			InitialCredits:  math.NewInt(0),
+		})
+		s.Require().NoError(err)
+
+		msg := &types.MsgTopUpUser{
+			Sender:          adminAddress,
+			SophonPublicKey: pubKeyHex,
+			UserId:          userId,
+			Amount:          math.NewInt(10_000_000_000_000),
+		}
+
+		_, err = s.msgSrvr.TopUpUser(s.ctx, msg)
+		s.Require().NoError(err)
+
+		_, err = s.msgSrvr.TopUpUser(s.ctx, msg)
+		s.Require().NoError(err)
+
+		sophonInfo, err := s.keeper.GetSophonInfo(s.ctx, pubKey)
+		s.Require().NoError(err)
+		s.Require().Equal(math.NewInt(20_000_000_000_000), sophonInfo.Balance)
+
+		sophonUser, err := s.keeper.GetSophonUser(s.ctx, sophonInfo.Id, userId)
+		s.Require().NoError(err)
+		s.Require().Equal(math.NewInt(20_000_000_000_000), sophonUser.Credits)
+	})
+}
