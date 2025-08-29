@@ -45,7 +45,7 @@ func (m msgServer) RegisterSophon(goCtx context.Context, msg *types.MsgRegisterS
 		return nil, err
 	}
 	if hasSophon {
-		return nil, types.ErrAlreadyExists
+		return nil, types.ErrSophonAlreadyExists
 	}
 
 	sophonInputs := types.SophonInputs{

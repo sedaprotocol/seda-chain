@@ -114,7 +114,7 @@ func (s *KeeperTestSuite) TestMsgServer_RegisterSophon_AlreadyExists() {
 			PublicKey:    pubKeyHex,
 			Memo:         "different memo same pubkey",
 		})
-		s.Require().ErrorIs(err, types.ErrAlreadyExists)
+		s.Require().ErrorIs(err, types.ErrSophonAlreadyExists)
 	})
 }
 

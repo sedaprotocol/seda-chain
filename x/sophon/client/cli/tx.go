@@ -28,7 +28,7 @@ func GetTxCmd() *cobra.Command {
 		CancelOwnershipTransfer(),
 		AddUser(),
 		TopUpUser(),
-		ExpireCredits(),
+		ExpireUserCredits(),
 		SettleCredits(),
 	)
 	return cmd
@@ -193,7 +193,7 @@ func TopUpUser() *cobra.Command {
 	return cmd
 }
 
-func ExpireCredits() *cobra.Command {
+func ExpireUserCredits() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "",
 		Short: "Expire a user's credits",
@@ -204,7 +204,7 @@ func ExpireCredits() *cobra.Command {
 				return err
 			}
 
-			msg := &types.MsgExpireCredits{
+			msg := &types.MsgExpireUserCredits{
 				AdminAddress: clientCtx.GetFromAddress().String(),
 			}
 
