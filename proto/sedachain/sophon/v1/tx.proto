@@ -210,16 +210,20 @@ message MsgRemoveUserResponse {}
 
 // Allows the admin to top up a user's credits.
 message MsgTopUpUser {
+  option (cosmos.msg.v1.signer) = "sender";
   option (amino.name) = "seda/sophon/MsgTopUpUser";
 
+  // the address that is toping up the user
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
   // the public key of the sophon as a hex string
-  string sophon_public_key = 1;
+  string sophon_public_key = 2;
 
   // the identifier of the user
-  string user_id = 2;
+  string user_id = 3;
 
   // the amount of credits to top up
-  string amount = 3 [
+  string amount = 4 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
