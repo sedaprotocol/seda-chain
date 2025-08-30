@@ -2,19 +2,17 @@ package keeper_test
 
 import (
 	"encoding/hex"
-	"os"
 	"time"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 
+	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 func (s *KeeperTestSuite) TestSetOracleProgram() {
 	s.SetupTest()
-	wasm, err := os.ReadFile("testutil/hello-world.wasm")
-	s.Require().NoError(err)
-	compWasm, err := ioutils.GzipIt(wasm)
+	compWasm, err := ioutils.GzipIt(testwasms.HelloWorldWasm())
 	s.Require().NoError(err)
 
 	mockWasm := types.NewOracleProgram(compWasm, time.Now().UTC())

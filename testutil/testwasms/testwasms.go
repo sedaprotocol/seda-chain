@@ -2,23 +2,38 @@ package testwasms
 
 import (
 	_ "embed"
+	"encoding/base64"
+
+	"cosmossdk.io/math"
 )
+
+func BurnerWasmFileName() string {
+	return "burner.wasm"
+}
+
+func ReflectWasmFileName() string {
+	return "reflect.wasm"
+}
+
+func CoreContractWasmFileName() string {
+	return "core_contract.wasm"
+}
 
 var (
 	//go:embed core_contract.wasm
 	coreContract []byte
-
-	//go:embed invalid_import.wasm
-	invalidImportWasm []byte
-
-	//go:embed random_string_tally.wasm
-	randomStringTallyWasm []byte
 
 	//go:embed sample_tally.wasm
 	sampleTallyWasm []byte
 
 	//go:embed sample_tally_2.wasm
 	sampleTallyWasm2 []byte
+
+	//go:embed random_string_tally.wasm
+	randomStringTallyWasm []byte
+
+	//go:embed invalid_import.wasm
+	invalidImportWasm []byte
 
 	//go:embed chaos-dr.wasm
 	chaosDrWasm []byte
@@ -49,7 +64,35 @@ var (
 
 	//go:embed random-number.wasm
 	randomNumberWasm []byte
+
+	//go:embed big.wasm
+	bigWasm []byte
+
+	//go:embed oversized.wasm
+	oversizedWasm []byte
+
+	//go:embed hello-world.wasm
+	helloWorldWasm []byte
 )
+
+var TestWasms = [][]byte{
+	SampleTallyWasm(),
+	SampleTallyWasm2(),
+	RandomStringTallyWasm(),
+	InvalidImportWasm(),
+	ChaosDrWasm(),
+	DataProxyWasm(),
+	HTTPHeavyWasm(),
+	LongHTTPWasm(),
+	MaxDrWasm(),
+	MaxResultWasm(),
+	MemoryWasm(),
+	MockAPIWasm(),
+	PriceFeedWasm(),
+	RandomNumberWasm(),
+	BigWasm(),
+	HelloWorldWasm(),
+}
 
 func CoreContractWasm() []byte {
 	return coreContract
@@ -82,18 +125,6 @@ func RandomStringTallyWasm() []byte {
 // Hash: 18d962cac6d9f931546f111da8d11b3ed54ccd77b79637b1c49a86ead16edb78
 func InvalidImportWasm() []byte {
 	return invalidImportWasm
-}
-
-func BurnerWasmFileName() string {
-	return "burner.wasm"
-}
-
-func ReflectWasmFileName() string {
-	return "reflect.wasm"
-}
-
-func CoreContractWasmFileName() string {
-	return "core_contract.wasm"
 }
 
 func ChaosDrWasm() []byte {
@@ -134,4 +165,81 @@ func PriceFeedWasm() []byte {
 
 func RandomNumberWasm() []byte {
 	return randomNumberWasm
+}
+
+// OversizedWasm returns a wasm that is over 1MB in size.
+func OversizedWasm() []byte {
+	return oversizedWasm
+}
+
+// BigWasm returns a wasm that is slightly less than 1MB in size.
+func BigWasm() []byte {
+	return bigWasm
+}
+
+func HelloWorldWasm() []byte {
+	return helloWorldWasm
+}
+
+// TallyTestItem is a bundle of tally program, reveal, and expected VM result.
+type TallyTestItem struct {
+	TallyProgram []byte
+	Reveal       string
+	GasUsed      uint64
+
+	// Expected values of data result:
+	ExpectedExitCode uint32
+	ExpectedResult   []byte
+	ExpectedGasUsed  math.Int
+}
+
+var TallyTestItems = []TallyTestItem{
+	TallyTestItemSampleTally(),
+	TallyTestItemRandomString(),
+	TallyTestItemRandomNumber(),
+	TallyTestInvalidImport(),
+}
+
+func TallyTestItemSampleTally() TallyTestItem {
+	return TallyTestItem{
+		TallyProgram:     sampleTallyWasm,
+		Reveal:           base64.StdEncoding.EncodeToString([]byte("{\"value\":\"one\"}")),
+		GasUsed:          150000000000000000,
+		ExpectedResult:   []byte("tally_inputs__REST__0"),
+		ExpectedExitCode: 0,
+		ExpectedGasUsed:  math.NewInt(100013725103196250),
+	}
+}
+
+func TallyTestItemRandomString() TallyTestItem {
+	return TallyTestItem{
+		TallyProgram:     randomStringTallyWasm,
+		Reveal:           base64.StdEncoding.EncodeToString([]byte("{\"value\":\"one\"}")),
+		GasUsed:          150000000000000000,
+		ExpectedResult:   []byte("one"),
+		ExpectedExitCode: 0,
+		ExpectedGasUsed:  math.NewInt(100014761092378750),
+	}
+}
+
+func TallyTestItemRandomNumber() TallyTestItem {
+	return TallyTestItem{
+		TallyProgram:     randomNumberWasm,
+		Reveal:           base64.StdEncoding.EncodeToString([]byte("{\"value\":\"one\"}")),
+		GasUsed:          150000000000000000,
+		ExpectedResult:   []byte("Not ok"),
+		ExpectedExitCode: 1,
+		ExpectedGasUsed:  math.NewInt(100017279108241250),
+	}
+}
+
+func TallyTestInvalidImport() TallyTestItem {
+	return TallyTestItem{
+		TallyProgram:     invalidImportWasm,
+		Reveal:           "",
+		GasUsed:          150000000000000000,
+		ExpectedResult:   []byte("Error: Failed to create WASMER instance: Error while importing \"seda_v1\".\"this_does_not_exist\": unknown import. Expected Function(FunctionType { params: [], results: [] })"),
+		ExpectedExitCode: 4,
+		ExpectedGasUsed:  math.NewInt(100006000002140000),
+	}
 }

@@ -99,7 +99,7 @@ func TestEndBlock(t *testing.T) {
 			err := f.SetDataProxyConfig(proxyPubKeys[0], "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f", sdk.NewCoin(bondDenom, math.NewInt(1000000000000000000)))
 			require.NoError(t, err)
 
-			drID := f.commitRevealDataRequest(
+			drID := f.executeDataRequestFlow(
 				t, nil, nil,
 				tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout,
 				commitRevealConfig{
@@ -160,7 +160,7 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	_, err := f.tallyMsgServer.UpdateParams(f.Context(), msg)
 	require.NoError(t, err)
 
-	drID := f.commitRevealDataRequest(
+	drID := f.executeDataRequestFlow(
 		t, testwasms.SampleTallyWasm(), testwasms.SampleTallyWasm2(),
 		1, 1, 1, false,
 		commitRevealConfig{
@@ -194,7 +194,7 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	_, err = f.tallyMsgServer.UpdateParams(f.Context(), msg)
 	require.NoError(t, err)
 
-	drID = f.commitRevealDataRequest(
+	drID = f.executeDataRequestFlow(
 		t, testwasms.SampleTallyWasm(), testwasms.SampleTallyWasm2(),
 		1, 1, 1, false,
 		commitRevealConfig{
@@ -223,7 +223,7 @@ func TestEndBlock_ChunkedContractQuery(t *testing.T) {
 	numDataRequests := tallykeeper.MaxDataRequestsPerQuery + 5
 
 	for range numDataRequests {
-		f.commitRevealDataRequest(
+		f.executeDataRequestFlow(
 			t, nil, nil,
 			1, 1, 1, false,
 			commitRevealConfig{
@@ -252,7 +252,7 @@ func TestEndBlock_ChunkedContractQuery_MaxTalliesPerBlock(t *testing.T) {
 	f.tallyKeeper.SetParams(f.Context(), params)
 
 	for range numDataRequests {
-		f.commitRevealDataRequest(
+		f.executeDataRequestFlow(
 			t, nil, nil,
 			1, 1, 1, false,
 			commitRevealConfig{
@@ -281,7 +281,7 @@ func TestEndBlock_ChunkedContractQuery_LowMaxTalliesPerBlock(t *testing.T) {
 	f.tallyKeeper.SetParams(f.Context(), params)
 
 	for range numDataRequests {
-		f.commitRevealDataRequest(
+		f.executeDataRequestFlow(
 			t, nil, nil,
 			1, 1, 1, false,
 			commitRevealConfig{
@@ -380,4 +380,41 @@ func TestEndBlock_PausedContract(t *testing.T) {
 	afterProcessingBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
 	diff := afterProcessingBalance.Sub(beforeBalance)
 	require.Equal(t, "0aseda", diff.String())
+}
+
+// TestTallyTestItems executes the 100 randomly selected tally programs and
+// verifies their results in the batching module store.
+func TestTallyTestItems(t *testing.T) {
+	f := initFixture(t)
+
+	numRequests := 100
+	drIDs := make([]string, numRequests)
+	testItems := make([]testwasms.TallyTestItem, numRequests)
+	for i := range numRequests {
+		drIDs[i], testItems[i] = f.executeDataRequestFlowWithTallyTestItem(t, []byte(fmt.Sprintf("%d", i)))
+	}
+
+	err := f.tallyKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	// Check the batching module store for the data results.
+	dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
+	require.NoError(t, err)
+	require.Equal(t, numRequests, len(dataResults))
+
+	for i, drID := range drIDs {
+		dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
+		require.NoError(t, err)
+
+		require.Equal(t, 64, len(dataResult.Id))
+		require.Equal(t, uint64(f.Context().BlockHeight()), dataResult.DrBlockHeight)
+		require.Equal(t, uint64(f.Context().BlockHeight()), dataResult.BlockHeight)
+		require.Equal(t, uint64(f.Context().BlockHeader().Time.Unix()), dataResult.BlockTimestamp)
+
+		require.Equal(t, testItems[i].ExpectedResult, dataResult.Result)
+		require.Equal(t, testItems[i].ExpectedExitCode, dataResult.ExitCode)
+		require.Equal(t, testItems[i].ExpectedGasUsed.String(), dataResult.GasUsed.String())
+
+		require.Contains(t, dataResults, *dataResult)
+	}
 }

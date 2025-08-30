@@ -62,7 +62,7 @@ func FuzzEndBlock(f *testing.F) {
 	})
 }
 
-// commitRevealDataRequest simulates stakers committing and revealing
+// fuzzCommitRevealDataRequest simulates stakers committing and revealing
 // for a data request. It returns the data request ID.
 func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitReveal, replicationFactor int, timeout bool) (string, []staker) {
 	stakers := f.addStakers(t, 5)

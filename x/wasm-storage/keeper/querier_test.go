@@ -2,12 +2,12 @@ package keeper_test
 
 import (
 	"encoding/hex"
-	"os"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
+	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -15,8 +15,7 @@ import (
 func (s *KeeperTestSuite) TestOracleProgram() {
 	s.SetupTest()
 	s.ApplyDefaultMockExpectations()
-	wasm, err := os.ReadFile("testutil/hello-world.wasm")
-	s.Require().NoError(err)
+	wasm := testwasms.HelloWorldWasm()
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)
 	input := types.MsgStoreOracleProgram{
@@ -37,8 +36,8 @@ func (s *KeeperTestSuite) TestOracleProgram() {
 func (s *KeeperTestSuite) TestOraclePrograms() {
 	s.SetupTest()
 	s.ApplyDefaultMockExpectations()
-	wasm, err := os.ReadFile("testutil/hello-world.wasm")
-	s.Require().NoError(err)
+
+	wasm := testwasms.SampleTallyWasm()
 	compWasm, err := ioutils.GzipIt(wasm)
 	s.Require().NoError(err)
 
@@ -50,8 +49,7 @@ func (s *KeeperTestSuite) TestOraclePrograms() {
 	storedWasm, err := s.msgSrvr.StoreOracleProgram(s.ctx, &input)
 	s.Require().NoError(err)
 
-	wasm2, err := os.ReadFile("testutil/cowsay.wasm")
-	s.Require().NoError(err)
+	wasm2 := testwasms.SampleTallyWasm2()
 	compWasm2, err := ioutils.GzipIt(wasm2)
 	s.Require().NoError(err)
 	input2 := types.MsgStoreOracleProgram{
@@ -66,6 +64,6 @@ func (s *KeeperTestSuite) TestOraclePrograms() {
 	res, err := s.queryClient.OraclePrograms(s.ctx, &req)
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
-	s.Require().Contains(res.List[0], storedWasm.Hash)
-	s.Require().Contains(res.List[1], storedWasm2.Hash)
+	s.Require().Contains(res.List, storedWasm.Hash)
+	s.Require().Contains(res.List, storedWasm2.Hash)
 }

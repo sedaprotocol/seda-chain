@@ -99,8 +99,9 @@ func TestExecuteTallyProgram_InvalidImports(t *testing.T) {
 	require.NoError(t, execItems[0].TallyExecErr)
 	require.Equal(t, 1, len(vmRes))
 
-	require.NotEqual(t, uint32(0), vmRes[0].ExitInfo.ExitCode)
-	require.Contains(t, "\"seda_v1\".\"this_does_not_exist\"", string(*vmRes[0].Result))
+	require.Equal(t, int(4), vmRes[0].ExitInfo.ExitCode)
+	// Note this exit message is assigned to x/tally/types.VMResult.Result in MapVMResult.
+	require.Contains(t, string(vmRes[0].ExitInfo.ExitMessage), "\"seda_v1\".\"this_does_not_exist\"")
 }
 
 // TestTallyVM tests tally VM using a sample tally wasm that performs
@@ -328,4 +329,89 @@ func TestTallyVM_EnvVars(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestExecuteTallyProgramsParallel_ErrorHandling tests the function
+// ExecuteTallyProgramsParallel against a scenario where some execution items
+// are not executed due to errors. In this case, the function should mark errors
+// in the execution items given as arguments and return results only for the
+// items that were executed successfully.
+func TestExecuteTallyProgramsParallel_ErrorHandling(t *testing.T) {
+	f := initFixture(t)
+
+	// Create one valid program and one invalid program
+	validProgram := wasmstoragetypes.NewOracleProgram(testwasms.RandomStringTallyWasm(), f.Context().BlockTime())
+	f.wasmStorageKeeper.OracleProgram.Set(f.Context(), validProgram.Hash, validProgram)
+
+	execItems := []keeper.TallyParallelExecItem{
+		{
+			Index: 0,
+			Request: types.Request{
+				ID:             "some_id_0",
+				TallyProgramID: hex.EncodeToString(validProgram.Hash),
+				TallyInputs:    base64.StdEncoding.EncodeToString([]byte("some_tally_input")),
+				PaybackAddress: base64.StdEncoding.EncodeToString([]byte("0x1111")),
+			},
+			Reveals: []types.Reveal{
+				{
+					Executor: "valid_executor",
+					RevealBody: types.RevealBody{
+						Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"valid\"}")),
+						ProxyPubKeys: []string{},
+						GasUsed:      10,
+					},
+				},
+			},
+			Outliers:  []bool{false},
+			Consensus: true,
+			GasMeter:  types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1),
+		},
+		{
+			Index: 1,
+			Request: types.Request{
+				ID:             "some_id_1",
+				TallyProgramID: "non_existent_program_hash", // This will cause an error
+			},
+		},
+		{
+			Index: 2,
+			Request: types.Request{
+				ID:             "some_id_2",
+				TallyProgramID: hex.EncodeToString(validProgram.Hash),
+				TallyInputs:    base64.StdEncoding.EncodeToString([]byte("some_tally_input")),
+				PaybackAddress: "invalid_base64_payback_address", // This will cause an error
+			},
+		},
+		{
+			Index: 3,
+			Request: types.Request{
+				ID:             "some_id_3",
+				TallyProgramID: hex.EncodeToString(validProgram.Hash),
+				TallyInputs:    base64.StdEncoding.EncodeToString([]byte("some_tally_input")),
+				PaybackAddress: base64.StdEncoding.EncodeToString([]byte("0x1111")),
+			},
+			Reveals: []types.Reveal{
+				{
+					Executor: "valid_executor",
+					RevealBody: types.RevealBody{
+						Reveal:       base64.StdEncoding.EncodeToString([]byte("{\"value\":\"valid\"}")),
+						ProxyPubKeys: []string{},
+						GasUsed:      10,
+					},
+				},
+			},
+			Outliers:  []bool{false},
+			Consensus: true,
+			GasMeter:  types.NewGasMeter(types.DefaultMaxTallyGasLimit, 100, types.DefaultMaxTallyGasLimit, math.NewInt(1), 1),
+		},
+	}
+
+	vmResults := f.tallyKeeper.ExecuteTallyProgramsParallel(f.Context(), execItems)
+
+	require.Equal(t, 2, len(vmResults), "Should return results only for valid execution items")
+
+	require.NoError(t, execItems[0].TallyExecErr, "Valid item should have no error")
+	require.Contains(t, execItems[1].TallyExecErr.Error(), "invalid hex-encoded wasm hash")
+	require.Contains(t, execItems[2].TallyExecErr.Error(), "illegal base64 data")
+	require.NoError(t, execItems[3].TallyExecErr, "Valid item should have no error")
 }

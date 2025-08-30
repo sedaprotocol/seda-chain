@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
-	"os"
 	"testing"
 
 	"go.uber.org/mock/gomock"
@@ -28,6 +27,7 @@ import (
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/testutil"
+	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
@@ -40,13 +40,11 @@ var (
 )
 
 func (s *KeeperTestSuite) TestStoreOracleProgram() {
-	regWasm, err := os.ReadFile("testutil/hello-world.wasm")
-	s.Require().NoError(err)
+	regWasm := testwasms.SampleTallyWasm()
 	regWasmZipped, err := ioutils.GzipIt(regWasm)
 	s.Require().NoError(err)
 
-	oversizedWasm, err := os.ReadFile("testutil/oversized.wasm")
-	s.Require().NoError(err)
+	oversizedWasm := testwasms.OversizedWasm()
 	oversizedWasmZipped, err := ioutils.GzipIt(oversizedWasm)
 	s.Require().NoError(err)
 
@@ -167,7 +165,7 @@ func (s *KeeperTestSuite) TestStoreOracleProgram() {
 				s.ApplyDefaultMockExpectations()
 			},
 			expErr:    true,
-			expErrMsg: "",
+			expErrMsg: "WASM file is too large",
 		},
 	}
 	for _, tc := range cases {

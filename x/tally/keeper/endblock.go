@@ -228,6 +228,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, tallyList []types.Request, param
 		vmResultIndex := 0
 		for i := range tallyExecItems {
 			if tallyExecItems[i].TallyExecErr == nil {
+				// Tally was executed, so parse VM execution results.
 				tallyExecItems[i].GasMeter.ConsumeTallyGas(vmResults[vmResultIndex].GasUsed)
 
 				result := types.MapVMResult(vmResults[vmResultIndex])
@@ -242,6 +243,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, tallyList []types.Request, param
 				dataResults[resultIndex].ExitCode = result.ExitCode
 				vmResultIndex++
 			} else {
+				// Tally was not executed.
 				resultIndex := tallyExecItems[i].Index
 				tallyResults[resultIndex].GasMeter.SetReducedPayoutMode()
 				dataResults[resultIndex].Result = []byte(tallyExecItems[i].TallyExecErr.Error())
@@ -266,7 +268,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, tallyList []types.Request, param
 			}
 		}
 
-		// GasMeter may not have been initialized in some cases.
+		// GasMeter is not initialized under paused or fallback cases.
 		if tr.GasMeter != nil {
 			tallyResults[i].TallyGasUsed = tr.GasMeter.TallyGasUsed()
 			tallyResults[i].ExecGasUsed = tr.GasMeter.ExecutionGasUsed()
