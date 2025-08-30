@@ -99,8 +99,9 @@ func TestExecuteTallyProgram_InvalidImports(t *testing.T) {
 	require.NoError(t, execItems[0].TallyExecErr)
 	require.Equal(t, 1, len(vmRes))
 
-	require.NotEqual(t, uint32(0), vmRes[0].ExitInfo.ExitCode)
-	require.Contains(t, "\"seda_v1\".\"this_does_not_exist\"", string(*vmRes[0].Result))
+	require.Equal(t, int(4), vmRes[0].ExitInfo.ExitCode)
+	// Note this exit message is assigned to x/tally/types.VMResult.Result in MapVMResult.
+	require.Contains(t, string(vmRes[0].ExitInfo.ExitMessage), "\"seda_v1\".\"this_does_not_exist\"")
 }
 
 // TestTallyVM tests tally VM using a sample tally wasm that performs

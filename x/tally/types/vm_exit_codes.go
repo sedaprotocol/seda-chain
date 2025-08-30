@@ -6,5 +6,5 @@ const (
 	TallyExitCodeContractPaused     uint32 = 202 // tally VM not executed due to contract being paused
 	TallyExitCodeInvalidFilterInput uint32 = 253 // tally VM not executed due to invalid filter input
 	TallyExitCodeFilterError        uint32 = 254 // tally VM not executed due to filter error
-	TallyExitCodeExecError          uint32 = 255 // error while executing tally VM
+	TallyExitCodeExecError          uint32 = 255 // tally VM not executed due to error while preparing VM inputs
 )

@@ -49,34 +49,18 @@ type commitRevealConfig struct {
 	exitCode      byte
 }
 
-var oraclePrograms [][]byte = [][]byte{
-	testwasms.SampleTallyWasm(),
-	testwasms.SampleTallyWasm2(),
-	testwasms.RandomStringTallyWasm(),
-	testwasms.InvalidImportWasm(),
-	testwasms.ChaosDrWasm(),
-	testwasms.DataProxyWasm(),
-	testwasms.HTTPHeavyWasm(),
-	testwasms.LongHTTPWasm(),
-	testwasms.MaxDrWasm(),
-	testwasms.MaxResultWasm(),
-	testwasms.MemoryWasm(),
-	testwasms.MockAPIWasm(),
-	testwasms.PriceFeedWasm(),
-	testwasms.RandomNumberWasm(),
-}
-
 func (f *fixture) uploadOraclePrograms(t testing.TB) {
-	for _, prog := range oraclePrograms {
-		execProgram := wasmstoragetypes.NewOracleProgram(prog, f.Context().BlockTime())
+	for _, op := range testwasms.TestWasms {
+		execProgram := wasmstoragetypes.NewOracleProgram(op, f.Context().BlockTime())
 		err := f.wasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
 		require.NoError(t, err)
 	}
 }
 
-// commitRevealDataRequest simulates stakers committing and revealing
-// for a data request. It returns the data request ID.
-func (f *fixture) commitRevealDataRequest(
+// executeDataRequestFlow posts a data request using the deployer account and
+// executes given numbers of commits and reveals for the request using the
+// stakers accounts. It returns the data request ID.
+func (f *fixture) executeDataRequestFlow(
 	t testing.TB,
 	execProgramBytes, tallyProgramBytes []byte,
 	replicationFactor, numCommits, numReveals int, timeout bool,
@@ -86,16 +70,14 @@ func (f *fixture) commitRevealDataRequest(
 	if execProgramBytes != nil {
 		execProgram = wasmstoragetypes.NewOracleProgram(execProgramBytes, f.Context().BlockTime())
 	} else {
-		randIndex := rand.Intn(len(oraclePrograms))
-		t.Logf("using execution program at index: %d", randIndex)
-		execProgram = wasmstoragetypes.NewOracleProgram(oraclePrograms[randIndex], f.Context().BlockTime())
+		randIndex := rand.Intn(len(testwasms.TestWasms))
+		execProgram = wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
 	}
 	if tallyProgramBytes != nil {
 		tallyProgram = wasmstoragetypes.NewOracleProgram(tallyProgramBytes, f.Context().BlockTime())
 	} else {
-		randIndex := rand.Intn(len(oraclePrograms))
-		t.Logf("using tally program at index: %d", randIndex)
-		tallyProgram = wasmstoragetypes.NewOracleProgram(oraclePrograms[randIndex], f.Context().BlockTime())
+		randIndex := rand.Intn(len(testwasms.TestWasms))
+		tallyProgram = wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
 	}
 
 	// Post a data request.
@@ -122,6 +104,42 @@ func (f *fixture) commitRevealDataRequest(
 		}
 	}
 	return res.DrID
+}
+
+// executeDataRequestFlowWithTallyTestItem posts a data request using the deployer
+// account and executes a commit and reveal for the request using a staker account.
+// It then returns the data request ID and the randomly selected TallyTestItem,
+// which contains the expected tally execution results.
+func (f *fixture) executeDataRequestFlowWithTallyTestItem(t testing.TB, entropy []byte) (string, testwasms.TallyTestItem) {
+	randIndex := rand.Intn(len(testwasms.TestWasms))
+	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
+
+	randIndex = rand.Intn(len(testwasms.TallyTestItems))
+	testItem := testwasms.TallyTestItems[randIndex]
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testItem.TallyProgram, f.Context().BlockTime())
+
+	config := commitRevealConfig{
+		requestHeight: 1,
+		requestMemo:   base64.StdEncoding.EncodeToString(entropy),
+		reveal:        testItem.Reveal,
+		proxyPubKeys:  []string{},
+		gasUsed:       testItem.GasUsed,
+	}
+
+	// Post a data request.
+	res, err := f.postDataRequest(execProgram.Hash, tallyProgram.Hash, config.requestMemo, 1)
+	require.NoError(t, err)
+
+	drID := res.DrID
+
+	// The stakers commit and reveal.
+	revealMsgs, err := f.commitDataRequest(f.stakers[:1], res.Height, drID, config)
+	require.NoError(t, err)
+
+	err = f.executeReveals(f.stakers, revealMsgs[:1])
+	require.NoError(t, err)
+
+	return res.DrID, testItem
 }
 
 func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) (PostDataRequestResponse, error) {

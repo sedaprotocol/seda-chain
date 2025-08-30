@@ -10,6 +10,7 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
 )
 
@@ -24,28 +25,12 @@ func BenchmarkDataRequestFlow(b *testing.B) {
 	params.MaxTalliesPerBlock = 1000
 	f.tallyKeeper.SetParams(f.Context(), params)
 
-	tt := struct {
-		name              string
-		replicationFactor int
-		numCommits        int
-		numReveals        int
-		timeout           bool
-		expExitCode       uint32
-	}{
-		name:              "full single commit-reveal",
-		replicationFactor: 1,
-		numCommits:        1,
-		numReveals:        1,
-		timeout:           false,
-		expExitCode:       0,
-	}
-
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
 		for j := 0; j < 1000; j++ {
-			f.commitRevealDataRequest(
+			f.executeDataRequestFlow(
 				b, nil, nil,
-				tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout,
+				1, 1, 1, false,
 				commitRevealConfig{
 					requestHeight: 1,
 					requestMemo:   base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
@@ -57,6 +42,35 @@ func BenchmarkDataRequestFlow(b *testing.B) {
 
 		b.StartTimer()
 		err = f.tallyKeeper.EndBlock(f.Context())
+		require.NoError(b, err)
+
+		f.AddBlock()
+	}
+}
+
+func BenchmarkBigTallyPrograms(b *testing.B) {
+	f := initFixture(b)
+
+	params := types.DefaultParams()
+	params.MaxTalliesPerBlock = 1000
+	f.tallyKeeper.SetParams(f.Context(), params)
+
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		for j := 0; j < 1000; j++ {
+			f.executeDataRequestFlow(
+				b, nil, testwasms.BigWasm(),
+				1, 1, 1, false,
+				commitRevealConfig{
+					requestHeight: 1,
+					requestMemo:   base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
+					reveal:        base64.StdEncoding.EncodeToString([]byte("reveal")),
+					gasUsed:       150000000000000000,
+				})
+		}
+
+		b.StartTimer()
+		err := f.tallyKeeper.EndBlock(f.Context())
 		require.NoError(b, err)
 
 		f.AddBlock()
