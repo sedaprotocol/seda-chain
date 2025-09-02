@@ -27,16 +27,17 @@ import (
 
 type KeeperTestSuite struct {
 	suite.Suite
-	ctx           sdk.Context
-	keeper        *keeper.Keeper
-	bankKeeper    *testutil.MockBankKeeper
-	accountKeeper *testutil.MockAccountKeeper
-	stakingKeeper *testutil.MockStakingKeeper
-	cdc           codec.Codec
-	msgSrvr       types.MsgServer
-	queryClient   types.QueryClient
-	serverCtx     *server.Context
-	authority     string
+	ctx             sdk.Context
+	keeper          *keeper.Keeper
+	bankKeeper      *testutil.MockBankKeeper
+	accountKeeper   *testutil.MockAccountKeeper
+	stakingKeeper   *testutil.MockStakingKeeper
+	dataProxyKeeper *testutil.MockDataProxyKeeper
+	cdc             codec.Codec
+	msgSrvr         types.MsgServer
+	queryClient     types.QueryClient
+	serverCtx       *server.Context
+	authority       string
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -66,6 +67,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.bankKeeper = testutil.NewMockBankKeeper(ctrl)
 	s.accountKeeper = testutil.NewMockAccountKeeper(ctrl)
 	s.stakingKeeper = testutil.NewMockStakingKeeper(ctrl)
+	s.dataProxyKeeper = testutil.NewMockDataProxyKeeper(ctrl)
 
 	// Ensure the keeper can be created
 	s.accountKeeper.EXPECT().AddressCodec().Return(authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()))
@@ -78,6 +80,7 @@ func (s *KeeperTestSuite) SetupTest() {
 		s.bankKeeper,
 		s.accountKeeper,
 		s.stakingKeeper,
+		s.dataProxyKeeper,
 		s.authority,
 	)
 

@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"encoding/hex"
 	"strings"
 
 	"cosmossdk.io/math"
@@ -931,6 +932,424 @@ func (s *TypesTestSuite) TestMsgSettleCredits_ValidateBasic() {
 				SophonPublicKey: pubKeyHex,
 				Amount:          math.NewInt(0),
 				SettleType:      types.SETTLE_TYPE_BURN,
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+	}
+
+	for _, test := range tests {
+		s.Run(test.name, func() {
+			err := test.msg.ValidateBasic()
+
+			if test.wantErr != nil {
+				s.Require().ErrorIs(err, test.wantErr)
+				return
+			}
+
+			s.Require().NoError(err)
+		})
+	}
+}
+
+func (s *TypesTestSuite) TestMsgSubmitReports_ValidateBasic() {
+	pubKeyHex := "02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3"
+	pubKey, err := hex.DecodeString(pubKeyHex)
+	s.Require().NoError(err)
+
+	tests := []struct {
+		name    string
+		msg     *types.MsgSubmitReports
+		wantErr error
+	}{
+		{
+			name: "valid single report without data proxy reports",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+					},
+				},
+			},
+		},
+		{
+			name: "valid single report with single data proxy report",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+						DataProxyReports: []*types.DataProxyReport{
+							{
+								DataProxyPubKey: "021dd035f760061e2833581d4ab50440a355db0ac98e489bf63a5dbc0e89e4af79",
+								Amount:          1,
+								Price:           math.NewInt(1000000000000000000),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid multiple reports without data proxy reports",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+					},
+					{
+						UserId:      "user_2",
+						Queries:     500,
+						UsedCredits: math.NewInt(1000000000000000000),
+					},
+				},
+			},
+		},
+		{
+			name: "valid multiple reports with multiple data proxy reports",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+					},
+					{
+						UserId:      "user_2",
+						Queries:     100,
+						UsedCredits: math.NewInt(3000000000000000000),
+						DataProxyReports: []*types.DataProxyReport{
+							{
+								DataProxyPubKey: "021dd035f760061e2833581d4ab50440a355db0ac98e489bf63a5dbc0e89e4af79",
+								Amount:          1,
+								Price:           math.NewInt(1000000000000000000),
+							},
+							{
+								DataProxyPubKey: "02095af5db08cef43871a4aa48a80bdddc5249e4234e7432c3d7eca14f31261b10",
+								Amount:          2,
+								Price:           math.NewInt(1000000000000000000),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid multiple reports with multiple data proxy reports with same user id",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+					},
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(3000000000000000000),
+						DataProxyReports: []*types.DataProxyReport{
+							{
+								DataProxyPubKey: "021dd035f760061e2833581d4ab50440a355db0ac98e489bf63a5dbc0e89e4af79",
+								Amount:          1,
+								Price:           math.NewInt(1000000000000000000),
+							},
+							{
+								DataProxyPubKey: "02095af5db08cef43871a4aa48a80bdddc5249e4234e7432c3d7eca14f31261b10",
+								Amount:          2,
+								Price:           math.NewInt(1000000000000000000),
+							},
+						},
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "invalid user id",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+					},
+					{
+						UserId:      "",
+						Queries:     100,
+						UsedCredits: math.NewInt(5000000000000000000),
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "invalid sophon public key",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: []byte{},
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "invalid report amount",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:  "user_1",
+						Queries: 100,
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "no reports",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports:         []*types.UserReport{},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "invalid credits",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(10),
+					},
+					{
+						UserId:  "user_1",
+						Queries: 100,
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "0 credits",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(0),
+					},
+					{
+						UserId:      "user_2",
+						Queries:     100,
+						UsedCredits: math.NewInt(10),
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "negative credits",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+					},
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(-5),
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "negative data proxy price",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+						DataProxyReports: []*types.DataProxyReport{
+							{
+								DataProxyPubKey: "021dd035f760061e2833581d4ab50440a355db0ac98e489bf63a5dbc0e89e4af79",
+								Amount:          1,
+								Price:           math.NewInt(-1000000000000000000),
+							},
+						},
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "zero data proxy price",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+						DataProxyReports: []*types.DataProxyReport{
+							{
+								DataProxyPubKey: "021dd035f760061e2833581d4ab50440a355db0ac98e489bf63a5dbc0e89e4af79",
+								Amount:          1,
+								Price:           math.NewInt(0),
+							},
+						},
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "invalid data proxy price",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+						DataProxyReports: []*types.DataProxyReport{
+							{
+								DataProxyPubKey: "021dd035f760061e2833581d4ab50440a355db0ac98e489bf63a5dbc0e89e4af79",
+								Amount:          1,
+							},
+						},
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "zero data proxy amount",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+						DataProxyReports: []*types.DataProxyReport{
+							{
+								DataProxyPubKey: "021dd035f760061e2833581d4ab50440a355db0ac98e489bf63a5dbc0e89e4af79",
+								Amount:          0,
+								Price:           math.NewInt(100000),
+							},
+						},
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "data proxy total amount is greater than used credits",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+						DataProxyReports: []*types.DataProxyReport{
+							{
+								DataProxyPubKey: "021dd035f760061e2833581d4ab50440a355db0ac98e489bf63a5dbc0e89e4af79",
+								Amount:          1,
+								Price:           math.NewInt(1000000000000000001),
+							},
+						},
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "data proxy total amount is greater than used credits (multiple calls to same data proxy)",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+						DataProxyReports: []*types.DataProxyReport{
+							{
+								DataProxyPubKey: "021dd035f760061e2833581d4ab50440a355db0ac98e489bf63a5dbc0e89e4af79",
+								Amount:          11,
+								Price:           math.NewInt(100000000000000000),
+							},
+						},
+					},
+				},
+			},
+			wantErr: sdkerrors.ErrInvalidRequest,
+		},
+		{
+			name: "data proxy total amount is greater than used credits (multiple data proxy reports)",
+			msg: &types.MsgSubmitReports{
+				Address:         "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				SophonPublicKey: pubKey,
+				Reports: []*types.UserReport{
+					{
+						UserId:      "user_1",
+						Queries:     100,
+						UsedCredits: math.NewInt(1000000000000000000),
+						DataProxyReports: []*types.DataProxyReport{
+							{
+								DataProxyPubKey: "021dd035f760061e2833581d4ab50440a355db0ac98e489bf63a5dbc0e89e4af79",
+								Amount:          10,
+								Price:           math.NewInt(100000000000000000),
+							},
+							{
+								DataProxyPubKey: "021dd035f760061e2833581d4ab50440a355db0ac98e489bf63a5dbc0e89e4af79",
+								Amount:          1,
+								Price:           math.NewInt(10000000000000000),
+							},
+						},
+					},
+				},
 			},
 			wantErr: sdkerrors.ErrInvalidRequest,
 		},

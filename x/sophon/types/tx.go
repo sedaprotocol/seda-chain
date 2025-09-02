@@ -2,7 +2,8 @@ package types
 
 import (
 	"encoding/hex"
-	"fmt"
+
+	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -316,8 +317,70 @@ func (m *MsgSettleCredits) ValidateBasic() error {
 }
 
 func (m *MsgSubmitReports) ValidateBasic() error {
-	// TODO: Deduplicate validation logic (hex strings, credits), move everything to msg handler
-	return fmt.Errorf("not implemented")
+	if _, err := sdk.AccAddressFromBech32(m.Address); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid address: %s", m.Address)
+	}
+
+	if len(m.SophonPublicKey) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("empty public key")
+	}
+
+	if len(m.Reports) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("no reports provided")
+	}
+
+	seenUserIDs := make(map[string]bool)
+
+	for i, report := range m.Reports {
+		if len(report.UserId) == 0 {
+			return sdkerrors.ErrInvalidRequest.Wrapf("user id is empty at index %d", i)
+		}
+
+		if seenUserIDs[report.UserId] {
+			return sdkerrors.ErrInvalidRequest.Wrapf("user id %s is duplicated at index %d", report.UserId, i)
+		}
+
+		seenUserIDs[report.UserId] = true
+
+		if report.Queries == 0 {
+			return sdkerrors.ErrInvalidRequest.Wrapf("queries is zero at index %d", i)
+		}
+
+		if report.UsedCredits.IsNil() {
+			return sdkerrors.ErrInvalidRequest.Wrapf("used credits is nil at index %d", i)
+		}
+
+		if !report.UsedCredits.IsPositive() {
+			return sdkerrors.ErrInvalidRequest.Wrapf("used credits is not positive at index %d", i)
+		}
+
+		totalDataProxyAmount := math.NewInt(0)
+		for j, dataProxyReport := range report.DataProxyReports {
+			if len(dataProxyReport.DataProxyPubKey) == 0 {
+				return sdkerrors.ErrInvalidRequest.Wrapf("data proxy pubkey is empty at index %d, %d", i, j)
+			}
+
+			if dataProxyReport.Amount == 0 {
+				return sdkerrors.ErrInvalidRequest.Wrapf("data proxy amount is zero at index %d, %d", i, j)
+			}
+
+			if dataProxyReport.Price.IsNil() {
+				return sdkerrors.ErrInvalidRequest.Wrapf("data proxy price is nil at index %d, %d", i, j)
+			}
+
+			if !dataProxyReport.Price.IsPositive() {
+				return sdkerrors.ErrInvalidRequest.Wrapf("data proxy price is not positive at index %d, %d", i, j)
+			}
+
+			totalDataProxyAmount = totalDataProxyAmount.Add(dataProxyReport.Price.Mul(math.NewIntFromUint64(dataProxyReport.Amount)))
+		}
+
+		if totalDataProxyAmount.GT(report.UsedCredits) {
+			return sdkerrors.ErrInvalidRequest.Wrapf("total data proxy amount is greater than used credits at index %d", i)
+		}
+	}
+
+	return nil
 }
 
 func (m *MsgUpdateParams) ValidateBasic() error {

@@ -6,6 +6,8 @@ import (
 	"cosmossdk.io/core/address"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 )
 
 // BankKeeper defines the contract needed for supply related APIs (noalias)
@@ -24,4 +26,8 @@ type AccountKeeper interface {
 
 type StakingKeeper interface {
 	BondDenom(ctx context.Context) (string, error)
+}
+
+type DataProxyKeeper interface {
+	GetDataProxyConfig(ctx context.Context, pubKey []byte) (result dataproxytypes.ProxyConfig, err error)
 }

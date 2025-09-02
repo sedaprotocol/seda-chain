@@ -673,6 +673,7 @@ func NewApp(
 		app.BankKeeper,
 		app.AccountKeeper,
 		app.StakingKeeper,
+		app.DataProxyKeeper,
 		// TODO: replace with the security group address
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
