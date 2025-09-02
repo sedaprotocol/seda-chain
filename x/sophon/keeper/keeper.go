@@ -14,9 +14,10 @@ import (
 )
 
 type Keeper struct {
-	bankKeeper    types.BankKeeper
-	accountKeeper types.AccountKeeper
-	stakingKeeper types.StakingKeeper
+	bankKeeper      types.BankKeeper
+	accountKeeper   types.AccountKeeper
+	stakingKeeper   types.StakingKeeper
+	dataProxyKeeper types.DataProxyKeeper
 
 	// authority is the address capable of executing MsgUpdateParams. Typically, this should be the gov module address.
 	// Initially this will be the SEDA security group address.
@@ -36,6 +37,7 @@ func NewKeeper(
 	bk types.BankKeeper,
 	ak types.AccountKeeper,
 	sk types.StakingKeeper,
+	dpk types.DataProxyKeeper,
 	authority string,
 ) *Keeper {
 	if _, err := ak.AddressCodec().StringToBytes(authority); err != nil {
@@ -48,15 +50,16 @@ func NewKeeper(
 
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
-		authority:      authority,
-		bankKeeper:     bk,
-		accountKeeper:  ak,
-		stakingKeeper:  sk,
-		params:         collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
-		sophonID:       collections.NewSequence(sb, types.SophonIDKey, "sophon_id"),
-		sophonInfo:     collections.NewMap(sb, types.SophonInfoKey, "sophon_info", collections.BytesKey, codec.CollValue[types.SophonInfo](cdc)),
-		sophonUser:     collections.NewMap(sb, types.SophonUserKey, "sophon_user", collections.PairKeyCodec(collections.Uint64Key, collections.StringKey), codec.CollValue[types.SophonUser](cdc)),
-		sophonTransfer: collections.NewMap(sb, types.SophonTransferKey, "sophon_transfer", collections.Uint64Key, collections.BytesValue),
+		authority:       authority,
+		bankKeeper:      bk,
+		accountKeeper:   ak,
+		stakingKeeper:   sk,
+		dataProxyKeeper: dpk,
+		params:          collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
+		sophonID:        collections.NewSequence(sb, types.SophonIDKey, "sophon_id"),
+		sophonInfo:      collections.NewMap(sb, types.SophonInfoKey, "sophon_info", collections.BytesKey, codec.CollValue[types.SophonInfo](cdc)),
+		sophonUser:      collections.NewMap(sb, types.SophonUserKey, "sophon_user", collections.PairKeyCodec(collections.Uint64Key, collections.StringKey), codec.CollValue[types.SophonUser](cdc)),
+		sophonTransfer:  collections.NewMap(sb, types.SophonTransferKey, "sophon_transfer", collections.Uint64Key, collections.BytesValue),
 	}
 
 	schema, err := sb.Build()

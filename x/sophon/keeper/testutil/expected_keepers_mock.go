@@ -15,6 +15,7 @@ import (
 
 	address "cosmossdk.io/core/address"
 	types "github.com/cosmos/cosmos-sdk/types"
+	types0 "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -187,4 +188,43 @@ func (m *MockStakingKeeper) BondDenom(ctx context.Context) (string, error) {
 func (mr *MockStakingKeeperMockRecorder) BondDenom(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BondDenom", reflect.TypeOf((*MockStakingKeeper)(nil).BondDenom), ctx)
+}
+
+// MockDataProxyKeeper is a mock of DataProxyKeeper interface.
+type MockDataProxyKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockDataProxyKeeperMockRecorder
+	isgomock struct{}
+}
+
+// MockDataProxyKeeperMockRecorder is the mock recorder for MockDataProxyKeeper.
+type MockDataProxyKeeperMockRecorder struct {
+	mock *MockDataProxyKeeper
+}
+
+// NewMockDataProxyKeeper creates a new mock instance.
+func NewMockDataProxyKeeper(ctrl *gomock.Controller) *MockDataProxyKeeper {
+	mock := &MockDataProxyKeeper{ctrl: ctrl}
+	mock.recorder = &MockDataProxyKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockDataProxyKeeper) EXPECT() *MockDataProxyKeeperMockRecorder {
+	return m.recorder
+}
+
+// GetDataProxyConfig mocks base method.
+func (m *MockDataProxyKeeper) GetDataProxyConfig(ctx context.Context, pubKey []byte) (types0.ProxyConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDataProxyConfig", ctx, pubKey)
+	ret0, _ := ret[0].(types0.ProxyConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDataProxyConfig indicates an expected call of GetDataProxyConfig.
+func (mr *MockDataProxyKeeperMockRecorder) GetDataProxyConfig(ctx, pubKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDataProxyConfig", reflect.TypeOf((*MockDataProxyKeeper)(nil).GetDataProxyConfig), ctx, pubKey)
 }
