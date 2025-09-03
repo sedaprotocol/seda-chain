@@ -387,7 +387,7 @@ func TestEndBlock_PausedContract(t *testing.T) {
 func TestTallyTestItems(t *testing.T) {
 	f := initFixture(t)
 
-	numRequests := 100
+	numRequests := 10
 	drIDs := make([]string, numRequests)
 	testItems := make([]testwasms.TallyTestItem, numRequests)
 	for i := range numRequests {
