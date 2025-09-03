@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -36,6 +37,7 @@ func NewTallyParallelExecItem(index int, req types.Request, gasMeter *types.GasM
 	}
 }
 
+/*
 // BatchExecuteTallyProgramsParallel executes ExecuteTallyProgramsParallel in
 // batches. The batch size is currently set to 25.
 func (k Keeper) BatchExecuteTallyProgramsParallel(ctx sdk.Context, tallyExecItems []TallyParallelExecItem) []tallyvm.VmResult {
@@ -49,9 +51,11 @@ func (k Keeper) BatchExecuteTallyProgramsParallel(ctx sdk.Context, tallyExecItem
 
 	return vmResults
 }
+*/
 
 type execArgs struct {
 	index   int
+	err     error // error that caused the item to not be executed
 	program []byte
 	args    []string
 	envs    map[string]string
@@ -63,73 +67,84 @@ type execArgs struct {
 // This method returns a slice of VM execution results of the items that are
 // executed in order.
 func (k Keeper) ExecuteTallyProgramsParallel(ctx sdk.Context, items []TallyParallelExecItem) []tallyvm.VmResult {
-	results := make(chan execArgs)
+	var wg sync.WaitGroup
+	results := make([]execArgs, len(items))
 
 	programs := make([][]byte, 0, len(items))
 	args := make([][]string, 0, len(items))
 	envs := make([]map[string]string, 0, len(items))
 
 	for i := range items {
-		go func() {
-			program, err := k.wasmStorageKeeper.GetOracleProgram(ctx, items[i].Request.TallyProgramID)
+		wg.Add(1)
+		go func(index int) {
+			defer wg.Done()
+
+			program, err := k.wasmStorageKeeper.GetOracleProgram(ctx, items[index].Request.TallyProgramID)
 			if err != nil {
-				items[i].TallyExecErr = err
-				k.Logger(ctx).Error(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrFindingTallyProgram)
+				results[index] = execArgs{index: items[index].Index, err: err}
+				return
 			}
 
-			input, err := base64.StdEncoding.DecodeString(items[i].Request.TallyInputs)
+			input, err := base64.StdEncoding.DecodeString(items[index].Request.TallyInputs)
 			if err != nil {
-				items[i].TallyExecErr = err
-				k.Logger(ctx).Error(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrDecodingTallyInputs)
+				results[index] = execArgs{index: items[index].Index, err: err}
+				return
 			}
 
 			// Convert base64 payback address to hex that tally VM expects.
-			paybackAddrBytes, err := base64.StdEncoding.DecodeString(items[i].Request.PaybackAddress)
+			paybackAddrBytes, err := base64.StdEncoding.DecodeString(items[index].Request.PaybackAddress)
 			if err != nil {
-				items[i].TallyExecErr = err
-				k.Logger(ctx).Error(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrDecodingPaybackAddress)
+				results[index] = execArgs{index: items[index].Index, err: err}
+				return
 			}
 
-			arg, err := tallyVMArg(input, items[i].Reveals, items[i].Outliers)
+			arg, err := tallyVMArg(input, items[index].Reveals, items[index].Outliers)
 			if err != nil {
-				items[i].TallyExecErr = err
-				k.Logger(ctx).Error(err.Error(), "request_id", items[i].Request.ID, "error", types.ErrConstructingTallyVMArgs)
+				results[index] = execArgs{index: items[index].Index, err: err}
+				return
 			}
 
-			results <- execArgs{
+			results[index] = execArgs{
+				index:   items[index].Index,
+				err:     nil,
 				program: program.Bytecode,
 				args:    arg,
 				envs: map[string]string{
 					"VM_MODE":               "tally",
-					"CONSENSUS":             fmt.Sprintf("%v", items[i].Consensus),
+					"CONSENSUS":             fmt.Sprintf("%v", items[index].Consensus),
 					"BLOCK_HEIGHT":          fmt.Sprintf("%d", ctx.BlockHeight()),
-					"DR_ID":                 items[i].Request.ID,
-					"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", items[i].Request.ReplicationFactor),
-					"EXEC_PROGRAM_ID":       items[i].Request.ExecProgramID,
-					"EXEC_INPUTS":           items[i].Request.ExecInputs,
-					"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", items[i].Request.ExecGasLimit),
-					"TALLY_INPUTS":          items[i].Request.TallyInputs,
-					"TALLY_PROGRAM_ID":      items[i].Request.TallyProgramID,
-					"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", items[i].GasMeter.RemainingTallyGas()),
-					"DR_GAS_PRICE":          items[i].Request.PostedGasPrice,
-					"DR_MEMO":               items[i].Request.Memo,
+					"DR_ID":                 items[index].Request.ID,
+					"DR_REPLICATION_FACTOR": fmt.Sprintf("%v", items[index].Request.ReplicationFactor),
+					"EXEC_PROGRAM_ID":       items[index].Request.ExecProgramID,
+					"EXEC_INPUTS":           items[index].Request.ExecInputs,
+					"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", items[index].Request.ExecGasLimit),
+					"TALLY_INPUTS":          items[index].Request.TallyInputs,
+					"TALLY_PROGRAM_ID":      items[index].Request.TallyProgramID,
+					"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", items[index].GasMeter.RemainingTallyGas()),
+					"DR_GAS_PRICE":          items[index].Request.PostedGasPrice,
+					"DR_MEMO":               items[index].Request.Memo,
 					"DR_PAYBACK_ADDRESS":    hex.EncodeToString(paybackAddrBytes),
 				},
 			}
 
 			k.Logger(ctx).Debug(
 				"executing tally VM",
-				"request_id", items[i].Request.ID,
-				"tally_program_id", items[i].Request.TallyProgramID,
+				"request_id", items[index].Request.ID,
+				"tally_program_id", items[index].Request.TallyProgramID,
 			)
-		}()
+		}(i)
 	}
 
-	for i := 0; i < len(items); i++ {
-		result := <-results
-		programs = append(programs, result.program)
-		args = append(args, result.args)
-		envs = append(envs, result.envs)
+	wg.Wait()
+	for i := range results {
+		if results[i].err == nil {
+			programs = append(programs, results[i].program)
+			args = append(args, results[i].args)
+			envs = append(envs, results[i].envs)
+		} else {
+			items[results[i].index].TallyExecErr = results[i].err
+			k.Logger(ctx).Error(results[i].err.Error(), "request_id", items[results[i].index].Request.ID, "error", types.ErrConstructingTallyVMArgs)
+		}
 	}
 
 	if len(programs) == 0 {
