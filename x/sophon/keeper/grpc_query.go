@@ -2,8 +2,15 @@ package keeper
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"strconv"
+	"strings"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"golang.org/x/crypto/sha3"
 
 	"cosmossdk.io/collections"
 	errorsmod "cosmossdk.io/errors"
@@ -136,8 +143,80 @@ func (q Querier) SophonUser(c context.Context, req *types.QuerySophonUserRequest
 	return &types.QuerySophonUserResponse{User: user}, nil
 }
 
-func (q Querier) SophonEligibility(_ context.Context, _ *types.QuerySophonEligibilityRequest) (*types.QuerySophonEligibilityResponse, error) {
-	panic("not implemented")
+func (q Querier) SophonEligibility(c context.Context, req *types.QuerySophonEligibilityRequest) (*types.QuerySophonEligibilityResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	payload, err := base64.StdEncoding.DecodeString(req.Payload)
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidRequest.Wrapf("invalid base64 in payload: %s", req.Payload)
+	}
+
+	// The format is "{blockNumber}:{userId}:{signature_hex_string}"
+	parts := strings.Split(string(payload), ":")
+	if len(parts) != 3 {
+		return nil, sdkerrors.ErrInvalidRequest.Wrapf("invalid number of parts: %s", string(payload))
+	}
+
+	blockHeight, err := strconv.ParseUint(parts[0], 10, 64)
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidRequest.Wrapf("invalid block height: %s", parts[0])
+	}
+
+	userID := parts[1]
+
+	signature := parts[2]
+	signatureBytes, err := hex.DecodeString(signature)
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidRequest.Wrapf("invalid hex in signature: %s", signature)
+	}
+
+	// The signed hash is "blocknumber_be_uint64, keccak256(userId_utf8_bytes), chainId_utf8_bytes"
+	var payloadBytes []byte
+	payloadBytes = binary.BigEndian.AppendUint64(payloadBytes, blockHeight)
+
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write([]byte(userID))
+	userIDHash := hasher.Sum(nil)
+	payloadBytes = append(payloadBytes, userIDHash...)
+
+	payloadBytes = append(payloadBytes, []byte(ctx.ChainID())...)
+
+	// Make the hash that should have been signed
+	hasher.Reset()
+	hasher.Write(payloadBytes)
+	payloadHash := hasher.Sum(nil)
+
+	sigPubKey, err := crypto.Ecrecover(payloadHash, signatureBytes)
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidRequest.Wrapf("invalid signature: %s", signature)
+	}
+
+	sophonInfo, err := q.GetSophonInfo(ctx, sigPubKey)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, sdkerrors.ErrNotFound.Wrapf("no sophon registered for %s", hex.EncodeToString(sigPubKey))
+		}
+
+		return nil, err
+	}
+
+	sophonUser, err := q.GetSophonUser(ctx, sophonInfo.Id, userID)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, sdkerrors.ErrNotFound.Wrapf("no user registered for %s", userID)
+		}
+
+		return nil, err
+	}
+
+	// The querying service is responsible for determining whether they want to handle the request or not,
+	// this query simply returns whether the signature is valid, the credits of the user, and the current block height.
+	return &types.QuerySophonEligibilityResponse{
+		Eligible:    true,
+		UserCredits: sophonUser.Credits,
+		//nolint:gosec // G115: We shouldn't get negative block heights
+		BlockHeight: uint64(ctx.BlockHeight()),
+	}, nil
 }
 
 func (q Querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
