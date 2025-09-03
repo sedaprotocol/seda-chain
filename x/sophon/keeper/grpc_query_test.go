@@ -356,3 +356,129 @@ func (s *KeeperTestSuite) TestQuerier_SophonUser() {
 		})
 	}
 }
+
+func (s *KeeperTestSuite) TestQuerier_SophonEligibility() {
+	adminAddress := "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5"
+
+	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+	pubKey, err := hex.DecodeString(pubKeyHex)
+	s.Require().NoError(err)
+
+	testSetup := func() {
+		sophonInfo, err := s.keeper.CreateSophonInfo(s.ctx, pubKey, types.SophonInputs{
+			OwnerAddress: adminAddress,
+			AdminAddress: adminAddress,
+			Address:      adminAddress,
+			PublicKey:    pubKey,
+			Memo:         "",
+		})
+		s.Require().NoError(err)
+
+		err = s.keeper.SetSophonUser(s.ctx, sophonInfo.Id, "user1", types.SophonUser{
+			UserId:  "user1",
+			Credits: math.NewInt(100),
+		})
+		s.Require().NoError(err)
+
+		err = s.keeper.SetSophonUser(s.ctx, sophonInfo.Id, "user2", types.SophonUser{
+			UserId:  "user2",
+			Credits: math.NewInt(0),
+		})
+		s.Require().NoError(err)
+	}
+
+	s.Run("Happy path user with credits", func() {
+		testSetup()
+
+		res, err := s.queryClient.SophonEligibility(s.ctx, &types.QuerySophonEligibilityRequest{
+			// 100:user1:signature_hex
+			Payload: "MTAwOnVzZXIxOjZjOWIwOTNlNDM5NjdkYjZhZDUxOTM5MWNhOTFmODU1NWRkYjYyMzAzYmI4NDgzMDI4YWQ2MzgyZTViNzBiZGY1NzA1YzAwZjBhM2RlMmMyNzQ3MmE1ZWNhMzIwZDE5YWE2NzBjNTdkMzlkMWNjODE4N2RkY2ZlZjc0ZGI3ODMwMDE=",
+		})
+		s.Require().NoError(err)
+		s.Require().NotNil(res)
+		s.Require().Equal(true, res.Eligible)
+		s.Require().Equal(math.NewInt(100), res.UserCredits)
+		s.Require().Equal(uint64(0), res.BlockHeight)
+	})
+
+	s.Run("Happy path user without credits", func() {
+		testSetup()
+
+		res, err := s.queryClient.SophonEligibility(s.ctx, &types.QuerySophonEligibilityRequest{
+			// 900:user2:signature_hex
+			Payload: "OTAwOnVzZXIyOmFmNGFkY2RlYjZiMjRlMzVjZDFiYTVhZGE4YmEyOTMzMmY3Njk5NzAwZmEyZWFiMTFiYjE0M2Q2MmQzMWY5YzMxZDM5ZDIxZDlhYmQyZWQ1MTJhNThhMDkwZDU3MmU3YTFkN2RlNjQ1YmI1OTJkYjhjZWE3YjI5MWM0NjJhNWExMDA=",
+		})
+		s.Require().NoError(err)
+		s.Require().NotNil(res)
+		s.Require().Equal(true, res.Eligible)
+		s.Require().Equal(math.NewInt(0), res.UserCredits)
+		s.Require().Equal(uint64(0), res.BlockHeight)
+	})
+
+	tests := []struct {
+		name        string
+		wantErr     error
+		errorString string
+		payload     string
+	}{
+		{
+			name: "Unknown user",
+			// 987654312:user3:signature_hex
+			payload: "OTg3NjU0MzEyOnVzZXIzOjU5NDkyYTdkZWUwMTdjMTMzNDI4NzQ5YjMyNWE5NzZkOTM5YzljMjJmMWU1ZGIzNjc2NDQzMGQwMzBlNGM2M2EwNTFlOTBlYTE1NWY0NjI2OTI5ZDdkYzM4NTYxMTMwMzNkNjcwYjc5YmRjYWMxOTY1MmQ4Y2Y0YmQyM2UxNWRlMDA=",
+			wantErr: sdkerrors.ErrNotFound,
+		},
+		{
+			name: "Unknown sophon",
+			// 888:user1:signature_hex
+			payload: "ODg4OnVzZXIxOmFhOWRkODc5NGM0NTg0ZTI1NWIwZmJmMmNmY2EyMmE5NDhhNWY0ZmY1N2IzZGQwZDhhYzdiY2Q1N2NjNjIwZmIyNWE1OGQyOTE0MDM1ZDIzNDEwOGVmNjZjY2Y4MjYzMDE2ZjZkMjhjZDZjNTRiNWU4ZjhmMDA4OWQ2ZjE1NzIxMDA=",
+			wantErr: sdkerrors.ErrNotFound,
+		},
+		{
+			name:        "Invalid payload",
+			payload:     "99()()",
+			wantErr:     sdkerrors.ErrInvalidRequest,
+			errorString: "invalid base64 in payload",
+		},
+		{
+			name: "Invalid number of parts",
+			// 888:signature_hex
+			payload:     "ODg4OmRiNGMwMWZjMzhjYTNmMzIwNTVmY2FkNGYzM2Q3YmY3ZWFhM2FmYjljMTFkNzg5NmMyNDZlN2U3NDkwYTQyYjA3OTEzMjIwZTMwOTFkMjJkZWM1N2YxNjg3ZDk0ZmM0MDhmZDE0YWIzNmI4YTE2ZTUwZTUyNGVlYTZhMWMyN2I2MDE=",
+			wantErr:     sdkerrors.ErrInvalidRequest,
+			errorString: "invalid number of parts",
+		},
+		{
+			name: "Invalid block height",
+			// -8:user1:signature_hex
+			payload:     "LTg6dXNlcjE6MmRFVFBYMTNPUGtsNCtmRlZTS051Um9YRStlVXQ4dGVKMlg3MU5ZR1Vwa3pHRElNaGEzZEZ5aWk1eDdSQmljMkYxdkNFd2VTQ2tQSmdXeFdYbEJuUkFFPQ==",
+			wantErr:     sdkerrors.ErrInvalidRequest,
+			errorString: "invalid block height",
+		},
+		{
+			name:        "Invalid signature hex",
+			payload:     "ODp1c2VyMTpzUy80T0E1elZoVkRKVS9xNlJPVmhJQUQzVDlFSlNmZCsxNTV1aTlBUXJNRVFISjMwMU1jK015QVozSE1DMnZZdVZURlZMVS9LTUhRclB0VGRJQ0lFd0U9",
+			wantErr:     sdkerrors.ErrInvalidRequest,
+			errorString: "invalid hex in signature",
+		},
+		{
+			name: "Invalid signature",
+			// Omitted recovery param from the signature
+			payload:     "ODp1c2VyMTo4MWQ5MzA1OGUwOWI3OTlkYzhhNGI3ODhhNGU1ZWE4YjQ0OGFhZWU4NDFiYmU2ZmI4MDViZjBhM2E1ZmJlNjNiNWQ0ZDg2ZDBlNTIxNDZmN2ExNjcxZGIxOGMwZTYxNmUwZDk2ZDM5YzY0MDA3NTgzNDM0MjViNmQ4YjVhNzg3Yw==",
+			wantErr:     sdkerrors.ErrInvalidRequest,
+			errorString: "invalid signature",
+		},
+	}
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			testSetup()
+			res, err := s.queryClient.SophonEligibility(s.ctx, &types.QuerySophonEligibilityRequest{
+				Payload: tt.payload,
+			})
+			s.Require().Nil(res)
+			s.Require().ErrorIs(err, tt.wantErr)
+
+			if tt.errorString != "" {
+				s.Require().Contains(err.Error(), tt.errorString)
+			}
+		})
+	}
+}

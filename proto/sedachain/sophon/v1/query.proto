@@ -4,6 +4,7 @@ package sedachain.sophon.v1;
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos_proto/cosmos.proto";
 import "sedachain/sophon/v1/sophon.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/sophon/types";
@@ -105,17 +106,24 @@ message QuerySophonUserResponse {
 
 // The request message for QuerySophonEligibility RPC method.
 message QuerySophonEligibilityRequest {
-  // A hex encoded string of the signature of the sophon.
-  string signature = 1;
-
-  string block_height = 2;
+  // A base64 encoded string of the payload of the sophon.
+  // Should be in the following format:
+  // "{blockNumber}:{userId}:{signature(blocknumber_be_uint64,
+  // keccak256(userId_utf8_bytes), chainId_utf8_bytes)_hex_string}"
+  string payload = 1;
 }
 
 // The response message for QuerySophonEligibility RPC method.
 message QuerySophonEligibilityResponse {
   bool eligible = 1;
 
-  string unspent_balance = 2;
+  string user_credits = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  uint64 block_height = 3;
 }
 
 // The request message for QueryParams RPC method.
