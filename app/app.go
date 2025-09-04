@@ -136,6 +136,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
+
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
@@ -145,13 +146,13 @@ import (
 	dataproxy "github.com/sedaprotocol/seda-chain/x/data-proxy"
 	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
+	fast "github.com/sedaprotocol/seda-chain/x/fast"
+	fastkeeper "github.com/sedaprotocol/seda-chain/x/fast/keeper"
+	fasttypes "github.com/sedaprotocol/seda-chain/x/fast/types"
 	"github.com/sedaprotocol/seda-chain/x/pubkey"
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	"github.com/sedaprotocol/seda-chain/x/slashing"
-	sophon "github.com/sedaprotocol/seda-chain/x/sophon"
-	sophonkeeper "github.com/sedaprotocol/seda-chain/x/sophon/keeper"
-	sophontypes "github.com/sedaprotocol/seda-chain/x/sophon/types"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally"
@@ -206,7 +207,7 @@ var (
 		tally.AppModuleBasic{},
 		dataproxy.AppModuleBasic{},
 		batching.AppModuleBasic{},
-		sophon.AppModuleBasic{},
+		fast.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -222,7 +223,7 @@ var (
 		icatypes.ModuleName:            nil,
 		wasmtypes.ModuleName:           {authtypes.Burner},
 		dataproxytypes.ModuleName:      {authtypes.Burner},
-		sophontypes.ModuleName:         {authtypes.Burner},
+		fasttypes.ModuleName:           {authtypes.Burner},
 	}
 )
 
@@ -329,7 +330,7 @@ func NewApp(
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
 		crisistypes.StoreKey, wasmstoragetypes.StoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey,
-		batchingtypes.StoreKey, tallytypes.StoreKey, sophontypes.StoreKey,
+		batchingtypes.StoreKey, tallytypes.StoreKey, fasttypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -667,9 +668,9 @@ func NewApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	app.SophonKeeper = *sophonkeeper.NewKeeper(
+	app.FastKeeper = *fastkeeper.NewKeeper(
 		appCodec,
-		runtime.NewKVStoreService(keys[sophontypes.StoreKey]),
+		runtime.NewKVStoreService(keys[fasttypes.StoreKey]),
 		app.BankKeeper,
 		app.AccountKeeper,
 		app.StakingKeeper,
@@ -820,7 +821,7 @@ func NewApp(
 		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
 		tally.NewAppModule(appCodec, app.TallyKeeper),
 		dataproxy.NewAppModule(appCodec, app.DataProxyKeeper),
-		sophon.NewAppModule(appCodec, app.SophonKeeper),
+		fast.NewAppModule(appCodec, app.FastKeeper),
 		pubkey.NewAppModule(appCodec, app.PubKeyKeeper),
 		batching.NewAppModule(appCodec, app.BatchingKeeper),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
@@ -880,7 +881,7 @@ func NewApp(
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
-		sophontypes.ModuleName,
+		fasttypes.ModuleName,
 		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
 	)
@@ -914,7 +915,7 @@ func NewApp(
 		wasmstoragetypes.ModuleName,
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
-		sophontypes.ModuleName,
+		fasttypes.ModuleName,
 		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
 	)
@@ -956,7 +957,7 @@ func NewApp(
 		tallytypes.ModuleName,
 		dataproxytypes.ModuleName,
 		batchingtypes.ModuleName,
-		sophontypes.ModuleName,
+		fasttypes.ModuleName,
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)

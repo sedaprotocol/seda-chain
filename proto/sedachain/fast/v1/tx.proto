@@ -1,0 +1,347 @@
+syntax = "proto3";
+package sedachain.fast.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
+import "sedachain/fast/v1/fast.proto";
+import "amino/amino.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/fast/types";
+
+// Msg service defines the fast tx gRPC methods.
+service Msg {
+  // Registers a new fast client entry in the registry.
+  rpc RegisterFastClient(MsgRegisterFastClient)
+      returns (MsgRegisterFastClientResponse);
+
+  // Edits an existing fast client.
+  rpc EditFastClient(MsgEditFastClient) returns (MsgEditFastClientResponse);
+
+  // Transfers the ownership of a fast client.
+  rpc TransferOwnership(MsgTransferOwnership)
+      returns (MsgTransferOwnershipResponse);
+
+  // Accepts the ownership of a fast client.
+  rpc AcceptOwnership(MsgAcceptOwnership) returns (MsgAcceptOwnershipResponse);
+
+  // Cancels the ownership transfer of a fast client.
+  rpc CancelOwnershipTransfer(MsgCancelOwnershipTransfer)
+      returns (MsgCancelOwnershipTransferResponse);
+
+  // Adds a user to a fast client.
+  rpc AddUser(MsgAddUser) returns (MsgAddUserResponse);
+
+  // Removes a user from a fast client.
+  rpc RemoveUser(MsgRemoveUser) returns (MsgRemoveUserResponse);
+
+  // Top up a user's credits.
+  rpc TopUpUser(MsgTopUpUser) returns (MsgTopUpUserResponse);
+
+  // Expire a user's credits.
+  rpc ExpireUserCredits(MsgExpireUserCredits)
+      returns (MsgExpireUserCreditsResponse);
+
+  // Settle a fast client's credits.
+  rpc SettleCredits(MsgSettleCredits) returns (MsgSettleCreditsResponse);
+
+  // Submits reports for a fast client.
+  rpc SubmitReports(MsgSubmitReports) returns (MsgSubmitReportsResponse);
+
+  // Used to update the modules parameters through the authority.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+}
+
+// All data required for a new fast client.
+message MsgRegisterFastClient {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "seda/fast/MsgRegisterFastClient";
+
+  // authority is the address that controls the fast module.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the address that can edit the fast client.
+  string owner_address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // The public key of the fast client used to verify signed requests as a hex
+  // string.
+  string public_key = 3;
+
+  // admin_address defines the address that can perform administrative actions
+  // on the fast client.
+  string admin_address = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the address of the fast client that is allowed to submit reports.
+  string address = 5 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // memo defines an optional string which is not used by the protocol.
+  string memo = 6;
+}
+
+// MsgRegisterFastClientResponse is the response type for the
+// Msg/RegisterFastClient
+message MsgRegisterFastClientResponse {}
+
+// Allows the owner to edit the fast client.
+message MsgEditFastClient {
+  option (cosmos.msg.v1.signer) = "owner_address";
+  option (amino.name) = "seda/fast/MsgEditFastClient";
+
+  // this should match the owner_address in the fast client
+  string owner_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the fast client as a hex string
+  string fast_client_public_key = 2;
+
+  // [optional] the new admin address of the fast client
+  string new_admin_address = 3 [
+    (cosmos_proto.scalar) = "cosmos.AddressString",
+    (amino.dont_omitempty) = false
+  ];
+
+  // [optional] the new address of the fast client
+  string new_address = 4 [
+    (cosmos_proto.scalar) = "cosmos.AddressString",
+    (amino.dont_omitempty) = false
+  ];
+
+  // [optional] the new public key of the fast client as a hex string
+  string new_public_key = 5 [ (amino.dont_omitempty) = true ];
+
+  // [optional] the new memo of the fast client
+  string new_memo = 6 [ (amino.dont_omitempty) = true ];
+}
+
+// MsgEditFastClientResponse is the response type for the Msg/EditFastClient RPC
+// method.
+message MsgEditFastClientResponse {}
+
+// Allows the owner to transfer the ownership of the fast client to a new
+// address.
+message MsgTransferOwnership {
+  option (cosmos.msg.v1.signer) = "owner_address";
+  option (amino.name) = "seda/fast/MsgTransferOwnership";
+
+  // this should match the owner_address in the fast client
+  string owner_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the fast client as a hex string
+  string fast_client_public_key = 2;
+
+  // the new owner address of the fast client
+  string new_owner_address = 3
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// MsgTransferOwnershipResponse is the response type for the
+// Msg/TransferOwnership RPC method.
+message MsgTransferOwnershipResponse {}
+
+// Allows the new owner to accept the ownership of the fast client.
+message MsgAcceptOwnership {
+  option (cosmos.msg.v1.signer) = "new_owner_address";
+  option (amino.name) = "seda/fast/MsgAcceptOwnership";
+
+  // the address that is accepting the ownership
+  string new_owner_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the fast client as a hex string
+  string fast_client_public_key = 2;
+}
+
+// MsgAcceptOwnershipResponse is the response type for the
+// Msg/AcceptOwnership RPC method.
+message MsgAcceptOwnershipResponse {}
+
+// Allows the owner to cancel the ownership transfer of the fast client.
+message MsgCancelOwnershipTransfer {
+  option (cosmos.msg.v1.signer) = "owner_address";
+  option (amino.name) = "seda/fast/MsgCancelOwnershipTransfer";
+
+  // this should match the owner_address in the fast client
+  string owner_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the fast client as a hex string
+  string fast_client_public_key = 2;
+}
+
+// MsgCancelOwnershipTransferResponse is the response type for the
+// Msg/CancelOwnershipTransfer RPC method.
+message MsgCancelOwnershipTransferResponse {}
+
+// Allows the admin to add a user to the fast client.
+message MsgAddUser {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (amino.name) = "seda/fast/MsgAddUser";
+
+  // this should match the admin_address in the fast client
+  string admin_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the fast client as a hex string
+  string fast_client_public_key = 2;
+
+  // the identifier of the user
+  string user_id = 3;
+
+  // the amount of credits the user has initially
+  string initial_credits = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgAddUserResponse is the response type for the Msg/AddUser RPC method.
+message MsgAddUserResponse {}
+
+// Allows the admin to remove a user from the fast client.
+message MsgRemoveUser {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (amino.name) = "seda/fast/MsgRemoveUser";
+
+  // this should match the admin_address in the fast client
+  string admin_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the fast client as a hex string
+  string fast_client_public_key = 2;
+
+  // the identifier of the user
+  string user_id = 3;
+}
+
+// MsgRemoveUserResponse is the response type for the Msg/RemoveUser RPC method.
+message MsgRemoveUserResponse {}
+
+// Allows the admin to top up a user's credits.
+message MsgTopUpUser {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "seda/fast/MsgTopUpUser";
+
+  // the address that is toping up the user
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the fast client as a hex string
+  string fast_client_public_key = 2;
+
+  // the identifier of the user
+  string user_id = 3;
+
+  // the amount of credits to top up
+  string amount = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgTopUpUserResponse is the response type for the Msg/TopUpUser RPC method.
+message MsgTopUpUserResponse {}
+
+// SettleType defines the type of settle (withdraw or burn)
+enum SettleType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // An unspecified settle type which will throw an error.
+  SETTLE_TYPE_UNSPECIFIED = 0;
+
+  // Withdraw the credits to the admin address.
+  SETTLE_TYPE_WITHDRAW = 1;
+
+  // Burn the credits.
+  SETTLE_TYPE_BURN = 2;
+}
+
+// Allows the admin to settle the credits of the fast client.
+message MsgSettleCredits {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (amino.name) = "seda/fast/MsgSettleCredits";
+
+  // this should match the admin_address in the fast client
+  string admin_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the fast client as a hex string
+  string fast_client_public_key = 2;
+
+  // the type of settle
+  SettleType settle_type = 3;
+
+  // the amount of credits to settle
+  string amount = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgSettleCreditsResponse is the response type for the Msg/SettleCredits RPC
+// method.
+message MsgSettleCreditsResponse {
+  // The amount of credits that were settled.
+  string amount = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Allows the admin to expire the credits of a user.
+message MsgExpireUserCredits {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (amino.name) = "seda/fast/MsgExpireUserCredits";
+
+  // this should match the admin_address in the fast client
+  string admin_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the fast client as a hex string
+  string fast_client_public_key = 2;
+
+  // the identifier of the user
+  string user_id = 3;
+
+  // the amount of credits to expire
+  string amount = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgExpireUserCreditsResponse is the response type for the
+// Msg/ExpireUserCredits RPC method.
+message MsgExpireUserCreditsResponse {}
+
+// Allows the fast client to submit user reports to update credits and pay out
+// data proxy fees.
+message MsgSubmitReports {
+  option (cosmos.msg.v1.signer) = "address";
+  option (amino.name) = "seda/fast/MsgSubmitReports";
+
+  // this should match the address in the fast client
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the fast client
+  bytes fast_client_public_key = 2;
+
+  // the reports to process
+  repeated FastUserReport reports = 3;
+}
+
+// MsgSubmitReportsResponse is the response type for the Msg/SubmitReports RPC
+// method.
+message MsgSubmitReportsResponse {}
+
+// The request message for the UpdateParams method.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "seda/fast/MsgUpdateParams";
+
+  // authority is the address that controls the module.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  Params params = 2 [ (gogoproto.nullable) = false ];
+}
+
+// MsgUpdateParamsResponse is the response type for the Msg/UpdateParams RPC
+// method.
+message MsgUpdateParamsResponse {}

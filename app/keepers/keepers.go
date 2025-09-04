@@ -30,8 +30,8 @@ import (
 
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
+	fastkeeper "github.com/sedaprotocol/seda-chain/x/fast/keeper"
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
-	sophonkeeper "github.com/sedaprotocol/seda-chain/x/sophon/keeper"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
 	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
@@ -80,5 +80,5 @@ type AppKeepers struct {
 	DataProxyKeeper   dataproxykeeper.Keeper
 	PubKeyKeeper      *pubkeykeeper.Keeper
 	BatchingKeeper    batchingkeeper.Keeper
-	SophonKeeper      sophonkeeper.Keeper
+	FastKeeper        fastkeeper.Keeper
 }

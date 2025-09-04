@@ -1,0 +1,35 @@
+syntax = "proto3";
+package sedachain.fast.v1;
+
+import "gogoproto/gogo.proto";
+import "sedachain/fast/v1/fast.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/fast/types";
+
+// GenesisState defines fast module's genesis state.
+message GenesisState {
+  uint64 starting_fast_client_id = 1;
+
+  Params params = 2 [ (gogoproto.nullable) = false ];
+
+  repeated FastClient fast_clients = 3 [ (gogoproto.nullable) = false ];
+
+  repeated UserWithFastClientId fast_users = 4 [ (gogoproto.nullable) = false ];
+
+  repeated FastClientTransferOwnership transfers = 5
+      [ (gogoproto.nullable) = false ];
+}
+
+// FastUser wraps a user and their associated FastClient id.
+message UserWithFastClientId {
+  uint64 fast_client_id = 1;
+
+  FastUser user = 2;
+}
+
+// FastClientTransferOwnership links a fast client to a new owner address.
+message FastClientTransferOwnership {
+  uint64 fast_client_id = 1;
+
+  string new_owner_address = 2;
+}

@@ -1,0 +1,139 @@
+syntax = "proto3";
+package sedachain.fast.v1;
+
+import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos_proto/cosmos.proto";
+import "sedachain/fast/v1/fast.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/fast/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // FastClient returns a fast client when given its public key as a hex
+  // encoded string.
+  rpc FastClient(QueryFastClientRequest) returns (QueryFastClientResponse) {
+    option (google.api.http).get =
+        "/seda-chain/fast/client/{fast_client_pub_key}";
+  }
+
+  // FastClientTransfer returns a fast client transfer when given its public key
+  // as a hex encoded string.
+  rpc FastClientTransfer(QueryFastClientTransferRequest)
+      returns (QueryFastClientTransferResponse) {
+    option (google.api.http).get =
+        "/seda-chain/fast/transfer/{fast_client_pub_key}";
+  }
+
+  // FastUsers returns a paginated list of Fast users when given the fast client
+  // public key as a hex encoded string.
+  rpc FastClientUsers(QueryFastClientUsersRequest)
+      returns (QueryFastClientUsersResponse) {
+    option (google.api.http).get =
+        "/seda-chain/fast/client/{fast_client_pub_key}/users";
+  }
+
+  // FastUser returns a fast user when given its public key as a hex
+  // encoded string.
+  rpc FastClientUser(QueryFastClientUserRequest)
+      returns (QueryFastClientUserResponse) {
+    option (google.api.http).get =
+        "/seda-chain/fast/client/{fast_client_pub_key}/users/{user_id}";
+  }
+
+  // FastClientEligibility returns a fast client's eligibility based on a signed
+  // payload.
+  rpc FastClientEligibility(QueryFastClientEligibilityRequest)
+      returns (QueryFastClientEligibilityResponse) {
+    option (google.api.http).get = "/seda-chain/fast/check_eligibility";
+  }
+
+  // Params returns the total set of fast parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/seda-chain/fast/params";
+  }
+}
+
+// The request message for QueryFastClient RPC method.
+message QueryFastClientRequest {
+  // A hex encoded string of the public key of the fast client.
+  string fast_client_pub_key = 1;
+}
+
+// The response message for QueryFastClient RPC method.
+message QueryFastClientResponse {
+  FastClient client = 1 [ (gogoproto.nullable) = false ];
+}
+
+// The request message for QueryFastClientTransfer RPC method.
+message QueryFastClientTransferRequest {
+  // A hex encoded string of the public key of the fast client.
+  string fast_client_pub_key = 1;
+}
+
+// The response message for QueryFastClientTransfer RPC method.
+message QueryFastClientTransferResponse { string new_owner_address = 1; }
+
+// The request message for QueryFastClientUsers RPC method.
+message QueryFastClientUsersRequest {
+  // A hex encoded string of the public key of the fast client.
+  string fast_client_pub_key = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// The response message for QueryFastClientUsers RPC method.
+message QueryFastClientUsersResponse {
+  // users are the users of the fast client of the given fast_client_pub_key.
+  repeated FastUser users = 1 [ (gogoproto.nullable) = false ];
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// The request message for QueryFastClientUser RPC method.
+message QueryFastClientUserRequest {
+  // A hex encoded string of the public key of the fast client.
+  string fast_client_pub_key = 1;
+
+  // the unique id of the user.
+  string user_id = 2;
+}
+
+// The response message for QueryFastClientUser RPC method.
+message QueryFastClientUserResponse {
+  FastUser user = 1 [ (gogoproto.nullable) = false ];
+}
+
+// The request message for QueryFastClientEligibility RPC method.
+message QueryFastClientEligibilityRequest {
+  // A base64 encoded string of the payload of the fast client.
+  // Should be in the following format:
+  // "{blockNumber}:{userId}:{signature(blocknumber_be_uint64,
+  // keccak256(userId_utf8_bytes), chainId_utf8_bytes)_hex_string}"
+  string payload = 1;
+}
+
+// The response message for QueryFastClientEligibility RPC method.
+message QueryFastClientEligibilityResponse {
+  bool eligible = 1;
+
+  string user_credits = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  uint64 block_height = 3;
+}
+
+// The request message for QueryParams RPC method.
+message QueryParamsRequest {}
+
+// The response message for QueryParams RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
