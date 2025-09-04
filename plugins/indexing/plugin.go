@@ -59,6 +59,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
+	fasttypes "github.com/sedaprotocol/seda-chain/x/fast/types"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
@@ -238,6 +239,7 @@ func main() {
 	tallytypes.RegisterInterfaces(interfaceRegistry)
 	dataproxytypes.RegisterInterfaces(interfaceRegistry)
 	batchingtypes.RegisterInterfaces(interfaceRegistry)
+	fasttypes.RegisterInterfaces(interfaceRegistry)
 
 	sqsClient, err := pluginaws.NewSqsClient(logger)
 	if err != nil {
