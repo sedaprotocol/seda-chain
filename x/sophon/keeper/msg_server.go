@@ -58,7 +58,7 @@ func (m msgServer) RegisterSophon(goCtx context.Context, msg *types.MsgRegisterS
 		UsedCredits:  math.NewInt(0),
 	}
 
-	sophonInfo, err := m.Keeper.CreateSophonInfo(ctx, pubKeyBytes, sophonInputs)
+	sophonInfo, err := m.CreateSophonInfo(ctx, pubKeyBytes, sophonInputs)
 	if err != nil {
 		return nil, err
 	}
