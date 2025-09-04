@@ -676,7 +676,7 @@ func NewApp(
 		app.StakingKeeper,
 		app.DataProxyKeeper,
 		// TODO: replace with the security group address
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		"seda1lyfkj6xwecq3462qa683s78weexhp7d72ku3qf",
 	)
 
 	app.BatchingKeeper = batchingkeeper.NewKeeper(
