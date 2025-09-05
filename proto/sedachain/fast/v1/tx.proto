@@ -32,8 +32,11 @@ service Msg {
   // Adds a user to a fast client.
   rpc AddUser(MsgAddUser) returns (MsgAddUserResponse);
 
-  // Removes a user from a fast client.
+  // Start the removal of a user from a fast client.
   rpc RemoveUser(MsgRemoveUser) returns (MsgRemoveUserResponse);
+
+  // Cancel the removal of a user from a fast client.
+  rpc CancelUserRemoval(MsgCancelUserRemoval) returns (MsgCancelUserRemovalResponse);
 
   // Top up a user's credits.
   rpc TopUpUser(MsgTopUpUser) returns (MsgTopUpUserResponse);
@@ -172,11 +175,11 @@ message MsgCancelOwnershipTransferResponse {}
 
 // Allows the admin to add a user to the fast client.
 message MsgAddUser {
-  option (cosmos.msg.v1.signer) = "admin_address";
+  option (cosmos.msg.v1.signer) = "sender";
   option (amino.name) = "seda/fast/MsgAddUser";
 
-  // this should match the admin_address in the fast client
-  string admin_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // the address that is adding the user and optionally topping up their credits
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // the public key of the fast client as a hex string
   string fast_client_public_key = 2;
@@ -195,13 +198,13 @@ message MsgAddUser {
 // MsgAddUserResponse is the response type for the Msg/AddUser RPC method.
 message MsgAddUserResponse {}
 
-// Allows the admin to remove a user from the fast client.
+// Allows the user to remove themselves from the fast client and start the removal process.
 message MsgRemoveUser {
-  option (cosmos.msg.v1.signer) = "admin_address";
+  option (cosmos.msg.v1.signer) = "user_address";
   option (amino.name) = "seda/fast/MsgRemoveUser";
 
-  // this should match the admin_address in the fast client
-  string admin_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // this should match the address of the fast client user
+  string user_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // the public key of the fast client as a hex string
   string fast_client_public_key = 2;
@@ -213,7 +216,25 @@ message MsgRemoveUser {
 // MsgRemoveUserResponse is the response type for the Msg/RemoveUser RPC method.
 message MsgRemoveUserResponse {}
 
-// Allows the admin to top up a user's credits.
+// Allows the user to cancel the removal process.
+message MsgCancelUserRemoval {
+  option (cosmos.msg.v1.signer) = "user_address";
+  option (amino.name) = "seda/fast/MsgCancelUserRemoval";
+
+  // this should match the address of the fast client user
+  string user_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // the public key of the fast client as a hex string
+  string fast_client_public_key = 2;
+
+  // the identifier of the user
+  string user_id = 3;
+}
+
+// MsgCancelUserRemovalResponse is the response type for the Msg/CancelUserRemoval RPC method.
+message MsgCancelUserRemovalResponse {}
+
+// Allows the sender to top up a user's credits.
 message MsgTopUpUser {
   option (cosmos.msg.v1.signer) = "sender";
   option (amino.name) = "seda/fast/MsgTopUpUser";

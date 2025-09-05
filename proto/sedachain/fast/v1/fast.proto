@@ -2,12 +2,21 @@ syntax = "proto3";
 package sedachain.fast.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/fast/types";
 
 // Module parameters which can be changed through the authority.
-message Params { option (gogoproto.equal) = true; }
+message Params {
+  option (gogoproto.equal) = true;
+
+  // user_removal_time is the time duration of deleting a fast client user
+  // and returning their credits.
+  google.protobuf.Duration user_removal_time = 1
+      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdduration) = true];
+}
 
 // FastClient contains information about a fast client.
 message FastClient {
@@ -53,12 +62,26 @@ message FastUser {
   // The identifier of the user, should be unique for a fast client.
   string user_id = 1;
 
+  // The address of the user. Can be used to remove the user and return their credits.
+  string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // The timestamp of the user's removal, if it's pending. Set to 0 if the user is not pending removal.
+  google.protobuf.Timestamp removal_timestamp = 3
+      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdtime) = true];
+
   // The amount of credits the user has.
-  string credits = 2 [
+  string credits = 4 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+}
+
+// A user that is pending removal.
+message PendingUserRemoval {
+  uint64 fast_client_id = 1;
+
+  string user_id = 2;
 }
 
 // A report of a user's usage of the fast.

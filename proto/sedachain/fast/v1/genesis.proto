@@ -2,6 +2,7 @@ syntax = "proto3";
 package sedachain.fast.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 import "sedachain/fast/v1/fast.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/fast/types";

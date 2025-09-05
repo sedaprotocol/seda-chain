@@ -4,6 +4,18 @@
 
 The module is responsible for storing the configurations of Fast clients, allowing admins to manage Fast clients and the users of the Fast client, keeping track of credits, verifying Fast client eligibility, and distributing Fast client data proxy payouts.
 
+> [!CAUTION]
+> TODO: 
+> - [ ] Deletion queue in keeper based on timestamp
+> - [ ] Deletion processing in endblock
+> - [ ] Delete TX
+> - [ ] Cancel deletion
+> - [ ] Disallow TopUp when deletion is pending
+> - [ ] Update eligibility query to return 0 credits when deletion is pending
+> - [ ] Update this README with new state layout and functionality
+> - [ ] Update validation logic (move to msg handler, deduplicate logic and error messages)
+> - [ ] Update balances to be separate mappings so it's more efficient when updating credits
+
 ## Overview
 
 > [!INFO]
