@@ -184,6 +184,11 @@ func (app *IntegationApp) Context() sdk.Context {
 	return app.ctx
 }
 
+// SetContextChainID sets the chainID of the application context.
+func (app *IntegationApp) SetContextChainID(chainID string) {
+	app.ctx = app.ctx.WithChainID(chainID)
+}
+
 // SetContextTxBytes sets the txBytes of the application context.
 func (app *IntegationApp) SetContextTxBytes(txBytes []byte) {
 	app.ctx = app.ctx.WithTxBytes(txBytes)

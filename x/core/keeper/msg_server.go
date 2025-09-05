@@ -1,0 +1,165 @@
+package keeper
+
+import (
+	"context"
+	"encoding/hex"
+	"errors"
+
+	"cosmossdk.io/collections"
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	vrf "github.com/sedaprotocol/vrf-go"
+
+	"github.com/sedaprotocol/seda-chain/x/core/types"
+)
+
+var _ types.MsgServer = msgServer{}
+
+type msgServer struct {
+	Keeper
+}
+
+func NewMsgServerImpl(keeper Keeper) types.MsgServer {
+	return &msgServer{Keeper: keeper}
+}
+
+func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllowlist) (*types.MsgAddToAllowlistResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if msg.Sender != m.GetAuthority() {
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Sender)
+	}
+
+	exists, err := m.isAllowlisted(ctx, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, types.ErrAlreadyAllowlisted
+	}
+
+	err = m.addToAllowlist(ctx, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO Add events
+
+	return &types.MsgAddToAllowlistResponse{}, nil
+}
+
+func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.MsgStakeResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Verify stake proof.
+	var sequenceNum uint64
+	var isExistingStaker bool // for later use
+	staker, err := m.GetStaker(ctx, msg.PublicKey)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+	} else {
+		sequenceNum = staker.SequenceNum
+		isExistingStaker = true
+	}
+
+	hash, err := msg.MsgHash("", ctx.ChainID(), sequenceNum)
+	if err != nil {
+		return nil, err
+	}
+	publicKey, err := hex.DecodeString(msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	proof, err := hex.DecodeString(msg.Proof)
+	if err != nil {
+		return nil, err
+	}
+	_, err = vrf.NewK256VRF().Verify(publicKey, proof, hash)
+	if err != nil {
+		return nil, types.ErrInvalidStakeProof.Wrapf("%s", err.Error())
+	}
+
+	// Verify that the staker is allowlisted if allowlist is enabled.
+	stakingConfig, err := m.GetStakingConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if stakingConfig.AllowlistEnabled {
+		allowlisted, err := m.isAllowlisted(ctx, msg.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		if !allowlisted {
+			return nil, types.ErrNotAllowlisted
+		}
+	}
+
+	denom, err := m.stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if msg.Stake.Denom != denom {
+		return nil, sdkerrors.ErrInvalidCoins.Wrapf("invalid denom: %s", msg.Stake.Denom)
+	}
+
+	// Check stake amount and save the staker.
+	if isExistingStaker {
+		staker.Staked = staker.Staked.Add(msg.Stake.Amount)
+		staker.Memo = msg.Memo
+	} else {
+		if msg.Stake.Amount.LT(stakingConfig.MinimumStake) {
+			return nil, types.ErrInsufficientStake.Wrapf("%s < %s", msg.Stake.Amount, stakingConfig.MinimumStake)
+		}
+		staker = types.Staker{
+			PublicKey:         msg.PublicKey,
+			Memo:              msg.Memo,
+			Staked:            msg.Stake.Amount,
+			PendingWithdrawal: math.NewInt(0),
+			SequenceNum:       sequenceNum,
+		}
+	}
+
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+	err = m.bankKeeper.SendCoinsFromAccountToModule(ctx, senderAddr, types.ModuleName, sdk.NewCoins(msg.Stake))
+	if err != nil {
+		return nil, err
+	}
+
+	staker.SequenceNum = sequenceNum + 1
+	err = m.SetStaker(ctx, staker)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO Add events
+
+	return &types.MsgStakeResponse{}, nil
+}
+
+func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid authority address: %s", msg.Authority)
+	}
+	if m.GetAuthority() != msg.Authority {
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Authority)
+	}
+
+	if err := msg.Params.Validate(); err != nil {
+		return nil, err
+	}
+	if err := m.SetParams(ctx, msg.Params); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUpdateParamsResponse{}, nil
+}
