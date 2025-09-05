@@ -186,15 +186,17 @@ func (q Querier) FastClientEligibility(c context.Context, req *types.QueryFastCl
 	hasher.Write(payloadBytes)
 	payloadHash := hasher.Sum(nil)
 
-	sigPubKey, err := crypto.Ecrecover(payloadHash, signatureBytes)
+	sigPubKey, err := crypto.SigToPub(payloadHash, signatureBytes)
 	if err != nil {
 		return nil, sdkerrors.ErrInvalidRequest.Wrapf("invalid signature: %s", signature)
 	}
 
-	fastClient, err := q.GetFastClient(ctx, sigPubKey)
+	compressedPubKey := crypto.CompressPubkey(sigPubKey)
+
+	fastClient, err := q.GetFastClient(ctx, compressedPubKey)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			return nil, sdkerrors.ErrNotFound.Wrapf("no fast client registered for %s", hex.EncodeToString(sigPubKey))
+			return nil, sdkerrors.ErrNotFound.Wrapf("no fast client registered for %s", hex.EncodeToString(compressedPubKey))
 		}
 
 		return nil, err

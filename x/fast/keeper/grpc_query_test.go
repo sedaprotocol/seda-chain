@@ -360,7 +360,7 @@ func (s *KeeperTestSuite) TestQuerier_FastClientUser() {
 func (s *KeeperTestSuite) TestQuerier_FastClientEligibility() {
 	adminAddress := "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5"
 
-	pubKeyHex := "041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1"
+	pubKeyHex := "031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f"
 	pubKey, err := hex.DecodeString(pubKeyHex)
 	s.Require().NoError(err)
 
