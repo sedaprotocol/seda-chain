@@ -12,3 +12,11 @@ type WasmStorageKeeper interface {
 	GetCoreContractAddr(ctx context.Context) (sdk.AccAddress, error)
 	GetOracleProgram(ctx context.Context, hash string) (types.OracleProgram, error)
 }
+
+type StakingKeeper interface {
+	BondDenom(ctx context.Context) (string, error)
+}
+
+type BankKeeper interface {
+	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+}
