@@ -1,0 +1,87 @@
+syntax = "proto3";
+package sedachain.core.v1;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/core/types";
+
+// Params defines the parameters for the core module.
+message Params {
+  DataRequestConfig data_request_config = 1 [ (gogoproto.nullable) = false ];
+  StakingConfig staking_config = 2 [ (gogoproto.nullable) = false ];
+  TallyConfig tally_config = 3 [ (gogoproto.nullable) = false ];
+}
+
+// DataRequestConfig defines data request-related parameters.
+message DataRequestConfig {
+  // Number of blocks after which a data request is timed out while waiting
+  // for commits.
+  uint32 commit_timeout_in_blocks = 1;
+  // Number of blocks after which a data request is timed out while waiting
+  // for reveals.
+  uint32 reveal_timeout_in_blocks = 2;
+  // Delay in blocks before the backup executors are allowed to start executing
+  // the data request.
+  uint32 backup_delay_in_blocks = 3;
+  // Maximum size of all the reveals in a data request.
+  uint32 dr_reveal_size_limit_in_bytes = 4;
+  // Maximum size of the input for the execution program.
+  uint32 exec_input_limit_in_bytes = 5;
+  // Maximum size of the input for the tally program.
+  uint32 tally_input_limit_in_bytes = 6;
+  // Maximum size of the consensus filter.
+  uint32 consensus_filter_limit_in_bytes = 7;
+  // Maximum size of the memo.
+  uint32 memo_limit_in_bytes = 8;
+  // Maximum size of the payback address.
+  uint32 payback_address_limit_in_bytes = 9;
+  // Maximum size of the SEDA payload.
+  uint32 s_e_d_a_payload_limit_in_bytes = 10;
+}
+
+// StakingConfig defines staking-related parameters.
+message StakingConfig {
+  // MiminumStake is the minimum amount of SEDA tokens required to register as
+  // an Overlay.
+  string minimum_stake = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // AllowlistEnabled is a flag that indicates whether the allowlist is enabled.
+  bool allowlist_enabled = 2;
+}
+
+// TallyConfig definfes tally-related parameters.
+message TallyConfig {
+  // MaxTallyGasLimit is the maximum gas limit for a tally request.
+  uint64 max_tally_gas_limit = 1;
+  // FilterGasCostNone is the gas cost for a filter type none.
+  uint64 filter_gas_cost_none = 2;
+  // FilterGasCostMultiplierMode is the gas cost multiplier for a filter type
+  // mode.
+  uint64 filter_gas_cost_multiplier_mode = 3;
+  // FilterGasCostMAD is the gas cost multiplier for a filter type
+  // Median Absolute Deviation.
+  uint64 filter_gas_cost_multiplier_m_a_d = 4;
+  // GasCostBase is the base gas cost for a data request.
+  uint64 gas_cost_base = 5;
+  // GasCostFallback is the gas cost incurred for data request execution when
+  // even basic consensus has not been reached.
+  uint64 execution_gas_cost_fallback = 6;
+  // BurnRatio is the ratio of the gas cost to be burned in case of reduced
+  // payout scenarios.
+  string burn_ratio = 7 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (amino.dont_omitempty) = true,
+    (gogoproto.nullable) = false
+  ];
+  // MaxResultSize is the maximum size of the result of a data request in bytes.
+  uint32 max_result_size = 8;
+  // MaxTalliesPerBlock specifies the maximum number of tallies per block.
+  uint32 max_tallies_per_block = 9;
+}

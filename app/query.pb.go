@@ -129,7 +129,7 @@ type SignerKey struct {
 	Index uint32 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
 	// IndexName is the name of the SEDA key.
 	IndexName string `protobuf:"bytes,2,opt,name=index_name,json=indexName,proto3" json:"index_name,omitempty"`
-	// IsActive indicates whether the given SEDA key index is active.
+	// IsProvingSchemeActive indicates whether the given SEDA key index is active.
 	IsProvingSchemeActive bool `protobuf:"varint,3,opt,name=is_proving_scheme_active,json=isProvingSchemeActive,proto3" json:"is_proving_scheme_active,omitempty"`
 	// PublicKey is the hex-encoded public key of the key loaded in
 	// the SEDA signer.
