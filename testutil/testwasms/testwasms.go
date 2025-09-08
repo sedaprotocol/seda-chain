@@ -2,7 +2,6 @@ package testwasms
 
 import (
 	_ "embed"
-	"encoding/base64"
 
 	"cosmossdk.io/math"
 )
@@ -184,7 +183,7 @@ func HelloWorldWasm() []byte {
 // TallyTestItem is a bundle of tally program, reveal, and expected VM result.
 type TallyTestItem struct {
 	TallyProgram []byte
-	Reveal       string
+	Reveal       []byte
 	GasUsed      uint64
 
 	// Expected values of data result:
@@ -203,7 +202,7 @@ var TallyTestItems = []TallyTestItem{
 func TallyTestItemSampleTally() TallyTestItem {
 	return TallyTestItem{
 		TallyProgram:     sampleTallyWasm,
-		Reveal:           base64.StdEncoding.EncodeToString([]byte("{\"value\":\"one\"}")),
+		Reveal:           []byte("{\"value\":\"one\"}"),
 		GasUsed:          150000000000000000,
 		ExpectedResult:   []byte("tally_inputs__REST__0"),
 		ExpectedExitCode: 0,
@@ -214,7 +213,7 @@ func TallyTestItemSampleTally() TallyTestItem {
 func TallyTestItemRandomString() TallyTestItem {
 	return TallyTestItem{
 		TallyProgram:     randomStringTallyWasm,
-		Reveal:           base64.StdEncoding.EncodeToString([]byte("{\"value\":\"one\"}")),
+		Reveal:           []byte("{\"value\":\"one\"}"),
 		GasUsed:          150000000000000000,
 		ExpectedResult:   []byte("one"),
 		ExpectedExitCode: 0,
@@ -225,7 +224,7 @@ func TallyTestItemRandomString() TallyTestItem {
 func TallyTestItemRandomNumber() TallyTestItem {
 	return TallyTestItem{
 		TallyProgram:     randomNumberWasm,
-		Reveal:           base64.StdEncoding.EncodeToString([]byte("{\"value\":\"one\"}")),
+		Reveal:           []byte("{\"value\":\"one\"}"),
 		GasUsed:          150000000000000000,
 		ExpectedResult:   []byte("Not ok"),
 		ExpectedExitCode: 1,
@@ -236,7 +235,7 @@ func TallyTestItemRandomNumber() TallyTestItem {
 func TallyTestInvalidImport() TallyTestItem {
 	return TallyTestItem{
 		TallyProgram:     invalidImportWasm,
-		Reveal:           "",
+		Reveal:           nil,
 		GasUsed:          150000000000000000,
 		ExpectedResult:   []byte("Error: Failed to create WASMER instance: Error while importing \"seda_v1\".\"this_does_not_exist\": unknown import. Expected Function(FunctionType { params: [], results: [] })"),
 		ExpectedExitCode: 4,

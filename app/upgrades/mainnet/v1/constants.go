@@ -16,19 +16,19 @@ import (
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
-	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 const (
-	UpgradeName = "v1.0.0"
+	UpgradeName   = "v1.0.0"
+	tallyStoreKey = "tally"
 )
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: storetypes.StoreUpgrades{
-		Added:   []string{wasmstoragetypes.StoreKey, batchingtypes.StoreKey, tallytypes.StoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey},
+		Added:   []string{wasmstoragetypes.StoreKey, batchingtypes.StoreKey, tallyStoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey},
 		Deleted: []string{},
 	},
 }

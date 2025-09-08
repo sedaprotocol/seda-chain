@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
@@ -144,6 +145,13 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 }
 
 // EndBlock returns the end block logic for the core module.
-func (am AppModule) EndBlock(_ context.Context) error {
-	return nil
+func (am AppModule) EndBlock(ctx context.Context) error {
+	start := telemetry.Now()
+	defer telemetry.ModuleMeasureSince(types.ModuleName, start, telemetry.MetricKeyEndBlocker)
+
+	// We reset all gauges to zero so blocks without tally executions
+	// will show correct values in the telemetry.
+	telemetry.SetGauge(0.0, types.TelemetryKeyDataRequestsTallied)
+
+	return am.keeper.EndBlock(sdk.UnwrapSDKContext(ctx))
 }

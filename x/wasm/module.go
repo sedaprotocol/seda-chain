@@ -35,7 +35,6 @@ func NewAppModule(
 	bk simulation.BankKeeper,
 	router *baseapp.MsgServiceRouter,
 	ss exported.Subspace,
-	wsk WasmStorageKeeper,
 ) AppModule {
 	return AppModule{
 		AppModule: wasm.NewAppModule(cdc, keeper.Keeper, validatorSetSource, ak, bk, router, ss),
