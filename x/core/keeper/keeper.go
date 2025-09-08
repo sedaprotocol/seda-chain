@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"sort"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
@@ -92,6 +93,34 @@ func NewKeeper(
 // GetDataRequest retrieves a data request given its hex-encoded ID.
 func (k Keeper) GetDataRequest(ctx sdk.Context, id string) (types.DataRequest, error) {
 	return k.dataRequests.Get(ctx, id)
+}
+
+// LoadRevealsSorted returns reveals, executors, and gas reports sorted in a
+// deterministically random order. The reveals are retrieved based on the given
+// map of executors, and each reveal's reported proxy public keys are sorted.
+func (k Keeper) LoadRevealsSorted(ctx sdk.Context, drID string, revealsMap map[string]bool) ([]types.Reveal, []string, []uint64) {
+	reveals := make([]types.Reveal, len(revealsMap))
+	i := 0
+	for executor := range revealsMap {
+		revealBody, err := k.GetRevealBody(ctx, drID, executor)
+		if err != nil {
+			// TODO Proper error handling
+			return nil, nil, nil
+		}
+		reveals[i] = types.Reveal{Executor: executor, RevealBody: revealBody}
+		sort.Strings(reveals[i].ProxyPubKeys)
+		i++
+	}
+
+	sortedReveals := types.HashSort(reveals, types.GetEntropy(drID, ctx.BlockHeight()))
+
+	executors := make([]string, len(sortedReveals))
+	gasReports := make([]uint64, len(sortedReveals))
+	for i, reveal := range sortedReveals {
+		executors[i] = reveal.Executor
+		gasReports[i] = reveal.GasUsed
+	}
+	return sortedReveals, executors, gasReports
 }
 
 // HasDataRequest checks if a data request exists given its hex-encoded ID.

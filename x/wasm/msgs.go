@@ -2,7 +2,6 @@ package wasm
 
 import (
 	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 
 	"cosmossdk.io/math"
@@ -11,14 +10,6 @@ import (
 
 	coretypes "github.com/sedaprotocol/seda-chain/x/core/types"
 )
-
-func base64ToHex(base64Str string) (string, error) {
-	decoded, err := base64.StdEncoding.DecodeString(base64Str)
-	if err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(decoded), nil
-}
 
 type PostRequestResponsePayload struct {
 	DrID   string `json:"dr_id"`
