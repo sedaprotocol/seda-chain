@@ -207,6 +207,7 @@ var (
 		tally.AppModuleBasic{},
 		dataproxy.AppModuleBasic{},
 		batching.AppModuleBasic{},
+		core.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -222,6 +223,7 @@ var (
 		icatypes.ModuleName:            nil,
 		wasmtypes.ModuleName:           {authtypes.Burner},
 		dataproxytypes.ModuleName:      {authtypes.Burner},
+		coretypes.ModuleName:           nil,
 	}
 )
 
@@ -694,6 +696,7 @@ func NewApp(
 		runtime.NewKVStoreService(keys[coretypes.StoreKey]),
 		app.WasmStorageKeeper,
 		app.BatchingKeeper,
+		app.DataProxyKeeper,
 		app.StakingKeeper,
 		app.BankKeeper,
 		app.WasmContractKeeper,

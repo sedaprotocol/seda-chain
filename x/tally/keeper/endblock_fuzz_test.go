@@ -99,12 +99,12 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 
 	// The stakers commit and reveal.
 	revealBody := types.RevealBody{
-		RequestID:          drID,
-		RequestBlockHeight: fuzz.requestHeight,
-		Reveal:             fuzz.reveal,
-		GasUsed:            fuzz.gasUsed,
-		ExitCode:           fuzz.exitCode,
-		ProxyPubKeys:       []string{},
+		DrID:          drID,
+		DrBlockHeight: fuzz.requestHeight,
+		Reveal:        fuzz.reveal,
+		GasUsed:       fuzz.gasUsed,
+		ExitCode:      fuzz.exitCode,
+		ProxyPubKeys:  []string{},
 	}
 
 	var revealMsgs [][]byte
@@ -117,9 +117,9 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 		commitProof, err := f.generateCommitProof(t, stakers[i].key, drID, commitment, res.Height)
 		require.NoError(t, err)
 
-		commitMsg := testutil.CommitMsg(drID, commitment, stakers[i].pubKey, commitProof, 0)
+		commitMsg := testutil.CommitMsg(drID, commitment, stakers[i].pubKey, commitProof)
 
-		err = f.executeCommitReveal(stakers[i].address, commitMsg, 500000)
+		err = f.executeCommitReveal(t, stakers[i].address, commitMsg, 500000)
 		require.NoError(t, err)
 
 		revealMsgs = append(revealMsgs, revealMsg)
@@ -129,17 +129,17 @@ func (f *fixture) fuzzCommitRevealDataRequest(t *testing.T, fuzz fuzzCommitRevea
 
 	for i := 0; i < len(revealMsgs); i++ {
 		msg := testutil.RevealMsg(
-			revealBody.RequestID,
+			revealBody.DrID,
 			revealBody.Reveal,
 			stakers[i].pubKey,
 			revealProofs[i],
 			revealBody.ProxyPubKeys,
 			revealBody.ExitCode,
-			revealBody.RequestBlockHeight,
+			revealBody.DrBlockHeight,
 			revealBody.GasUsed,
 		)
 
-		err = f.executeCommitReveal(stakers[i].address, msg, 500000)
+		err = f.executeCommitReveal(t, stakers[i].address, msg, 500000)
 		require.NoError(t, err)
 	}
 

@@ -72,6 +72,7 @@ func (s *KeeperTestSuite) SetupTest() {
 		runtime.NewKVStoreService(key),
 		nil, // wasmStorageKeeper
 		nil, // batchingKeeper
+		nil, // dataProxyKeeper
 		s.stakingKeeper,
 		s.bankKeeper,
 		nil, // wasmKeeper
@@ -92,7 +93,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.queryClient = types.NewQueryClient(queryHelper)
 
 	// Set default params
-	err := s.keeper.Params.Set(s.ctx, types.DefaultParams())
+	err := s.keeper.SetParams(s.ctx, types.DefaultParams())
 	s.Require().NoError(err)
 }
 
@@ -166,7 +167,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddToAllowlist() {
 			s.Require().NotNil(res)
 
 			// Verify the public key was added to allowlist
-			exists, err := s.keeper.Allowlist.Has(s.ctx, tt.msg.PublicKey)
+			exists, err := s.keeper.IsAllowlisted(s.ctx, tt.msg.PublicKey)
 			s.Require().NoError(err)
 			s.Require().True(exists)
 		})
@@ -233,7 +234,7 @@ func (s *KeeperTestSuite) TestMsgServer_Stake() {
 			},
 			wantErr: sdkerrors.ErrInvalidCoins,
 			setup: func() {
-				s.keeper.Allowlist.Set(s.ctx, validPublicKey)
+				s.keeper.AddToAllowlist(s.ctx, validPublicKey)
 				s.stakingKeeper.EXPECT().BondDenom(gomock.Any()).Return("aseda", nil)
 			},
 		},
@@ -295,7 +296,7 @@ func (s *KeeperTestSuite) TestMsgServer_Stake() {
 			wantErr: nil,
 			setup: func() {
 				// Must be allowlisted
-				s.keeper.Allowlist.Set(s.ctx, validPublicKey)
+				s.keeper.AddToAllowlist(s.ctx, validPublicKey)
 
 				// Mock staking keeper to return bond denom
 				s.stakingKeeper.EXPECT().BondDenom(gomock.Any()).Return("aseda", nil)
@@ -325,7 +326,7 @@ func (s *KeeperTestSuite) TestMsgServer_Stake() {
 				s.Require().NotNil(res)
 
 				// Verify total stake
-				staker, err := s.keeper.Stakers.Get(s.ctx, validPublicKey)
+				staker, err := s.keeper.GetStaker(s.ctx, validPublicKey)
 				s.Require().NoError(err)
 				expectedTotal := validStake.Amount.Add(secondStake.Amount)
 				s.Require().Equal(expectedTotal, staker.Staked)
@@ -350,7 +351,7 @@ func (s *KeeperTestSuite) TestMsgServer_Stake() {
 			s.Require().NotNil(res)
 
 			// Verify staker was created/updated
-			staker, err := s.keeper.Stakers.Get(s.ctx, tt.msg.PublicKey)
+			staker, err := s.keeper.GetStaker(s.ctx, tt.msg.PublicKey)
 			s.Require().NoError(err)
 			s.Require().Equal(tt.msg.PublicKey, staker.PublicKey)
 			s.Require().Equal(tt.msg.Memo, staker.Memo)
@@ -432,7 +433,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 			s.Require().NotNil(res)
 
 			// Verify params were updated
-			params, err := s.keeper.Params.Get(s.ctx)
+			params, err := s.keeper.GetParams(s.ctx)
 			s.Require().NoError(err)
 			s.Require().Equal(tt.msg.Params, params)
 		})

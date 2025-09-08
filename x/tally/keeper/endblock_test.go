@@ -333,7 +333,7 @@ func TestEndBlock_PausedContract(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	err = f.executeReveals(stakers, revealMsgs)
+	err = f.executeReveals(t, stakers, revealMsgs)
 	require.NoError(t, err)
 
 	afterPostBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
