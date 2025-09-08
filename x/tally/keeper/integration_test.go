@@ -13,8 +13,8 @@ import (
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	sdkwasm "github.com/CosmWasm/wasmd/x/wasm"
+	sdkwasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"cosmossdk.io/core/appmodule"
@@ -64,6 +64,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/tally"
 	"github.com/sedaprotocol/seda-chain/x/tally/keeper"
 	"github.com/sedaprotocol/seda-chain/x/tally/types"
+	"github.com/sedaprotocol/seda-chain/x/wasm"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -85,8 +86,8 @@ type fixture struct {
 	accountKeeper     authkeeper.AccountKeeper
 	bankKeeper        bankkeeper.Keeper
 	stakingKeeper     stakingkeeper.Keeper
-	contractKeeper    wasmkeeper.PermissionedKeeper
-	wasmKeeper        wasmkeeper.Keeper
+	contractKeeper    sdkwasmkeeper.PermissionedKeeper
+	wasmKeeper        sdkwasmkeeper.Keeper
 	wasmStorageKeeper wasmstoragekeeper.Keeper
 	tallyKeeper       keeper.Keeper
 	tallyMsgServer    types.MsgServer
@@ -110,7 +111,7 @@ func initFixture(t testing.TB) *fixture {
 		dataproxytypes.StoreKey,
 	)
 
-	mb := module.NewBasicManager(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}, wasm.AppModuleBasic{})
+	mb := module.NewBasicManager(auth.AppModuleBasic{}, bank.AppModuleBasic{}, wasmstorage.AppModuleBasic{}, sdkwasm.AppModuleBasic{})
 
 	interfaceRegistry := sdktestutil.CodecOptions{
 		AccAddressPrefix: params.Bech32PrefixAccAddr,
@@ -180,7 +181,21 @@ func initFixture(t testing.TB) *fixture {
 
 	// x/wasm
 	router := baseapp.NewMsgServiceRouter()
-	wasmKeeper := wasmkeeper.NewKeeper(
+	// wasmKeeper := wasmkeeper.NewKeeper(
+	// 	cdc,
+	// 	runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+	// 	accountKeeper,
+	// 	bankKeeper,
+	// 	stakingKeeper,
+	// 	nil, nil, nil, nil,
+	// 	nil, nil, router, nil,
+	// 	tempDir,
+	// 	wasmtypes.DefaultWasmConfig(),
+	// 	app.GetWasmCapabilities(),
+	// 	authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	// 	[]wasmkeeper.Option{}...,
+	// )
+	sdkWasmKeeper := sdkwasmkeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
 		accountKeeper,
@@ -192,12 +207,20 @@ func initFixture(t testing.TB) *fixture {
 		wasmtypes.DefaultWasmConfig(),
 		app.GetWasmCapabilities(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		[]wasmkeeper.Option{}...,
+		[]sdkwasmkeeper.Option{}...,
 	)
-	require.NoError(t, wasmKeeper.SetParams(ctx, wasmtypes.DefaultParams()))
+	// require.NoError(t, wasmKeeper.SetParams(ctx, wasmtypes.DefaultParams()))
 
-	contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&wasmKeeper)
+	// contractKeeper := wasmkeeper.NewDefaultPermissionKeeper(&wasmKeeper)
 
+	wasmKeeper := wasm.NewKeeper(
+		&sdkWasmKeeper,
+		stakingKeeper,
+		cdc,
+		router,
+	)
+
+	contractKeeper := sdkwasmkeeper.NewDefaultPermissionKeeper(wasmKeeper)
 	wasmStorageKeeper := wasmstoragekeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[wasmstoragetypes.StoreKey]),
@@ -208,6 +231,10 @@ func initFixture(t testing.TB) *fixture {
 		stakingKeeper,
 		contractKeeper,
 	)
+
+	wasmKeeper.SetWasmStorageKeeper(wasmStorageKeeper)
+
+	require.NoError(t, wasmKeeper.SetParams(ctx, wasmtypes.DefaultParams()))
 
 	slashingKeeper := slashingkeeper.NewKeeper(
 		cdc,
@@ -332,7 +359,7 @@ func initFixture(t testing.TB) *fixture {
 		bankKeeper:        bankKeeper,
 		stakingKeeper:     *stakingKeeper,
 		contractKeeper:    *contractKeeper,
-		wasmKeeper:        wasmKeeper,
+		wasmKeeper:        *wasmKeeper.Keeper,
 		wasmStorageKeeper: *wasmStorageKeeper,
 		tallyKeeper:       tallyKeeper,
 		tallyMsgServer:    tallyMsgServer,

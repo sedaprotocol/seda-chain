@@ -29,7 +29,7 @@ type AppModule struct {
 // NewAppModule creates a new AppModule object
 func NewAppModule(
 	cdc codec.Codec,
-	keeper *keeper.Keeper,
+	keeper *Keeper,
 	validatorSetSource keeper.ValidatorSetSource,
 	ak types.AccountKeeper,
 	bk simulation.BankKeeper,
@@ -38,8 +38,8 @@ func NewAppModule(
 	wsk WasmStorageKeeper,
 ) AppModule {
 	return AppModule{
-		AppModule: wasm.NewAppModule(cdc, keeper, validatorSetSource, ak, bk, router, ss),
-		keeper:    NewKeeper(keeper, wsk),
+		AppModule: wasm.NewAppModule(cdc, keeper.Keeper, validatorSetSource, ak, bk, router, ss),
+		keeper:    keeper,
 	}
 }
 
