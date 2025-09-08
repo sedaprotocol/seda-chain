@@ -4,7 +4,6 @@ package sedachain.core.v1;
 import "gogoproto/gogo.proto";
 import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
-import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/core/types";
 
@@ -26,51 +25,102 @@ message Staker {
   uint64 sequence_num = 5;
 }
 
-//
+// DataRequest is a data request object.
 message DataRequest {
-  string id = 1;
+  // Hex-encoded ID of the data request
+  string i_d = 1 [ (gogoproto.jsontag) = "id" ];
+  // Semantic versioning
   string version = 2;
-  string exec_program_id = 3;
+  // Hex-encoded ID (hash) of the execution program
+  string exec_program_i_d = 3 [ (gogoproto.jsontag) = "exec_program_id" ];
+  // Inputs for the execution program
   bytes exec_inputs = 4;
+  // Gas limit for execution program execution
   uint64 exec_gas_limit = 5;
-  string tally_program_id = 6;
+  // Hex-encoded ID (hash) of the tally program
+  string tally_program_i_d = 6 [ (gogoproto.jsontag) = "tally_program_id" ];
+  // Inputs for the tally program
   bytes tally_inputs = 7;
+  // Gas limit for tally program execution
   uint64 tally_gas_limit = 8;
+  // Number of required data request executors (used as uint16)
   uint32 replication_factor = 9;
+  // Specifications for the filter process
   bytes consensus_filter = 10;
+  // Amount of SEDA tokens per unit gas (used as uint128)
   string gas_price = 11 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+  // Public information attached to the data request
   bytes memo = 12;
+  // Set by the relayer
   bytes payback_address = 13;
-  bytes seda_payload = 14;
-  uint64 height = 15;
+  // Set by SEDA Protocol (e.g. OEV-enabled data requests)
+  bytes s_e_d_a_payload = 14;
+  // Height at which the data request was posted
+  int64 posted_height = 15;
+  // Actual gas price derived by dividing attached funds by the total gas limit
+  // (may be higher than the minimum gas price)
   string posted_gas_price = 16 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
-  // Commits is a map from staker public keys to their commitments.
+  // Map from staker public keys to commits.
   map<string, bytes> commits = 17;
-  // Reveals is a map from staker public keys to placeholder booleans.
+  // Map from staker public keys to placeholder booleans.
   map<string, bool> reveals = 18;
+  // Poster of the data request (Bech32 string)
   string poster = 19;
-  cosmos.base.v1beta1.Coin escrow = 20
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
-  uint64 timeout_height = 21;
+  // Funds escrowed for the data request
+  string escrow = 20 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // Timeout height of the data request (-1 if not set, i.e., under tallying
+  // status)
+  int64 timeout_height = 21;
+  // Status of the data request
   DataRequestStatus status = 22;
 }
 
+// DataRequestStatus is the status of a data request.
 enum DataRequestStatus {
   option (gogoproto.goproto_enum_prefix) = false;
 
-  DATA_REQUEST_COMMITTING = 0;
-  DATA_REQUEST_REVEALING = 1;
-  DATA_REQUEST_TALLYING = 2;
+  // Zero value as required by proto3.
+  DATA_REQUEST_STATUS_UNSPECIFIED = 0;
+  // Data request has been posted and is collecting commits.
+  DATA_REQUEST_STATUS_COMMITTING = 1;
+  // The number of commits has reached the replication factor, and the data
+  // request is now collecting reveals.
+  DATA_REQUEST_STATUS_REVEALING = 2;
+  // The number of reveals has reached the replication factor, and the data
+  // request is now ready to be tallied.
+  DATA_REQUEST_STATUS_TALLYING = 3;
+}
+
+// RevealBody is the content of a reveal.
+message RevealBody {
+  // Hex-encoded ID of the data request
+  string dr_i_d = 1 [ (gogoproto.jsontag) = "dr_id" ];
+  // Block height of the data request posting
+  uint64 dr_block_height = 2;
+  // Exit code of the data request execution (used as uint8)
+  uint32 exit_code = 3;
+  // Gas used by the data request execution
+  uint64 gas_used = 4;
+  // Contents of the reveal
+  bytes reveal = 5;
+  // List of data proxy public keys used
+  repeated string proxy_pub_keys = 6
+      [ (gogoproto.jsontag) = "proxy_public_keys" ];
 }
 
 // Params defines the parameters for the core module.

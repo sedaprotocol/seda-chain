@@ -6,12 +6,13 @@ import (
 	"errors"
 	"strconv"
 
-	vrf "github.com/sedaprotocol/vrf-go"
-
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	vrf "github.com/sedaprotocol/vrf-go"
 
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
@@ -37,7 +38,7 @@ func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllo
 		return nil, sdkerrors.ErrInvalidRequest.Wrapf("public key is empty")
 	}
 
-	exists, err := m.Allowlist.Has(ctx, msg.PublicKey)
+	exists, err := m.IsAllowlisted(ctx, msg.PublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,7 @@ func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllo
 		return nil, types.ErrAlreadyAllowlisted
 	}
 
-	err = m.Allowlist.Set(ctx, msg.PublicKey)
+	err = m.Keeper.AddToAllowlist(ctx, msg.PublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllo
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeAddToAllowlist,
-			sdk.NewAttribute(types.AttributeIdentity, msg.PublicKey),
+			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.PublicKey),
 		),
 	)
 
@@ -66,7 +67,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 	// Verify stake proof.
 	var sequenceNum uint64
 	var isExistingStaker bool // for later use
-	staker, err := m.Stakers.Get(ctx, msg.PublicKey)
+	staker, err := m.GetStaker(ctx, msg.PublicKey)
 	if err != nil {
 		if !errors.Is(err, collections.ErrNotFound) {
 			return nil, err
@@ -76,7 +77,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 		isExistingStaker = true
 	}
 
-	hash, err := msg.ComputeStakeHash(ctx.ChainID(), sequenceNum)
+	hash, err := msg.MsgHash(ctx.ChainID(), sequenceNum)
 	if err != nil {
 		return nil, err
 	}
@@ -94,12 +95,12 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 	}
 
 	// Verify that the staker is allowlisted if allowlist is enabled.
-	params, err := m.Params.Get(ctx)
+	stakingConfig, err := m.GetStakingConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if params.StakingConfig.AllowlistEnabled {
-		allowlisted, err := m.Allowlist.Has(ctx, msg.PublicKey)
+	if stakingConfig.AllowlistEnabled {
+		allowlisted, err := m.IsAllowlisted(ctx, msg.PublicKey)
 		if err != nil {
 			return nil, err
 		}
@@ -121,8 +122,8 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 		staker.Staked = staker.Staked.Add(msg.Stake.Amount)
 		staker.Memo = msg.Memo
 	} else {
-		if msg.Stake.Amount.LT(params.StakingConfig.MinimumStake) {
-			return nil, types.ErrInsufficientStake.Wrapf("%s < %s", msg.Stake.Amount, params.StakingConfig.MinimumStake)
+		if msg.Stake.Amount.LT(stakingConfig.MinimumStake) {
+			return nil, types.ErrInsufficientStake.Wrapf("%s < %s", msg.Stake.Amount, stakingConfig.MinimumStake)
 		}
 		staker = types.Staker{
 			PublicKey:         msg.PublicKey,
@@ -143,7 +144,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 	}
 
 	staker.SequenceNum = sequenceNum + 1
-	err = m.Stakers.Set(ctx, msg.PublicKey, staker)
+	err = m.SetStaker(ctx, staker)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +154,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 			types.EventTypeStake,
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Stake.String()),
-			sdk.NewAttribute(types.AttributeIdentity, msg.PublicKey),
+			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.PublicKey),
 			sdk.NewAttribute(types.AttributeTokensStaked, staker.Staked.String()),
 			sdk.NewAttribute(types.AttributeTokensPendingWithdrawal, staker.PendingWithdrawal.String()),
 			sdk.NewAttribute(types.AttributeMemo, staker.Memo),
@@ -176,7 +177,7 @@ func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 	if err := msg.Params.Validate(); err != nil {
 		return nil, err
 	}
-	if err := m.Params.Set(ctx, msg.Params); err != nil {
+	if err := m.SetParams(ctx, msg.Params); err != nil {
 		return nil, err
 	}
 

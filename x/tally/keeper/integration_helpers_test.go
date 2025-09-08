@@ -93,7 +93,7 @@ func (f *fixture) executeDataRequestFlow(
 	revealMsgs, err := f.commitDataRequest(t, f.stakers[:numCommits], res.Height, drID, config)
 	require.NoError(t, err)
 
-	err = f.executeReveals(f.stakers, revealMsgs[:numReveals])
+	err = f.executeReveals(t, f.stakers, revealMsgs[:numReveals])
 	require.NoError(t, err)
 
 	if timeout {
@@ -139,7 +139,7 @@ func (f *fixture) executeDataRequestFlowWithTallyTestItem(t testing.TB, entropy 
 	revealMsgs, err := f.commitDataRequest(t, f.stakers[:1], res.Height, drID, config)
 	require.NoError(t, err)
 
-	err = f.executeReveals(f.stakers, revealMsgs[:1])
+	err = f.executeReveals(t, f.stakers, revealMsgs[:1])
 	require.NoError(t, err)
 
 	return res.DrID, testItem
@@ -173,11 +173,12 @@ func (f *fixture) postDataRequest(execProgHash, tallyProgHash []byte, requestMem
 // returns a list of corresponding reveal messages.
 func (f *fixture) commitDataRequest(t testing.TB, stakers []staker, height uint64, drID string, config commitRevealConfig) ([][]byte, error) {
 	revealBody := types.RevealBody{
-		RequestID:    drID,
-		Reveal:       config.reveal,
-		GasUsed:      config.gasUsed,
-		ExitCode:     config.exitCode,
-		ProxyPubKeys: config.proxyPubKeys,
+		DrID:          drID,
+		DrBlockHeight: height,
+		Reveal:        config.reveal,
+		GasUsed:       config.gasUsed,
+		ExitCode:      config.exitCode,
+		ProxyPubKeys:  config.proxyPubKeys,
 	}
 
 	var revealMsgs [][]byte
@@ -191,9 +192,9 @@ func (f *fixture) commitDataRequest(t testing.TB, stakers []staker, height uint6
 		if err != nil {
 			return nil, err
 		}
-		commitMsg := testutil.CommitMsg(drID, commitment, stakers[i].pubKey, proof, config.gasUsed)
+		commitMsg := testutil.CommitMsg(drID, commitment, stakers[i].pubKey, proof)
 
-		err = f.executeCommitReveal(stakers[i].address, commitMsg, 500000)
+		err = f.executeCommitReveal(t, stakers[i].address, commitMsg, 500000)
 		if err != nil {
 			return nil, err
 		}
@@ -205,12 +206,10 @@ func (f *fixture) commitDataRequest(t testing.TB, stakers []staker, height uint6
 }
 
 // executeReveals executes a list of reveal messages.
-func (f *fixture) executeReveals(stakers []staker, revealMsgs [][]byte) error {
+func (f *fixture) executeReveals(t testing.TB, stakers []staker, revealMsgs [][]byte) error {
 	for i := 0; i < len(revealMsgs); i++ {
-		err := f.executeCommitReveal(stakers[i].address, revealMsgs[i], 500000)
-		if err != nil {
-			return err
-		}
+		err := f.executeCommitReveal(t, stakers[i].address, revealMsgs[i], 500000)
+		require.NoError(t, err)
 	}
 	return nil
 }
@@ -287,7 +286,8 @@ func (f *fixture) generateStakeProof(t testing.TB, signKey []byte, sequenceNum u
 	msg := coretypes.MsgStake{
 		Memo: "YWRkcmVzcw==",
 	}
-	hash, err := msg.ComputeLegacyStakeHash(f.coreContractAddr.String(), f.chainID, sequenceNum)
+
+	hash, err := msg.LegacyMsgHash(f.coreContractAddr.String(), f.chainID, sequenceNum)
 	require.NoError(t, err)
 
 	proof, err := vrf.NewK256VRF().Prove(signKey, hash)
@@ -297,10 +297,10 @@ func (f *fixture) generateStakeProof(t testing.TB, signKey []byte, sequenceNum u
 
 func (f *fixture) generateCommitProof(t testing.TB, signKey []byte, drID, commitment string, drHeight uint64) (string, error) {
 	msg := coretypes.MsgCommit{
-		DrId:       drID,
-		Commitment: commitment,
+		DrID:   drID,
+		Commit: commitment,
 	}
-	hash, err := msg.ComputeLegacyCommitHash(f.coreContractAddr.String(), f.chainID, drHeight)
+	hash, err := msg.LegacyMsgHash(f.coreContractAddr.String(), f.chainID, drHeight)
 	require.NoError(t, err)
 
 	proof, err := vrf.NewK256VRF().Prove(signKey, hash)
@@ -332,14 +332,14 @@ func (f *fixture) generateRevealBodyHash(rb types.RevealBody) ([]byte, error) {
 
 	hasher := sha3.NewLegacyKeccak256()
 
-	idBytes, err := hex.DecodeString(rb.RequestID)
+	idBytes, err := hex.DecodeString(rb.DrID)
 	if err != nil {
 		return nil, err
 	}
 	hasher.Write(idBytes)
 
 	reqHeightBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(reqHeightBytes, rb.RequestBlockHeight)
+	binary.BigEndian.PutUint64(reqHeightBytes, rb.DrBlockHeight)
 	hasher.Write(reqHeightBytes)
 
 	hasher.Write([]byte{rb.ExitCode})
@@ -374,13 +374,13 @@ func (f *fixture) createRevealMsg(staker staker, revealBody types.RevealBody) ([
 	}
 
 	msg := testutil.RevealMsg(
-		revealBody.RequestID,
+		revealBody.DrID,
 		revealBody.Reveal,
 		staker.pubKey,
 		proof,
 		revealBody.ProxyPubKeys,
 		revealBody.ExitCode,
-		revealBody.RequestBlockHeight,
+		revealBody.DrBlockHeight,
 		revealBody.GasUsed,
 	)
 
@@ -417,7 +417,7 @@ func generateRevealProof(signKey []byte, revealBodyHash []byte, chainID, coreCon
 
 // executeCommitReveal executes a commit msg or a reveal msg with the required
 // context.
-func (f *fixture) executeCommitReveal(sender sdk.AccAddress, msg []byte, gasLimit uint64) error {
+func (f *fixture) executeCommitReveal(t testing.TB, sender sdk.AccAddress, msg []byte, gasLimit uint64) error {
 	contractMsg := wasmtypes.MsgExecuteContract{
 		Sender:   sdk.AccAddress(sender).String(),
 		Contract: f.coreContractAddr.String(),
@@ -433,22 +433,16 @@ func (f *fixture) executeCommitReveal(sender sdk.AccAddress, msg []byte, gasLimi
 		WithFeePayer(sender)
 
 	tx, err := txf.BuildUnsignedTx(&contractMsg)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 
 	txBytes, err := f.txConfig.TxEncoder()(tx.GetTx())
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 	f.SetContextTxBytes(txBytes)
 	f.SetBasicGasMeter(gasLimit)
 
 	// Transfer the fee to the fee collector.
 	err = f.bankKeeper.SendCoinsFromAccountToModule(f.Context(), sender, authtypes.FeeCollectorName, fee)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 
 	// Execute the message.
 	_, err = f.contractKeeper.Execute(
@@ -458,9 +452,8 @@ func (f *fixture) executeCommitReveal(sender sdk.AccAddress, msg []byte, gasLimi
 		msg,
 		sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 	)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
+
 	f.SetInfiniteGasMeter()
 	return nil
 }

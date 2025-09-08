@@ -19,7 +19,7 @@ func TestStakeProof(t *testing.T) {
 		Proof:     "030b3a90682d42547987d283027f71e5b434087ae6fd2c46d2cccc870d8b90ca71e0b8331e8467028665341f63a21765c0f4687798aa13b8655fe170f7d7132959e37ae35a2a7e0664a87eb6345c06d507",
 	}
 
-	hash, err := msg.ComputeStakeHash(chainID, seqNum)
+	hash, err := msg.MsgHash(chainID, seqNum)
 	require.NoError(t, err)
 	publicKey, err := hex.DecodeString(msg.PublicKey)
 	require.NoError(t, err)
@@ -39,7 +39,7 @@ func TestProveAndVerifyStakeProof(t *testing.T) {
 		PublicKey: hex.EncodeToString(pubKey),
 		Memo:      "VGhlIFNpbmdsZSBVTklYIFNwZWNpZmljYXRpb24gc3VwcG9ydHMgZm9ybWFsIHN0YW5kYXJkcyBkZXZlbG9wZWQgZm9yIGFwcGxpY2F0aW9ucyBwb3J0YWJpbGl0eS4g",
 	}
-	hash, err := msg.ComputeStakeHash(chainID, 99)
+	hash, err := msg.MsgHash(chainID, 99)
 	require.NoError(t, err)
 
 	proof, err := vrf.NewK256VRF().Prove(privKey, hash)
