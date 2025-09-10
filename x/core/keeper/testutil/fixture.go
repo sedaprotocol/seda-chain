@@ -1,4 +1,4 @@
-package keeper_test
+package testutil
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	sdkwasm "github.com/CosmWasm/wasmd/x/wasm"
@@ -75,13 +76,12 @@ const (
 	bondDenom    = "aseda"
 )
 
-type fixture struct {
+type Fixture struct {
 	*testutil.IntegationApp
 	cdc               codec.Codec
 	txConfig          client.TxConfig
 	chainID           string
 	coreContractAddr  sdk.AccAddress
-	deployer          sdk.AccAddress
 	stakers           []staker
 	accountKeeper     authkeeper.AccountKeeper
 	bankKeeper        bankkeeper.Keeper
@@ -89,19 +89,24 @@ type fixture struct {
 	contractKeeper    sdkwasmkeeper.PermissionedKeeper
 	wasmKeeper        sdkwasmkeeper.Keeper
 	wasmStorageKeeper wasmstoragekeeper.Keeper
-	coreKeeper        keeper.Keeper
+	CoreKeeper        keeper.Keeper
 	coreMsgServer     types.MsgServer
+	coreQuerier       types.QueryServer
 	batchingKeeper    batchingkeeper.Keeper
 	dataProxyKeeper   *dataproxykeeper.Keeper
 	wasmViewKeeper    wasmtypes.ViewKeeper
 	logBuf            *bytes.Buffer
 	router            *baseapp.MsgServiceRouter
+	Creator           TestAccount
+	Deployer          TestAccount
+	testAccounts      map[string]TestAccount
+	tb                testing.TB
 }
 
-func initFixture(t testing.TB) *fixture {
-	t.Helper()
+func InitFixture(tb testing.TB) *Fixture {
+	tb.Helper()
 
-	tempDir := t.TempDir()
+	tempDir := tb.TempDir()
 
 	chainID := "integration-app"
 	tallyvm.TallyMaxBytes = 1024
@@ -141,9 +146,16 @@ func initFixture(t testing.TB) *fixture {
 
 	cms := sdkintegration.CreateMultiStore(keys, logger)
 
-	ctx := sdk.NewContext(cms, cmtproto.Header{Time: time.Now().UTC()}, true, logger)
+	ctx := sdk.NewContext(cms, cmtproto.Header{Time: time.Now().UTC(), ChainID: chainID}, true, logger)
 
 	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	creator := TestAccount{
+		name:       "creator",
+		addr:       authority,
+		signingKey: secp256k1.GenPrivKey(),
+		fixture:    nil,
+		Sequence:   0,
+	}
 
 	maccPerms := map[string][]string{
 		authtypes.FeeCollectorName:        nil,
@@ -182,7 +194,7 @@ func initFixture(t testing.TB) *fixture {
 	stakingParams := sdkstakingtypes.DefaultParams()
 	stakingParams.BondDenom = bondDenom
 	err := stakingKeeper.SetParams(ctx, stakingParams)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	// x/wasm
 	router := baseapp.NewMsgServiceRouter()
@@ -222,7 +234,7 @@ func initFixture(t testing.TB) *fixture {
 	)
 
 	wasmKeeper.SetWasmStorageKeeper(wasmStorageKeeper)
-	require.NoError(t, wasmKeeper.SetParams(ctx, wasmtypes.DefaultParams()))
+	require.NoError(tb, wasmKeeper.SetParams(ctx, wasmtypes.DefaultParams()))
 
 	slashingKeeper := slashingkeeper.NewKeeper(
 		cdc,
@@ -261,7 +273,6 @@ func initFixture(t testing.TB) *fixture {
 		addresscodec.NewBech32Codec(params.Bech32PrefixValAddr),
 	)
 
-	deployer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	coreKeeper := keeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[types.StoreKey]),
@@ -272,10 +283,12 @@ func initFixture(t testing.TB) *fixture {
 		bankKeeper,
 		contractKeeper,
 		wasmKeeper,
-		deployer.String(),
+		authority.String(),
 	)
 
 	coreMsgServer := keeper.NewMsgServerImpl(coreKeeper)
+
+	coreQuerier := keeper.Querier{Keeper: coreKeeper}
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
@@ -296,7 +309,7 @@ func initFixture(t testing.TB) *fixture {
 
 	// TODO: Check why IntegrationApp setup fails to initialize params.
 	err = coreKeeper.SetParams(ctx, types.DefaultParams())
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	err = pubKeyKeeper.SetProvingScheme(
 		ctx,
@@ -306,25 +319,25 @@ func initFixture(t testing.TB) *fixture {
 			ActivationHeight: ctx.BlockHeight(),
 		},
 	)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	// TODO: Check why IntegrationApp setup fails to initialize params.
 	bankKeeper.SetSendEnabled(ctx, "aseda", true)
 
 	err = coreKeeper.SetParams(ctx, types.DefaultParams())
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	// Upload, instantiate, and configure the Core Contract.
 	int1e21, ok := math.NewIntFromString("10000000000000000000000000")
-	require.True(t, ok)
+	require.True(tb, ok)
 	err = bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(bondDenom, int1e21)))
-	require.NoError(t, err)
-	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, deployer, sdk.NewCoins(sdk.NewCoin(bondDenom, int1e21)))
-	require.NoError(t, err)
+	require.NoError(tb, err)
+	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, authority, sdk.NewCoins(sdk.NewCoin(bondDenom, int1e21)))
+	require.NoError(tb, err)
 
-	codeID, _, err := contractKeeper.Create(ctx, deployer, testwasms.CoreContractWasm(), nil)
-	require.NoError(t, err)
-	require.Equal(t, uint64(1), codeID)
+	codeID, _, err := contractKeeper.Create(ctx, authority, testwasms.CoreContractWasm(), nil)
+	require.NoError(tb, err)
+	require.Equal(tb, uint64(1), codeID)
 
 	initMsg := struct {
 		Token   string         `json:"token"`
@@ -332,32 +345,31 @@ func initFixture(t testing.TB) *fixture {
 		ChainID string         `json:"chain_id"`
 	}{
 		Token:   "aseda",
-		Owner:   deployer,
+		Owner:   authority,
 		ChainID: chainID,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
-	coreContractAddr, _, err := contractKeeper.Instantiate(ctx, codeID, deployer, nil, initMsgBz, "Core Contract", sdk.NewCoins())
-	require.NoError(t, err)
-	require.NotEmpty(t, coreContractAddr)
+	coreContractAddr, _, err := contractKeeper.Instantiate(ctx, codeID, authority, nil, initMsgBz, "Core Contract", sdk.NewCoins())
+	require.NoError(tb, err)
+	require.NotEmpty(tb, coreContractAddr)
 
 	err = wasmStorageKeeper.CoreContractRegistry.Set(ctx, coreContractAddr.String())
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	_, err = contractKeeper.Execute(
 		ctx,
 		coreContractAddr,
-		deployer,
+		authority,
 		[]byte(setStakingConfigMsg),
 		sdk.NewCoins(),
 	)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
-	f := fixture{
+	f := Fixture{
 		IntegationApp:     integrationApp,
 		chainID:           chainID,
-		deployer:          deployer,
 		cdc:               cdc,
 		txConfig:          txConfig,
 		coreContractAddr:  coreContractAddr,
@@ -367,22 +379,53 @@ func initFixture(t testing.TB) *fixture {
 		contractKeeper:    *contractKeeper,
 		wasmKeeper:        *wasmKeeper.Keeper,
 		wasmStorageKeeper: *wasmStorageKeeper,
-		coreKeeper:        coreKeeper,
+		CoreKeeper:        coreKeeper,
 		coreMsgServer:     coreMsgServer,
+		coreQuerier:       coreQuerier,
 		batchingKeeper:    batchingKeeper,
 		dataProxyKeeper:   dataProxyKeeper,
 		wasmViewKeeper:    wasmKeeper,
 		logBuf:            buf,
 		router:            router,
+		testAccounts:      make(map[string]TestAccount),
+		Creator:           creator,
+		tb:                tb,
 	}
+	f.Creator.fixture = &f
+	f.Deployer.fixture = &f
 
 	f.SetContextChainID(chainID)
-	f.addStakers(t, 5)
-	f.uploadOraclePrograms(t)
+	f.addStakers(tb, 5)
+	f.uploadOraclePrograms(tb)
 	return &f
 }
 
-func (f *fixture) SetDataProxyConfig(proxyPubKey, payoutAddr string, proxyFee sdk.Coin) error {
+func (f *Fixture) GetTestAccount(name string) TestAccount {
+	acc, exists := f.testAccounts[name]
+	require.True(f.tb, exists, "test account %s not found", name)
+	return acc
+}
+
+func (f *Fixture) CreateTestAccount(name string, initialBalanceSeda int64) TestAccount {
+	addrPrivKey := ed25519.GenPrivKey()
+	addr := sdk.AccAddress(addrPrivKey.PubKey().Address())
+
+	acc := TestAccount{
+		name:       name,
+		addr:       addr,
+		signingKey: secp256k1.GenPrivKey(),
+		fixture:    f,
+		Sequence:   0,
+	}
+	bigAmountSeda := math.NewInt(initialBalanceSeda)
+	bigAmount := bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))
+	f.initAccountWithCoins(f.tb, acc.AccAddress(), sdk.NewCoins(sdk.NewCoin(bondDenom, bigAmount)))
+
+	f.testAccounts[name] = acc
+	return acc
+}
+
+func (f *Fixture) SetDataProxyConfig(proxyPubKey, payoutAddr string, proxyFee sdk.Coin) error {
 	pkBytes, err := hex.DecodeString(proxyPubKey)
 	if err != nil {
 		return err
@@ -402,3 +445,7 @@ var setStakingConfigMsg = `{
 	  "allowlist_enabled": true
 	}
   }`
+
+func NewCoin(amount math.Int) sdk.Coin {
+	return sdk.NewCoin(bondDenom, amount)
+}
