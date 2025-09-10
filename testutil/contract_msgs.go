@@ -50,14 +50,14 @@ func AddToAllowListMsg(stakerPubKey string) []byte {
 	}`, stakerPubKey))
 }
 
-func StakeMsg(stakerPubKey, proof string) []byte {
+func StakeMsg(stakerPubKey, proof, memo string) []byte {
 	return []byte(fmt.Sprintf(`{
 		"stake": {
 		  "public_key": "%s",
 		  "proof": "%s",
-		  "memo": "YWRkcmVzcw=="
+		  "memo": "%s"
 		}
-	}`, stakerPubKey, proof))
+	}`, stakerPubKey, proof, memo))
 }
 
 func PostDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) []byte {

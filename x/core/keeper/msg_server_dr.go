@@ -297,9 +297,6 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 
 	revealsCount := dr.MarkAsRevealed(msg.PublicKey)
 	if revealsCount >= int(dr.ReplicationFactor) {
-		// TODO double check
-		dr.Status = types.DATA_REQUEST_STATUS_TALLYING
-
 		err = m.RemoveFromTimeoutQueue(ctx, dr.ID, dr.TimeoutHeight)
 		if err != nil {
 			return nil, err
