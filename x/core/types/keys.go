@@ -15,4 +15,7 @@ var (
 	DrIndexingKeyPrefix   = collections.NewPrefix(4)
 	TimeoutQueueKeyPrefix = collections.NewPrefix(5)
 	ParamsKey             = collections.NewPrefix(6)
+	OwnerKey              = collections.NewPrefix(7)
+	PausedKey             = collections.NewPrefix(8)
+	PendingOwnerKey       = collections.NewPrefix(9)
 )
