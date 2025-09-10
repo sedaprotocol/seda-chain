@@ -32,6 +32,11 @@ type Keeper struct {
 
 	Schema collections.Schema
 
+	// Core module state:
+	owner        collections.Item[string]
+	paused       collections.Item[bool]
+	pendingOwner collections.Item[string]
+
 	// Staking-related states:
 	// allowlist is an owner-controlled allowlist of staker public keys.
 	allowlist collections.KeySet[string]
@@ -80,6 +85,9 @@ func NewKeeper(
 		authority:           authority,
 		feeCollectorName:    feeCollectorName,
 		txDecoder:           txDecoder,
+		owner:               collections.NewItem(sb, types.OwnerKey, "owner", collections.StringValue),
+		paused:              collections.NewItem(sb, types.PausedKey, "paused", collections.BoolValue),
+		pendingOwner:        collections.NewItem(sb, types.PendingOwnerKey, "pending_owner", collections.StringValue),
 		allowlist:           collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
 		stakers:             collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
 		dataRequests:        collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
@@ -220,4 +228,55 @@ func (k Keeper) GetAuthority() string {
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+func (k Keeper) IsPaused(ctx sdk.Context) (bool, error) {
+	paused, err := k.paused.Get(ctx)
+	if err != nil {
+		return false, err
+	}
+	return paused, nil
+}
+
+func (k Keeper) SetPaused(ctx sdk.Context, paused bool) error {
+	return k.paused.Set(ctx, paused)
+}
+
+func (k Keeper) GetOwner(ctx sdk.Context) (string, error) {
+	owner, err := k.owner.Get(ctx)
+	if err != nil {
+		return "", err
+	}
+	return owner, nil
+}
+
+func (k Keeper) SetOwner(ctx sdk.Context) error {
+	// get the new owner from the pending owner
+	pendingOwner, err := k.pendingOwner.Get(ctx)
+	if err != nil {
+		return err
+	}
+	// set the new owner
+	err = k.owner.Set(ctx, pendingOwner)
+	if err != nil {
+		return err
+	}
+	// clear the pending owner
+	return k.pendingOwner.Remove(ctx)
+}
+
+func (k Keeper) GetPendingOwner(ctx sdk.Context) (string, error) {
+	pendingOwner, err := k.pendingOwner.Get(ctx)
+	if err != nil {
+		return "", err
+	}
+	return pendingOwner, nil
+}
+
+func (k Keeper) SetPendingOwner(ctx sdk.Context, pendingOwner string) error {
+	_, err := sdk.AccAddressFromBech32(pendingOwner)
+	if err != nil {
+		return err
+	}
+	return k.pendingOwner.Set(ctx, pendingOwner)
 }
