@@ -8,8 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/math"
-
 	"github.com/sedaprotocol/seda-chain/x/core/keeper"
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
@@ -891,7 +889,11 @@ func TestFilter(t *testing.T) {
 				}
 			}
 
-			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
+			// Just provide enought tally gas to cover the filter operation.
+			gasMeter := types.NewGasMeter(
+				&types.DataRequest{TallyGasLimit: types.DefaultMaxTallyGasLimit},
+				types.DefaultMaxTallyGasLimit, types.DefaultGasCostBase,
+			)
 
 			result, err := keeper.ExecuteFilter(
 				reveals,
@@ -1035,7 +1037,11 @@ func TestFilterWildcard(t *testing.T) {
 				}
 			}
 
-			gasMeter := types.NewGasMeter(1e13, 0, types.DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), types.DefaultGasCostBase)
+			// Just provide enought tally gas to cover the filter operation.
+			gasMeter := types.NewGasMeter(
+				&types.DataRequest{TallyGasLimit: types.DefaultMaxTallyGasLimit},
+				types.DefaultMaxTallyGasLimit, types.DefaultGasCostBase,
+			)
 
 			result, err := keeper.ExecuteFilter(
 				reveals,

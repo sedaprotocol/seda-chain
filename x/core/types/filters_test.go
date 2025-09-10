@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"cosmossdk.io/math"
 )
 
 func TestDecodeFilterInput(t *testing.T) {
@@ -52,7 +50,11 @@ func TestDecodeFilterInput(t *testing.T) {
 			b, err := hex.DecodeString(tt.hexStr)
 			require.NoError(t, err)
 
-			gasMeter := NewGasMeter(1e13, 0, DefaultMaxTallyGasLimit, math.NewIntWithDecimal(1, 18), DefaultGasCostBase)
+			// Just provide enought tally gas to cover the filter operation.
+			gasMeter := NewGasMeter(
+				&DataRequest{TallyGasLimit: DefaultMaxTallyGasLimit},
+				DefaultMaxTallyGasLimit, DefaultGasCostBase,
+			)
 
 			filter, err := NewFilterMode(b, 1, 1, gasMeter)
 			if tt.wantErr != nil {

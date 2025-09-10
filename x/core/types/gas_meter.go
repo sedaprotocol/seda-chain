@@ -17,39 +17,28 @@ type GasMeter struct {
 	execGasRemaining     uint64
 	totalProxyGasPerExec uint64
 	postedGasPrice       math.Int // gas price as posted, can be higher than the GasPrice on the request
+	poster               string
+	escrow               math.Int
 }
 
-var _ HashSortable = ProxyGasUsed{}
-
-type ProxyGasUsed struct {
-	PayoutAddress string
-	PublicKey     string
-	Amount        math.Int
+func (g *GasMeter) GetPoster() string {
+	return g.poster
 }
 
-func (p ProxyGasUsed) GetSortKey() []byte {
-	return []byte(p.PublicKey)
-}
-
-var _ HashSortable = ExecutorGasUsed{}
-
-type ExecutorGasUsed struct {
-	PublicKey string
-	Amount    math.Int
-}
-
-func (e ExecutorGasUsed) GetSortKey() []byte {
-	return []byte(e.PublicKey)
+func (g *GasMeter) GetEscrow() math.Int {
+	return g.escrow
 }
 
 // NewGasMeter creates a new gas meter and incurs the base gas cost.
-func NewGasMeter(tallyGasLimit, execGasLimit, maxTallyGasLimit uint64, postedGasPrice math.Int, baseGasCost uint64) *GasMeter {
+func NewGasMeter(dr *DataRequest, maxTallyGasLimit uint64, baseGasCost uint64) *GasMeter {
 	gasMeter := &GasMeter{
-		tallyGasLimit:     min(tallyGasLimit, maxTallyGasLimit),
-		tallyGasRemaining: min(tallyGasLimit, maxTallyGasLimit),
-		execGasLimit:      execGasLimit,
-		execGasRemaining:  execGasLimit,
-		postedGasPrice:    postedGasPrice,
+		tallyGasLimit:     min(dr.TallyGasLimit, maxTallyGasLimit),
+		tallyGasRemaining: min(dr.TallyGasLimit, maxTallyGasLimit),
+		execGasLimit:      dr.ExecGasLimit,
+		execGasRemaining:  dr.ExecGasLimit,
+		postedGasPrice:    dr.PostedGasPrice,
+		poster:            dr.Poster,
+		escrow:            dr.Escrow,
 	}
 
 	// For normal operations we first check if the gas limit is enough to cover
@@ -165,6 +154,29 @@ func (g *GasMeter) GetProxyGasUsed(drID string, height int64) []ProxyGasUsed {
 // in the case where the number of commits is less than the replication factor.
 func (g *GasMeter) GetExecutorGasUsed() []ExecutorGasUsed {
 	return g.executors
+}
+
+var _ HashSortable = ProxyGasUsed{}
+
+type ProxyGasUsed struct {
+	PayoutAddress string
+	PublicKey     string
+	Amount        math.Int
+}
+
+func (p ProxyGasUsed) GetSortKey() []byte {
+	return []byte(p.PublicKey)
+}
+
+var _ HashSortable = ExecutorGasUsed{}
+
+type ExecutorGasUsed struct {
+	PublicKey string
+	Amount    math.Int
+}
+
+func (e ExecutorGasUsed) GetSortKey() []byte {
+	return []byte(e.PublicKey)
 }
 
 func GetEntropy(drID string, height int64) []byte {

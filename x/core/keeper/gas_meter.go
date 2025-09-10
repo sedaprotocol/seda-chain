@@ -14,14 +14,12 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
-// DistributionsFromGasMeter constructs a list of distribution messages to be
-// sent to the core contract based on the given gas meter. It takes the ID and
-// the height of the request for event emission.
-func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeight uint64, gasMeter *types.GasMeter, burnRatio math.LegacyDec) []types.Distribution {
+// ReadGasMeter reads the given gas meter to construct a list of distributions.
+func (k Keeper) ReadGasMeter(ctx sdk.Context, gasMeter *types.GasMeter, drID string, drHeight uint64, burnRatio math.LegacyDec) []types.Distribution {
 	dists := []types.Distribution{}
 	attrs := []sdk.Attribute{
-		sdk.NewAttribute(types.AttributeDataRequestID, reqID),
-		sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatUint(reqHeight, 10)),
+		sdk.NewAttribute(types.AttributeDataRequestID, drID),
+		sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatUint(drHeight, 10)),
 		sdk.NewAttribute(types.AttributeReducedPayout, strconv.FormatBool(gasMeter.ReducedPayout)),
 	}
 
@@ -31,7 +29,7 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 	attrs = append(attrs, sdk.NewAttribute(types.AttributeTallyGas, strconv.FormatUint(gasMeter.TallyGasUsed(), 10)))
 
 	// Append distribution messages for data proxies.
-	for _, proxy := range gasMeter.GetProxyGasUsed(reqID, ctx.BlockHeight()) {
+	for _, proxy := range gasMeter.GetProxyGasUsed(drID, ctx.BlockHeight()) {
 		proxyDist := types.NewDataProxyReward(proxy.PublicKey, proxy.PayoutAddress, proxy.Amount, gasMeter.GasPrice())
 		dists = append(dists, proxyDist)
 		attrs = append(attrs, sdk.NewAttribute(types.AttributeDataProxyGas,
@@ -61,6 +59,83 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 	ctx.EventManager().EmitEvent(sdk.NewEvent(types.EventTypeGasMeter, attrs...))
 
 	return dists
+}
+
+// ChargeGasCosts charges gas costs to the escrow funds based on gas meter
+// reading. Remaining escrow funds are refunded to the data request poster.
+func (k Keeper) ChargeGasCosts(ctx sdk.Context, tr *TallyResult, minimumStake math.Int, burnRatio math.LegacyDec) error {
+	dists := k.ReadGasMeter(ctx, tr.GasMeter, tr.ID, tr.Height, burnRatio)
+
+	// Distribute in order.
+	denom, err := k.stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return err
+	}
+
+	remainingEscrow := tr.GasMeter.GetEscrow()
+
+	// TODO Events
+	var amount math.Int
+	for _, dist := range dists {
+		switch {
+		case dist.Burn != nil:
+			amount = math.MinInt(dist.Burn.Amount, remainingEscrow)
+			err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(denom, amount)))
+			if err != nil {
+				return err
+			}
+
+		case dist.DataProxyReward != nil:
+			amount = math.MinInt(dist.DataProxyReward.Amount, remainingEscrow)
+			payoutAddr, err := sdk.AccAddressFromBech32(dist.DataProxyReward.PayoutAddress)
+			if err != nil {
+				// Should not be reachable because the address has been validated.
+				return err
+			}
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, payoutAddr, sdk.NewCoins(sdk.NewCoin(denom, amount)))
+			if err != nil {
+				return err
+			}
+
+		case dist.ExecutorReward != nil:
+			amount = math.MinInt(dist.ExecutorReward.Amount, remainingEscrow)
+			staker, err := k.GetStaker(ctx, dist.ExecutorReward.Identity)
+			if err != nil {
+				return err
+			}
+
+			// Top up staked amount to minimum stake.
+			topup := math.ZeroInt()
+			if staker.Staked.LT(minimumStake) {
+				topup = math.MinInt(minimumStake.Sub(staker.Staked), amount)
+				staker.Staked = staker.Staked.Add(topup)
+				remainingEscrow = remainingEscrow.Sub(topup)
+			}
+			staker.PendingWithdrawal = staker.PendingWithdrawal.Add(amount.Sub(topup))
+
+			err = k.SetStaker(ctx, staker)
+			if err != nil {
+				return err
+			}
+		}
+
+		remainingEscrow = remainingEscrow.Sub(amount)
+	}
+
+	// Refund the poster.
+	if !remainingEscrow.IsZero() {
+		poster, err := sdk.AccAddressFromBech32(tr.GasMeter.GetPoster())
+		if err != nil {
+			// Should not be reachable because the address has been validated.
+			return err
+		}
+		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, poster, sdk.NewCoins(sdk.NewCoin(denom, remainingEscrow)))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // MeterProxyGas computes and records the gas consumption of data proxies given
