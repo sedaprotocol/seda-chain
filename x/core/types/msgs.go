@@ -8,8 +8,12 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/sha3"
+	"golang.org/x/mod/semver"
 
 	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
@@ -25,16 +29,26 @@ func isBigIntUint128(x *big.Int) bool {
 }
 
 func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("%s", err.Error())
+	}
+
 	if m.ReplicationFactor == 0 {
 		return ErrZeroReplicationFactor
 	}
+	// Ensure that the replication factor fits within 16 bits (unsigned).
+	if m.ReplicationFactor > uint32(^uint16(0)) {
+		return ErrReplicationFactorNotUint16
+	}
 
+	if m.GasPrice.IsNegative() || m.GasPrice.LT(MinGasPrice) {
+		return ErrGasPriceTooLow.Wrapf("%s < %s", m.GasPrice, MinGasPrice)
+	}
 	if !isBigIntUint128(m.GasPrice.BigInt()) {
 		return ErrGasPriceTooHigh
 	}
-	if m.GasPrice.LT(MinGasPrice) {
-		return ErrGasPriceTooLow.Wrapf("%s < %s", m.GasPrice, MinGasPrice)
-	}
+
 	if m.ExecGasLimit < MinExecGasLimit {
 		return ErrExecGasLimitTooLow.Wrapf("%d < %d", m.ExecGasLimit, MinExecGasLimit)
 	}
@@ -42,6 +56,12 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 		return ErrTallyGasLimitTooLow.Wrapf("%d < %d", m.TallyGasLimit, MinTallyGasLimit)
 	}
 
+	if _, err := hex.DecodeString(m.ExecProgramID); err != nil {
+		return ErrInvalidExecProgramID
+	}
+	if _, err := hex.DecodeString(m.TallyProgramID); err != nil {
+		return ErrInvalidTallyProgramID
+	}
 	if len(m.ExecProgramID) != 64 {
 		return ErrInvalidLengthExecProgramID.Wrapf("given ID is %d characters long", len(m.ExecProgramID))
 	}
@@ -49,11 +69,11 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 		return ErrInvalidLengthTallyProgramID.Wrapf("given ID is %d characters long", len(m.TallyProgramID))
 	}
 
-	// TODO
-	// // Ensure the version only consists of Major.Minor.Patch
-	// if !self.posted_dr.version.pre.is_empty() || !self.posted_dr.version.build.is_empty() {
-	// 	return Err(ContractError::DataRequestVersionInvalid);
-	// }
+	// Ensure the version only consists of Major.Minor.Patch
+	// with no prerelease or build suffixes.
+	if !semver.IsValid("v"+m.Version) || semver.Prerelease("v"+m.Version) != "" || semver.Build("v"+m.Version) != "" {
+		return ErrInvalidVersion.Wrapf("%s", m.Version)
+	}
 
 	if len(m.ExecInputs) > int(config.ExecInputLimitInBytes) {
 		return ErrExecInputLimitExceeded.Wrapf("%d bytes > %d bytes", len(m.ExecInputs), config.ExecInputLimitInBytes)
