@@ -6,14 +6,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
-func (k Keeper) IsAllowlisted(ctx sdk.Context, pubKey string) (bool, error) {
-	return k.allowlist.Has(ctx, pubKey)
-}
-
-func (k Keeper) AddToAllowlist(ctx sdk.Context, pubKey string) error {
-	return k.allowlist.Set(ctx, pubKey)
-}
-
 // GetStaker retrieves a staker given its public key.
 func (k Keeper) GetStaker(ctx sdk.Context, pubKey string) (types.Staker, error) {
 	staker, err := k.stakers.Get(ctx, pubKey)

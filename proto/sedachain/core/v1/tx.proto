@@ -14,8 +14,26 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/core/types";
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
+  // AcceptOwnership accepts the ownership of the core module.
+  rpc AcceptOwnership(MsgAcceptOwnership) returns (MsgAcceptOwnershipResponse);
+
+  // TransferOwnership transfers the ownership of the core module to a new
+  // address.
+  rpc TransferOwnership(MsgTransferOwnership)
+      returns (MsgTransferOwnershipResponse);
+
   // AddToAllowlist adds a new address to the allowlist.
   rpc AddToAllowlist(MsgAddToAllowlist) returns (MsgAddToAllowlistResponse);
+
+  // RemoveFromAllowlist removes an address from the allowlist.
+  rpc RemoveFromAllowlist(MsgRemoveFromAllowlist)
+      returns (MsgRemoveFromAllowlistResponse);
+
+  // Pause pauses the core module.
+  rpc Pause(MsgPause) returns (MsgPauseResponse);
+
+  // Unpause unpauses the core module.
+  rpc Unpause(MsgUnpause) returns (MsgUnpauseResponse);
 
   // Stake adds a stake to the executor identity.
   rpc Stake(MsgStake) returns (MsgStakeResponse);
@@ -33,6 +51,27 @@ service Msg {
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
+// The request message for the AcceptOwnership method.
+message MsgAcceptOwnership {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// The response message for the AcceptOwnership method.
+message MsgAcceptOwnershipResponse {}
+
+// The request message for the TransferOwnership method.
+message MsgTransferOwnership {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string new_owner = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// The response message for the TransferOwnership method.
+message MsgTransferOwnershipResponse {}
+
 // The request message for the AddToAllowlist method.
 message MsgAddToAllowlist {
   option (cosmos.msg.v1.signer) = "sender";
@@ -43,6 +82,36 @@ message MsgAddToAllowlist {
 
 // The response message for the AddToAllowlist method.
 message MsgAddToAllowlistResponse {}
+
+// The request message for the RemoveFromAllowlist method.
+message MsgRemoveFromAllowlist {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string public_key = 2;
+}
+
+// The response message for the RemoveFromAllowlist method.
+message MsgRemoveFromAllowlistResponse {}
+
+// The request message for the Pause method.
+message MsgPause {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// The response message for the Pause method.
+message MsgPauseResponse {}
+
+// The request message for the Unpause method.
+message MsgUnpause {
+  option (cosmos.msg.v1.signer) = "sender";
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// The response message for the Unpause method.
+message MsgUnpauseResponse {}
 
 // The request message for the Stake method.
 message MsgStake {
