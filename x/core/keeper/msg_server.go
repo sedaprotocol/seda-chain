@@ -27,13 +27,62 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{Keeper: keeper}
 }
 
+func (m msgServer) AcceptOwnership(goCtx context.Context, msg *types.MsgAcceptOwnership) (*types.MsgAcceptOwnershipResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	currentPendingOwner, err := m.GetPendingOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if msg.Sender != currentPendingOwner {
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", currentPendingOwner, msg.Sender)
+	}
+
+	err = m.Keeper.SetOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Emit event
+
+	return &types.MsgAcceptOwnershipResponse{}, nil
+}
+
+func (m msgServer) TransferOwnership(goCtx context.Context, msg *types.MsgTransferOwnership) (*types.MsgTransferOwnershipResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	currentOwner, err := m.GetOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if msg.Sender != currentOwner {
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", currentOwner, msg.Sender)
+	}
+
+	err = m.Keeper.SetPendingOwner(ctx, msg.NewOwner)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Emit event
+
+	return &types.MsgTransferOwnershipResponse{}, nil
+}
+
 func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllowlist) (*types.MsgAddToAllowlistResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if msg.Sender != m.GetAuthority() {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Sender)
+	owner, err := m.GetOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if msg.Sender != owner {
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", owner, msg.Sender)
 	}
 
+	// TODO: validate public key format
 	if msg.PublicKey == "" {
 		return nil, sdkerrors.ErrInvalidRequest.Wrapf("public key is empty")
 	}
@@ -59,6 +108,105 @@ func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllo
 	)
 
 	return &types.MsgAddToAllowlistResponse{}, nil
+}
+
+func (m msgServer) RemoveFromAllowlist(goCtx context.Context, msg *types.MsgRemoveFromAllowlist) (*types.MsgRemoveFromAllowlistResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	owner, err := m.GetOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if msg.Sender != owner {
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", owner, msg.Sender)
+	}
+
+	if msg.PublicKey == "" {
+		return nil, sdkerrors.ErrInvalidRequest.Wrapf("public key is empty")
+	}
+
+	exists, err := m.IsAllowlisted(ctx, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, types.ErrNotAllowlisted
+	}
+
+	err = m.Keeper.RemoveFromAllowlist(ctx, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if staker, err := m.GetStaker(ctx, msg.PublicKey); err == nil {
+		if staker.Staked.GT(math.ZeroInt()) {
+			staker.PendingWithdrawal = staker.PendingWithdrawal.Add(staker.Staked)
+			staker.Staked = math.ZeroInt()
+			err = m.SetStaker(ctx, staker)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// TODO: emit event
+	return &types.MsgRemoveFromAllowlistResponse{}, nil
+}
+
+func (m msgServer) Pause(goCtx context.Context, msg *types.MsgPause) (*types.MsgPauseResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	owner, err := m.GetOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if msg.Sender != owner {
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", owner, msg.Sender)
+	}
+
+	current, err := m.IsPaused(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if current {
+		return nil, errors.New("module is already paused")
+	}
+
+	err = m.Keeper.Pause(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgPauseResponse{}, nil
+}
+
+func (m msgServer) Unpause(goCtx context.Context, msg *types.MsgUnpause) (*types.MsgUnpauseResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	owner, err := m.GetOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if msg.Sender != owner {
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", owner, msg.Sender)
+	}
+
+	current, err := m.IsPaused(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if !current {
+		return nil, errors.New("module is not paused")
+	}
+
+	err = m.Keeper.Unpause(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUnpauseResponse{}, nil
 }
 
 func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.MsgStakeResponse, error) {
