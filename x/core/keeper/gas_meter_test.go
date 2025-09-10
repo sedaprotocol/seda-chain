@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/core/keeper"
+	"github.com/sedaprotocol/seda-chain/x/core/keeper/testutil"
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
@@ -115,14 +116,14 @@ func TestMeterExecutorGasFallback(t *testing.T) {
 
 // Encountered this scenario on a testnet.
 func TestReducedPayoutWithProxies(t *testing.T) {
-	fixture := initFixture(t)
+	fixture := testutil.InitFixture(t)
 
 	// Set up data proxies.
 	proxyPubKey1, proxyPubKey2 := "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec"
 	proxyPayoutAddr1, proxyPayoutAddr2 := "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f", "seda149sewl80wccuzhhukxgn2jg4kcun02d8qclwkt"
-	err := fixture.SetDataProxyConfig(proxyPubKey1, proxyPayoutAddr1, sdk.NewCoin(bondDenom, math.NewInt(1000000000000000000)))
+	err := fixture.SetDataProxyConfig(proxyPubKey1, proxyPayoutAddr1, sdk.NewCoin(testutil.BondDenom, math.NewInt(1000000000000000000)))
 	require.NoError(t, err)
-	err = fixture.SetDataProxyConfig(proxyPubKey2, proxyPayoutAddr2, sdk.NewCoin(bondDenom, math.NewInt(10000000000000)))
+	err = fixture.SetDataProxyConfig(proxyPubKey2, proxyPayoutAddr2, sdk.NewCoin(testutil.BondDenom, math.NewInt(10000000000000)))
 	require.NoError(t, err)
 
 	// Scenario: 4 data proxy calls (3 to the same proxy, 1 to a different proxy), replication factor = 1.
@@ -136,7 +137,7 @@ func TestReducedPayoutWithProxies(t *testing.T) {
 		types.DefaultBaseGasCost,
 	)
 
-	fixture.coreKeeper.MeterProxyGas(
+	fixture.CoreKeeper.MeterProxyGas(
 		fixture.Context(),
 		[]string{proxyPubKey2, proxyPubKey1, proxyPubKey1, proxyPubKey1},
 		1, gasMeter,
