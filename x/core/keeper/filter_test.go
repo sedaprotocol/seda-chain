@@ -9,14 +9,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sedaprotocol/seda-chain/x/core/keeper"
+	"github.com/sedaprotocol/seda-chain/x/core/keeper/testutil"
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
 func TestFilter(t *testing.T) {
-	f := initFixture(t)
+	f := testutil.InitFixture(t)
 
 	defaultParams := types.DefaultParams()
-	err := f.coreKeeper.SetParams(f.Context(), defaultParams)
+	err := f.CoreKeeper.SetParams(f.Context(), defaultParams)
 	require.NoError(t, err)
 
 	tallyConfig := defaultParams.TallyConfig
@@ -921,10 +922,10 @@ func TestFilter(t *testing.T) {
 // TestFilterWildcard tests filters with JSON paths containing wildcard expressions.
 
 func TestFilterWildcard(t *testing.T) {
-	f := initFixture(t)
+	f := testutil.InitFixture(t)
 
 	defaultParams := types.DefaultParams()
-	err := f.coreKeeper.SetParams(f.Context(), defaultParams)
+	err := f.CoreKeeper.SetParams(f.Context(), defaultParams)
 	require.NoError(t, err)
 
 	tallyConfig := defaultParams.TallyConfig
