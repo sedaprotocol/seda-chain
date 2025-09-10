@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -49,15 +51,15 @@ func (k Keeper) Tally(ctx sdk.Context) error {
 	}
 	k.Logger(ctx).Info("non-empty tally list - starting tally process")
 
-	params, err := k.GetTallyConfig(ctx)
+	params, err := k.GetParams(ctx)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally params", "err", err)
 		return nil
 	}
-	tallyvm.TallyMaxBytes = uint(params.MaxResultSize)
+	tallyvm.TallyMaxBytes = uint(params.TallyConfig.MaxResultSize)
 
-	tallyResults, dataResults, err := k.ProcessTallies(ctx, drIDs, params)
+	tallyResults, dataResults, err := k.ProcessTallies(ctx, drIDs, params.TallyConfig, params.StakingConfig.MinimumStake)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to tally data requests", "err", err)
@@ -102,12 +104,11 @@ func (k Keeper) Tally(ctx sdk.Context) error {
 // of requests: Filtering -> VM execution -> Gas metering and distributions.
 // It returns the tally results, data results, processed list of requests
 // expected by the Core Contract, and an error.
-func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.TallyConfig) ([]TallyResult, []batchingtypes.DataResult, error) {
+func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.TallyConfig, minStake math.Int) ([]TallyResult, []batchingtypes.DataResult, error) {
 	// tallyResults and dataResults have the same indexing.
 	tallyResults := make([]TallyResult, len(drIDs))
 	dataResults := make([]batchingtypes.DataResult, len(drIDs))
 
-	processedReqs := make(map[string][]types.Distribution)
 	tallyExecItems := []TallyParallelExecItem{}
 
 	var err error
@@ -139,9 +140,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 		// 	continue
 		// }
 
-		// Initialize the processedReqs map for each request with a full refund (no other distributions)
-		processedReqs[dr.ID] = make([]types.Distribution, 0)
-
 		tallyResults[i] = TallyResult{
 			ID: dr.ID,
 			//nolint:gosec // G115: Block height is never negative.
@@ -150,7 +148,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 			ReplicationFactor: uint16(dr.ReplicationFactor),
 		}
 
-		gasMeter := types.NewGasMeter(dr.TallyGasLimit, dr.ExecGasLimit, config.MaxTallyGasLimit, dr.PostedGasPrice, config.GasCostBase)
+		gasMeter := types.NewGasMeter(&dr, config.MaxTallyGasLimit, config.GasCostBase)
 
 		// Phase 1: Filtering
 		if len(dr.Commits) < int(dr.ReplicationFactor) {
@@ -263,7 +261,11 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 			tallyResults[i].TallyGasUsed = tr.GasMeter.TallyGasUsed()
 			tallyResults[i].ExecGasUsed = tr.GasMeter.ExecutionGasUsed()
 
-			processedReqs[tr.ID] = k.DistributionsFromGasMeter(ctx, tr.ID, tr.Height, tr.GasMeter, config.BurnRatio)
+			err = k.ChargeGasCosts(ctx, &tr, minStake, config.BurnRatio)
+			if err != nil {
+				return nil, nil, err
+			}
+
 			dataResults[i].GasUsed = tr.GasMeter.TotalGasUsed()
 		}
 
