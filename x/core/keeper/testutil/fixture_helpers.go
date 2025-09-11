@@ -223,9 +223,9 @@ func (f *Fixture) mintCoinsForAccount(t testing.TB, address sdk.AccAddress, seda
 	require.NoError(t, err)
 }
 
-// addStakers generates stakers and adds them to the allowlist. The
+// AddStakers generates stakers and adds them to the allowlist. The
 // stakers subsequently send their stakes to the core contract.
-func (f *Fixture) addStakers(tb testing.TB, num int) []Staker {
+func (f *Fixture) AddStakers(tb testing.TB, num int) []Staker {
 	tb.Helper()
 
 	stakers := make([]Staker, num)

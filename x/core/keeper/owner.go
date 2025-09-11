@@ -5,6 +5,14 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+func (k Keeper) GetOwner(ctx sdk.Context) (string, error) {
+	owner, err := k.owner.Get(ctx)
+	if err != nil {
+		return "", err
+	}
+	return owner, nil
+}
+
 func (k Keeper) SetOwner(ctx sdk.Context) error {
 	// get the new owner from the pending owner
 	pendingOwner, err := k.pendingOwner.Get(ctx)
@@ -62,12 +70,4 @@ func (k Keeper) Pause(ctx sdk.Context) error {
 
 func (k Keeper) Unpause(ctx sdk.Context) error {
 	return k.paused.Set(ctx, false)
-}
-
-func (k Keeper) GetOwner(ctx sdk.Context) (string, error) {
-	owner, err := k.owner.Get(ctx)
-	if err != nil {
-		return "", err
-	}
-	return owner, nil
 }
