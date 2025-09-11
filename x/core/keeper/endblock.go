@@ -131,14 +131,21 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 			BlockTimestamp: uint64(ctx.BlockTime().Unix()),
 		}
 
-		// TODO Add pausability
-		// if isPaused {
-		// 	markResultErr := MarkResultAsPaused(&dataResults[i], &tallyResults[i])
-		// 	if markResultErr != nil {
-		// 		return nil, nil, nil, err
-		// 	}
-		// 	continue
-		// }
+		isPaused, err := k.IsPaused(ctx)
+		k.Logger(ctx).Info("isPaused", "isPaused", isPaused)
+		if err != nil {
+			telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
+			k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get paused status", "err", err)
+			return nil, nil, err
+		}
+
+		if isPaused {
+			markResultErr := MarkResultAsPaused(&dataResults[i], &tallyResults[i])
+			if markResultErr != nil {
+				return nil, nil, err
+			}
+			continue
+		}
 
 		tallyResults[i] = TallyResult{
 			ID: dr.ID,

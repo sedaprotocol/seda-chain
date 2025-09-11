@@ -95,8 +95,9 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.queryClient = types.NewQueryClient(queryHelper)
 
 	// Set default params
-	err := s.keeper.SetParams(s.ctx, types.DefaultParams())
-	s.Require().NoError(err)
+	genesis := types.DefaultGenesisState()
+	genesis.Owner = s.authority
+	s.keeper.InitGenesis(s.ctx, *genesis)
 }
 
 func (s *KeeperTestSuite) NewIntFromString(val string) math.Int {
