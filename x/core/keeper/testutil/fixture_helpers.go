@@ -163,7 +163,7 @@ func (f *Fixture) postDataRequest(tb testing.TB, execProgHash, tallyProgHash []b
 
 // commitDataRequest executes a commit for each of the given stakers and
 // returns a list of corresponding reveal messages.
-func (f *Fixture) commitDataRequest(tb testing.TB, stakers []staker, height uint64, drID string, config CommitRevealConfig) [][]byte {
+func (f *Fixture) commitDataRequest(tb testing.TB, stakers []Staker, height uint64, drID string, config CommitRevealConfig) [][]byte {
 	tb.Helper()
 
 	revealBody := types.RevealBody{
@@ -190,7 +190,7 @@ func (f *Fixture) commitDataRequest(tb testing.TB, stakers []staker, height uint
 }
 
 // executeReveals executes a list of reveal messages.
-func (f *Fixture) executeReveals(tb testing.TB, stakers []staker, revealMsgs [][]byte) {
+func (f *Fixture) executeReveals(tb testing.TB, stakers []Staker, revealMsgs [][]byte) {
 	tb.Helper()
 
 	for i := 0; i < len(revealMsgs); i++ {
@@ -198,21 +198,21 @@ func (f *Fixture) executeReveals(tb testing.TB, stakers []staker, revealMsgs [][
 	}
 }
 
-type staker struct {
+type Staker struct {
 	key     []byte
 	pubKey  string
 	address []byte
 }
 
-// addStakers generates stakers and adds them to the allowlist. The
+// AddStakers generates stakers and adds them to the allowlist. The
 // stakers subsequently send their stakes to the core contract.
-func (f *Fixture) addStakers(tb testing.TB, num int) []staker {
+func (f *Fixture) AddStakers(tb testing.TB, num int) []Staker {
 	tb.Helper()
 
-	stakers := make([]staker, num)
+	stakers := make([]Staker, num)
 	for i := 0; i < num; i++ {
 		privKey := secp256k1.GenPrivKey()
-		stakers[i] = staker{
+		stakers[i] = Staker{
 			key:     privKey.Bytes(),
 			pubKey:  hex.EncodeToString(privKey.PubKey().Bytes()),
 			address: privKey.PubKey().Address().Bytes(),
@@ -308,7 +308,7 @@ func (f *Fixture) initAccountWithCoins(tb testing.TB, addr sdk.AccAddress, coins
 
 // createRevealMsg constructs and returns a reveal message and its corresponding
 // commitment and proof.
-func (f *Fixture) createRevealMsg(tb testing.TB, staker staker, revealBody types.RevealBody) ([]byte, string, string) {
+func (f *Fixture) createRevealMsg(tb testing.TB, staker Staker, revealBody types.RevealBody) ([]byte, string, string) {
 	tb.Helper()
 
 	revealBodyHash, err := revealBody.RevealBodyHash()

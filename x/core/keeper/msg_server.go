@@ -39,7 +39,7 @@ func (m msgServer) AcceptOwnership(goCtx context.Context, msg *types.MsgAcceptOw
 		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", currentPendingOwner, msg.Sender)
 	}
 
-	err = m.Keeper.SetOwner(ctx)
+	err = m.SetOwner(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (m msgServer) TransferOwnership(goCtx context.Context, msg *types.MsgTransf
 		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", currentOwner, msg.Sender)
 	}
 
-	err = m.Keeper.SetPendingOwner(ctx, msg.NewOwner)
+	err = m.SetPendingOwner(ctx, msg.NewOwner)
 	if err != nil {
 		return nil, err
 	}

@@ -14,7 +14,7 @@ type Querier struct {
 	Keeper
 }
 
-func (q Querier) Allowlist(c context.Context, req *types.QueryAllowlistRequest) (*types.QueryAllowlistResponse, error) {
+func (q Querier) Allowlist(c context.Context, _ *types.QueryAllowlistRequest) (*types.QueryAllowlistResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	iter, _ := q.allowlist.Iterate(ctx, nil)
