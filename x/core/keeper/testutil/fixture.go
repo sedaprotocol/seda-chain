@@ -82,7 +82,7 @@ type Fixture struct {
 	txConfig          client.TxConfig
 	chainID           string
 	coreContractAddr  sdk.AccAddress
-	stakers           []staker
+	stakers           []Staker
 	accountKeeper     authkeeper.AccountKeeper
 	bankKeeper        bankkeeper.Keeper
 	stakingKeeper     stakingkeeper.Keeper
@@ -286,6 +286,10 @@ func InitFixture(tb testing.TB) *Fixture {
 		authority.String(),
 	)
 
+	genesis := types.DefaultGenesisState()
+	genesis.Owner = authority.String()
+	coreKeeper.InitGenesis(ctx, *genesis)
+
 	coreMsgServer := keeper.NewMsgServerImpl(coreKeeper)
 
 	coreQuerier := keeper.Querier{Keeper: coreKeeper}
@@ -308,9 +312,6 @@ func InitFixture(tb testing.TB) *Fixture {
 	wasmKeeper.SetRouter(router)
 
 	// TODO: Check why IntegrationApp setup fails to initialize params.
-	err = coreKeeper.SetParams(ctx, types.DefaultParams())
-	require.NoError(tb, err)
-
 	err = pubKeyKeeper.SetProvingScheme(
 		ctx,
 		pubkeytypes.ProvingScheme{
@@ -395,7 +396,6 @@ func InitFixture(tb testing.TB) *Fixture {
 	f.Deployer.fixture = &f
 
 	f.SetContextChainID(chainID)
-	f.addStakers(tb, 5)
 	f.uploadOraclePrograms(tb)
 	return &f
 }

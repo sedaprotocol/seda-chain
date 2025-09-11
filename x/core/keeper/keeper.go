@@ -29,6 +29,11 @@ type Keeper struct {
 
 	Schema collections.Schema
 
+	// Core module state:
+	owner        collections.Item[string]
+	paused       collections.Item[bool]
+	pendingOwner collections.Item[string]
+
 	// Staking-related states:
 	// allowlist is an owner-controlled allowlist of staker public keys.
 	allowlist collections.KeySet[string]
@@ -73,6 +78,9 @@ func NewKeeper(
 		wasmKeeper:          wk,
 		wasmViewKeeper:      wvk,
 		authority:           authority,
+		owner:               collections.NewItem(sb, types.OwnerKey, "owner", collections.StringValue),
+		paused:              collections.NewItem(sb, types.PausedKey, "paused", collections.BoolValue),
+		pendingOwner:        collections.NewItem(sb, types.PendingOwnerKey, "pending_owner", collections.StringValue),
 		allowlist:           collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
 		stakers:             collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
 		dataRequests:        collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),

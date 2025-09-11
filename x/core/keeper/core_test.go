@@ -14,6 +14,7 @@ import (
 
 func TestEndBlock(t *testing.T) {
 	f := testutil.InitFixture(t)
+	f.AddStakers(t, 5)
 
 	tests := []struct {
 		name              string
@@ -69,6 +70,7 @@ func TestEndBlock(t *testing.T) {
 
 			// Data request should have been removed from the store.
 			dr, err = f.CoreKeeper.GetDataRequest(f.Context(), drID)
+			t.Log("dr after endblock", dr, err)
 			require.Error(t, err)
 			for executor := range dr.Reveals {
 				_, err := f.CoreKeeper.GetRevealBody(f.Context(), drID, executor)
