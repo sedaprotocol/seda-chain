@@ -21,6 +21,7 @@ import (
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	apptestutil "github.com/sedaprotocol/seda-chain/app/testutil"
 	"github.com/sedaprotocol/seda-chain/testutil"
+	coretypes "github.com/sedaprotocol/seda-chain/x/core/types"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -63,7 +64,39 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "happy path",
+			name: "happy path - mix of contract and module msgs",
+			msgs: []sdk.Msg{
+				&wasmtypes.MsgExecuteContract{
+					Sender:   sender.String(),
+					Contract: coreContractAddr.String(),
+					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
+					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+				},
+				&coretypes.MsgCommit{
+					Sender:    sender.String(),
+					DrID:      "dr_id_2",
+					PublicKey: "public_key",
+					Proof:     "proof",
+				},
+				&wasmtypes.MsgExecuteContract{
+					Sender:   sender.String(),
+					Contract: coreContractAddr.String(),
+					Msg:      testutil.RevealMsg("dr_id_2", "reveal", "public_key", "proof", []string{}, 0, 99, 35000),
+					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+				},
+				&coretypes.MsgReveal{
+					Sender: sender.String(),
+					RevealBody: &coretypes.RevealBody{
+						DrID: "dr_id",
+					},
+					PublicKey: "public_key",
+					Proof:     "proof",
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "happy path - only contract msgs",
 			msgs: []sdk.Msg{
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
@@ -81,6 +114,40 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 			expectedError: "",
 		},
 		{
+			name: "happy path - only module msgs",
+			msgs: []sdk.Msg{
+				&coretypes.MsgCommit{
+					Sender:    sender.String(),
+					DrID:      "dr_id",
+					PublicKey: "public_key",
+					Proof:     "proof",
+				},
+				&coretypes.MsgReveal{
+					Sender: sender.String(),
+					RevealBody: &coretypes.RevealBody{
+						DrID: "dr_id",
+					},
+					PublicKey: "public_key",
+					Proof:     "proof",
+				},
+				&coretypes.MsgCommit{
+					Sender:    sender.String(),
+					DrID:      "dr_id",
+					PublicKey: "public_key_2",
+					Proof:     "proof",
+				},
+				&coretypes.MsgReveal{
+					Sender: sender.String(),
+					RevealBody: &coretypes.RevealBody{
+						DrID: "dr_id",
+					},
+					PublicKey: "public_key_2",
+					Proof:     "proof",
+				},
+			},
+			expectedError: "",
+		},
+		{
 			name: "duplicate commits",
 			msgs: []sdk.Msg{
 				&wasmtypes.MsgExecuteContract{
@@ -89,11 +156,11 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
-				&wasmtypes.MsgExecuteContract{
-					Sender:   sender.String(),
-					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof2"),
-					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+				&coretypes.MsgCommit{
+					Sender:    sender.String(),
+					DrID:      "dr_id",
+					PublicKey: "public_key",
+					Proof:     "proof",
 				},
 			},
 			expectedError: "duplicate commit or reveal message detected",
@@ -116,8 +183,16 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.RevealMsg("dr_id", "reveal", "public_key", "proof", []string{"a"}, 0, 99, 35000),
+					Msg:      testutil.RevealMsg("dr_id_2", "reveal", "public_key", "proof", []string{"a"}, 0, 99, 35000),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+				},
+				&coretypes.MsgReveal{
+					Sender: sender.String(),
+					RevealBody: &coretypes.RevealBody{
+						DrID: "dr_id",
+					},
+					PublicKey: "public_key",
+					Proof:     "proof",
 				},
 			},
 			expectedError: "duplicate commit or reveal message detected",
@@ -136,11 +211,11 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
-				&wasmtypes.MsgExecuteContract{
-					Sender:   sender.String(),
-					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id_2", "commitment", "public_key", "proof"),
-					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+				&coretypes.MsgCommit{
+					Sender:    sender.String(),
+					DrID:      "dr_id_2",
+					PublicKey: "public_key",
+					Proof:     "proof",
 				},
 			},
 			expectedError: "commit or reveal message cannot be mixed with other messages",
@@ -159,11 +234,11 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 					Wasm:       []byte{},
 					StorageFee: sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
-				&wasmtypes.MsgExecuteContract{
-					Sender:   sender.String(),
-					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id_2", "commitment", "public_key", "proof"),
-					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+				&coretypes.MsgCommit{
+					Sender:    sender.String(),
+					DrID:      "dr_id_2",
+					PublicKey: "public_key",
+					Proof:     "proof",
 				},
 			},
 			expectedError: "commit or reveal message cannot be mixed with other messages",
@@ -182,6 +257,14 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 					Contract: coreContractAddr.String(),
 					Msg:      testutil.RevealMsg("dr_id", "reveal", "public_key", "proof", []string{}, 0, 99, 35000),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+				},
+				&coretypes.MsgReveal{
+					Sender: sender.String(),
+					RevealBody: &coretypes.RevealBody{
+						DrID: "dr_id_2",
+					},
+					PublicKey: "public_key",
+					Proof:     "proof",
 				},
 				&wasmstoragetypes.MsgStoreOracleProgram{
 					Sender:     testAddrs[1].String(),
@@ -214,6 +297,12 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 					Contract: coreContractAddr.String(),
 					Msg:      []byte(`{"commit_data_result": null}`),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
+				},
+				&coretypes.MsgCommit{
+					Sender:    sender.String(),
+					DrID:      "dr_id",
+					PublicKey: "public_key_2",
+					Proof:     "proof",
 				},
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),

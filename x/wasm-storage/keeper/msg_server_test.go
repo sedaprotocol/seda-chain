@@ -2,30 +2,21 @@ package keeper_test
 
 import (
 	"encoding/hex"
-	"fmt"
 	"math"
-	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"golang.org/x/exp/rand"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
-	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
@@ -324,178 +315,4 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			s.Require().Equal(tc.input.Params, params)
 		})
 	}
-}
-
-func (s *KeeperTestSuite) TestRefundTxFee() {
-	s.SetupTest()
-
-	coreContract := "seda1p9dtxynydns46wgv7wthsgh4rhvp7cw8rn99a6ekga7jzufqkhcqgrgcwg"
-	err := s.keeper.CoreContractRegistry.Set(s.ctx, coreContract)
-	s.Require().NoError(err)
-
-	cases := []struct {
-		name            string
-		isLastMsgReveal bool
-		input           *types.MsgRefundTxFee
-		gasLimit        uint64
-		refund          bool
-		expErrMsg       string
-	}{
-		{
-			name: "not the core contract",
-			input: &types.MsgRefundTxFee{
-				Authority: "seda13uj26mq00terh0lrrhd3vajt723c03xsp6nu3stmpf7t5l36vlsq7zpct2",
-				DrId:      "drID",
-				PublicKey: "pubKey",
-				IsReveal:  false,
-			},
-			gasLimit:  2000,
-			refund:    false,
-			expErrMsg: "expected " + coreContract + ", got seda13uj26mq00terh0lrrhd3vajt723c03xsp6nu3stmpf7t5l36vlsq7zpct2: invalid authority",
-		},
-		{
-			name: "not the last message's DR ID",
-			input: &types.MsgRefundTxFee{
-				Authority: coreContract,
-				DrId:      "drIDa",
-				PublicKey: "pubKey",
-				IsReveal:  false,
-			},
-			gasLimit: 2000,
-			refund:   false,
-		},
-		{
-			name: "not the last message's public key",
-			input: &types.MsgRefundTxFee{
-				Authority: coreContract,
-				DrId:      "drID",
-				PublicKey: "pubKeya",
-				IsReveal:  false,
-			},
-			gasLimit: 2000,
-			refund:   false,
-		},
-		{
-			name:            "last msg is reveal, not commit",
-			isLastMsgReveal: true,
-			input: &types.MsgRefundTxFee{
-				Authority: coreContract,
-				DrId:      "drID",
-				PublicKey: "pubKey",
-				IsReveal:  false,
-			},
-			gasLimit: 2000,
-			refund:   false,
-		},
-		{
-			name:            "last msg is commit, not reveal",
-			isLastMsgReveal: false,
-			input: &types.MsgRefundTxFee{
-				Authority: coreContract,
-				DrId:      "drID",
-				PublicKey: "pubKey",
-				IsReveal:  true,
-			},
-			gasLimit: 2000,
-			refund:   false,
-		},
-		{
-			name: "gas limit too large for refund",
-			input: &types.MsgRefundTxFee{
-				Authority: coreContract,
-				DrId:      "drID",
-				PublicKey: "pubKey",
-				IsReveal:  false,
-			},
-			gasLimit: 10000,
-			refund:   false,
-		},
-		{
-			name:            "happy path - last msg is commit",
-			isLastMsgReveal: false,
-			input: &types.MsgRefundTxFee{
-				Authority: coreContract,
-				DrId:      "drID",
-				PublicKey: "pubKey",
-				IsReveal:  false,
-			},
-			gasLimit: 2000,
-			refund:   true,
-		},
-		{
-			name:            "happy path - last msg is reveal",
-			isLastMsgReveal: true,
-			input: &types.MsgRefundTxFee{
-				Authority: coreContract,
-				DrId:      "drID",
-				PublicKey: "pubKey",
-				IsReveal:  true,
-			},
-			gasLimit: 2000,
-			refund:   true,
-		},
-	}
-
-	for _, tc := range cases {
-		s.Run(tc.name, func() {
-			fee := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewIntFromUint64(tc.gasLimit*1e10)))
-			txBytes := generateTxBytes(s.T(), s.txConfig, coreContract, fee, rand.Intn(10)+1, tc.isLastMsgReveal)
-
-			s.ctx = s.ctx.WithTxBytes(txBytes)
-			s.ctx = s.ctx.WithGasMeter(storetypes.NewGasMeter(tc.gasLimit))
-
-			if tc.refund {
-				s.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), authtypes.FeeCollectorName, testAddrs[0], fee).Return(nil).Times(1)
-			}
-
-			_, err = s.msgSrvr.RefundTxFee(s.ctx, tc.input)
-			if tc.expErrMsg != "" {
-				s.Require().Error(err)
-				s.Require().Equal(tc.expErrMsg, err.Error())
-				return
-			}
-			s.Require().NoError(err)
-		})
-	}
-}
-
-// generateTxBytes generates numMsg commit/reveal messages, with the last message
-// having fixed data request ID and public key ("drID" and "pubKey").
-func generateTxBytes(t *testing.T, txConfig client.TxConfig, coreContract string, fee sdk.Coins, numMsgs int, isLastMsgReveal bool) []byte {
-	var msgs []sdk.Msg
-	for i := 0; i < numMsgs; i++ {
-		var msg []byte
-		if i == numMsgs-1 {
-			if isLastMsgReveal {
-				msg = testutil.RevealMsg("drID", "reveal", "pubKey", "proof", []string{}, 0, 99, 777)
-			} else {
-				msg = testutil.CommitMsg("drID", "commitment", "pubKey", "proof")
-			}
-		} else {
-			if i%2 == 0 {
-				msg = testutil.CommitMsg(fmt.Sprintf("drID%d", i), "commitment", fmt.Sprintf("pubKey%d", i), "proof")
-			} else {
-				msg = testutil.RevealMsg(fmt.Sprintf("drID%d", i), "reveal", fmt.Sprintf("pubKey%d", i), "proof", []string{}, 0, 99, 777)
-			}
-		}
-		contractMsg := wasmtypes.MsgExecuteContract{
-			Sender:   sdk.AccAddress(testAddrs[0]).String(),
-			Contract: coreContract,
-			Msg:      msg,
-			Funds:    sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewIntFromUint64(1))),
-		}
-		msgs = append(msgs, &contractMsg)
-	}
-
-	txf := tx.Factory{}.
-		WithChainID("chain-id").
-		WithTxConfig(txConfig).
-		WithFees(fee.String()).
-		WithFeePayer(sdk.AccAddress(testAddrs[0]))
-	tx, err := txf.BuildUnsignedTx(msgs...)
-	require.NoError(t, err)
-
-	txBytes, err := txConfig.TxEncoder()(tx.GetTx())
-	require.NoError(t, err)
-	return txBytes
 }

@@ -130,7 +130,6 @@ func initFixture(t testing.TB) *fixture {
 		Amino:             aminoCodec,
 	}
 	cdc := encCfg.Codec
-	txConfig := encCfg.TxConfig
 	std.RegisterLegacyAminoCodec(encCfg.Amino)
 	std.RegisterInterfaces(encCfg.InterfaceRegistry)
 	mb.RegisterLegacyAminoCodec(encCfg.Amino)
@@ -273,6 +272,8 @@ func initFixture(t testing.TB) *fixture {
 		contractKeeper,
 		wasmKeeper,
 		deployer.String(),
+		authtypes.FeeCollectorName,
+		encCfg.TxConfig.TxDecoder(),
 	)
 
 	coreMsgServer := keeper.NewMsgServerImpl(coreKeeper)
@@ -284,14 +285,17 @@ func initFixture(t testing.TB) *fixture {
 	wasmModule := wasm.NewAppModule(cdc, wasmKeeper, stakingKeeper, accountKeeper, bankKeeper, router, nil)
 	coreModule := core.NewAppModule(cdc, coreKeeper)
 
-	integrationApp := testutil.NewIntegrationApp(ctx, logger, keys, cdc, router, map[string]appmodule.AppModule{
-		authtypes.ModuleName:        authModule,
-		banktypes.ModuleName:        bankModule,
-		sdkstakingtypes.ModuleName:  stakingModule,
-		wasmstoragetypes.ModuleName: wasmStorageModule,
-		wasmtypes.ModuleName:        wasmModule,
-		types.ModuleName:            coreModule,
-	})
+	integrationApp := testutil.NewIntegrationApp(
+		ctx, logger, keys, cdc, router,
+		map[string]appmodule.AppModule{
+			authtypes.ModuleName:        authModule,
+			banktypes.ModuleName:        bankModule,
+			sdkstakingtypes.ModuleName:  stakingModule,
+			wasmstoragetypes.ModuleName: wasmStorageModule,
+			wasmtypes.ModuleName:        wasmModule,
+			types.ModuleName:            coreModule,
+		},
+	)
 	wasmKeeper.SetRouter(router)
 
 	// TODO: Check why IntegrationApp setup fails to initialize params.
@@ -359,7 +363,7 @@ func initFixture(t testing.TB) *fixture {
 		chainID:           chainID,
 		deployer:          deployer,
 		cdc:               cdc,
-		txConfig:          txConfig,
+		txConfig:          encCfg.TxConfig,
 		coreContractAddr:  coreContractAddr,
 		accountKeeper:     accountKeeper,
 		bankKeeper:        bankKeeper,
