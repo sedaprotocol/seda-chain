@@ -2,8 +2,12 @@ package types
 
 import (
 	"encoding/binary"
+	"fmt"
+	"strconv"
 
 	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GasMeter stores the results of the canonical gas consumption calculations.
@@ -19,14 +23,6 @@ type GasMeter struct {
 	postedGasPrice       math.Int // gas price as posted, can be higher than the GasPrice on the request
 	poster               string
 	escrow               math.Int
-}
-
-func (g *GasMeter) GetPoster() string {
-	return g.poster
-}
-
-func (g *GasMeter) GetEscrow() math.Int {
-	return g.escrow
 }
 
 // NewGasMeter creates a new gas meter and incurs the base gas cost.
@@ -51,6 +47,14 @@ func NewGasMeter(dr *DataRequest, maxTallyGasLimit uint64, baseGasCost uint64) *
 	}
 
 	return gasMeter
+}
+
+func (g *GasMeter) GetPoster() string {
+	return g.poster
+}
+
+func (g *GasMeter) GetEscrow() math.Int {
+	return g.escrow
 }
 
 func (g GasMeter) TotalGasUsed() *math.Int {
@@ -156,6 +160,53 @@ func (g *GasMeter) GetExecutorGasUsed() []ExecutorGasUsed {
 	return g.executors
 }
 
+// ReadGasMeter reads the given gas meter to construct a list of distributions.
+func (g GasMeter) ReadGasMeter(ctx sdk.Context, drID string, drHeight uint64, burnRatio math.LegacyDec) []Distribution {
+	dists := []Distribution{}
+	attrs := []sdk.Attribute{
+		sdk.NewAttribute(AttributeDataRequestID, drID),
+		sdk.NewAttribute(AttributeDataRequestHeight, strconv.FormatUint(drHeight, 10)),
+		sdk.NewAttribute(AttributeReducedPayout, strconv.FormatBool(g.ReducedPayout)),
+	}
+
+	// First distribution message is the combined burn.
+	burn := NewBurn(math.NewIntFromUint64(g.TallyGasUsed()), g.GasPrice())
+	dists = append(dists, burn)
+	attrs = append(attrs, sdk.NewAttribute(AttributeTallyGas, strconv.FormatUint(g.TallyGasUsed(), 10)))
+
+	// Append distribution messages for data proxies.
+	for _, proxy := range g.GetProxyGasUsed(drID, ctx.BlockHeight()) {
+		proxyDist := NewDataProxyReward(proxy.PublicKey, proxy.PayoutAddress, proxy.Amount, g.GasPrice())
+		dists = append(dists, proxyDist)
+		attrs = append(attrs, sdk.NewAttribute(AttributeDataProxyGas,
+			fmt.Sprintf("%s,%s,%s", proxy.PublicKey, proxy.PayoutAddress, proxy.Amount.String())))
+	}
+
+	// Append distribution messages for executors, burning a portion of their
+	// payouts in case of a reduced payout scenario.
+	reducedPayoutBurn := math.ZeroInt()
+	for _, executor := range g.GetExecutorGasUsed() {
+		payoutAmt := executor.Amount
+		if g.ReducedPayout {
+			burnAmt := burnRatio.MulInt(executor.Amount).TruncateInt()
+			payoutAmt = executor.Amount.Sub(burnAmt)
+			reducedPayoutBurn = reducedPayoutBurn.Add(burnAmt)
+		}
+
+		executorDist := NewExecutorReward(executor.PublicKey, payoutAmt, g.GasPrice())
+		dists = append(dists, executorDist)
+		attrs = append(attrs, sdk.NewAttribute(AttributeExecutorGas,
+			fmt.Sprintf("%s,%s", executor.PublicKey, payoutAmt.String())))
+	}
+
+	dists[0].Burn.Amount = dists[0].Burn.Amount.Add(reducedPayoutBurn.Mul(g.GasPrice()))
+	attrs = append(attrs, sdk.NewAttribute(AttributeReducedPayoutBurn, reducedPayoutBurn.String()))
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(EventTypeGasMeter, attrs...))
+
+	return dists
+}
+
 var _ HashSortable = ProxyGasUsed{}
 
 type ProxyGasUsed struct {
@@ -184,4 +235,52 @@ func GetEntropy(drID string, height int64) []byte {
 	//nolint:gosec // G115: We shouldn't get negative block heights anyway.
 	binary.BigEndian.PutUint64(heightBytes, uint64(height))
 	return append([]byte(drID), heightBytes...)
+}
+
+type Distribution struct {
+	Burn            *DistributionBurn            `json:"burn,omitempty"`
+	ExecutorReward  *DistributionExecutorReward  `json:"executor_reward,omitempty"`
+	DataProxyReward *DistributionDataProxyReward `json:"data_proxy_reward,omitempty"`
+}
+
+type DistributionBurn struct {
+	Amount math.Int `json:"amount"`
+}
+
+type DistributionDataProxyReward struct {
+	PayoutAddress string   `json:"payout_address"`
+	Amount        math.Int `json:"amount"`
+	// The public key of the data proxy as a hex string
+	PublicKey string `json:"public_key"`
+}
+
+type DistributionExecutorReward struct {
+	Amount math.Int `json:"amount"`
+	// The public key of the executor as a hex string
+	Identity string `json:"identity"`
+}
+
+func NewBurn(amount, gasPrice math.Int) Distribution {
+	return Distribution{
+		Burn: &DistributionBurn{Amount: amount.Mul(gasPrice)},
+	}
+}
+
+func NewDataProxyReward(pubkey, payoutAddr string, amount, gasPrice math.Int) Distribution {
+	return Distribution{
+		DataProxyReward: &DistributionDataProxyReward{
+			PayoutAddress: payoutAddr,
+			Amount:        amount.Mul(gasPrice),
+			PublicKey:     pubkey,
+		},
+	}
+}
+
+func NewExecutorReward(identity string, amount, gasPrice math.Int) Distribution {
+	return Distribution{
+		ExecutorReward: &DistributionExecutorReward{
+			Identity: identity,
+			Amount:   amount.Mul(gasPrice),
+		},
+	}
 }

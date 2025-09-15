@@ -2,10 +2,8 @@ package keeper
 
 import (
 	"encoding/hex"
-	"fmt"
 	stdmath "math"
 	"sort"
-	"strconv"
 
 	"cosmossdk.io/math"
 
@@ -14,57 +12,10 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
-// ReadGasMeter reads the given gas meter to construct a list of distributions.
-func (k Keeper) ReadGasMeter(ctx sdk.Context, gasMeter *types.GasMeter, drID string, drHeight uint64, burnRatio math.LegacyDec) []types.Distribution {
-	dists := []types.Distribution{}
-	attrs := []sdk.Attribute{
-		sdk.NewAttribute(types.AttributeDataRequestID, drID),
-		sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatUint(drHeight, 10)),
-		sdk.NewAttribute(types.AttributeReducedPayout, strconv.FormatBool(gasMeter.ReducedPayout)),
-	}
-
-	// First distribution message is the combined burn.
-	burn := types.NewBurn(math.NewIntFromUint64(gasMeter.TallyGasUsed()), gasMeter.GasPrice())
-	dists = append(dists, burn)
-	attrs = append(attrs, sdk.NewAttribute(types.AttributeTallyGas, strconv.FormatUint(gasMeter.TallyGasUsed(), 10)))
-
-	// Append distribution messages for data proxies.
-	for _, proxy := range gasMeter.GetProxyGasUsed(drID, ctx.BlockHeight()) {
-		proxyDist := types.NewDataProxyReward(proxy.PublicKey, proxy.PayoutAddress, proxy.Amount, gasMeter.GasPrice())
-		dists = append(dists, proxyDist)
-		attrs = append(attrs, sdk.NewAttribute(types.AttributeDataProxyGas,
-			fmt.Sprintf("%s,%s,%s", proxy.PublicKey, proxy.PayoutAddress, proxy.Amount.String())))
-	}
-
-	// Append distribution messages for executors, burning a portion of their
-	// payouts in case of a reduced payout scenario.
-	reducedPayoutBurn := math.ZeroInt()
-	for _, executor := range gasMeter.GetExecutorGasUsed() {
-		payoutAmt := executor.Amount
-		if gasMeter.ReducedPayout {
-			burnAmt := burnRatio.MulInt(executor.Amount).TruncateInt()
-			payoutAmt = executor.Amount.Sub(burnAmt)
-			reducedPayoutBurn = reducedPayoutBurn.Add(burnAmt)
-		}
-
-		executorDist := types.NewExecutorReward(executor.PublicKey, payoutAmt, gasMeter.GasPrice())
-		dists = append(dists, executorDist)
-		attrs = append(attrs, sdk.NewAttribute(types.AttributeExecutorGas,
-			fmt.Sprintf("%s,%s", executor.PublicKey, payoutAmt.String())))
-	}
-
-	dists[0].Burn.Amount = dists[0].Burn.Amount.Add(reducedPayoutBurn.Mul(gasMeter.GasPrice()))
-	attrs = append(attrs, sdk.NewAttribute(types.AttributeReducedPayoutBurn, reducedPayoutBurn.String()))
-
-	ctx.EventManager().EmitEvent(sdk.NewEvent(types.EventTypeGasMeter, attrs...))
-
-	return dists
-}
-
 // ChargeGasCosts charges gas costs to the escrow funds based on gas meter
 // reading. Remaining escrow funds are refunded to the data request poster.
 func (k Keeper) ChargeGasCosts(ctx sdk.Context, tr *TallyResult, minimumStake math.Int, burnRatio math.LegacyDec) error {
-	dists := k.ReadGasMeter(ctx, tr.GasMeter, tr.ID, tr.Height, burnRatio)
+	dists := tr.GasMeter.ReadGasMeter(ctx, tr.ID, tr.Height, burnRatio)
 
 	// Distribute in order.
 	denom, err := k.stakingKeeper.BondDenom(ctx)
@@ -172,9 +123,9 @@ func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicatio
 	}
 }
 
-// MeterExecutorGasFallback computes and records the gas consumption of committers
-// of a data request when basic consensus has not been reached. If checkReveal is
-// set to true, it will only consume gas for committers that have also revealed.
+// MeterExecutorGasFallback consumes the given fallback gas amount for each
+// committer. If any reveal is present, it will only consume gas for committers
+// that have also revealed.
 func MeterExecutorGasFallback(req types.DataRequest, gasCostFallback uint64, gasMeter *types.GasMeter) {
 	if len(req.Commits) == 0 || gasMeter.RemainingExecGas() == 0 {
 		return

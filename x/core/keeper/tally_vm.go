@@ -14,25 +14,25 @@ import (
 )
 
 type TallyParallelExecItem struct {
-	Request   types.DataRequest
-	GasMeter  *types.GasMeter
-	Reveals   []types.Reveal
-	Outliers  []bool
-	Consensus bool
+	Request           types.DataRequest
+	TallyExecGasLimit uint64
+	Reveals           []types.Reveal
+	Outliers          []bool
+	Consensus         bool
 	// Index is the corresponding index in tallyResults and dataResults arrays.
 	Index int
 	// If TallyExecErr is not nil, the item was not executed due to this error.
 	TallyExecErr error
 }
 
-func NewTallyParallelExecItem(index int, req types.DataRequest, gasMeter *types.GasMeter, reveals []types.Reveal, outliers []bool, consensus bool) TallyParallelExecItem {
+func NewTallyParallelExecItem(index int, req types.DataRequest, gasLimit uint64, reveals []types.Reveal, outliers []bool, consensus bool) TallyParallelExecItem {
 	return TallyParallelExecItem{
-		Index:     index,
-		Request:   req,
-		GasMeter:  gasMeter,
-		Reveals:   reveals,
-		Outliers:  outliers,
-		Consensus: consensus,
+		Index:             index,
+		Request:           req,
+		TallyExecGasLimit: gasLimit,
+		Reveals:           reveals,
+		Outliers:          outliers,
+		Consensus:         consensus,
 	}
 }
 
@@ -88,7 +88,7 @@ func (k Keeper) ExecuteTallyProgramsParallel(ctx sdk.Context, items []TallyParal
 			"EXEC_GAS_LIMIT":        fmt.Sprintf("%v", items[i].Request.ExecGasLimit),
 			"TALLY_INPUTS":          base64.StdEncoding.EncodeToString(items[i].Request.TallyInputs),
 			"TALLY_PROGRAM_ID":      items[i].Request.TallyProgramID,
-			"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", items[i].GasMeter.RemainingTallyGas()),
+			"DR_TALLY_GAS_LIMIT":    fmt.Sprintf("%v", items[i].TallyExecGasLimit),
 			"DR_GAS_PRICE":          items[i].Request.PostedGasPrice.String(),
 			"DR_MEMO":               base64.StdEncoding.EncodeToString(items[i].Request.Memo),
 			"DR_PAYBACK_ADDRESS":    hex.EncodeToString(items[i].Request.PaybackAddress),

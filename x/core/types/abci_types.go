@@ -3,8 +3,6 @@ package types
 import (
 	"encoding/json"
 
-	"cosmossdk.io/math"
-
 	"github.com/sedaprotocol/seda-wasm-vm/tallyvm/v3"
 )
 
@@ -67,52 +65,4 @@ func MapVMResult(vmRes tallyvm.VmResult) VMResult {
 	}
 
 	return result
-}
-
-type Distribution struct {
-	Burn            *DistributionBurn            `json:"burn,omitempty"`
-	ExecutorReward  *DistributionExecutorReward  `json:"executor_reward,omitempty"`
-	DataProxyReward *DistributionDataProxyReward `json:"data_proxy_reward,omitempty"`
-}
-
-type DistributionBurn struct {
-	Amount math.Int `json:"amount"`
-}
-
-type DistributionDataProxyReward struct {
-	PayoutAddress string   `json:"payout_address"`
-	Amount        math.Int `json:"amount"`
-	// The public key of the data proxy as a hex string
-	PublicKey string `json:"public_key"`
-}
-
-type DistributionExecutorReward struct {
-	Amount math.Int `json:"amount"`
-	// The public key of the executor as a hex string
-	Identity string `json:"identity"`
-}
-
-func NewBurn(amount, gasPrice math.Int) Distribution {
-	return Distribution{
-		Burn: &DistributionBurn{Amount: amount.Mul(gasPrice)},
-	}
-}
-
-func NewDataProxyReward(pubkey, payoutAddr string, amount, gasPrice math.Int) Distribution {
-	return Distribution{
-		DataProxyReward: &DistributionDataProxyReward{
-			PayoutAddress: payoutAddr,
-			Amount:        amount.Mul(gasPrice),
-			PublicKey:     pubkey,
-		},
-	}
-}
-
-func NewExecutorReward(identity string, amount, gasPrice math.Int) Distribution {
-	return Distribution{
-		ExecutorReward: &DistributionExecutorReward{
-			Identity: identity,
-			Amount:   amount.Mul(gasPrice),
-		},
-	}
 }
