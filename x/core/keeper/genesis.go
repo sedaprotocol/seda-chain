@@ -9,7 +9,13 @@ import (
 // InitGenesis initializes the store based on the given genesis state.
 func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 	// set owner state
-	err := k.owner.Set(ctx, data.Owner)
+	err := k.SetOwner(ctx, data.Owner)
+	if err != nil {
+		panic(err)
+	}
+
+	// set pending owner state
+	err = k.SetPendingOwner(ctx, data.PendingOwner)
 	if err != nil {
 		panic(err)
 	}
@@ -39,9 +45,14 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
+	gs.PendingOwner, err = k.GetPendingOwner(ctx)
+	if err != nil {
+		panic(err)
+	}
 	gs.Paused, err = k.IsPaused(ctx)
 	if err != nil {
 		panic(err)
 	}
+
 	return gs
 }

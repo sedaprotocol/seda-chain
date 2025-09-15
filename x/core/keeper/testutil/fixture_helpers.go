@@ -114,32 +114,32 @@ func (f *Fixture) ExecuteDataRequestFlow(
 // account and executes a commit and reveal for the request using a staker account.
 // It then returns the data request ID and the randomly selected TallyTestItem,
 // which contains the expected tally execution results.
-func (f *Fixture) executeDataRequestFlowWithTallyTestItem(tb testing.TB, entropy []byte) (string, testwasms.TallyTestItem) {
-	randIndex := rand.Intn(len(testwasms.TestWasms))
-	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
+// func (f *Fixture) executeDataRequestFlowWithTallyTestItem(tb testing.TB, entropy []byte) (string, testwasms.TallyTestItem) {
+// 	randIndex := rand.Intn(len(testwasms.TestWasms))
+// 	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
 
-	randIndex = rand.Intn(len(testwasms.TallyTestItems))
-	testItem := testwasms.TallyTestItems[randIndex]
-	tallyProgram := wasmstoragetypes.NewOracleProgram(testItem.TallyProgram, f.Context().BlockTime())
+// 	randIndex = rand.Intn(len(testwasms.TallyTestItems))
+// 	testItem := testwasms.TallyTestItems[randIndex]
+// 	tallyProgram := wasmstoragetypes.NewOracleProgram(testItem.TallyProgram, f.Context().BlockTime())
 
-	config := CommitRevealConfig{
-		RequestHeight: 1,
-		RequestMemo:   base64.StdEncoding.EncodeToString(entropy),
-		Reveal:        testItem.Reveal,
-		ProxyPubKeys:  []string{},
-		GasUsed:       testItem.GasUsed,
-	}
+// 	config := CommitRevealConfig{
+// 		RequestHeight: 1,
+// 		RequestMemo:   base64.StdEncoding.EncodeToString(entropy),
+// 		Reveal:        testItem.Reveal,
+// 		ProxyPubKeys:  []string{},
+// 		GasUsed:       testItem.GasUsed,
+// 	}
 
-	// Post a data request.
-	res := f.PostDataRequest(tb, execProgram.Hash, tallyProgram.Hash, config.RequestMemo, 1)
-	drID := res.DrID
+// 	// Post a data request.
+// 	res := f.PostDataRequest(tb, execProgram.Hash, tallyProgram.Hash, config.RequestMemo, 1)
+// 	drID := res.DrID
 
-	// The stakers commit and reveal.
-	revealMsgs := f.CommitDataRequest(tb, f.Stakers[:1], res.Height, drID, config)
-	f.ExecuteReveals(tb, f.Stakers, revealMsgs[:1], config)
+// 	// The stakers commit and reveal.
+// 	revealMsgs := f.CommitDataRequest(tb, f.Stakers[:1], res.Height, drID, config)
+// 	f.ExecuteReveals(tb, f.Stakers, revealMsgs[:1], config)
 
-	return res.DrID, testItem
-}
+// 	return res.DrID, testItem
+// }
 
 func (f *Fixture) PostDataRequest(tb testing.TB, execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) PostDataRequestResponse {
 	tb.Helper()
@@ -215,12 +215,14 @@ type Staker struct {
 	Address []byte
 }
 
-func (f *Fixture) mintCoinsForAccount(t testing.TB, address sdk.AccAddress, sedaAmount uint64) {
+func (f *Fixture) mintCoinsForAccount(tb testing.TB, address sdk.AccAddress, sedaAmount uint64) {
+	tb.Helper()
+
 	amount := math.NewIntFromUint64(sedaAmount).Mul(math.NewInt(1e18))
 	err := f.BankKeeper.MintCoins(f.Context(), minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(BondDenom, amount)))
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	err = f.BankKeeper.SendCoinsFromModuleToAccount(f.Context(), minttypes.ModuleName, address, sdk.NewCoins(sdk.NewCoin(BondDenom, amount)))
-	require.NoError(t, err)
+	require.NoError(tb, err)
 }
 
 // AddStakers generates stakers and adds them to the allowlist. The
@@ -361,13 +363,13 @@ func (f *Fixture) createRevealMsg(tb testing.TB, staker Staker, revealBody types
 	return msg, hex.EncodeToString(commitment), proof
 }
 
-func generateRevealProof(tb testing.TB, signKey []byte, revealBodyHash []byte, ChainID, _ string) string {
+func generateRevealProof(tb testing.TB, signKey []byte, revealBodyHash []byte, chainID, _ string) string {
 	tb.Helper()
 
 	allBytes := []byte("reveal_data_result")
 
 	allBytes = append(allBytes, revealBodyHash...)
-	allBytes = append(allBytes, []byte(ChainID)...)
+	allBytes = append(allBytes, []byte(chainID)...)
 	// Legacy format
 	// allBytes = append(allBytes, []byte(coreContractAddr)...)
 

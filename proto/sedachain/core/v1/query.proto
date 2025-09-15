@@ -43,7 +43,7 @@ message QueryOwnerRequest {}
 // The response message for Query/Owner RPC method.
 message QueryOwnerResponse {
   // owner is the address of the core module owner.
-  string owner = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string owner = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 
 // The request message for Query/PendingOwner RPC method.
@@ -52,7 +52,7 @@ message QueryPendingOwnerRequest {}
 // The response message for Query/PendingOwner RPC method.
 message QueryPendingOwnerResponse {
   // pending_owner is the address of the core module pending owner.
-  string pending_owner = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string pending_owner = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 
 // The request message for Query/Paused RPC method.
@@ -61,7 +61,7 @@ message QueryPausedRequest {}
 // The response message for Query/Paused RPC method.
 message QueryPausedResponse {
   // paused is whether the core module is paused.
-  bool paused = 3;
+  bool paused = 1;
 }
 
 // The request message for Query/Allowlist RPC method.
@@ -70,7 +70,7 @@ message QueryAllowlistRequest {}
 // The response message for Query/Allowlist RPC method.
 message QueryAllowlistResponse {
   // public_keys is the list of hex-encoded public keys in the allowlist.
-  repeated string public_keys = 3;
+  repeated string public_keys = 1;
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.

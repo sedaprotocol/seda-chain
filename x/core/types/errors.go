@@ -42,6 +42,8 @@ var (
 	ErrRevealMismatch               = errors.Register("core", 36, "revealed result does not match the committed result")
 	ErrInvalidCommitProof           = errors.Register("core", 37, "invalid commit proof")
 	ErrInvalidRevealProof           = errors.Register("core", 38, "invalid reveal proof")
+	ErrModuleAlreadyPaused          = errors.Register("core", 57, "module is already paused")
+	ErrModuleAlreadyUnpaused        = errors.Register("core", 58, "module is already unpaused")
 	// Errors used in filter:
 	ErrInvalidFilterType      = errors.Register("core", 39, "invalid filter type")
 	ErrFilterInputTooShort    = errors.Register("core", 40, "filter input length too short")
