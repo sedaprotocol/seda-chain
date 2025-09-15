@@ -37,23 +37,37 @@ func (ta *TestAccount) Stake(amountSeda int64, memo string) (*types.MsgStakeResp
 	return ta.fixture.CoreMsgServer.Stake(ta.fixture.Context(), msg)
 }
 
-// func (ta *TestAccount) Unstake(amountSeda int64) (*types.MsgUnstakeResponse, error) {
-// 	bigAmountSeda := math.NewInt(amountSeda)
-// 	bigAmount := bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))
-// 	unstake := sdk.NewCoin(bondDenom, bigAmount)
+func (ta *TestAccount) Unstake() (*types.MsgUnstakeResponse, error) {
+	msg := &types.MsgUnstake{
+		Sender:    ta.Address(),
+		PublicKey: ta.PublicKeyHex(),
+	}
+	hash, err := msg.MsgHash(ta.fixture.ChainID, ta.GetSequence())
+	require.NoError(ta.fixture.tb, err)
+	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), hash)
+	require.NoError(ta.fixture.tb, err)
+	msg.Proof = hex.EncodeToString(proof)
 
-// 	msg := &types.MsgUnstake{
-// 		Sender:  ta.Address().String(),
-// 		Stake:   unstake,
-// 		Address: ta.Address().String(),
-// 	}
-// 	return ta.fixture.coreMsgServer.Unstake(ta.fixture.Context(), msg)
-// }
+	return ta.fixture.CoreMsgServer.Unstake(ta.fixture.Context(), msg)
+}
 
-// func (ta *TestAccount) Withdraw() (*types.MsgWithdrawResponse, error) {
-// 	msg := &types.MsgWithdraw{
-// 		Sender:  ta.Address().String(),
-// 		Address: ta.Address().String(),
-// 	}
-// 	return ta.fixture.coreMsgServer.Withdraw(ta.fixture.Context(), msg)
-// }
+func (ta *TestAccount) Withdraw(to *TestAccount) (*types.MsgWithdrawResponse, error) {
+	msg := &types.MsgWithdraw{
+		Sender:    ta.Address(),
+		PublicKey: ta.PublicKeyHex(),
+	}
+
+	if to != nil {
+		msg.WithdrawAddress = to.Address()
+	} else {
+		msg.WithdrawAddress = ta.Address()
+	}
+
+	hash, err := msg.MsgHash(ta.fixture.ChainID, ta.GetSequence())
+	require.NoError(ta.fixture.tb, err)
+	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), hash)
+	require.NoError(ta.fixture.tb, err)
+	msg.Proof = hex.EncodeToString(proof)
+
+	return ta.fixture.CoreMsgServer.Withdraw(ta.fixture.Context(), msg)
+}

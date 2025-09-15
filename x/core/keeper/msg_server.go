@@ -222,6 +222,15 @@ func (m msgServer) Unpause(goCtx context.Context, msg *types.MsgUnpause) (*types
 func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.MsgStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// check if paused
+	paused, err := m.IsPaused(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if paused {
+		return nil, types.ErrModulePaused
+	}
+
 	// Verify stake proof.
 	var sequenceNum uint64
 	var isExistingStaker bool // for later use
@@ -325,8 +334,17 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 func (m msgServer) Unstake(goCtx context.Context, msg *types.MsgUnstake) (*types.MsgUnstakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// check if paused
+	paused, err := m.IsPaused(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if paused {
+		return nil, types.ErrModulePaused
+	}
+
 	// Verify the sender
-	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	_, err = sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", msg.Sender)
 	}
@@ -370,8 +388,17 @@ func (m msgServer) Unstake(goCtx context.Context, msg *types.MsgUnstake) (*types
 func (m msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*types.MsgWithdrawResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// check if paused
+	paused, err := m.IsPaused(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if paused {
+		return nil, types.ErrModulePaused
+	}
+
 	// Verify the Sender
-	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	_, err = sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", msg.Sender)
 	}
@@ -384,6 +411,7 @@ func (m msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 
 	// Check the staker exists
 	staker, err := m.GetStaker(ctx, msg.PublicKey)
+	staker.SequenceNum++
 	if err != nil {
 		return nil, err
 	}

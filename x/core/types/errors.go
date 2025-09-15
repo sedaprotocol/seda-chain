@@ -44,6 +44,7 @@ var (
 	ErrInvalidRevealProof           = errors.Register("core", 38, "invalid reveal proof")
 	ErrModuleAlreadyPaused          = errors.Register("core", 57, "module is already paused")
 	ErrModuleAlreadyUnpaused        = errors.Register("core", 58, "module is already unpaused")
+	ErrModulePaused                 = errors.Register("core", 59, "module is paused")
 	// Errors used in filter:
 	ErrInvalidFilterType      = errors.Register("core", 39, "invalid filter type")
 	ErrFilterInputTooShort    = errors.Register("core", 40, "filter input length too short")
