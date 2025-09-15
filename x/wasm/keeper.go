@@ -5,6 +5,8 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 
+	corestoretypes "cosmossdk.io/core/store"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -19,19 +21,32 @@ type StakingKeeper interface {
 }
 
 type Keeper struct {
-	*keeper.Keeper                         // default wasm keeper
-	WasmStorageKeeper WasmStorageKeeper    // for core contract shim
-	StakingKeeper     StakingKeeper        // for core contract shim
-	cdc               codec.Codec          // for core contract shim
-	router            keeper.MessageRouter // for core contract shim
+	*keeper.Keeper                                  // default wasm keeper
+	WasmStorageKeeper WasmStorageKeeper             // for core contract shim
+	StakingKeeper     StakingKeeper                 // for core contract shim
+	cdc               codec.Codec                   // for core contract shim
+	router            keeper.MessageRouter          // for core contract shim
+	storeService      corestoretypes.KVStoreService // for core contract query shim
+	queryGasLimit     uint64                        // for core contract query shim
+	queryRouter       keeper.GRPCQueryRouter        // for core contract query shim
 }
 
-func NewKeeper(k *keeper.Keeper, sk StakingKeeper, cdc codec.Codec, router keeper.MessageRouter) *Keeper {
+func NewKeeper(
+	k *keeper.Keeper,
+	sk StakingKeeper,
+	cdc codec.Codec,
+	router keeper.MessageRouter,
+	queryRouter keeper.GRPCQueryRouter,
+	storeService corestoretypes.KVStoreService,
+) *Keeper {
 	return &Keeper{
 		Keeper:        k,
 		StakingKeeper: sk,
 		cdc:           cdc,
 		router:        router,
+		storeService:  storeService,
+		queryGasLimit: k.QueryGasLimit(),
+		queryRouter:   queryRouter,
 	}
 }
 

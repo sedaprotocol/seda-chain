@@ -72,6 +72,10 @@ cat $HOME/.sedad/config/genesis.json | jq '.consensus.params.block.max_gas="1000
 cat $HOME/.sedad/config/genesis.json | jq '.consensus.params.abci.vote_extensions_enable_height = "1"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 cat $HOME/.sedad/config/genesis.json | jq '.app_state["pubkey"]["params"]["activation_block_delay"]="1"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
 
+# fixedacc
+cat $HOME/.sedad/config/genesis.json | jq '.app_state["core"]["owner"]="seda1v6v23stx7p2wkqu5j9967x9s0vla3u49dyhvqm"' > $HOME/.sedad/config/tmp_genesis.json && mv $HOME/.sedad/config/tmp_genesis.json $HOME/.sedad/config/genesis.json
+
+
 if [[ "$OSTYPE" == "darwin"* ]]; then
     sed -i '' 's/swagger = false/swagger = true/' $HOME/.sedad/config/app.toml
     sed -i '' 's/allow-unencrypted-seda-keys = false/allow-unencrypted-seda-keys = true/' $HOME/.sedad/config/app.toml

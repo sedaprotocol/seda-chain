@@ -31,9 +31,28 @@ service Query {
     option (google.api.http).get = "/seda-chain/core/allowlist";
   }
 
+  // StakerAndSeq returns the staker and its sequence number.
+  rpc StakerAndSeq(QueryStakerAndSeqRequest)
+      returns (QueryStakerAndSeqResponse) {
+    option (google.api.http).get =
+        "/seda-chain/core/staker_and_seq/{public_key}";
+  }
+
   // Params returns the total set of core parameters.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/seda-chain/core/params";
+  }
+
+  // StakingConfig returns the staking config of the core module.
+  rpc StakingConfig(QueryStakingConfigRequest)
+      returns (QueryStakingConfigResponse) {
+    option (google.api.http).get = "/seda-chain/core/staking_config";
+  }
+
+  // DataRequestConfig returns the data request config of the core module.
+  rpc DataRequestConfig(QueryDataRequestConfigRequest)
+      returns (QueryDataRequestConfigResponse) {
+    option (google.api.http).get = "/seda-chain/core/data_request_config";
   }
 }
 
@@ -73,6 +92,15 @@ message QueryAllowlistResponse {
   repeated string public_keys = 1;
 }
 
+// The request message for Query/StakerAndSeq RPC method.
+message QueryStakerAndSeqRequest { string public_key = 1; }
+
+// The response message for Query/StakerAndSeq RPC method.
+message QueryStakerAndSeqResponse {
+  Staker staker = 1 [ (gogoproto.nullable) = false ];
+  uint64 sequence_num = 2;
+}
+
 // QueryParamsRequest is the request type for the Query/Params RPC method.
 message QueryParamsRequest {}
 
@@ -80,4 +108,20 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // Params defines the parameters of the module.
   Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+// The request message for Query/StakingConfig RPC method.
+message QueryStakingConfigRequest {}
+
+// The response message for Query/StakingConfig RPC method.
+message QueryStakingConfigResponse {
+  StakingConfig staking_config = 1 [ (gogoproto.nullable) = false ];
+}
+
+// The request message for Query/DataRequestConfig RPC method.
+message QueryDataRequestConfigRequest {}
+
+// The response message for Query/DataRequestConfig RPC method.
+message QueryDataRequestConfigResponse {
+  DataRequestConfig data_request_config = 1 [ (gogoproto.nullable) = false ];
 }
