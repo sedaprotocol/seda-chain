@@ -201,6 +201,37 @@ func (m MsgStake) LegacyMsgHash(coreContractAddr, chainID string, sequenceNum ui
 	return hasher.Sum(nil), nil
 }
 
+func (m MsgUnstake) MsgHash(chainID string, sequenceNum uint64) ([]byte, error) {
+	allBytes := append([]byte{}, []byte("unstake")...)
+	allBytes = append(allBytes, []byte(chainID)...)
+
+	// Write to last 8 bytes of 16-byte variable.
+	// TODO contract used uint128
+	seqBytes := make([]byte, 16)
+	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
+	allBytes = append(allBytes, seqBytes...)
+
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(allBytes)
+	return hasher.Sum(nil), nil
+}
+
+func (m MsgUnstake) LegacyMsgHash(coreContractAddr, chainID string, sequenceNum uint64) ([]byte, error) {
+	allBytes := append([]byte{}, []byte("unstake")...)
+	allBytes = append(allBytes, []byte(chainID)...)
+	allBytes = append(allBytes, []byte(coreContractAddr)...)
+
+	// Write to last 8 bytes of 16-byte variable.
+	// TODO contract used uint128
+	seqBytes := make([]byte, 16)
+	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
+	allBytes = append(allBytes, seqBytes...)
+
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(allBytes)
+	return hasher.Sum(nil), nil
+}
+
 func (m MsgCommit) MsgHash(chainID string, drHeight int64) ([]byte, error) {
 	drHeightBytes := make([]byte, 8)
 	//nolint:gosec // G115: Block height is never negative.

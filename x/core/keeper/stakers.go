@@ -20,6 +20,11 @@ func (k Keeper) SetStaker(ctx sdk.Context, staker types.Staker) error {
 	return k.stakers.Set(ctx, staker.PublicKey, staker)
 }
 
+// RemoveStaker removes a staker from the store.
+func (k Keeper) RemoveStaker(ctx sdk.Context, pubKey string) error {
+	return k.stakers.Remove(ctx, pubKey)
+}
+
 // GetStakersCount returns the number of stakers in the store.
 func (k Keeper) GetStakersCount(ctx sdk.Context) (uint32, error) {
 	count := uint32(0)

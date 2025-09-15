@@ -38,6 +38,12 @@ service Msg {
   // Stake adds a stake to the executor identity.
   rpc Stake(MsgStake) returns (MsgStakeResponse);
 
+  // Unstake removes a stake from the executor identity.
+  rpc Unstake(MsgUnstake) returns (MsgUnstakeResponse);
+
+  // Withdraw withdraws available rewards to the sender address.
+  rpc Withdraw(MsgWithdraw) returns (MsgWithdrawResponse);
+
   // PostDataRequest posts a data request.
   rpc PostDataRequest(MsgPostDataRequest) returns (MsgPostDataRequestResponse);
 
@@ -132,6 +138,39 @@ message MsgStake {
 
 // The response message for the Stake method.
 message MsgStakeResponse {}
+
+// The request message for the Unstake method.
+message MsgUnstake {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  // Address of the tx sender.
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Hex-encoded identity of the executor.
+  string public_key = 2;
+  // Hex-encoded proof of the executor identity.
+  string proof = 3;
+}
+
+// The response message for the Unstake method.
+message MsgUnstakeResponse {}
+
+// The request message for the Withdraw method.
+message MsgWithdraw {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  // Address of the tx sender.
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Hex-encoded identity of the executor.
+  string public_key = 2;
+  // Hex-encoded proof of the executor identity.
+  string proof = 3;
+  // Address to which the withdrawn rewards will be sent.
+  string withdraw_address = 4
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// The response message for the Withdraw method.
+message MsgWithdrawResponse {}
 
 // The request message for the PostDataRequest method.
 message MsgPostDataRequest {
