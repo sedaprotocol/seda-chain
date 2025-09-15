@@ -1,0 +1,119 @@
+package wasm
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	abci "github.com/cometbft/cometbft/abci/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+)
+
+// Querier creates a new grpc querier instance
+func Querier(k *Keeper) *GrpcQuerier {
+	return NewGrpcQuerier(k)
+}
+
+var _ types.QueryServer = &GrpcQuerier{}
+
+type GrpcQuerier struct {
+	*keeper.GrpcQuerier
+	Keeper *Keeper
+	cdc    codec.Codec
+}
+
+// NewGrpcQuerier constructor
+func NewGrpcQuerier(k *Keeper) *GrpcQuerier {
+	return &GrpcQuerier{
+		GrpcQuerier: keeper.NewGrpcQuerier(k.cdc, k.storeService, k, k.queryGasLimit),
+		Keeper:      k,
+		cdc:         k.cdc,
+	}
+}
+
+func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmartContractStateRequest) (rsp *types.QuerySmartContractStateResponse, err error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	if err := req.QueryData.ValidateBasic(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid query data")
+	}
+	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	coreContractAddr, err := q.Keeper.WasmStorageKeeper.GetCoreContractAddr(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if contractAddr.String() != coreContractAddr.String() {
+		return q.GrpcQuerier.SmartContractState(c, req)
+	}
+
+	var query *CoreContractQuery
+	err = json.Unmarshal(req.QueryData, &query)
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidRequest.Wrapf("failed to unmarshal core contract query: %v", err)
+	}
+
+	// Encode and dispatch.
+	var encodedQuery []byte
+	var path string
+	switch {
+	case query.GetStakerAndSeq != nil:
+		encodedQuery, path, err = query.GetStakerAndSeq.ToModuleQuery()
+	case query.GetStakingConfig != nil:
+		encodedQuery, path, err = query.GetStakingConfig.ToModuleQuery()
+	default:
+		return nil, fmt.Errorf("unsupported core contractquery type %T", query)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	handler := q.Keeper.queryRouter.Route(path)
+	if handler == nil {
+		return nil, fmt.Errorf("failed to find handler for query route %s", path)
+	}
+
+	result, err := handler(ctx, &abci.RequestQuery{
+		Path: path,
+		Data: encodedQuery,
+		// Height: req.Height,
+		// Prove: req.Prove,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Decode the response.
+	var responseBytes []byte
+	switch {
+	case query.GetStakerAndSeq != nil:
+		responseBytes, err = query.GetStakerAndSeq.FromModuleQuery(q.cdc, result.Value)
+	case query.GetStakingConfig != nil:
+		responseBytes, err = query.GetStakingConfig.FromModuleQuery(q.cdc, result.Value)
+	default:
+		return nil, fmt.Errorf("unsupported core contractquery type %T", query)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QuerySmartContractStateResponse{
+		Data: types.RawContractMessage(responseBytes),
+	}, nil
+}

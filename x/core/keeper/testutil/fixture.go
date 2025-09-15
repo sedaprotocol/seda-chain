@@ -196,10 +196,11 @@ func InitFixture(tb testing.TB) *Fixture {
 	require.NoError(tb, err)
 
 	// x/wasm
+	wasmStoreService := runtime.NewKVStoreService(keys[wasmtypes.StoreKey])
 	router := baseapp.NewMsgServiceRouter()
 	sdkWasmKeeper := sdkwasmkeeper.NewKeeper(
 		cdc,
-		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+		wasmStoreService,
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
@@ -217,6 +218,8 @@ func InitFixture(tb testing.TB) *Fixture {
 		stakingKeeper,
 		cdc,
 		router,
+		nil, // queryRouter
+		wasmStoreService,
 	)
 
 	contractKeeper := sdkwasmkeeper.NewDefaultPermissionKeeper(wasmKeeper)
@@ -449,7 +452,3 @@ var setStakingConfigMsg = `{
 	  "allowlist_enabled": true
 	}
   }`
-
-// func NewCoin(amount math.Int) sdk.Coin {
-// 	return sdk.NewCoin(BondDenom, amount)
-// }

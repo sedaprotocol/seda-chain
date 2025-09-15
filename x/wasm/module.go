@@ -49,5 +49,5 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), NewMsgServerImpl(sdkMsgServer, am.keeper))
 
 	// TODO add querier shim
-	types.RegisterQueryServer(cfg.QueryServer(), keeper.Querier(am.keeper.Keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), Querier(am.keeper))
 }

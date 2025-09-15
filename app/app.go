@@ -584,9 +584,10 @@ func NewApp(
 
 	var wasmOpts []sdkwasmkeeper.Option
 
+	wasmStoreService := runtime.NewKVStoreService(keys[wasmtypes.StoreKey])
 	sdkWasmKeeper := sdkwasmkeeper.NewKeeper(
 		appCodec,
-		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+		wasmStoreService,
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
@@ -639,6 +640,8 @@ func NewApp(
 		app.StakingKeeper,
 		appCodec,
 		app.MsgServiceRouter(),
+		app.GRPCQueryRouter(),
+		wasmStoreService,
 	)
 	app.WasmContractKeeper = sdkwasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
 

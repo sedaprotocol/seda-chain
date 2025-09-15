@@ -2,6 +2,9 @@ package keeper
 
 import (
 	"context"
+	"errors"
+
+	"cosmossdk.io/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -24,6 +27,18 @@ func (q Querier) Allowlist(c context.Context, _ *types.QueryAllowlistRequest) (*
 	return &types.QueryAllowlistResponse{
 		PublicKeys: keys,
 	}, nil
+}
+
+func (q Querier) StakerAndSeq(c context.Context, req *types.QueryStakerAndSeqRequest) (*types.QueryStakerAndSeqResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	staker, err := q.GetStaker(ctx, req.PublicKey)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return &types.QueryStakerAndSeqResponse{}, nil
+		}
+		return nil, err
+	}
+	return &types.QueryStakerAndSeqResponse{Staker: staker, SequenceNum: staker.SequenceNum}, nil
 }
 
 func (q Querier) Paused(c context.Context, _ *types.QueryPausedRequest) (*types.QueryPausedResponse, error) {
@@ -60,4 +75,22 @@ func (q Querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.
 		return nil, err
 	}
 	return &types.QueryParamsResponse{Params: params}, nil
+}
+
+func (q Querier) StakingConfig(c context.Context, _ *types.QueryStakingConfigRequest) (*types.QueryStakingConfigResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	stakingConfig, err := q.GetStakingConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryStakingConfigResponse{StakingConfig: stakingConfig}, nil
+}
+
+func (q Querier) DataRequestConfig(c context.Context, _ *types.QueryDataRequestConfigRequest) (*types.QueryDataRequestConfigResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	dataRequestConfig, err := q.GetDataRequestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryDataRequestConfigResponse{DataRequestConfig: dataRequestConfig}, nil
 }
