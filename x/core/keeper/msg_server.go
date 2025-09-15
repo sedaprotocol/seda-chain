@@ -322,6 +322,100 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 	return &types.MsgStakeResponse{}, nil
 }
 
+func (m msgServer) Unstake(goCtx context.Context, msg *types.MsgUnstake) (*types.MsgUnstakeResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Verify the sender
+	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", msg.Sender)
+	}
+
+	// Check the staker exists
+	staker, err := m.GetStaker(ctx, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify the proof
+	publicKeyBytes, err := hex.DecodeString(msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	hash, err := msg.MsgHash(ctx.ChainID(), staker.SequenceNum)
+	if err != nil {
+		return nil, err
+	}
+	proof, err := hex.DecodeString(msg.Proof)
+	if err != nil {
+		return nil, err
+	}
+	_, err = vrf.NewK256VRF().Verify(publicKeyBytes, proof, hash)
+	if err != nil {
+		return nil, types.ErrInvalidStakeProof.Wrapf(err.Error())
+	}
+
+	// Update staker info
+	staker.PendingWithdrawal = staker.PendingWithdrawal.Add(staker.Staked)
+	staker.Staked = math.ZeroInt()
+	staker.SequenceNum++
+	err = m.SetStaker(ctx, staker)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUnstakeResponse{}, nil
+}
+
+func (m msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*types.MsgWithdrawResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Verify the Sender
+	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", msg.Sender)
+	}
+
+	// Verify the withdraw address
+	withdrawAddr, err := sdk.AccAddressFromBech32(msg.WithdrawAddress)
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid withdraw address: %s", msg.WithdrawAddress)
+	}
+
+	// Check the staker exists
+	staker, err := m.GetStaker(ctx, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	amount := staker.PendingWithdrawal
+	staker.PendingWithdrawal = math.ZeroInt()
+
+	if staker.Staked.IsZero() && staker.PendingWithdrawal.IsZero() {
+		err = m.RemoveStaker(ctx, msg.PublicKey)
+	} else {
+		err = m.SetStaker(ctx, staker)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Send coins
+	denom, err := m.stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	coins := sdk.NewCoins(sdk.NewCoin(denom, amount))
+	err = m.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, withdrawAddr, coins)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO emit event
+
+	return &types.MsgWithdrawResponse{}, nil
+}
+
 func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
