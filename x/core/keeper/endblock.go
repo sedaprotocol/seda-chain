@@ -146,9 +146,8 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 			Height: uint64(dr.PostedHeight),
 			//nolint:gosec // G115: Replication factor is guaranteed to fit within uint16.
 			ReplicationFactor: uint16(dr.ReplicationFactor),
+			GasMeter:          types.NewGasMeter(&dr, config.MaxTallyGasLimit, config.BaseGasCost),
 		}
-
-		gasMeter := types.NewGasMeter(&dr, config.MaxTallyGasLimit, config.GasCostBase)
 
 		// Phase 1: Filtering
 		if len(dr.Commits) < int(dr.ReplicationFactor) {
@@ -158,11 +157,11 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", dr.ID)
 
-			MeterExecutorGasFallback(dr, config.ExecutionGasCostFallback, gasMeter)
+			MeterExecutorGasFallback(dr, config.ExecutionGasCostFallback, tallyResults[i].GasMeter)
 		} else {
 			reveals, executors, gasReports := k.LoadRevealsSorted(ctx, dr.ID, dr.Reveals)
 			//nolint:gosec // G115: Replication factor is guaranteed to fit within uint16.
-			filterResult, filterErr := ExecuteFilter(reveals, dr.ConsensusFilter, uint16(dr.ReplicationFactor), config, gasMeter)
+			filterResult, filterErr := ExecuteFilter(reveals, dr.ConsensusFilter, uint16(dr.ReplicationFactor), config, tallyResults[i].GasMeter)
 
 			filterResult.Error = filterErr
 			filterResult.Executors = executors
@@ -174,7 +173,10 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 
 			if filterErr == nil {
 				// Execute tally VM for this request.
-				tallyExecItems = append(tallyExecItems, NewTallyParallelExecItem(i, dr, gasMeter, reveals, filterResult.Outliers, filterResult.Consensus))
+				tallyExecItems = append(
+					tallyExecItems,
+					NewTallyParallelExecItem(i, dr, tallyResults[i].GasMeter.RemainingTallyGas(), reveals, filterResult.Outliers, filterResult.Consensus),
+				)
 			} else {
 				// Skip tally execution.
 				dataResults[i].Result = []byte(filterErr.Error())
@@ -185,14 +187,12 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 				}
 
 				if errors.Is(filterErr, types.ErrNoBasicConsensus) {
-					MeterExecutorGasFallback(dr, config.ExecutionGasCostFallback, gasMeter)
+					MeterExecutorGasFallback(dr, config.ExecutionGasCostFallback, tallyResults[i].GasMeter)
 				} else if errors.Is(filterErr, types.ErrInvalidFilterInput) || errors.Is(filterErr, types.ErrNoConsensus) {
-					gasMeter.SetReducedPayoutMode()
+					tallyResults[i].GasMeter.SetReducedPayoutMode()
 				}
 			}
 		}
-
-		tallyResults[i].GasMeter = gasMeter
 
 		err = k.UpdateDataRequestIndexing(ctx, dr.Index(), dr.Status, types.DATA_REQUEST_STATUS_UNSPECIFIED)
 		if err != nil {
@@ -217,8 +217,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 		for i := range tallyExecItems {
 			if tallyExecItems[i].TallyExecErr == nil {
 				// Tally was executed, so parse VM execution results.
-				tallyExecItems[i].GasMeter.ConsumeTallyGas(vmResults[vmResultIndex].GasUsed)
-
 				result := types.MapVMResult(vmResults[vmResultIndex])
 				if result.ExitCode != 0 {
 					k.Logger(ctx).Error("tally vm exit message", "request_id", tallyExecItems[i].Request.ID, "exit_message", result.ExitMessage)
@@ -227,6 +225,8 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 				resultIndex := tallyExecItems[i].Index
 				tallyResults[resultIndex].StdOut = result.Stdout
 				tallyResults[resultIndex].StdErr = result.Stderr
+				tallyResults[resultIndex].GasMeter.ConsumeTallyGas(vmResults[vmResultIndex].GasUsed)
+
 				dataResults[resultIndex].Result = result.Result
 				dataResults[resultIndex].ExitCode = result.ExitCode
 				vmResultIndex++

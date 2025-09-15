@@ -44,7 +44,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostNone,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostNone,
 			wantErr:      nil,
 		},
 		{
@@ -62,7 +62,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*7,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*7,
 			wantErr:      nil,
 		},
 		{
@@ -76,7 +76,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*3,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*3,
 			wantErr:      nil,
 		},
 		{
@@ -90,7 +90,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*3,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*3,
 			wantErr:      types.ErrConsensusInError,
 		},
 		{
@@ -108,7 +108,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*7,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*7,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -122,7 +122,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*3,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*3,
 			wantErr:      nil,
 		},
 		{
@@ -139,7 +139,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + 0,
+			tallyGasUsed: tallyConfig.BaseGasCost + 0,
 			wantErr:      types.ErrNoBasicConsensus,
 		},
 		{
@@ -156,7 +156,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*6,
 			wantErr:      types.ErrConsensusInError,
 		},
 		{
@@ -232,7 +232,7 @@ func TestFilter(t *testing.T) {
 				"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
 				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
 			},
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*6,
 			wantErr:      nil,
 		},
 		{
@@ -307,7 +307,7 @@ func TestFilter(t *testing.T) {
 				"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4c3",
 				"034c0f86f0cb61f9ddb47c4ba0b2ca0470962b5a1c50bee3a563184979672195f4",
 			},
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*6,
 			wantErr:      types.ErrConsensusInError,
 		},
 		{
@@ -372,7 +372,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + 0,
+			tallyGasUsed: tallyConfig.BaseGasCost + 0,
 			wantErr:      types.ErrNoBasicConsensus,
 		},
 		{
@@ -387,7 +387,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*4,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*4,
 			wantErr:      nil,
 		},
 		{
@@ -402,7 +402,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*4,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*4,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -417,7 +417,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*4,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*4,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -432,7 +432,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  []string{"02100efce2a783cc7a3fbf9c5d15d4cc6e263337651312f21a35d30c16cb38f4g3"},
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*4,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*4,
 			wantErr:      nil,
 		},
 		{
@@ -447,7 +447,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + 0,
+			tallyGasUsed: tallyConfig.BaseGasCost + 0,
 			wantErr:      types.ErrNoBasicConsensus,
 		},
 		{
@@ -468,7 +468,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*7,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*7,
 			wantErr:      nil,
 		},
 		{
@@ -485,7 +485,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*6,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -502,7 +502,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*6,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -517,7 +517,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*4,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*4,
 			wantErr:      nil,
 		},
 		{
@@ -535,7 +535,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*7,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*7,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -552,7 +552,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*6,
 			wantErr:      nil,
 		},
 		{
@@ -567,7 +567,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*4,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*4,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -582,7 +582,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*4,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*4,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -597,7 +597,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*4,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*4,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -614,7 +614,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*6,
 			wantErr:      nil,
 		},
 		{
@@ -626,7 +626,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD,
 			wantErr:      nil,
 		},
 		{
@@ -643,7 +643,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*6,
 			wantErr:      nil,
 		},
 		{
@@ -660,7 +660,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*6,
 			wantErr:      nil,
 		},
 		{
@@ -677,7 +677,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*6,
 			wantErr:      nil,
 		},
 		{
@@ -696,7 +696,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*8,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*8,
 			wantErr:      nil,
 		},
 		{
@@ -715,7 +715,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*8,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*8,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -732,7 +732,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*6,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -749,7 +749,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*6,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -766,7 +766,7 @@ func TestFilter(t *testing.T) {
 			}, // median = -28360.5, MAD = 464, range = [-28833.316, -27887.684]
 			consensus:    false,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*6,
 			wantErr:      types.ErrNoConsensus,
 		},
 		{
@@ -783,7 +783,7 @@ func TestFilter(t *testing.T) {
 			}, // median = -28360.5, MAD = 465, max_dev = 604.5, range = [-28965, -27756]
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*6,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*6,
 			wantErr:      nil,
 		},
 		{
@@ -802,7 +802,7 @@ func TestFilter(t *testing.T) {
 			}, // median = 4.5, MAD = 0.5, range = [4, 5]
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*8,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*8,
 			wantErr:      nil,
 		},
 		{
@@ -822,7 +822,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*9,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*9,
 			wantErr:      nil,
 		},
 		{
@@ -837,7 +837,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*4,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*4,
 			wantErr:      nil,
 		},
 		{
@@ -852,7 +852,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*4,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*4,
 			wantErr:      nil,
 		},
 		{
@@ -867,7 +867,7 @@ func TestFilter(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*4,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*4,
 			wantErr:      nil,
 		},
 	}
@@ -892,7 +892,7 @@ func TestFilter(t *testing.T) {
 			// Just provide enought tally gas to cover the filter operation.
 			gasMeter := types.NewGasMeter(
 				&types.DataRequest{TallyGasLimit: types.DefaultMaxTallyGasLimit},
-				types.DefaultMaxTallyGasLimit, types.DefaultGasCostBase,
+				types.DefaultMaxTallyGasLimit, types.DefaultBaseGasCost,
 			)
 
 			result, err := keeper.ExecuteFilter(
@@ -956,7 +956,7 @@ func TestFilterWildcard(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*7,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*7,
 			wantErr:      nil,
 		},
 		{
@@ -975,7 +975,7 @@ func TestFilterWildcard(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*7,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*7,
 			wantErr:      nil,
 		},
 		{
@@ -994,7 +994,7 @@ func TestFilterWildcard(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMode*7,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMode*7,
 			wantErr:      nil,
 		},
 		{
@@ -1013,7 +1013,7 @@ func TestFilterWildcard(t *testing.T) {
 			},
 			consensus:    true,
 			consPubKeys:  nil,
-			tallyGasUsed: tallyConfig.GasCostBase + tallyConfig.FilterGasCostMultiplierMAD*7,
+			tallyGasUsed: tallyConfig.BaseGasCost + tallyConfig.FilterGasCostMultiplierMAD*7,
 			wantErr:      nil,
 		},
 	}
@@ -1040,7 +1040,7 @@ func TestFilterWildcard(t *testing.T) {
 			// Just provide enought tally gas to cover the filter operation.
 			gasMeter := types.NewGasMeter(
 				&types.DataRequest{TallyGasLimit: types.DefaultMaxTallyGasLimit},
-				types.DefaultMaxTallyGasLimit, types.DefaultGasCostBase,
+				types.DefaultMaxTallyGasLimit, types.DefaultBaseGasCost,
 			)
 
 			result, err := keeper.ExecuteFilter(

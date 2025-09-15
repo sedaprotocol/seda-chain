@@ -183,8 +183,8 @@ message TallyConfig {
   // FilterGasCostMAD is the gas cost multiplier for a filter type
   // Median Absolute Deviation.
   uint64 filter_gas_cost_multiplier_m_a_d = 4;
-  // GasCostBase is the base gas cost for a data request.
-  uint64 gas_cost_base = 5;
+  // BaseGasCost is the base gas cost for a data request.
+  uint64 base_gas_cost = 5;
   // GasCostFallback is the gas cost incurred for data request execution when
   // even basic consensus has not been reached.
   uint64 execution_gas_cost_fallback = 6;

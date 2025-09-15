@@ -53,7 +53,7 @@ func TestDecodeFilterInput(t *testing.T) {
 			// Just provide enought tally gas to cover the filter operation.
 			gasMeter := NewGasMeter(
 				&DataRequest{TallyGasLimit: DefaultMaxTallyGasLimit},
-				DefaultMaxTallyGasLimit, DefaultGasCostBase,
+				DefaultMaxTallyGasLimit, DefaultBaseGasCost,
 			)
 
 			filter, err := NewFilterMode(b, 1, 1, gasMeter)

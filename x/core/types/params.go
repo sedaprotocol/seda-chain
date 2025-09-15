@@ -30,14 +30,14 @@ const (
 	DefaultSEDAPayloadLimitInBytes     uint32 = 512   // 512 B
 
 	// TallyConfig
-	DefaultMaxResultSize               = 1024
-	DefaultMaxTallyGasLimit            = 50_000_000_000_000
-	DefaultFilterGasCostNone           = 100_000
-	DefaultFilterGasCostMultiplierMode = 100_000
-	DefaultFilterGasCostMultiplierMAD  = 100_000
-	DefaultGasCostBase                 = 1_000_000_000_000
-	DefaultExecutionGasCostFallback    = 5_000_000_000_000
-	DefaultMaxTalliesPerBlock          = 100
+	DefaultMaxResultSize               uint32 = 1024
+	DefaultMaxTallyGasLimit            uint64 = 50_000_000_000_000
+	DefaultFilterGasCostNone           uint64 = 100_000
+	DefaultFilterGasCostMultiplierMode uint64 = 100_000
+	DefaultFilterGasCostMultiplierMAD  uint64 = 100_000
+	DefaultBaseGasCost                 uint64 = 1_000_000_000_000
+	DefaultExecutionGasCostFallback    uint64 = 5_000_000_000_000
+	DefaultMaxTalliesPerBlock          uint32 = 100
 )
 
 // DefaultParams returns default core module parameters.
@@ -65,7 +65,7 @@ func DefaultParams() Params {
 			FilterGasCostNone:           DefaultFilterGasCostNone,
 			FilterGasCostMultiplierMode: DefaultFilterGasCostMultiplierMode,
 			FilterGasCostMultiplierMAD:  DefaultFilterGasCostMultiplierMAD,
-			GasCostBase:                 DefaultGasCostBase,
+			BaseGasCost:                 DefaultBaseGasCost,
 			ExecutionGasCostFallback:    DefaultExecutionGasCostFallback,
 			BurnRatio:                   DefaultBurnRatio,
 			MaxTalliesPerBlock:          DefaultMaxTalliesPerBlock,
@@ -147,8 +147,8 @@ func (tc *TallyConfig) Validate() error {
 	if tc.FilterGasCostMultiplierMAD <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("filter gas cost (MAD) must be greater than 0: %d", tc.FilterGasCostMultiplierMAD)
 	}
-	if tc.GasCostBase <= 0 {
-		return sdkerrors.ErrInvalidRequest.Wrapf("base gas cost must be greater than 0: %d", tc.GasCostBase)
+	if tc.BaseGasCost <= 0 {
+		return sdkerrors.ErrInvalidRequest.Wrapf("base gas cost must be greater than 0: %d", tc.BaseGasCost)
 	}
 	if tc.ExecutionGasCostFallback <= 0 {
 		return sdkerrors.ErrInvalidRequest.Wrapf("execution gas cost fallback must be greater than 0: %d", tc.ExecutionGasCostFallback)
