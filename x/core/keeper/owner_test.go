@@ -23,8 +23,9 @@ func TestGetNoPendingOwner(t *testing.T) {
 
 	someone := f.CreateTestAccount("someone", 10_000)
 
-	_, err := someone.GetPendingOwner()
-	require.Error(t, err)
+	resp, err := someone.GetPendingOwner()
+	require.Empty(t, resp.PendingOwner)
+	require.NoError(t, err)
 }
 
 func TestNonOwnerCannotTransferOwnership(t *testing.T) {
@@ -60,8 +61,9 @@ func TestTwoStepOwnershipTransfer(t *testing.T) {
 	require.Equal(t, newOwner.Address(), ownerResp.Owner)
 
 	// Check no pending owner
-	_, err = f.Creator.GetPendingOwner()
-	require.Error(t, err)
+	resp, err = f.Creator.GetPendingOwner()
+	require.Empty(t, resp.PendingOwner)
+	require.NoError(t, err)
 }
 
 func TestNonPendingOwnerCannotAcceptOwnership(t *testing.T) {

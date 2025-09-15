@@ -12,4 +12,5 @@ message GenesisState {
   Params params = 1 [ (gogoproto.nullable) = false ];
   bool paused = 2;
   string owner = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string pending_owner = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }

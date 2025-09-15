@@ -14,7 +14,7 @@ func (ta *TestAccount) AddToAllowlist(publicKey string) (*types.MsgAddToAllowlis
 
 func (ta *TestAccount) GetAllowlist() (*types.QueryAllowlistResponse, error) {
 	msg := &types.QueryAllowlistRequest{}
-	return ta.fixture.coreQuerier.Allowlist(ta.fixture.Context(), msg)
+	return ta.fixture.CoreQuerier.Allowlist(ta.fixture.Context(), msg)
 }
 
 func (ta *TestAccount) RemoveFromAllowlist(publicKey string) (*types.MsgRemoveFromAllowlistResponse, error) {
@@ -22,5 +22,5 @@ func (ta *TestAccount) RemoveFromAllowlist(publicKey string) (*types.MsgRemoveFr
 		Sender:    ta.Address(),
 		PublicKey: publicKey,
 	}
-	return ta.fixture.coreMsgServer.RemoveFromAllowlist(ta.fixture.Context(), msg)
+	return ta.fixture.CoreMsgServer.RemoveFromAllowlist(ta.fixture.Context(), msg)
 }

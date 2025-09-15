@@ -108,6 +108,7 @@ func TestEndBlock(t *testing.T) {
 
 func TestTxFeeRefund(t *testing.T) {
 	f := testutil.InitFixture(t)
+	f.AddStakers(t, 5)
 
 	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.HTTPHeavyWasm(), f.Context().BlockTime())
 	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm(), f.Context().BlockTime())

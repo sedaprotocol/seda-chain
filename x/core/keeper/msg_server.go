@@ -39,7 +39,12 @@ func (m msgServer) AcceptOwnership(goCtx context.Context, msg *types.MsgAcceptOw
 		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", currentPendingOwner, msg.Sender)
 	}
 
-	err = m.SetOwner(ctx)
+	err = m.SetOwner(ctx, msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.SetPendingOwner(ctx, "")
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +64,11 @@ func (m msgServer) TransferOwnership(goCtx context.Context, msg *types.MsgTransf
 
 	if msg.Sender != currentOwner {
 		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", currentOwner, msg.Sender)
+	}
+
+	// validate new owner address
+	if _, err := sdk.AccAddressFromBech32(msg.NewOwner); err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid new owner address: %s", msg.NewOwner)
 	}
 
 	err = m.SetPendingOwner(ctx, msg.NewOwner)
@@ -170,7 +180,7 @@ func (m msgServer) Pause(goCtx context.Context, msg *types.MsgPause) (*types.Msg
 	}
 
 	if current {
-		return nil, errors.New("module is already paused")
+		return nil, types.ErrModuleAlreadyPaused
 	}
 
 	err = m.Keeper.Pause(ctx)
@@ -198,7 +208,7 @@ func (m msgServer) Unpause(goCtx context.Context, msg *types.MsgUnpause) (*types
 	}
 
 	if !current {
-		return nil, errors.New("module is not paused")
+		return nil, types.ErrModuleAlreadyUnpaused
 	}
 
 	err = m.Keeper.Unpause(ctx)
