@@ -21,6 +21,15 @@ import (
 func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostDataRequest) (*types.MsgPostDataRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// check if paused
+	paused, err := m.IsPaused(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if paused {
+		return nil, types.ErrModulePaused
+	}
+
 	drConfig, err := m.GetDataRequestConfig(ctx)
 	if err != nil {
 		return nil, err
@@ -147,6 +156,16 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 
 func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.MsgCommitResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// check if paused
+	paused, err := m.IsPaused(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if paused {
+		return nil, types.ErrModulePaused
+	}
+
 	params, err := m.GetParams(ctx)
 	if err != nil {
 		return nil, err
@@ -241,6 +260,15 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 
 func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.MsgRevealResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// check if paused
+	paused, err := m.IsPaused(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if paused {
+		return nil, types.ErrModulePaused
+	}
 
 	// Check the status of the data request.
 	dr, err := m.GetDataRequest(ctx, msg.RevealBody.DrID)
