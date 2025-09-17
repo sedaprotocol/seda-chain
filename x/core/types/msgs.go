@@ -407,3 +407,36 @@ func (rb RevealBody) RevealBodyHash() ([]byte, error) {
 
 	return hasher.Sum(nil), nil
 }
+
+func (q QueryIsExecutorEligibleRequest) Parts() (publicKeyBytes, drIDBytes, proof []byte, err error) {
+	// base64 decode the data
+	data, err := base64.StdEncoding.DecodeString(q.Data)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	publicKeyBytes = data[:66]
+	drIDBytes = data[67:131]
+	proof = data[132:]
+
+	return publicKeyBytes, drIDBytes, proof, nil
+}
+
+func (q QueryIsExecutorEligibleRequest) MsgHash() []byte {
+	_, drIdBytes, _, _ := q.Parts()
+	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
+	allBytes = append(allBytes, drIdBytes...)
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(allBytes)
+	return hasher.Sum(nil)
+}
+
+func (q QueryIsExecutorEligibleRequest) LegacyMsgHash(contractAddr string) []byte {
+	_, drIdBytes, _, _ := q.Parts()
+	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
+	allBytes = append(allBytes, drIdBytes...)
+	allBytes = append(allBytes, []byte(contractAddr)...)
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(allBytes)
+	return hasher.Sum(nil)
+}

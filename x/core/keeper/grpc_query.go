@@ -2,10 +2,13 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"golang.org/x/crypto/sha3"
 
 	"github.com/sedaprotocol/seda-chain/x/core/types"
+	vrf "github.com/sedaprotocol/vrf-go"
 )
 
 var _ types.QueryServer = Querier{}
@@ -60,4 +63,79 @@ func (q Querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.
 		return nil, err
 	}
 	return &types.QueryParamsResponse{Params: params}, nil
+}
+
+func (q Querier) AccountSeq(c context.Context, req *types.QueryAccountSeqRequest) (*types.QueryAccountSeqResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	staker, err := q.GetStaker(ctx, req.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryAccountSeqResponse{
+		AccountSeq: staker.SequenceNum,
+	}, nil
+}
+
+func (q Querier) IsStakerExecutor(c context.Context, req *types.QueryIsStakerExecutorRequest) (*types.QueryIsStakerExecutorResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	isExecutor, err := q.Keeper.IsStakerExecutor(ctx, req.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryIsStakerExecutorResponse{
+		IsStakerExecutor: isExecutor,
+	}, nil
+}
+
+func isExecutorEligibleMsgHash(publicKeyBytes, drIdBytes []byte) []byte {
+	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
+	allBytes = append(allBytes, drIdBytes...)
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(allBytes)
+	return hasher.Sum(nil)
+}
+
+func isExecutorEligibleLegacyMsgHash(contractAddr string, publicKeyBytes, drIdBytes []byte) []byte {
+	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
+	allBytes = append(allBytes, drIdBytes...)
+	allBytes = append(allBytes, []byte(contractAddr)...)
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(allBytes)
+	return hasher.Sum(nil)
+}
+
+func (q Querier) IsExecutorEligible(c context.Context, req *types.QueryIsExecutorEligibleRequest) (*types.QueryIsExecutorEligibleResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	// verify the proof
+	hash := req.MsgHash()
+	publicKeyBytes, drIDBytes, proof, err := req.Parts()
+	if err != nil {
+		return nil, err
+	}
+	vrf.NewK256VRF().Verify(publicKeyBytes, proof, hash)
+
+	// TODO: we should store the drID as bytes to avoid this
+	hexDrID := hex.EncodeToString(drIDBytes)
+	// check if dr is in the data request pool
+	_, err = q.GetDataRequest(ctx, hexDrID)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: move IsStakerExecutor logic to a separate function and call it here
+	isExecutor, err := q.Keeper.IsStakerExecutor(ctx, hex.EncodeToString(publicKeyBytes))
+	if err != nil {
+		return nil, err
+	}
+	if !isExecutor {
+		return &types.QueryIsExecutorEligibleResponse{
+			IsExecutorEligible: false,
+		}, nil
+	}
+
+	return &types.QueryIsExecutorEligibleResponse{
+		IsExecutorEligible: false,
+	}, nil
 }
