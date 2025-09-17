@@ -48,6 +48,26 @@ service Query {
         "/seda-chain/core/data_requests_by_status/{status}";
   }
 
+  // AccountSeq returns the account sequence number for a given public key.
+  rpc AccountSeq(QueryAccountSeqRequest) returns (QueryAccountSeqResponse) {
+    option (google.api.http).get = "/seda-chain/core/account_seq/{public_key}";
+  }
+
+  // IsStakerExecutor returns whether the staker is a executor.
+  rpc IsStakerExecutor(QueryIsStakerExecutorRequest)
+      returns (QueryIsStakerExecutorResponse) {
+    option (google.api.http).get =
+        "/seda-chain/core/is_staker_executor/{public_key}";
+  }
+
+  // IsExecutorEligible returns whether the account is eligible to be an
+  // executor.
+  rpc IsExecutorEligible(QueryIsExecutorEligibleRequest)
+      returns (QueryIsExecutorEligibleResponse) {
+    option (google.api.http).get =
+        "/seda-chain/core/is_executor_eligible/{data}";
+  }
+
   // Params returns the total set of core parameters.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/seda-chain/core/params";
@@ -143,6 +163,45 @@ message QueryDataRequestsByStatusResponse {
   uint64 total = 3;
   // LastSeenIndex is the index of the last data request retrieved.
   repeated string last_seen_index = 4;
+}
+
+// The request message for Query/AccountSeq RPC method.
+message QueryAccountSeqRequest {
+  // public_key is the hex-encoded public key of the account.
+  string public_key = 1;
+}
+
+// QueryAccountSeqResponse is the response type for the Query/AccountSeq
+// RPC method.
+message QueryAccountSeqResponse {
+  // account_seq is the account sequence number.
+  uint64 account_seq = 1;
+}
+
+// The request message for Query/IsStakerExecutor RPC method.
+message QueryIsStakerExecutorRequest {
+  // public_key is the hex-encoded public key of the account.
+  string public_key = 1;
+}
+
+// QueryIsStakerExecutorResponse is the response type for the
+// Query/IsStakerExecutor RPC method.
+message QueryIsStakerExecutorResponse {
+  // is_staker_executor is whether the staker is a executor.
+  bool is_staker_executor = 1;
+}
+
+// The request message for Query/IsExecutorEligible RPC method.
+message QueryIsExecutorEligibleRequest {
+  // data is the base64 encoded data used to determine eligibility.
+  string data = 1;
+}
+
+// QueryIsExecutorEligibleResponse is the response type for the
+// Query/IsExecutorEligible RPC method.
+message QueryIsExecutorEligibleResponse {
+  // is_executor_eligible is whether the account is eligible to be an executor.
+  bool is_executor_eligible = 1;
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
