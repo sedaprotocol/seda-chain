@@ -30,23 +30,23 @@ message DataRequest {
   // Hex-encoded ID of the data request
   string i_d = 1 [ (gogoproto.jsontag) = "id" ];
   // Semantic versioning
-  string version = 2;
+  string version = 2 [ (gogoproto.jsontag) = "version" ];
   // Hex-encoded ID (hash) of the execution program
   string exec_program_i_d = 3 [ (gogoproto.jsontag) = "exec_program_id" ];
   // Inputs for the execution program
-  bytes exec_inputs = 4;
+  bytes exec_inputs = 4 [ (gogoproto.jsontag) = "exec_inputs" ];
   // Gas limit for execution program execution
-  uint64 exec_gas_limit = 5;
+  uint64 exec_gas_limit = 5 [ (gogoproto.jsontag) = "exec_gas_limit" ];
   // Hex-encoded ID (hash) of the tally program
   string tally_program_i_d = 6 [ (gogoproto.jsontag) = "tally_program_id" ];
   // Inputs for the tally program
-  bytes tally_inputs = 7;
+  bytes tally_inputs = 7 [ (gogoproto.jsontag) = "tally_inputs" ];
   // Gas limit for tally program execution
-  uint64 tally_gas_limit = 8;
+  uint64 tally_gas_limit = 8 [ (gogoproto.jsontag) = "tally_gas_limit" ];
   // Number of required data request executors (used as uint16)
-  uint32 replication_factor = 9;
+  uint32 replication_factor = 9 [ (gogoproto.jsontag) = "replication_factor" ];
   // Specifications for the filter process
-  bytes consensus_filter = 10;
+  bytes consensus_filter = 10 [ (gogoproto.jsontag) = "consensus_filter" ];
   // Amount of SEDA tokens per unit gas (used as uint128)
   string gas_price = 11 [
     (cosmos_proto.scalar) = "cosmos.Int",
@@ -55,29 +55,31 @@ message DataRequest {
     (amino.dont_omitempty) = true
   ];
   // Public information attached to the data request
-  bytes memo = 12;
+  bytes memo = 12 [ (gogoproto.jsontag) = "memo" ];
   // Set by the relayer
-  bytes payback_address = 13;
+  bytes payback_address = 13 [ (gogoproto.jsontag) = "payback_address" ];
   // Set by SEDA Protocol (e.g. OEV-enabled data requests)
-  bytes s_e_d_a_payload = 14;
+  bytes s_e_d_a_payload = 14 [ (gogoproto.jsontag) = "seda_payload" ];
   // Height at which the data request was posted
-  int64 posted_height = 15;
+  int64 posted_height = 15 [ (gogoproto.jsontag) = "height" ];
   // Actual gas price derived by dividing attached funds by the total gas limit
   // (may be higher than the minimum gas price)
   string posted_gas_price = 16 [
+    (gogoproto.jsontag) = "posted_gas_price",
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
   // Map from staker public keys to commits.
-  map<string, bytes> commits = 17;
+  map<string, bytes> commits = 17 [ (gogoproto.jsontag) = "commits" ];
   // Map from staker public keys to placeholder booleans.
-  map<string, bool> reveals = 18;
+  map<string, bool> reveals = 18 [ (gogoproto.jsontag) = "reveals" ];
   // Poster of the data request (Bech32 string)
-  string poster = 19;
+  string poster = 19 [ (gogoproto.jsontag) = "poster" ];
   // Funds escrowed for the data request
   string escrow = 20 [
+    (gogoproto.jsontag) = "escrow",
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
@@ -85,9 +87,9 @@ message DataRequest {
   ];
   // Timeout height of the data request (-1 if not set, i.e., under tallying
   // status)
-  int64 timeout_height = 21;
+  int64 timeout_height = 21 [ (gogoproto.jsontag) = "timeout_height" ];
   // Status of the data request
-  DataRequestStatus status = 22;
+  DataRequestStatus status = 22 [ (gogoproto.jsontag) = "status" ];
 }
 
 // DataRequestStatus is the status of a data request.
@@ -154,7 +156,8 @@ message DataRequestConfig {
   // Maximum size of the payback address.
   uint32 payback_address_limit_in_bytes = 9;
   // Maximum size of the SEDA payload.
-  uint32 s_e_d_a_payload_limit_in_bytes = 10;
+  uint32 s_e_d_a_payload_limit_in_bytes = 10
+      [ (gogoproto.jsontag) = "seda_payload_limit_in_bytes" ];
 }
 
 // StakingConfig defines staking-related parameters.

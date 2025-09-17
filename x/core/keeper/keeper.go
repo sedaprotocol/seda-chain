@@ -7,7 +7,6 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"cosmossdk.io/collections"
-	collcdc "cosmossdk.io/collections/codec"
 	storetypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 
@@ -49,7 +48,7 @@ type Keeper struct {
 	// revealBodies is a map of data request IDs and executor public keys to reveal bodies.
 	revealBodies collections.Map[collections.Pair[string, string], types.RevealBody]
 	// dataRequestIndexing is a set of data request indices under different statuses.
-	dataRequestIndexing collections.KeySet[collections.Pair[types.DataRequestStatus, types.DataRequestIndex]]
+	dataRequestIndexing DataRequestIndexSet
 	// timeoutQueue is a queue of data request IDs and their timeout heights.
 	timeoutQueue collections.KeySet[collections.Pair[int64, string]]
 
@@ -92,7 +91,7 @@ func NewKeeper(
 		stakers:             collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
 		dataRequests:        collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
 		revealBodies:        collections.NewMap(sb, types.RevealBodiesKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
-		dataRequestIndexing: collections.NewKeySet(sb, types.DrIndexingKeyPrefix, "data_request_indexing", collections.PairKeyCodec(collcdc.NewInt32Key[types.DataRequestStatus](), collcdc.NewBytesKey[types.DataRequestIndex]())),
+		dataRequestIndexing: NewDataRequestIndexSet(sb),
 		timeoutQueue:        collections.NewKeySet(sb, types.TimeoutQueueKeyPrefix, "timeout_queue", collections.PairKeyCodec(collections.Int64Key, collections.StringKey)),
 		params:              collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}

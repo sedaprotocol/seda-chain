@@ -73,12 +73,19 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 	var encodedQuery []byte
 	var path string
 	switch {
+	case query.GetDataRequestsByStatus != nil:
+		encodedQuery, path, err = query.GetDataRequestsByStatus.ToModuleQuery()
+	case query.GetStaker != nil:
+		encodedQuery, path, err = query.GetStaker.ToModuleQuery()
 	case query.GetStakerAndSeq != nil:
 		encodedQuery, path, err = query.GetStakerAndSeq.ToModuleQuery()
 	case query.GetStakingConfig != nil:
 		encodedQuery, path, err = query.GetStakingConfig.ToModuleQuery()
+	case query.GetDataRequestConfig != nil:
+		encodedQuery, path, err = query.GetDataRequestConfig.ToModuleQuery()
 	default:
-		return nil, fmt.Errorf("unsupported core contractquery type %T", query)
+		// TODO Do not include query data in the error message.
+		return nil, fmt.Errorf("unsupported core contract query type %s", string(req.QueryData))
 	}
 	if err != nil {
 		return nil, err
@@ -102,12 +109,19 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 	// Decode the response.
 	var responseBytes []byte
 	switch {
+	case query.GetDataRequestsByStatus != nil:
+		responseBytes, err = query.GetDataRequestsByStatus.FromModuleQuery(q.cdc, result.Value)
+	case query.GetStaker != nil:
+		responseBytes, err = query.GetStaker.FromModuleQuery(q.cdc, result.Value)
 	case query.GetStakerAndSeq != nil:
 		responseBytes, err = query.GetStakerAndSeq.FromModuleQuery(q.cdc, result.Value)
 	case query.GetStakingConfig != nil:
 		responseBytes, err = query.GetStakingConfig.FromModuleQuery(q.cdc, result.Value)
+	case query.GetDataRequestConfig != nil:
+		responseBytes, err = query.GetDataRequestConfig.FromModuleQuery(q.cdc, result.Value)
 	default:
-		return nil, fmt.Errorf("unsupported core contractquery type %T", query)
+		// TODO Do not include query data in the error message.
+		return nil, fmt.Errorf("unsupported core contract query type %s", string(req.QueryData))
 	}
 	if err != nil {
 		return nil, err
