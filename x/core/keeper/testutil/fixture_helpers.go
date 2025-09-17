@@ -203,7 +203,7 @@ func (f *Fixture) ExecuteReveals(stakers []Staker, revealMsgs [][]byte, config C
 
 	require.Equal(f.tb, len(stakers), len(revealMsgs))
 
-	for i := 0; i < len(revealMsgs); i++ {
+	for i := range revealMsgs {
 		f.executeCommitReveal(stakers[i].Address, revealMsgs[i], RevealGasLimit)
 	}
 }

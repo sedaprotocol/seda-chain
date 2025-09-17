@@ -105,13 +105,17 @@ func (k Keeper) Tally(ctx sdk.Context) error {
 // It returns the tally results, data results, processed list of requests
 // expected by the Core Contract, and an error.
 func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.TallyConfig, minStake math.Int) ([]TallyResult, []batchingtypes.DataResult, error) {
+	denom, err := k.stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// tallyResults and dataResults have the same indexing.
 	tallyResults := make([]TallyResult, len(drIDs))
 	dataResults := make([]batchingtypes.DataResult, len(drIDs))
 
 	tallyExecItems := []TallyParallelExecItem{}
 
-	var err error
 	for i, id := range drIDs {
 		dr, err := k.GetDataRequest(ctx, id)
 		if err != nil {
@@ -132,7 +136,6 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 		}
 
 		isPaused, err := k.IsPaused(ctx)
-		k.Logger(ctx).Info("isPaused", "isPaused", isPaused)
 		if err != nil {
 			telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 			k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get paused status", "err", err)
@@ -142,6 +145,19 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 		if isPaused {
 			markResultErr := MarkResultAsPaused(&dataResults[i], &tallyResults[i])
 			if markResultErr != nil {
+				return nil, nil, err
+			}
+			poster, err := sdk.AccAddressFromBech32(dr.Poster)
+			if err != nil {
+				// should never happen as the address was validated on posting
+				return nil, nil, err
+			}
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, poster, sdk.NewCoins(sdk.NewCoin(denom, dr.Escrow)))
+			if err != nil {
+				return nil, nil, err
+			}
+			err = k.ClearDataRequest(ctx, dr)
+			if err != nil {
 				return nil, nil, err
 			}
 			continue
@@ -201,15 +217,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 			}
 		}
 
-		err = k.UpdateDataRequestIndexing(ctx, dr.Index(), dr.Status, types.DATA_REQUEST_STATUS_UNSPECIFIED)
-		if err != nil {
-			return nil, nil, err
-		}
-		err = k.RemoveRevealBodies(ctx, dr.ID)
-		if err != nil {
-			return nil, nil, err
-		}
-		err = k.RemoveDataRequest(ctx, dr.ID)
+		err = k.ClearDataRequest(ctx, dr)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -263,12 +271,12 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 			}
 		}
 
-		// GasMeter is not initialized under paused or fallback cases.
+		// GasMeter is not initialized under paused cases.
 		if tr.GasMeter != nil {
 			tallyResults[i].TallyGasUsed = tr.GasMeter.TallyGasUsed()
 			tallyResults[i].ExecGasUsed = tr.GasMeter.ExecutionGasUsed()
 
-			err = k.ChargeGasCosts(ctx, &tr, minStake, config.BurnRatio)
+			err = k.ChargeGasCosts(ctx, denom, &tr, minStake, config.BurnRatio)
 			if err != nil {
 				return nil, nil, err
 			}

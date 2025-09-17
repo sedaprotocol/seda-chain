@@ -14,14 +14,8 @@ import (
 
 // ChargeGasCosts charges gas costs to the escrow funds based on gas meter
 // reading. Remaining escrow funds are refunded to the data request poster.
-func (k Keeper) ChargeGasCosts(ctx sdk.Context, tr *TallyResult, minimumStake math.Int, burnRatio math.LegacyDec) error {
+func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, minimumStake math.Int, burnRatio math.LegacyDec) error {
 	dists := tr.GasMeter.ReadGasMeter(ctx, tr.ID, tr.Height, burnRatio)
-
-	// Distribute in order.
-	denom, err := k.stakingKeeper.BondDenom(ctx)
-	if err != nil {
-		return err
-	}
 
 	remainingEscrow := tr.GasMeter.GetEscrow()
 
@@ -31,7 +25,7 @@ func (k Keeper) ChargeGasCosts(ctx sdk.Context, tr *TallyResult, minimumStake ma
 		switch {
 		case dist.Burn != nil:
 			amount = math.MinInt(dist.Burn.Amount, remainingEscrow)
-			err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(denom, amount)))
+			err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(denom, amount)))
 			if err != nil {
 				return err
 			}
