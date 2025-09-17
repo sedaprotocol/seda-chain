@@ -30,6 +30,19 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 	if err != nil {
 		panic(err)
 	}
+
+	err = k.dataRequestIndexing.committingCount.Set(ctx, data.CommittingCount)
+	if err != nil {
+		panic(err)
+	}
+	err = k.dataRequestIndexing.revealingCount.Set(ctx, data.RevealingCount)
+	if err != nil {
+		panic(err)
+	}
+	err = k.dataRequestIndexing.tallyingCount.Set(ctx, data.TallyingCount)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis extracts all data from store to genesis state.
@@ -50,6 +63,19 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 		panic(err)
 	}
 	gs.Paused, err = k.IsPaused(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	gs.CommittingCount, err = k.dataRequestIndexing.committingCount.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
+	gs.RevealingCount, err = k.dataRequestIndexing.revealingCount.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
+	gs.TallyingCount, err = k.dataRequestIndexing.tallyingCount.Get(ctx)
 	if err != nil {
 		panic(err)
 	}

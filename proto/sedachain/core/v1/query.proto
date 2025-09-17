@@ -26,16 +26,21 @@ service Query {
     option (google.api.http).get = "/seda-chain/core/paused";
   }
 
-  // Allowlist returns the allowlist of the core module.
+  // Allowlist returns the allowlist of staker public keys.
   rpc Allowlist(QueryAllowlistRequest) returns (QueryAllowlistResponse) {
     option (google.api.http).get = "/seda-chain/core/allowlist";
   }
 
-  // StakerAndSeq returns the staker and its sequence number.
-  rpc StakerAndSeq(QueryStakerAndSeqRequest)
-      returns (QueryStakerAndSeqResponse) {
+  // Staker returns the staker given its public key.
+  rpc Staker(QueryStakerRequest) returns (QueryStakerResponse) {
+    option (google.api.http).get = "/seda-chain/core/staker/{public_key}";
+  }
+
+  // DataRequestsByStatus returns data requests by status.
+  rpc DataRequestsByStatus(QueryDataRequestsByStatusRequest)
+      returns (QueryDataRequestsByStatusResponse) {
     option (google.api.http).get =
-        "/seda-chain/core/staker_and_seq/{public_key}";
+        "/seda-chain/core/data_requests_by_status/{status}";
   }
 
   // Params returns the total set of core parameters.
@@ -43,13 +48,13 @@ service Query {
     option (google.api.http).get = "/seda-chain/core/params";
   }
 
-  // StakingConfig returns the staking config of the core module.
+  // StakingConfig returns the staking parameters of the core module.
   rpc StakingConfig(QueryStakingConfigRequest)
       returns (QueryStakingConfigResponse) {
     option (google.api.http).get = "/seda-chain/core/staking_config";
   }
 
-  // DataRequestConfig returns the data request config of the core module.
+  // DataRequestConfig returns the data request parameters of the core module.
   rpc DataRequestConfig(QueryDataRequestConfigRequest)
       returns (QueryDataRequestConfigResponse) {
     option (google.api.http).get = "/seda-chain/core/data_request_config";
@@ -92,13 +97,37 @@ message QueryAllowlistResponse {
   repeated string public_keys = 1;
 }
 
-// The request message for Query/StakerAndSeq RPC method.
-message QueryStakerAndSeqRequest { string public_key = 1; }
+// The request message for Query/Staker RPC method.
+message QueryStakerRequest { string public_key = 1; }
 
-// The response message for Query/StakerAndSeq RPC method.
-message QueryStakerAndSeqResponse {
+// The response message for Query/Staker RPC method.
+message QueryStakerResponse {
   Staker staker = 1 [ (gogoproto.nullable) = false ];
-  uint64 sequence_num = 2;
+}
+
+// The request message for Query/DataRequestsByStatus RPC method.
+message QueryDataRequestsByStatusRequest {
+  // Status specifies the status of the data requests to retrieve.
+  DataRequestStatus status = 1;
+  // Limit specifies the maximum number of data requests to retrieve.
+  uint64 limit = 2;
+  // LastSeenIndex, if specified, sets the starting point (exclusive) of the
+  // query.
+  repeated string last_seen_index = 3
+      [ (gogoproto.moretags) = "minItems:3,maxItems:3" ];
+}
+
+// The response message for Query/DataRequestsByStatus RPC method.
+message QueryDataRequestsByStatusResponse {
+  // DataRequests is the list of data requests under the given status.
+  repeated DataRequest data_requests = 1 [ (gogoproto.nullable) = false ];
+  // IsPaused is indicates whether the core module is paused.
+  bool is_paused = 2;
+  // Total is the total number of data requests under the given status.
+  uint64 total = 3;
+  // LastSeenIndex is the index of the last data request retrieved.
+  repeated string last_seen_index = 4
+      [ (gogoproto.moretags) = "minItems:3,maxItems:3" ];
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.

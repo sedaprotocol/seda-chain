@@ -209,7 +209,7 @@ message MsgPostDataRequest {
   // Public information attached to the data request
   bytes memo = 13;
   // Set by SEDA Protocol (e.g. OEV-enabled data requests)
-  bytes s_e_d_a_payload = 14;
+  bytes s_e_d_a_payload = 14 [ (gogoproto.jsontag) = "seda_payload" ];
   // Set by the relayer
   bytes payback_address = 15;
 }
@@ -217,7 +217,7 @@ message MsgPostDataRequest {
 // The response message for the PostDataRequest method.
 message MsgPostDataRequestResponse {
   // DrId is the hex-encoded ID of the data request.
-  string dr_i_d = 1;
+  string dr_i_d = 1 [ (gogoproto.jsontag) = "dr_id" ];
   // Height is the block height at which the data request was posted.
   int64 height = 2;
 }
@@ -227,7 +227,7 @@ message MsgCommit {
   option (cosmos.msg.v1.signer) = "sender";
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  string dr_i_d = 2;
+  string dr_i_d = 2 [ (gogoproto.jsontag) = "dr_id" ];
   string commit = 3;
   string public_key = 4;
   string proof = 5;
