@@ -184,6 +184,23 @@ func (k Keeper) RemoveRevealBodies(ctx sdk.Context, drID string) error {
 	return nil
 }
 
+// ClearDataRequest removes the data request and all associated information with it.
+func (k Keeper) ClearDataRequest(ctx sdk.Context, dr types.DataRequest) error {
+	err := k.UpdateDataRequestIndexing(ctx, dr.Index(), dr.Status, types.DATA_REQUEST_STATUS_UNSPECIFIED)
+	if err != nil {
+		return err
+	}
+	err = k.RemoveRevealBodies(ctx, dr.ID)
+	if err != nil {
+		return err
+	}
+	err = k.RemoveDataRequest(ctx, dr.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // GetParams retrieves the core module parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 	params, err := k.params.Get(ctx)

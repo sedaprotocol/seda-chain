@@ -221,7 +221,7 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	dr.AddCommit(msg.PublicKey, commit)
 
 	if len(dr.Commits) >= int(dr.ReplicationFactor) {
-		newTimeoutHeight := dr.TimeoutHeight + int64(params.DataRequestConfig.RevealTimeoutInBlocks)
+		newTimeoutHeight := ctx.BlockHeight() + int64(params.DataRequestConfig.RevealTimeoutInBlocks)
 		err = m.UpdateDataRequestTimeout(ctx, msg.DrID, dr.TimeoutHeight, newTimeoutHeight)
 		if err != nil {
 			return nil, err

@@ -53,7 +53,7 @@ func (k Keeper) ExpireDataRequests(ctx sdk.Context) error {
 		drID := key.K2()
 
 		if timeoutHeight > ctx.BlockHeight() {
-			break
+			continue
 		}
 
 		// Update data request status to tallying.
