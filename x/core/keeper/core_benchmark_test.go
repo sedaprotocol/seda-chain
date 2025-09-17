@@ -34,7 +34,7 @@ func BenchmarkDataRequestFlow(b *testing.B) {
 		b.StopTimer()
 		for j := 0; j < 1000; j++ {
 			f.ExecuteDataRequestFlow(
-				b, nil, nil,
+				nil, nil,
 				1, 1, 1, false,
 				testutil.CommitRevealConfig{
 					RequestHeight: 1,
@@ -66,7 +66,7 @@ func BenchmarkBigTallyPrograms(b *testing.B) {
 		b.StopTimer()
 		for j := 0; j < 1000; j++ {
 			f.ExecuteDataRequestFlow(
-				b, nil, testwasms.BigWasm(),
+				nil, testwasms.BigWasm(),
 				1, 1, 1, false,
 				testutil.CommitRevealConfig{
 					RequestHeight: 1,

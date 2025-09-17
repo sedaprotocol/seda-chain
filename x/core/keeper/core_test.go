@@ -48,7 +48,7 @@ func TestEndBlock(t *testing.T) {
 			require.NoError(t, err)
 
 			drID := f.ExecuteDataRequestFlow(
-				t, nil, nil,
+				nil, nil,
 				tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout,
 				testutil.CommitRevealConfig{
 					RequestHeight: 1,
@@ -157,13 +157,13 @@ func TestTxFeeRefund(t *testing.T) {
 			}
 
 			res := f.PostDataRequest(
-				t, execProgram.Hash, tallyProgram.Hash,
+				execProgram.Hash, tallyProgram.Hash,
 				base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
 				1,
 			)
 
 			// Commit and check balance
-			revealMsgs := f.CommitDataRequest(t, f.Stakers[:1], res.Height, res.DrID, config)
+			revealMsgs := f.CommitDataRequest(f.Stakers[:1], res.Height, res.DrID, config)
 
 			afterCommitBalance := f.BankKeeper.GetBalance(f.Context(), f.Stakers[0].Address, testutil.BondDenom)
 			diff := initialBalance.Sub(afterCommitBalance)
@@ -175,7 +175,7 @@ func TestTxFeeRefund(t *testing.T) {
 			}
 
 			// Reveal and check balance
-			f.ExecuteReveals(t, f.Stakers[:1], revealMsgs, config)
+			f.ExecuteReveals(f.Stakers[:1], revealMsgs, config)
 
 			afterRevealBalance := f.BankKeeper.GetBalance(f.Context(), f.Stakers[0].Address, testutil.BondDenom)
 			diff = afterCommitBalance.Sub(afterRevealBalance)
