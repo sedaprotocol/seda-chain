@@ -25,7 +25,7 @@ func GetQueryCmd() *cobra.Command {
 		GetPendingOwner(),
 		GetPaused(),
 		GetAllowlist(),
-		GetStakerAndSeq(),
+		GetStaker(),
 		GetCmdQueryParams(),
 		GetStakingConfig(),
 		GetDataRequestConfig(),
@@ -129,10 +129,10 @@ func GetAllowlist() *cobra.Command {
 	return cmd
 }
 
-func GetStakerAndSeq() *cobra.Command {
+func GetStaker() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "staker-and-seq [public_key]",
-		Short: "Query the staker address and sequence number for a given executor public key",
+		Use:   "staker [public_key]",
+		Short: "Query the staker info for a given executor public key",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -141,7 +141,7 @@ func GetStakerAndSeq() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.StakerAndSeq(cmd.Context(), &types.QueryStakerAndSeqRequest{
+			res, err := queryClient.Staker(cmd.Context(), &types.QueryStakerRequest{
 				PublicKey: args[0],
 			})
 			if err != nil {
