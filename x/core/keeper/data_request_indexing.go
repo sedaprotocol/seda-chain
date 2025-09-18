@@ -29,25 +29,31 @@ func NewDataRequestIndexing(sb *collections.SchemaBuilder) DataRequestIndexing {
 
 // Set overrides the KeySet method to track data request count by status.
 func (s DataRequestIndexing) Set(ctx sdk.Context, key collections.Pair[types.DataRequestStatus, types.DataRequestIndex]) error {
-	count, err := s.getDataRequestCountByStatus(ctx, key.K1())
-	if err != nil {
-		return err
-	}
-	err = s.KeySet.Set(ctx, key)
-	if err != nil {
-		return err
-	}
-	return s.setDataRequestCountByStatus(ctx, key.K1(), count+1)
-}
-
-// Remove overrides the KeySet Remove to track data request count by status.
-func (s DataRequestIndexing) Remove(ctx sdk.Context, key collections.Pair[types.DataRequestStatus, types.DataRequestIndex]) error {
-	exists, err := s.KeySet.Has(ctx, key)
+	exists, err := s.Has(ctx, key)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		return types.ErrDataRequestStatusNotFound.Wrapf("DR ID %s, status %s", key.K2().DrID(), key.K1())
+		count, err := s.getDataRequestCountByStatus(ctx, key.K1())
+		if err != nil {
+			return err
+		}
+		err = s.setDataRequestCountByStatus(ctx, key.K1(), count+1)
+		if err != nil {
+			return err
+		}
+	}
+	return s.KeySet.Set(ctx, key)
+}
+
+// Remove overrides the KeySet Remove to track data request count by status.
+func (s DataRequestIndexing) Remove(ctx sdk.Context, key collections.Pair[types.DataRequestStatus, types.DataRequestIndex]) error {
+	exists, err := s.Has(ctx, key)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return types.ErrDataRequestStatusNotFound.Wrapf("data request ID %s, status %s", key.K2().DrID(), key.K1())
 	}
 
 	count, err := s.getDataRequestCountByStatus(ctx, key.K1())
