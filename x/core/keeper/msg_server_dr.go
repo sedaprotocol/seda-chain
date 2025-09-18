@@ -109,11 +109,10 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		// Reveals:           make(map[string]bool), // Dropped by proto anyways
 	}
 
-	err = m.UpdateDataRequestIndexing(ctx, dr.Index(), dr.Status, types.DATA_REQUEST_STATUS_COMMITTING)
+	err = m.UpdateDataRequestIndexing(ctx, &dr, types.DATA_REQUEST_STATUS_COMMITTING)
 	if err != nil {
 		return nil, err
 	}
-	dr.Status = types.DATA_REQUEST_STATUS_COMMITTING
 
 	err = m.AddToTimeoutQueue(ctx, drID, dr.TimeoutHeight)
 	if err != nil {
@@ -228,11 +227,10 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 		}
 		dr.TimeoutHeight = newTimeoutHeight
 
-		err = m.UpdateDataRequestIndexing(ctx, dr.Index(), dr.Status, types.DATA_REQUEST_STATUS_REVEALING)
+		err = m.UpdateDataRequestIndexing(ctx, &dr, types.DATA_REQUEST_STATUS_REVEALING)
 		if err != nil {
 			return nil, err
 		}
-		dr.Status = types.DATA_REQUEST_STATUS_REVEALING
 	}
 
 	err = m.SetDataRequest(ctx, dr)
@@ -333,11 +331,10 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 			return nil, err
 		}
 
-		err = m.UpdateDataRequestIndexing(ctx, dr.Index(), dr.Status, types.DATA_REQUEST_STATUS_TALLYING)
+		err = m.UpdateDataRequestIndexing(ctx, &dr, types.DATA_REQUEST_STATUS_TALLYING)
 		if err != nil {
 			return nil, err
 		}
-		dr.Status = types.DATA_REQUEST_STATUS_TALLYING
 	}
 
 	err = m.SetRevealBody(ctx, msg.PublicKey, *msg.RevealBody)
