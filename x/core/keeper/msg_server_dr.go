@@ -190,6 +190,15 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	if err != nil {
 		return nil, err
 	}
+	if params.StakingConfig.AllowlistEnabled {
+		allowlisted, err := m.IsAllowlisted(ctx, msg.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		if !allowlisted {
+			return nil, types.ErrNotAllowlisted
+		}
+	}
 	if staker.Staked.LT(params.StakingConfig.MinimumStake) {
 		return nil, types.ErrInsufficientStake.Wrapf("%s < %s", staker.Staked, params.StakingConfig.MinimumStake)
 	}
