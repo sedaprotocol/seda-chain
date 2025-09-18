@@ -9,15 +9,17 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
-type DataRequestIndexSet struct {
+// DataRequestIndexing is used to maintain data request indexing by status and
+// track counts of data requests by status.
+type DataRequestIndexing struct {
 	collections.KeySet[collections.Pair[types.DataRequestStatus, types.DataRequestIndex]]
 	committingCount collections.Item[uint64]
 	revealingCount  collections.Item[uint64]
 	tallyingCount   collections.Item[uint64]
 }
 
-func NewDataRequestIndexSet(sb *collections.SchemaBuilder) DataRequestIndexSet {
-	return DataRequestIndexSet{
+func NewDataRequestIndexing(sb *collections.SchemaBuilder) DataRequestIndexing {
+	return DataRequestIndexing{
 		KeySet:          collections.NewKeySet(sb, types.DataRequestIndexingPrefix, "data_request_indexing", collections.PairKeyCodec(collcdc.NewInt32Key[types.DataRequestStatus](), collcdc.NewBytesKey[types.DataRequestIndex]())),
 		committingCount: collections.NewItem(sb, types.DataRequestCommittingKey, "committing_count", collections.Uint64Value),
 		revealingCount:  collections.NewItem(sb, types.DataRequestRevealingKey, "revealing_count", collections.Uint64Value),
@@ -25,8 +27,8 @@ func NewDataRequestIndexSet(sb *collections.SchemaBuilder) DataRequestIndexSet {
 	}
 }
 
-// Set overrides the KeySet method to track data request count by status as well.
-func (s DataRequestIndexSet) Set(ctx sdk.Context, key collections.Pair[types.DataRequestStatus, types.DataRequestIndex]) error {
+// Set overrides the KeySet method to track data request count by status.
+func (s DataRequestIndexing) Set(ctx sdk.Context, key collections.Pair[types.DataRequestStatus, types.DataRequestIndex]) error {
 	count, err := s.getDataRequestCountByStatus(ctx, key.K1())
 	if err != nil {
 		return err
@@ -38,8 +40,16 @@ func (s DataRequestIndexSet) Set(ctx sdk.Context, key collections.Pair[types.Dat
 	return s.setDataRequestCountByStatus(ctx, key.K1(), count+1)
 }
 
-// Remove overrides the KeySet Remove to track data request count by status as well.
-func (s DataRequestIndexSet) Remove(ctx sdk.Context, key collections.Pair[types.DataRequestStatus, types.DataRequestIndex]) error {
+// Remove overrides the KeySet Remove to track data request count by status.
+func (s DataRequestIndexing) Remove(ctx sdk.Context, key collections.Pair[types.DataRequestStatus, types.DataRequestIndex]) error {
+	exists, err := s.KeySet.Has(ctx, key)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return types.ErrDataRequestStatusNotFound.Wrapf("DR ID %s, status %s", key.K2().DrID(), key.K1())
+	}
+
 	count, err := s.getDataRequestCountByStatus(ctx, key.K1())
 	if err != nil {
 		return err
@@ -54,7 +64,7 @@ func (s DataRequestIndexSet) Remove(ctx sdk.Context, key collections.Pair[types.
 	return s.setDataRequestCountByStatus(ctx, key.K1(), count-1)
 }
 
-func (s DataRequestIndexSet) getDataRequestCountByStatus(ctx sdk.Context, status types.DataRequestStatus) (uint64, error) {
+func (s DataRequestIndexing) getDataRequestCountByStatus(ctx sdk.Context, status types.DataRequestStatus) (uint64, error) {
 	switch status {
 	case types.DATA_REQUEST_STATUS_COMMITTING:
 		return s.committingCount.Get(ctx)
@@ -67,7 +77,7 @@ func (s DataRequestIndexSet) getDataRequestCountByStatus(ctx sdk.Context, status
 	}
 }
 
-func (s DataRequestIndexSet) setDataRequestCountByStatus(ctx sdk.Context, status types.DataRequestStatus, count uint64) error {
+func (s DataRequestIndexing) setDataRequestCountByStatus(ctx sdk.Context, status types.DataRequestStatus, count uint64) error {
 	switch status {
 	case types.DATA_REQUEST_STATUS_COMMITTING:
 		return s.committingCount.Set(ctx, count)
@@ -126,6 +136,7 @@ func (k Keeper) GetDataRequestsByStatus(ctx sdk.Context, status types.DataReques
 	return dataRequests, newLastSeenIndex, total, nil
 }
 
+// GetDataRequestIDsByStatus returns the IDs of the data requests under the given status.
 func (k Keeper) GetDataRequestIDsByStatus(ctx sdk.Context, status types.DataRequestStatus) ([]string, error) {
 	rng := collections.NewPrefixedPairRange[types.DataRequestStatus, types.DataRequestIndex](status)
 
@@ -146,52 +157,56 @@ func (k Keeper) GetDataRequestIDsByStatus(ctx sdk.Context, status types.DataRequ
 	return ids, nil
 }
 
-func (k Keeper) UpdateDataRequestIndexing(ctx sdk.Context, index types.DataRequestIndex, currentStatus, newStatus types.DataRequestStatus) error {
-	// Check the logic of the status transition, which follows:
-	// Unspecified (addition) -> Committing -> Revealing -> Tallying -> Unspecified (removal)
-	// except that in case of timeout, Committing -> Tallying is also possible.
-	switch currentStatus {
-	case types.DATA_REQUEST_STATUS_UNSPECIFIED:
-		if newStatus != types.DATA_REQUEST_STATUS_COMMITTING {
-			return types.ErrInvalidStatusTransition.Wrapf("%s -> %s", currentStatus, newStatus)
-		}
-
+func (k Keeper) UpdateDataRequestIndexing(ctx sdk.Context, dr *types.DataRequest, newStatus types.DataRequestStatus) error {
+	// Check the logic of the status transition while removing the index from
+	// the current status set.
+	// Committing -> Revealing -> Tallying, except that in case of timeout,
+	// Committing -> Tallying is also possible.
+	switch newStatus {
 	case types.DATA_REQUEST_STATUS_COMMITTING:
-		if newStatus != types.DATA_REQUEST_STATUS_REVEALING &&
-			newStatus != types.DATA_REQUEST_STATUS_TALLYING {
-			return types.ErrInvalidStatusTransition.Wrapf("%s -> %s", currentStatus, newStatus)
+		// The data request must be new.
+		if dr.Status != types.DATA_REQUEST_STATUS_UNSPECIFIED {
+			return types.ErrInvalidStatusTransition.Wrapf("%s -> %s", dr.Status, newStatus)
 		}
 
 	case types.DATA_REQUEST_STATUS_REVEALING:
-		if newStatus != types.DATA_REQUEST_STATUS_TALLYING {
-			return types.ErrInvalidStatusTransition.Wrapf("%s -> %s", currentStatus, newStatus)
+		// The data request must be in committing status.
+		if dr.Status != types.DATA_REQUEST_STATUS_COMMITTING {
+			return types.ErrInvalidStatusTransition.Wrapf("%s -> %s", dr.Status, newStatus)
+		}
+		err := k.RemoveDataRequestIndexing(ctx, dr.Index(), types.DATA_REQUEST_STATUS_COMMITTING)
+		if err != nil {
+			return err
 		}
 
 	case types.DATA_REQUEST_STATUS_TALLYING:
-		if newStatus != types.DATA_REQUEST_STATUS_UNSPECIFIED {
-			return types.ErrInvalidStatusTransition.Wrapf("%s -> %s", currentStatus, newStatus)
+		// The data request must be in committing or revealing status.
+		if dr.Status != types.DATA_REQUEST_STATUS_COMMITTING &&
+			dr.Status != types.DATA_REQUEST_STATUS_REVEALING {
+			return types.ErrInvalidStatusTransition.Wrapf("%s -> %s", dr.Status, newStatus)
 		}
+		err := k.RemoveDataRequestIndexing(ctx, dr.Index(), dr.Status)
+		if err != nil {
+			return err
+		}
+
+	default: //	case types.DATA_REQUEST_STATUS_UNSPECIFIED:
+		return types.ErrInvalidStatusTransition.Wrapf("%s -> %s", dr.Status, newStatus)
 	}
 
-	if currentStatus != types.DATA_REQUEST_STATUS_UNSPECIFIED {
-		exists, err := k.dataRequestIndexing.Has(ctx, collections.Join(currentStatus, index))
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return types.ErrDataRequestNotFoundInIndex.Wrapf("data request ID %s, status %s", index.DrID(), currentStatus)
-		}
-		err = k.dataRequestIndexing.Remove(ctx, collections.Join(currentStatus, index))
-		if err != nil {
-			return err
-		}
+	err := k.dataRequestIndexing.Set(ctx, collections.Join(newStatus, dr.Index()))
+	if err != nil {
+		return err
 	}
+	dr.Status = newStatus
 
-	if newStatus != types.DATA_REQUEST_STATUS_UNSPECIFIED {
-		err := k.dataRequestIndexing.Set(ctx, collections.Join(newStatus, index))
-		if err != nil {
-			return err
-		}
-	}
 	return nil
+}
+
+func (k Keeper) CheckDataRequestIndexing(ctx sdk.Context, index types.DataRequestIndex, status types.DataRequestStatus) (bool, error) {
+	return k.dataRequestIndexing.Has(ctx, collections.Join(status, index))
+}
+
+func (k Keeper) RemoveDataRequestIndexing(ctx sdk.Context, index types.DataRequestIndex, status types.DataRequestStatus) error {
+	return k.dataRequestIndexing.Remove(ctx, collections.Join(status, index))
 }

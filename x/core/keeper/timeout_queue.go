@@ -62,11 +62,10 @@ func (k Keeper) ExpireDataRequests(ctx sdk.Context) error {
 			return err
 		}
 
-		err = k.UpdateDataRequestIndexing(ctx, dr.Index(), dr.Status, types.DATA_REQUEST_STATUS_TALLYING)
+		err = k.UpdateDataRequestIndexing(ctx, &dr, types.DATA_REQUEST_STATUS_TALLYING)
 		if err != nil {
 			return err
 		}
-		dr.Status = types.DATA_REQUEST_STATUS_TALLYING
 		dr.TimeoutHeight = -1
 
 		err = k.SetDataRequest(ctx, dr)
