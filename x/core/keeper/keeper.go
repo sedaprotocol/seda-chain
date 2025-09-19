@@ -40,7 +40,7 @@ type Keeper struct {
 	// allowlist is an owner-controlled allowlist of staker public keys.
 	allowlist collections.KeySet[string]
 	// stakers is a map of staker public keys to staker objects.
-	stakers collections.Map[string, types.Staker]
+	stakers types.StakerIndexing
 
 	// Data request-related states:
 	// dataRequests is a map of data request IDs to data request objects.
@@ -88,7 +88,7 @@ func NewKeeper(
 		paused:              collections.NewItem(sb, types.PausedKey, "paused", collections.BoolValue),
 		pendingOwner:        collections.NewItem(sb, types.PendingOwnerKey, "pending_owner", collections.StringValue),
 		allowlist:           collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
-		stakers:             collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
+		stakers:             types.NewStakerIndexing(sb, cdc),
 		dataRequests:        collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
 		revealBodies:        collections.NewMap(sb, types.RevealBodiesKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
 		dataRequestIndexing: NewDataRequestIndexing(sb),
