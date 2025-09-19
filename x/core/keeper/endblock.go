@@ -37,7 +37,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 // Tally fetches from a list of tally-ready requests, tallies them, reports
 // results to the contract, and stores results for batching.
 func (k Keeper) Tally(ctx sdk.Context) error {
-	drIDs, err := k.GetTallyingDataRequestIDs(ctx)
+	drIDs, err := k.GetDataRequestIDsByStatus(ctx, types.DATA_REQUEST_STATUS_TALLYING)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tallying data request IDs", "err", err)

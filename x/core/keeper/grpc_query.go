@@ -2,9 +2,6 @@ package keeper
 
 import (
 	"context"
-	"errors"
-
-	"cosmossdk.io/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -29,16 +26,43 @@ func (q Querier) Allowlist(c context.Context, _ *types.QueryAllowlistRequest) (*
 	}, nil
 }
 
-func (q Querier) StakerAndSeq(c context.Context, req *types.QueryStakerAndSeqRequest) (*types.QueryStakerAndSeqResponse, error) {
+func (q Querier) Staker(c context.Context, req *types.QueryStakerRequest) (*types.QueryStakerResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	staker, err := q.GetStaker(ctx, req.PublicKey)
 	if err != nil {
-		if errors.Is(err, collections.ErrNotFound) {
-			return &types.QueryStakerAndSeqResponse{}, nil
-		}
 		return nil, err
 	}
-	return &types.QueryStakerAndSeqResponse{Staker: staker, SequenceNum: staker.SequenceNum}, nil
+	return &types.QueryStakerResponse{Staker: staker}, nil
+}
+
+func (q Querier) DataRequestsByStatus(c context.Context, req *types.QueryDataRequestsByStatusRequest) (*types.QueryDataRequestsByStatusResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	var lastSeenIndex types.DataRequestIndex
+	var err error
+	if req.LastSeenIndex != nil {
+		lastSeenIndex, err = types.DataRequestIndexFromStrings(req.LastSeenIndex)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	dataRequests, newLastSeenIndex, total, err := q.GetDataRequestsByStatus(ctx, req.Status, req.Limit, lastSeenIndex)
+	if err != nil {
+		return nil, err
+	}
+
+	isPaused, err := q.IsPaused(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryDataRequestsByStatusResponse{
+		DataRequests:  dataRequests,
+		IsPaused:      isPaused,
+		Total:         total,
+		LastSeenIndex: newLastSeenIndex.Strings(),
+	}, nil
 }
 
 func (q Querier) Paused(c context.Context, _ *types.QueryPausedRequest) (*types.QueryPausedResponse, error) {
