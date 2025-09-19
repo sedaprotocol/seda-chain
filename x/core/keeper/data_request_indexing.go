@@ -53,7 +53,7 @@ func (s DataRequestIndexing) Remove(ctx sdk.Context, key collections.Pair[types.
 		return err
 	}
 	if !exists {
-		return types.ErrDataRequestStatusNotFound.Wrapf("data request ID %s, status %s", key.K2().DrID(), key.K1())
+		return types.ErrDataRequestIndexNotFound.Wrapf("data request ID %s, status %s", key.K2().DrID(), key.K1())
 	}
 
 	count, err := s.getDataRequestCountByStatus(ctx, key.K1())

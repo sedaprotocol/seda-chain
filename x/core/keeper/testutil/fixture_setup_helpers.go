@@ -265,7 +265,7 @@ func (f *Fixture) AddStakers(tb testing.TB, num int) []Staker {
 		)
 	}
 
-	f.Stakers = stakers
+	f.Stakers = append(f.Stakers, stakers...)
 	return stakers
 }
 
