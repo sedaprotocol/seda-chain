@@ -48,7 +48,7 @@ type Keeper struct {
 	// revealBodies is a map of data request IDs and executor public keys to reveal bodies.
 	revealBodies collections.Map[collections.Pair[string, string], types.RevealBody]
 	// dataRequestIndexing is a set of data request indices under different statuses.
-	dataRequestIndexing DataRequestIndexSet
+	dataRequestIndexing DataRequestIndexing
 	// timeoutQueue is a queue of data request IDs and their timeout heights.
 	timeoutQueue collections.KeySet[collections.Pair[int64, string]]
 
@@ -91,7 +91,7 @@ func NewKeeper(
 		stakers:             collections.NewMap(sb, types.StakersKeyPrefix, "stakers", collections.StringKey, codec.CollValue[types.Staker](cdc)),
 		dataRequests:        collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
 		revealBodies:        collections.NewMap(sb, types.RevealBodiesKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
-		dataRequestIndexing: NewDataRequestIndexSet(sb),
+		dataRequestIndexing: NewDataRequestIndexing(sb),
 		timeoutQueue:        collections.NewKeySet(sb, types.TimeoutQueueKeyPrefix, "timeout_queue", collections.PairKeyCodec(collections.Int64Key, collections.StringKey)),
 		params:              collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
@@ -185,7 +185,7 @@ func (k Keeper) RemoveRevealBodies(ctx sdk.Context, drID string) error {
 
 // ClearDataRequest removes the data request and all associated information with it.
 func (k Keeper) ClearDataRequest(ctx sdk.Context, dr types.DataRequest) error {
-	err := k.UpdateDataRequestIndexing(ctx, dr.Index(), dr.Status, types.DATA_REQUEST_STATUS_UNSPECIFIED)
+	err := k.RemoveDataRequestIndexing(ctx, dr.Index(), dr.Status)
 	if err != nil {
 		return err
 	}
