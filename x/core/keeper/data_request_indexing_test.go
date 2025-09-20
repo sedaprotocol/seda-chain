@@ -167,7 +167,7 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 		// Now try to transition to REVEALING - this should fail
 		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &newDr, types.DATA_REQUEST_STATUS_REVEALING)
 		require.Error(t, err)
-		require.ErrorIs(t, err, types.ErrDataRequestStatusNotFound)
+		require.ErrorIs(t, err, types.ErrDataRequestIndexNotFound)
 	})
 
 	t.Run("invalid status transition from TALLYING to REVEALING", func(t *testing.T) {

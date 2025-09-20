@@ -35,6 +35,15 @@ func (q Querier) Staker(c context.Context, req *types.QueryStakerRequest) (*type
 	return &types.QueryStakerResponse{Staker: staker}, nil
 }
 
+func (q Querier) Executors(c context.Context, req *types.QueryExecutorsRequest) (*types.QueryExecutorsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	executors, err := q.stakers.GetExecutors(ctx, req.Offset, req.Limit)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryExecutorsResponse{Executors: executors}, nil
+}
+
 func (q Querier) DataRequestsByStatus(c context.Context, req *types.QueryDataRequestsByStatusRequest) (*types.QueryDataRequestsByStatusResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 

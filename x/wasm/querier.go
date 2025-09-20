@@ -83,6 +83,8 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 		encodedQuery, path, err = query.GetStakingConfig.ToModuleQuery()
 	case query.GetDataRequestConfig != nil:
 		encodedQuery, path, err = query.GetDataRequestConfig.ToModuleQuery()
+	case query.GetExecutors != nil:
+		encodedQuery, path, err = query.GetExecutors.ToModuleQuery()
 	default:
 		// TODO Do not include query data in the error message.
 		return nil, fmt.Errorf("unsupported core contract query type %s", string(req.QueryData))
@@ -119,6 +121,8 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 		responseBytes, err = query.GetStakingConfig.FromModuleQuery(q.cdc, result.Value)
 	case query.GetDataRequestConfig != nil:
 		responseBytes, err = query.GetDataRequestConfig.FromModuleQuery(q.cdc, result.Value)
+	case query.GetExecutors != nil:
+		responseBytes, err = query.GetExecutors.FromModuleQuery(q.cdc, result.Value)
 	default:
 		// TODO Do not include query data in the error message.
 		return nil, fmt.Errorf("unsupported core contract query type %s", string(req.QueryData))

@@ -43,6 +43,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 	if err != nil {
 		panic(err)
 	}
+	err = k.stakers.SetStakerCount(ctx, data.StakerCount)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis extracts all data from store to genesis state.
@@ -79,6 +83,9 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
-
+	gs.StakerCount, err = k.stakers.GetStakerCount(ctx)
+	if err != nil {
+		panic(err)
+	}
 	return gs
 }

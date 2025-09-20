@@ -15,6 +15,7 @@ const (
 	QueryPathStakerAndSeq         = "/sedachain.core.v1.Query/StakerAndSeq"
 	QueryPathStakingConfig        = "/sedachain.core.v1.Query/StakingConfig"
 	QueryPathDataRequestConfig    = "/sedachain.core.v1.Query/DataRequestConfig"
+	QueryPathExecutors            = "/sedachain.core.v1.Query/Executors"
 )
 
 type CoreContractQuery struct {
@@ -23,6 +24,7 @@ type CoreContractQuery struct {
 	GetStakerAndSeq         *GetStakerAndSeq         `json:"get_staker_and_seq"`
 	GetStakingConfig        *GetStakingConfig        `json:"get_staking_config"`
 	GetDataRequestConfig    *GetDataRequestConfig    `json:"get_dr_config"`
+	GetExecutors            *GetExecutors            `json:"get_executors"`
 }
 
 type GetDataRequestsByStatus struct {
@@ -104,6 +106,7 @@ type StakerResponse struct {
 	Memo                    []byte `json:"memo"`
 	TokensPendingWithdrawal string `json:"tokens_pending_withdrawal"`
 	TokensStaked            string `json:"tokens_staked"`
+	PublicKey               string `json:"public_key"`
 }
 
 func (g GetStaker) ToModuleQuery() ([]byte, string, error) {
@@ -133,6 +136,52 @@ func (g GetStaker) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, erro
 	}
 
 	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		return nil, err
+	}
+	return responseBytes, nil
+}
+
+type GetExecutors struct {
+	Limit  uint32 `json:"limit"`
+	Offset uint32 `json:"offset"`
+}
+
+type GetExecutorsResponse struct {
+	Executors []StakerResponse `json:"executors"`
+}
+
+func (g GetExecutors) ToModuleQuery() ([]byte, string, error) {
+	query := &coretypes.QueryExecutorsRequest{
+		Limit:  g.Limit,
+		Offset: g.Offset,
+	}
+	queryProto, err := query.Marshal()
+	if err != nil {
+		return nil, "", err
+	}
+	return queryProto, QueryPathExecutors, nil
+}
+
+func (g GetExecutors) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, error) {
+	var res coretypes.QueryExecutorsResponse
+	err := cdc.Unmarshal(result, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	response := make([]StakerResponse, len(res.Executors))
+	for i, executor := range res.Executors {
+		response[i] = StakerResponse{
+			Memo:                    []byte(executor.Memo),
+			TokensPendingWithdrawal: executor.PendingWithdrawal.String(),
+			TokensStaked:            executor.Staked.String(),
+		}
+	}
+
+	responseBytes, err := json.Marshal(GetExecutorsResponse{
+		Executors: response,
+	})
 	if err != nil {
 		return nil, err
 	}

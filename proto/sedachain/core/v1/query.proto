@@ -36,6 +36,11 @@ service Query {
     option (google.api.http).get = "/seda-chain/core/staker/{public_key}";
   }
 
+  // Executors returns stakers that are eligible to execute data requests.
+  rpc Executors(QueryExecutorsRequest) returns (QueryExecutorsResponse) {
+    option (google.api.http).get = "/seda-chain/core/executors";
+  }
+
   // DataRequestsByStatus returns data requests by status.
   rpc DataRequestsByStatus(QueryDataRequestsByStatusRequest)
       returns (QueryDataRequestsByStatusResponse) {
@@ -103,6 +108,17 @@ message QueryStakerRequest { string public_key = 1; }
 // The response message for Query/Staker RPC method.
 message QueryStakerResponse {
   Staker staker = 1 [ (gogoproto.nullable) = false ];
+}
+
+// The request message for Query/Executors RPC method.
+message QueryExecutorsRequest {
+  uint32 limit = 1;
+  uint32 offset = 2;
+}
+
+// The response message for Query/Executors RPC method.
+message QueryExecutorsResponse {
+  repeated Staker executors = 1 [ (gogoproto.nullable) = false ];
 }
 
 // The request message for Query/DataRequestsByStatus RPC method.

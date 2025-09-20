@@ -16,4 +16,5 @@ message GenesisState {
   uint64 committing_count = 5;
   uint64 revealing_count = 6;
   uint64 tallying_count = 7;
+  uint32 staker_count = 8;
 }

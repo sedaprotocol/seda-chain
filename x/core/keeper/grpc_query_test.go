@@ -80,3 +80,53 @@ func TestGetDataRequestsByStatus(t *testing.T) {
 		})
 	}
 }
+
+func TestGetExecutors(t *testing.T) {
+	f := testutil.InitFixture(t)
+
+	f.AddStakers(t, 5) // total 5 stakers
+
+	executors, err := f.CoreKeeper.GetExecutors(f.Context(), 0, 10)
+	require.NoError(t, err)
+	require.Equal(t, 5, len(executors))
+	for i := range executors {
+		require.Equal(t, f.Stakers[i].PubKey, executors[i].GetPublicKey())
+	}
+
+	f.AddStakers(t, 23) // total 28 stakers
+
+	executors, err = f.CoreKeeper.GetExecutors(f.Context(), 0, 10)
+	require.NoError(t, err)
+	require.Equal(t, 10, len(executors)) // query limit is 10
+	i := 0
+	for _, executor := range executors {
+		require.Equal(t, f.Stakers[i].PubKey, executor.GetPublicKey())
+		i++
+	}
+
+	executors, err = f.CoreKeeper.GetExecutors(f.Context(), 10, 10)
+	require.NoError(t, err)
+	require.Equal(t, 10, len(executors)) // query limit is 10
+	for _, executor := range executors {
+		require.Equal(t, f.Stakers[i].PubKey, executor.GetPublicKey())
+		i++
+	}
+
+	executors, err = f.CoreKeeper.GetExecutors(f.Context(), 20, 10)
+	require.NoError(t, err)
+	require.Equal(t, 8, len(executors))
+	for _, executor := range executors {
+		require.Equal(t, f.Stakers[i].PubKey, executor.GetPublicKey())
+		i++
+	}
+
+	// arbitrary offset and limit
+	executors, err = f.CoreKeeper.GetExecutors(f.Context(), 17, 6)
+	require.NoError(t, err)
+	require.Equal(t, 6, len(executors))
+	i = 17 // offset is 17
+	for _, executor := range executors {
+		require.Equal(t, f.Stakers[i].PubKey, executor.GetPublicKey())
+		i++
+	}
+}

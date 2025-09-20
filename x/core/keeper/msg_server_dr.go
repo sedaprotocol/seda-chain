@@ -39,7 +39,7 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		return nil, err
 	}
 
-	count, err := m.GetStakersCount(ctx)
+	count, err := m.GetStakerCount(ctx)
 	if err != nil {
 		return nil, err
 	}
