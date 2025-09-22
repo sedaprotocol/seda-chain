@@ -157,26 +157,32 @@ func (q Querier) IsStakerExecutor(c context.Context, req *types.QueryIsStakerExe
 func (q Querier) IsExecutorEligible(c context.Context, req *types.QueryIsExecutorEligibleRequest) (*types.QueryIsExecutorEligibleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// verify the proof
-	hash := req.MsgHash()
-	publicKeyBytes, drIDBytes, proof, err := req.Parts()
-	if err != nil {
-		return nil, err
-	}
-	_, err = vrf.NewK256VRF().Verify(publicKeyBytes, proof, hash)
+	publicKey, drID, proof, err := req.Parts()
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: we should store the drID as bytes to avoid this
-	hexDrID := hex.EncodeToString(drIDBytes)
-	// check if dr is in the data request pool
-	_, err = q.GetDataRequest(ctx, hexDrID)
+	// Verify the proof.
+	publicKeyBytes, err := hex.DecodeString(publicKey)
+	if err != nil {
+		return nil, err
+	}
+	proofBytes, err := hex.DecodeString(proof)
+	if err != nil {
+		return nil, err
+	}
+	_, err = vrf.NewK256VRF().Verify(publicKeyBytes, proofBytes, req.MsgHash(ctx.ChainID()))
 	if err != nil {
 		return nil, err
 	}
 
-	isExecutor, err := q.Keeper.IsStakerExecutor(ctx, hex.EncodeToString(publicKeyBytes))
+	// Check if the data request exists.
+	_, err = q.GetDataRequest(ctx, drID)
+	if err != nil {
+		return nil, err
+	}
+
+	isExecutor, err := q.Keeper.IsStakerExecutor(ctx, publicKey)
 	if err != nil {
 		return nil, err
 	}
