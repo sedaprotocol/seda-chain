@@ -25,4 +25,4 @@ $mockgen_cmd -source=app/ante.go -package testutil -destination=app/testutil/exp
 $mockgen_cmd -source=app/utils/seda_keys.go -package testutil -destination=app/abci/testutil/seda_keys_mock.go
 $mockgen_cmd -source=x/data-proxy/types/expected_keepers.go -package testutil -destination=x/data-proxy/keeper/testutil/expected_keepers_mock.go
 aws_sdk_version=$(go list -m -f '{{.Version}}' github.com/aws/aws-sdk-go)
-$mockgen_cmd -source=$GOPATH/pkg/mod/github.com/aws/aws-sdk-go@${aws_sdk_version}/service/sqs/sqsiface/interface.go -package testutil -destination=plugins/indexing/pluginaws/testutil/sqs_client_mock.go
+$mockgen_cmd -source=$GOPATH/pkg/mod/github.com/aws/aws-sdk-go@${aws_sdk_version}/service/sns/snsiface/interface.go -package testutil -destination=plugins/indexing/pluginaws/testutil/sns_client_mock.go

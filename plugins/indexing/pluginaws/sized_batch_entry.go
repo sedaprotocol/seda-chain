@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sns"
 
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
@@ -17,7 +17,7 @@ const MaxAttempts = 3
 type sizedBatchEntry struct {
 	deliveryAttempts int
 	size             int
-	entry            *sqs.SendMessageBatchRequestEntry
+	entry            *sns.PublishBatchRequestEntry
 }
 
 func (r *sizedBatchEntry) attemptsExceeded() bool {
@@ -28,8 +28,8 @@ func (r *sizedBatchEntry) incrementAttempts() {
 	r.deliveryAttempts++
 }
 
-func newSizedBatchEntry(entry *sqs.SendMessageBatchRequestEntry) (*sizedBatchEntry, error) {
-	size, err := batchEntrySize(entry.MessageBody, entry.MessageAttributes)
+func newSizedBatchEntry(entry *sns.PublishBatchRequestEntry) (*sizedBatchEntry, error) {
+	size, err := batchEntrySize(entry.Message, entry.MessageAttributes)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func newSizedBatchEntry(entry *sqs.SendMessageBatchRequestEntry) (*sizedBatchEnt
 	}, nil
 }
 
-func (sc *SqsClient) createSizedBatchEntries(data []*types.Message) ([]*sizedBatchEntry, error) {
+func (sc *SnsClient) createSizedBatchEntries(data []*types.Message) ([]*sizedBatchEntry, error) {
 	entries := make([]*sizedBatchEntry, 0, len(data))
 
 	for i, message := range data {
@@ -50,7 +50,7 @@ func (sc *SqsClient) createSizedBatchEntries(data []*types.Message) ([]*sizedBat
 			return nil, err
 		}
 
-		attributes := map[string]*sqs.MessageAttributeValue{
+		attributes := map[string]*sns.MessageAttributeValue{
 			"height": {
 				DataType:    aws.String("Number"),
 				StringValue: aws.String(strconv.FormatInt(message.Block.Height, 10)),
@@ -74,16 +74,16 @@ func (sc *SqsClient) createSizedBatchEntries(data []*types.Message) ([]*sizedBat
 			}
 
 			serialisedMessage = s3SerialisedMessage
-			attributes["file"] = &sqs.MessageAttributeValue{
+			attributes["file"] = &sns.MessageAttributeValue{
 				DataType:    aws.String("String"),
 				StringValue: aws.String(fileKey),
 			}
 		}
 
-		sizedEntry, err := newSizedBatchEntry(&sqs.SendMessageBatchRequestEntry{
+		sizedEntry, err := newSizedBatchEntry(&sns.PublishBatchRequestEntry{
 			Id:                aws.String(fmt.Sprintf("%s-%d", message.Type, i)),
 			MessageAttributes: attributes,
-			MessageBody:       aws.String(string(serialisedMessage)),
+			Message:           aws.String(string(serialisedMessage)),
 		})
 		if err != nil {
 			return nil, err

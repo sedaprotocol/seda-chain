@@ -7,19 +7,19 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sns"
 
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
 const (
-	// Roughly half the limit of SQS request size (256KiB)
+	// Roughly half the limit of SNS request size (256KiB)
 	// since we're not expecting many messages to be that large
 	// we want to leave room for other messages in the same batch
 	MaxMessageBodyLengthBytes = 120_000 // ~120KB
 )
 
-func (sc *SqsClient) uploadToS3(key string, body []byte, ctx *types.BlockContext) (*types.Message, error) {
+func (sc *SnsClient) uploadToS3(key string, body []byte, ctx *types.BlockContext) (*types.Message, error) {
 	sc.logger.Trace("uploading to S3", "key", key)
 
 	response, err := sc.s3Client.PutObject(&s3.PutObjectInput{
@@ -43,7 +43,7 @@ func (sc *SqsClient) uploadToS3(key string, body []byte, ctx *types.BlockContext
 	return types.NewMessage("large-message", data, ctx), nil
 }
 
-func batchEntrySize(msg *string, msgAttr map[string]*sqs.MessageAttributeValue) (int, error) {
+func batchEntrySize(msg *string, msgAttr map[string]*sns.MessageAttributeValue) (int, error) {
 	var size int
 	if msg != nil {
 		size += len(*msg)
