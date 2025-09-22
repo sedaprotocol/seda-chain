@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
@@ -17,14 +17,14 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
-func TestSqsClient_PublishToQueue(t *testing.T) {
+func TestSnsClient_PublishToQueue(t *testing.T) {
 	blockCtx := types.NewBlockContext(1, time.Now())
 	logger := log.NewLogger(os.Stdout)
 
 	tests := []struct {
 		name            string
 		messages        []*types.Message
-		mockResponses   []*sqs.SendMessageBatchOutput
+		mockResponses   []*sns.PublishBatchOutput
 		mockErrors      []error
 		expectedError   bool
 		expectedRetries int
@@ -35,9 +35,9 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 				types.NewMessage("test", "data1", blockCtx),
 				types.NewMessage("test", "data2", blockCtx),
 			},
-			mockResponses: []*sqs.SendMessageBatchOutput{
+			mockResponses: []*sns.PublishBatchOutput{
 				{
-					Failed: []*sqs.BatchResultErrorEntry{},
+					Failed: []*sns.BatchResultErrorEntry{},
 				},
 			},
 			expectedError:   false,
@@ -49,9 +49,9 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 				types.NewMessage("test", "data1", blockCtx),
 				types.NewMessage("test", "data2", blockCtx),
 			},
-			mockResponses: []*sqs.SendMessageBatchOutput{
+			mockResponses: []*sns.PublishBatchOutput{
 				{
-					Failed: []*sqs.BatchResultErrorEntry{
+					Failed: []*sns.BatchResultErrorEntry{
 						{
 							Id:          stringPtr("test-0"),
 							Code:        stringPtr("InternalError"),
@@ -61,7 +61,7 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 					},
 				},
 				{
-					Failed: []*sqs.BatchResultErrorEntry{},
+					Failed: []*sns.BatchResultErrorEntry{},
 				},
 			},
 			expectedError:   false,
@@ -72,9 +72,9 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 			messages: []*types.Message{
 				types.NewMessage("test", "data1", blockCtx),
 			},
-			mockResponses: []*sqs.SendMessageBatchOutput{
+			mockResponses: []*sns.PublishBatchOutput{
 				{
-					Failed: []*sqs.BatchResultErrorEntry{
+					Failed: []*sns.BatchResultErrorEntry{
 						{
 							Id:          stringPtr("test-0"),
 							Code:        stringPtr("InternalError"),
@@ -84,7 +84,7 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 					},
 				},
 				{
-					Failed: []*sqs.BatchResultErrorEntry{
+					Failed: []*sns.BatchResultErrorEntry{
 						{
 							Id:          stringPtr("test-0"),
 							Code:        stringPtr("InternalError"),
@@ -94,7 +94,7 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 					},
 				},
 				{
-					Failed: []*sqs.BatchResultErrorEntry{},
+					Failed: []*sns.BatchResultErrorEntry{},
 				},
 			},
 			expectedError:   false,
@@ -105,9 +105,9 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 			messages: []*types.Message{
 				types.NewMessage("test", "data1", blockCtx),
 			},
-			mockResponses: []*sqs.SendMessageBatchOutput{
+			mockResponses: []*sns.PublishBatchOutput{
 				{
-					Failed: []*sqs.BatchResultErrorEntry{
+					Failed: []*sns.BatchResultErrorEntry{
 						{
 							Id:          stringPtr("test-0"),
 							Code:        stringPtr("InvalidMessageContents"),
@@ -125,9 +125,9 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 			messages: []*types.Message{
 				types.NewMessage("test", "data1", blockCtx),
 			},
-			mockResponses: []*sqs.SendMessageBatchOutput{
+			mockResponses: []*sns.PublishBatchOutput{
 				{
-					Failed: []*sqs.BatchResultErrorEntry{
+					Failed: []*sns.BatchResultErrorEntry{
 						{
 							Id:          stringPtr("test-0"),
 							Code:        stringPtr("InternalError"),
@@ -137,7 +137,7 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 					},
 				},
 				{
-					Failed: []*sqs.BatchResultErrorEntry{
+					Failed: []*sns.BatchResultErrorEntry{
 						{
 							Id:          stringPtr("test-0"),
 							Code:        stringPtr("InternalError"),
@@ -147,7 +147,7 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 					},
 				},
 				{
-					Failed: []*sqs.BatchResultErrorEntry{
+					Failed: []*sns.BatchResultErrorEntry{
 						{
 							Id:          stringPtr("test-0"),
 							Code:        stringPtr("InternalError"),
@@ -175,12 +175,12 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 				types.NewMessage("test", "data10", blockCtx),
 				types.NewMessage("test", "data11", blockCtx),
 			},
-			mockResponses: []*sqs.SendMessageBatchOutput{
+			mockResponses: []*sns.PublishBatchOutput{
 				{
-					Failed: []*sqs.BatchResultErrorEntry{},
+					Failed: []*sns.BatchResultErrorEntry{},
 				},
 				{
-					Failed: []*sqs.BatchResultErrorEntry{},
+					Failed: []*sns.BatchResultErrorEntry{},
 				},
 			},
 			expectedError:   false,
@@ -195,12 +195,12 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 				types.NewMessage("test", strings.Repeat("1", MaxMessageBodyLengthBytes-100), blockCtx),
 				types.NewMessage("test", strings.Repeat("2", MaxMessageBodyLengthBytes-100), blockCtx),
 			},
-			mockResponses: []*sqs.SendMessageBatchOutput{
+			mockResponses: []*sns.PublishBatchOutput{
 				{
-					Failed: []*sqs.BatchResultErrorEntry{},
+					Failed: []*sns.BatchResultErrorEntry{},
 				},
 				{
-					Failed: []*sqs.BatchResultErrorEntry{},
+					Failed: []*sns.BatchResultErrorEntry{},
 				},
 			},
 			expectedError:   false,
@@ -213,7 +213,7 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockSQS := testutil.NewMockSQSAPI(ctrl)
+			mockSNS := testutil.NewMockSNSAPI(ctrl)
 
 			seenMessages := make(map[string]bool)
 			for i, message := range tt.messages {
@@ -227,21 +227,21 @@ func TestSqsClient_PublishToQueue(t *testing.T) {
 					err = tt.mockErrors[i]
 				}
 
-				mockSQS.EXPECT().
-					SendMessageBatch(gomock.Any()).
-					DoAndReturn(func(input *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
-						assert.Equal(t, "test-queue", *input.QueueUrl)
-						assert.LessOrEqualf(t, len(input.Entries), MaxSQSBatchSize, "expected batch size to be less than or equal to %d, got %d", MaxSQSBatchSize, len(input.Entries))
-						for _, entry := range input.Entries {
+				mockSNS.EXPECT().
+					PublishBatch(gomock.Any()).
+					DoAndReturn(func(input *sns.PublishBatchInput) (*sns.PublishBatchOutput, error) {
+						assert.Equal(t, "test-topic", *input.TopicArn)
+						assert.LessOrEqualf(t, len(input.PublishBatchRequestEntries), MaxSNSBatchSize, "expected batch size to be less than or equal to %d, got %d", MaxSNSBatchSize, len(input.PublishBatchRequestEntries))
+						for _, entry := range input.PublishBatchRequestEntries {
 							seenMessages[*entry.Id] = true
 						}
 						return response, err
 					})
 			}
 
-			client := &SqsClient{
-				sqsClient: mockSQS,
-				queueURL:  "test-queue",
+			client := &SnsClient{
+				snsClient: mockSNS,
+				topicARN:  "test-topic",
 				logger:    logger,
 			}
 
@@ -276,49 +276,49 @@ func TestTakeBatch_SizeCalculation(t *testing.T) {
 		{
 			deliveryAttempts: 0,
 			size:             50000,
-			entry: &sqs.SendMessageBatchRequestEntry{
-				Id:          stringPtr("test-0"),
-				MessageBody: aws.String("small body"),
+			entry: &sns.PublishBatchRequestEntry{
+				Id:      stringPtr("test-0"),
+				Message: aws.String("small body"),
 			},
 		},
 		{
 			deliveryAttempts: 0,
 			size:             50000,
-			entry: &sqs.SendMessageBatchRequestEntry{
-				Id:          stringPtr("test-1"),
-				MessageBody: aws.String("small body"),
+			entry: &sns.PublishBatchRequestEntry{
+				Id:      stringPtr("test-1"),
+				Message: aws.String("small body"),
 			},
 		},
 		{
 			deliveryAttempts: 0,
 			size:             50000,
-			entry: &sqs.SendMessageBatchRequestEntry{
-				Id:          stringPtr("test-2"),
-				MessageBody: aws.String("small body"),
+			entry: &sns.PublishBatchRequestEntry{
+				Id:      stringPtr("test-2"),
+				Message: aws.String("small body"),
 			},
 		},
 		{
 			deliveryAttempts: 0,
 			size:             50000,
-			entry: &sqs.SendMessageBatchRequestEntry{
-				Id:          stringPtr("test-3"),
-				MessageBody: aws.String("small body"),
+			entry: &sns.PublishBatchRequestEntry{
+				Id:      stringPtr("test-3"),
+				Message: aws.String("small body"),
 			},
 		},
 		{
 			deliveryAttempts: 0,
 			size:             50000,
-			entry: &sqs.SendMessageBatchRequestEntry{
-				Id:          stringPtr("test-4"),
-				MessageBody: aws.String("small body"),
+			entry: &sns.PublishBatchRequestEntry{
+				Id:      stringPtr("test-4"),
+				Message: aws.String("small body"),
 			},
 		},
 		{
 			deliveryAttempts: 0,
 			size:             50000,
-			entry: &sqs.SendMessageBatchRequestEntry{
-				Id:          stringPtr("test-5"),
-				MessageBody: aws.String("small body"),
+			entry: &sns.PublishBatchRequestEntry{
+				Id:      stringPtr("test-5"),
+				Message: aws.String("small body"),
 			},
 		},
 	}

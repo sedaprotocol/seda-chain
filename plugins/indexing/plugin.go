@@ -72,12 +72,12 @@ var _ storetypes.ABCIListener = &IndexerPlugin{}
 type IndexerPlugin struct {
 	block     *types.BlockContext
 	cdc       codec.Codec
-	sqsClient *pluginaws.SqsClient
+	snsClient *pluginaws.SnsClient
 	logger    *log.Logger
 }
 
 func (p *IndexerPlugin) publishToQueue(messages []*types.Message) error {
-	publishError := p.sqsClient.PublishToQueue(messages)
+	publishError := p.snsClient.PublishToQueue(messages)
 	if publishError != nil {
 		p.logger.Error("Failed to publish messages to queue.", "error", publishError)
 		return publishError
@@ -239,14 +239,14 @@ func main() {
 	dataproxytypes.RegisterInterfaces(interfaceRegistry)
 	batchingtypes.RegisterInterfaces(interfaceRegistry)
 
-	sqsClient, err := pluginaws.NewSqsClient(logger)
+	snsClient, err := pluginaws.NewSnsClient(logger)
 	if err != nil {
 		logger.Fatal("failed to create AWS clients", err)
 	}
 
 	filePlugin := &IndexerPlugin{
 		cdc:       codec.NewProtoCodec(interfaceRegistry),
-		sqsClient: sqsClient,
+		snsClient: snsClient,
 		logger:    logger,
 	}
 

@@ -4,19 +4,19 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sns"
 
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
 const (
 	MaxAwsRequestLengthBytes = 262_144 // 256KiB
-	MaxSQSBatchSize          = 10
+	MaxSNSBatchSize          = 10
 	NilString                = "nil"
 )
 
-func (sc *SqsClient) PublishToQueue(data []*types.Message) error {
-	sc.logger.Trace("publishing to queue", "size", len(data))
+func (sc *SnsClient) PublishToQueue(data []*types.Message) error {
+	sc.logger.Trace("publishing to topic", "size", len(data))
 
 	allowedMessages := sc.filterMessages(data)
 	sizedBatchEntries, err := sc.createSizedBatchEntries(allowedMessages)
@@ -45,14 +45,14 @@ func (sc *SqsClient) PublishToQueue(data []*types.Message) error {
 }
 
 // takeBatch takes a list of retryable entries and returns a batch of entries from the front of the list
-// that fit in a single SQS request.
+// that fit in a single SNS request.
 func takeBatch(retryableEntries []*sizedBatchEntry) []*sizedBatchEntry {
 	currentRequestSize := 0
-	batch := make([]*sizedBatchEntry, 0, MaxSQSBatchSize)
+	batch := make([]*sizedBatchEntry, 0, MaxSNSBatchSize)
 
 	for _, retryableEntry := range retryableEntries {
 		nextSize := currentRequestSize + retryableEntry.size
-		if len(batch) == MaxSQSBatchSize || nextSize > MaxAwsRequestLengthBytes {
+		if len(batch) == MaxSNSBatchSize || nextSize > MaxAwsRequestLengthBytes {
 			return batch
 		}
 
@@ -63,24 +63,24 @@ func takeBatch(retryableEntries []*sizedBatchEntry) []*sizedBatchEntry {
 	return batch
 }
 
-// sendMessageBatch attempts to send a batch of messages to SQS.
+// sendMessageBatch attempts to send a batch of messages to SNS.
 // It returns a list of failed entries that can be retried.
 // If any of the messages are not retryable, exceed the max retry attempts,
 // or the request failed after the SDK's retry attempts, the function will return an error.
-func (sc *SqsClient) sendMessageBatch(entries []*sizedBatchEntry) ([]*sizedBatchEntry, error) {
+func (sc *SnsClient) sendMessageBatch(entries []*sizedBatchEntry) ([]*sizedBatchEntry, error) {
 	sc.logger.Trace("sending batch", "size", len(entries))
 
 	// Prepare a message batch and increment the attempts for each entry
-	batch := make([]*sqs.SendMessageBatchRequestEntry, 0, len(entries))
+	batch := make([]*sns.PublishBatchRequestEntry, 0, len(entries))
 	for _, entry := range entries {
 		batch = append(batch, entry.entry)
 		entry.incrementAttempts()
 	}
 
 	// Send the message batch, request level retry is handled by the SDK.
-	result, err := sc.sqsClient.SendMessageBatch(&sqs.SendMessageBatchInput{
-		Entries:  batch,
-		QueueUrl: &sc.queueURL,
+	result, err := sc.snsClient.PublishBatch(&sns.PublishBatchInput{
+		PublishBatchRequestEntries: batch,
+		TopicArn:                   &sc.topicARN,
 	})
 	if err != nil {
 		sc.logger.Error("failed to send message batch", "error", err.Error())

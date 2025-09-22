@@ -1,6 +1,6 @@
 # Indexing Plugin
 
-A simple plugin to aid with indexing the blockchain state. It listens to state changes, decodes the keys/values, and publishes these changes in JSON format on an SQS queue.
+A simple plugin to aid with indexing the blockchain state. It listens to state changes, decodes the keys/values, and publishes these changes in JSON format to an SNS topic.
 
 This plugin follows the architecture laid out in [ADR-038](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-038-state-listening.md).
 
@@ -12,7 +12,7 @@ The process that starts the node should have the following environment variables
 
 ```sh
 export COSMOS_SDK_ABCI=PATH_TO_PLUGIN_EXECUTABLE
-export SQS_QUEUE_URL=""
+export SNS_TOPIC_ARN=""
 export S3_LARGE_MSG_BUCKET_NAME=""
 export PLUGIN_LOG_FILE=PATH_TO_DESIRED_LOG_FILE
 # Optionally you can also specify the log level, one of "trace", "debug", "info", "warn", "error"
@@ -22,7 +22,7 @@ export PLUGIN_LOG_LEVEL="WARN"
 export ALLOWED_MESSAGE_TYPES="block,account"
 ```
 
-Lastly, as we're using SQS and S3 the node needs access to a valid set of AWS credentials with permission to publish messages to the specified queue and upload access to the specified bucket.
+Lastly, as we're using SNS and S3 the node needs access to a valid set of AWS credentials with permission to publish messages to the specified topic and upload access to the specified bucket.
 
 ### Logging
 
@@ -118,12 +118,12 @@ make build-plugin
 
 ## Local Development
 
-To simplify local development we use [a SQS emulator](https://github.com/Admiral-Piett/goaws/) and [a S3 emulator](https://github.com/adobe/S3Mock). To connect to this from the plugin you need to need to build the plugin with the `dev` flag. In addition you'll need specifiy an environment variable for `SQS_ENDPOINT` (which should be the base of the `SQS_QUEUE_URL`) in the process that launches the node, and an environment variable for `S3_ENDPOINT` (which should correspond to your local port of the service.).
+To simplify local development we use [a SNS emulator](https://github.com/Admiral-Piett/goaws/) and [a S3 emulator](https://github.com/adobe/S3Mock). To connect to this from the plugin you need to need to build the plugin with the `dev` flag. In addition you'll need specifiy an environment variable for `SNS_ENDPOINT` in the process that launches the node, and an environment variable for `S3_ENDPOINT` (which should correspond to your local port of the service.).
 
 ```sh
 # Example urls
-export SQS_QUEUE_URL=http://localhost/4100/test-queue
-export SQS_ENDPOINT=http://localhost:4100
+export SNS_TOPIC_ARN="arn:aws:sns:eu-west-2:queue:local-updates-topic"
+export SNS_ENDPOINT=http://localhost:4100
 export S3_LARGE_MSG_BUCKET_NAME="indexer-localnet-large-messages"
 export S3_ENDPOINT=http://localhost:9444
 ```

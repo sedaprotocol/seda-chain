@@ -6,7 +6,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
 )
 
-func (sc *SqsClient) filterMessages(data []*types.Message) []*types.Message {
+func (sc *SnsClient) filterMessages(data []*types.Message) []*types.Message {
 	allowedMessages := make([]*types.Message, 0, len(data))
 
 	for _, message := range data {
@@ -20,7 +20,7 @@ func (sc *SqsClient) filterMessages(data []*types.Message) []*types.Message {
 	return allowedMessages
 }
 
-func (sc *SqsClient) isMessageAllowed(event *types.Message) bool {
+func (sc *SnsClient) isMessageAllowed(event *types.Message) bool {
 	// When no allowlist is specified assume everything is allowed.
 	if len(sc.allowedMessages) == 0 {
 		return true

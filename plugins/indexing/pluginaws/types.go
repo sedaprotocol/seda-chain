@@ -7,31 +7,31 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/sqs"
-	sqsiface "github.com/aws/aws-sdk-go/service/sqs/sqsiface"
+	"github.com/aws/aws-sdk-go/service/sns"
+	snsiface "github.com/aws/aws-sdk-go/service/sns/snsiface"
 
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/log"
 )
 
 var (
-	queueURLEnvName      = "SQS_QUEUE_URL"
+	topicARNEnvName      = "SNS_TOPIC_ARN"
 	bucketURLEnvName     = "S3_LARGE_MSG_BUCKET_NAME"
 	messageFilterEnvName = "ALLOWED_MESSAGE_TYPES"
 )
 
-type SqsClient struct {
+type SnsClient struct {
 	bucketName      string
-	queueURL        string
+	topicARN        string
 	allowedMessages []string
-	sqsClient       sqsiface.SQSAPI
+	snsClient       snsiface.SNSAPI
 	s3Client        *s3.S3
 	logger          *log.Logger
 }
 
-func NewSqsClient(logger *log.Logger) (*SqsClient, error) {
-	queueURL, found := os.LookupEnv(queueURLEnvName)
+func NewSnsClient(logger *log.Logger) (*SnsClient, error) {
+	queueURL, found := os.LookupEnv(topicARNEnvName)
 	if !found {
-		return nil, fmt.Errorf("missing environment variable '%s'", queueURLEnvName)
+		return nil, fmt.Errorf("missing environment variable '%s'", topicARNEnvName)
 	}
 
 	bucketName, found := os.LookupEnv(bucketURLEnvName)
@@ -49,9 +49,9 @@ func NewSqsClient(logger *log.Logger) (*SqsClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialise session: %w", err)
 	}
-	sqsConfig := aws.NewConfig()
-	AddRetryToConfig(sqsConfig)
-	awsSqsClient := sqs.New(sess, sqsConfig)
+	snsConfig := aws.NewConfig()
+	AddRetryToConfig(snsConfig)
+	awsSnsClient := sns.New(sess, snsConfig)
 
 	s3Config, err := NewS3Config()
 	if err != nil {
@@ -59,11 +59,11 @@ func NewSqsClient(logger *log.Logger) (*SqsClient, error) {
 	}
 	awsS3Client := s3.New(sess, s3Config)
 
-	return &SqsClient{
-		queueURL:        queueURL,
+	return &SnsClient{
+		topicARN:        queueURL,
 		bucketName:      bucketName,
 		allowedMessages: allowedMessages,
-		sqsClient:       awsSqsClient,
+		snsClient:       awsSnsClient,
 		s3Client:        awsS3Client,
 		logger:          logger,
 	}, nil

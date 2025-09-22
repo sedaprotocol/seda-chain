@@ -12,14 +12,14 @@ import (
 )
 
 var (
-	sqsEndpointEnvName = "SQS_ENDPOINT"
+	snsEndpointEnvName = "SNS_ENDPOINT"
 	s3EndpointEnvName  = "S3_ENDPOINT"
 )
 
 func NewSession() (*session.Session, error) {
-	endpoint, found := os.LookupEnv(sqsEndpointEnvName)
+	endpoint, found := os.LookupEnv(snsEndpointEnvName)
 	if !found {
-		return nil, fmt.Errorf("missing environment variable '%s'", sqsEndpointEnvName)
+		return nil, fmt.Errorf("missing environment variable '%s'", snsEndpointEnvName)
 	}
 
 	return session.NewSession(&aws.Config{
