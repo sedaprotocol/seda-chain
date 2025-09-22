@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	QueryPathDataRequest          = "/sedachain.core.v1.Query/DataRequest"
 	QueryPathDataRequestsByStatus = "/sedachain.core.v1.Query/DataRequestsByStatus"
 	QueryPathDataRequestStatuses  = "/sedachain.core.v1.Query/DataRequestStatuses"
 	QueryPathStaker               = "/sedachain.core.v1.Query/Staker"
@@ -20,6 +21,7 @@ const (
 )
 
 type CoreContractQuery struct {
+	GetDataRequest          *GetDataRequest          `json:"get_data_request"`
 	GetDataRequestsByStatus *GetDataRequestsByStatus `json:"get_data_requests_by_status"`
 	GetDataRequestsStatuses *GetDataRequestsStatuses `json:"get_data_requests_statuses"`
 	GetStaker               *GetStaker               `json:"get_staker"`
@@ -30,10 +32,46 @@ type CoreContractQuery struct {
 	IsExecutorEligible      *IsExecutorEligible      `json:"is_executor_eligible"`
 }
 
+type GetDataRequest struct {
+	ID string `json:"dr_id"`
+}
+
+func (g GetDataRequest) ToModuleQuery() ([]byte, string, error) {
+	query := &coretypes.QueryDataRequestRequest{
+		DrId: g.ID,
+	}
+	queryProto, err := query.Marshal()
+	if err != nil {
+		return nil, "", err
+	}
+	return queryProto, QueryPathDataRequest, nil
+}
+
+func (g GetDataRequest) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, error) {
+	var res coretypes.QueryDataRequestResponse
+	err := cdc.Unmarshal(result, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	responseBytes, err := json.Marshal(res.DataRequest)
+	if err != nil {
+		return nil, err
+	}
+	return responseBytes, nil
+}
+
 type GetDataRequestsByStatus struct {
 	Status        string   `json:"status"`
 	Limit         int      `json:"limit"`
 	LastSeenIndex []string `json:"last_seen_index"`
+}
+
+type GetDataRequestsByStatusResponse struct {
+	DataRequests  []coretypes.DataRequest `json:"data_requests"`
+	IsPaused      bool                    `json:"is_paused"`
+	LastSeenIndex []string                `json:"last_seen_index"`
+	Total         uint32                  `json:"total"`
 }
 
 func (g GetDataRequestsByStatus) ToModuleQuery() ([]byte, string, error) {
@@ -45,6 +83,8 @@ func (g GetDataRequestsByStatus) ToModuleQuery() ([]byte, string, error) {
 		status = coretypes.DATA_REQUEST_STATUS_REVEALING
 	case "tallying":
 		status = coretypes.DATA_REQUEST_STATUS_TALLYING
+	default:
+		return nil, "", coretypes.ErrInvalidDataRequestStatus.Wrapf("status: %s", g.Status)
 	}
 
 	query := &coretypes.QueryDataRequestsByStatusRequest{
@@ -82,13 +122,7 @@ func (g GetDataRequestsByStatus) FromModuleQuery(cdc codec.Codec, result []byte)
 	return responseBytes, nil
 }
 
-type GetDataRequestsByStatusResponse struct {
-	DataRequests  []coretypes.DataRequest `json:"data_requests"`
-	IsPaused      bool                    `json:"is_paused"`
-	LastSeenIndex []string                `json:"last_seen_index"`
-	Total         uint32                  `json:"total"`
-}
-
+// MarshalJSON prevents omission of the DataRequests field in the response.
 func (r GetDataRequestsByStatusResponse) MarshalJSON() ([]byte, error) {
 	type Alias GetDataRequestsByStatusResponse
 	if r.DataRequests == nil {
@@ -99,10 +133,6 @@ func (r GetDataRequestsByStatusResponse) MarshalJSON() ([]byte, error) {
 
 type GetDataRequestsStatuses struct {
 	DataRequestIDs []string `json:"dr_ids"`
-}
-
-type GetDataRequestsStatusesResponse struct {
-	Statuses map[string]coretypes.DataRequestStatus `json:"statuses"`
 }
 
 func (g GetDataRequestsStatuses) ToModuleQuery() ([]byte, string, error) {
@@ -123,11 +153,7 @@ func (g GetDataRequestsStatuses) FromModuleQuery(cdc codec.Codec, result []byte)
 		return nil, err
 	}
 
-	response := GetDataRequestsStatusesResponse{
-		Statuses: res.Statuses,
-	}
-
-	responseBytes, err := json.Marshal(response)
+	responseBytes, err := json.Marshal(res.Statuses)
 	if err != nil {
 		return nil, err
 	}
@@ -143,10 +169,10 @@ type GetStakerResponse struct {
 }
 
 type StakerResponse struct {
+	PublicKey               string `json:"public_key"`
 	Memo                    []byte `json:"memo"`
 	TokensPendingWithdrawal string `json:"tokens_pending_withdrawal"`
 	TokensStaked            string `json:"tokens_staked"`
-	PublicKey               string `json:"public_key"`
 }
 
 func (g GetStaker) ToModuleQuery() ([]byte, string, error) {
@@ -213,6 +239,7 @@ func (g GetExecutors) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, e
 	response := make([]StakerResponse, len(res.Executors))
 	for i, executor := range res.Executors {
 		response[i] = StakerResponse{
+			PublicKey:               executor.PublicKey,
 			Memo:                    []byte(executor.Memo),
 			TokensPendingWithdrawal: executor.PendingWithdrawal.String(),
 			TokensStaked:            executor.Staked.String(),

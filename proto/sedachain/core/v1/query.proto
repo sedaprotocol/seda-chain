@@ -41,6 +41,11 @@ service Query {
     option (google.api.http).get = "/seda-chain/core/executors";
   }
 
+  // DataRequest returns the data request given its ID.
+  rpc DataRequest(QueryDataRequestRequest) returns (QueryDataRequestResponse) {
+    option (google.api.http).get = "/seda-chain/core/data_request/{dr_id}";
+  }
+
   // DataRequestsByStatus returns data requests by status.
   rpc DataRequestsByStatus(QueryDataRequestsByStatusRequest)
       returns (QueryDataRequestsByStatusResponse) {
@@ -146,6 +151,14 @@ message QueryExecutorsRequest {
 // The response message for Query/Executors RPC method.
 message QueryExecutorsResponse {
   repeated Staker executors = 1 [ (gogoproto.nullable) = false ];
+}
+
+// The request message for Query/DataRequest RPC method.
+message QueryDataRequestRequest { string dr_id = 1; }
+
+// The response message for Query/DataRequest RPC method.
+message QueryDataRequestResponse {
+  DataRequest data_request = 1 [ (gogoproto.nullable) = false ];
 }
 
 // The request message for Query/DataRequestsByStatus RPC method.
