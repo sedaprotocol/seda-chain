@@ -408,21 +408,20 @@ func (rb RevealBody) RevealBodyHash() ([]byte, error) {
 	return hasher.Sum(nil), nil
 }
 
-// Parts extracts the public key, drID, and proof from the base64-encoded
-func (q QueryIsExecutorEligibleRequest) Parts() ([]byte, []byte, []byte, error) {
-	// base64 decode the data
+// Parts extracts the hex-encoded public key, drID, and proof from the query request.
+func (q QueryIsExecutorEligibleRequest) Parts() (string, string, string, error) {
 	data, err := base64.StdEncoding.DecodeString(q.Data)
 	if err != nil {
-		return nil, nil, nil, err
+		return "", "", "", err
 	}
-
-	return data[:66], data[67:131], data[132:], nil
+	return string(data[:66]), string(data[67:131]), string(data[132:]), nil
 }
 
-func (q QueryIsExecutorEligibleRequest) MsgHash() []byte {
+func (q QueryIsExecutorEligibleRequest) MsgHash(chainID string) []byte {
 	_, drIDBytes, _, _ := q.Parts()
 	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
 	allBytes = append(allBytes, drIDBytes...)
+	allBytes = append(allBytes, []byte(chainID)...)
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
 	return hasher.Sum(nil)

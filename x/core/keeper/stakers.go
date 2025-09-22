@@ -115,7 +115,7 @@ func computeSelectionHash(pubKey []byte, drID []byte) []byte {
 	return hasher.Sum(nil)
 }
 
-func (k Keeper) IsEligibleForDr(ctx sdk.Context, pubKeyBytes, drIDBytes []byte, dr types.DataRequest) (bool, error) {
+func (k Keeper) IsEligibleForDataRequest(ctx sdk.Context, pubKeyBytes, drIDBytes []byte, dr types.DataRequest) (bool, error) {
 	stakingConfig, err := k.GetStakingConfig(ctx)
 	if err != nil {
 		return false, err

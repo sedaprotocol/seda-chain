@@ -16,6 +16,7 @@ const (
 	QueryPathStakingConfig        = "/sedachain.core.v1.Query/StakingConfig"
 	QueryPathDataRequestConfig    = "/sedachain.core.v1.Query/DataRequestConfig"
 	QueryPathExecutors            = "/sedachain.core.v1.Query/Executors"
+	QueryPathIsExecutorEligible   = "/sedachain.core.v1.Query/IsExecutorEligible"
 )
 
 type CoreContractQuery struct {
@@ -25,6 +26,7 @@ type CoreContractQuery struct {
 	GetStakingConfig        *GetStakingConfig        `json:"get_staking_config"`
 	GetDataRequestConfig    *GetDataRequestConfig    `json:"get_dr_config"`
 	GetExecutors            *GetExecutors            `json:"get_executors"`
+	IsExecutorEligible      *IsExecutorEligible      `json:"is_executor_eligible"`
 }
 
 type GetDataRequestsByStatus struct {
@@ -289,6 +291,35 @@ func (g GetDataRequestConfig) FromModuleQuery(cdc codec.Codec, result []byte) ([
 	}
 
 	responseBytes, err := json.Marshal(GetDataRequestConfigResponse{res.DataRequestConfig})
+	if err != nil {
+		return nil, err
+	}
+	return responseBytes, nil
+}
+
+type IsExecutorEligible struct {
+	Data string `json:"data"`
+}
+
+func (g IsExecutorEligible) ToModuleQuery() ([]byte, string, error) {
+	query := &coretypes.QueryIsExecutorEligibleRequest{
+		Data: g.Data,
+	}
+	queryProto, err := query.Marshal()
+	if err != nil {
+		return nil, "", err
+	}
+	return queryProto, QueryPathIsExecutorEligible, nil
+}
+
+func (g IsExecutorEligible) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, error) {
+	var res coretypes.QueryIsExecutorEligibleResponse
+	err := cdc.Unmarshal(result, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	responseBytes, err := json.Marshal(res.IsExecutorEligible)
 	if err != nil {
 		return nil, err
 	}
