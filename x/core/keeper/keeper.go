@@ -109,6 +109,14 @@ func (k Keeper) GetDataRequest(ctx sdk.Context, id string) (types.DataRequest, e
 	return k.dataRequests.Get(ctx, id)
 }
 
+func (k Keeper) GetDataRequestStatus(ctx sdk.Context, id string) (types.DataRequestStatus, error) {
+	dr, err := k.GetDataRequest(ctx, id)
+	if err != nil {
+		return types.DATA_REQUEST_STATUS_UNSPECIFIED, err
+	}
+	return dr.Status, nil
+}
+
 // LoadRevealsSorted returns reveals, executors, and gas reports sorted in a
 // deterministically random order. The reveals are retrieved based on the given
 // map of executors, and each reveal's reported proxy public keys are sorted.

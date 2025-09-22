@@ -77,6 +77,15 @@ func (q Querier) DataRequestsByStatus(c context.Context, req *types.QueryDataReq
 	}, nil
 }
 
+func (q Querier) DataRequestStatuses(c context.Context, req *types.QueryDataRequestStatusesRequest) (*types.QueryDataRequestStatusesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	statuses, err := q.GetDataRequestStatuses(ctx, req.DataRequestIds)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryDataRequestStatusesResponse{Statuses: statuses}, nil
+}
+
 func (q Querier) Paused(c context.Context, _ *types.QueryPausedRequest) (*types.QueryPausedResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	paused, err := q.IsPaused(ctx)
