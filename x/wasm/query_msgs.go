@@ -11,8 +11,8 @@ import (
 
 const (
 	QueryPathDataRequestsByStatus = "/sedachain.core.v1.Query/DataRequestsByStatus"
+	QueryPathDataRequestStatuses  = "/sedachain.core.v1.Query/DataRequestStatuses"
 	QueryPathStaker               = "/sedachain.core.v1.Query/Staker"
-	QueryPathStakerAndSeq         = "/sedachain.core.v1.Query/StakerAndSeq"
 	QueryPathStakingConfig        = "/sedachain.core.v1.Query/StakingConfig"
 	QueryPathDataRequestConfig    = "/sedachain.core.v1.Query/DataRequestConfig"
 	QueryPathExecutors            = "/sedachain.core.v1.Query/Executors"
@@ -21,6 +21,7 @@ const (
 
 type CoreContractQuery struct {
 	GetDataRequestsByStatus *GetDataRequestsByStatus `json:"get_data_requests_by_status"`
+	GetDataRequestsStatuses *GetDataRequestsStatuses `json:"get_data_requests_statuses"`
 	GetStaker               *GetStaker               `json:"get_staker"`
 	GetStakerAndSeq         *GetStakerAndSeq         `json:"get_staker_and_seq"`
 	GetStakingConfig        *GetStakingConfig        `json:"get_staking_config"`
@@ -59,6 +60,28 @@ func (g GetDataRequestsByStatus) ToModuleQuery() ([]byte, string, error) {
 	return queryProto, QueryPathDataRequestsByStatus, nil
 }
 
+func (g GetDataRequestsByStatus) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, error) {
+	var res coretypes.QueryDataRequestsByStatusResponse
+	err := cdc.Unmarshal(result, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	response := GetDataRequestsByStatusResponse{
+		DataRequests:  res.DataRequests,
+		IsPaused:      res.IsPaused,
+		LastSeenIndex: res.LastSeenIndex,
+		//nolint:gosec // G115: Temporary support for old version.
+		Total: uint32(res.Total),
+	}
+
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		return nil, err
+	}
+	return responseBytes, nil
+}
+
 type GetDataRequestsByStatusResponse struct {
 	DataRequests  []coretypes.DataRequest `json:"data_requests"`
 	IsPaused      bool                    `json:"is_paused"`
@@ -74,19 +97,34 @@ func (r GetDataRequestsByStatusResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(Alias(r))
 }
 
-func (g GetDataRequestsByStatus) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, error) {
-	var res coretypes.QueryDataRequestsByStatusResponse
+type GetDataRequestsStatuses struct {
+	DataRequestIDs []string `json:"dr_ids"`
+}
+
+type GetDataRequestsStatusesResponse struct {
+	Statuses map[string]coretypes.DataRequestStatus `json:"statuses"`
+}
+
+func (g GetDataRequestsStatuses) ToModuleQuery() ([]byte, string, error) {
+	query := &coretypes.QueryDataRequestStatusesRequest{
+		DataRequestIds: g.DataRequestIDs,
+	}
+	queryProto, err := query.Marshal()
+	if err != nil {
+		return nil, "", err
+	}
+	return queryProto, QueryPathDataRequestStatuses, nil
+}
+
+func (g GetDataRequestsStatuses) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, error) {
+	var res coretypes.QueryDataRequestStatusesResponse
 	err := cdc.Unmarshal(result, &res)
 	if err != nil {
 		return nil, err
 	}
 
-	response := GetDataRequestsByStatusResponse{
-		DataRequests:  res.DataRequests,
-		IsPaused:      res.IsPaused,
-		LastSeenIndex: res.LastSeenIndex,
-		//nolint:gosec // G115: Temporary support for old version.
-		Total: uint32(res.Total),
+	response := GetDataRequestsStatusesResponse{
+		Statuses: res.Statuses,
 	}
 
 	responseBytes, err := json.Marshal(response)
@@ -207,7 +245,7 @@ func (g GetStakerAndSeq) ToModuleQuery() ([]byte, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	return queryProto, QueryPathStakerAndSeq, nil
+	return queryProto, QueryPathStaker, nil
 }
 
 func (g GetStakerAndSeq) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, error) {

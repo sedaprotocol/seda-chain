@@ -163,6 +163,19 @@ func (k Keeper) GetDataRequestIDsByStatus(ctx sdk.Context, status types.DataRequ
 	return ids, nil
 }
 
+// GetDataRequestStatuses returns the statuses of the data requests given their IDs.
+func (k Keeper) GetDataRequestStatuses(ctx sdk.Context, ids []string) (map[string]types.DataRequestStatus, error) {
+	statuses := make(map[string]types.DataRequestStatus)
+	for _, id := range ids {
+		status, err := k.GetDataRequestStatus(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		statuses[id] = status
+	}
+	return statuses, nil
+}
+
 func (k Keeper) UpdateDataRequestIndexing(ctx sdk.Context, dr *types.DataRequest, newStatus types.DataRequestStatus) error {
 	// Check the logic of the status transition while removing the index from
 	// the current status set.

@@ -75,6 +75,8 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 	switch {
 	case query.GetDataRequestsByStatus != nil:
 		encodedQuery, path, err = query.GetDataRequestsByStatus.ToModuleQuery()
+	case query.GetDataRequestsStatuses != nil:
+		encodedQuery, path, err = query.GetDataRequestsStatuses.ToModuleQuery()
 	case query.GetStaker != nil:
 		encodedQuery, path, err = query.GetStaker.ToModuleQuery()
 	case query.GetStakerAndSeq != nil:
@@ -115,6 +117,8 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 	switch {
 	case query.GetDataRequestsByStatus != nil:
 		responseBytes, err = query.GetDataRequestsByStatus.FromModuleQuery(q.cdc, result.Value)
+	case query.GetDataRequestsStatuses != nil:
+		responseBytes, err = query.GetDataRequestsStatuses.FromModuleQuery(q.cdc, result.Value)
 	case query.GetStaker != nil:
 		responseBytes, err = query.GetStaker.FromModuleQuery(q.cdc, result.Value)
 	case query.GetStakerAndSeq != nil:
