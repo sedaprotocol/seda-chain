@@ -47,6 +47,15 @@ func (q Querier) Executors(c context.Context, req *types.QueryExecutorsRequest) 
 	return &types.QueryExecutorsResponse{Executors: executors}, nil
 }
 
+func (q Querier) DataRequest(c context.Context, req *types.QueryDataRequestRequest) (*types.QueryDataRequestResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	dataRequest, err := q.GetDataRequest(ctx, req.DrId)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryDataRequestResponse{DataRequest: dataRequest}, nil
+}
+
 func (q Querier) DataRequestsByStatus(c context.Context, req *types.QueryDataRequestsByStatusRequest) (*types.QueryDataRequestsByStatusResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 

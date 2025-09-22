@@ -73,6 +73,8 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 	var encodedQuery []byte
 	var path string
 	switch {
+	case query.GetDataRequest != nil:
+		encodedQuery, path, err = query.GetDataRequest.ToModuleQuery()
 	case query.GetDataRequestsByStatus != nil:
 		encodedQuery, path, err = query.GetDataRequestsByStatus.ToModuleQuery()
 	case query.GetDataRequestsStatuses != nil:
@@ -115,6 +117,8 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 	// Decode the response.
 	var responseBytes []byte
 	switch {
+	case query.GetDataRequest != nil:
+		responseBytes, err = query.GetDataRequest.FromModuleQuery(q.cdc, result.Value)
 	case query.GetDataRequestsByStatus != nil:
 		responseBytes, err = query.GetDataRequestsByStatus.FromModuleQuery(q.cdc, result.Value)
 	case query.GetDataRequestsStatuses != nil:
