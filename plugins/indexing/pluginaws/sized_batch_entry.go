@@ -59,6 +59,10 @@ func (sc *SnsClient) createSizedBatchEntries(data []*types.Message) ([]*sizedBat
 				DataType:    aws.String("String"),
 				StringValue: aws.String(message.Block.Time.Format(time.RFC3339)),
 			},
+			"type": {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(message.Type),
+			},
 		}
 
 		if len(serialisedMessage) > MaxMessageBodyLengthBytes {
