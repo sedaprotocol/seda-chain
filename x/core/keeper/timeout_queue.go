@@ -83,3 +83,13 @@ func (k Keeper) ExpireDataRequests(ctx sdk.Context) error {
 
 	return nil
 }
+
+func (k Keeper) ListTimeoutQueue(ctx sdk.Context) ([]collections.Pair[int64, string], error) {
+	iter, err := k.timeoutQueue.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	return iter.Keys()
+}

@@ -402,6 +402,10 @@ func InitFixture(tb testing.TB) *Fixture {
 	f.Creator.fixture = &f
 	f.Deployer.fixture = &f
 
+	bigAmount, ok := math.NewIntFromString("10000000000000000000000") // 1e22
+	require.True(tb, ok)
+	f.initAccountWithCoins(f.tb, f.Creator.addr, sdk.NewCoins(sdk.NewCoin(BondDenom, bigAmount)))
+
 	f.SetContextChainID(chainID)
 	f.uploadOraclePrograms(tb)
 	return &f

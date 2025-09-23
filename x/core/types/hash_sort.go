@@ -10,6 +10,9 @@ type HashSortable interface {
 	GetSortKey() []byte
 }
 
+// HashSort sorts a given slice of items by the hash of the item's sort key and
+// the given entropy. If the entropy is nil, the items are sorted by the item's
+// sort key without hashing.
 func HashSort[T HashSortable](originalItems []T, entropy []byte) []T {
 	type sortItem struct {
 		sortKey  []byte
@@ -21,14 +24,20 @@ func HashSort[T HashSortable](originalItems []T, entropy []byte) []T {
 
 	hasher := sha256.New()
 	for i := range totalItems {
-		hasher.Reset()
+		if entropy != nil {
+			hasher.Reset()
+			hasher.Write(originalItems[i].GetSortKey())
+			hasher.Write(entropy)
 
-		hasher.Write(originalItems[i].GetSortKey())
-		hasher.Write(entropy)
-
-		sortItems[i] = sortItem{
-			sortKey:  hasher.Sum(nil),
-			original: originalItems[i],
+			sortItems[i] = sortItem{
+				sortKey:  hasher.Sum(nil),
+				original: originalItems[i],
+			}
+		} else {
+			sortItems[i] = sortItem{
+				sortKey:  originalItems[i].GetSortKey(),
+				original: originalItems[i],
+			}
 		}
 	}
 
