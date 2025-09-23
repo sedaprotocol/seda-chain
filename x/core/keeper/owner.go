@@ -36,19 +36,33 @@ func (k Keeper) SetPendingOwner(ctx sdk.Context, pendingOwner string) error {
 	return k.pendingOwner.Set(ctx, pendingOwner)
 }
 
-// Checks if the given pubKey is in the allowlist
+// IsAllowlisted checks if the given public key is in the allowlist.
 func (k Keeper) IsAllowlisted(ctx sdk.Context, pubKey string) (bool, error) {
 	return k.allowlist.Has(ctx, pubKey)
 }
 
-// Adds the given pubKey to the allowlist
+// AddToAllowlist adds the given public key to the allowlist.
 func (k Keeper) AddToAllowlist(ctx sdk.Context, pubKey string) error {
 	return k.allowlist.Set(ctx, pubKey)
 }
 
-// Removes the given pubKey from the allowlist
+// RemoveFromAllowlist removes the given public key from the allowlist.
 func (k Keeper) RemoveFromAllowlist(ctx sdk.Context, pubKey string) error {
 	return k.allowlist.Remove(ctx, pubKey)
+}
+
+// ListAllowlist retrieves a list of all public keys in the allowlist.
+func (k Keeper) ListAllowlist(ctx sdk.Context) ([]string, error) {
+	iter, err := k.allowlist.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+	keys, err := iter.Keys()
+	if err != nil {
+		return nil, err
+	}
+	return keys, nil
 }
 
 // Checks if the module is paused

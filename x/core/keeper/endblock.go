@@ -182,7 +182,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 
 			MeterExecutorGasFallback(dr, config.ExecutionGasCostFallback, tallyResults[i].GasMeter)
 		} else {
-			reveals, executors, gasReports := k.LoadRevealsSorted(ctx, dr.ID, dr.Reveals)
+			reveals, executors, gasReports := k.LoadRevealsHashSorted(ctx, dr.ID, dr.Reveals, types.GetEntropy(dr.ID, ctx.BlockHeight()))
 			//nolint:gosec // G115: Replication factor is guaranteed to fit within uint16.
 			filterResult, filterErr := ExecuteFilter(reveals, dr.ConsensusFilter, uint16(dr.ReplicationFactor), config, tallyResults[i].GasMeter)
 

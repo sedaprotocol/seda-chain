@@ -26,14 +26,19 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // GenesisState defines core module's genesis state.
 type GenesisState struct {
-	Params          Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
-	Paused          bool   `protobuf:"varint,2,opt,name=paused,proto3" json:"paused,omitempty"`
-	Owner           string `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`
-	PendingOwner    string `protobuf:"bytes,4,opt,name=pending_owner,json=pendingOwner,proto3" json:"pending_owner,omitempty"`
-	CommittingCount uint64 `protobuf:"varint,5,opt,name=committing_count,json=committingCount,proto3" json:"committing_count,omitempty"`
-	RevealingCount  uint64 `protobuf:"varint,6,opt,name=revealing_count,json=revealingCount,proto3" json:"revealing_count,omitempty"`
-	TallyingCount   uint64 `protobuf:"varint,7,opt,name=tallying_count,json=tallyingCount,proto3" json:"tallying_count,omitempty"`
-	StakerCount     uint32 `protobuf:"varint,8,opt,name=staker_count,json=stakerCount,proto3" json:"staker_count,omitempty"`
+	Params       Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+	Owner        string `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
+	PendingOwner string `protobuf:"bytes,3,opt,name=pending_owner,json=pendingOwner,proto3" json:"pending_owner,omitempty"`
+	Paused       bool   `protobuf:"varint,4,opt,name=paused,proto3" json:"paused,omitempty"`
+	// Staking-related states:
+	Allowlist []string `protobuf:"bytes,5,rep,name=allowlist,proto3" json:"allowlist,omitempty"`
+	Stakers   []Staker `protobuf:"bytes,6,rep,name=stakers,proto3" json:"stakers"`
+	// Data request-related states:
+	DataRequests    []DataRequest            `protobuf:"bytes,7,rep,name=data_requests,json=dataRequests,proto3" json:"data_requests"`
+	RevealBodies    []GenesisStateRevealBody `protobuf:"bytes,8,rep,name=reveal_bodies,json=revealBodies,proto3" json:"reveal_bodies"`
+	CommittingCount uint64                   `protobuf:"varint,9,opt,name=committing_count,json=committingCount,proto3" json:"committing_count,omitempty"`
+	RevealingCount  uint64                   `protobuf:"varint,10,opt,name=revealing_count,json=revealingCount,proto3" json:"revealing_count,omitempty"`
+	TallyingCount   uint64                   `protobuf:"varint,11,opt,name=tallying_count,json=tallyingCount,proto3" json:"tallying_count,omitempty"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -76,13 +81,6 @@ func (m *GenesisState) GetParams() Params {
 	return Params{}
 }
 
-func (m *GenesisState) GetPaused() bool {
-	if m != nil {
-		return m.Paused
-	}
-	return false
-}
-
 func (m *GenesisState) GetOwner() string {
 	if m != nil {
 		return m.Owner
@@ -95,6 +93,41 @@ func (m *GenesisState) GetPendingOwner() string {
 		return m.PendingOwner
 	}
 	return ""
+}
+
+func (m *GenesisState) GetPaused() bool {
+	if m != nil {
+		return m.Paused
+	}
+	return false
+}
+
+func (m *GenesisState) GetAllowlist() []string {
+	if m != nil {
+		return m.Allowlist
+	}
+	return nil
+}
+
+func (m *GenesisState) GetStakers() []Staker {
+	if m != nil {
+		return m.Stakers
+	}
+	return nil
+}
+
+func (m *GenesisState) GetDataRequests() []DataRequest {
+	if m != nil {
+		return m.DataRequests
+	}
+	return nil
+}
+
+func (m *GenesisState) GetRevealBodies() []GenesisStateRevealBody {
+	if m != nil {
+		return m.RevealBodies
+	}
+	return nil
 }
 
 func (m *GenesisState) GetCommittingCount() uint64 {
@@ -118,45 +151,95 @@ func (m *GenesisState) GetTallyingCount() uint64 {
 	return 0
 }
 
-func (m *GenesisState) GetStakerCount() uint32 {
-	if m != nil {
-		return m.StakerCount
+// GenesisStateRevealBody is used to store an object of RevealBody type in the
+// genesis state. The executor field allows for self-contained construction of
+// the key in the store.
+type GenesisStateRevealBody struct {
+	RevealBody `protobuf:"bytes,1,opt,name=reveal_body,json=revealBody,proto3,embedded=reveal_body" json:"reveal_body"`
+	Executor   string `protobuf:"bytes,2,opt,name=executor,proto3" json:"executor,omitempty"`
+}
+
+func (m *GenesisStateRevealBody) Reset()         { *m = GenesisStateRevealBody{} }
+func (m *GenesisStateRevealBody) String() string { return proto.CompactTextString(m) }
+func (*GenesisStateRevealBody) ProtoMessage()    {}
+func (*GenesisStateRevealBody) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9ae62d9b0e76089c, []int{1}
+}
+func (m *GenesisStateRevealBody) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GenesisStateRevealBody) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GenesisStateRevealBody.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
 	}
-	return 0
+}
+func (m *GenesisStateRevealBody) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GenesisStateRevealBody.Merge(m, src)
+}
+func (m *GenesisStateRevealBody) XXX_Size() int {
+	return m.Size()
+}
+func (m *GenesisStateRevealBody) XXX_DiscardUnknown() {
+	xxx_messageInfo_GenesisStateRevealBody.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GenesisStateRevealBody proto.InternalMessageInfo
+
+func (m *GenesisStateRevealBody) GetExecutor() string {
+	if m != nil {
+		return m.Executor
+	}
+	return ""
 }
 
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "sedachain.core.v1.GenesisState")
+	proto.RegisterType((*GenesisStateRevealBody)(nil), "sedachain.core.v1.GenesisStateRevealBody")
 }
 
 func init() { proto.RegisterFile("sedachain/core/v1/genesis.proto", fileDescriptor_9ae62d9b0e76089c) }
 
 var fileDescriptor_9ae62d9b0e76089c = []byte{
-	// 375 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0xd1, 0xbd, 0x4e, 0xeb, 0x30,
-	0x14, 0x07, 0xf0, 0xb8, 0xb7, 0xed, 0xed, 0x75, 0xbf, 0x2e, 0x51, 0x85, 0xd2, 0x0a, 0xa5, 0x01,
-	0x09, 0x11, 0x86, 0x26, 0x2a, 0x0c, 0x4c, 0x0c, 0x94, 0x01, 0x31, 0x81, 0xd2, 0x8d, 0xa5, 0x72,
-	0x13, 0x2b, 0x8d, 0x48, 0xec, 0xc8, 0x76, 0x0b, 0x7d, 0x0b, 0x1e, 0x86, 0x87, 0xe8, 0x58, 0x31,
-	0x31, 0x21, 0xd4, 0xae, 0x3c, 0x04, 0x8a, 0x1d, 0xda, 0xa1, 0x03, 0x5b, 0xce, 0x3f, 0xbf, 0x63,
-	0x1f, 0xf9, 0xc0, 0x2e, 0xc7, 0x01, 0xf2, 0x27, 0x28, 0x22, 0xae, 0x4f, 0x19, 0x76, 0x67, 0x7d,
-	0x37, 0xc4, 0x04, 0xf3, 0x88, 0x3b, 0x29, 0xa3, 0x82, 0xea, 0x7b, 0x1b, 0xe0, 0x64, 0xc0, 0x99,
-	0xf5, 0x3b, 0x6d, 0x9f, 0xf2, 0x84, 0xf2, 0x91, 0x04, 0xae, 0x2a, 0x94, 0xee, 0xb4, 0x42, 0x1a,
-	0x52, 0x95, 0x67, 0x5f, 0x79, 0x7a, 0xb0, 0x7b, 0x89, 0x3c, 0x4b, 0xfe, 0x3d, 0xfa, 0x2a, 0xc0,
-	0xda, 0x8d, 0xba, 0x73, 0x28, 0x90, 0xc0, 0xfa, 0x05, 0x2c, 0xa7, 0x88, 0xa1, 0x84, 0x1b, 0xc0,
-	0x02, 0x76, 0xf5, 0xac, 0xed, 0xec, 0xcc, 0xe0, 0xdc, 0x4b, 0x30, 0x28, 0x2e, 0x3e, 0xba, 0x9a,
-	0x97, 0x73, 0x7d, 0x3f, 0x6b, 0x9c, 0x72, 0x1c, 0x18, 0x05, 0x0b, 0xd8, 0x15, 0x2f, 0xaf, 0x74,
-	0x07, 0x96, 0xe8, 0x13, 0xc1, 0xcc, 0xf8, 0x63, 0x01, 0xfb, 0xdf, 0xc0, 0x78, 0x7b, 0xed, 0xb5,
-	0xf2, 0xb1, 0xaf, 0x82, 0x80, 0x61, 0xce, 0x87, 0x82, 0x45, 0x24, 0xf4, 0x14, 0xd3, 0x2f, 0x61,
-	0x3d, 0xc5, 0x24, 0x88, 0x48, 0x38, 0x52, 0x7d, 0xc5, 0x5f, 0xfa, 0x6a, 0x39, 0xbf, 0x93, 0xed,
-	0xa7, 0xf0, 0xbf, 0x4f, 0x93, 0x24, 0x12, 0x22, 0x3b, 0xc1, 0xa7, 0x53, 0x22, 0x8c, 0x92, 0x05,
-	0xec, 0xa2, 0xd7, 0xdc, 0xe6, 0xd7, 0x59, 0xac, 0x9f, 0xc0, 0x26, 0xc3, 0x33, 0x8c, 0xe2, 0xad,
-	0x2c, 0x4b, 0xd9, 0xd8, 0xc4, 0x0a, 0x1e, 0xc3, 0x86, 0x40, 0x71, 0x3c, 0xdf, 0xba, 0xbf, 0xd2,
-	0xd5, 0x7f, 0x52, 0xc5, 0x0e, 0x61, 0x8d, 0x0b, 0xf4, 0x88, 0x59, 0x8e, 0x2a, 0x16, 0xb0, 0xeb,
-	0x5e, 0x55, 0x65, 0x92, 0x0c, 0x6e, 0x17, 0x2b, 0x13, 0x2c, 0x57, 0x26, 0xf8, 0x5c, 0x99, 0xe0,
-	0x65, 0x6d, 0x6a, 0xcb, 0xb5, 0xa9, 0xbd, 0xaf, 0x4d, 0xed, 0xc1, 0x0d, 0x23, 0x31, 0x99, 0x8e,
-	0x1d, 0x9f, 0x26, 0x6e, 0xf6, 0xe2, 0x72, 0x3d, 0x3e, 0x8d, 0x65, 0xd1, 0x53, 0xfb, 0x7b, 0x56,
-	0x1b, 0x14, 0xf3, 0x14, 0xf3, 0x71, 0x59, 0x8a, 0xf3, 0xef, 0x00, 0x00, 0x00, 0xff, 0xff, 0xa5,
-	0x48, 0x3e, 0xa8, 0x45, 0x02, 0x00, 0x00,
+	// 506 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x93, 0xc1, 0x6e, 0xd3, 0x40,
+	0x10, 0x86, 0x63, 0x92, 0xa6, 0xc9, 0x26, 0x69, 0x61, 0x55, 0x55, 0x6e, 0x04, 0x8e, 0x55, 0x09,
+	0x91, 0x1e, 0x6a, 0xab, 0x20, 0x81, 0x38, 0x70, 0x20, 0x20, 0x41, 0x4f, 0x20, 0x87, 0x13, 0x97,
+	0x68, 0x63, 0x8f, 0x5c, 0x0b, 0xdb, 0x1b, 0x76, 0xd6, 0x69, 0x73, 0xe1, 0x19, 0x78, 0x18, 0x1e,
+	0xa2, 0xc7, 0x88, 0x13, 0x17, 0x2a, 0x94, 0xbc, 0x08, 0xf2, 0xae, 0x13, 0x57, 0x4a, 0xa0, 0x37,
+	0xcf, 0xef, 0x6f, 0xfe, 0x9d, 0xdf, 0xde, 0x21, 0x3d, 0x84, 0x80, 0xf9, 0x17, 0x2c, 0x4a, 0x5d,
+	0x9f, 0x0b, 0x70, 0xa7, 0x67, 0x6e, 0x08, 0x29, 0x60, 0x84, 0xce, 0x44, 0x70, 0xc9, 0xe9, 0x83,
+	0x35, 0xe0, 0xe4, 0x80, 0x33, 0x3d, 0xeb, 0x1e, 0xf9, 0x1c, 0x13, 0x8e, 0x23, 0x05, 0xb8, 0xba,
+	0xd0, 0x74, 0xf7, 0x20, 0xe4, 0x21, 0xd7, 0x7a, 0xfe, 0x54, 0xa8, 0x0f, 0x37, 0x0f, 0x51, 0x5e,
+	0xea, 0xed, 0xf1, 0xef, 0x1a, 0x69, 0xbf, 0xd3, 0x67, 0x0e, 0x25, 0x93, 0x40, 0x5f, 0x90, 0xfa,
+	0x84, 0x09, 0x96, 0xa0, 0x69, 0xd8, 0x46, 0xbf, 0xf5, 0xf4, 0xc8, 0xd9, 0x98, 0xc1, 0xf9, 0xa8,
+	0x80, 0x41, 0xed, 0xfa, 0xa6, 0x57, 0xf1, 0x0a, 0x9c, 0x3a, 0x64, 0x87, 0x5f, 0xa6, 0x20, 0xcc,
+	0x7b, 0xb6, 0xd1, 0x6f, 0x0e, 0xcc, 0x9f, 0x3f, 0x4e, 0x0f, 0x8a, 0xf1, 0x5e, 0x07, 0x81, 0x00,
+	0xc4, 0xa1, 0x14, 0x51, 0x1a, 0x7a, 0x1a, 0xa3, 0xaf, 0x48, 0x67, 0x02, 0x69, 0x10, 0xa5, 0xe1,
+	0x48, 0xf7, 0x55, 0xef, 0xe8, 0x6b, 0x17, 0xf8, 0x07, 0xd5, 0x7e, 0x98, 0xcf, 0x99, 0x21, 0x04,
+	0x66, 0xcd, 0x36, 0xfa, 0x0d, 0xaf, 0xa8, 0xe8, 0x73, 0xd2, 0x64, 0x71, 0xcc, 0x2f, 0xe3, 0x08,
+	0xa5, 0xb9, 0x63, 0x57, 0xff, 0x6b, 0x59, 0xa2, 0xf4, 0x25, 0xd9, 0x45, 0xc9, 0xbe, 0x80, 0x40,
+	0xb3, 0x6e, 0x57, 0xff, 0x11, 0x7c, 0xa8, 0x88, 0x22, 0xf8, 0x8a, 0xa7, 0xe7, 0xa4, 0x13, 0x30,
+	0xc9, 0x46, 0x02, 0xbe, 0x66, 0x80, 0x12, 0xcd, 0x5d, 0x65, 0x60, 0x6d, 0x31, 0x78, 0xcb, 0x24,
+	0xf3, 0x34, 0x56, 0xb8, 0xb4, 0x83, 0x52, 0x42, 0xfa, 0x89, 0x74, 0x04, 0x4c, 0x81, 0xc5, 0xa3,
+	0x31, 0x0f, 0x22, 0x40, 0xb3, 0xa1, 0xac, 0x4e, 0xb6, 0x58, 0xdd, 0xfe, 0x6b, 0x9e, 0xea, 0x19,
+	0xf0, 0x60, 0xb6, 0x72, 0x15, 0x2b, 0x25, 0x02, 0xa4, 0x27, 0xe4, 0xbe, 0xcf, 0x93, 0x24, 0x92,
+	0x32, 0xff, 0xda, 0x3e, 0xcf, 0x52, 0x69, 0x36, 0x6d, 0xa3, 0x5f, 0xf3, 0xf6, 0x4b, 0xfd, 0x4d,
+	0x2e, 0xd3, 0x27, 0x64, 0x5f, 0xb7, 0x96, 0x24, 0x51, 0xe4, 0xde, 0x5a, 0xd6, 0xe0, 0x63, 0xb2,
+	0x27, 0x59, 0x1c, 0xcf, 0x4a, 0xae, 0xa5, 0xb8, 0xce, 0x4a, 0x55, 0xd8, 0xf1, 0x37, 0x72, 0xb8,
+	0x7d, 0x50, 0xfa, 0x9e, 0xb4, 0xca, 0xa8, 0xb3, 0xe2, 0xb6, 0x3d, 0xda, 0x12, 0xf4, 0x56, 0xb8,
+	0x46, 0x1e, 0x6e, 0x7e, 0xd3, 0x33, 0x3c, 0x22, 0x4a, 0xa7, 0x2e, 0x69, 0xc0, 0x15, 0xf8, 0x99,
+	0xe4, 0xc5, 0xe5, 0xf3, 0xd6, 0xf5, 0xe0, 0xfc, 0x7a, 0x61, 0x19, 0xf3, 0x85, 0x65, 0xfc, 0x59,
+	0x58, 0xc6, 0xf7, 0xa5, 0x55, 0x99, 0x2f, 0xad, 0xca, 0xaf, 0xa5, 0x55, 0xf9, 0xec, 0x86, 0x91,
+	0xbc, 0xc8, 0xc6, 0x8e, 0xcf, 0x13, 0x37, 0x3f, 0x54, 0xed, 0x83, 0xcf, 0x63, 0x55, 0x9c, 0xea,
+	0x85, 0xb9, 0xd2, 0x2b, 0x23, 0x67, 0x13, 0xc0, 0x71, 0x5d, 0x11, 0xcf, 0xfe, 0x06, 0x00, 0x00,
+	0xff, 0xff, 0x31, 0x72, 0xc1, 0x7a, 0xb6, 0x03, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -179,39 +262,71 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.StakerCount != 0 {
-		i = encodeVarintGenesis(dAtA, i, uint64(m.StakerCount))
-		i--
-		dAtA[i] = 0x40
-	}
 	if m.TallyingCount != 0 {
 		i = encodeVarintGenesis(dAtA, i, uint64(m.TallyingCount))
 		i--
-		dAtA[i] = 0x38
+		dAtA[i] = 0x58
 	}
 	if m.RevealingCount != 0 {
 		i = encodeVarintGenesis(dAtA, i, uint64(m.RevealingCount))
 		i--
-		dAtA[i] = 0x30
+		dAtA[i] = 0x50
 	}
 	if m.CommittingCount != 0 {
 		i = encodeVarintGenesis(dAtA, i, uint64(m.CommittingCount))
 		i--
-		dAtA[i] = 0x28
+		dAtA[i] = 0x48
 	}
-	if len(m.PendingOwner) > 0 {
-		i -= len(m.PendingOwner)
-		copy(dAtA[i:], m.PendingOwner)
-		i = encodeVarintGenesis(dAtA, i, uint64(len(m.PendingOwner)))
-		i--
-		dAtA[i] = 0x22
+	if len(m.RevealBodies) > 0 {
+		for iNdEx := len(m.RevealBodies) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.RevealBodies[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x42
+		}
 	}
-	if len(m.Owner) > 0 {
-		i -= len(m.Owner)
-		copy(dAtA[i:], m.Owner)
-		i = encodeVarintGenesis(dAtA, i, uint64(len(m.Owner)))
-		i--
-		dAtA[i] = 0x1a
+	if len(m.DataRequests) > 0 {
+		for iNdEx := len(m.DataRequests) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.DataRequests[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x3a
+		}
+	}
+	if len(m.Stakers) > 0 {
+		for iNdEx := len(m.Stakers) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Stakers[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x32
+		}
+	}
+	if len(m.Allowlist) > 0 {
+		for iNdEx := len(m.Allowlist) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Allowlist[iNdEx])
+			copy(dAtA[i:], m.Allowlist[iNdEx])
+			i = encodeVarintGenesis(dAtA, i, uint64(len(m.Allowlist[iNdEx])))
+			i--
+			dAtA[i] = 0x2a
+		}
 	}
 	if m.Paused {
 		i--
@@ -221,10 +336,64 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0
 		}
 		i--
-		dAtA[i] = 0x10
+		dAtA[i] = 0x20
+	}
+	if len(m.PendingOwner) > 0 {
+		i -= len(m.PendingOwner)
+		copy(dAtA[i:], m.PendingOwner)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.PendingOwner)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Owner) > 0 {
+		i -= len(m.Owner)
+		copy(dAtA[i:], m.Owner)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.Owner)))
+		i--
+		dAtA[i] = 0x12
 	}
 	{
 		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *GenesisStateRevealBody) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GenesisStateRevealBody) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GenesisStateRevealBody) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Executor) > 0 {
+		i -= len(m.Executor)
+		copy(dAtA[i:], m.Executor)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.Executor)))
+		i--
+		dAtA[i] = 0x12
+	}
+	{
+		size, err := m.RevealBody.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -255,9 +424,6 @@ func (m *GenesisState) Size() (n int) {
 	_ = l
 	l = m.Params.Size()
 	n += 1 + l + sovGenesis(uint64(l))
-	if m.Paused {
-		n += 2
-	}
 	l = len(m.Owner)
 	if l > 0 {
 		n += 1 + l + sovGenesis(uint64(l))
@@ -265,6 +431,33 @@ func (m *GenesisState) Size() (n int) {
 	l = len(m.PendingOwner)
 	if l > 0 {
 		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.Paused {
+		n += 2
+	}
+	if len(m.Allowlist) > 0 {
+		for _, s := range m.Allowlist {
+			l = len(s)
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.Stakers) > 0 {
+		for _, e := range m.Stakers {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.DataRequests) > 0 {
+		for _, e := range m.DataRequests {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.RevealBodies) > 0 {
+		for _, e := range m.RevealBodies {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
 	}
 	if m.CommittingCount != 0 {
 		n += 1 + sovGenesis(uint64(m.CommittingCount))
@@ -275,8 +468,20 @@ func (m *GenesisState) Size() (n int) {
 	if m.TallyingCount != 0 {
 		n += 1 + sovGenesis(uint64(m.TallyingCount))
 	}
-	if m.StakerCount != 0 {
-		n += 1 + sovGenesis(uint64(m.StakerCount))
+	return n
+}
+
+func (m *GenesisStateRevealBody) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.RevealBody.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	l = len(m.Executor)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
 	}
 	return n
 }
@@ -350,26 +555,6 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Paused", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Paused = bool(v != 0)
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
 			}
@@ -401,7 +586,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			}
 			m.Owner = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PendingOwner", wireType)
 			}
@@ -433,7 +618,161 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			}
 			m.PendingOwner = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Paused", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Paused = bool(v != 0)
 		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Allowlist", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Allowlist = append(m.Allowlist, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Stakers", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Stakers = append(m.Stakers, Staker{})
+			if err := m.Stakers[len(m.Stakers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DataRequests", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DataRequests = append(m.DataRequests, DataRequest{})
+			if err := m.DataRequests[len(m.DataRequests)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RevealBodies", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RevealBodies = append(m.RevealBodies, GenesisStateRevealBody{})
+			if err := m.RevealBodies[len(m.RevealBodies)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 9:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CommittingCount", wireType)
 			}
@@ -452,7 +791,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 6:
+		case 10:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field RevealingCount", wireType)
 			}
@@ -471,7 +810,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 7:
+		case 11:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TallyingCount", wireType)
 			}
@@ -490,11 +829,61 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 8:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StakerCount", wireType)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
 			}
-			m.StakerCount = 0
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GenesisStateRevealBody) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: GenesisStateRevealBody: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: GenesisStateRevealBody: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RevealBody", wireType)
+			}
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowGenesis
@@ -504,11 +893,57 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.StakerCount |= uint32(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RevealBody.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Executor", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Executor = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipGenesis(dAtA[iNdEx:])

@@ -31,10 +31,11 @@ type Keeper struct {
 
 	Schema collections.Schema
 
-	// Core module state:
+	// Core module parameter states:
 	owner        collections.Item[string]
-	paused       collections.Item[bool]
 	pendingOwner collections.Item[string]
+	paused       collections.Item[bool]
+	params       collections.Item[types.Params]
 
 	// Staking-related states:
 	// allowlist is an owner-controlled allowlist of staker public keys.
@@ -51,10 +52,6 @@ type Keeper struct {
 	dataRequestIndexing DataRequestIndexing
 	// timeoutQueue is a queue of data request IDs and their timeout heights.
 	timeoutQueue collections.KeySet[collections.Pair[int64, string]]
-
-	// Parameter state:
-	// params defines the core module parameters.
-	params collections.Item[types.Params]
 }
 
 func NewKeeper(
@@ -109,6 +106,29 @@ func (k Keeper) GetDataRequest(ctx sdk.Context, id string) (types.DataRequest, e
 	return k.dataRequests.Get(ctx, id)
 }
 
+// GetAllDataRequests retrieves all data requests from the store.
+func (k Keeper) GetAllDataRequests(ctx sdk.Context) ([]types.DataRequest, error) {
+	iter, err := k.dataRequests.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	dataRequests := make([]types.DataRequest, 0)
+	for ; iter.Valid(); iter.Next() {
+		key, err := iter.Key()
+		if err != nil {
+			return nil, err
+		}
+		dataRequest, err := k.GetDataRequest(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+		dataRequests = append(dataRequests, dataRequest)
+	}
+	return dataRequests, nil
+}
+
 func (k Keeper) GetDataRequestStatus(ctx sdk.Context, id string) (types.DataRequestStatus, error) {
 	dr, err := k.GetDataRequest(ctx, id)
 	if err != nil {
@@ -117,10 +137,12 @@ func (k Keeper) GetDataRequestStatus(ctx sdk.Context, id string) (types.DataRequ
 	return dr.Status, nil
 }
 
-// LoadRevealsSorted returns reveals, executors, and gas reports sorted in a
-// deterministically random order. The reveals are retrieved based on the given
-// map of executors, and each reveal's reported proxy public keys are sorted.
-func (k Keeper) LoadRevealsSorted(ctx sdk.Context, drID string, revealsMap map[string]bool) ([]types.Reveal, []string, []uint64) {
+// LoadRevealsHashSorted returns reveals, executors, and gas reports corresponding
+// to the given data request ID and map of reveal executors' public keys. Returned
+// slices are in the same order sorted by the hash of the executor public key and
+// given entropy. If the entropy is nil, the items are sorted simply by the executor
+// public key without hashing.
+func (k Keeper) LoadRevealsHashSorted(ctx sdk.Context, drID string, revealsMap map[string]bool, entropy []byte) ([]types.Reveal, []string, []uint64) {
 	reveals := make([]types.Reveal, len(revealsMap))
 	i := 0
 	for executor := range revealsMap {
@@ -134,7 +156,7 @@ func (k Keeper) LoadRevealsSorted(ctx sdk.Context, drID string, revealsMap map[s
 		i++
 	}
 
-	sortedReveals := types.HashSort(reveals, types.GetEntropy(drID, ctx.BlockHeight()))
+	sortedReveals := types.HashSort(reveals, entropy)
 
 	executors := make([]string, len(sortedReveals))
 	gasReports := make([]uint64, len(sortedReveals))
@@ -165,7 +187,8 @@ func (k Keeper) GetRevealBody(ctx sdk.Context, drID string, executor string) (ty
 	return k.revealBodies.Get(ctx, collections.Join(drID, executor))
 }
 
-// SetRevealBody stores a reveal body in the store.
+// SetRevealBody stores a reveal body in the store given the hex-encoded ID of
+// the executor.
 func (k Keeper) SetRevealBody(ctx sdk.Context, executor string, revealBody types.RevealBody) error {
 	return k.revealBodies.Set(ctx, collections.Join(revealBody.DrID, executor), revealBody)
 }
@@ -189,6 +212,29 @@ func (k Keeper) RemoveRevealBodies(ctx sdk.Context, drID string) error {
 		}
 	}
 	return nil
+}
+
+// GetAllRevealBodies retrieves all reveal bodies from the store.
+func (k Keeper) GetAllRevealBodies(ctx sdk.Context) ([]types.RevealBody, error) {
+	iter, err := k.revealBodies.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	revealBodies := make([]types.RevealBody, 0)
+	for ; iter.Valid(); iter.Next() {
+		key, err := iter.Key()
+		if err != nil {
+			return nil, err
+		}
+		revealBody, err := k.GetRevealBody(ctx, key.K1(), key.K2())
+		if err != nil {
+			return nil, err
+		}
+		revealBodies = append(revealBodies, revealBody)
+	}
+	return revealBodies, nil
 }
 
 // ClearDataRequest removes the data request and all associated information with it.

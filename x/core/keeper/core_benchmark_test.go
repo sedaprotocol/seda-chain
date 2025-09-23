@@ -21,6 +21,7 @@ import (
 // randomly selected from test wasm catalog.
 func BenchmarkDataRequestFlow(b *testing.B) {
 	f := testutil.InitFixture(b)
+	f.AddStakers(b, 5)
 
 	proxyPubKeys := []string{"03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0"}
 	err := f.SetDataProxyConfig(proxyPubKeys[0], "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f", sdk.NewCoin(testutil.BondDenom, math.NewInt(1000000000000000000)))

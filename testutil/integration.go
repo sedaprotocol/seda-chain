@@ -68,7 +68,6 @@ func NewIntegrationApp(
 				m.InitGenesis(ctx, appCodec, m.DefaultGenesis(appCodec))
 			}
 		}
-
 		return &cmtabcitypes.ResponseInitChain{}, nil
 	})
 
