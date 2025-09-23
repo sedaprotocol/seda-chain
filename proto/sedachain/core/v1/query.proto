@@ -65,12 +65,12 @@ service Query {
         "/seda-chain/core/is_staker_executor/{public_key}";
   }
 
-  // IsExecutorEligible returns whether the account is eligible to be an
-  // executor.
-  rpc IsExecutorEligible(QueryIsExecutorEligibleRequest)
-      returns (QueryIsExecutorEligibleResponse) {
+  // GetExecutorEligibility returns the eligibility status of an executor given
+  // the eligibility message data.
+  rpc GetExecutorEligibility(QueryGetExecutorEligibilityRequest)
+      returns (QueryGetExecutorEligibilityResponse) {
     option (google.api.http).get =
-        "/seda-chain/core/is_executor_eligible/{data}";
+        "/seda-chain/core/get_executor_eligibility/{data}";
   }
 
   // DataRequestStatuses returns the statuses of data requests given their IDs.
@@ -211,17 +211,45 @@ message QueryIsStakerExecutorResponse {
   bool is_staker_executor = 1;
 }
 
-// The request message for Query/IsExecutorEligible RPC method.
-message QueryIsExecutorEligibleRequest {
+// The request message for Query/GetExecutorEligibility RPC method.
+message QueryGetExecutorEligibilityRequest {
   // data is the base64 encoded data used to determine eligibility.
   string data = 1;
 }
 
-// QueryIsExecutorEligibleResponse is the response type for the
-// Query/IsExecutorEligible RPC method.
-message QueryIsExecutorEligibleResponse {
-  // is_executor_eligible is whether the account is eligible to be an executor.
-  bool is_executor_eligible = 1;
+// QueryGetExecutorEligibilityResponse is the response type for the
+// Query/GetExecutorEligibility RPC method.
+message QueryGetExecutorEligibilityResponse {
+  // EligibilityStatus is the eligibility status of the executor with respect
+  // to the data request.
+  EligibilityStatus status = 1;
+  // BlockHeight is the block height when the eligibility was determined.
+  uint64 block_height = 2;
+  // ErrorMessage, if not empty, indicates any error that was intercepted.
+  string error_message = 3;
+}
+
+// ExecutorEligibility is the eligibility status of an executor given
+// the eligibility message data.
+enum EligibilityStatus {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // Zero value as required by proto3.
+  ELIGIBILITY_STATUS_UNSPECIFIED = 0;
+  // Executor is eligible for the data request
+  ELIGIBILITY_STATUS_ELLIGIBLE = 1;
+  // Executor is not eligible for the data request
+  ELIGIBILITY_STATUS_NOT_ELIGIBLE = 2;
+  // Data request not found
+  ELIGIBILITY_STATUS_DATA_REQUEST_NOT_FOUND = 3;
+  // Executor is not a staker
+  ELIGIBILITY_STATUS_NOT_STAKER = 4;
+  // Executor has insufficient stake
+  ELIGIBILITY_STATUS_INSUFFICIENT_STAKE = 5;
+  // Executor is not on the allowlist
+  ELIGIBILITY_STATUS_NOT_ALLOWLISTED = 6;
+  // Invalid signature
+  ELIGIBILITY_STATUS_INVALID_SIGNATURE = 7;
 }
 
 // The request message for Query/DataRequestStatuses RPC method.

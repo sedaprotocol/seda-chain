@@ -6,6 +6,8 @@ import (
 
 	"golang.org/x/crypto/sha3"
 
+	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/core/types"
@@ -115,8 +117,8 @@ func computeSelectionHash(pubKey []byte, drID []byte) []byte {
 	return hasher.Sum(nil)
 }
 
-func (k Keeper) IsEligibleForDataRequest(ctx sdk.Context, pubKeyBytes, drIDBytes []byte, dr types.DataRequest) (bool, error) {
-	stakingConfig, err := k.GetStakingConfig(ctx)
+func (k Keeper) IsEligibleForDataRequest(ctx sdk.Context, pubKeyBytes, drIDBytes []byte, mininumStake math.Int) (bool, error) {
+	dr, err := k.GetDataRequest(ctx, hex.EncodeToString(drIDBytes))
 	if err != nil {
 		return false, err
 	}
@@ -149,11 +151,10 @@ func (k Keeper) IsEligibleForDataRequest(ctx sdk.Context, pubKeyBytes, drIDBytes
 			return false, err
 		}
 
-		if !staker.Staked.LT(stakingConfig.MinimumStake) {
+		if staker.Staked.LT(mininumStake) {
 			continue
 		}
 
-		// TODO: we should store pubkey as bytes to avoid this
 		stakerPubKeyBytes, err := hex.DecodeString(staker.PublicKey)
 		if err != nil {
 			return false, err
@@ -169,10 +170,9 @@ func (k Keeper) IsEligibleForDataRequest(ctx sdk.Context, pubKeyBytes, drIDBytes
 		return false, nil
 	}
 
+	var totalNeeded uint64
 	backupDelayInBlocks := uint64(drConfig.BackupDelayInBlocks)
 	replicationFactor := uint64(dr.ReplicationFactor)
-	totalNeeded := uint64(0)
-
 	if blocksPassed > backupDelayInBlocks {
 		totalNeeded = replicationFactor + ((blocksPassed - 1) / backupDelayInBlocks)
 	} else {
