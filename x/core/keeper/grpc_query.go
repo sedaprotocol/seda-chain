@@ -172,12 +172,44 @@ func (q Querier) IsStakerExecutor(c context.Context, req *types.QueryIsStakerExe
 	}, nil
 }
 
-func (q Querier) IsExecutorEligible(c context.Context, req *types.QueryIsExecutorEligibleRequest) (*types.QueryIsExecutorEligibleResponse, error) {
+func (q Querier) GetExecutorEligibility(c context.Context, req *types.QueryGetExecutorEligibilityRequest) (*types.QueryGetExecutorEligibilityResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	result := &types.QueryGetExecutorEligibilityResponse{
+		//nolint:gosec // G115: Block height should never be negative.
+		BlockHeight: uint64(ctx.BlockHeight()),
+	}
 
 	publicKey, drID, proof, err := req.Parts()
 	if err != nil {
 		return nil, err
+	}
+
+	// Check the executor's status as a staker.
+	staker, err := q.GetStaker(ctx, publicKey)
+	if err != nil {
+		result.Status = types.ELIGIBILITY_STATUS_NOT_STAKER
+		result.ErrorMessage = err.Error()
+		return result, nil
+	}
+
+	stakingConfig, err := q.GetStakingConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if stakingConfig.AllowlistEnabled {
+		isAllowlisted, err := q.IsAllowlisted(ctx, publicKey)
+		if err != nil {
+			return nil, err
+		}
+		if !isAllowlisted {
+			result.Status = types.ELIGIBILITY_STATUS_NOT_ALLOWLISTED
+			return result, nil
+		}
+	}
+
+	if staker.Staked.LT(stakingConfig.MinimumStake) {
+		result.Status = types.ELIGIBILITY_STATUS_INSUFFICIENT_STAKE
+		return result, nil
 	}
 
 	// Verify the proof.
@@ -191,21 +223,28 @@ func (q Querier) IsExecutorEligible(c context.Context, req *types.QueryIsExecuto
 	}
 	_, err = vrf.NewK256VRF().Verify(publicKeyBytes, proofBytes, req.MsgHash(ctx.ChainID()))
 	if err != nil {
-		return nil, err
+		result.Status = types.ELIGIBILITY_STATUS_INVALID_SIGNATURE
+		result.ErrorMessage = err.Error()
+		return result, nil
 	}
 
-	// Check if the data request exists.
-	_, err = q.GetDataRequest(ctx, drID)
+	// Verify eligibility with respect to the data request.
+	drIDBytes, err := hex.DecodeString(drID)
 	if err != nil {
 		return nil, err
 	}
 
-	isExecutor, err := q.Keeper.IsStakerExecutor(ctx, publicKey)
+	isEligible, err := q.IsEligibleForDataRequest(ctx, publicKeyBytes, drIDBytes, stakingConfig.MinimumStake)
 	if err != nil {
-		return nil, err
+		result.Status = types.ELIGIBILITY_STATUS_NOT_ELIGIBLE
+		result.ErrorMessage = err.Error()
+		return result, nil
 	}
 
-	return &types.QueryIsExecutorEligibleResponse{
-		IsExecutorEligible: isExecutor,
-	}, nil
+	if isEligible {
+		result.Status = types.ELIGIBILITY_STATUS_ELLIGIBLE
+	} else {
+		result.Status = types.ELIGIBILITY_STATUS_NOT_ELIGIBLE
+	}
+	return result, nil
 }

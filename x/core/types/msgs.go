@@ -409,7 +409,7 @@ func (rb RevealBody) RevealBodyHash() ([]byte, error) {
 }
 
 // Parts extracts the hex-encoded public key, drID, and proof from the query request.
-func (q QueryIsExecutorEligibleRequest) Parts() (string, string, string, error) {
+func (q QueryGetExecutorEligibilityRequest) Parts() (string, string, string, error) {
 	data, err := base64.StdEncoding.DecodeString(q.Data)
 	if err != nil {
 		return "", "", "", err
@@ -417,7 +417,7 @@ func (q QueryIsExecutorEligibleRequest) Parts() (string, string, string, error) 
 	return string(data[:66]), string(data[67:131]), string(data[132:]), nil
 }
 
-func (q QueryIsExecutorEligibleRequest) MsgHash(chainID string) []byte {
+func (q QueryGetExecutorEligibilityRequest) MsgHash(chainID string) []byte {
 	_, drIDBytes, _, _ := q.Parts()
 	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
 	allBytes = append(allBytes, drIDBytes...)
@@ -427,7 +427,7 @@ func (q QueryIsExecutorEligibleRequest) MsgHash(chainID string) []byte {
 	return hasher.Sum(nil)
 }
 
-func (q QueryIsExecutorEligibleRequest) LegacyMsgHash(contractAddr string) []byte {
+func (q QueryGetExecutorEligibilityRequest) LegacyMsgHash(contractAddr string) []byte {
 	_, drIDBytes, _, _ := q.Parts()
 	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
 	allBytes = append(allBytes, drIDBytes...)

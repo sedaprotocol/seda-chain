@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	QueryPathDataRequest          = "/sedachain.core.v1.Query/DataRequest"
-	QueryPathDataRequestsByStatus = "/sedachain.core.v1.Query/DataRequestsByStatus"
-	QueryPathDataRequestStatuses  = "/sedachain.core.v1.Query/DataRequestStatuses"
-	QueryPathStaker               = "/sedachain.core.v1.Query/Staker"
-	QueryPathStakingConfig        = "/sedachain.core.v1.Query/StakingConfig"
-	QueryPathDataRequestConfig    = "/sedachain.core.v1.Query/DataRequestConfig"
-	QueryPathExecutors            = "/sedachain.core.v1.Query/Executors"
-	QueryPathIsExecutorEligible   = "/sedachain.core.v1.Query/IsExecutorEligible"
+	QueryPathDataRequest            = "/sedachain.core.v1.Query/DataRequest"
+	QueryPathDataRequestsByStatus   = "/sedachain.core.v1.Query/DataRequestsByStatus"
+	QueryPathDataRequestStatuses    = "/sedachain.core.v1.Query/DataRequestStatuses"
+	QueryPathStaker                 = "/sedachain.core.v1.Query/Staker"
+	QueryPathStakingConfig          = "/sedachain.core.v1.Query/StakingConfig"
+	QueryPathDataRequestConfig      = "/sedachain.core.v1.Query/DataRequestConfig"
+	QueryPathExecutors              = "/sedachain.core.v1.Query/Executors"
+	QueryPathGetExecutorEligibility = "/sedachain.core.v1.Query/GetExecutorEligibility"
 )
 
 type CoreContractQuery struct {
@@ -29,7 +29,7 @@ type CoreContractQuery struct {
 	GetStakingConfig        *GetStakingConfig        `json:"get_staking_config"`
 	GetDataRequestConfig    *GetDataRequestConfig    `json:"get_dr_config"`
 	GetExecutors            *GetExecutors            `json:"get_executors"`
-	IsExecutorEligible      *IsExecutorEligible      `json:"is_executor_eligible"`
+	GetExecutorEligibility  *GetExecutorEligibility  `json:"get_executor_eligibility"`
 }
 
 type GetDataRequest struct {
@@ -362,29 +362,68 @@ func (g GetDataRequestConfig) FromModuleQuery(cdc codec.Codec, result []byte) ([
 	return responseBytes, nil
 }
 
-type IsExecutorEligible struct {
+type GetExecutorEligibility struct {
 	Data string `json:"data"`
 }
 
-func (g IsExecutorEligible) ToModuleQuery() ([]byte, string, error) {
-	query := &coretypes.QueryIsExecutorEligibleRequest{
+type GetExecutorEligibilityResponse struct {
+	BlockHeight uint64                  `json:"block_height"`
+	Status      LegacyEligibilityStatus `json:"status"`
+}
+
+type LegacyEligibilityStatus string
+
+const (
+	LegacyEligibilityStatusEligible            LegacyEligibilityStatus = "eligible"
+	LegacyEligibilityStatusNotEligible         LegacyEligibilityStatus = "not_eligible"
+	LegacyEligibilityStatusDataRequestNotFound LegacyEligibilityStatus = "data_request_not_found"
+	LegacyEligibilityStatusNotStaker           LegacyEligibilityStatus = "not_staker"
+	LegacyEligibilityStatusInvalidSignature    LegacyEligibilityStatus = "invalid_signature"
+)
+
+func (g GetExecutorEligibility) ToModuleQuery() ([]byte, string, error) {
+	query := &coretypes.QueryGetExecutorEligibilityRequest{
 		Data: g.Data,
 	}
 	queryProto, err := query.Marshal()
 	if err != nil {
 		return nil, "", err
 	}
-	return queryProto, QueryPathIsExecutorEligible, nil
+	return queryProto, QueryPathGetExecutorEligibility, nil
 }
 
-func (g IsExecutorEligible) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, error) {
-	var res coretypes.QueryIsExecutorEligibleResponse
+func (g GetExecutorEligibility) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, error) {
+	var res coretypes.QueryGetExecutorEligibilityResponse
 	err := cdc.Unmarshal(result, &res)
 	if err != nil {
 		return nil, err
 	}
 
-	responseBytes, err := json.Marshal(res.IsExecutorEligible)
+	response := GetExecutorEligibilityResponse{
+		BlockHeight: res.BlockHeight,
+	}
+
+	// Convert eligibility status to legacy status.
+	switch res.Status {
+	case coretypes.ELIGIBILITY_STATUS_ELLIGIBLE:
+		response.Status = LegacyEligibilityStatusEligible
+	case coretypes.ELIGIBILITY_STATUS_NOT_ELIGIBLE:
+		response.Status = LegacyEligibilityStatusNotEligible
+	case coretypes.ELIGIBILITY_STATUS_DATA_REQUEST_NOT_FOUND:
+		response.Status = LegacyEligibilityStatusDataRequestNotFound
+	case coretypes.ELIGIBILITY_STATUS_NOT_STAKER:
+		response.Status = LegacyEligibilityStatusNotStaker
+	case coretypes.ELIGIBILITY_STATUS_INSUFFICIENT_STAKE:
+		response.Status = LegacyEligibilityStatusNotStaker
+	case coretypes.ELIGIBILITY_STATUS_NOT_ALLOWLISTED:
+		response.Status = LegacyEligibilityStatusNotStaker
+	case coretypes.ELIGIBILITY_STATUS_INVALID_SIGNATURE:
+		response.Status = LegacyEligibilityStatusInvalidSignature
+	default: // coretypes.ELIGIBILITY_STATUS_UNSPECIFIED
+		response.Status = LegacyEligibilityStatusNotEligible
+	}
+
+	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		return nil, err
 	}
