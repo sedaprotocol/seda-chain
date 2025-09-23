@@ -6,16 +6,15 @@ import (
 	"strings"
 )
 
-func CommitMsg(drID, commitment, stakerPubKey, proof string, gasUsed uint64) []byte {
+func CommitMsg(drID, commitment, stakerPubKey, proof string) []byte {
 	return []byte(fmt.Sprintf(`{
 		"commit_data_result": {
 		  "dr_id": "%s",
 		  "commitment": "%s",
 		  "public_key": "%s",
-		  "proof": "%s",
-		  "gas_used": %d
+		  "proof": "%s"
 		}
-	}`, drID, commitment, stakerPubKey, proof, gasUsed))
+	}`, drID, commitment, stakerPubKey, proof))
 }
 
 func RevealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, exitCode byte, drHeight, gasUsed uint64) []byte {

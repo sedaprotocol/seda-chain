@@ -1,7 +1,6 @@
 package keepers
 
 import (
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
@@ -29,10 +28,11 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
+	corekeeper "github.com/sedaprotocol/seda-chain/x/core/keeper"
 	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
-	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
+	"github.com/sedaprotocol/seda-chain/x/wasm"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 )
 
@@ -58,7 +58,7 @@ type AppKeepers struct {
 	IBCKeeper           *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	ICAHostKeeper       icahostkeeper.Keeper
 	TransferKeeper      ibctransferkeeper.Keeper
-	WasmKeeper          wasmkeeper.Keeper
+	WasmKeeper          *wasm.Keeper
 	IBCFeeKeeper        ibcfeekeeper.Keeper
 	ICAControllerKeeper icacontrollerkeeper.Keeper
 	PacketForwardKeeper *packetforwardkeeper.Keeper
@@ -75,7 +75,7 @@ type AppKeepers struct {
 
 	// SEDA modules keepers
 	WasmStorageKeeper wasmstoragekeeper.Keeper
-	TallyKeeper       tallykeeper.Keeper
+	CoreKeeper        corekeeper.Keeper
 	DataProxyKeeper   dataproxykeeper.Keeper
 	PubKeyKeeper      *pubkeykeeper.Keeper
 	BatchingKeeper    batchingkeeper.Keeper

@@ -15,8 +15,8 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	wasmapp "github.com/CosmWasm/wasmd/app"
-	wasm "github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	sdkwasm "github.com/CosmWasm/wasmd/x/wasm"
+	sdkwasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	dbm "github.com/cosmos/cosmos-db"
@@ -142,6 +142,9 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching"
 	batchingkeeper "github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	"github.com/sedaprotocol/seda-chain/x/core"
+	corekeeper "github.com/sedaprotocol/seda-chain/x/core/keeper"
+	coretypes "github.com/sedaprotocol/seda-chain/x/core/types"
 	dataproxy "github.com/sedaprotocol/seda-chain/x/data-proxy"
 	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
@@ -151,11 +154,9 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/slashing"
 	"github.com/sedaprotocol/seda-chain/x/staking"
 	stakingkeeper "github.com/sedaprotocol/seda-chain/x/staking/keeper"
-	"github.com/sedaprotocol/seda-chain/x/tally"
-	tallykeeper "github.com/sedaprotocol/seda-chain/x/tally/keeper"
-	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	"github.com/sedaprotocol/seda-chain/x/vesting"
 	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
+	"github.com/sedaprotocol/seda-chain/x/wasm"
 	wasmstorage "github.com/sedaprotocol/seda-chain/x/wasm-storage"
 	wasmstoragekeeper "github.com/sedaprotocol/seda-chain/x/wasm-storage/keeper"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -190,7 +191,7 @@ var (
 		consensus.AppModuleBasic{},
 		circuit.AppModuleBasic{},
 		capability.AppModuleBasic{},
-		wasm.AppModuleBasic{},
+		sdkwasm.AppModuleBasic{},
 		ibc.AppModuleBasic{},
 		ibctm.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
@@ -200,9 +201,9 @@ var (
 		crisis.AppModuleBasic{},
 		packetforward.AppModuleBasic{},
 		wasmstorage.AppModuleBasic{},
-		tally.AppModuleBasic{},
 		dataproxy.AppModuleBasic{},
 		batching.AppModuleBasic{},
+		core.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -218,6 +219,7 @@ var (
 		icatypes.ModuleName:            nil,
 		wasmtypes.ModuleName:           {authtypes.Burner},
 		dataproxytypes.ModuleName:      {authtypes.Burner},
+		coretypes.ModuleName:           {authtypes.Burner},
 	}
 )
 
@@ -324,7 +326,7 @@ func NewApp(
 		capabilitytypes.StoreKey, ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasmtypes.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey, packetforwardtypes.StoreKey,
 		crisistypes.StoreKey, wasmstoragetypes.StoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey,
-		batchingtypes.StoreKey, tallytypes.StoreKey,
+		batchingtypes.StoreKey, coretypes.StoreKey,
 	)
 
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -575,14 +577,14 @@ func NewApp(
 	app.EvidenceKeeper = *evidenceKeeper
 
 	wasmDir := filepath.Join(homePath, "wasm")
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	wasmConfig, err := sdkwasm.ReadWasmConfig(appOpts)
 	if err != nil {
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
-	var wasmOpts []wasmkeeper.Option
+	var wasmOpts []sdkwasmkeeper.Option
 
-	app.WasmKeeper = wasmkeeper.NewKeeper(
+	sdkWasmKeeper := sdkwasmkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
 		app.AccountKeeper,
@@ -632,7 +634,13 @@ func NewApp(
 		wasmtypes.MaxWasmSize = int(val) // default 819200 (800 * 1024)
 	}
 
-	app.WasmContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
+	app.WasmKeeper = wasm.NewKeeper(
+		&sdkWasmKeeper,
+		app.StakingKeeper,
+		appCodec,
+		app.MsgServiceRouter(),
+	)
+	app.WasmContractKeeper = sdkwasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
 
 	app.WasmStorageKeeper = *wasmstoragekeeper.NewKeeper(
 		appCodec,
@@ -644,6 +652,8 @@ func NewApp(
 		app.StakingKeeper,
 		app.WasmContractKeeper,
 	)
+
+	app.WasmKeeper.SetWasmStorageKeeper(app.WasmStorageKeeper)
 
 	app.PubKeyKeeper = pubkeykeeper.NewKeeper(
 		appCodec,
@@ -674,15 +684,17 @@ func NewApp(
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 	)
 
-	app.TallyKeeper = tallykeeper.NewKeeper(
+	app.CoreKeeper = corekeeper.NewKeeper(
 		appCodec,
-		runtime.NewKVStoreService(keys[tallytypes.StoreKey]),
+		runtime.NewKVStoreService(keys[coretypes.StoreKey]),
 		app.WasmStorageKeeper,
 		app.BatchingKeeper,
 		app.DataProxyKeeper,
+		app.StakingKeeper,
+		app.BankKeeper,
 		app.WasmContractKeeper,
 		app.WasmKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: subject to change
 	)
 
 	// Create evidence router, add batching evidence route, seal it, and set it in the keeper.
@@ -736,7 +748,7 @@ func NewApp(
 	/*                    WASM STACK                       */
 	/* =================================================== */
 	var wasmStack ibcporttypes.IBCModule
-	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
+	wasmStack = sdkwasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
 	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.IBCFeeKeeper)
 
 	/* =================================================== */
@@ -794,7 +806,7 @@ func NewApp(
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
 		circuit.NewAppModule(appCodec, app.CircuitKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
-		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), nil),
+		wasm.NewAppModule(appCodec, app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), nil),
 		ibc.NewAppModule(app.IBCKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
@@ -802,10 +814,10 @@ func NewApp(
 		ibctm.AppModule{},
 		packetforward.NewAppModule(app.PacketForwardKeeper, nil),
 		wasmstorage.NewAppModule(appCodec, app.WasmStorageKeeper),
-		tally.NewAppModule(appCodec, app.TallyKeeper),
 		dataproxy.NewAppModule(appCodec, app.DataProxyKeeper),
 		pubkey.NewAppModule(appCodec, app.PubKeyKeeper),
 		batching.NewAppModule(appCodec, app.BatchingKeeper),
+		core.NewAppModule(appCodec, app.CoreKeeper),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -861,7 +873,7 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 		// custom modules
 		wasmstoragetypes.ModuleName,
-		tallytypes.ModuleName,
+		coretypes.ModuleName,
 		dataproxytypes.ModuleName,
 		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
@@ -894,7 +906,7 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 		// custom modules
 		wasmstoragetypes.ModuleName,
-		tallytypes.ModuleName,
+		coretypes.ModuleName,
 		dataproxytypes.ModuleName,
 		pubkeytypes.ModuleName,
 		batchingtypes.ModuleName,
@@ -934,7 +946,7 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 		// custom modules (except pubkey)
 		wasmstoragetypes.ModuleName,
-		tallytypes.ModuleName,
+		coretypes.ModuleName,
 		dataproxytypes.ModuleName,
 		batchingtypes.ModuleName,
 	}
@@ -950,7 +962,8 @@ func NewApp(
 	if err != nil {
 		panic(err)
 	}
-	app.setupUpgrades()
+	// TODO Re-enable upgrades
+	// app.setupUpgrades()
 
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.mm.Modules))
 	reflectionSvc, err := runtimeservices.NewReflectionService()
@@ -983,7 +996,7 @@ func NewApp(
 				},
 				IBCKeeper:             app.IBCKeeper,
 				WasmConfig:            &wasmConfig,
-				WasmKeeper:            &app.WasmKeeper,
+				WasmKeeper:            app.WasmKeeper.Keeper,
 				TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
 				CircuitKeeper:         &app.CircuitKeeper,
 			},
@@ -1050,7 +1063,7 @@ func NewApp(
 
 	if manager := app.SnapshotManager(); manager != nil {
 		err = manager.RegisterExtensions(
-			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WasmKeeper),
+			sdkwasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), app.WasmKeeper.Keeper),
 		)
 		if err != nil {
 			panic("failed to register snapshot extension: " + err.Error())
