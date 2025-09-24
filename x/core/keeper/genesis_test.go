@@ -14,7 +14,7 @@ import (
 )
 
 // Test export and import genesis after simulated data request flows.
-func TestGenesis_AfterDataRequestFlows(t *testing.T) {
+func TestExportImport(t *testing.T) {
 	// Setup with arbitrary data
 	f := testutil.InitFixture(t)
 	f.AddStakers(t, 32)

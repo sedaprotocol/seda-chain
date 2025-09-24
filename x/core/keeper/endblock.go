@@ -156,10 +156,16 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 			if err != nil {
 				return nil, nil, err
 			}
-			err = k.ClearDataRequest(ctx, dr)
+
+			err = k.RemoveRevealBodies(ctx, dr.ID)
 			if err != nil {
 				return nil, nil, err
 			}
+			err = k.RemoveDataRequest(ctx, dr.Index(), dr.Status)
+			if err != nil {
+				return nil, nil, err
+			}
+
 			continue
 		}
 
@@ -217,7 +223,11 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 			}
 		}
 
-		err = k.ClearDataRequest(ctx, dr)
+		err = k.RemoveRevealBodies(ctx, dr.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+		err = k.RemoveDataRequest(ctx, dr.Index(), dr.Status)
 		if err != nil {
 			return nil, nil, err
 		}

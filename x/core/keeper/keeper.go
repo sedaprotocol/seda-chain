@@ -44,12 +44,10 @@ type Keeper struct {
 	stakers types.StakerIndexing
 
 	// Data request-related states:
-	// dataRequests is a map of data request IDs to data request objects.
-	dataRequests collections.Map[string, types.DataRequest]
+	// dataRequestIndexing is a set of data request indices under different statuses.
+	dataRequests types.DataRequestIndexing
 	// revealBodies is a map of data request IDs and executor public keys to reveal bodies.
 	revealBodies collections.Map[collections.Pair[string, string], types.RevealBody]
-	// dataRequestIndexing is a set of data request indices under different statuses.
-	dataRequestIndexing DataRequestIndexing
 	// timeoutQueue is a queue of data request IDs and their timeout heights.
 	timeoutQueue collections.KeySet[collections.Pair[int64, string]]
 }
@@ -71,26 +69,25 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
-		wasmStorageKeeper:   wsk,
-		batchingKeeper:      batk,
-		dataProxyKeeper:     dpk,
-		stakingKeeper:       sk,
-		bankKeeper:          bank,
-		wasmKeeper:          wk,
-		wasmViewKeeper:      wvk,
-		authority:           authority,
-		feeCollectorName:    feeCollectorName,
-		txDecoder:           txDecoder,
-		owner:               collections.NewItem(sb, types.OwnerKey, "owner", collections.StringValue),
-		paused:              collections.NewItem(sb, types.PausedKey, "paused", collections.BoolValue),
-		pendingOwner:        collections.NewItem(sb, types.PendingOwnerKey, "pending_owner", collections.StringValue),
-		allowlist:           collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
-		stakers:             types.NewStakerIndexing(sb, cdc),
-		dataRequests:        collections.NewMap(sb, types.DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[types.DataRequest](cdc)),
-		revealBodies:        collections.NewMap(sb, types.RevealBodiesKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
-		dataRequestIndexing: NewDataRequestIndexing(sb),
-		timeoutQueue:        collections.NewKeySet(sb, types.TimeoutQueueKeyPrefix, "timeout_queue", collections.PairKeyCodec(collections.Int64Key, collections.StringKey)),
-		params:              collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
+		wasmStorageKeeper: wsk,
+		batchingKeeper:    batk,
+		dataProxyKeeper:   dpk,
+		stakingKeeper:     sk,
+		bankKeeper:        bank,
+		wasmKeeper:        wk,
+		wasmViewKeeper:    wvk,
+		authority:         authority,
+		feeCollectorName:  feeCollectorName,
+		txDecoder:         txDecoder,
+		owner:             collections.NewItem(sb, types.OwnerKey, "owner", collections.StringValue),
+		paused:            collections.NewItem(sb, types.PausedKey, "paused", collections.BoolValue),
+		pendingOwner:      collections.NewItem(sb, types.PendingOwnerKey, "pending_owner", collections.StringValue),
+		allowlist:         collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
+		stakers:           types.NewStakerIndexing(sb, cdc),
+		dataRequests:      types.NewDataRequestIndexing(sb, cdc),
+		revealBodies:      collections.NewMap(sb, types.RevealBodiesKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
+		timeoutQueue:      collections.NewKeySet(sb, types.TimeoutQueueKeyPrefix, "timeout_queue", collections.PairKeyCodec(collections.Int64Key, collections.StringKey)),
+		params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
 
 	schema, err := sb.Build()
@@ -99,42 +96,6 @@ func NewKeeper(
 	}
 	k.Schema = schema
 	return k
-}
-
-// GetDataRequest retrieves a data request given its hex-encoded ID.
-func (k Keeper) GetDataRequest(ctx sdk.Context, id string) (types.DataRequest, error) {
-	return k.dataRequests.Get(ctx, id)
-}
-
-// GetAllDataRequests retrieves all data requests from the store.
-func (k Keeper) GetAllDataRequests(ctx sdk.Context) ([]types.DataRequest, error) {
-	iter, err := k.dataRequests.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer iter.Close()
-
-	dataRequests := make([]types.DataRequest, 0)
-	for ; iter.Valid(); iter.Next() {
-		key, err := iter.Key()
-		if err != nil {
-			return nil, err
-		}
-		dataRequest, err := k.GetDataRequest(ctx, key)
-		if err != nil {
-			return nil, err
-		}
-		dataRequests = append(dataRequests, dataRequest)
-	}
-	return dataRequests, nil
-}
-
-func (k Keeper) GetDataRequestStatus(ctx sdk.Context, id string) (types.DataRequestStatus, error) {
-	dr, err := k.GetDataRequest(ctx, id)
-	if err != nil {
-		return types.DATA_REQUEST_STATUS_UNSPECIFIED, err
-	}
-	return dr.Status, nil
 }
 
 // LoadRevealsHashSorted returns reveals, executors, and gas reports corresponding
@@ -165,21 +126,6 @@ func (k Keeper) LoadRevealsHashSorted(ctx sdk.Context, drID string, revealsMap m
 		gasReports[i] = reveal.GasUsed
 	}
 	return sortedReveals, executors, gasReports
-}
-
-// HasDataRequest checks if a data request exists given its hex-encoded ID.
-func (k Keeper) HasDataRequest(ctx sdk.Context, id string) (bool, error) {
-	return k.dataRequests.Has(ctx, id)
-}
-
-// SetDataRequest stores a data request in the store.
-func (k Keeper) SetDataRequest(ctx sdk.Context, dr types.DataRequest) error {
-	return k.dataRequests.Set(ctx, dr.ID, dr)
-}
-
-// RemoveDataRequest removes a data request given its hex-encoded ID.
-func (k Keeper) RemoveDataRequest(ctx sdk.Context, id string) error {
-	return k.dataRequests.Remove(ctx, id)
 }
 
 // GetRevealBody retrieves a reveal body given a data request ID and an executor.
@@ -235,23 +181,6 @@ func (k Keeper) GetAllRevealBodies(ctx sdk.Context) ([]types.RevealBody, error) 
 		revealBodies = append(revealBodies, revealBody)
 	}
 	return revealBodies, nil
-}
-
-// ClearDataRequest removes the data request and all associated information with it.
-func (k Keeper) ClearDataRequest(ctx sdk.Context, dr types.DataRequest) error {
-	err := k.RemoveDataRequestIndexing(ctx, dr.Index(), dr.Status)
-	if err != nil {
-		return err
-	}
-	err = k.RemoveRevealBodies(ctx, dr.ID)
-	if err != nil {
-		return err
-	}
-	err = k.RemoveDataRequest(ctx, dr.ID)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // GetParams retrieves the core module parameters.

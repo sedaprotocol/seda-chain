@@ -70,8 +70,6 @@ func (f *Fixture) ExecuteDataRequestFlow(
 	replicationFactor, numCommits, numReveals int, timeout bool,
 	config CommitRevealConfig,
 ) string {
-	f.tb.Helper()
-
 	var execProgram, tallyProgram wasmstoragetypes.OracleProgram
 	if execProgramBytes != nil {
 		execProgram = wasmstoragetypes.NewOracleProgram(execProgramBytes, f.Context().BlockTime())
@@ -141,8 +139,6 @@ func (f *Fixture) ExecuteDataRequestFlow(
 // }
 
 func (f *Fixture) PostDataRequest(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) PostDataRequestResponse {
-	f.tb.Helper()
-
 	amount, ok := math.NewIntFromString("200600000000000000000")
 	require.True(f.tb, ok)
 
@@ -161,8 +157,6 @@ func (f *Fixture) PostDataRequest(execProgHash, tallyProgHash []byte, requestMem
 // commitDataRequest executes a commit for each of the given stakers and
 // returns a list of corresponding reveal messages.
 func (f *Fixture) CommitDataRequest(stakers []Staker, height uint64, drID string, config CommitRevealConfig) [][]byte {
-	f.tb.Helper()
-
 	CommitGasLimit := config.CommitGasLimit
 	if config.CommitGasLimit == 0 {
 		CommitGasLimit = 100000
@@ -194,8 +188,6 @@ func (f *Fixture) CommitDataRequest(stakers []Staker, height uint64, drID string
 // executeReveals executes a list of reveal messages, one by one using
 // the staker addresses.
 func (f *Fixture) ExecuteReveals(stakers []Staker, revealMsgs [][]byte, config CommitRevealConfig) {
-	f.tb.Helper()
-
 	RevealGasLimit := config.RevealGasLimit
 	if config.RevealGasLimit == 0 {
 		RevealGasLimit = 100000
@@ -408,8 +400,6 @@ func generateRevealProof(tb testing.TB, signKey []byte, revealBodyHash []byte, c
 // executeCommitReveal executes a commit msg or a reveal msg with the required
 // context.
 func (f *Fixture) executeCommitReveal(sender sdk.AccAddress, msg []byte, gasLimit uint64) {
-	f.tb.Helper()
-
 	f.SetBasicGasMeter(gasLimit)
 
 	contractMsg := wasmtypes.MsgExecuteContract{
@@ -446,8 +436,6 @@ func (f *Fixture) executeCommitReveal(sender sdk.AccAddress, msg []byte, gasLimi
 }
 
 func (f *Fixture) executeCoreContract(sender string, msg []byte, funds sdk.Coins) []byte {
-	f.tb.Helper()
-
 	execMsg := &wasmtypes.MsgExecuteContract{
 		Sender:   sender,
 		Contract: f.CoreContractAddr.String(),
