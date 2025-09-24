@@ -38,6 +38,8 @@ func (k Keeper) UpdateDataRequestTimeout(ctx sdk.Context, drID string, oldTimeou
 }
 
 func (k Keeper) ExpireDataRequests(ctx sdk.Context) error {
+	statusUpdate := types.DATA_REQUEST_STATUS_TALLYING
+
 	iter, err := k.timeoutQueue.Iterate(ctx, nil)
 	if err != nil {
 		return err
@@ -56,25 +58,19 @@ func (k Keeper) ExpireDataRequests(ctx sdk.Context) error {
 			continue
 		}
 
-		// Update data request status to tallying.
 		dr, err := k.GetDataRequest(ctx, drID)
 		if err != nil {
 			return err
 		}
 
-		err = k.UpdateDataRequestIndexing(ctx, &dr, types.DATA_REQUEST_STATUS_TALLYING)
-		if err != nil {
-			return err
-		}
-		dr.TimeoutHeight = -1
-
-		err = k.SetDataRequest(ctx, dr)
-		if err != nil {
-			return err
-		}
-
-		// Remove from timeout queue.
+		// Remove from timeout queue and update data request status to tallying.
 		err = k.timeoutQueue.Remove(ctx, key)
+		if err != nil {
+			return err
+		}
+
+		dr.TimeoutHeight = -1
+		err = k.UpdateDataRequest(ctx, &dr, &statusUpdate)
 		if err != nil {
 			return err
 		}

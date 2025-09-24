@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// StakerIndexing is used to store staker objects while maintaining their indices.
 type StakerIndexing struct {
 	collections.Map[string, Staker]
 	indexToKey collections.Map[uint32, string]

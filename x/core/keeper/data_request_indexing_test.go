@@ -33,6 +33,10 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, dr.Status)
 
+	newStatusCommitting := types.DATA_REQUEST_STATUS_COMMITTING
+	newStatusRevealing := types.DATA_REQUEST_STATUS_REVEALING
+	newStatusTallying := types.DATA_REQUEST_STATUS_TALLYING
+
 	t.Run("transition to COMMITTING status (new data request)", func(t *testing.T) {
 		// Create a new data request for this test
 		newPostResult := f.PostDataRequest(
@@ -46,9 +50,9 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, newDr.Status)
 
-		exists, err := f.CoreKeeper.CheckDataRequestIndexing(f.Context(), newDr.Index(), types.DATA_REQUEST_STATUS_COMMITTING)
+		drs, _, _, err := f.CoreKeeper.GetDataRequestsByStatus(f.Context(), types.DATA_REQUEST_STATUS_COMMITTING, 100, nil)
 		require.NoError(t, err)
-		require.True(t, exists)
+		require.Contains(t, drs, newDr)
 	})
 
 	t.Run("transition to REVEALING status from COMMITTING", func(t *testing.T) {
@@ -56,18 +60,18 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 		drCopy := dr
 
 		// This should succeed as the data request is in COMMITTING status
-		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &drCopy, types.DATA_REQUEST_STATUS_REVEALING)
+		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &drCopy, &newStatusRevealing)
 		require.NoError(t, err)
 		require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, drCopy.Status)
 
 		// Verify the data request was moved from COMMITTING to REVEALING in the index
-		exists, err := f.CoreKeeper.CheckDataRequestIndexing(f.Context(), drCopy.Index(), types.DATA_REQUEST_STATUS_COMMITTING)
+		drs, _, _, err := f.CoreKeeper.GetDataRequestsByStatus(f.Context(), types.DATA_REQUEST_STATUS_COMMITTING, 100, nil)
 		require.NoError(t, err)
-		require.False(t, exists)
+		require.NotContains(t, drs, drCopy)
 
-		exists, err = f.CoreKeeper.CheckDataRequestIndexing(f.Context(), drCopy.Index(), types.DATA_REQUEST_STATUS_REVEALING)
+		drs, _, _, err = f.CoreKeeper.GetDataRequestsByStatus(f.Context(), types.DATA_REQUEST_STATUS_REVEALING, 100, nil)
 		require.NoError(t, err)
-		require.True(t, exists)
+		require.Contains(t, drs, drCopy)
 	})
 
 	t.Run("transition to TALLYING status from COMMITTING (timeout case)", func(t *testing.T) {
@@ -84,18 +88,18 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 		require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, newDr.Status)
 
 		// This should succeed as COMMITTING -> TALLYING is allowed for timeout cases
-		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &newDr, types.DATA_REQUEST_STATUS_TALLYING)
+		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &newDr, &newStatusTallying)
 		require.NoError(t, err)
 		require.Equal(t, types.DATA_REQUEST_STATUS_TALLYING, newDr.Status)
 
 		// Verify the data request was moved from COMMITTING to TALLYING in the index
-		exists, err := f.CoreKeeper.CheckDataRequestIndexing(f.Context(), newDr.Index(), types.DATA_REQUEST_STATUS_COMMITTING)
+		drs, _, _, err := f.CoreKeeper.GetDataRequestsByStatus(f.Context(), types.DATA_REQUEST_STATUS_COMMITTING, 100, nil)
 		require.NoError(t, err)
-		require.False(t, exists)
+		require.NotContains(t, drs, newDr)
 
-		exists, err = f.CoreKeeper.CheckDataRequestIndexing(f.Context(), newDr.Index(), types.DATA_REQUEST_STATUS_TALLYING)
+		drs, _, _, err = f.CoreKeeper.GetDataRequestsByStatus(f.Context(), types.DATA_REQUEST_STATUS_TALLYING, 100, nil)
 		require.NoError(t, err)
-		require.True(t, exists)
+		require.Contains(t, drs, newDr)
 	})
 
 	t.Run("transition to TALLYING status from REVEALING", func(t *testing.T) {
@@ -111,23 +115,23 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 		require.NoError(t, err)
 
 		// First transition to REVEALING
-		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &newDr, types.DATA_REQUEST_STATUS_REVEALING)
+		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &newDr, &newStatusRevealing)
 		require.NoError(t, err)
 		require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, newDr.Status)
 
 		// Now transition to TALLYING
-		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &newDr, types.DATA_REQUEST_STATUS_TALLYING)
+		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &newDr, &newStatusTallying)
 		require.NoError(t, err)
 		require.Equal(t, types.DATA_REQUEST_STATUS_TALLYING, newDr.Status)
 
 		// Verify the data request was moved from REVEALING to TALLYING in the index
-		exists, err := f.CoreKeeper.CheckDataRequestIndexing(f.Context(), newDr.Index(), types.DATA_REQUEST_STATUS_REVEALING)
+		drs, _, _, err := f.CoreKeeper.GetDataRequestsByStatus(f.Context(), types.DATA_REQUEST_STATUS_REVEALING, 100, nil)
 		require.NoError(t, err)
-		require.False(t, exists)
+		require.NotContains(t, drs, newDr)
 
-		exists, err = f.CoreKeeper.CheckDataRequestIndexing(f.Context(), newDr.Index(), types.DATA_REQUEST_STATUS_TALLYING)
+		drs, _, _, err = f.CoreKeeper.GetDataRequestsByStatus(f.Context(), types.DATA_REQUEST_STATUS_TALLYING, 100, nil)
 		require.NoError(t, err)
-		require.True(t, exists)
+		require.Contains(t, drs, newDr)
 	})
 
 	t.Run("invalid transition to UNSPECIFIED status", func(t *testing.T) {
@@ -143,31 +147,10 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 		require.NoError(t, err)
 
 		// This should fail as UNSPECIFIED is not a valid target status
-		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &newDr, types.DATA_REQUEST_STATUS_UNSPECIFIED)
+		newStatusUnspecified := types.DATA_REQUEST_STATUS_UNSPECIFIED
+		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &newDr, &newStatusUnspecified)
 		require.Error(t, err)
 		require.ErrorIs(t, err, types.ErrInvalidStatusTransition)
-	})
-
-	t.Run("error when data request index not found in current status", func(t *testing.T) {
-		// Create a new data request for this test
-		newPostResult := f.PostDataRequest(
-			execProgram.Hash,
-			tallyProgram.Hash,
-			base64.StdEncoding.EncodeToString([]byte("test-input-6")),
-			1,
-		)
-
-		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), newPostResult.DrID)
-		require.NoError(t, err)
-
-		// Manually remove the data request from the COMMITTING index to simulate it not being found
-		err = f.CoreKeeper.RemoveDataRequestIndexing(f.Context(), newDr.Index(), types.DATA_REQUEST_STATUS_COMMITTING)
-		require.NoError(t, err)
-
-		// Now try to transition to REVEALING - this should fail
-		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &newDr, types.DATA_REQUEST_STATUS_REVEALING)
-		require.Error(t, err)
-		require.ErrorIs(t, err, types.ErrDataRequestIndexNotFound)
 	})
 
 	t.Run("invalid status transition from TALLYING to REVEALING", func(t *testing.T) {
@@ -183,12 +166,12 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 		require.NoError(t, err)
 
 		// Transition to TALLYING
-		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &newDr, types.DATA_REQUEST_STATUS_TALLYING)
+		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &newDr, &newStatusTallying)
 		require.NoError(t, err)
 		require.Equal(t, types.DATA_REQUEST_STATUS_TALLYING, newDr.Status)
 
 		// Now try to transition back to REVEALING - this should fail
-		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &newDr, types.DATA_REQUEST_STATUS_REVEALING)
+		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &newDr, &newStatusRevealing)
 		require.Error(t, err)
 		require.ErrorIs(t, err, types.ErrInvalidStatusTransition)
 	})
@@ -206,17 +189,17 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 		require.NoError(t, err)
 
 		// Transition to REVEALING
-		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &newDr, types.DATA_REQUEST_STATUS_REVEALING)
+		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &newDr, &newStatusRevealing)
 		require.NoError(t, err)
 		require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, newDr.Status)
 
 		// Now try to transition back to COMMITTING - this should fail
-		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &newDr, types.DATA_REQUEST_STATUS_COMMITTING)
+		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &newDr, &newStatusCommitting)
 		require.Error(t, err)
 		require.ErrorIs(t, err, types.ErrInvalidStatusTransition)
 	})
 
-	t.Run("error when data request index not found for TALLYING transition", func(t *testing.T) {
+	t.Run("error when data request is not found", func(t *testing.T) {
 		// Create a new data request for this test
 		newPostResult := f.PostDataRequest(
 			execProgram.Hash,
@@ -228,13 +211,13 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), newPostResult.DrID)
 		require.NoError(t, err)
 
-		// Manually remove the data request from the COMMITTING index to simulate it not being found
-		err = f.CoreKeeper.RemoveDataRequestIndexing(f.Context(), newDr.Index(), types.DATA_REQUEST_STATUS_COMMITTING)
+		// Remove the data request
+		err = f.CoreKeeper.RemoveDataRequest(f.Context(), newDr.Index(), types.DATA_REQUEST_STATUS_COMMITTING)
 		require.NoError(t, err)
 
 		// Now try to transition to TALLYING - this should fail
-		err = f.CoreKeeper.UpdateDataRequestIndexing(f.Context(), &newDr, types.DATA_REQUEST_STATUS_TALLYING)
+		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &newDr, &newStatusTallying)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "data request index was not found under given status")
+		require.ErrorIs(t, err, types.ErrDataRequestNotFound)
 	})
 }

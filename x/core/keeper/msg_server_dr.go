@@ -52,13 +52,6 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 	if err != nil {
 		return nil, err
 	}
-	exists, err := m.HasDataRequest(ctx, drID)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, types.ErrDataRequestAlreadyExists
-	}
 
 	denom, err := m.stakingKeeper.BondDenom(ctx)
 	if err != nil {
@@ -104,14 +97,10 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		PostedGasPrice:    postedGasPrice,
 		Poster:            msg.Sender,
 		Escrow:            msg.Funds.Amount,
+		Status:            types.DATA_REQUEST_STATUS_COMMITTING,
 		TimeoutHeight:     ctx.BlockHeight() + int64(drConfig.CommitTimeoutInBlocks),
 		// Commits:           make(map[string][]byte), // Dropped by proto anyways
 		// Reveals:           make(map[string]bool), // Dropped by proto anyways
-	}
-
-	err = m.UpdateDataRequestIndexing(ctx, &dr, types.DATA_REQUEST_STATUS_COMMITTING)
-	if err != nil {
-		return nil, err
 	}
 
 	err = m.AddToTimeoutQueue(ctx, drID, dr.TimeoutHeight)
@@ -119,7 +108,7 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		return nil, err
 	}
 
-	err = m.SetDataRequest(ctx, dr)
+	err = m.StoreDataRequest(ctx, dr)
 	if err != nil {
 		return nil, err
 	}
@@ -228,21 +217,20 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	}
 	dr.AddCommit(msg.PublicKey, commit)
 
+	var statusUpdate *types.DataRequestStatus
 	if len(dr.Commits) >= int(dr.ReplicationFactor) {
+		newStatus := types.DATA_REQUEST_STATUS_REVEALING
+		statusUpdate = &newStatus
+
 		newTimeoutHeight := ctx.BlockHeight() + int64(params.DataRequestConfig.RevealTimeoutInBlocks)
 		err = m.UpdateDataRequestTimeout(ctx, msg.DrID, dr.TimeoutHeight, newTimeoutHeight)
 		if err != nil {
 			return nil, err
 		}
 		dr.TimeoutHeight = newTimeoutHeight
-
-		err = m.UpdateDataRequestIndexing(ctx, &dr, types.DATA_REQUEST_STATUS_REVEALING)
-		if err != nil {
-			return nil, err
-		}
 	}
 
-	err = m.SetDataRequest(ctx, dr)
+	err = m.UpdateDataRequest(ctx, &dr, statusUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -334,23 +322,24 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 	}
 
 	revealsCount := dr.MarkAsRevealed(msg.PublicKey)
+
+	var statusUpdate *types.DataRequestStatus
 	if revealsCount >= int(dr.ReplicationFactor) {
+		newStatus := types.DATA_REQUEST_STATUS_TALLYING
+		statusUpdate = &newStatus
+
 		err = m.RemoveFromTimeoutQueue(ctx, dr.ID, dr.TimeoutHeight)
 		if err != nil {
 			return nil, err
 		}
-
-		err = m.UpdateDataRequestIndexing(ctx, &dr, types.DATA_REQUEST_STATUS_TALLYING)
-		if err != nil {
-			return nil, err
-		}
 	}
 
-	err = m.SetRevealBody(ctx, msg.PublicKey, *msg.RevealBody)
+	err = m.UpdateDataRequest(ctx, &dr, statusUpdate)
 	if err != nil {
 		return nil, err
 	}
-	err = m.SetDataRequest(ctx, dr)
+
+	err = m.SetRevealBody(ctx, msg.PublicKey, *msg.RevealBody)
 	if err != nil {
 		return nil, err
 	}
