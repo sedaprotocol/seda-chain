@@ -693,6 +693,382 @@ func (m *QueryDataRequestResponse) GetDataRequest() DataRequest {
 	return DataRequest{}
 }
 
+// The request message for Query/DataRequestCommitment RPC method.
+type QueryDataRequestCommitmentRequest struct {
+	DrId      string `protobuf:"bytes,1,opt,name=dr_id,json=drId,proto3" json:"dr_id,omitempty"`
+	PublicKey string `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+}
+
+func (m *QueryDataRequestCommitmentRequest) Reset()         { *m = QueryDataRequestCommitmentRequest{} }
+func (m *QueryDataRequestCommitmentRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryDataRequestCommitmentRequest) ProtoMessage()    {}
+func (*QueryDataRequestCommitmentRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{14}
+}
+func (m *QueryDataRequestCommitmentRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDataRequestCommitmentRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDataRequestCommitmentRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDataRequestCommitmentRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataRequestCommitmentRequest.Merge(m, src)
+}
+func (m *QueryDataRequestCommitmentRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDataRequestCommitmentRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataRequestCommitmentRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDataRequestCommitmentRequest proto.InternalMessageInfo
+
+func (m *QueryDataRequestCommitmentRequest) GetDrId() string {
+	if m != nil {
+		return m.DrId
+	}
+	return ""
+}
+
+func (m *QueryDataRequestCommitmentRequest) GetPublicKey() string {
+	if m != nil {
+		return m.PublicKey
+	}
+	return ""
+}
+
+// The response message for Query/DataRequestCommitment RPC method.
+type QueryDataRequestCommitmentResponse struct {
+	Commitment string `protobuf:"bytes,1,opt,name=commitment,proto3" json:"commitment,omitempty"`
+}
+
+func (m *QueryDataRequestCommitmentResponse) Reset()         { *m = QueryDataRequestCommitmentResponse{} }
+func (m *QueryDataRequestCommitmentResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryDataRequestCommitmentResponse) ProtoMessage()    {}
+func (*QueryDataRequestCommitmentResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{15}
+}
+func (m *QueryDataRequestCommitmentResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDataRequestCommitmentResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDataRequestCommitmentResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDataRequestCommitmentResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataRequestCommitmentResponse.Merge(m, src)
+}
+func (m *QueryDataRequestCommitmentResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDataRequestCommitmentResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataRequestCommitmentResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDataRequestCommitmentResponse proto.InternalMessageInfo
+
+func (m *QueryDataRequestCommitmentResponse) GetCommitment() string {
+	if m != nil {
+		return m.Commitment
+	}
+	return ""
+}
+
+// The request message for Query/DataRequestCommitments RPC method.
+type QueryDataRequestCommitmentsRequest struct {
+	DrId string `protobuf:"bytes,1,opt,name=dr_id,json=drId,proto3" json:"dr_id,omitempty"`
+}
+
+func (m *QueryDataRequestCommitmentsRequest) Reset()         { *m = QueryDataRequestCommitmentsRequest{} }
+func (m *QueryDataRequestCommitmentsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryDataRequestCommitmentsRequest) ProtoMessage()    {}
+func (*QueryDataRequestCommitmentsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{16}
+}
+func (m *QueryDataRequestCommitmentsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDataRequestCommitmentsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDataRequestCommitmentsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDataRequestCommitmentsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataRequestCommitmentsRequest.Merge(m, src)
+}
+func (m *QueryDataRequestCommitmentsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDataRequestCommitmentsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataRequestCommitmentsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDataRequestCommitmentsRequest proto.InternalMessageInfo
+
+func (m *QueryDataRequestCommitmentsRequest) GetDrId() string {
+	if m != nil {
+		return m.DrId
+	}
+	return ""
+}
+
+// The response message for Query/DataRequestCommitments RPC method.
+type QueryDataRequestCommitmentsResponse struct {
+	Commitments map[string]string `protobuf:"bytes,1,rep,name=commitments,proto3" json:"commitments,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (m *QueryDataRequestCommitmentsResponse) Reset()         { *m = QueryDataRequestCommitmentsResponse{} }
+func (m *QueryDataRequestCommitmentsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryDataRequestCommitmentsResponse) ProtoMessage()    {}
+func (*QueryDataRequestCommitmentsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{17}
+}
+func (m *QueryDataRequestCommitmentsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDataRequestCommitmentsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDataRequestCommitmentsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDataRequestCommitmentsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataRequestCommitmentsResponse.Merge(m, src)
+}
+func (m *QueryDataRequestCommitmentsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDataRequestCommitmentsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataRequestCommitmentsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDataRequestCommitmentsResponse proto.InternalMessageInfo
+
+func (m *QueryDataRequestCommitmentsResponse) GetCommitments() map[string]string {
+	if m != nil {
+		return m.Commitments
+	}
+	return nil
+}
+
+// The request message for Query/DataRequestReveal RPC method.
+type QueryDataRequestRevealRequest struct {
+	DrId      string `protobuf:"bytes,1,opt,name=dr_id,json=drId,proto3" json:"dr_id,omitempty"`
+	PublicKey string `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+}
+
+func (m *QueryDataRequestRevealRequest) Reset()         { *m = QueryDataRequestRevealRequest{} }
+func (m *QueryDataRequestRevealRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryDataRequestRevealRequest) ProtoMessage()    {}
+func (*QueryDataRequestRevealRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{18}
+}
+func (m *QueryDataRequestRevealRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDataRequestRevealRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDataRequestRevealRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDataRequestRevealRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataRequestRevealRequest.Merge(m, src)
+}
+func (m *QueryDataRequestRevealRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDataRequestRevealRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataRequestRevealRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDataRequestRevealRequest proto.InternalMessageInfo
+
+func (m *QueryDataRequestRevealRequest) GetDrId() string {
+	if m != nil {
+		return m.DrId
+	}
+	return ""
+}
+
+func (m *QueryDataRequestRevealRequest) GetPublicKey() string {
+	if m != nil {
+		return m.PublicKey
+	}
+	return ""
+}
+
+// The response message for Query/DataRequestReveal RPC method.
+type QueryDataRequestRevealResponse struct {
+	Reveal *RevealBody `protobuf:"bytes,1,opt,name=reveal,proto3" json:"reveal,omitempty"`
+}
+
+func (m *QueryDataRequestRevealResponse) Reset()         { *m = QueryDataRequestRevealResponse{} }
+func (m *QueryDataRequestRevealResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryDataRequestRevealResponse) ProtoMessage()    {}
+func (*QueryDataRequestRevealResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{19}
+}
+func (m *QueryDataRequestRevealResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDataRequestRevealResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDataRequestRevealResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDataRequestRevealResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataRequestRevealResponse.Merge(m, src)
+}
+func (m *QueryDataRequestRevealResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDataRequestRevealResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataRequestRevealResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDataRequestRevealResponse proto.InternalMessageInfo
+
+func (m *QueryDataRequestRevealResponse) GetReveal() *RevealBody {
+	if m != nil {
+		return m.Reveal
+	}
+	return nil
+}
+
+// The request message for Query/DataRequestReveals RPC method.
+type QueryDataRequestRevealsRequest struct {
+	DrId string `protobuf:"bytes,1,opt,name=dr_id,json=drId,proto3" json:"dr_id,omitempty"`
+}
+
+func (m *QueryDataRequestRevealsRequest) Reset()         { *m = QueryDataRequestRevealsRequest{} }
+func (m *QueryDataRequestRevealsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryDataRequestRevealsRequest) ProtoMessage()    {}
+func (*QueryDataRequestRevealsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{20}
+}
+func (m *QueryDataRequestRevealsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDataRequestRevealsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDataRequestRevealsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDataRequestRevealsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataRequestRevealsRequest.Merge(m, src)
+}
+func (m *QueryDataRequestRevealsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDataRequestRevealsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataRequestRevealsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDataRequestRevealsRequest proto.InternalMessageInfo
+
+func (m *QueryDataRequestRevealsRequest) GetDrId() string {
+	if m != nil {
+		return m.DrId
+	}
+	return ""
+}
+
+// The response message for Query/DataRequestReveals RPC method.
+type QueryDataRequestRevealsResponse struct {
+	Reveals map[string]*RevealBody `protobuf:"bytes,1,rep,name=reveals,proto3" json:"reveals,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (m *QueryDataRequestRevealsResponse) Reset()         { *m = QueryDataRequestRevealsResponse{} }
+func (m *QueryDataRequestRevealsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryDataRequestRevealsResponse) ProtoMessage()    {}
+func (*QueryDataRequestRevealsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{21}
+}
+func (m *QueryDataRequestRevealsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDataRequestRevealsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDataRequestRevealsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDataRequestRevealsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDataRequestRevealsResponse.Merge(m, src)
+}
+func (m *QueryDataRequestRevealsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDataRequestRevealsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDataRequestRevealsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDataRequestRevealsResponse proto.InternalMessageInfo
+
+func (m *QueryDataRequestRevealsResponse) GetReveals() map[string]*RevealBody {
+	if m != nil {
+		return m.Reveals
+	}
+	return nil
+}
+
 // The request message for Query/DataRequestsByStatus RPC method.
 type QueryDataRequestsByStatusRequest struct {
 	// Status specifies the status of the data requests to retrieve.
@@ -708,7 +1084,7 @@ func (m *QueryDataRequestsByStatusRequest) Reset()         { *m = QueryDataReque
 func (m *QueryDataRequestsByStatusRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryDataRequestsByStatusRequest) ProtoMessage()    {}
 func (*QueryDataRequestsByStatusRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{14}
+	return fileDescriptor_0d8090940a863ab0, []int{22}
 }
 func (m *QueryDataRequestsByStatusRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -774,7 +1150,7 @@ func (m *QueryDataRequestsByStatusResponse) Reset()         { *m = QueryDataRequ
 func (m *QueryDataRequestsByStatusResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryDataRequestsByStatusResponse) ProtoMessage()    {}
 func (*QueryDataRequestsByStatusResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{15}
+	return fileDescriptor_0d8090940a863ab0, []int{23}
 }
 func (m *QueryDataRequestsByStatusResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -841,7 +1217,7 @@ func (m *QueryAccountSeqRequest) Reset()         { *m = QueryAccountSeqRequest{}
 func (m *QueryAccountSeqRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryAccountSeqRequest) ProtoMessage()    {}
 func (*QueryAccountSeqRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{16}
+	return fileDescriptor_0d8090940a863ab0, []int{24}
 }
 func (m *QueryAccountSeqRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -888,7 +1264,7 @@ func (m *QueryAccountSeqResponse) Reset()         { *m = QueryAccountSeqResponse
 func (m *QueryAccountSeqResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryAccountSeqResponse) ProtoMessage()    {}
 func (*QueryAccountSeqResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{17}
+	return fileDescriptor_0d8090940a863ab0, []int{25}
 }
 func (m *QueryAccountSeqResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -924,6 +1300,226 @@ func (m *QueryAccountSeqResponse) GetAccountSeq() uint64 {
 	return 0
 }
 
+// The request message for Query/CanExecutorCommit RPC method.
+type QueryCanExecutorCommitRequest struct {
+	// dr_id is the hex-encoded ID of the data request.
+	DrId string `protobuf:"bytes,1,opt,name=dr_id,json=drId,proto3" json:"dr_id,omitempty"`
+	// public_key is the hex-encoded public key of the executor.
+	PublicKey string `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	// commitment is the hex-encoded commitment of the executor.
+	Commitment string `protobuf:"bytes,3,opt,name=commitment,proto3" json:"commitment,omitempty"`
+	// proof is the hex-encoded proof for the commitment message.
+	Proof string `protobuf:"bytes,4,opt,name=proof,proto3" json:"proof,omitempty"`
+}
+
+func (m *QueryCanExecutorCommitRequest) Reset()         { *m = QueryCanExecutorCommitRequest{} }
+func (m *QueryCanExecutorCommitRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryCanExecutorCommitRequest) ProtoMessage()    {}
+func (*QueryCanExecutorCommitRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{26}
+}
+func (m *QueryCanExecutorCommitRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryCanExecutorCommitRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryCanExecutorCommitRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryCanExecutorCommitRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryCanExecutorCommitRequest.Merge(m, src)
+}
+func (m *QueryCanExecutorCommitRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryCanExecutorCommitRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryCanExecutorCommitRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryCanExecutorCommitRequest proto.InternalMessageInfo
+
+func (m *QueryCanExecutorCommitRequest) GetDrId() string {
+	if m != nil {
+		return m.DrId
+	}
+	return ""
+}
+
+func (m *QueryCanExecutorCommitRequest) GetPublicKey() string {
+	if m != nil {
+		return m.PublicKey
+	}
+	return ""
+}
+
+func (m *QueryCanExecutorCommitRequest) GetCommitment() string {
+	if m != nil {
+		return m.Commitment
+	}
+	return ""
+}
+
+func (m *QueryCanExecutorCommitRequest) GetProof() string {
+	if m != nil {
+		return m.Proof
+	}
+	return ""
+}
+
+// QueryCanExecutorCommitResponse is the response type for the
+// Query/CanExecutorCommit RPC method.
+type QueryCanExecutorCommitResponse struct {
+	CanCommit bool `protobuf:"varint,1,opt,name=can_commit,json=canCommit,proto3" json:"can_commit,omitempty"`
+}
+
+func (m *QueryCanExecutorCommitResponse) Reset()         { *m = QueryCanExecutorCommitResponse{} }
+func (m *QueryCanExecutorCommitResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryCanExecutorCommitResponse) ProtoMessage()    {}
+func (*QueryCanExecutorCommitResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{27}
+}
+func (m *QueryCanExecutorCommitResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryCanExecutorCommitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryCanExecutorCommitResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryCanExecutorCommitResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryCanExecutorCommitResponse.Merge(m, src)
+}
+func (m *QueryCanExecutorCommitResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryCanExecutorCommitResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryCanExecutorCommitResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryCanExecutorCommitResponse proto.InternalMessageInfo
+
+func (m *QueryCanExecutorCommitResponse) GetCanCommit() bool {
+	if m != nil {
+		return m.CanCommit
+	}
+	return false
+}
+
+// The request message for Query/CanExecutorReveal RPC method.
+type QueryCanExecutorRevealRequest struct {
+	// dr_id is the hex-encoded ID of the data request.
+	DrId string `protobuf:"bytes,1,opt,name=dr_id,json=drId,proto3" json:"dr_id,omitempty"`
+	// public_key is the hex-encoded public key of the executor.
+	PublicKey string `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+}
+
+func (m *QueryCanExecutorRevealRequest) Reset()         { *m = QueryCanExecutorRevealRequest{} }
+func (m *QueryCanExecutorRevealRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryCanExecutorRevealRequest) ProtoMessage()    {}
+func (*QueryCanExecutorRevealRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{28}
+}
+func (m *QueryCanExecutorRevealRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryCanExecutorRevealRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryCanExecutorRevealRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryCanExecutorRevealRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryCanExecutorRevealRequest.Merge(m, src)
+}
+func (m *QueryCanExecutorRevealRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryCanExecutorRevealRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryCanExecutorRevealRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryCanExecutorRevealRequest proto.InternalMessageInfo
+
+func (m *QueryCanExecutorRevealRequest) GetDrId() string {
+	if m != nil {
+		return m.DrId
+	}
+	return ""
+}
+
+func (m *QueryCanExecutorRevealRequest) GetPublicKey() string {
+	if m != nil {
+		return m.PublicKey
+	}
+	return ""
+}
+
+// QueryCanExecutorRevealResponse is the response type for the
+// Query/CanExecutorReveal RPC method.
+type QueryCanExecutorRevealResponse struct {
+	CanReveal bool `protobuf:"varint,1,opt,name=can_reveal,json=canReveal,proto3" json:"can_reveal,omitempty"`
+}
+
+func (m *QueryCanExecutorRevealResponse) Reset()         { *m = QueryCanExecutorRevealResponse{} }
+func (m *QueryCanExecutorRevealResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryCanExecutorRevealResponse) ProtoMessage()    {}
+func (*QueryCanExecutorRevealResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d8090940a863ab0, []int{29}
+}
+func (m *QueryCanExecutorRevealResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryCanExecutorRevealResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryCanExecutorRevealResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryCanExecutorRevealResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryCanExecutorRevealResponse.Merge(m, src)
+}
+func (m *QueryCanExecutorRevealResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryCanExecutorRevealResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryCanExecutorRevealResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryCanExecutorRevealResponse proto.InternalMessageInfo
+
+func (m *QueryCanExecutorRevealResponse) GetCanReveal() bool {
+	if m != nil {
+		return m.CanReveal
+	}
+	return false
+}
+
 // The request message for Query/IsStakerExecutor RPC method.
 type QueryIsStakerExecutorRequest struct {
 	// public_key is the hex-encoded public key of the account.
@@ -934,7 +1530,7 @@ func (m *QueryIsStakerExecutorRequest) Reset()         { *m = QueryIsStakerExecu
 func (m *QueryIsStakerExecutorRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryIsStakerExecutorRequest) ProtoMessage()    {}
 func (*QueryIsStakerExecutorRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{18}
+	return fileDescriptor_0d8090940a863ab0, []int{30}
 }
 func (m *QueryIsStakerExecutorRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -981,7 +1577,7 @@ func (m *QueryIsStakerExecutorResponse) Reset()         { *m = QueryIsStakerExec
 func (m *QueryIsStakerExecutorResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryIsStakerExecutorResponse) ProtoMessage()    {}
 func (*QueryIsStakerExecutorResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{19}
+	return fileDescriptor_0d8090940a863ab0, []int{31}
 }
 func (m *QueryIsStakerExecutorResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1027,7 +1623,7 @@ func (m *QueryGetExecutorEligibilityRequest) Reset()         { *m = QueryGetExec
 func (m *QueryGetExecutorEligibilityRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryGetExecutorEligibilityRequest) ProtoMessage()    {}
 func (*QueryGetExecutorEligibilityRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{20}
+	return fileDescriptor_0d8090940a863ab0, []int{32}
 }
 func (m *QueryGetExecutorEligibilityRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1079,7 +1675,7 @@ func (m *QueryGetExecutorEligibilityResponse) Reset()         { *m = QueryGetExe
 func (m *QueryGetExecutorEligibilityResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryGetExecutorEligibilityResponse) ProtoMessage()    {}
 func (*QueryGetExecutorEligibilityResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{21}
+	return fileDescriptor_0d8090940a863ab0, []int{33}
 }
 func (m *QueryGetExecutorEligibilityResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1138,7 +1734,7 @@ func (m *QueryDataRequestStatusesRequest) Reset()         { *m = QueryDataReques
 func (m *QueryDataRequestStatusesRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryDataRequestStatusesRequest) ProtoMessage()    {}
 func (*QueryDataRequestStatusesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{22}
+	return fileDescriptor_0d8090940a863ab0, []int{34}
 }
 func (m *QueryDataRequestStatusesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1183,7 +1779,7 @@ func (m *QueryDataRequestStatusesResponse) Reset()         { *m = QueryDataReque
 func (m *QueryDataRequestStatusesResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryDataRequestStatusesResponse) ProtoMessage()    {}
 func (*QueryDataRequestStatusesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{23}
+	return fileDescriptor_0d8090940a863ab0, []int{35}
 }
 func (m *QueryDataRequestStatusesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1227,7 +1823,7 @@ func (m *QueryParamsRequest) Reset()         { *m = QueryParamsRequest{} }
 func (m *QueryParamsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryParamsRequest) ProtoMessage()    {}
 func (*QueryParamsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{24}
+	return fileDescriptor_0d8090940a863ab0, []int{36}
 }
 func (m *QueryParamsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1266,7 +1862,7 @@ func (m *QueryParamsResponse) Reset()         { *m = QueryParamsResponse{} }
 func (m *QueryParamsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryParamsResponse) ProtoMessage()    {}
 func (*QueryParamsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{25}
+	return fileDescriptor_0d8090940a863ab0, []int{37}
 }
 func (m *QueryParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1310,7 +1906,7 @@ func (m *QueryStakingConfigRequest) Reset()         { *m = QueryStakingConfigReq
 func (m *QueryStakingConfigRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryStakingConfigRequest) ProtoMessage()    {}
 func (*QueryStakingConfigRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{26}
+	return fileDescriptor_0d8090940a863ab0, []int{38}
 }
 func (m *QueryStakingConfigRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1348,7 +1944,7 @@ func (m *QueryStakingConfigResponse) Reset()         { *m = QueryStakingConfigRe
 func (m *QueryStakingConfigResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryStakingConfigResponse) ProtoMessage()    {}
 func (*QueryStakingConfigResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{27}
+	return fileDescriptor_0d8090940a863ab0, []int{39}
 }
 func (m *QueryStakingConfigResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1392,7 +1988,7 @@ func (m *QueryDataRequestConfigRequest) Reset()         { *m = QueryDataRequestC
 func (m *QueryDataRequestConfigRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryDataRequestConfigRequest) ProtoMessage()    {}
 func (*QueryDataRequestConfigRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{28}
+	return fileDescriptor_0d8090940a863ab0, []int{40}
 }
 func (m *QueryDataRequestConfigRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1430,7 +2026,7 @@ func (m *QueryDataRequestConfigResponse) Reset()         { *m = QueryDataRequest
 func (m *QueryDataRequestConfigResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryDataRequestConfigResponse) ProtoMessage()    {}
 func (*QueryDataRequestConfigResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d8090940a863ab0, []int{29}
+	return fileDescriptor_0d8090940a863ab0, []int{41}
 }
 func (m *QueryDataRequestConfigResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1482,10 +2078,24 @@ func init() {
 	proto.RegisterType((*QueryExecutorsResponse)(nil), "sedachain.core.v1.QueryExecutorsResponse")
 	proto.RegisterType((*QueryDataRequestRequest)(nil), "sedachain.core.v1.QueryDataRequestRequest")
 	proto.RegisterType((*QueryDataRequestResponse)(nil), "sedachain.core.v1.QueryDataRequestResponse")
+	proto.RegisterType((*QueryDataRequestCommitmentRequest)(nil), "sedachain.core.v1.QueryDataRequestCommitmentRequest")
+	proto.RegisterType((*QueryDataRequestCommitmentResponse)(nil), "sedachain.core.v1.QueryDataRequestCommitmentResponse")
+	proto.RegisterType((*QueryDataRequestCommitmentsRequest)(nil), "sedachain.core.v1.QueryDataRequestCommitmentsRequest")
+	proto.RegisterType((*QueryDataRequestCommitmentsResponse)(nil), "sedachain.core.v1.QueryDataRequestCommitmentsResponse")
+	proto.RegisterMapType((map[string]string)(nil), "sedachain.core.v1.QueryDataRequestCommitmentsResponse.CommitmentsEntry")
+	proto.RegisterType((*QueryDataRequestRevealRequest)(nil), "sedachain.core.v1.QueryDataRequestRevealRequest")
+	proto.RegisterType((*QueryDataRequestRevealResponse)(nil), "sedachain.core.v1.QueryDataRequestRevealResponse")
+	proto.RegisterType((*QueryDataRequestRevealsRequest)(nil), "sedachain.core.v1.QueryDataRequestRevealsRequest")
+	proto.RegisterType((*QueryDataRequestRevealsResponse)(nil), "sedachain.core.v1.QueryDataRequestRevealsResponse")
+	proto.RegisterMapType((map[string]*RevealBody)(nil), "sedachain.core.v1.QueryDataRequestRevealsResponse.RevealsEntry")
 	proto.RegisterType((*QueryDataRequestsByStatusRequest)(nil), "sedachain.core.v1.QueryDataRequestsByStatusRequest")
 	proto.RegisterType((*QueryDataRequestsByStatusResponse)(nil), "sedachain.core.v1.QueryDataRequestsByStatusResponse")
 	proto.RegisterType((*QueryAccountSeqRequest)(nil), "sedachain.core.v1.QueryAccountSeqRequest")
 	proto.RegisterType((*QueryAccountSeqResponse)(nil), "sedachain.core.v1.QueryAccountSeqResponse")
+	proto.RegisterType((*QueryCanExecutorCommitRequest)(nil), "sedachain.core.v1.QueryCanExecutorCommitRequest")
+	proto.RegisterType((*QueryCanExecutorCommitResponse)(nil), "sedachain.core.v1.QueryCanExecutorCommitResponse")
+	proto.RegisterType((*QueryCanExecutorRevealRequest)(nil), "sedachain.core.v1.QueryCanExecutorRevealRequest")
+	proto.RegisterType((*QueryCanExecutorRevealResponse)(nil), "sedachain.core.v1.QueryCanExecutorRevealResponse")
 	proto.RegisterType((*QueryIsStakerExecutorRequest)(nil), "sedachain.core.v1.QueryIsStakerExecutorRequest")
 	proto.RegisterType((*QueryIsStakerExecutorResponse)(nil), "sedachain.core.v1.QueryIsStakerExecutorResponse")
 	proto.RegisterType((*QueryGetExecutorEligibilityRequest)(nil), "sedachain.core.v1.QueryGetExecutorEligibilityRequest")
@@ -1504,112 +2114,138 @@ func init() {
 func init() { proto.RegisterFile("sedachain/core/v1/query.proto", fileDescriptor_0d8090940a863ab0) }
 
 var fileDescriptor_0d8090940a863ab0 = []byte{
-	// 1677 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x58, 0x41, 0x53, 0xdb, 0xd6,
-	0x16, 0x46, 0x60, 0x78, 0xe1, 0x00, 0x79, 0xe6, 0x42, 0x88, 0x51, 0xc0, 0x06, 0x85, 0x10, 0x48,
-	0xc0, 0x0e, 0x90, 0xf7, 0x92, 0xf0, 0x5e, 0x16, 0x26, 0x08, 0x9e, 0x26, 0x0e, 0x24, 0xb6, 0x79,
-	0x99, 0x66, 0xa6, 0xa3, 0x11, 0xf6, 0x8d, 0xd1, 0x60, 0x4b, 0xc6, 0x57, 0x4e, 0x60, 0x28, 0x9b,
-	0x4e, 0xdb, 0xe9, 0xb2, 0x9d, 0x4e, 0xfa, 0x07, 0x3a, 0xd3, 0x4d, 0x17, 0xdd, 0x74, 0xd3, 0x99,
-	0x6e, 0xba, 0x4b, 0x77, 0x99, 0x66, 0xd3, 0x55, 0xa6, 0x93, 0x64, 0xd5, 0x65, 0x7f, 0x41, 0x47,
-	0xf7, 0x5e, 0xc9, 0xb2, 0x2d, 0x19, 0xd1, 0x15, 0xd6, 0xb9, 0xe7, 0x3b, 0xe7, 0xbb, 0x47, 0xe7,
-	0xe8, 0x7c, 0x03, 0x4c, 0x12, 0x5c, 0xd4, 0x0a, 0x7b, 0x9a, 0x6e, 0xa4, 0x0a, 0x66, 0x0d, 0xa7,
-	0x9e, 0x2d, 0xa5, 0x0e, 0xea, 0xb8, 0x76, 0x94, 0xac, 0xd6, 0x4c, 0xcb, 0x44, 0xc3, 0xee, 0x71,
-	0xd2, 0x3e, 0x4e, 0x3e, 0x5b, 0x12, 0xc7, 0x0b, 0x26, 0xa9, 0x98, 0x44, 0xa5, 0x0e, 0x29, 0xf6,
-	0xc0, 0xbc, 0xc5, 0x89, 0x92, 0x69, 0x96, 0xca, 0x38, 0xa5, 0x55, 0xf5, 0x94, 0x66, 0x18, 0xa6,
-	0xa5, 0x59, 0xba, 0x69, 0x38, 0xa7, 0xa3, 0x25, 0xb3, 0x64, 0x32, 0x94, 0xfd, 0xcb, 0xc1, 0xb4,
-	0x13, 0xa0, 0x99, 0xe8, 0xa9, 0x34, 0x02, 0xc3, 0x8f, 0x6c, 0x3a, 0xdb, 0xcf, 0x0d, 0x5c, 0xcb,
-	0xe2, 0x83, 0x3a, 0x26, 0x96, 0xb4, 0x0e, 0xc8, 0x6b, 0x24, 0x55, 0xd3, 0x20, 0x18, 0x25, 0xa1,
-	0xd7, 0xb4, 0x0d, 0x31, 0x61, 0x4a, 0x98, 0xeb, 0x5f, 0x8b, 0xfd, 0xfa, 0xc3, 0xe2, 0x28, 0x67,
-	0x97, 0x2e, 0x16, 0x6b, 0x98, 0x90, 0x9c, 0x55, 0xd3, 0x8d, 0x52, 0x96, 0xb9, 0x49, 0x22, 0xc4,
-	0x68, 0x94, 0x87, 0xd8, 0x28, 0xea, 0x46, 0xa9, 0x29, 0xc3, 0x13, 0x18, 0xf7, 0x39, 0xe3, 0x89,
-	0xee, 0xc2, 0x50, 0x95, 0xd9, 0xd5, 0x70, 0x09, 0x07, 0xab, 0x9e, 0x30, 0xd2, 0x28, 0x67, 0xff,
-	0x50, 0xab, 0x13, 0x5c, 0x74, 0x32, 0x2e, 0xc2, 0x48, 0x93, 0x95, 0xe7, 0x1a, 0x83, 0xbe, 0x2a,
-	0xb5, 0xd0, 0x24, 0xe7, 0xb2, 0xfc, 0x49, 0xba, 0x08, 0x17, 0xa8, 0x7b, 0xba, 0x5c, 0x36, 0x9f,
-	0x97, 0x75, 0x62, 0x39, 0x71, 0xee, 0xc0, 0x58, 0xeb, 0x01, 0x0f, 0x95, 0x80, 0x81, 0x6a, 0x7d,
-	0xb7, 0xac, 0x17, 0xd4, 0x7d, 0x7c, 0x44, 0x62, 0xc2, 0x54, 0xcf, 0x5c, 0x7f, 0x16, 0x98, 0xe9,
-	0x3e, 0x3e, 0x22, 0xd2, 0x0a, 0x27, 0x96, 0xb3, 0xb4, 0x7d, 0xb7, 0x14, 0x68, 0x12, 0xa0, 0x01,
-	0x63, 0x57, 0xcd, 0xf6, 0xbb, 0x28, 0x69, 0x8b, 0xf3, 0x76, 0x40, 0x3c, 0xd9, 0x2d, 0xe8, 0x23,
-	0xd4, 0x42, 0x11, 0x03, 0xcb, 0xe3, 0xc9, 0xb6, 0x46, 0x4a, 0x32, 0xc8, 0x5a, 0xe4, 0xe5, 0x9b,
-	0x44, 0x57, 0x96, 0xbb, 0x4b, 0x32, 0xbf, 0x98, 0x7c, 0x88, 0x0b, 0x75, 0xcb, 0xac, 0x11, 0x87,
-	0xc7, 0x28, 0xf4, 0x96, 0xf5, 0x8a, 0x6e, 0xd1, 0x80, 0x43, 0x59, 0xf6, 0x60, 0xd7, 0xc7, 0x7c,
-	0xfa, 0x94, 0x60, 0x2b, 0xd6, 0x4d, 0xcd, 0xfc, 0x49, 0x7a, 0xcc, 0xcb, 0xe0, 0x09, 0xe3, 0xbe,
-	0xbd, 0x7e, 0xec, 0x18, 0x69, 0x11, 0x42, 0x90, 0x6b, 0x20, 0xa4, 0x24, 0x5c, 0xa4, 0x81, 0xd7,
-	0x35, 0x4b, 0xe3, 0xd4, 0x1c, 0x86, 0x23, 0xd0, 0x5b, 0xac, 0xa9, 0x7a, 0x91, 0x17, 0x29, 0x52,
-	0xac, 0x29, 0x45, 0xa9, 0xc0, 0xbb, 0xac, 0xc9, 0x9f, 0x53, 0xd9, 0x84, 0xc1, 0xa2, 0x66, 0x69,
-	0x6a, 0x8d, 0xd9, 0x79, 0xa9, 0xe2, 0x3e, 0x6c, 0x3c, 0x68, 0x4e, 0x69, 0xa0, 0xd8, 0x30, 0x49,
-	0x3f, 0x0a, 0x30, 0xd5, 0x9a, 0x85, 0xac, 0xd9, 0xef, 0xc4, 0xaa, 0xbb, 0x05, 0xfc, 0x2f, 0x7d,
-	0x25, 0x56, 0x9d, 0xd0, 0x3c, 0xe7, 0x97, 0x67, 0x3a, 0xe7, 0xe1, 0x60, 0x8e, 0x69, 0x94, 0xdf,
-	0xae, 0x73, 0xc4, 0x29, 0x7f, 0x1a, 0xfe, 0x59, 0xd6, 0x88, 0xa5, 0x12, 0x8c, 0x0d, 0x55, 0x37,
-	0x8a, 0xf8, 0x30, 0xd6, 0x63, 0xf7, 0xd5, 0xda, 0xf8, 0x9f, 0x6f, 0x12, 0x17, 0x2a, 0xba, 0xa1,
-	0x58, 0xb8, 0x42, 0x56, 0x57, 0x16, 0x2a, 0xda, 0x21, 0xff, 0x99, 0x1d, 0xb2, 0x11, 0x39, 0x8c,
-	0x0d, 0xc5, 0xf6, 0x97, 0x7e, 0x11, 0x60, 0xba, 0x03, 0x77, 0x5e, 0x2a, 0x05, 0x86, 0xbc, 0xa5,
-	0x72, 0xde, 0x5c, 0xb8, 0x5a, 0x0d, 0x7a, 0x6a, 0x45, 0xd0, 0x25, 0xe8, 0xd7, 0x89, 0xca, 0xa7,
-	0xaa, 0x9b, 0x4e, 0xd5, 0x39, 0x9d, 0xb0, 0xb9, 0xb3, 0xaf, 0x69, 0x99, 0x96, 0x56, 0x8e, 0xf5,
-	0xb0, 0x6b, 0xd2, 0x07, 0x34, 0xdb, 0x7e, 0xcd, 0x08, 0x1d, 0x9f, 0x96, 0xbb, 0xdc, 0x72, 0x86,
-	0xaf, 0x50, 0x30, 0xeb, 0x86, 0x95, 0xc3, 0x07, 0x21, 0xa7, 0x68, 0x95, 0x77, 0x95, 0x17, 0xd8,
-	0x18, 0x5b, 0x8d, 0x59, 0x55, 0x82, 0x0f, 0x28, 0x34, 0x92, 0x05, 0xcd, 0x75, 0x94, 0xee, 0xc2,
-	0x04, 0xc5, 0x2a, 0x84, 0xf5, 0xac, 0xd3, 0xf2, 0x21, 0x53, 0x3f, 0x80, 0xc9, 0x00, 0x38, 0x27,
-	0xb0, 0x00, 0x48, 0x27, 0x2a, 0x1b, 0x4f, 0xd5, 0x19, 0x04, 0xfe, 0x39, 0x8a, 0xea, 0x2d, 0x28,
-	0xe9, 0x36, 0x48, 0x34, 0xdc, 0x26, 0xb6, 0x1c, 0x9b, 0x5c, 0xd6, 0x4b, 0xfa, 0xae, 0x5e, 0xd6,
-	0xad, 0x23, 0x87, 0x13, 0x82, 0x88, 0xfd, 0x4e, 0xdc, 0x49, 0xd1, 0x2c, 0x4d, 0xfa, 0x4e, 0x80,
-	0xcb, 0x1d, 0xa1, 0x9c, 0x4f, 0x98, 0x3e, 0xf6, 0xe0, 0x5a, 0xfa, 0x78, 0x1a, 0x06, 0x77, 0xcb,
-	0x66, 0x61, 0x5f, 0xdd, 0xc3, 0x7a, 0x69, 0xcf, 0x69, 0xe7, 0x01, 0x6a, 0xfb, 0x1f, 0x35, 0xa1,
-	0xcb, 0x30, 0x84, 0x6b, 0x35, 0xb3, 0xa6, 0x56, 0x30, 0x21, 0x5a, 0x09, 0xd3, 0x5e, 0xe8, 0xcf,
-	0x0e, 0x52, 0xe3, 0x03, 0x66, 0x93, 0x1e, 0x43, 0xa2, 0xb5, 0x6b, 0x59, 0x26, 0xec, 0x0e, 0xdc,
-	0x4d, 0x88, 0x7a, 0x7b, 0x56, 0xd5, 0x8b, 0xfc, 0xab, 0xbb, 0x06, 0x7f, 0xbc, 0x49, 0xf4, 0xd1,
-	0x6f, 0x05, 0xc9, 0x9e, 0xf7, 0x34, 0xa7, 0x52, 0x24, 0xd2, 0x7b, 0x9f, 0x59, 0x6e, 0x44, 0xe6,
-	0x35, 0xf8, 0x10, 0xce, 0x11, 0x6e, 0xe3, 0x93, 0x90, 0xf6, 0xa9, 0xc2, 0x69, 0x61, 0x92, 0x8e,
-	0x41, 0x36, 0xac, 0xda, 0x51, 0xd6, 0x0d, 0x29, 0x6a, 0x30, 0xd4, 0x74, 0x84, 0xa2, 0xd0, 0xd3,
-	0x68, 0x1e, 0xfb, 0x27, 0x5a, 0x85, 0xde, 0x67, 0x5a, 0xb9, 0x8e, 0x69, 0x01, 0xc3, 0x7e, 0x4c,
-	0x18, 0x64, 0xb5, 0xfb, 0xb6, 0xe0, 0xd9, 0x82, 0x35, 0xad, 0xe2, 0x94, 0xcc, 0xdd, 0x26, 0x8e,
-	0xb5, 0xb1, 0x4d, 0xaa, 0xd4, 0xd2, 0x61, 0x9b, 0x30, 0x88, 0xb3, 0x4d, 0x98, 0xbb, 0x74, 0x89,
-	0xef, 0x71, 0xbb, 0x49, 0x75, 0xa3, 0x74, 0xcf, 0x34, 0x9e, 0xea, 0x25, 0x27, 0xd9, 0x3e, 0x88,
-	0x7e, 0x87, 0x3c, 0xe7, 0x03, 0x38, 0x4f, 0xd8, 0x81, 0x5a, 0xa0, 0x27, 0x3c, 0xf7, 0x54, 0xc0,
-	0xb2, 0x70, 0x23, 0x70, 0x0a, 0x43, 0xc4, 0x6b, 0x94, 0x12, 0x7c, 0xcc, 0x3c, 0x45, 0x69, 0x66,
-	0xf3, 0x11, 0xc4, 0x83, 0x1c, 0x38, 0xa3, 0x27, 0x30, 0xd2, 0xd4, 0x4f, 0x4d, 0xb4, 0x4e, 0x79,
-	0x01, 0x4d, 0xd4, 0x86, 0x8b, 0xad, 0x07, 0xd7, 0x5e, 0x77, 0xc3, 0x70, 0xdb, 0xd0, 0x20, 0x09,
-	0xe2, 0x72, 0x46, 0xd9, 0x54, 0xd6, 0x94, 0x8c, 0x92, 0xff, 0x40, 0xcd, 0xe5, 0xd3, 0xf9, 0x9d,
-	0x9c, 0xba, 0xb3, 0x95, 0x7b, 0x28, 0xdf, 0x53, 0x36, 0x14, 0x79, 0x3d, 0xda, 0x85, 0xa6, 0x60,
-	0xc2, 0xc7, 0x47, 0xce, 0x50, 0x5b, 0x46, 0x8e, 0x0a, 0xe8, 0x32, 0x24, 0x7c, 0x3c, 0xb6, 0xb6,
-	0xf3, 0xaa, 0xec, 0x38, 0x75, 0xa3, 0x45, 0x98, 0xf7, 0x71, 0x5a, 0x4f, 0xe7, 0xd3, 0x6a, 0x56,
-	0x7e, 0xb4, 0x23, 0xe7, 0xf2, 0x14, 0xb1, 0xb1, 0xbd, 0xb3, 0xb5, 0x1e, 0xed, 0x41, 0xd3, 0x30,
-	0x19, 0x10, 0x33, 0x97, 0x4f, 0xdf, 0x97, 0xb3, 0xd1, 0x08, 0x9a, 0x87, 0x2b, 0x3e, 0x2e, 0xca,
-	0x56, 0x6e, 0x67, 0x63, 0x43, 0xb9, 0xa7, 0xc8, 0x5b, 0xdc, 0x37, 0xda, 0x8b, 0x66, 0x41, 0x0a,
-	0x88, 0x96, 0xce, 0x64, 0xb6, 0x1f, 0x67, 0x94, 0x5c, 0x5e, 0x5e, 0x8f, 0xf6, 0xa1, 0x39, 0x98,
-	0xf1, 0x0d, 0xf9, 0xff, 0x74, 0x46, 0x59, 0x57, 0x73, 0xca, 0xe6, 0x56, 0x3a, 0xbf, 0x93, 0x95,
-	0xa3, 0xff, 0x10, 0x23, 0x9f, 0x7f, 0x13, 0xef, 0x5a, 0xfe, 0x0c, 0x41, 0x2f, 0x7d, 0xa9, 0xc8,
-	0x82, 0x5e, 0xaa, 0xfe, 0xd0, 0x4c, 0xd0, 0x9c, 0x7a, 0xf5, 0xa7, 0x78, 0xe5, 0x14, 0x2f, 0xd6,
-	0x11, 0x52, 0xfc, 0xe3, 0xd7, 0xef, 0xbf, 0xea, 0x8e, 0xa1, 0xb1, 0x94, 0xed, 0xbe, 0xe8, 0x51,
-	0xd1, 0x54, 0x98, 0xa2, 0x2f, 0x05, 0x18, 0xf4, 0x4a, 0x58, 0x74, 0x3d, 0x28, 0xae, 0x8f, 0x08,
-	0x16, 0x17, 0xc2, 0x39, 0x73, 0x2e, 0xb3, 0x94, 0xcb, 0x14, 0x8a, 0xb7, 0x71, 0x69, 0x12, 0xcb,
-	0xe8, 0x10, 0xfa, 0xf8, 0xae, 0x0d, 0xbc, 0x64, 0x93, 0x32, 0x16, 0x67, 0x4f, 0x73, 0xe3, 0x04,
-	0x12, 0x94, 0xc0, 0x38, 0xba, 0xd8, 0x4e, 0x80, 0xe5, 0xfb, 0x44, 0x80, 0x7e, 0x57, 0x16, 0xa3,
-	0xb9, 0xa0, 0xb0, 0xad, 0x92, 0x5a, 0x9c, 0x0f, 0xe1, 0xc9, 0x39, 0x48, 0x94, 0xc3, 0x04, 0x12,
-	0xdb, 0x38, 0x68, 0x6e, 0xe2, 0x4f, 0x05, 0xe8, 0x63, 0x4b, 0x33, 0xb8, 0x02, 0x4d, 0x12, 0x3c,
-	0xb8, 0x02, 0xcd, 0xa2, 0x5b, 0x5a, 0xa0, 0xd9, 0x67, 0xd1, 0x4c, 0x5b, 0x76, 0xb6, 0xbd, 0x53,
-	0xc7, 0x0d, 0x21, 0x70, 0x42, 0xcb, 0xe1, 0xca, 0xe3, 0xe0, 0x72, 0xb4, 0x0a, 0xf1, 0xe0, 0x72,
-	0xb4, 0x69, 0xed, 0x0e, 0xe5, 0x70, 0x05, 0x35, 0x7a, 0x21, 0xc0, 0x80, 0xe7, 0x43, 0x85, 0xae,
-	0x85, 0x58, 0x64, 0x0e, 0x95, 0xeb, 0xa1, 0x7c, 0x39, 0x99, 0x45, 0x4a, 0xe6, 0x2a, 0xba, 0xd2,
-	0x46, 0xc6, 0xfb, 0x55, 0x4d, 0x1d, 0xd3, 0xbd, 0x7c, 0x82, 0x7e, 0x12, 0x60, 0xd4, 0x4f, 0x92,
-	0xa2, 0x95, 0x10, 0x49, 0x5b, 0xc5, 0xb7, 0x78, 0xf3, 0x6c, 0x20, 0x4e, 0xf9, 0x0e, 0xa5, 0xbc,
-	0x82, 0x96, 0x3a, 0x52, 0x26, 0xea, 0xee, 0x91, 0xca, 0x76, 0x77, 0xea, 0x98, 0xfd, 0x3d, 0x41,
-	0x5f, 0x0b, 0x00, 0x0d, 0x35, 0x89, 0x82, 0x7b, 0xb8, 0x55, 0xaa, 0x8a, 0xd7, 0xc2, 0xb8, 0x72,
-	0x82, 0x4b, 0x94, 0xe0, 0x75, 0x34, 0xdf, 0xde, 0xef, 0x0d, 0xcd, 0xda, 0xdc, 0x76, 0xdf, 0x0b,
-	0x10, 0x6d, 0xd5, 0x9a, 0x28, 0x15, 0x94, 0x33, 0x40, 0xd4, 0x8a, 0x37, 0xc2, 0x03, 0x38, 0xd5,
-	0xdb, 0x94, 0xea, 0x32, 0xba, 0xd1, 0x46, 0xb5, 0x5d, 0xdd, 0x36, 0x33, 0xfe, 0x59, 0x80, 0x31,
-	0x7f, 0x4d, 0x8a, 0xfe, 0x15, 0x44, 0xa3, 0xa3, 0xfc, 0x15, 0xff, 0x7d, 0x56, 0xd8, 0xa9, 0x77,
-	0x28, 0x61, 0xcb, 0x65, 0xaf, 0xe2, 0x06, 0x34, 0x75, 0x6c, 0x77, 0x0a, 0xbd, 0xc3, 0x88, 0x8f,
-	0x12, 0x44, 0xcb, 0x67, 0x92, 0x8d, 0x8c, 0xfd, 0xca, 0xdf, 0x90, 0x9a, 0x52, 0x9a, 0x52, 0xff,
-	0x0f, 0xba, 0xd3, 0xb1, 0x95, 0x55, 0x47, 0x82, 0x32, 0xde, 0x5e, 0xe9, 0x7c, 0xc2, 0x36, 0x87,
-	0x2d, 0xeb, 0x3a, 0x6d, 0x0e, 0x8f, 0x9a, 0xec, 0xb4, 0x39, 0xbc, 0xf2, 0xb2, 0xe3, 0xe6, 0xa0,
-	0xf9, 0x5e, 0x08, 0x54, 0x10, 0x37, 0xe4, 0x1c, 0x5a, 0xe8, 0xf4, 0x49, 0x6e, 0x55, 0x9a, 0xe2,
-	0x62, 0x48, 0x6f, 0xce, 0xe7, 0x2a, 0xe5, 0x33, 0x8d, 0x12, 0xbe, 0xdf, 0xf1, 0x86, 0x22, 0x45,
-	0xdf, 0x0a, 0x30, 0xdc, 0x26, 0xf2, 0xd0, 0x8d, 0x10, 0xef, 0xa7, 0x99, 0xdf, 0xd2, 0x19, 0x10,
-	0xa7, 0xee, 0x1a, 0x1f, 0x8d, 0xba, 0xa6, 0xbc, 0x7c, 0x1b, 0x17, 0x5e, 0xbd, 0x8d, 0x0b, 0xbf,
-	0xbf, 0x8d, 0x0b, 0x5f, 0xbc, 0x8b, 0x77, 0xbd, 0x7a, 0x17, 0xef, 0xfa, 0xed, 0x5d, 0xbc, 0xeb,
-	0x49, 0xaa, 0xa4, 0x5b, 0x7b, 0xf5, 0xdd, 0x64, 0xc1, 0xac, 0xd0, 0x48, 0xf4, 0xdf, 0x7e, 0x05,
-	0xb3, 0xec, 0x0d, 0x7b, 0xc8, 0x02, 0x5b, 0x47, 0x55, 0x4c, 0x76, 0xfb, 0xa8, 0xc7, 0xca, 0x5f,
-	0x01, 0x00, 0x00, 0xff, 0xff, 0x1f, 0x61, 0x7b, 0x8f, 0xb9, 0x14, 0x00, 0x00,
+	// 2085 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x59, 0x4b, 0x6f, 0x1b, 0xc9,
+	0xf1, 0xd7, 0x48, 0x94, 0xd6, 0x2a, 0x49, 0xfe, 0x53, 0x2d, 0x59, 0xa6, 0x68, 0x8b, 0x94, 0xc7,
+	0xb6, 0xd6, 0x0f, 0x89, 0xb4, 0x24, 0xeb, 0xbf, 0xb6, 0x13, 0xc7, 0xa0, 0x24, 0x5a, 0x19, 0xac,
+	0x2c, 0x7b, 0x49, 0x2a, 0x82, 0x0d, 0x04, 0x83, 0x11, 0xd9, 0xa6, 0x07, 0x26, 0x67, 0xe8, 0xe9,
+	0xa1, 0x57, 0x82, 0xe3, 0x4b, 0x90, 0x00, 0x9b, 0x5b, 0x82, 0x60, 0xf3, 0x05, 0x02, 0xe4, 0x92,
+	0x43, 0x80, 0x20, 0x97, 0x20, 0xb9, 0x24, 0xa7, 0x0d, 0x72, 0x31, 0xb2, 0x87, 0xe4, 0x64, 0x04,
+	0xf6, 0x9e, 0x72, 0xcc, 0x27, 0x08, 0xa6, 0xbb, 0xe7, 0xfd, 0xd0, 0x70, 0x7d, 0xb2, 0x58, 0x5d,
+	0x8f, 0x5f, 0x57, 0x77, 0x57, 0xd5, 0x6f, 0x0c, 0x0b, 0x04, 0xb7, 0x94, 0xe6, 0x33, 0x45, 0xd5,
+	0xca, 0x4d, 0xdd, 0xc0, 0xe5, 0x97, 0xab, 0xe5, 0x17, 0x7d, 0x6c, 0x1c, 0x97, 0x7a, 0x86, 0x6e,
+	0xea, 0x68, 0xda, 0x59, 0x2e, 0x59, 0xcb, 0xa5, 0x97, 0xab, 0xf9, 0xf9, 0xa6, 0x4e, 0xba, 0x3a,
+	0x91, 0xa9, 0x42, 0x99, 0xfd, 0x60, 0xda, 0xf9, 0xf3, 0x6d, 0x5d, 0x6f, 0x77, 0x70, 0x59, 0xe9,
+	0xa9, 0x65, 0x45, 0xd3, 0x74, 0x53, 0x31, 0x55, 0x5d, 0xb3, 0x57, 0x67, 0xdb, 0x7a, 0x5b, 0x67,
+	0x56, 0xd6, 0x5f, 0xb6, 0x4d, 0x18, 0x00, 0x8d, 0x44, 0x57, 0xc5, 0x19, 0x98, 0xfe, 0xcc, 0x82,
+	0xf3, 0xf0, 0x73, 0x0d, 0x1b, 0x35, 0xfc, 0xa2, 0x8f, 0x89, 0x29, 0x6e, 0x03, 0xf2, 0x0a, 0x49,
+	0x4f, 0xd7, 0x08, 0x46, 0x25, 0x18, 0xd5, 0x2d, 0x41, 0x4e, 0x58, 0x14, 0xae, 0x8c, 0x6f, 0xe6,
+	0xfe, 0xf1, 0x87, 0x95, 0x59, 0x8e, 0xae, 0xd2, 0x6a, 0x19, 0x98, 0x90, 0xba, 0x69, 0xa8, 0x5a,
+	0xbb, 0xc6, 0xd4, 0xc4, 0x3c, 0xe4, 0xa8, 0x97, 0x47, 0x58, 0x6b, 0xa9, 0x5a, 0xdb, 0x17, 0xe1,
+	0x09, 0xcc, 0x47, 0xac, 0xf1, 0x40, 0x77, 0x61, 0xaa, 0xc7, 0xe4, 0x72, 0xba, 0x80, 0x93, 0x3d,
+	0x8f, 0x1b, 0x71, 0x96, 0xa3, 0x7f, 0xa4, 0xf4, 0x09, 0x6e, 0xd9, 0x11, 0x57, 0x60, 0xc6, 0x27,
+	0xe5, 0xb1, 0xe6, 0x60, 0xac, 0x47, 0x25, 0x34, 0xc8, 0xa9, 0x1a, 0xff, 0x25, 0x9e, 0x85, 0x33,
+	0x54, 0xbd, 0xd2, 0xe9, 0xe8, 0x9f, 0x77, 0x54, 0x62, 0xda, 0x7e, 0x6e, 0xc3, 0x5c, 0x70, 0x81,
+	0xbb, 0x2a, 0xc2, 0x44, 0xaf, 0x7f, 0xd8, 0x51, 0x9b, 0xf2, 0x73, 0x7c, 0x4c, 0x72, 0xc2, 0xe2,
+	0xc8, 0x95, 0xf1, 0x1a, 0x30, 0xd1, 0xa7, 0xf8, 0x98, 0x88, 0xeb, 0x1c, 0x58, 0xdd, 0x54, 0x9e,
+	0x3b, 0xa9, 0x40, 0x0b, 0x00, 0xae, 0x19, 0xdb, 0x6a, 0x6d, 0xdc, 0xb1, 0x12, 0xf7, 0x38, 0x6e,
+	0xdb, 0x88, 0x07, 0xfb, 0x04, 0xc6, 0x08, 0x95, 0x50, 0x8b, 0x89, 0xb5, 0xf9, 0x52, 0xe8, 0x22,
+	0x95, 0x98, 0xc9, 0x66, 0xe6, 0xab, 0xb7, 0xc5, 0xa1, 0x1a, 0x57, 0x17, 0xab, 0x7c, 0x63, 0xd5,
+	0x23, 0xdc, 0xec, 0x9b, 0xba, 0x41, 0x6c, 0x1c, 0xb3, 0x30, 0xda, 0x51, 0xbb, 0xaa, 0x49, 0x1d,
+	0x4e, 0xd5, 0xd8, 0x0f, 0x2b, 0x3f, 0xfa, 0xd3, 0xa7, 0x04, 0x9b, 0xb9, 0x61, 0x2a, 0xe6, 0xbf,
+	0xc4, 0x03, 0x9e, 0x06, 0x8f, 0x1b, 0xe7, 0xf4, 0xc6, 0xb1, 0x2d, 0xa4, 0x49, 0x48, 0x01, 0xce,
+	0xb5, 0x10, 0x4b, 0x70, 0x96, 0x3a, 0xde, 0x56, 0x4c, 0x85, 0x43, 0xb3, 0x11, 0xce, 0xc0, 0x68,
+	0xcb, 0x90, 0xd5, 0x16, 0x4f, 0x52, 0xa6, 0x65, 0x48, 0x2d, 0xb1, 0xc9, 0x6f, 0x99, 0x4f, 0x9f,
+	0x43, 0xd9, 0x81, 0xc9, 0x96, 0x62, 0x2a, 0xb2, 0xc1, 0xe4, 0x3c, 0x55, 0x85, 0x08, 0x34, 0x1e,
+	0x6b, 0x0e, 0x69, 0xa2, 0xe5, 0x8a, 0xc4, 0x03, 0xb8, 0x10, 0x0c, 0xb2, 0xa5, 0x77, 0xbb, 0xaa,
+	0xd9, 0xc5, 0x5a, 0x22, 0xbc, 0xc0, 0xe9, 0x0e, 0x07, 0x4f, 0x77, 0x1b, 0xc4, 0x24, 0xc7, 0x7c,
+	0x1f, 0x05, 0x80, 0xa6, 0x23, 0xe5, 0xee, 0x3d, 0x12, 0xf1, 0x76, 0x92, 0x17, 0x92, 0x98, 0xbe,
+	0x37, 0x02, 0x5c, 0x4c, 0xb4, 0xe5, 0x10, 0x54, 0x98, 0x70, 0x03, 0xda, 0xe7, 0xba, 0x13, 0x91,
+	0xc9, 0x14, 0xce, 0x4a, 0x1e, 0x59, 0x55, 0x33, 0x8d, 0xe3, 0x9a, 0xd7, 0x77, 0xfe, 0x7b, 0x90,
+	0x0d, 0x2a, 0xa0, 0x2c, 0x8c, 0xb8, 0xaf, 0xc3, 0xfa, 0xd3, 0xba, 0xae, 0x2f, 0x95, 0x4e, 0x1f,
+	0xf3, 0x9c, 0xb2, 0x1f, 0x77, 0x86, 0x6f, 0x09, 0x62, 0x1d, 0x16, 0xc2, 0x37, 0xe2, 0x25, 0x56,
+	0x3a, 0x1f, 0x72, 0x50, 0x07, 0x50, 0x88, 0x73, 0xca, 0x33, 0xb4, 0x01, 0x63, 0x06, 0x95, 0xf0,
+	0x6b, 0xb6, 0x10, 0x91, 0x1c, 0x66, 0xb2, 0xa9, 0xb7, 0x8e, 0x6b, 0x5c, 0x59, 0xdc, 0x88, 0x73,
+	0x9c, 0x7c, 0x6e, 0xff, 0x14, 0xa0, 0x18, 0x6b, 0xc7, 0x11, 0x3d, 0x86, 0x8f, 0x58, 0x10, 0xfb,
+	0xbc, 0xee, 0xa5, 0x38, 0xaf, 0x80, 0x13, 0x0e, 0x99, 0x9f, 0x93, 0xed, 0x2f, 0xff, 0x18, 0x26,
+	0xbd, 0x0b, 0x11, 0xe7, 0xb3, 0xee, 0x3d, 0x9f, 0x13, 0xb3, 0xe1, 0x39, 0xbe, 0x3f, 0x0a, 0xb0,
+	0x18, 0x04, 0x45, 0x36, 0xad, 0xfa, 0x67, 0xf6, 0x9d, 0x9c, 0x7c, 0x97, 0x96, 0x3f, 0xb3, 0x4f,
+	0x68, 0xc8, 0xd3, 0x6b, 0x97, 0x92, 0xdf, 0x34, 0x37, 0xe6, 0x36, 0x6e, 0xa9, 0xb3, 0xb0, 0x65,
+	0xec, 0x52, 0x57, 0x81, 0xff, 0xeb, 0x28, 0xc4, 0x94, 0x09, 0xc6, 0x9a, 0xac, 0x6a, 0x2d, 0x7c,
+	0x94, 0x1b, 0xb1, 0x6a, 0xf8, 0xe6, 0xfc, 0x7f, 0xdf, 0x16, 0xcf, 0x74, 0x55, 0x4d, 0x32, 0x71,
+	0x97, 0xdc, 0x59, 0x5f, 0xee, 0x2a, 0x47, 0xfc, 0xcf, 0xda, 0x94, 0x65, 0x51, 0xc7, 0x58, 0x93,
+	0x2c, 0x7d, 0xf1, 0x6f, 0x42, 0xb8, 0x50, 0x78, 0xb0, 0xf3, 0x73, 0x91, 0x60, 0xca, 0x5b, 0x96,
+	0xec, 0xd3, 0x49, 0x57, 0x97, 0x26, 0x3d, 0x75, 0x89, 0xa0, 0x73, 0x30, 0xae, 0x12, 0x99, 0x77,
+	0xb0, 0x61, 0xda, 0xc1, 0x4e, 0xa9, 0x84, 0xf5, 0x38, 0x6b, 0x9b, 0xa6, 0x6e, 0x2a, 0x9d, 0xdc,
+	0x08, 0xdb, 0x26, 0xfd, 0x81, 0x96, 0xc2, 0xdb, 0xcc, 0xd0, 0x56, 0x15, 0xd8, 0xcb, 0x27, 0x76,
+	0xa3, 0x6b, 0x36, 0xf5, 0xbe, 0x66, 0xd6, 0xf1, 0x8b, 0x94, 0x1d, 0xeb, 0x0e, 0xaf, 0xe0, 0x5e,
+	0x43, 0xb7, 0x45, 0x2a, 0x4c, 0x2a, 0x13, 0xfc, 0x82, 0x9a, 0x66, 0x6a, 0xa0, 0x38, 0x8a, 0xe2,
+	0xcf, 0x04, 0xfe, 0x78, 0xb7, 0x14, 0xcd, 0x6e, 0x2d, 0xac, 0x18, 0x7c, 0xc0, 0xe3, 0x0d, 0xd4,
+	0xcf, 0x91, 0x60, 0xfd, 0xb4, 0x12, 0xd5, 0x33, 0x74, 0xfd, 0x69, 0x2e, 0xc3, 0x6a, 0x09, 0xfd,
+	0x21, 0xde, 0xe3, 0x2f, 0x33, 0x02, 0x0a, 0xdf, 0xce, 0x02, 0x40, 0x53, 0xd1, 0x64, 0xe6, 0x89,
+	0x0f, 0x10, 0xe3, 0x4d, 0x45, 0x63, 0x6a, 0x4e, 0x21, 0xf2, 0x38, 0xf8, 0xf0, 0x42, 0x14, 0x81,
+	0x2a, 0x50, 0x88, 0x38, 0x2a, 0x4f, 0x31, 0x62, 0xa8, 0x98, 0x9a, 0x78, 0x17, 0xce, 0x53, 0x07,
+	0x12, 0x61, 0x2d, 0xd8, 0xf5, 0x92, 0xea, 0x74, 0x1f, 0xf0, 0x4d, 0x85, 0xcd, 0x79, 0xf8, 0x65,
+	0x40, 0x2a, 0x91, 0xd9, 0xb4, 0x21, 0xdb, 0x7d, 0x9d, 0xc3, 0xc8, 0xaa, 0x01, 0x2b, 0xf1, 0x16,
+	0x6f, 0x5d, 0x3b, 0xd8, 0xb4, 0x65, 0xd5, 0x8e, 0xda, 0x56, 0x0f, 0xd5, 0x8e, 0x6a, 0x1e, 0xdb,
+	0x98, 0x10, 0x64, 0xac, 0x6b, 0xef, 0xe4, 0x49, 0x31, 0x15, 0xf1, 0xb7, 0x76, 0xe7, 0x8a, 0x33,
+	0xe5, 0x78, 0xd2, 0x94, 0x0a, 0x8f, 0x5d, 0xa0, 0x54, 0x5c, 0x80, 0xc9, 0xc3, 0x8e, 0xde, 0x7c,
+	0x2e, 0x3f, 0xc3, 0x6a, 0xfb, 0x99, 0x5d, 0x31, 0x26, 0xa8, 0xec, 0xfb, 0x54, 0x84, 0x2e, 0xc2,
+	0x14, 0x36, 0x0c, 0xdd, 0x90, 0xbb, 0x98, 0x10, 0xa5, 0x8d, 0xf9, 0x05, 0x9b, 0xa4, 0xc2, 0x07,
+	0x4c, 0x26, 0x1e, 0x84, 0xcb, 0x35, 0x8b, 0x84, 0x9d, 0x9a, 0x76, 0x13, 0xb2, 0xde, 0xb2, 0x20,
+	0xab, 0x2d, 0x3e, 0x44, 0x6e, 0xc2, 0x7f, 0xde, 0x16, 0xc7, 0xe8, 0x4d, 0x21, 0xb5, 0xd3, 0x9e,
+	0xf7, 0x2f, 0xb5, 0x88, 0xf8, 0x4d, 0x44, 0xb9, 0x74, 0x3d, 0xf3, 0x1c, 0xfc, 0x10, 0x4e, 0x11,
+	0x2e, 0xe3, 0xc5, 0xa6, 0x92, 0xa2, 0x15, 0x04, 0xdd, 0x94, 0x6c, 0x01, 0x6b, 0x06, 0x8e, 0xcb,
+	0xbc, 0x02, 0x53, 0xbe, 0xa5, 0x88, 0x76, 0x70, 0xc7, 0xdb, 0x0e, 0xd2, 0xd6, 0x6b, 0x4f, 0x57,
+	0x70, 0x87, 0x7a, 0x43, 0xe9, 0xda, 0x29, 0x73, 0x86, 0x63, 0x5b, 0xea, 0x0e, 0xc7, 0x3d, 0x2a,
+	0x49, 0x18, 0x8e, 0x99, 0x89, 0x3d, 0x1c, 0x33, 0x75, 0xf1, 0x1c, 0xa7, 0x25, 0xd6, 0x25, 0x55,
+	0xb5, 0xf6, 0x96, 0xae, 0x3d, 0x55, 0xdb, 0x76, 0xb0, 0xe7, 0x90, 0x8f, 0x5a, 0xe4, 0x31, 0x1f,
+	0xc0, 0x69, 0xc2, 0x16, 0xe4, 0x26, 0x5d, 0xe1, 0xb1, 0x17, 0x63, 0x66, 0x5f, 0xc7, 0x03, 0x87,
+	0x30, 0x45, 0xbc, 0x42, 0xb1, 0x18, 0x1e, 0x62, 0xfc, 0x68, 0x7e, 0x14, 0x9e, 0x1b, 0x02, 0x88,
+	0x9e, 0xc0, 0x8c, 0xef, 0x3e, 0xf9, 0x60, 0x9d, 0x70, 0x00, 0x3e, 0x68, 0xd3, 0xad, 0xe0, 0xc2,
+	0xb5, 0xaf, 0x87, 0x61, 0x3a, 0xf4, 0x68, 0x90, 0x08, 0x85, 0xea, 0xae, 0xb4, 0x23, 0x6d, 0x4a,
+	0xbb, 0x52, 0xe3, 0xb1, 0x5c, 0x6f, 0x54, 0x1a, 0xfb, 0x75, 0x79, 0x7f, 0xaf, 0xfe, 0xa8, 0xba,
+	0x25, 0xdd, 0x97, 0xaa, 0xdb, 0xd9, 0x21, 0xb4, 0x08, 0xe7, 0x23, 0x74, 0xaa, 0xbb, 0x54, 0xb6,
+	0x5b, 0xcd, 0x0a, 0xe8, 0x22, 0x14, 0x23, 0x34, 0xf6, 0x1e, 0x36, 0xe4, 0xaa, 0xad, 0x34, 0x8c,
+	0x56, 0xe0, 0x6a, 0x84, 0xd2, 0x76, 0xa5, 0x51, 0x91, 0x6b, 0xd5, 0xcf, 0xf6, 0xab, 0xf5, 0x06,
+	0xb5, 0xb8, 0xff, 0x70, 0x7f, 0x6f, 0x3b, 0x3b, 0x82, 0x2e, 0xc0, 0x42, 0x8c, 0xcf, 0x7a, 0xa3,
+	0xf2, 0x69, 0xb5, 0x96, 0xcd, 0xa0, 0xab, 0x70, 0x39, 0x42, 0x45, 0xda, 0xab, 0xef, 0xdf, 0xbf,
+	0x2f, 0x6d, 0x49, 0xd5, 0x3d, 0xae, 0x9b, 0x1d, 0x45, 0x4b, 0x20, 0xc6, 0x78, 0xab, 0xec, 0xee,
+	0x3e, 0x3c, 0xd8, 0x95, 0xea, 0x8d, 0xea, 0x76, 0x76, 0x0c, 0x5d, 0x81, 0x4b, 0x91, 0x2e, 0x7f,
+	0x50, 0xd9, 0x95, 0xb6, 0xe5, 0xba, 0xb4, 0xb3, 0x57, 0x69, 0xec, 0xd7, 0xaa, 0xd9, 0x8f, 0xf2,
+	0x99, 0x2f, 0x7e, 0x5d, 0x18, 0x5a, 0xfb, 0xe2, 0x1c, 0x8c, 0xd2, 0x43, 0x45, 0x26, 0x8c, 0x52,
+	0x32, 0x8b, 0x2e, 0xc5, 0xbd, 0x53, 0x2f, 0x9d, 0xce, 0x5f, 0x3e, 0x41, 0x8b, 0xdd, 0x08, 0xb1,
+	0xf0, 0xe3, 0xaf, 0xbf, 0xf9, 0xe5, 0x70, 0x0e, 0xcd, 0x95, 0x2d, 0xf5, 0x15, 0xcf, 0x47, 0x01,
+	0xca, 0xb3, 0xd1, 0x2f, 0x04, 0x98, 0xf4, 0x32, 0x72, 0x74, 0x3d, 0xce, 0x6f, 0x04, 0xa7, 0xcf,
+	0x2f, 0xa7, 0x53, 0xe6, 0x58, 0x96, 0x28, 0x96, 0x45, 0x54, 0x08, 0x61, 0xf1, 0x71, 0x7f, 0x74,
+	0x04, 0x63, 0x7c, 0x9c, 0x89, 0xdd, 0xa4, 0x8f, 0xe8, 0xe7, 0x97, 0x4e, 0x52, 0xe3, 0x00, 0x8a,
+	0x14, 0xc0, 0x3c, 0x3a, 0x1b, 0x06, 0xc0, 0xe2, 0xfd, 0x44, 0x80, 0x71, 0x87, 0xe5, 0xa3, 0x2b,
+	0x71, 0x6e, 0x83, 0x5f, 0x08, 0xf2, 0x57, 0x53, 0x68, 0x72, 0x0c, 0x22, 0xc5, 0x70, 0x1e, 0xe5,
+	0x43, 0x18, 0x14, 0x27, 0xf0, 0x4f, 0x05, 0x18, 0x63, 0x4d, 0x33, 0x3e, 0x03, 0xbe, 0x2f, 0x0a,
+	0xf1, 0x19, 0xf0, 0x7f, 0x43, 0x10, 0x97, 0x69, 0xf4, 0x25, 0x74, 0x29, 0x14, 0x9d, 0x75, 0xef,
+	0xf2, 0x2b, 0x77, 0x10, 0x78, 0x4d, 0xd3, 0xe1, 0xb0, 0xfd, 0xf8, 0x74, 0x04, 0xbf, 0x2b, 0xc4,
+	0xa7, 0x23, 0xf4, 0xe9, 0x20, 0x21, 0x1d, 0xce, 0xf7, 0x01, 0xf4, 0xa5, 0x00, 0x13, 0x9e, 0x42,
+	0x85, 0xae, 0xa5, 0xe2, 0x34, 0x0c, 0xca, 0xf5, 0x54, 0xba, 0x1c, 0xcc, 0x0a, 0x05, 0xf3, 0x31,
+	0xba, 0x1c, 0x02, 0xe3, 0xad, 0xaa, 0xe5, 0x57, 0xb4, 0x2f, 0xbf, 0x46, 0x7f, 0x17, 0xe0, 0x4c,
+	0x24, 0xed, 0x45, 0x37, 0x07, 0x62, 0xc9, 0x36, 0xd6, 0x8d, 0x01, 0xad, 0x38, 0xea, 0x2a, 0x45,
+	0x7d, 0x0f, 0xdd, 0x4d, 0x44, 0x2d, 0xbb, 0xc3, 0xaf, 0xbd, 0x01, 0xff, 0x61, 0xff, 0x55, 0x80,
+	0xb9, 0x68, 0x12, 0x8f, 0x36, 0x06, 0x25, 0xfd, 0x6c, 0x3f, 0xff, 0xff, 0xed, 0xbe, 0x15, 0x88,
+	0xb7, 0xe9, 0x86, 0xd6, 0xd1, 0x6a, 0xda, 0x0d, 0x11, 0xe7, 0x48, 0xfe, 0x24, 0xc0, 0x74, 0x88,
+	0xd9, 0xa2, 0x1b, 0xa9, 0x49, 0xb0, 0x0d, 0x7d, 0x75, 0x00, 0x0b, 0x8e, 0xba, 0x42, 0x51, 0x7f,
+	0x07, 0xdd, 0x4e, 0x46, 0xcd, 0x66, 0xf4, 0xe8, 0x23, 0xf8, 0xbd, 0x00, 0x28, 0xcc, 0xcb, 0xd1,
+	0xea, 0x20, 0x1c, 0x9e, 0xe1, 0x5f, 0x1b, 0x9c, 0xf6, 0x8b, 0x1b, 0x74, 0x03, 0x65, 0xb4, 0x92,
+	0x66, 0x03, 0x6e, 0xca, 0xff, 0x2c, 0xc0, 0x6c, 0x14, 0xf7, 0x45, 0xeb, 0x29, 0x30, 0x04, 0x59,
+	0x7e, 0xfe, 0xe6, 0x60, 0x46, 0x03, 0xdd, 0x18, 0x22, 0x1f, 0x1e, 0xcb, 0x6c, 0x82, 0x2d, 0xbf,
+	0x62, 0xff, 0xbe, 0x46, 0xbf, 0x12, 0x00, 0x5c, 0xda, 0x8a, 0xe2, 0x2b, 0x79, 0x90, 0x13, 0xe7,
+	0xaf, 0xa5, 0x51, 0xe5, 0x00, 0x57, 0x29, 0xc0, 0xeb, 0xe8, 0x6a, 0xb8, 0xea, 0xbb, 0xe4, 0xd8,
+	0x7f, 0x19, 0xac, 0xab, 0x1c, 0xe2, 0xa1, 0xf1, 0x57, 0x39, 0x8e, 0x3d, 0xc7, 0x5f, 0xe5, 0x58,
+	0x92, 0x9b, 0x70, 0x95, 0x2d, 0x96, 0x69, 0x17, 0x66, 0xfe, 0x00, 0xa3, 0xaf, 0x72, 0x00, 0xfd,
+	0x49, 0x0f, 0x31, 0x8e, 0x2f, 0xa7, 0x42, 0x9f, 0xfa, 0x21, 0xfa, 0xd0, 0x27, 0x3d, 0xc4, 0xdf,
+	0x09, 0x90, 0x0d, 0xb2, 0x5d, 0x54, 0x8e, 0x83, 0x12, 0x43, 0xab, 0xf3, 0x37, 0xd2, 0x1b, 0x70,
+	0xe8, 0xb7, 0x28, 0xf4, 0x35, 0x74, 0x23, 0x04, 0x3d, 0xcc, 0xaf, 0xfd, 0x88, 0xff, 0x22, 0xc0,
+	0x5c, 0x34, 0x2b, 0x8e, 0xaf, 0xde, 0x89, 0x04, 0x3c, 0xbe, 0x7a, 0x27, 0x93, 0xef, 0x84, 0x3d,
+	0xb4, 0xb1, 0xe9, 0xa6, 0x1f, 0xbb, 0xa6, 0xe5, 0x57, 0xd6, 0x2b, 0xa5, 0x7b, 0x98, 0x89, 0xe0,
+	0xa2, 0x68, 0x6d, 0x20, 0xe2, 0xca, 0xd0, 0xaf, 0x7f, 0x0b, 0xb2, 0x9b, 0xb6, 0x84, 0xdb, 0x24,
+	0x98, 0xe1, 0xf6, 0x92, 0xf7, 0xd7, 0x6c, 0x76, 0xb5, 0x88, 0x65, 0xd2, 0xec, 0xea, 0xe1, 0xb3,
+	0x49, 0xb3, 0xab, 0x97, 0xe0, 0x26, 0xce, 0xae, 0x34, 0xde, 0x97, 0x02, 0xa5, 0xe4, 0x2e, 0xa1,
+	0x44, 0xcb, 0x49, 0x43, 0x61, 0x90, 0xeb, 0xe6, 0x57, 0x52, 0x6a, 0x73, 0x3c, 0x1f, 0x53, 0x3c,
+	0x17, 0x50, 0x31, 0x72, 0x92, 0x74, 0x39, 0x31, 0xfa, 0x8d, 0xbf, 0x25, 0x73, 0x6c, 0x37, 0x52,
+	0xcd, 0x06, 0x5e, 0x7c, 0xab, 0x03, 0x58, 0x9c, 0x38, 0xed, 0x46, 0xb0, 0xe4, 0x4d, 0xe9, 0xab,
+	0x77, 0x05, 0xe1, 0xcd, 0xbb, 0x82, 0xf0, 0xef, 0x77, 0x05, 0xe1, 0xe7, 0xef, 0x0b, 0x43, 0x6f,
+	0xde, 0x17, 0x86, 0xfe, 0xf5, 0xbe, 0x30, 0xf4, 0xa4, 0xdc, 0x56, 0xcd, 0x67, 0xfd, 0xc3, 0x52,
+	0x53, 0xef, 0x52, 0x4f, 0xf4, 0xff, 0x51, 0x9b, 0x7a, 0xc7, 0xeb, 0xf6, 0x88, 0x39, 0x36, 0x8f,
+	0x7b, 0x98, 0x1c, 0x8e, 0x51, 0x8d, 0xf5, 0xff, 0x05, 0x00, 0x00, 0xff, 0xff, 0x19, 0xa5, 0x60,
+	0xaf, 0x0a, 0x1e, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1638,10 +2274,28 @@ type QueryClient interface {
 	Executors(ctx context.Context, in *QueryExecutorsRequest, opts ...grpc.CallOption) (*QueryExecutorsResponse, error)
 	// DataRequest returns the data request given its ID.
 	DataRequest(ctx context.Context, in *QueryDataRequestRequest, opts ...grpc.CallOption) (*QueryDataRequestResponse, error)
+	// DataRequestCommitment returns the data request commitment given the data
+	// request ID and executor public key.
+	DataRequestCommitment(ctx context.Context, in *QueryDataRequestCommitmentRequest, opts ...grpc.CallOption) (*QueryDataRequestCommitmentResponse, error)
+	// DataRequestCommitments returns all data request commitments for a given
+	// data request ID.
+	DataRequestCommitments(ctx context.Context, in *QueryDataRequestCommitmentsRequest, opts ...grpc.CallOption) (*QueryDataRequestCommitmentsResponse, error)
+	// DataRequestReveal returns the data request reveal given the data
+	// request ID and executor public key.
+	DataRequestReveal(ctx context.Context, in *QueryDataRequestRevealRequest, opts ...grpc.CallOption) (*QueryDataRequestRevealResponse, error)
+	// DataRequestReveals returns all data request reveals for a given
+	// data request ID.
+	DataRequestReveals(ctx context.Context, in *QueryDataRequestRevealsRequest, opts ...grpc.CallOption) (*QueryDataRequestRevealsResponse, error)
 	// DataRequestsByStatus returns data requests by status.
 	DataRequestsByStatus(ctx context.Context, in *QueryDataRequestsByStatusRequest, opts ...grpc.CallOption) (*QueryDataRequestsByStatusResponse, error)
 	// AccountSeq returns the account sequence number for a given public key.
 	AccountSeq(ctx context.Context, in *QueryAccountSeqRequest, opts ...grpc.CallOption) (*QueryAccountSeqResponse, error)
+	// CanExecutorCommit returns whether the executor can commit for the given
+	// data request ID.
+	CanExecutorCommit(ctx context.Context, in *QueryCanExecutorCommitRequest, opts ...grpc.CallOption) (*QueryCanExecutorCommitResponse, error)
+	// CanExecutorReveal returns whether the executor can reveal for the given
+	// data request ID.
+	CanExecutorReveal(ctx context.Context, in *QueryCanExecutorRevealRequest, opts ...grpc.CallOption) (*QueryCanExecutorRevealResponse, error)
 	// IsStakerExecutor returns whether the staker is a executor.
 	IsStakerExecutor(ctx context.Context, in *QueryIsStakerExecutorRequest, opts ...grpc.CallOption) (*QueryIsStakerExecutorResponse, error)
 	// GetExecutorEligibility returns the eligibility status of an executor given
@@ -1728,6 +2382,42 @@ func (c *queryClient) DataRequest(ctx context.Context, in *QueryDataRequestReque
 	return out, nil
 }
 
+func (c *queryClient) DataRequestCommitment(ctx context.Context, in *QueryDataRequestCommitmentRequest, opts ...grpc.CallOption) (*QueryDataRequestCommitmentResponse, error) {
+	out := new(QueryDataRequestCommitmentResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Query/DataRequestCommitment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) DataRequestCommitments(ctx context.Context, in *QueryDataRequestCommitmentsRequest, opts ...grpc.CallOption) (*QueryDataRequestCommitmentsResponse, error) {
+	out := new(QueryDataRequestCommitmentsResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Query/DataRequestCommitments", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) DataRequestReveal(ctx context.Context, in *QueryDataRequestRevealRequest, opts ...grpc.CallOption) (*QueryDataRequestRevealResponse, error) {
+	out := new(QueryDataRequestRevealResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Query/DataRequestReveal", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) DataRequestReveals(ctx context.Context, in *QueryDataRequestRevealsRequest, opts ...grpc.CallOption) (*QueryDataRequestRevealsResponse, error) {
+	out := new(QueryDataRequestRevealsResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Query/DataRequestReveals", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *queryClient) DataRequestsByStatus(ctx context.Context, in *QueryDataRequestsByStatusRequest, opts ...grpc.CallOption) (*QueryDataRequestsByStatusResponse, error) {
 	out := new(QueryDataRequestsByStatusResponse)
 	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Query/DataRequestsByStatus", in, out, opts...)
@@ -1740,6 +2430,24 @@ func (c *queryClient) DataRequestsByStatus(ctx context.Context, in *QueryDataReq
 func (c *queryClient) AccountSeq(ctx context.Context, in *QueryAccountSeqRequest, opts ...grpc.CallOption) (*QueryAccountSeqResponse, error) {
 	out := new(QueryAccountSeqResponse)
 	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Query/AccountSeq", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) CanExecutorCommit(ctx context.Context, in *QueryCanExecutorCommitRequest, opts ...grpc.CallOption) (*QueryCanExecutorCommitResponse, error) {
+	out := new(QueryCanExecutorCommitResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Query/CanExecutorCommit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) CanExecutorReveal(ctx context.Context, in *QueryCanExecutorRevealRequest, opts ...grpc.CallOption) (*QueryCanExecutorRevealResponse, error) {
+	out := new(QueryCanExecutorRevealResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Query/CanExecutorReveal", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1816,10 +2524,28 @@ type QueryServer interface {
 	Executors(context.Context, *QueryExecutorsRequest) (*QueryExecutorsResponse, error)
 	// DataRequest returns the data request given its ID.
 	DataRequest(context.Context, *QueryDataRequestRequest) (*QueryDataRequestResponse, error)
+	// DataRequestCommitment returns the data request commitment given the data
+	// request ID and executor public key.
+	DataRequestCommitment(context.Context, *QueryDataRequestCommitmentRequest) (*QueryDataRequestCommitmentResponse, error)
+	// DataRequestCommitments returns all data request commitments for a given
+	// data request ID.
+	DataRequestCommitments(context.Context, *QueryDataRequestCommitmentsRequest) (*QueryDataRequestCommitmentsResponse, error)
+	// DataRequestReveal returns the data request reveal given the data
+	// request ID and executor public key.
+	DataRequestReveal(context.Context, *QueryDataRequestRevealRequest) (*QueryDataRequestRevealResponse, error)
+	// DataRequestReveals returns all data request reveals for a given
+	// data request ID.
+	DataRequestReveals(context.Context, *QueryDataRequestRevealsRequest) (*QueryDataRequestRevealsResponse, error)
 	// DataRequestsByStatus returns data requests by status.
 	DataRequestsByStatus(context.Context, *QueryDataRequestsByStatusRequest) (*QueryDataRequestsByStatusResponse, error)
 	// AccountSeq returns the account sequence number for a given public key.
 	AccountSeq(context.Context, *QueryAccountSeqRequest) (*QueryAccountSeqResponse, error)
+	// CanExecutorCommit returns whether the executor can commit for the given
+	// data request ID.
+	CanExecutorCommit(context.Context, *QueryCanExecutorCommitRequest) (*QueryCanExecutorCommitResponse, error)
+	// CanExecutorReveal returns whether the executor can reveal for the given
+	// data request ID.
+	CanExecutorReveal(context.Context, *QueryCanExecutorRevealRequest) (*QueryCanExecutorRevealResponse, error)
 	// IsStakerExecutor returns whether the staker is a executor.
 	IsStakerExecutor(context.Context, *QueryIsStakerExecutorRequest) (*QueryIsStakerExecutorResponse, error)
 	// GetExecutorEligibility returns the eligibility status of an executor given
@@ -1860,11 +2586,29 @@ func (*UnimplementedQueryServer) Executors(ctx context.Context, req *QueryExecut
 func (*UnimplementedQueryServer) DataRequest(ctx context.Context, req *QueryDataRequestRequest) (*QueryDataRequestResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DataRequest not implemented")
 }
+func (*UnimplementedQueryServer) DataRequestCommitment(ctx context.Context, req *QueryDataRequestCommitmentRequest) (*QueryDataRequestCommitmentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DataRequestCommitment not implemented")
+}
+func (*UnimplementedQueryServer) DataRequestCommitments(ctx context.Context, req *QueryDataRequestCommitmentsRequest) (*QueryDataRequestCommitmentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DataRequestCommitments not implemented")
+}
+func (*UnimplementedQueryServer) DataRequestReveal(ctx context.Context, req *QueryDataRequestRevealRequest) (*QueryDataRequestRevealResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DataRequestReveal not implemented")
+}
+func (*UnimplementedQueryServer) DataRequestReveals(ctx context.Context, req *QueryDataRequestRevealsRequest) (*QueryDataRequestRevealsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DataRequestReveals not implemented")
+}
 func (*UnimplementedQueryServer) DataRequestsByStatus(ctx context.Context, req *QueryDataRequestsByStatusRequest) (*QueryDataRequestsByStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DataRequestsByStatus not implemented")
 }
 func (*UnimplementedQueryServer) AccountSeq(ctx context.Context, req *QueryAccountSeqRequest) (*QueryAccountSeqResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AccountSeq not implemented")
+}
+func (*UnimplementedQueryServer) CanExecutorCommit(ctx context.Context, req *QueryCanExecutorCommitRequest) (*QueryCanExecutorCommitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CanExecutorCommit not implemented")
+}
+func (*UnimplementedQueryServer) CanExecutorReveal(ctx context.Context, req *QueryCanExecutorRevealRequest) (*QueryCanExecutorRevealResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CanExecutorReveal not implemented")
 }
 func (*UnimplementedQueryServer) IsStakerExecutor(ctx context.Context, req *QueryIsStakerExecutorRequest) (*QueryIsStakerExecutorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsStakerExecutor not implemented")
@@ -2015,6 +2759,78 @@ func _Query_DataRequest_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_DataRequestCommitment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDataRequestCommitmentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).DataRequestCommitment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.core.v1.Query/DataRequestCommitment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).DataRequestCommitment(ctx, req.(*QueryDataRequestCommitmentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_DataRequestCommitments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDataRequestCommitmentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).DataRequestCommitments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.core.v1.Query/DataRequestCommitments",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).DataRequestCommitments(ctx, req.(*QueryDataRequestCommitmentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_DataRequestReveal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDataRequestRevealRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).DataRequestReveal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.core.v1.Query/DataRequestReveal",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).DataRequestReveal(ctx, req.(*QueryDataRequestRevealRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_DataRequestReveals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDataRequestRevealsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).DataRequestReveals(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.core.v1.Query/DataRequestReveals",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).DataRequestReveals(ctx, req.(*QueryDataRequestRevealsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Query_DataRequestsByStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryDataRequestsByStatusRequest)
 	if err := dec(in); err != nil {
@@ -2047,6 +2863,42 @@ func _Query_AccountSeq_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QueryServer).AccountSeq(ctx, req.(*QueryAccountSeqRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_CanExecutorCommit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryCanExecutorCommitRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).CanExecutorCommit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.core.v1.Query/CanExecutorCommit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).CanExecutorCommit(ctx, req.(*QueryCanExecutorCommitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_CanExecutorReveal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryCanExecutorRevealRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).CanExecutorReveal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.core.v1.Query/CanExecutorReveal",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).CanExecutorReveal(ctx, req.(*QueryCanExecutorRevealRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2193,12 +3045,36 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_DataRequest_Handler,
 		},
 		{
+			MethodName: "DataRequestCommitment",
+			Handler:    _Query_DataRequestCommitment_Handler,
+		},
+		{
+			MethodName: "DataRequestCommitments",
+			Handler:    _Query_DataRequestCommitments_Handler,
+		},
+		{
+			MethodName: "DataRequestReveal",
+			Handler:    _Query_DataRequestReveal_Handler,
+		},
+		{
+			MethodName: "DataRequestReveals",
+			Handler:    _Query_DataRequestReveals_Handler,
+		},
+		{
 			MethodName: "DataRequestsByStatus",
 			Handler:    _Query_DataRequestsByStatus_Handler,
 		},
 		{
 			MethodName: "AccountSeq",
 			Handler:    _Query_AccountSeq_Handler,
+		},
+		{
+			MethodName: "CanExecutorCommit",
+			Handler:    _Query_CanExecutorCommit_Handler,
+		},
+		{
+			MethodName: "CanExecutorReveal",
+			Handler:    _Query_CanExecutorReveal_Handler,
 		},
 		{
 			MethodName: "IsStakerExecutor",
@@ -2642,6 +3518,296 @@ func (m *QueryDataRequestResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryDataRequestCommitmentRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDataRequestCommitmentRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDataRequestCommitmentRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.DrId) > 0 {
+		i -= len(m.DrId)
+		copy(dAtA[i:], m.DrId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.DrId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDataRequestCommitmentResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDataRequestCommitmentResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDataRequestCommitmentResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Commitment) > 0 {
+		i -= len(m.Commitment)
+		copy(dAtA[i:], m.Commitment)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Commitment)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDataRequestCommitmentsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDataRequestCommitmentsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDataRequestCommitmentsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.DrId) > 0 {
+		i -= len(m.DrId)
+		copy(dAtA[i:], m.DrId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.DrId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDataRequestCommitmentsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDataRequestCommitmentsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDataRequestCommitmentsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Commitments) > 0 {
+		for k := range m.Commitments {
+			v := m.Commitments[k]
+			baseI := i
+			i -= len(v)
+			copy(dAtA[i:], v)
+			i = encodeVarintQuery(dAtA, i, uint64(len(v)))
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintQuery(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintQuery(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDataRequestRevealRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDataRequestRevealRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDataRequestRevealRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.DrId) > 0 {
+		i -= len(m.DrId)
+		copy(dAtA[i:], m.DrId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.DrId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDataRequestRevealResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDataRequestRevealResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDataRequestRevealResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Reveal != nil {
+		{
+			size, err := m.Reveal.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDataRequestRevealsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDataRequestRevealsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDataRequestRevealsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.DrId) > 0 {
+		i -= len(m.DrId)
+		copy(dAtA[i:], m.DrId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.DrId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDataRequestRevealsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDataRequestRevealsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDataRequestRevealsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Reveals) > 0 {
+		for k := range m.Reveals {
+			v := m.Reveals[k]
+			baseI := i
+			if v != nil {
+				{
+					size, err := v.MarshalToSizedBuffer(dAtA[:i])
+					if err != nil {
+						return 0, err
+					}
+					i -= size
+					i = encodeVarintQuery(dAtA, i, uint64(size))
+				}
+				i--
+				dAtA[i] = 0x12
+			}
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintQuery(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintQuery(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *QueryDataRequestsByStatusRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -2797,6 +3963,160 @@ func (m *QueryAccountSeqResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	_ = l
 	if m.AccountSeq != 0 {
 		i = encodeVarintQuery(dAtA, i, uint64(m.AccountSeq))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryCanExecutorCommitRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryCanExecutorCommitRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryCanExecutorCommitRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Proof) > 0 {
+		i -= len(m.Proof)
+		copy(dAtA[i:], m.Proof)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Proof)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Commitment) > 0 {
+		i -= len(m.Commitment)
+		copy(dAtA[i:], m.Commitment)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Commitment)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.DrId) > 0 {
+		i -= len(m.DrId)
+		copy(dAtA[i:], m.DrId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.DrId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryCanExecutorCommitResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryCanExecutorCommitResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryCanExecutorCommitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.CanCommit {
+		i--
+		if m.CanCommit {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryCanExecutorRevealRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryCanExecutorRevealRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryCanExecutorRevealRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.DrId) > 0 {
+		i -= len(m.DrId)
+		copy(dAtA[i:], m.DrId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.DrId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryCanExecutorRevealResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryCanExecutorRevealResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryCanExecutorRevealResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.CanReveal {
+		i--
+		if m.CanReveal {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
 		i--
 		dAtA[i] = 0x8
 	}
@@ -3354,6 +4674,131 @@ func (m *QueryDataRequestResponse) Size() (n int) {
 	return n
 }
 
+func (m *QueryDataRequestCommitmentRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.DrId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryDataRequestCommitmentResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Commitment)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryDataRequestCommitmentsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.DrId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryDataRequestCommitmentsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Commitments) > 0 {
+		for k, v := range m.Commitments {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovQuery(uint64(len(k))) + 1 + len(v) + sovQuery(uint64(len(v)))
+			n += mapEntrySize + 1 + sovQuery(uint64(mapEntrySize))
+		}
+	}
+	return n
+}
+
+func (m *QueryDataRequestRevealRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.DrId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryDataRequestRevealResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Reveal != nil {
+		l = m.Reveal.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryDataRequestRevealsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.DrId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryDataRequestRevealsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Reveals) > 0 {
+		for k, v := range m.Reveals {
+			_ = k
+			_ = v
+			l = 0
+			if v != nil {
+				l = v.Size()
+				l += 1 + sovQuery(uint64(l))
+			}
+			mapEntrySize := 1 + len(k) + sovQuery(uint64(len(k))) + l
+			n += mapEntrySize + 1 + sovQuery(uint64(mapEntrySize))
+		}
+	}
+	return n
+}
+
 func (m *QueryDataRequestsByStatusRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -3423,6 +4868,72 @@ func (m *QueryAccountSeqResponse) Size() (n int) {
 	_ = l
 	if m.AccountSeq != 0 {
 		n += 1 + sovQuery(uint64(m.AccountSeq))
+	}
+	return n
+}
+
+func (m *QueryCanExecutorCommitRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.DrId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Commitment)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Proof)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryCanExecutorCommitResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.CanCommit {
+		n += 2
+	}
+	return n
+}
+
+func (m *QueryCanExecutorRevealRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.DrId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryCanExecutorRevealResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.CanReveal {
+		n += 2
 	}
 	return n
 }
@@ -4600,6 +6111,922 @@ func (m *QueryDataRequestResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *QueryDataRequestCommitmentRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDataRequestCommitmentRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDataRequestCommitmentRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DrId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DrId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDataRequestCommitmentResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDataRequestCommitmentResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDataRequestCommitmentResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Commitment", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Commitment = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDataRequestCommitmentsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDataRequestCommitmentsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDataRequestCommitmentsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DrId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DrId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDataRequestCommitmentsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDataRequestCommitmentsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDataRequestCommitmentsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Commitments", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Commitments == nil {
+				m.Commitments = make(map[string]string)
+			}
+			var mapkey string
+			var mapvalue string
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowQuery
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowQuery
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthQuery
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthQuery
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var stringLenmapvalue uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowQuery
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapvalue := int(stringLenmapvalue)
+					if intStringLenmapvalue < 0 {
+						return ErrInvalidLengthQuery
+					}
+					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+					if postStringIndexmapvalue < 0 {
+						return ErrInvalidLengthQuery
+					}
+					if postStringIndexmapvalue > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
+					iNdEx = postStringIndexmapvalue
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipQuery(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthQuery
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.Commitments[mapkey] = mapvalue
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDataRequestRevealRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDataRequestRevealRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDataRequestRevealRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DrId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DrId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDataRequestRevealResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDataRequestRevealResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDataRequestRevealResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reveal", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Reveal == nil {
+				m.Reveal = &RevealBody{}
+			}
+			if err := m.Reveal.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDataRequestRevealsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDataRequestRevealsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDataRequestRevealsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DrId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DrId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDataRequestRevealsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDataRequestRevealsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDataRequestRevealsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reveals", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Reveals == nil {
+				m.Reveals = make(map[string]*RevealBody)
+			}
+			var mapkey string
+			var mapvalue *RevealBody
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowQuery
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowQuery
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthQuery
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthQuery
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapmsglen int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowQuery
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapmsglen |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					if mapmsglen < 0 {
+						return ErrInvalidLengthQuery
+					}
+					postmsgIndex := iNdEx + mapmsglen
+					if postmsgIndex < 0 {
+						return ErrInvalidLengthQuery
+					}
+					if postmsgIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = &RevealBody{}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
+						return err
+					}
+					iNdEx = postmsgIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipQuery(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthQuery
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.Reveals[mapkey] = mapvalue
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *QueryDataRequestsByStatusRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -5005,6 +7432,438 @@ func (m *QueryAccountSeqResponse) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryCanExecutorCommitRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryCanExecutorCommitRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryCanExecutorCommitRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DrId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DrId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Commitment", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Commitment = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Proof", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Proof = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryCanExecutorCommitResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryCanExecutorCommitResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryCanExecutorCommitResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CanCommit", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.CanCommit = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryCanExecutorRevealRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryCanExecutorRevealRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryCanExecutorRevealRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DrId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DrId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryCanExecutorRevealResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryCanExecutorRevealResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryCanExecutorRevealResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CanReveal", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.CanReveal = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])

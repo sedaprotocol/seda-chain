@@ -46,6 +46,38 @@ service Query {
     option (google.api.http).get = "/seda-chain/core/data_request/{dr_id}";
   }
 
+  // DataRequestCommitment returns the data request commitment given the data
+  // request ID and executor public key.
+  rpc DataRequestCommitment(QueryDataRequestCommitmentRequest)
+      returns (QueryDataRequestCommitmentResponse) {
+    option (google.api.http).get =
+        "/seda-chain/core/data_request_commitment/{dr_id}/{public_key}";
+  }
+
+  // DataRequestCommitments returns all data request commitments for a given
+  // data request ID.
+  rpc DataRequestCommitments(QueryDataRequestCommitmentsRequest)
+      returns (QueryDataRequestCommitmentsResponse) {
+    option (google.api.http).get =
+        "/seda-chain/core/data_request_commitments/{dr_id}";
+  }
+
+  // DataRequestReveal returns the data request reveal given the data
+  // request ID and executor public key.
+  rpc DataRequestReveal(QueryDataRequestRevealRequest)
+      returns (QueryDataRequestRevealResponse) {
+    option (google.api.http).get =
+        "/seda-chain/core/data_request_reveal/{dr_id}/{public_key}";
+  }
+
+  // DataRequestReveals returns all data request reveals for a given
+  // data request ID.
+  rpc DataRequestReveals(QueryDataRequestRevealsRequest)
+      returns (QueryDataRequestRevealsResponse) {
+    option (google.api.http).get =
+        "/seda-chain/core/data_request_reveals/{dr_id}";
+  }
+
   // DataRequestsByStatus returns data requests by status.
   rpc DataRequestsByStatus(QueryDataRequestsByStatusRequest)
       returns (QueryDataRequestsByStatusResponse) {
@@ -56,6 +88,22 @@ service Query {
   // AccountSeq returns the account sequence number for a given public key.
   rpc AccountSeq(QueryAccountSeqRequest) returns (QueryAccountSeqResponse) {
     option (google.api.http).get = "/seda-chain/core/account_seq/{public_key}";
+  }
+
+  // CanExecutorCommit returns whether the executor can commit for the given
+  // data request ID.
+  rpc CanExecutorCommit(QueryCanExecutorCommitRequest)
+      returns (QueryCanExecutorCommitResponse) {
+    option (google.api.http).get =
+        "/seda-chain/core/can_executor_commit/{dr_id}/{public_key}";
+  }
+
+  // CanExecutorReveal returns whether the executor can reveal for the given
+  // data request ID.
+  rpc CanExecutorReveal(QueryCanExecutorRevealRequest)
+      returns (QueryCanExecutorRevealResponse) {
+    option (google.api.http).get =
+        "/seda-chain/core/can_executor_reveal/{dr_id}/{public_key}";
   }
 
   // IsStakerExecutor returns whether the staker is a executor.
@@ -161,6 +209,38 @@ message QueryDataRequestResponse {
   DataRequest data_request = 1 [ (gogoproto.nullable) = false ];
 }
 
+// The request message for Query/DataRequestCommitment RPC method.
+message QueryDataRequestCommitmentRequest {
+  string dr_id = 1;
+  string public_key = 2;
+}
+
+// The response message for Query/DataRequestCommitment RPC method.
+message QueryDataRequestCommitmentResponse { string commitment = 1; }
+
+// The request message for Query/DataRequestCommitments RPC method.
+message QueryDataRequestCommitmentsRequest { string dr_id = 1; }
+
+// The response message for Query/DataRequestCommitments RPC method.
+message QueryDataRequestCommitmentsResponse {
+  map<string, string> commitments = 1;
+}
+
+// The request message for Query/DataRequestReveal RPC method.
+message QueryDataRequestRevealRequest {
+  string dr_id = 1;
+  string public_key = 2;
+}
+
+// The response message for Query/DataRequestReveal RPC method.
+message QueryDataRequestRevealResponse { RevealBody reveal = 1; }
+
+// The request message for Query/DataRequestReveals RPC method.
+message QueryDataRequestRevealsRequest { string dr_id = 1; }
+
+// The response message for Query/DataRequestReveals RPC method.
+message QueryDataRequestRevealsResponse { map<string, RevealBody> reveals = 1; }
+
 // The request message for Query/DataRequestsByStatus RPC method.
 message QueryDataRequestsByStatusRequest {
   // Status specifies the status of the data requests to retrieve.
@@ -197,6 +277,34 @@ message QueryAccountSeqResponse {
   // account_seq is the account sequence number.
   uint64 account_seq = 1;
 }
+
+// The request message for Query/CanExecutorCommit RPC method.
+message QueryCanExecutorCommitRequest {
+  // dr_id is the hex-encoded ID of the data request.
+  string dr_id = 1;
+  // public_key is the hex-encoded public key of the executor.
+  string public_key = 2;
+  // commitment is the hex-encoded commitment of the executor.
+  string commitment = 3;
+  // proof is the hex-encoded proof for the commitment message.
+  string proof = 4;
+}
+
+// QueryCanExecutorCommitResponse is the response type for the
+// Query/CanExecutorCommit RPC method.
+message QueryCanExecutorCommitResponse { bool can_commit = 1; }
+
+// The request message for Query/CanExecutorReveal RPC method.
+message QueryCanExecutorRevealRequest {
+  // dr_id is the hex-encoded ID of the data request.
+  string dr_id = 1;
+  // public_key is the hex-encoded public key of the executor.
+  string public_key = 2;
+}
+
+// QueryCanExecutorRevealResponse is the response type for the
+// Query/CanExecutorReveal RPC method.
+message QueryCanExecutorRevealResponse { bool can_reveal = 1; }
 
 // The request message for Query/IsStakerExecutor RPC method.
 message QueryIsStakerExecutorRequest {
