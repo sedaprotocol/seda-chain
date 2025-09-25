@@ -49,7 +49,12 @@ func (m msgServer) AcceptOwnership(goCtx context.Context, msg *types.MsgAcceptOw
 		return nil, err
 	}
 
-	// TODO: Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeAcceptOwnership,
+			sdk.NewAttribute(types.AttributeNewOwner, msg.Sender),
+		),
+	)
 
 	return &types.MsgAcceptOwnershipResponse{}, nil
 }
@@ -76,7 +81,12 @@ func (m msgServer) TransferOwnership(goCtx context.Context, msg *types.MsgTransf
 		return nil, err
 	}
 
-	// TODO: Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeTransferOwnership,
+			sdk.NewAttribute(types.AttributePendingOwner, msg.NewOwner),
+		),
+	)
 
 	return &types.MsgTransferOwnershipResponse{}, nil
 }
@@ -159,7 +169,13 @@ func (m msgServer) RemoveFromAllowlist(goCtx context.Context, msg *types.MsgRemo
 		}
 	}
 
-	// TODO: emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeRemoveFromAllowlist,
+			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.PublicKey),
+		),
+	)
+
 	return &types.MsgRemoveFromAllowlistResponse{}, nil
 }
 
@@ -188,6 +204,13 @@ func (m msgServer) Pause(goCtx context.Context, msg *types.MsgPause) (*types.Msg
 		return nil, err
 	}
 
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypePause,
+			sdk.NewAttribute(types.AttributePaused, "true"),
+		),
+	)
+
 	return &types.MsgPauseResponse{}, nil
 }
 
@@ -215,6 +238,13 @@ func (m msgServer) Unpause(goCtx context.Context, msg *types.MsgUnpause) (*types
 	if err != nil {
 		return nil, err
 	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUnpause,
+			sdk.NewAttribute(types.AttributePaused, "false"),
+		),
+	)
 
 	return &types.MsgUnpauseResponse{}, nil
 }
@@ -374,13 +404,27 @@ func (m msgServer) Unstake(goCtx context.Context, msg *types.MsgUnstake) (*types
 	}
 
 	// Update staker info
-	staker.PendingWithdrawal = staker.PendingWithdrawal.Add(staker.Staked)
+	sequenceNum := staker.SequenceNum
+	unstakeAmount := staker.Staked
+	staker.PendingWithdrawal = staker.PendingWithdrawal.Add(unstakeAmount)
 	staker.Staked = math.ZeroInt()
 	staker.SequenceNum++
 	err = m.SetStaker(ctx, staker)
 	if err != nil {
 		return nil, err
 	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUnstake,
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, unstakeAmount.String()),
+			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.PublicKey),
+			sdk.NewAttribute(types.AttributeTokensPendingWithdrawal, staker.PendingWithdrawal.String()),
+			sdk.NewAttribute(types.AttributeMemo, staker.Memo),
+			sdk.NewAttribute(types.AttributeSequenceNumber, strconv.FormatUint(sequenceNum, 10)),
+		),
+	)
 
 	return &types.MsgUnstakeResponse{}, nil
 }
@@ -411,10 +455,11 @@ func (m msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 
 	// Check the staker exists
 	staker, err := m.GetStaker(ctx, msg.PublicKey)
-	staker.SequenceNum++
 	if err != nil {
 		return nil, err
 	}
+	sequenceNum := staker.SequenceNum
+	staker.SequenceNum++
 
 	amount := staker.PendingWithdrawal
 	staker.PendingWithdrawal = math.ZeroInt()
@@ -439,7 +484,17 @@ func (m msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 		return nil, err
 	}
 
-	// TODO emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeWithdraw,
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, amount.String()),
+			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.PublicKey),
+			sdk.NewAttribute(types.AttributeTokensPendingWithdrawal, staker.PendingWithdrawal.String()),
+			sdk.NewAttribute(types.AttributeMemo, staker.Memo),
+			sdk.NewAttribute(types.AttributeSequenceNumber, strconv.FormatUint(sequenceNum, 10)),
+		),
+	)
 
 	return &types.MsgWithdrawResponse{}, nil
 }
@@ -460,6 +515,16 @@ func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 	if err := m.SetParams(ctx, msg.Params); err != nil {
 		return nil, err
 	}
+
+	// TODO: how to do events here for the different config changes...
+	var event sdk.Event
+	// event = sdk.NewEvent(
+	// 		types.EventTypeUpdateParams,
+	// 	),
+
+	ctx.EventManager().EmitEvent(
+		event,
+	)
 
 	return &types.MsgUpdateParamsResponse{}, nil
 }
