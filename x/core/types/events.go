@@ -1,14 +1,25 @@
 package types
 
 const (
-	EventTypeAddToAllowlist  = "add_to_allowlist"
-	EventTypeStake           = "stake"
-	EventTypePostDataRequest = "post_data_request"
-	EventTypeCommit          = "commit_data_result"
-	EventTypeReveal          = "reveal_data_result"
-	EventTypeTallyCompletion = "tally_completion"
-	EventTypeGasMeter        = "gas_calculation"
+	EventTypeAcceptOwnership     = "core_accept_ownership"
+	EventTypeTransferOwnership   = "core_transfer_ownership"
+	EventTypeAddToAllowlist      = "add_to_allowlist"
+	EventTypeRemoveFromAllowlist = "remove_from_allowlist"
+	EventTypeStake               = "core_executor_stake"
+	EventTypeUnstake             = "core_executor_unstake"
+	EventTypeWithdraw            = "core_executor_withdraw"
+	EventTypeSubmitProgram       = "submit_program"
+	EventTypePostDataRequest     = "post_data_request"
+	EventTypeCommit              = "commit_data_result"
+	EventTypeReveal              = "reveal_data_result"
+	EventTypeTallyCompletion     = "tally_completion"
+	EventTypeGasMeter            = "gas_calculation"
+	EventTypePause               = "core_pause"
+	EventTypeUnpause             = "core_unpause"
+	EventTypeUpdateParams        = "core_update_params"
 
+	AttributeNewOwner                = "new_owner"
+	AttributePendingOwner            = "pending_owner"
 	AttributeExecutorIdentity        = "executor"
 	AttributeExecProgramID           = "exec_program_id"
 	AttributeExecInputs              = "exec_inputs"
@@ -46,4 +57,5 @@ const (
 	AttributeExecutorGas             = "executor_reward_gas"
 	AttributeReducedPayout           = "reduced_payout"
 	AttributeReducedPayoutBurn       = "reduced_payout_burn"
+	AttributePaused                  = "paused"
 )
