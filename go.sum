@@ -993,8 +993,8 @@ github.com/sasha-s/go-deadlock v0.3.5/go.mod h1:bugP6EGbdGYObIlx7pUZtWqlvo8k9H6v
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529 h1:VbJcd022MkoohRyAfktHnN99Brt/4eJr01mdLqPhGaE=
 github.com/sedaprotocol/rosetta-seda v0.0.0-20240427181737-e1d7563b2529/go.mod h1:GdlDqGJN2g55PHiwYJs2bQMlL0rdlQQbauK4dcrOI6w=
-github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 v2.5.0 h1:jW55cab57mqJUxCCIILRAQP4nYQlnrX4aCEfkRYbw0c=
-github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 v2.5.0/go.mod h1:GnPFBlYHV+AcpLcUKcxkNkfHf2CtmTSmPbHat8flDBY=
+github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 v2.6.0 h1:8DALHDNpHmSq/ORyfQs4lNNv9B/tIpCH2nAylPpYRZk=
+github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 v2.6.0/go.mod h1:GnPFBlYHV+AcpLcUKcxkNkfHf2CtmTSmPbHat8flDBY=
 github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c h1:PbSn7HpWeox6lqBu6Ba6YZS3On3euwn1BPz/egsnEgA=
 github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c/go.mod h1:DEIXHk41VUzOMVbZnIApssPXtZ+2zrETDP7kJjGc1RM=
 github.com/shamaton/msgpack/v2 v2.2.0 h1:IP1m01pHwCrMa6ZccP9B3bqxEMKMSmMVAVKk54g3L/Y=
