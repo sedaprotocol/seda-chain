@@ -509,22 +509,36 @@ func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Authority)
 	}
 
+	if msg.Params.DataRequestConfig == nil {
+		currentDataRequestConfig, err := m.GetDataRequestConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+		msg.Params.DataRequestConfig = &currentDataRequestConfig
+	}
+
+	if msg.Params.StakingConfig == nil {
+		currentStakingConfig, err := m.GetStakingConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+		msg.Params.StakingConfig = &currentStakingConfig
+	}
+
+	if msg.Params.TallyConfig == nil {
+		currentTallyConfig, err := m.GetTallyConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+		msg.Params.TallyConfig = &currentTallyConfig
+	}
+
 	if err := msg.Params.Validate(); err != nil {
 		return nil, err
 	}
 	if err := m.SetParams(ctx, msg.Params); err != nil {
 		return nil, err
 	}
-
-	// TODO: how to do events here for the different config changes...
-	var event sdk.Event
-	// event = sdk.NewEvent(
-	// 		types.EventTypeUpdateParams,
-	// 	),
-
-	ctx.EventManager().EmitEvent(
-		event,
-	)
 
 	return &types.MsgUpdateParamsResponse{}, nil
 }

@@ -43,7 +43,7 @@ const (
 // DefaultParams returns default core module parameters.
 func DefaultParams() Params {
 	return Params{
-		DataRequestConfig: DataRequestConfig{
+		DataRequestConfig: &DataRequestConfig{
 			CommitTimeoutInBlocks:       DefaultCommitTimeoutInBlocks,
 			RevealTimeoutInBlocks:       DefaultRevealTimeoutInBlocks,
 			BackupDelayInBlocks:         DefaultBackupDelayInBlocks,
@@ -55,11 +55,11 @@ func DefaultParams() Params {
 			PaybackAddressLimitInBytes:  DefaultPaybackAddressLimitInBytes,
 			SEDAPayloadLimitInBytes:     DefaultSEDAPayloadLimitInBytes,
 		},
-		StakingConfig: StakingConfig{
+		StakingConfig: &StakingConfig{
 			MinimumStake:     DefaultMinimumStake,
 			AllowlistEnabled: DefaultAllowlistEnabled,
 		},
-		TallyConfig: TallyConfig{
+		TallyConfig: &TallyConfig{
 			MaxResultSize:               DefaultMaxResultSize,
 			MaxTallyGasLimit:            DefaultMaxTallyGasLimit,
 			FilterGasCostNone:           DefaultFilterGasCostNone,

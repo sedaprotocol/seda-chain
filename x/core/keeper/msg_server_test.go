@@ -388,7 +388,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 			msg: &types.MsgUpdateParams{
 				Authority: "seda1invalid",
 				Params: types.Params{
-					StakingConfig: types.StakingConfig{
+					StakingConfig: &types.StakingConfig{
 						MinimumStake:     s.NewIntFromString("1000000000000000000"),
 						AllowlistEnabled: false,
 					},
@@ -401,7 +401,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 			msg: &types.MsgUpdateParams{
 				Authority: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 				Params: types.Params{
-					StakingConfig: types.StakingConfig{
+					StakingConfig: &types.StakingConfig{
 						MinimumStake:     s.NewIntFromString("1000000000000000000"),
 						AllowlistEnabled: false,
 					},
@@ -414,7 +414,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 			msg: &types.MsgUpdateParams{
 				Authority: authority,
 				Params: types.Params{
-					StakingConfig: types.StakingConfig{
+					StakingConfig: &types.StakingConfig{
 						MinimumStake:     s.NewIntFromString("-1"), // Invalid negative amount
 						AllowlistEnabled: false,
 					},

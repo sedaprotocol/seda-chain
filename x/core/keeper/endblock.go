@@ -59,7 +59,7 @@ func (k Keeper) Tally(ctx sdk.Context) error {
 	}
 	tallyvm.TallyMaxBytes = uint(params.TallyConfig.MaxResultSize)
 
-	tallyResults, dataResults, err := k.ProcessTallies(ctx, drIDs, params.TallyConfig, params.StakingConfig.MinimumStake)
+	tallyResults, dataResults, err := k.ProcessTallies(ctx, drIDs, *params.TallyConfig, params.StakingConfig.MinimumStake)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to tally data requests", "err", err)

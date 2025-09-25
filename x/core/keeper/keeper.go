@@ -202,7 +202,7 @@ func (k Keeper) GetDataRequestConfig(ctx sdk.Context) (types.DataRequestConfig, 
 	if err != nil {
 		return types.DataRequestConfig{}, err
 	}
-	return params.DataRequestConfig, nil
+	return *params.DataRequestConfig, nil
 }
 
 func (k Keeper) GetStakingConfig(ctx sdk.Context) (types.StakingConfig, error) {
@@ -210,7 +210,7 @@ func (k Keeper) GetStakingConfig(ctx sdk.Context) (types.StakingConfig, error) {
 	if err != nil {
 		return types.StakingConfig{}, err
 	}
-	return params.StakingConfig, nil
+	return *params.StakingConfig, nil
 }
 
 func (k Keeper) GetTallyConfig(ctx sdk.Context) (types.TallyConfig, error) {
@@ -218,7 +218,7 @@ func (k Keeper) GetTallyConfig(ctx sdk.Context) (types.TallyConfig, error) {
 	if err != nil {
 		return types.TallyConfig{}, err
 	}
-	return params.TallyConfig, nil
+	return *params.TallyConfig, nil
 }
 
 func (k Keeper) GetAuthority() string {
