@@ -127,9 +127,9 @@ message RevealBody {
 
 // Params defines the parameters for the core module.
 message Params {
-  DataRequestConfig data_request_config = 1 [ (gogoproto.nullable) = false ];
-  StakingConfig staking_config = 2 [ (gogoproto.nullable) = false ];
-  TallyConfig tally_config = 3 [ (gogoproto.nullable) = false ];
+  DataRequestConfig data_request_config = 1;
+  StakingConfig staking_config = 2;
+  TallyConfig tally_config = 3;
 }
 
 // DataRequestConfig defines data request-related parameters.

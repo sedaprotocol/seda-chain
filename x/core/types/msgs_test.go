@@ -41,7 +41,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				PaybackAddress:  make([]byte, 100),
 				SEDAPayload:     make([]byte, 100),
 			},
-			config:  validConfig,
+			config:  *validConfig,
 			wantErr: nil,
 		},
 		{
@@ -56,7 +56,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				ExecProgramID:     validProgramID,
 				TallyProgramID:    validProgramID,
 			},
-			config:  validConfig,
+			config:  *validConfig,
 			wantErr: ErrZeroReplicationFactor,
 		},
 		{
@@ -71,7 +71,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				ExecProgramID:     validProgramID,
 				TallyProgramID:    validProgramID,
 			},
-			config:  validConfig,
+			config:  *validConfig,
 			wantErr: ErrReplicationFactorNotUint16,
 		},
 		{
@@ -86,7 +86,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				ExecProgramID:     validProgramID,
 				TallyProgramID:    validProgramID,
 			},
-			config:  validConfig,
+			config:  *validConfig,
 			wantErr: ErrGasPriceTooLow,
 		},
 		{
@@ -105,7 +105,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				ExecProgramID:  validProgramID,
 				TallyProgramID: validProgramID,
 			},
-			config:  validConfig,
+			config:  *validConfig,
 			wantErr: ErrGasPriceTooHigh,
 		},
 		{
@@ -120,7 +120,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				ExecProgramID:     validProgramID,
 				TallyProgramID:    validProgramID,
 			},
-			config:  validConfig,
+			config:  *validConfig,
 			wantErr: ErrExecGasLimitTooLow,
 		},
 		{
@@ -135,7 +135,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				ExecProgramID:     validProgramID,
 				TallyProgramID:    validProgramID,
 			},
-			config:  validConfig,
+			config:  *validConfig,
 			wantErr: ErrTallyGasLimitTooLow,
 		},
 		{
@@ -150,7 +150,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				ExecProgramID:     "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdefa",
 				TallyProgramID:    validProgramID,
 			},
-			config:  validConfig,
+			config:  *validConfig,
 			wantErr: ErrInvalidExecProgramID,
 		},
 		{
@@ -165,7 +165,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				ExecProgramID:     validProgramID,
 				TallyProgramID:    "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdzz",
 			},
-			config:  validConfig,
+			config:  *validConfig,
 			wantErr: ErrInvalidTallyProgramID,
 		},
 		{
@@ -180,7 +180,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				ExecProgramID:     validProgramID,
 				TallyProgramID:    validProgramID + "ab",
 			},
-			config:  validConfig,
+			config:  *validConfig,
 			wantErr: ErrInvalidLengthTallyProgramID,
 		},
 		{
@@ -195,7 +195,7 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 				ExecProgramID:     validProgramID,
 				TallyProgramID:    validProgramID,
 			},
-			config:  validConfig,
+			config:  *validConfig,
 			wantErr: ErrInvalidVersion,
 		},
 	}

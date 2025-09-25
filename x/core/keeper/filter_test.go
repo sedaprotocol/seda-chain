@@ -900,7 +900,7 @@ func TestFilter(t *testing.T) {
 				reveals,
 				filterInput,
 				uint16(len(tt.reveals)),
-				tallyConfig,
+				*tallyConfig,
 				gasMeter,
 			)
 			require.ErrorIs(t, err, tt.wantErr)
@@ -1048,7 +1048,7 @@ func TestFilterWildcard(t *testing.T) {
 				reveals,
 				filterInput,
 				uint16(len(tt.reveals)),
-				tallyConfig,
+				*tallyConfig,
 				gasMeter,
 			)
 			require.ErrorIs(t, err, tt.wantErr)
