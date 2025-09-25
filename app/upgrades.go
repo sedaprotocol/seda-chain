@@ -16,6 +16,7 @@ import (
 
 // Upgrades is a list of currently supported upgrades.
 var Upgrades = []upgrades.Upgrade{
+	upgrades.NewDefaultUpgrade("v1.0.3"),
 	v1rc4.Upgrade,
 	v1rc6.Upgrade,
 	v1.Upgrade,
