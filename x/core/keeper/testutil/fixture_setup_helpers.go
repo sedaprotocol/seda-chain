@@ -4,13 +4,11 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
-	"encoding/json"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/sha3"
-	"golang.org/x/exp/rand"
 
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 
@@ -36,22 +34,6 @@ const (
 	defaultRevealTimeoutBlocks = 5
 )
 
-type PostDataRequestResponse struct {
-	DrID   string `json:"dr_id"`
-	Height uint64 `json:"height"`
-}
-
-type CommitRevealConfig struct {
-	RequestHeight  uint64
-	RequestMemo    string
-	Reveal         []byte
-	ProxyPubKeys   []string
-	GasUsed        uint64
-	ExitCode       byte
-	CommitGasLimit uint64 // defaults to 100000 if not set or set to 0
-	RevealGasLimit uint64 // defaults to 100000 if not set or set to 0
-}
-
 func (f *Fixture) uploadOraclePrograms(tb testing.TB) {
 	tb.Helper()
 
@@ -62,150 +44,6 @@ func (f *Fixture) uploadOraclePrograms(tb testing.TB) {
 	}
 }
 
-// ExecuteDataRequestFlow posts a data request using the deployer account and
-// executes given numbers of commits and reveals for the request using the
-// stakers accounts. It returns the data request ID.
-func (f *Fixture) ExecuteDataRequestFlow(
-	execProgramBytes, tallyProgramBytes []byte,
-	replicationFactor, numCommits, numReveals int, timeout bool,
-	config CommitRevealConfig,
-) string {
-	var execProgram, tallyProgram wasmstoragetypes.OracleProgram
-	if execProgramBytes != nil {
-		execProgram = wasmstoragetypes.NewOracleProgram(execProgramBytes, f.Context().BlockTime())
-	} else {
-		randIndex := rand.Intn(len(testwasms.TestWasms))
-		execProgram = wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
-	}
-	if tallyProgramBytes != nil {
-		tallyProgram = wasmstoragetypes.NewOracleProgram(tallyProgramBytes, f.Context().BlockTime())
-	} else {
-		randIndex := rand.Intn(len(testwasms.TestWasms))
-		tallyProgram = wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
-	}
-
-	// Post a data request.
-	res := f.PostDataRequest(execProgram.Hash, tallyProgram.Hash, config.RequestMemo, replicationFactor)
-
-	drID := res.DrID
-
-	// The stakers commit and reveal.
-	revealMsgs := f.CommitDataRequest(f.Stakers[:numCommits], res.Height, drID, config)
-
-	f.ExecuteReveals(f.Stakers[:numReveals], revealMsgs[:numReveals], config)
-
-	if timeout {
-		timeoutBlocks := defaultCommitTimeoutBlocks
-		if numCommits == replicationFactor {
-			timeoutBlocks = defaultRevealTimeoutBlocks
-		}
-
-		for range timeoutBlocks {
-			f.AddBlock()
-		}
-	}
-	return res.DrID
-}
-
-// executeDataRequestFlowWithTallyTestItem posts a data request using the deployer
-// account and executes a commit and reveal for the request using a staker account.
-// It then returns the data request ID and the randomly selected TallyTestItem,
-// which contains the expected tally execution results.
-// func (f *Fixture) executeDataRequestFlowWithTallyTestItem(tb testing.TB, entropy []byte) (string, testwasms.TallyTestItem) {
-// 	randIndex := rand.Intn(len(testwasms.TestWasms))
-// 	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
-
-// 	randIndex = rand.Intn(len(testwasms.TallyTestItems))
-// 	testItem := testwasms.TallyTestItems[randIndex]
-// 	tallyProgram := wasmstoragetypes.NewOracleProgram(testItem.TallyProgram, f.Context().BlockTime())
-
-// 	config := CommitRevealConfig{
-// 		RequestHeight: 1,
-// 		RequestMemo:   base64.StdEncoding.EncodeToString(entropy),
-// 		Reveal:        testItem.Reveal,
-// 		ProxyPubKeys:  []string{},
-// 		GasUsed:       testItem.GasUsed,
-// 	}
-
-// 	// Post a data request.
-// 	res := f.PostDataRequest(tb, execProgram.Hash, tallyProgram.Hash, config.RequestMemo, 1)
-// 	drID := res.DrID
-
-// 	// The stakers commit and reveal.
-// 	revealMsgs := f.CommitDataRequest(tb, f.Stakers[:1], res.Height, drID, config)
-// 	f.ExecuteReveals(tb, f.Stakers, revealMsgs[:1], config)
-
-// 	return res.DrID, testItem
-// }
-
-func (f *Fixture) PostDataRequest(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) PostDataRequestResponse {
-	amount, ok := math.NewIntFromString("200600000000000000000")
-	require.True(f.tb, ok)
-
-	resJSON := f.executeCoreContract(
-		f.Creator.Address(),
-		testutil.PostDataRequestMsg(execProgHash, tallyProgHash, requestMemo, replicationFactor),
-		sdk.NewCoins(sdk.NewCoin(BondDenom, amount)),
-	)
-
-	var res PostDataRequestResponse
-	err := json.Unmarshal(resJSON, &res)
-	require.NoError(f.tb, err)
-	return res
-}
-
-// commitDataRequest executes a commit for each of the given stakers and
-// returns a list of corresponding reveal messages.
-func (f *Fixture) CommitDataRequest(stakers []Staker, height uint64, drID string, config CommitRevealConfig) [][]byte {
-	CommitGasLimit := config.CommitGasLimit
-	if config.CommitGasLimit == 0 {
-		CommitGasLimit = 100000
-	}
-
-	revealBody := types.RevealBody{
-		DrID:         drID,
-		Reveal:       config.Reveal,
-		GasUsed:      config.GasUsed,
-		ExitCode:     uint32(config.ExitCode),
-		ProxyPubKeys: config.ProxyPubKeys,
-	}
-
-	var revealMsgs [][]byte
-	for i := 0; i < len(stakers); i++ {
-		revealMsg, commitment, _ := f.createRevealMsg(stakers[i], revealBody)
-
-		proof := f.generateCommitProof(stakers[i].Key, drID, commitment, height)
-
-		commitMsg := testutil.CommitMsg(drID, commitment, stakers[i].PubKey, proof)
-		f.executeCommitReveal(stakers[i].Address, commitMsg, CommitGasLimit)
-
-		revealMsgs = append(revealMsgs, revealMsg)
-	}
-
-	return revealMsgs
-}
-
-// executeReveals executes a list of reveal messages, one by one using
-// the staker addresses.
-func (f *Fixture) ExecuteReveals(stakers []Staker, revealMsgs [][]byte, config CommitRevealConfig) {
-	RevealGasLimit := config.RevealGasLimit
-	if config.RevealGasLimit == 0 {
-		RevealGasLimit = 100000
-	}
-
-	require.Equal(f.tb, len(stakers), len(revealMsgs))
-
-	for i := range revealMsgs {
-		f.executeCommitReveal(stakers[i].Address, revealMsgs[i], RevealGasLimit)
-	}
-}
-
-type Staker struct {
-	Key     []byte
-	PubKey  string
-	Address []byte
-}
-
 func (f *Fixture) mintCoinsForAccount(tb testing.TB, address sdk.AccAddress, sedaAmount uint64) {
 	tb.Helper()
 
@@ -214,6 +52,12 @@ func (f *Fixture) mintCoinsForAccount(tb testing.TB, address sdk.AccAddress, sed
 	require.NoError(tb, err)
 	err = f.BankKeeper.SendCoinsFromModuleToAccount(f.Context(), minttypes.ModuleName, address, sdk.NewCoins(sdk.NewCoin(BondDenom, amount)))
 	require.NoError(tb, err)
+}
+
+type Staker struct {
+	Key     []byte
+	PubKey  string
+	Address []byte
 }
 
 // AddStakers generates stakers and adds them to the allowlist. The
@@ -283,10 +127,6 @@ func (f *Fixture) CheckDataRequestsByStatus(tb testing.TB, status types.DataRequ
 		require.Equal(tb, min(remainingTotal, fetchLimit), uint64(len(drs)))
 	}
 }
-
-// func (f *Fixture) pauseContract(tb testing.TB) {
-// 	f.executeCoreContract(tb, f.deployer.String(), []byte(`{"pause":{}}`), sdk.NewCoins())
-// }
 
 // generateStakeProof generates a proof for a stake message given a
 // base64-encoded memo.
@@ -397,11 +237,8 @@ func generateRevealProof(tb testing.TB, signKey []byte, revealBodyHash []byte, c
 	return hex.EncodeToString(proof)
 }
 
-// executeCommitReveal executes a commit msg or a reveal msg with the required
-// context.
-func (f *Fixture) executeCommitReveal(sender sdk.AccAddress, msg []byte, gasLimit uint64) {
-	f.SetBasicGasMeter(gasLimit)
-
+// executeCommitOrReveal executes a commit msg or a reveal msg.
+func (f *Fixture) executeCommitOrReveal(sender sdk.AccAddress, msg []byte, gasLimit uint64) {
 	contractMsg := wasmtypes.MsgExecuteContract{
 		Sender:   sender.String(),
 		Contract: f.CoreContractAddr.String(),
@@ -424,6 +261,8 @@ func (f *Fixture) executeCommitReveal(sender sdk.AccAddress, msg []byte, gasLimi
 
 	f.SetContextTxBytes(txBytes)
 
+	f.SetBasicGasMeter(gasLimit)
+
 	// Transfer the fee to the fee collector.
 	// This simulates the ante handler DeductFees.
 	err = f.BankKeeper.SendCoinsFromAccountToModule(f.Context(), sender, authtypes.FeeCollectorName, fee)
@@ -432,6 +271,7 @@ func (f *Fixture) executeCommitReveal(sender sdk.AccAddress, msg []byte, gasLimi
 	// Execute the message.
 	f.executeCoreContract(sender.String(), msg, sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(1))))
 
+	// Reset to infinite gas meter to prevent out of gas error in other operations.
 	f.SetInfiniteGasMeter()
 }
 

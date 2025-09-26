@@ -15,6 +15,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/core/keeper/testutil"
 	"github.com/sedaprotocol/seda-chain/x/core/types"
+	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 // BenchmarkDataRequestFlow benchmarks core end blockers with 1000 tally programs
@@ -34,16 +35,16 @@ func BenchmarkDataRequestFlow(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
 		for j := 0; j < 1000; j++ {
-			f.ExecuteDataRequestFlow(
-				nil, nil,
-				1, 1, 1, false,
-				testutil.CommitRevealConfig{
-					RequestHeight: 1,
-					RequestMemo:   base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
-					Reveal:        []byte("reveal"),
-					ProxyPubKeys:  proxyPubKeys,
-					GasUsed:       150000000000000000,
-				})
+			dr := testutil.NewTestDRWithRandomPrograms(
+				[]byte("reveal"),
+				base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
+				150000000000000000,
+				0,
+				proxyPubKeys,
+				1,
+				f.Context().BlockTime(),
+			)
+			dr.ExecuteDataRequestFlow(f, 1, 1, false)
 		}
 
 		b.StartTimer()
@@ -58,23 +59,27 @@ func BenchmarkDataRequestFlow(b *testing.B) {
 // of a big tally program (slightly less than 1MB in size).
 func BenchmarkBigTallyPrograms(b *testing.B) {
 	f := testutil.InitFixture(b)
+	f.AddStakers(b, 5)
 
 	params := types.DefaultParams()
 	params.TallyConfig.MaxTalliesPerBlock = 1000
 	f.CoreKeeper.SetParams(f.Context(), params)
 
+	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.BigWasm(), f.Context().BlockTime())
+
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
 		for j := 0; j < 1000; j++ {
-			f.ExecuteDataRequestFlow(
-				nil, testwasms.BigWasm(),
-				1, 1, 1, false,
-				testutil.CommitRevealConfig{
-					RequestHeight: 1,
-					RequestMemo:   base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
-					Reveal:        []byte("reveal"),
-					GasUsed:       150000000000000000,
-				})
+			dr := testutil.NewTestDR(
+				execProgram.Hash, execProgram.Hash,
+				[]byte("reveal"),
+				base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
+				150000000000000000,
+				0,
+				[]string{},
+				1,
+			)
+			dr.ExecuteDataRequestFlow(f, 1, 1, false)
 		}
 
 		b.StartTimer()

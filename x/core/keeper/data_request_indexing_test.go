@@ -19,34 +19,45 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 	// Create test data request
 	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.HTTPHeavyWasm(), f.Context().BlockTime())
 	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm(), f.Context().BlockTime())
-
-	// Post a data request to get it in COMMITTING status
-	postResult := f.PostDataRequest(
+	dr := testutil.NewTestDR(
 		execProgram.Hash,
 		tallyProgram.Hash,
+		[]byte("reveal"),
 		base64.StdEncoding.EncodeToString([]byte("test-input")),
+		150000000000000000,
+		0,
+		[]string{},
 		1,
 	)
 
+	// Post a data request to get it in COMMITTING status
+	dr.PostDataRequest(f)
+
 	// Get the data request
-	dr, err := f.CoreKeeper.GetDataRequest(f.Context(), postResult.DrID)
+	checkDR, err := f.CoreKeeper.GetDataRequest(f.Context(), dr.GetDataRequestID())
 	require.NoError(t, err)
-	require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, dr.Status)
+	require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, checkDR.Status)
 
 	newStatusCommitting := types.DATA_REQUEST_STATUS_COMMITTING
 	newStatusRevealing := types.DATA_REQUEST_STATUS_REVEALING
 	newStatusTallying := types.DATA_REQUEST_STATUS_TALLYING
 
 	t.Run("transition to COMMITTING status (new data request)", func(t *testing.T) {
-		// Create a new data request for this test
-		newPostResult := f.PostDataRequest(
+		dr2 := testutil.NewTestDR(
 			execProgram.Hash,
 			tallyProgram.Hash,
+			[]byte("reveal"),
 			base64.StdEncoding.EncodeToString([]byte("test-input-2")),
+			150000000000000000,
+			0,
+			[]string{},
 			1,
 		)
 
-		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), newPostResult.DrID)
+		// Create a new data request for this test
+		dr2.PostDataRequest(f)
+
+		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), dr2.GetDataRequestID())
 		require.NoError(t, err)
 		require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, newDr.Status)
 
@@ -57,33 +68,37 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 
 	t.Run("transition to REVEALING status from COMMITTING", func(t *testing.T) {
 		// Use the original data request that's in COMMITTING status
-		drCopy := dr
 
 		// This should succeed as the data request is in COMMITTING status
-		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &drCopy, &newStatusRevealing)
+		err = f.CoreKeeper.UpdateDataRequest(f.Context(), &checkDR, &newStatusRevealing)
 		require.NoError(t, err)
-		require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, drCopy.Status)
+		require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, checkDR.Status)
 
 		// Verify the data request was moved from COMMITTING to REVEALING in the index
 		drs, _, _, err := f.CoreKeeper.GetDataRequestsByStatus(f.Context(), types.DATA_REQUEST_STATUS_COMMITTING, 100, nil)
 		require.NoError(t, err)
-		require.NotContains(t, drs, drCopy)
+		require.NotContains(t, drs, checkDR)
 
 		drs, _, _, err = f.CoreKeeper.GetDataRequestsByStatus(f.Context(), types.DATA_REQUEST_STATUS_REVEALING, 100, nil)
 		require.NoError(t, err)
-		require.Contains(t, drs, drCopy)
+		require.Contains(t, drs, checkDR)
 	})
 
 	t.Run("transition to TALLYING status from COMMITTING (timeout case)", func(t *testing.T) {
-		// Create a new data request for this test
-		newPostResult := f.PostDataRequest(
+		dr3 := testutil.NewTestDR(
 			execProgram.Hash,
 			tallyProgram.Hash,
+			[]byte("reveal"),
 			base64.StdEncoding.EncodeToString([]byte("test-input-3")),
+			150000000000000000,
+			0,
+			[]string{},
 			1,
 		)
 
-		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), newPostResult.DrID)
+		dr3.PostDataRequest(f)
+
+		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), dr3.GetDataRequestID())
 		require.NoError(t, err)
 		require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, newDr.Status)
 
@@ -103,15 +118,20 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 	})
 
 	t.Run("transition to TALLYING status from REVEALING", func(t *testing.T) {
-		// Create a new data request and transition it to REVEALING first
-		newPostResult := f.PostDataRequest(
+		dr4 := testutil.NewTestDR(
 			execProgram.Hash,
 			tallyProgram.Hash,
+			[]byte("reveal"),
 			base64.StdEncoding.EncodeToString([]byte("test-input-4")),
+			150000000000000000,
+			0,
+			[]string{},
 			1,
 		)
 
-		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), newPostResult.DrID)
+		dr4.PostDataRequest(f)
+
+		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), dr4.GetDataRequestID())
 		require.NoError(t, err)
 
 		// First transition to REVEALING
@@ -136,14 +156,20 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 
 	t.Run("invalid transition to UNSPECIFIED status", func(t *testing.T) {
 		// Create a new data request for this test
-		newPostResult := f.PostDataRequest(
+		dr5 := testutil.NewTestDR(
 			execProgram.Hash,
 			tallyProgram.Hash,
+			[]byte("reveal"),
 			base64.StdEncoding.EncodeToString([]byte("test-input-5")),
+			150000000000000000,
+			0,
+			[]string{},
 			1,
 		)
 
-		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), newPostResult.DrID)
+		dr5.PostDataRequest(f)
+
+		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), dr5.GetDataRequestID())
 		require.NoError(t, err)
 
 		// This should fail as UNSPECIFIED is not a valid target status
@@ -155,14 +181,19 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 
 	t.Run("invalid status transition from TALLYING to REVEALING", func(t *testing.T) {
 		// Create a new data request and transition it to TALLYING
-		newPostResult := f.PostDataRequest(
+		dr6 := testutil.NewTestDR(
 			execProgram.Hash,
 			tallyProgram.Hash,
-			base64.StdEncoding.EncodeToString([]byte("test-input-7")),
+			[]byte("reveal"),
+			base64.StdEncoding.EncodeToString([]byte("test-input-6")),
+			150000000000000000,
+			0,
+			[]string{},
 			1,
 		)
+		dr6.PostDataRequest(f)
 
-		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), newPostResult.DrID)
+		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), dr6.GetDataRequestID())
 		require.NoError(t, err)
 
 		// Transition to TALLYING
@@ -178,14 +209,19 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 
 	t.Run("invalid status transition from REVEALING to COMMITTING", func(t *testing.T) {
 		// Create a new data request and transition it to REVEALING
-		newPostResult := f.PostDataRequest(
+		dr7 := testutil.NewTestDR(
 			execProgram.Hash,
 			tallyProgram.Hash,
-			base64.StdEncoding.EncodeToString([]byte("test-input-8")),
+			[]byte("reveal"),
+			base64.StdEncoding.EncodeToString([]byte("test-input-7")),
+			150000000000000000,
+			0,
+			[]string{},
 			1,
 		)
+		dr7.PostDataRequest(f)
 
-		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), newPostResult.DrID)
+		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), dr7.GetDataRequestID())
 		require.NoError(t, err)
 
 		// Transition to REVEALING
@@ -201,14 +237,19 @@ func TestUpdateDataRequestIndexing(t *testing.T) {
 
 	t.Run("error when data request is not found", func(t *testing.T) {
 		// Create a new data request for this test
-		newPostResult := f.PostDataRequest(
+		dr8 := testutil.NewTestDR(
 			execProgram.Hash,
 			tallyProgram.Hash,
-			base64.StdEncoding.EncodeToString([]byte("test-input-9")),
+			[]byte("reveal"),
+			base64.StdEncoding.EncodeToString([]byte("test-input-8")),
+			150000000000000000,
+			0,
+			[]string{},
 			1,
 		)
+		dr8.PostDataRequest(f)
 
-		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), newPostResult.DrID)
+		newDr, err := f.CoreKeeper.GetDataRequest(f.Context(), dr8.GetDataRequestID())
 		require.NoError(t, err)
 
 		// Remove the data request
