@@ -90,22 +90,6 @@ service Query {
     option (google.api.http).get = "/seda-chain/core/account_seq/{public_key}";
   }
 
-  // CanExecutorCommit returns whether the executor can commit for the given
-  // data request ID.
-  rpc CanExecutorCommit(QueryCanExecutorCommitRequest)
-      returns (QueryCanExecutorCommitResponse) {
-    option (google.api.http).get =
-        "/seda-chain/core/can_executor_commit/{dr_id}/{public_key}";
-  }
-
-  // CanExecutorReveal returns whether the executor can reveal for the given
-  // data request ID.
-  rpc CanExecutorReveal(QueryCanExecutorRevealRequest)
-      returns (QueryCanExecutorRevealResponse) {
-    option (google.api.http).get =
-        "/seda-chain/core/can_executor_reveal/{dr_id}/{public_key}";
-  }
-
   // IsStakerExecutor returns whether the staker is a executor.
   rpc IsStakerExecutor(QueryIsStakerExecutorRequest)
       returns (QueryIsStakerExecutorResponse) {
@@ -277,34 +261,6 @@ message QueryAccountSeqResponse {
   // account_seq is the account sequence number.
   uint64 account_seq = 1;
 }
-
-// The request message for Query/CanExecutorCommit RPC method.
-message QueryCanExecutorCommitRequest {
-  // dr_id is the hex-encoded ID of the data request.
-  string dr_id = 1;
-  // public_key is the hex-encoded public key of the executor.
-  string public_key = 2;
-  // commitment is the hex-encoded commitment of the executor.
-  string commitment = 3;
-  // proof is the hex-encoded proof for the commitment message.
-  string proof = 4;
-}
-
-// QueryCanExecutorCommitResponse is the response type for the
-// Query/CanExecutorCommit RPC method.
-message QueryCanExecutorCommitResponse { bool can_commit = 1; }
-
-// The request message for Query/CanExecutorReveal RPC method.
-message QueryCanExecutorRevealRequest {
-  // dr_id is the hex-encoded ID of the data request.
-  string dr_id = 1;
-  // public_key is the hex-encoded public key of the executor.
-  string public_key = 2;
-}
-
-// QueryCanExecutorRevealResponse is the response type for the
-// Query/CanExecutorReveal RPC method.
-message QueryCanExecutorRevealResponse { bool can_reveal = 1; }
 
 // The request message for Query/IsStakerExecutor RPC method.
 message QueryIsStakerExecutorRequest {

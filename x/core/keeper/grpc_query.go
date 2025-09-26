@@ -221,64 +221,6 @@ func (q Querier) AccountSeq(c context.Context, req *types.QueryAccountSeqRequest
 	}, nil
 }
 
-func (q Querier) CanExecutorCommit(c context.Context, req *types.QueryCanExecutorCommitRequest) (*types.QueryCanExecutorCommitResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	dataRequest, err := q.GetDataRequest(ctx, req.DrId)
-	if err != nil {
-		return nil, err
-	}
-
-	commitMsg := types.MsgCommit{
-		DrID:      req.DrId,
-		Commit:    req.Commitment,
-		PublicKey: req.PublicKey,
-		Proof:     req.Proof,
-	}
-	commitMsgHash, err := commitMsg.MsgHash(ctx.ChainID(), dataRequest.PostedHeight)
-	if err != nil {
-		return nil, err
-	}
-	proof, err := hex.DecodeString(req.Proof)
-	if err != nil {
-		return nil, err
-	}
-	publicKey, err := hex.DecodeString(req.PublicKey)
-	if err != nil {
-		return nil, err
-	}
-	_, err = vrf.NewK256VRF().Verify(publicKey, proof, commitMsgHash)
-	if err != nil {
-		return nil, types.ErrInvalidCommitProof.Wrapf("%s", err.Error())
-	}
-
-	return &types.QueryCanExecutorCommitResponse{
-		CanCommit: true,
-	}, nil
-}
-
-func (q Querier) CanExecutorReveal(c context.Context, req *types.QueryCanExecutorRevealRequest) (*types.QueryCanExecutorRevealResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	dataRequest, err := q.GetDataRequest(ctx, req.DrId)
-	if err != nil {
-		return nil, err
-	}
-
-	_, hasCommit := dataRequest.GetCommit(req.PublicKey)
-	if !hasCommit {
-		return nil, err
-	}
-
-	if dataRequest.Status != types.DATA_REQUEST_STATUS_REVEALING {
-		return nil, err
-	}
-
-	return &types.QueryCanExecutorRevealResponse{
-		CanReveal: true,
-	}, nil
-}
-
 func (q Querier) IsStakerExecutor(c context.Context, req *types.QueryIsStakerExecutorRequest) (*types.QueryIsStakerExecutorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	isExecutor, err := q.Keeper.IsStakerExecutor(ctx, req.PublicKey)
