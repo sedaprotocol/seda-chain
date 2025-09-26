@@ -15,6 +15,13 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
+func (ta *TestAccount) GetAccountSequence() (*types.QueryAccountSeqResponse, error) {
+	req := &types.QueryAccountSeqRequest{
+		PublicKey: ta.PublicKeyHex(),
+	}
+	return ta.fixture.CoreQuerier.AccountSeq(ta.fixture.Context(), req)
+}
+
 func (ta *TestAccount) Stake(amountSeda int64, memo string) (*types.MsgStakeResponse, error) {
 	bigAmountSeda := math.NewInt(amountSeda)
 	bigAmount := bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))
@@ -25,10 +32,11 @@ func (ta *TestAccount) Stake(amountSeda int64, memo string) (*types.MsgStakeResp
 		Sender:    ta.Address(),
 		PublicKey: ta.PublicKeyHex(),
 		Memo:      memoBase64,
-		Proof:     "",
 		Stake:     stake,
 	}
-	hash, err := msg.MsgHash(ta.fixture.ChainID, ta.GetSequence())
+	seq, err := ta.GetAccountSequence()
+	require.NoError(ta.fixture.tb, err)
+	hash, err := msg.MsgHash(ta.fixture.ChainID, seq.AccountSeq)
 	require.NoError(ta.fixture.tb, err)
 	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), hash)
 	require.NoError(ta.fixture.tb, err)
@@ -42,7 +50,9 @@ func (ta *TestAccount) Unstake() (*types.MsgUnstakeResponse, error) {
 		Sender:    ta.Address(),
 		PublicKey: ta.PublicKeyHex(),
 	}
-	hash, err := msg.MsgHash(ta.fixture.ChainID, ta.GetSequence())
+	seq, err := ta.GetAccountSequence()
+	require.NoError(ta.fixture.tb, err)
+	hash, err := msg.MsgHash(ta.fixture.ChainID, seq.AccountSeq)
 	require.NoError(ta.fixture.tb, err)
 	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), hash)
 	require.NoError(ta.fixture.tb, err)
@@ -63,7 +73,9 @@ func (ta *TestAccount) Withdraw(to *TestAccount) (*types.MsgWithdrawResponse, er
 		msg.WithdrawAddress = ta.Address()
 	}
 
-	hash, err := msg.MsgHash(ta.fixture.ChainID, ta.GetSequence())
+	seq, err := ta.GetAccountSequence()
+	require.NoError(ta.fixture.tb, err)
+	hash, err := msg.MsgHash(ta.fixture.ChainID, seq.AccountSeq)
 	require.NoError(ta.fixture.tb, err)
 	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), hash)
 	require.NoError(ta.fixture.tb, err)
