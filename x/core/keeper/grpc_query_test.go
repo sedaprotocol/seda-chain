@@ -40,39 +40,35 @@ func TestGetDataRequestsByStatus(t *testing.T) {
 			require.True(t, tt.numPosts >= tt.numCommits)
 			require.True(t, tt.numCommits >= tt.numReveals)
 
-			config := testutil.CommitRevealConfig{
-				RequestHeight: 1,
-				RequestMemo:   "",
-				Reveal:        []byte("reveal"),
-				ProxyPubKeys:  []string{},
-				GasUsed:       150000000000000000,
-			}
-
 			// Post and check
-			postResults := make([]testutil.PostDataRequestResponse, tt.numPosts)
+			testDRs := make([]testutil.TestDR, tt.numPosts)
 			for i := uint64(0); i < tt.numPosts; i++ {
-				postResults[i] = f.PostDataRequest(
+				testDRs[i] = testutil.NewTestDR(
 					execProgram.Hash, tallyProgram.Hash,
+					[]byte("reveal"),
 					base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
+					150000000000000000,
+					0,
+					[]string{},
 					1,
 				)
+				testDRs[i].PostDataRequest(f)
 			}
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_COMMITTING, tt.numPosts, fetchLimit)
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_REVEALING, 0, fetchLimit)
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_TALLYING, 0, fetchLimit)
 
 			// Commit and check
-			revealMsgs := make([][][]byte, tt.numCommits)
-			for i, postRes := range postResults[:tt.numCommits] {
-				revealMsgs[i] = f.CommitDataRequest(f.Stakers[:1], postRes.Height, postRes.DrID, config)
+			for i := range testDRs[:tt.numCommits] {
+				testDRs[i].CommitDataRequest(f, 1)
 			}
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_COMMITTING, tt.numPosts-tt.numCommits, fetchLimit)
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_REVEALING, tt.numCommits, fetchLimit)
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_TALLYING, 0, fetchLimit)
 
 			// Reveal and check
-			for _, revealMsg := range revealMsgs[:tt.numReveals] {
-				f.ExecuteReveals(f.Stakers[:1], revealMsg, config)
+			for _, testDR := range testDRs[:tt.numReveals] {
+				testDR.ExecuteReveals(f, 1)
 			}
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_COMMITTING, tt.numPosts-tt.numCommits, fetchLimit)
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_REVEALING, tt.numCommits-tt.numReveals, fetchLimit)

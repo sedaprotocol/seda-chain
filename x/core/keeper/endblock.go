@@ -17,11 +17,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
-const (
-	// MaxDataRequestsPerQuery is the maximum number of data requests that will be retrieved in a single query.
-	MaxDataRequestsPerQuery = uint32(50)
-)
-
 func (k Keeper) EndBlock(ctx sdk.Context) error {
 	// TODO Memory considerations (Check old queryContract with params.MaxTalliesPerBlock)
 	err := k.ExpireDataRequests(ctx)

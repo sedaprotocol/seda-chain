@@ -46,15 +46,17 @@ func TestExportImport(t *testing.T) {
 			numReveals = rf
 		}
 
-		drID := f.ExecuteDataRequestFlow(
-			nil, nil,
-			rf, numCommits, numReveals, false,
-			testutil.CommitRevealConfig{
-				RequestHeight: 1,
-				RequestMemo:   base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
-				Reveal:        []byte("reveal"),
-				GasUsed:       150000000000000000,
-			})
+		dr := testutil.NewTestDRWithRandomPrograms(
+			[]byte("reveal"),
+			base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
+			150000000000000000,
+			0,
+			[]string{},
+			rf,
+			f.Context().BlockTime(),
+		)
+
+		drID := dr.ExecuteDataRequestFlow(f, numCommits, numReveals, false)
 
 		drIDs[j] = drID
 	}

@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 	"github.com/sedaprotocol/seda-chain/x/core/keeper/testutil"
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -40,6 +41,60 @@ func TestEndBlock(t *testing.T) {
 			timeout:           false,
 			expExitCode:       0,
 		},
+		{
+			name:              "full 5 commit-reveals",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo1")),
+			replicationFactor: 5,
+			numCommits:        5,
+			numReveals:        5,
+			timeout:           false,
+			expExitCode:       0,
+		},
+		{
+			name:              "commit timeout",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo2")),
+			replicationFactor: 2,
+			numCommits:        0,
+			numReveals:        0,
+			timeout:           true,
+			expExitCode:       types.TallyExitCodeNotEnoughCommits,
+		},
+		{
+			name:              "commit timeout with 1 commit",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo3")),
+			replicationFactor: 2,
+			numCommits:        1,
+			numReveals:        0,
+			timeout:           true,
+			expExitCode:       types.TallyExitCodeNotEnoughCommits,
+		},
+		{
+			name:              "commit timeout with 2 commits",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo4")),
+			replicationFactor: 2,
+			numCommits:        1,
+			numReveals:        0,
+			timeout:           true,
+			expExitCode:       types.TallyExitCodeNotEnoughCommits,
+		},
+		{
+			name:              "reveal timeout with no reveals",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo5")),
+			replicationFactor: 2,
+			numCommits:        2,
+			numReveals:        0,
+			timeout:           true,
+			expExitCode:       types.TallyExitCodeFilterError,
+		},
+		{
+			name:              "reveal timeout with 2 reveals",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo6")),
+			replicationFactor: 3,
+			numCommits:        3,
+			numReveals:        2,
+			timeout:           true,
+			expExitCode:       0,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -47,61 +102,51 @@ func TestEndBlock(t *testing.T) {
 			err := f.SetDataProxyConfig(proxyPubKeys[0], "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f", sdk.NewCoin(testutil.BondDenom, math.NewInt(1000000000000000000)))
 			require.NoError(t, err)
 
-			drID := f.ExecuteDataRequestFlow(
-				nil, nil,
-				tt.replicationFactor, tt.numCommits, tt.numReveals, tt.timeout,
-				testutil.CommitRevealConfig{
-					RequestHeight: 1,
-					RequestMemo:   tt.memo,
-					Reveal:        []byte("reveal"),
-					ProxyPubKeys:  proxyPubKeys,
-					GasUsed:       150000000000000000,
-				})
+			dr := testutil.NewTestDRWithRandomPrograms(
+				[]byte("reveal"),   // reveal
+				tt.memo,            // memo
+				150000000000000000, // gas used
+				0,                  // exit code
+				proxyPubKeys,
+				tt.replicationFactor,
+				f.Context().BlockTime(),
+			)
+
+			drID := dr.ExecuteDataRequestFlow(f, tt.numCommits, tt.numReveals, tt.timeout)
 
 			// Data request should be in the tallying status.
-			dr, err := f.CoreKeeper.GetDataRequest(f.Context(), drID)
+			drCheck, err := f.CoreKeeper.GetDataRequest(f.Context(), drID)
 			require.NoError(t, err)
-			require.Equal(t, types.DATA_REQUEST_STATUS_TALLYING, dr.Status)
-			for executor := range dr.Reveals {
+
+			if tt.timeout {
+				if tt.numCommits >= tt.replicationFactor {
+					require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, drCheck.Status)
+				} else {
+					require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, drCheck.Status)
+				}
+			} else {
+				require.Equal(t, types.DATA_REQUEST_STATUS_TALLYING, drCheck.Status)
+			}
+
+			for executor := range drCheck.Reveals {
 				_, err := f.CoreKeeper.GetRevealBody(f.Context(), drID, executor)
 				require.NoError(t, err)
 			}
-
-			// TODO re-activate more detailed checks
-			// beforeBalance := f.bankKeeper.GetBalance(f.Context(), f.stakers[0].address, bondDenom)
-			// posterBeforeBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
 
 			err = f.CoreKeeper.EndBlock(f.Context())
 			require.NoError(t, err)
 
 			// Data request should have been removed from the store.
-			dr, err = f.CoreKeeper.GetDataRequest(f.Context(), drID)
-			t.Log("dr after endblock", dr, err)
+			drCheck, err = f.CoreKeeper.GetDataRequest(f.Context(), drID)
 			require.Error(t, err)
-			for executor := range dr.Reveals {
+			for executor := range drCheck.Reveals {
 				_, err := f.CoreKeeper.GetRevealBody(f.Context(), drID, executor)
 				require.Error(t, err)
 			}
 
-			// // TODO query get_staker pending_withdrawal and check diff
-			// // Verify the staker did not pay for the transactions
-			// afterBalance := f.bankKeeper.GetBalance(f.Context(), f.stakers[0].address, bondDenom)
-			// diff := afterBalance.Sub(beforeBalance)
-			// require.Equal(t, "0aseda", diff.String())
-
-			// // Verify the poster paid for execution
-			// afterPostBalance := f.bankKeeper.GetBalance(f.Context(), f.deployer, bondDenom)
-			// diff = afterPostBalance.Sub(posterBeforeBalance)
-			// require.NotEqual(t, "0aseda", diff.String(), "Poster should have paid for execution")
-
-			// dataResult, err := f.batchingKeeper.GetLatestDataResult(f.Context(), drID)
-			// require.NoError(t, err)
-			// // TODO map oracle program to exit code
-			// // require.Equal(t, tt.expExitCode, dataResult.ExitCode)
-
-			// dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
-			// require.NoError(t, err)
-			// require.Contains(t, dataResults, *dataResult)
+			dataResult, err := f.BatchingKeeper.GetLatestDataResult(f.Context(), drID)
+			require.NoError(t, err)
+			require.Equal(t, tt.expExitCode, dataResult.ExitCode)
 		})
 	}
 }
@@ -146,24 +191,22 @@ func TestTxFeeRefund(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initialBalance := f.BankKeeper.GetBalance(f.Context(), f.Stakers[0].Address, testutil.BondDenom)
 
-			config := testutil.CommitRevealConfig{
-				RequestHeight:  1,
-				RequestMemo:    "",
-				Reveal:         []byte("reveal"),
-				ProxyPubKeys:   []string{},
-				GasUsed:        150000000000000000,
-				CommitGasLimit: tt.CommitGasLimit,
-				RevealGasLimit: tt.RevealGasLimit,
-			}
-
-			res := f.PostDataRequest(
-				execProgram.Hash, tallyProgram.Hash,
-				base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
-				1,
+			dr := testutil.NewTestDR(
+				execProgram.Hash,
+				tallyProgram.Hash,
+				[]byte("reveal"), // reveal
+				base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))), // memo
+				150000000000000000, // gas used
+				0,                  // exit code
+				[]string{},         // proxy pub keys
+				1,                  // replication factor
 			)
+			dr.SetCommitRevealGasLimits(tt.CommitGasLimit, tt.RevealGasLimit)
+
+			dr.PostDataRequest(f)
 
 			// Commit and check balance
-			revealMsgs := f.CommitDataRequest(f.Stakers[:1], res.Height, res.DrID, config)
+			dr.CommitDataRequest(f, 1)
 
 			afterCommitBalance := f.BankKeeper.GetBalance(f.Context(), f.Stakers[0].Address, testutil.BondDenom)
 			diff := initialBalance.Sub(afterCommitBalance)
@@ -175,7 +218,7 @@ func TestTxFeeRefund(t *testing.T) {
 			}
 
 			// Reveal and check balance
-			f.ExecuteReveals(f.Stakers[:1], revealMsgs, config)
+			dr.ExecuteReveals(f, 1)
 
 			afterRevealBalance := f.BankKeeper.GetBalance(f.Context(), f.Stakers[0].Address, testutil.BondDenom)
 			diff = afterCommitBalance.Sub(afterRevealBalance)
@@ -187,4 +230,232 @@ func TestTxFeeRefund(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEndBlock_NoTallyReadyDataRequests(t *testing.T) {
+	f := testutil.InitFixture(t)
+	err := f.CoreKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+	require.NotContains(t, f.LogBuf.String(), "ERR")
+}
+
+func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
+	f := testutil.InitFixture(t)
+	f.AddStakers(t, 1)
+
+	// Set max result size to 1 and verify that the data request fails
+	params := types.DefaultParams()
+	params.TallyConfig.MaxResultSize = 1
+	msg := &types.MsgUpdateParams{
+		Authority: f.CoreKeeper.GetAuthority(),
+		Params:    params,
+	}
+
+	_, err := f.CoreMsgServer.UpdateParams(f.Context(), msg)
+	require.NoError(t, err)
+
+	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm(), f.Context().BlockTime())
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm2(), f.Context().BlockTime())
+	dr := testutil.NewTestDR(
+		execProgram.Hash, tallyProgram.Hash,
+		[]byte("reveal"),
+		base64.StdEncoding.EncodeToString([]byte("memo")),
+		150000000000000000, // gas used
+		0,                  // exit code
+		[]string{},         // proxy pub keys
+		1,                  // replication factor
+	)
+
+	drID := dr.ExecuteDataRequestFlow(f, 1, 1, false)
+
+	err = f.CoreKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	dataResult, err := f.BatchingKeeper.GetLatestDataResult(f.Context(), drID)
+	require.NoError(t, err)
+	require.NotEqual(t, uint32(0), dataResult.ExitCode)
+	require.Contains(t, string(dataResult.Result), "Result larger than 1bytes")
+
+	dataResults, err := f.BatchingKeeper.GetDataResults(f.Context(), false)
+	require.NoError(t, err)
+	require.Contains(t, dataResults, *dataResult)
+
+	// Ensure the new DR gets a unique ID
+	f.AddBlock()
+
+	// Set max result size to 1024 and verify that the data request succeeds
+	params.TallyConfig.MaxResultSize = 1024
+	msg = &types.MsgUpdateParams{
+		Authority: f.CoreKeeper.GetAuthority(),
+		Params:    params,
+	}
+
+	_, err = f.CoreMsgServer.UpdateParams(f.Context(), msg)
+	require.NoError(t, err)
+
+	drID = dr.ExecuteDataRequestFlow(f, 1, 1, false)
+
+	err = f.CoreKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	dataResultAfter, err := f.BatchingKeeper.GetLatestDataResult(f.Context(), drID)
+	require.NoError(t, err)
+	require.Equal(t, uint32(0), dataResultAfter.ExitCode)
+	require.Contains(t, string(dataResultAfter.Result), "VM_MODE=tally")
+
+	dataResultsAfter, err := f.BatchingKeeper.GetDataResults(f.Context(), false)
+	require.NoError(t, err)
+	require.Contains(t, dataResultsAfter, *dataResultAfter)
+}
+
+// TestTallyTestItems executes the 100 randomly selected tally programs and
+// verifies their results in the batching module store.
+func TestTallyTestItems(t *testing.T) {
+	f := testutil.InitFixture(t)
+	f.AddStakers(t, 1)
+
+	numRequests := 100
+	drIDs := make([]string, numRequests)
+	testItems := make([]testwasms.TallyTestItem, numRequests)
+	for i := range numRequests {
+		randIndex := rand.Intn(len(testwasms.TestWasms))
+		execProgram := wasmstoragetypes.NewOracleProgram(testwasms.TestWasms[randIndex], f.Context().BlockTime())
+
+		randIndex = rand.Intn(len(testwasms.TallyTestItems))
+		testItem := testwasms.TallyTestItems[randIndex]
+		tallyProgram := wasmstoragetypes.NewOracleProgram(testItem.TallyProgram, f.Context().BlockTime())
+
+		dr := testutil.NewTestDR(
+			execProgram.Hash, tallyProgram.Hash,
+			testItem.Reveal,
+			base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d", i))), // memo
+			testItem.GasUsed,
+			0,
+			[]string{},
+			1,
+		)
+		drIDs[i] = dr.ExecuteDataRequestFlow(f, 1, 1, false)
+		testItems[i] = testItem
+	}
+
+	err := f.CoreKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	// Check the batching module store for the data results.
+	dataResults, err := f.BatchingKeeper.GetDataResults(f.Context(), false)
+	require.NoError(t, err)
+	require.Equal(t, numRequests, len(dataResults))
+
+	for i, drID := range drIDs {
+		dataResult, err := f.BatchingKeeper.GetLatestDataResult(f.Context(), drID)
+		require.NoError(t, err)
+
+		require.Equal(t, 64, len(dataResult.Id))
+		require.Equal(t, uint64(f.Context().BlockHeight()), dataResult.DrBlockHeight)
+		require.Equal(t, uint64(f.Context().BlockHeight()), dataResult.BlockHeight)
+		require.Equal(t, uint64(f.Context().BlockHeader().Time.Unix()), dataResult.BlockTimestamp)
+
+		require.Equal(t, testItems[i].ExpectedResult, dataResult.Result)
+		require.Equal(t, testItems[i].ExpectedExitCode, dataResult.ExitCode)
+		// TODO Revive
+		// require.Equal(t, testItems[i].ExpectedGasUsed.String(), dataResult.GasUsed.String())
+
+		require.Contains(t, dataResults, *dataResult)
+	}
+}
+
+func TestEndBlock_PausedCore(t *testing.T) {
+	f := testutil.InitFixture(t)
+	f.AddStakers(t, 5)
+	zeroHash := make([]byte, 32)
+
+	// When the module is paused the DR poster should get a full refund and end up with the same balance as before posting
+	beforeBalance := f.BankKeeper.GetBalance(f.Context(), f.Creator.AccAddress(), testutil.BondDenom)
+	t.Log("Poster balance before posting:", beforeBalance, f.Creator.Address())
+
+	noCommitsDR := testutil.NewTestDR(
+		zeroHash, zeroHash,
+		[]byte("sike"),
+		base64.StdEncoding.EncodeToString([]byte("noCommits")),
+		150000000000000000,
+		0,
+		[]string{},
+		1,
+	)
+	noCommitsDR.PostDataRequest(f)
+
+	noRevealsDR := testutil.NewTestDR(
+		zeroHash, zeroHash,
+		[]byte("sike"),
+		base64.StdEncoding.EncodeToString([]byte("noReveals")),
+		150000000000000000,
+		0,
+		[]string{},
+		1,
+	)
+	noRevealsDR.PostDataRequest(f)
+	noRevealsDR.CommitDataRequest(f, 1)
+
+	resolvedDR := testutil.NewTestDR(
+		zeroHash, zeroHash,
+		[]byte("sike"),
+		base64.StdEncoding.EncodeToString([]byte("resolved")),
+		150000000000000000,
+		0,
+		[]string{},
+		1,
+	)
+	resolvedDR.PostDataRequest(f)
+	resolvedDR.CommitDataRequest(f, 1)
+	resolvedDR.ExecuteReveals(f, 1)
+
+	afterPostBalance := f.BankKeeper.GetBalance(f.Context(), f.Creator.AccAddress(), testutil.BondDenom)
+	require.True(t, afterPostBalance.IsLT(beforeBalance), "Poster should have escrowed funds")
+
+	f.Creator.Pause()
+	params, err := f.CoreKeeper.GetParams(f.Context())
+	require.NoError(t, err)
+
+	defaultCommitTimeoutBlocks := params.GetDataRequestConfig().CommitTimeoutInBlocks
+	defaultRevealTimeoutBlocks := params.GetDataRequestConfig().RevealTimeoutInBlocks
+	var noRevealsResult *batchingtypes.DataResult
+
+	// Ensure the DR without commitments and the DR without reveals are timed out
+	for i := range defaultCommitTimeoutBlocks {
+		f.AddBlock()
+
+		// DRs in the reveal stage time out before DRs in the commit stage
+		if i == defaultRevealTimeoutBlocks-1 {
+			err = f.CoreKeeper.EndBlock(f.Context())
+			require.NoError(t, err)
+			require.NotContains(t, f.LogBuf.String(), "ERR")
+
+			noRevealsResult, err = f.BatchingKeeper.GetLatestDataResult(f.Context(), noRevealsDR.GetDataRequestID())
+			require.NoError(t, err)
+			require.Equal(t, uint32(types.TallyExitCodeContractPaused), noRevealsResult.ExitCode)
+
+			resolvedResult, err := f.BatchingKeeper.GetLatestDataResult(f.Context(), resolvedDR.GetDataRequestID())
+			require.NoError(t, err)
+			require.Equal(t, uint32(types.TallyExitCodeContractPaused), resolvedResult.ExitCode)
+		}
+	}
+
+	err = f.CoreKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+	require.NotContains(t, f.LogBuf.String(), "ERR")
+
+	noCommitsResult, err := f.BatchingKeeper.GetLatestDataResult(f.Context(), noCommitsDR.GetDataRequestID())
+	require.NoError(t, err)
+	require.NotEqual(t, "", noCommitsResult.Id, "Result ID should not be empty")
+	require.Equal(t, uint32(types.TallyExitCodeContractPaused), noCommitsResult.ExitCode)
+
+	// Ensure the DR without reveals was removed from the module and not processed again
+	noRevealsResultAfterTimeout, err := f.BatchingKeeper.GetLatestDataResult(f.Context(), noRevealsDR.GetDataRequestID())
+	require.NoError(t, err)
+	require.Equal(t, int(noRevealsResult.BlockHeight), int(noRevealsResultAfterTimeout.BlockHeight), "Already resolved DR was processed again")
+
+	// Ensure the poster got a full refund for all the posted DRs.
+	afterProcessingBalance := f.BankKeeper.GetBalance(f.Context(), f.Creator.AccAddress(), testutil.BondDenom)
+	diff := afterProcessingBalance.Sub(beforeBalance)
+	require.Equal(t, "0aseda", diff.String())
 }
