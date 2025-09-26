@@ -13,7 +13,6 @@ type TestAccount struct {
 	addr       sdk.AccAddress
 	signingKey secp256k1.PrivKey
 	fixture    *Fixture
-	Sequence   uint64
 }
 
 func (ta *TestAccount) Name() string {
@@ -30,11 +29,4 @@ func (ta *TestAccount) AccAddress() sdk.AccAddress {
 
 func (ta *TestAccount) PublicKeyHex() string {
 	return hex.EncodeToString(ta.signingKey.PubKey().Bytes())
-}
-
-func (ta *TestAccount) GetSequence() uint64 {
-	// TODO: should use the query to get the actual sequence number
-	current := ta.Sequence
-	ta.Sequence++
-	return current
 }

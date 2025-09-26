@@ -158,7 +158,6 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		addr:       authority,
 		signingKey: secp256k1.GenPrivKey(),
 		fixture:    nil,
-		Sequence:   0,
 	}
 
 	maccPerms := map[string][]string{
@@ -441,7 +440,6 @@ func (f *Fixture) CreateTestAccount(name string, initialBalanceSeda int64) TestA
 		addr:       addr,
 		signingKey: secp256k1.GenPrivKey(),
 		fixture:    f,
-		Sequence:   0,
 	}
 	bigAmountSeda := math.NewInt(initialBalanceSeda)
 	bigAmount := bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))
