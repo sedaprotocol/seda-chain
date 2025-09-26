@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	"cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/sedaprotocol/seda-chain/x/core/keeper/testutil"
 	"github.com/sedaprotocol/seda-chain/x/core/types"
@@ -55,21 +56,35 @@ func TestAddToAllowlistWorks(t *testing.T) {
 	_, err := f.Creator.AddToAllowlist(alice.PublicKeyHex())
 	require.NoError(t, err)
 
-	// _, err = alice.Stake(10, "")
-	// t.Log("stake err", err)
-	// require.NoError(t, err)
+	// alice can now stake
+	_, err = alice.Stake(10, "")
+	t.Log("stake err", err)
+	require.NoError(t, err)
 
-	// TODO: not yet implemented
-	// _, err = alice.Unstake()
-	// require.NoError(t, err)
-	// _, err = alice.Withdraw()
-	// require.NoError(t, err)
+	// alice can unstake and withdraw
+	_, err = alice.Unstake()
+	require.NoError(t, err)
+	_, err = alice.Withdraw(&alice)
+	require.NoError(t, err)
 
-	// _, err = f.Creator.RemoveFromAllowlist(alice.PublicKeyHex())
-	// require.NoError(t, err)
+	// owner can remove from allowlist
+	_, err = f.Creator.RemoveFromAllowlist(alice.PublicKeyHex())
+	require.NoError(t, err)
 
-	// _, err = alice.Stake(10, "t")
-	// require.ErrorIs(t, err, types.ErrNotAllowlisted)
+	// alice can no longer stake
+	_, err = alice.Stake(10, "t")
+	require.ErrorIs(t, err, types.ErrNotAllowlisted)
+
+	// update the config to disable allowlist
+	_, err = f.Creator.SetStakingConfig(types.StakingConfig{
+		AllowlistEnabled: false,
+		MinimumStake:     math.NewInt(10),
+	})
+	require.NoError(t, err)
+
+	// alice can now stake
+	_, err = alice.Stake(10, "")
+	require.NoError(t, err)
 }
 
 func TestGetAllowlist(t *testing.T) {
@@ -109,41 +124,27 @@ func TestGetAllowlist(t *testing.T) {
 
 // TODO: test to update config to disable allowlist test
 
-func TestPauseBasics(t *testing.T) {
-	f := testutil.InitFixture(t, false, nil)
-
-	// initially not paused
-	paused, err := f.CoreKeeper.IsPaused(f.Context())
-	require.NoError(t, err)
-	require.False(t, paused)
-
-	// pause the contract
-	_, err = f.Creator.Pause()
-	require.NoError(t, err)
-
-	// cannot pause again
-	_, err = f.Creator.Pause()
-	require.Error(t, err)
-
-	// unpause the contract
-	_, err = f.Creator.Unpause()
-	require.NoError(t, err)
-
-	// cannot unpause again
-	_, err = f.Creator.Unpause()
-	require.Error(t, err)
-}
-
-func TestOnlyOwnerCanPause(t *testing.T) {
+func TestRemoveFromAllowlistUnstakesUser(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 
-	// non-owner cannot pause
-	_, err := alice.Pause()
-	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
+	// owner can add to allowlist
+	_, err := f.Creator.AddToAllowlist(alice.PublicKeyHex())
+	require.NoError(t, err)
 
-	// non-owner cannot unpause
-	_, err = alice.Unpause()
-	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
+	// alice can now stake
+	_, err = alice.Stake(10, "")
+	t.Log("stake err", err)
+	require.NoError(t, err)
+
+	// owner can remove from allowlist
+	_, err = f.Creator.RemoveFromAllowlist(alice.PublicKeyHex())
+	require.NoError(t, err)
+
+	// alice should now be unstaked
+	stakeResp, err := alice.GetStaker()
+	require.NoError(t, err)
+	require.Equal(t, math.ZeroInt(), stakeResp.Staker.Staked)
+	require.Equal(t, math.NewInt(10), stakeResp.Staker.PendingWithdrawal)
 }

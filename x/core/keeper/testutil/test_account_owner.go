@@ -47,3 +47,13 @@ func (ta *TestAccount) Unpause() (*types.MsgUnpauseResponse, error) {
 	}
 	return ta.fixture.CoreMsgServer.Unpause(ta.fixture.Context(), msg)
 }
+
+func (ta *TestAccount) SetStakingConfig(config types.StakingConfig) (*types.MsgUpdateParamsResponse, error) {
+	msg := &types.MsgUpdateParams{
+		Authority: ta.Address(),
+		Params: types.Params{
+			StakingConfig: &config,
+		},
+	}
+	return ta.fixture.CoreMsgServer.UpdateParams(ta.fixture.Context(), msg)
+}

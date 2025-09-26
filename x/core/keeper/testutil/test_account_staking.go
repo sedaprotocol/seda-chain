@@ -22,6 +22,12 @@ func (ta *TestAccount) GetAccountSequence() (*types.QueryAccountSeqResponse, err
 	return ta.fixture.CoreQuerier.AccountSeq(ta.fixture.Context(), req)
 }
 
+func (ta *TestAccount) GetStaker() (*types.QueryStakerResponse, error) {
+	return ta.fixture.CoreQuerier.Staker(ta.fixture.Context(), &types.QueryStakerRequest{
+		PublicKey: ta.PublicKeyHex(),
+	})
+}
+
 func (ta *TestAccount) Stake(amountSeda int64, memo string) (*types.MsgStakeResponse, error) {
 	bigAmountSeda := math.NewInt(amountSeda)
 	bigAmount := bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))

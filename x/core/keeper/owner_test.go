@@ -5,6 +5,7 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/sedaprotocol/seda-chain/x/core/keeper/testutil"
+	"github.com/sedaprotocol/seda-chain/x/core/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -89,4 +90,62 @@ func TestNonPendingOwnerCannotAcceptOwnership(t *testing.T) {
 	pendingResp, err := newOwner.GetPendingOwner()
 	require.NoError(t, err)
 	require.Equal(t, newOwner.Address(), pendingResp.PendingOwner)
+}
+
+// TODO: Failing bc owner != authority... need to fix
+func TestNewOwnerCanChangeParams(t *testing.T) {
+	f := testutil.InitFixture(t)
+
+	newOwner := f.CreateTestAccount("newowner", 10_000)
+
+	// Owner transfers ownership to newOwner
+	_, err := f.Creator.TransferOwnership(newOwner.Address())
+	require.NoError(t, err)
+
+	// new Owner accepts ownership
+	_, err = newOwner.AcceptOwnership()
+	require.NoError(t, err)
+
+	// new Owner can change params
+	_, err = newOwner.SetStakingConfig(*types.DefaultParams().StakingConfig)
+	require.NoError(t, err)
+}
+
+func TestPauseBasics(t *testing.T) {
+	f := testutil.InitFixture(t)
+
+	// initially not paused
+	paused, err := f.CoreKeeper.IsPaused(f.Context())
+	require.NoError(t, err)
+	require.False(t, paused)
+
+	// pause the contract
+	_, err = f.Creator.Pause()
+	require.NoError(t, err)
+
+	// cannot pause again
+	_, err = f.Creator.Pause()
+	require.Error(t, err)
+
+	// unpause the contract
+	_, err = f.Creator.Unpause()
+	require.NoError(t, err)
+
+	// cannot unpause again
+	_, err = f.Creator.Unpause()
+	require.Error(t, err)
+}
+
+func TestOnlyOwnerCanPause(t *testing.T) {
+	f := testutil.InitFixture(t)
+
+	alice := f.CreateTestAccount("alice", 10_000)
+
+	// non-owner cannot pause
+	_, err := alice.Pause()
+	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
+
+	// non-owner cannot unpause
+	_, err = alice.Unpause()
+	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
 }
