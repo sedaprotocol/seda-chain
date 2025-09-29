@@ -20,7 +20,7 @@ import (
 )
 
 func TestEndBlock(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 	f.AddStakers(t, 5)
 
 	tests := []struct {
@@ -152,7 +152,7 @@ func TestEndBlock(t *testing.T) {
 }
 
 func TestTxFeeRefund(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 	f.AddStakers(t, 5)
 
 	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.HTTPHeavyWasm(), f.Context().BlockTime())
@@ -233,14 +233,14 @@ func TestTxFeeRefund(t *testing.T) {
 }
 
 func TestEndBlock_NoTallyReadyDataRequests(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 	err := f.CoreKeeper.EndBlock(f.Context())
 	require.NoError(t, err)
 	require.NotContains(t, f.LogBuf.String(), "ERR")
 }
 
 func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 	f.AddStakers(t, 1)
 
 	// Set max result size to 1 and verify that the data request fails
@@ -311,7 +311,7 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 // TestTallyTestItems executes the 100 randomly selected tally programs and
 // verifies their results in the batching module store.
 func TestTallyTestItems(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 	f.AddStakers(t, 1)
 
 	numRequests := 100
@@ -365,7 +365,7 @@ func TestTallyTestItems(t *testing.T) {
 }
 
 func TestEndBlock_PausedCore(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 	f.AddStakers(t, 5)
 	zeroHash := make([]byte, 32)
 

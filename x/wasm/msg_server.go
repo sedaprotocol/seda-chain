@@ -25,8 +25,6 @@ func NewMsgServerImpl(sdkMsgServer types.MsgServer, keeper *Keeper) types.MsgSer
 	return ms
 }
 
-// TODO Override all methods?
-
 // ExecuteContract overrides the default ExecuteContract method.
 func (m msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteContract) (*types.MsgExecuteContractResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

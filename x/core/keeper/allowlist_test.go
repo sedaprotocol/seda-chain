@@ -10,7 +10,7 @@ import (
 )
 
 func TestAddToAllowlistUnauthorized(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 
@@ -19,7 +19,7 @@ func TestAddToAllowlistUnauthorized(t *testing.T) {
 }
 
 func TestOnlyOwnerCanAddToAllowlist(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 	bob := f.CreateTestAccount("bob", 10_000)
@@ -29,7 +29,7 @@ func TestOnlyOwnerCanAddToAllowlist(t *testing.T) {
 }
 
 func TestOnlyOwnerCanRemoveFromAllowlist(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 
@@ -47,7 +47,7 @@ func TestOnlyOwnerCanRemoveFromAllowlist(t *testing.T) {
 }
 
 func TestAddToAllowlistWorks(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 
@@ -73,7 +73,7 @@ func TestAddToAllowlistWorks(t *testing.T) {
 }
 
 func TestGetAllowlist(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	// initially empty and called by owner
 	resp, err := f.Creator.GetAllowlist()
@@ -110,7 +110,7 @@ func TestGetAllowlist(t *testing.T) {
 // TODO: test to update config to disable allowlist test
 
 func TestPauseBasics(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	// initially not paused
 	paused, err := f.CoreKeeper.IsPaused(f.Context())
@@ -135,7 +135,7 @@ func TestPauseBasics(t *testing.T) {
 }
 
 func TestOnlyOwnerCanPause(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 

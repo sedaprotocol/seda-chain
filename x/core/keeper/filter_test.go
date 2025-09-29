@@ -14,7 +14,7 @@ import (
 )
 
 func TestFilter(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	defaultParams := types.DefaultParams()
 	err := f.CoreKeeper.SetParams(f.Context(), defaultParams)
@@ -922,7 +922,7 @@ func TestFilter(t *testing.T) {
 // TestFilterWildcard tests filters with JSON paths containing wildcard expressions.
 
 func TestFilterWildcard(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	defaultParams := types.DefaultParams()
 	err := f.CoreKeeper.SetParams(f.Context(), defaultParams)

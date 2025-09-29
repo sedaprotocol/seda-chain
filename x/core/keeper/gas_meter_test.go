@@ -116,7 +116,7 @@ func TestMeterExecutorGasFallback(t *testing.T) {
 
 // Encountered this scenario on a testnet.
 func TestReducedPayoutWithProxies(t *testing.T) {
-	fixture := testutil.InitFixture(t)
+	fixture := testutil.InitFixture(t, false, nil)
 
 	// Set up data proxies.
 	proxyPubKey1, proxyPubKey2 := "03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec"

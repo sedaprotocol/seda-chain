@@ -11,7 +11,7 @@ import (
 )
 
 func TestStakerIndexing(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	// Create test stakers
 	staker1 := types.Staker{

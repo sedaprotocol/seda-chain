@@ -15,7 +15,7 @@ import (
 )
 
 func TestGetDataRequestsByStatus(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 	f.AddStakers(t, 5)
 
 	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.HTTPHeavyWasm(), f.Context().BlockTime())
@@ -78,7 +78,7 @@ func TestGetDataRequestsByStatus(t *testing.T) {
 }
 
 func TestGetExecutors(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	f.AddStakers(t, 5) // total 5 stakers
 

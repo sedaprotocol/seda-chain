@@ -101,9 +101,14 @@ type Fixture struct {
 	Creator           TestAccount
 	Deployer          TestAccount
 	TestAccounts      map[string]TestAccount
+	noShim            bool
 }
 
-func InitFixture(tb testing.TB) *Fixture {
+// InitFixure sets up a new integration testing fixture.
+// If noShim is true, the Core Contract registry will be set to an empty string,
+// thereby effectively deactivating the shim.
+// If coreContractWasm is provided, it will be used instead of the default Core Contract WASM.
+func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 	tb.Helper()
 
 	tempDir := tb.TempDir()
@@ -343,7 +348,12 @@ func InitFixture(tb testing.TB) *Fixture {
 	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, authority, sdk.NewCoins(sdk.NewCoin(BondDenom, int1e21)))
 	require.NoError(tb, err)
 
-	codeID, _, err := contractKeeper.Create(ctx, authority, testwasms.CoreContractWasm(), nil)
+	var codeID uint64
+	if coreContractWasm != nil {
+		codeID, _, err = contractKeeper.Create(ctx, authority, coreContractWasm, nil)
+	} else {
+		codeID, _, err = contractKeeper.Create(ctx, authority, testwasms.CoreContractWasm(), nil)
+	}
 	require.NoError(tb, err)
 	require.Equal(tb, uint64(1), codeID)
 
@@ -363,7 +373,11 @@ func InitFixture(tb testing.TB) *Fixture {
 	require.NoError(tb, err)
 	require.NotEmpty(tb, coreContractAddr)
 
-	err = wasmStorageKeeper.CoreContractRegistry.Set(ctx, coreContractAddr.String())
+	if noShim {
+		err = wasmStorageKeeper.CoreContractRegistry.Set(ctx, "")
+	} else {
+		err = wasmStorageKeeper.CoreContractRegistry.Set(ctx, coreContractAddr.String())
+	}
 	require.NoError(tb, err)
 
 	_, err = contractKeeper.Execute(
@@ -398,6 +412,7 @@ func InitFixture(tb testing.TB) *Fixture {
 		Router:            router,
 		TestAccounts:      make(map[string]TestAccount),
 		Creator:           creator,
+		noShim:            noShim,
 	}
 	f.Creator.fixture = &f
 	f.Deployer.fixture = &f
