@@ -28,4 +28,5 @@ $mockgen_cmd -source=x/staking/types/expected_keepers.go -package testutil -dest
 $mockgen_cmd -source=app/abci/expected_keepers.go -package testutil -destination=app/abci/testutil/expected_keepers_mock.go
 $mockgen_cmd -source=app/ante.go -package testutil -destination=app/testutil/expected_keepers_mock.go
 $mockgen_cmd -source=app/utils/seda_keys.go -package testutil -destination=app/abci/testutil/seda_keys_mock.go
+$mockgen_cmd -source=app/upgrades/types.go -package testutil -destination=app/upgrades/testutil/types_mock.go
 $mockgen_cmd -source=x/data-proxy/types/expected_keepers.go -package testutil -destination=x/data-proxy/keeper/testutil/expected_keepers_mock.go

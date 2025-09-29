@@ -42,6 +42,14 @@ func RevealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, 
 	}`, drID, drHeight, exitCode, gasUsed, reveal, pks, stakerPubKey, proof))
 }
 
+func DrainDataRequestPoolMsg(targetHeight uint64) []byte {
+	return []byte(fmt.Sprintf(`{
+		"drain_data_request_pool": {
+		  "target_height": %d
+		}
+	}`, targetHeight))
+}
+
 func AddToAllowListMsg(stakerPubKey string) []byte {
 	return []byte(fmt.Sprintf(`{
 		"add_to_allowlist": {

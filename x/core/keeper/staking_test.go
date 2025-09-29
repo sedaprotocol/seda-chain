@@ -8,7 +8,7 @@ import (
 )
 
 func TestStake(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
@@ -20,7 +20,7 @@ func TestStake(t *testing.T) {
 }
 
 func TestStakeWithMemo(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
@@ -32,7 +32,7 @@ func TestStakeWithMemo(t *testing.T) {
 }
 
 func TestUnstake(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
@@ -47,7 +47,7 @@ func TestUnstake(t *testing.T) {
 }
 
 func TestWithdraw(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
@@ -64,7 +64,7 @@ func TestWithdraw(t *testing.T) {
 }
 
 func TestWithdrawRemovesStakerIfNoStake(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
@@ -82,7 +82,7 @@ func TestWithdrawRemovesStakerIfNoStake(t *testing.T) {
 }
 
 func TestCannotStakeIfPaused(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
@@ -93,7 +93,7 @@ func TestCannotStakeIfPaused(t *testing.T) {
 }
 
 func TestCannotUnstakeIfPaused(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
@@ -107,7 +107,7 @@ func TestCannotUnstakeIfPaused(t *testing.T) {
 }
 
 func TestCannotWithdrawIfPaused(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())

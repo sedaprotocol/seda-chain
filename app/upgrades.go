@@ -6,22 +6,24 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/sedaprotocol/seda-chain/app/upgrades"
-	v017 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.7"
-	v018 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.8"
-	v019 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.9"
+	v0_1_7 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.7"
+	v0_1_8 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.8"
+	v0_1_9 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v0.1.9"
 	v1 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v1"
-	v1rc4 "github.com/sedaprotocol/seda-chain/app/upgrades/testnet/v1.0.0-rc.4"
-	v1rc6 "github.com/sedaprotocol/seda-chain/app/upgrades/testnet/v1.0.0-rc.6"
+	v1_1_0 "github.com/sedaprotocol/seda-chain/app/upgrades/mainnet/v1.1.0"
+	v1_rc4 "github.com/sedaprotocol/seda-chain/app/upgrades/testnet/v1.0.0-rc.4"
+	v1_rc6 "github.com/sedaprotocol/seda-chain/app/upgrades/testnet/v1.0.0-rc.6"
 )
 
 // Upgrades is a list of currently supported upgrades.
 var Upgrades = []upgrades.Upgrade{
-	v1rc4.Upgrade,
-	v1rc6.Upgrade,
+	v1_1_0.Upgrade,
+	v1_rc4.Upgrade,
+	v1_rc6.Upgrade,
 	v1.Upgrade,
-	v017.Upgrade,
-	v018.Upgrade,
-	v019.Upgrade,
+	v0_1_7.Upgrade,
+	v0_1_8.Upgrade,
+	v0_1_9.Upgrade,
 }
 
 func (app *App) setupUpgrades() {

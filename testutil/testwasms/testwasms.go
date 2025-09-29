@@ -22,6 +22,9 @@ var (
 	//go:embed core_contract.wasm
 	coreContract []byte
 
+	//go:embed core_contract_upgrade_ready.wasm
+	coreContractUpgradeReadyWasm []byte
+
 	//go:embed sample_tally.wasm
 	sampleTallyWasm []byte
 
@@ -93,8 +96,15 @@ var TestWasms = [][]byte{
 	HelloWorldWasm(),
 }
 
+// v1.0.16 Core Contract with commit/reveal refund tx call removed
 func CoreContractWasm() []byte {
 	return coreContract
+}
+
+// v1.0.16 Core Contract with drain data request pool tx
+// and without commit/reveal refund tx call
+func CoreContractUpgradeReadyWasm() []byte {
+	return coreContractUpgradeReadyWasm
 }
 
 // SampleTallyWasm returns a sample tally wasm binary whose Keccak256

@@ -105,6 +105,14 @@ func (f *Fixture) AddStakers(tb testing.TB, num int) []Staker {
 	return stakers
 }
 
+func (f *Fixture) DrainDataRequestPool(targetHeight uint64) []byte {
+	return f.executeCoreContract(
+		f.Creator.Address(),
+		testutil.DrainDataRequestPoolMsg(targetHeight),
+		sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(500000000000000000))),
+	)
+}
+
 // CheckDataRequestsByStatus checks that the given number of data requests is
 // retrieved by GetDataRequestsByStatus.
 func (f *Fixture) CheckDataRequestsByStatus(tb testing.TB, status types.DataRequestStatus, expectedTotal, fetchLimit uint64) {
@@ -136,7 +144,13 @@ func (f *Fixture) generateStakeProof(tb testing.TB, signKey []byte, base64Memo s
 	msg := types.MsgStake{
 		Memo: base64Memo,
 	}
-	hash, err := msg.MsgHash(f.ChainID, seqNum)
+	var hash []byte
+	var err error
+	if f.noShim {
+		hash, err = msg.LegacyMsgHash(f.CoreContractAddr.String(), f.ChainID, seqNum)
+	} else {
+		hash, err = msg.MsgHash(f.ChainID, seqNum)
+	}
 	require.NoError(tb, err)
 
 	proof, err := vrf.NewK256VRF().Prove(signKey, hash)
@@ -161,8 +175,9 @@ func (f *Fixture) generateCommitProof(signKey []byte, drID, commitment string, d
 	allBytes = append(allBytes, drHeightBytes...)
 	allBytes = append(allBytes, commitmentBytes...)
 	allBytes = append(allBytes, chainIDBytes...)
-	// Legacy format
-	// allBytes = append(allBytes, []byte(f.coreContractAddr.String())...)
+	if f.noShim {
+		allBytes = append(allBytes, []byte(f.CoreContractAddr.String())...)
+	}
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
@@ -191,7 +206,7 @@ func (f *Fixture) createRevealMsg(staker Staker, revealBody types.RevealBody) ([
 	revealBodyHash, err := revealBody.RevealBodyHash()
 	require.NoError(f.tb, err)
 
-	proof := generateRevealProof(f.tb, staker.Key, revealBodyHash, f.ChainID, f.CoreContractAddr.String())
+	proof := f.generateRevealProof(f.tb, staker.Key, revealBodyHash)
 
 	msg := testutil.RevealMsg(
 		revealBody.DrID,
@@ -217,15 +232,15 @@ func (f *Fixture) createRevealMsg(staker Staker, revealBody types.RevealBody) ([
 	return msg, hex.EncodeToString(commitment), proof
 }
 
-func generateRevealProof(tb testing.TB, signKey []byte, revealBodyHash []byte, chainID, _ string) string {
+func (f *Fixture) generateRevealProof(tb testing.TB, signKey []byte, revealBodyHash []byte) string {
 	tb.Helper()
 
 	allBytes := []byte("reveal_data_result")
-
 	allBytes = append(allBytes, revealBodyHash...)
-	allBytes = append(allBytes, []byte(chainID)...)
-	// Legacy format
-	// allBytes = append(allBytes, []byte(coreContractAddr)...)
+	allBytes = append(allBytes, []byte(f.ChainID)...)
+	if f.noShim {
+		allBytes = append(allBytes, []byte(f.CoreContractAddr.String())...)
+	}
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
@@ -290,4 +305,20 @@ func (f *Fixture) executeCoreContract(sender string, msg []byte, funds sdk.Coins
 	require.NoError(f.tb, err, "failed to execute Core Contract msg %s", execMsg.String())
 
 	return result.MsgResponses[0].GetCachedValue().(*wasmtypes.MsgExecuteContractResponse).Data
+}
+
+func (f *Fixture) executeCoreContractShouldErr(sender string, msg []byte, funds sdk.Coins, errMsg string) {
+	execMsg := &wasmtypes.MsgExecuteContract{
+		Sender:   sender,
+		Contract: f.CoreContractAddr.String(),
+		Msg:      msg,
+		Funds:    funds,
+	}
+
+	handler := f.Router.Handler(execMsg)
+	require.NotNil(f.tb, handler)
+
+	_, err := handler(f.Context(), execMsg)
+	require.Error(f.tb, err)
+	require.Contains(f.tb, err.Error(), errMsg)
 }

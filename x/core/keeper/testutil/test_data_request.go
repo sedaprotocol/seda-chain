@@ -1,7 +1,9 @@
 package testutil
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -73,6 +75,18 @@ func NewTestDRWithRandomPrograms(reveal []byte, memo string, gasUsed uint64, exi
 	}
 }
 
+func NewRandomTestDR(f *Fixture, rf int) TestDR {
+	return NewTestDRWithRandomPrograms(
+		[]byte("reveal"),
+		base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
+		150000000000000000,
+		0,
+		[]string{},
+		rf,
+		f.Context().BlockTime(),
+	)
+}
+
 func (dr *TestDR) SetCommitRevealGasLimits(commitGasLimit, revealGasLimit uint64) {
 	dr.CommitGasLimit = commitGasLimit
 	dr.RevealGasLimit = revealGasLimit
@@ -99,6 +113,18 @@ func (dr *TestDR) PostDataRequest(f *Fixture) {
 	dr.postedHeight = res.Height
 }
 
+func (dr *TestDR) PostDataRequestShouldErr(f *Fixture, errMsg string) {
+	amount, ok := math.NewIntFromString("200600000000000000000")
+	require.True(f.tb, ok)
+
+	f.executeCoreContractShouldErr(
+		f.Creator.Address(),
+		testutil.PostDataRequestMsg(dr.ExecProgHash, dr.TallyProgHash, dr.Memo, dr.ReplicationFactor),
+		sdk.NewCoins(sdk.NewCoin(BondDenom, amount)),
+		errMsg,
+	)
+}
+
 // commitDataRequest executes a commit for each of the given stakers and
 // returns a list of corresponding reveal messages.
 func (dr *TestDR) CommitDataRequest(f *Fixture, numCommits int) {
@@ -107,7 +133,7 @@ func (dr *TestDR) CommitDataRequest(f *Fixture, numCommits int) {
 	gasLimit := dr.CommitGasLimit
 	if dr.CommitGasLimit == 0 {
 		// TODO Use gastimation formula
-		gasLimit = 200000
+		gasLimit = 500000
 	}
 
 	drID := dr.postedID
@@ -145,7 +171,7 @@ func (dr *TestDR) ExecuteReveals(f *Fixture, numReveals int) {
 	gasLimit := dr.RevealGasLimit
 	if dr.RevealGasLimit == 0 {
 		// TODO Use gastimation formula
-		gasLimit = 200000
+		gasLimit = 500000
 	}
 
 	for i := 0; i < numReveals; i++ {

@@ -16,7 +16,7 @@ import (
 // Test export and import genesis after simulated data request flows.
 func TestExportImport(t *testing.T) {
 	// Setup with arbitrary data
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 	f.AddStakers(t, 32)
 
 	gs := types.DefaultGenesisState()
@@ -115,7 +115,7 @@ func TestExportImport(t *testing.T) {
 	// Export and import genesis.
 	exportedGenesis := f.CoreKeeper.ExportGenesis(f.Context())
 
-	f2 := testutil.InitFixture(t)
+	f2 := testutil.InitFixture(t, false, nil)
 
 	err = types.ValidateGenesis(exportedGenesis)
 	require.NoError(t, err)

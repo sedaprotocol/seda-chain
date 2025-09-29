@@ -9,7 +9,7 @@ import (
 )
 
 func TestGetOwner(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	someone := f.CreateTestAccount("someone", 10_000)
 
@@ -19,7 +19,7 @@ func TestGetOwner(t *testing.T) {
 }
 
 func TestGetNoPendingOwner(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	someone := f.CreateTestAccount("someone", 10_000)
 
@@ -29,7 +29,7 @@ func TestGetNoPendingOwner(t *testing.T) {
 }
 
 func TestNonOwnerCannotTransferOwnership(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	someone := f.CreateTestAccount("someone", 10_000)
 
@@ -38,7 +38,7 @@ func TestNonOwnerCannotTransferOwnership(t *testing.T) {
 }
 
 func TestTwoStepOwnershipTransfer(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	newOwner := f.CreateTestAccount("newowner", 10_000)
 
@@ -67,7 +67,7 @@ func TestTwoStepOwnershipTransfer(t *testing.T) {
 }
 
 func TestNonPendingOwnerCannotAcceptOwnership(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	newOwner := f.CreateTestAccount("newowner", 10_000)
 	someone := f.CreateTestAccount("someone", 10_000)

@@ -21,7 +21,7 @@ import (
 // BenchmarkDataRequestFlow benchmarks core end blockers with 1000 tally programs
 // randomly selected from test wasm catalog.
 func BenchmarkDataRequestFlow(b *testing.B) {
-	f := testutil.InitFixture(b)
+	f := testutil.InitFixture(b, false, nil)
 	f.AddStakers(b, 5)
 
 	proxyPubKeys := []string{"03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0"}
@@ -58,7 +58,7 @@ func BenchmarkDataRequestFlow(b *testing.B) {
 // BenchmarkBigTallyPrograms benchmarks core end blockers with 1000 executions
 // of a big tally program (slightly less than 1MB in size).
 func BenchmarkBigTallyPrograms(b *testing.B) {
-	f := testutil.InitFixture(b)
+	f := testutil.InitFixture(b, false, nil)
 	f.AddStakers(b, 5)
 
 	params := types.DefaultParams()

@@ -13,7 +13,7 @@ import (
 )
 
 func TestUpdateDataRequestIndexing(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 	f.AddStakers(t, 1)
 
 	// Create test data request

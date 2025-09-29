@@ -21,14 +21,14 @@ import (
 
 const (
 	UpgradeName   = "v1.0.0"
-	tallyStoreKey = "tally"
+	TallyStoreKey = "tally"
 )
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: storetypes.StoreUpgrades{
-		Added:   []string{wasmstoragetypes.StoreKey, batchingtypes.StoreKey, tallyStoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey},
+		Added:   []string{wasmstoragetypes.StoreKey, batchingtypes.StoreKey, TallyStoreKey, dataproxytypes.StoreKey, pubkeytypes.StoreKey},
 		Deleted: []string{},
 	},
 }
