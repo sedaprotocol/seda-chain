@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	"cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/sedaprotocol/seda-chain/x/core/keeper/testutil"
 	"github.com/sedaprotocol/seda-chain/x/core/types"
@@ -92,9 +93,42 @@ func TestNonPendingOwnerCannotAcceptOwnership(t *testing.T) {
 	require.Equal(t, newOwner.Address(), pendingResp.PendingOwner)
 }
 
+func TestOwnerCanChangeParams(t *testing.T) {
+	f := testutil.InitFixture(t, false, nil)
+
+	// Owner can change params
+	stakingConfig := types.DefaultParams().StakingConfig
+	stakingConfig.MinimumStake = math.NewInt(1)
+
+	_, err := f.Creator.SetStakingConfig(*stakingConfig)
+	require.NoError(t, err)
+
+	// Check params were updated
+	paramsResp, err := f.Creator.GetStakingConfig()
+	require.NoError(t, err)
+	require.Equal(t, math.NewInt(1), paramsResp.StakingConfig.MinimumStake)
+}
+
+func TestNonOwnerCannotChangeParams(t *testing.T) {
+	f := testutil.InitFixture(t, false, nil)
+
+	someone := f.CreateTestAccount("someone", 10_000)
+
+	stakingConfig := types.DefaultParams().StakingConfig
+	stakingConfig.MinimumStake = math.NewInt(1)
+
+	_, err := someone.SetStakingConfig(*stakingConfig)
+	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
+
+	// Check params were not updated
+	paramsResp, err := someone.GetStakingConfig()
+	require.NoError(t, err)
+	require.NotEqual(t, math.NewInt(1), paramsResp.StakingConfig.MinimumStake)
+}
+
 // TODO: Failing bc owner != authority... need to fix
 func TestNewOwnerCanChangeParams(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	newOwner := f.CreateTestAccount("newowner", 10_000)
 
@@ -107,12 +141,20 @@ func TestNewOwnerCanChangeParams(t *testing.T) {
 	require.NoError(t, err)
 
 	// new Owner can change params
-	_, err = newOwner.SetStakingConfig(*types.DefaultParams().StakingConfig)
+	stakingConfig := types.DefaultParams().StakingConfig
+	stakingConfig.MinimumStake = math.NewInt(1)
+
+	_, err = newOwner.SetStakingConfig(*stakingConfig)
 	require.NoError(t, err)
+
+	// Check params were updated
+	paramsResp, err := newOwner.GetStakingConfig()
+	require.NoError(t, err)
+	require.Equal(t, math.NewInt(1), paramsResp.StakingConfig.MinimumStake)
 }
 
 func TestPauseBasics(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	// initially not paused
 	paused, err := f.CoreKeeper.IsPaused(f.Context())
@@ -137,7 +179,7 @@ func TestPauseBasics(t *testing.T) {
 }
 
 func TestOnlyOwnerCanPause(t *testing.T) {
-	f := testutil.InitFixture(t)
+	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateTestAccount("alice", 10_000)
 
@@ -148,4 +190,24 @@ func TestOnlyOwnerCanPause(t *testing.T) {
 	// non-owner cannot unpause
 	_, err = alice.Unpause()
 	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
+}
+
+func TestCanStillUpdateParamsIfPaused(t *testing.T) {
+	f := testutil.InitFixture(t, false, nil)
+
+	// pause the contract
+	_, err := f.Creator.Pause()
+	require.NoError(t, err)
+
+	// Owner can change params
+	stakingConfig := types.DefaultParams().StakingConfig
+	stakingConfig.MinimumStake = math.NewInt(1)
+
+	_, err = f.Creator.SetStakingConfig(*stakingConfig)
+	require.NoError(t, err)
+
+	// Check params were updated
+	paramsResp, err := f.Creator.GetStakingConfig()
+	require.NoError(t, err)
+	require.Equal(t, math.NewInt(1), paramsResp.StakingConfig.MinimumStake)
 }
