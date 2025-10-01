@@ -431,6 +431,11 @@ func (f *Fixture) GetTestAccount(name string) TestAccount {
 	return acc
 }
 
+func (f *Fixture) SedaToAseda(amountSeda int64) math.Int {
+	bigAmountSeda := math.NewInt(amountSeda)
+	return bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))
+}
+
 func (f *Fixture) CreateTestAccount(name string, initialBalanceSeda int64) TestAccount {
 	addrPrivKey := ed25519.GenPrivKey()
 	addr := sdk.AccAddress(addrPrivKey.PubKey().Address())
@@ -441,9 +446,7 @@ func (f *Fixture) CreateTestAccount(name string, initialBalanceSeda int64) TestA
 		signingKey: secp256k1.GenPrivKey(),
 		fixture:    f,
 	}
-	bigAmountSeda := math.NewInt(initialBalanceSeda)
-	bigAmount := bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))
-	f.initAccountWithCoins(f.tb, acc.AccAddress(), sdk.NewCoins(sdk.NewCoin(BondDenom, bigAmount)))
+	f.initAccountWithCoins(f.tb, acc.AccAddress(), sdk.NewCoins(sdk.NewCoin(BondDenom, f.SedaToAseda(initialBalanceSeda))))
 
 	f.TestAccounts[name] = acc
 	return acc

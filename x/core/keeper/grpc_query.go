@@ -3,7 +3,9 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 
+	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	vrf "github.com/sedaprotocol/vrf-go"
@@ -213,6 +215,12 @@ func (q Querier) AccountSeq(c context.Context, req *types.QueryAccountSeqRequest
 	ctx := sdk.UnwrapSDKContext(c)
 	staker, err := q.GetStaker(ctx, req.PublicKey)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return &types.QueryAccountSeqResponse{
+				AccountSeq: 0,
+			}, nil
+		}
+
 		return nil, err
 	}
 

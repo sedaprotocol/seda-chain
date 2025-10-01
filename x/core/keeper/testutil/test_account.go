@@ -3,6 +3,7 @@ package testutil
 import (
 	"encoding/hex"
 
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,4 +30,8 @@ func (ta *TestAccount) AccAddress() sdk.AccAddress {
 
 func (ta *TestAccount) PublicKeyHex() string {
 	return hex.EncodeToString(ta.signingKey.PubKey().Bytes())
+}
+
+func (ta *TestAccount) Balance() math.Int {
+	return ta.fixture.BankKeeper.GetBalance(ta.fixture.Context(), ta.addr, BondDenom).Amount
 }

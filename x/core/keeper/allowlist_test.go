@@ -15,7 +15,7 @@ func TestAddToAllowlistUnauthorized(t *testing.T) {
 
 	alice := f.CreateTestAccount("alice", 10_000)
 
-	_, err := alice.Stake(10, "t")
+	_, err := alice.Stake(10)
 	require.ErrorIs(t, err, types.ErrNotAllowlisted)
 }
 
@@ -57,7 +57,7 @@ func TestAddToAllowlistWorks(t *testing.T) {
 	require.NoError(t, err)
 
 	// alice can now stake
-	_, err = alice.Stake(10, "")
+	_, err = alice.Stake(10)
 	t.Log("stake err", err)
 	require.NoError(t, err)
 
@@ -72,7 +72,7 @@ func TestAddToAllowlistWorks(t *testing.T) {
 	require.NoError(t, err)
 
 	// alice can no longer stake
-	_, err = alice.Stake(10, "t")
+	_, err = alice.Stake(10)
 	require.ErrorIs(t, err, types.ErrNotAllowlisted)
 
 	// update the config to disable allowlist
@@ -83,7 +83,7 @@ func TestAddToAllowlistWorks(t *testing.T) {
 	require.NoError(t, err)
 
 	// alice can now stake
-	_, err = alice.Stake(10, "")
+	_, err = alice.Stake(10)
 	require.NoError(t, err)
 }
 
@@ -134,7 +134,7 @@ func TestRemoveFromAllowlistUnstakesUser(t *testing.T) {
 	require.NoError(t, err)
 
 	// alice can now stake
-	_, err = alice.Stake(10, "")
+	_, err = alice.Stake(10)
 	t.Log("stake err", err)
 	require.NoError(t, err)
 
