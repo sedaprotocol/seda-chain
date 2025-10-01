@@ -28,7 +28,28 @@ func (ta *TestAccount) GetStaker() (*types.QueryStakerResponse, error) {
 	})
 }
 
-func (ta *TestAccount) Stake(amountSeda int64, memo string) (*types.MsgStakeResponse, error) {
+func (ta *TestAccount) Stake(amountSeda int64) (*types.MsgStakeResponse, error) {
+	bigAmountSeda := math.NewInt(amountSeda)
+	bigAmount := bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))
+	stake := sdk.NewCoin(BondDenom, bigAmount)
+
+	msg := &types.MsgStake{
+		Sender:    ta.Address(),
+		PublicKey: ta.PublicKeyHex(),
+		Stake:     stake,
+	}
+	seq, err := ta.GetAccountSequence()
+	require.NoError(ta.fixture.tb, err)
+	hash, err := msg.MsgHash(ta.fixture.ChainID, seq.AccountSeq)
+	require.NoError(ta.fixture.tb, err)
+	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), hash)
+	require.NoError(ta.fixture.tb, err)
+	msg.Proof = hex.EncodeToString(proof)
+
+	return ta.fixture.CoreMsgServer.Stake(ta.fixture.Context(), msg)
+}
+
+func (ta *TestAccount) StakeWithMemo(amountSeda int64, memo string) (*types.MsgStakeResponse, error) {
 	bigAmountSeda := math.NewInt(amountSeda)
 	bigAmount := bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))
 	stake := sdk.NewCoin(BondDenom, bigAmount)
@@ -88,4 +109,9 @@ func (ta *TestAccount) Withdraw(to *TestAccount) (*types.MsgWithdrawResponse, er
 	msg.Proof = hex.EncodeToString(proof)
 
 	return ta.fixture.CoreMsgServer.Withdraw(ta.fixture.Context(), msg)
+}
+
+func (ta *TestAccount) GetStakingConfig() (*types.QueryStakingConfigResponse, error) {
+	msg := &types.QueryStakingConfigRequest{}
+	return ta.fixture.CoreQuerier.StakingConfig(ta.fixture.Context(), msg)
 }
