@@ -11,7 +11,7 @@ import (
 func TestStake(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
-	alice := f.CreateTestAccount("alice", 10_000)
+	alice := f.CreateTestAccount("alice", 20)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
 
 	_, err := alice.Stake(10)
@@ -141,7 +141,7 @@ func TestWithdrawToAnother(t *testing.T) {
 func TestWithdrawRemovesStakerIfNoStake(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
-	alice := f.CreateTestAccount("alice", 10_000)
+	alice := f.CreateTestAccount("alice", 20)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
 
 	_, err := alice.Stake(10)
@@ -161,7 +161,7 @@ func TestWithdrawRemovesStakerIfNoStake(t *testing.T) {
 func TestCannotStakeIfPaused(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
-	alice := f.CreateTestAccount("alice", 10_000)
+	alice := f.CreateTestAccount("alice", 20)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
 
 	f.Creator.Pause()
@@ -173,7 +173,7 @@ func TestCannotStakeIfPaused(t *testing.T) {
 func TestCannotUnstakeIfPaused(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
-	alice := f.CreateTestAccount("alice", 10_000)
+	alice := f.CreateTestAccount("alice", 20)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
 
 	_, err := alice.Stake(10)
@@ -188,7 +188,7 @@ func TestCannotUnstakeIfPaused(t *testing.T) {
 func TestCannotWithdrawIfPaused(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
-	alice := f.CreateTestAccount("alice", 10_000)
+	alice := f.CreateTestAccount("alice", 20)
 	f.Creator.AddToAllowlist(alice.PublicKeyHex())
 
 	_, err := alice.Stake(10)
