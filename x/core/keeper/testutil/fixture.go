@@ -25,6 +25,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	clientTx "github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	sdktestutil "github.com/cosmos/cosmos-sdk/codec/testutil"
@@ -452,6 +453,15 @@ func (f *Fixture) CreateTestAccount(name string, initialBalanceSeda int64) TestA
 	return acc
 }
 
+func (f *Fixture) CreateStakedTestAccount(name string, initialBalanceSeda, stakeAmountSeda int64) TestAccount {
+	acc := f.CreateTestAccount(name, initialBalanceSeda)
+	f.Creator.AddToAllowlist(acc.PublicKeyHex())
+	_, err := acc.Stake(stakeAmountSeda)
+	require.NoError(f.tb, err)
+
+	return acc
+}
+
 func (f *Fixture) SetDataProxyConfig(proxyPubKey, payoutAddr string, proxyFee sdk.Coin) error {
 	pkBytes, err := hex.DecodeString(proxyPubKey)
 	if err != nil {
@@ -464,6 +474,35 @@ func (f *Fixture) SetDataProxyConfig(proxyPubKey, payoutAddr string, proxyFee sd
 		},
 	)
 	return err
+}
+
+func (f *Fixture) AdvanceBlocks(numBlocks int64) {
+	for range numBlocks {
+		f.AddBlock()
+		f.CoreKeeper.EndBlock(f.Context())
+	}
+}
+
+func (f *Fixture) SetTx(gasLimit uint64, feePayer sdk.AccAddress, msg sdk.Msg) {
+	fee := sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(100_000).Mul(math.NewInt(1e10))))
+
+	txf := clientTx.Factory{}.
+		WithChainID(f.ChainID).
+		WithTxConfig(f.TxConfig).
+		WithFees(fee.String()).
+		WithFeePayer(feePayer)
+
+	tx, err := txf.BuildUnsignedTx(msg)
+	require.NoError(f.tb, err)
+
+	txBytes, err := f.TxConfig.TxEncoder()(tx.GetTx())
+	require.NoError(f.tb, err)
+
+	f.SetContextTxBytes(txBytes)
+	f.SetBasicGasMeter(100_000)
+
+	err = f.BankKeeper.SendCoinsFromAccountToModule(f.Context(), feePayer, authtypes.FeeCollectorName, fee)
+	require.NoError(f.tb, err)
 }
 
 var setStakingConfigMsg = `{
