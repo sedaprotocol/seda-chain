@@ -43,7 +43,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/group"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/auth"
@@ -60,6 +59,7 @@ import (
 	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
+	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
 	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
 	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
