@@ -36,19 +36,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/group"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
-	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
-	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
-	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
-	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
-	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 
 	"github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/auth"
@@ -62,6 +49,13 @@ import (
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/pubkey"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/tally"
 	"github.com/sedaprotocol/seda-chain/plugins/indexing/types"
+	batchingtypes "github.com/sedaprotocol/seda-chain/x/batching/types"
+	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
+	stakingtypes "github.com/sedaprotocol/seda-chain/x/staking/types"
+	tallytypes "github.com/sedaprotocol/seda-chain/x/tally/types"
+	vestingtypes "github.com/sedaprotocol/seda-chain/x/vesting/types"
+	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
 )
 
 var _ storetypes.ABCIListener = &IndexerPlugin{}
@@ -225,14 +219,8 @@ func main() {
 	circuittypes.RegisterInterfaces(interfaceRegistry)
 	// capability doesn't have any interfaces to register
 	wasmtypes.RegisterInterfaces(interfaceRegistry)
-	ibctypes.RegisterInterfaces(interfaceRegistry)
-	ibctm.RegisterInterfaces(interfaceRegistry)
-	ibcfee.RegisterInterfaces(interfaceRegistry)
-	ibctransfertypes.RegisterInterfaces(interfaceRegistry)
 	pubkeytypes.RegisterInterfaces(interfaceRegistry)
-	icatypes.RegisterInterfaces(interfaceRegistry)
 	crisistypes.RegisterInterfaces(interfaceRegistry)
-	packetforwardtypes.RegisterInterfaces(interfaceRegistry)
 	wasmstoragetypes.RegisterInterfaces(interfaceRegistry)
 	tallytypes.RegisterInterfaces(interfaceRegistry)
 	dataproxytypes.RegisterInterfaces(interfaceRegistry)
