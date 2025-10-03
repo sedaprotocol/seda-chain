@@ -21,8 +21,137 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
+		GetOwner(),
+		GetPendingOwner(),
+		GetPaused(),
+		GetAllowlist(),
+		GetStakerAndSeq(),
 		GetCmdQueryParams(),
+		GetStakingConfig(),
+		GetDataRequestConfig(),
 	)
+	return cmd
+}
+
+func GetOwner() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "owner",
+		Short: "Query the owner of the core module",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Owner(cmd.Context(), &types.QueryOwnerRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetPendingOwner() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pending-owner",
+		Short: "Query the pending owner of the core module",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.PendingOwner(cmd.Context(), &types.QueryPendingOwnerRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetPaused() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "paused",
+		Short: "Query whether the core module is paused",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Paused(cmd.Context(), &types.QueryPausedRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetAllowlist() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "allowlist",
+		Short: "Query the executor allowlist",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Allowlist(cmd.Context(), &types.QueryAllowlistRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetStakerAndSeq() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "staker-and-seq [public_key]",
+		Short: "Query the staker address and sequence number for a given executor public key",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.StakerAndSeq(cmd.Context(), &types.QueryStakerAndSeqRequest{
+				PublicKey: args[0],
+			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -39,6 +168,54 @@ func GetCmdQueryParams() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			res, err := queryClient.Params(cmd.Context(), &types.QueryParamsRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetStakingConfig() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "staking-config",
+		Short: "Query the staking configuration",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.StakingConfig(cmd.Context(), &types.QueryStakingConfigRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetDataRequestConfig() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "data-request-config",
+		Short: "Query the data request configuration",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.DataRequestConfig(cmd.Context(), &types.QueryDataRequestConfigRequest{})
 			if err != nil {
 				return err
 			}
