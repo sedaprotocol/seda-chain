@@ -19,7 +19,7 @@ func TestTimedOutRequestsMoveToTally(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	_, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -34,7 +34,7 @@ func TestTimedOutRequestsMoveToTally(t *testing.T) {
 	require.Len(t, tallyDrsResp.DataRequests, 1)
 
 	// post another dr
-	dr2 := bob.CalculateDrIdAndArgs("2", 1)
+	dr2 := bob.CalculateDrIDAndArgs("2", 1)
 	postDr2Result, err := bob.PostDataRequest(dr2, 1, nil)
 	require.NoError(t, err)
 

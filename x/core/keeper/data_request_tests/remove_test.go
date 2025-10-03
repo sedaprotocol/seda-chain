@@ -15,7 +15,7 @@ func TestBasicWorkflowWorks(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 	bob := f.CreateTestAccount("bob", 22)
 
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 

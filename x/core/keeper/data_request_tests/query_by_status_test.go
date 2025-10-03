@@ -26,7 +26,7 @@ func TestOneWorks(t *testing.T) {
 	bob := f.CreateTestAccount("bob", 22)
 	_ = f.CreateStakedTestAccount("alice", 22, 1)
 
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -43,9 +43,9 @@ func TestLimitWorks(t *testing.T) {
 	bob := f.CreateTestAccount("bob", 22)
 	_ = f.CreateStakedTestAccount("alice", 22, 1)
 
-	dr1 := bob.CalculateDrIdAndArgs("1", 1)
-	dr2 := bob.CalculateDrIdAndArgs("2", 1)
-	dr3 := bob.CalculateDrIdAndArgs("3", 1)
+	dr1 := bob.CalculateDrIDAndArgs("1", 1)
+	dr2 := bob.CalculateDrIDAndArgs("2", 1)
+	dr3 := bob.CalculateDrIDAndArgs("3", 1)
 
 	_, err := bob.PostDataRequest(dr1, 1, nil)
 	require.NoError(t, err)
@@ -66,19 +66,19 @@ func TestDrsAreSortedByGasPrice(t *testing.T) {
 	bob := f.CreateTestAccount("bob", 22)
 	_ = f.CreateStakedTestAccount("alice", 22, 1)
 
-	dr1 := bob.CalculateDrIdAndArgs("1", 1)
+	dr1 := bob.CalculateDrIDAndArgs("1", 1)
 	dr1.GasPrice = types.MinGasPrice.Add(math.NewInt(1))
 	dr1Funds := (math.NewIntFromUint64(dr1.ExecGasLimit).Add(math.NewIntFromUint64(dr1.TallyGasLimit))).Mul(dr1.GasPrice)
 	_, err := bob.PostDataRequest(dr1, 1, &dr1Funds)
 	require.NoError(t, err)
 
-	dr2 := bob.CalculateDrIdAndArgs("2", 1)
+	dr2 := bob.CalculateDrIDAndArgs("2", 1)
 	dr2.GasPrice = types.MinGasPrice.Add(math.NewInt(3))
 	dr2Funds := (math.NewIntFromUint64(dr2.ExecGasLimit).Add(math.NewIntFromUint64(dr2.TallyGasLimit))).Mul(dr2.GasPrice)
 	_, err = bob.PostDataRequest(dr2, 1, &dr2Funds)
 	require.NoError(t, err)
 
-	dr3 := bob.CalculateDrIdAndArgs("3", 1)
+	dr3 := bob.CalculateDrIDAndArgs("3", 1)
 	dr3.GasPrice = types.MinGasPrice.Add(math.NewInt(2))
 	dr3Funds := (math.NewIntFromUint64(dr3.ExecGasLimit).Add(math.NewIntFromUint64(dr3.TallyGasLimit))).Mul(dr3.GasPrice)
 	_, err = bob.PostDataRequest(dr3, 1, &dr3Funds)
@@ -87,7 +87,6 @@ func TestDrsAreSortedByGasPrice(t *testing.T) {
 	drsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, nil)
 	require.NoError(t, err)
 	require.Len(t, drsResp.DataRequests, 3)
-	t.Log(drsResp.DataRequests[0])
 	require.Equal(t, dr2.GasPrice, drsResp.DataRequests[0].GasPrice)
 	require.Equal(t, dr3.GasPrice, drsResp.DataRequests[1].GasPrice)
 	require.Equal(t, dr1.GasPrice, drsResp.DataRequests[2].GasPrice)
@@ -100,9 +99,9 @@ func TestLastSeenIndexWorks(t *testing.T) {
 	bob := f.CreateTestAccount("bob", 22)
 	_ = f.CreateStakedTestAccount("alice", 22, 1)
 
-	dr1 := bob.CalculateDrIdAndArgs("1", 1)
-	dr2 := bob.CalculateDrIdAndArgs("2", 1)
-	dr3 := bob.CalculateDrIdAndArgs("3", 1)
+	dr1 := bob.CalculateDrIDAndArgs("1", 1)
+	dr2 := bob.CalculateDrIDAndArgs("2", 1)
+	dr3 := bob.CalculateDrIDAndArgs("3", 1)
 
 	postDrResult1, err := bob.PostDataRequest(dr1, 1, nil)
 	require.NoError(t, err)
@@ -136,7 +135,7 @@ func TestQueryByStatusManyDrsWorks(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 
 	for i := range 25 {
-		dr := bob.CalculateDrIdAndArgs(fmt.Sprintf("%d", i), 1)
+		dr := bob.CalculateDrIDAndArgs(fmt.Sprintf("%d", i), 1)
 		postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 		require.NoError(t, err)
 
@@ -185,7 +184,7 @@ func TestQueryByStatusManyMoreDrsWorks(t *testing.T) {
 
 	// post 100 drs, commit half of them, and post another 50 drs
 	for i := range 100 {
-		dr := bob.CalculateDrIdAndArgs(fmt.Sprintf("%d", i), 1)
+		dr := bob.CalculateDrIDAndArgs(fmt.Sprintf("%d", i), 1)
 		postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 		require.NoError(t, err)
 
@@ -207,7 +206,7 @@ func TestQueryByStatusManyMoreDrsWorks(t *testing.T) {
 			_, err = alice.CommitResult(aliceRevealMsg)
 			require.NoError(t, err)
 
-			anotherDR := bob.CalculateDrIdAndArgs(fmt.Sprintf("%d", i+20_000), 1)
+			anotherDR := bob.CalculateDrIDAndArgs(fmt.Sprintf("%d", i+20_000), 1)
 			_, err = bob.PostDataRequest(anotherDR, 1, nil)
 			require.NoError(t, err)
 		}
@@ -242,7 +241,7 @@ func TestQueryByStatusManyMoreDrsWorks(t *testing.T) {
 			_, err = alice.RevealResult(aliceRevealMsg)
 			require.NoError(t, err)
 
-			anotherDR := bob.CalculateDrIdAndArgs(fmt.Sprintf("%d", i+10_000), 1)
+			anotherDR := bob.CalculateDrIDAndArgs(fmt.Sprintf("%d", i+10_000), 1)
 			_, err = bob.PostDataRequest(anotherDR, 1, nil)
 			require.NoError(t, err)
 
@@ -284,9 +283,9 @@ func TestQueryStatusesWorks(t *testing.T) {
 	bob := f.CreateStakedTestAccount("bob", 22, 1)
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 
-	dr1 := bob.CalculateDrIdAndArgs("1", 2)
-	dr2 := bob.CalculateDrIdAndArgs("2", 1)
-	dr3 := bob.CalculateDrIdAndArgs("3", 1)
+	dr1 := bob.CalculateDrIDAndArgs("1", 2)
+	dr2 := bob.CalculateDrIDAndArgs("2", 1)
+	dr3 := bob.CalculateDrIDAndArgs("3", 1)
 
 	postDrResult1, err := bob.PostDataRequest(dr1, 1, nil)
 	require.NoError(t, err)

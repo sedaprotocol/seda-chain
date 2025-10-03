@@ -102,7 +102,8 @@ func TestWithdrawSelf(t *testing.T) {
 	_, err := alice.Stake(10)
 	require.NoError(t, err)
 
-	// TODO: need to reward them
+	_, err = alice.Unstake()
+	require.NoError(t, err)
 
 	_, err = alice.Withdraw(nil)
 	require.NoError(t, err)
@@ -110,8 +111,8 @@ func TestWithdrawSelf(t *testing.T) {
 	_, err = alice.GetStaker()
 	require.Error(t, err)
 
-	// aliceBalance := alice.Balance()
-	// require.Equal(t, f.SedaToAseda(20), aliceBalance)
+	aliceBalance := alice.Balance()
+	require.Equal(t, f.SedaToAseda(20), aliceBalance)
 }
 
 func TestWithdrawToAnother(t *testing.T) {
@@ -124,7 +125,6 @@ func TestWithdrawToAnother(t *testing.T) {
 	_, err := alice.Stake(10)
 	require.NoError(t, err)
 
-	// TODO: reward alice instead
 	_, err = alice.Unstake()
 	require.NoError(t, err)
 
@@ -153,8 +153,7 @@ func TestWithdrawRemovesStakerIfNoStake(t *testing.T) {
 	_, err = alice.Withdraw(nil)
 	require.NoError(t, err)
 
-	aliceStaker, err := alice.GetStaker()
-	require.Nil(t, aliceStaker.Staker)
+	_, err = alice.GetStaker()
 	require.Error(t, err)
 }
 
