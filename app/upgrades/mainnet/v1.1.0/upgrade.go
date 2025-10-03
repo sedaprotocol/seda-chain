@@ -56,9 +56,11 @@ func CreateUpgradeHandler(
 			keyStr := string(key)
 			switch {
 			case strings.Contains(keyStr, "owner"):
-				err := json.Unmarshal(value, &owner)
-				if err != nil {
-					panic(fmt.Sprintf("failed to unmarshal owner: %s", owner))
+				if !strings.Contains(keyStr, "pending_owner") {
+					err := json.Unmarshal(value, &owner)
+					if err != nil {
+						panic(fmt.Sprintf("failed to unmarshal owner: %s", owner))
+					}
 				}
 
 			case strings.Contains(keyStr, "allowlist"):
