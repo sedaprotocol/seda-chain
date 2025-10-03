@@ -25,6 +25,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	clientTx "github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	sdktestutil "github.com/cosmos/cosmos-sdk/codec/testutil"
@@ -101,6 +102,7 @@ type Fixture struct {
 	Creator           TestAccount
 	Deployer          TestAccount
 	TestAccounts      map[string]TestAccount
+	ProxyAccounts     map[string]ProxyAccount
 	noShim            bool
 }
 
@@ -158,7 +160,6 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		addr:       authority,
 		signingKey: secp256k1.GenPrivKey(),
 		fixture:    nil,
-		Sequence:   0,
 	}
 
 	maccPerms := map[string][]string{
@@ -411,6 +412,7 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		LogBuf:            buf,
 		Router:            router,
 		TestAccounts:      make(map[string]TestAccount),
+		ProxyAccounts:     make(map[string]ProxyAccount),
 		Creator:           creator,
 		noShim:            noShim,
 	}
@@ -432,6 +434,26 @@ func (f *Fixture) GetTestAccount(name string) TestAccount {
 	return acc
 }
 
+func (f *Fixture) SedaToAseda(amountSeda int64) math.Int {
+	bigAmountSeda := math.NewInt(amountSeda)
+	return bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))
+}
+
+func (f *Fixture) CreateProxyAccount(name string) ProxyAccount {
+	sk := secp256k1.GenPrivKey()
+	pk := sk.PubKey().(secp256k1.PubKey)
+
+	acc := ProxyAccount{
+		name:       name,
+		privateKey: sk,
+		publicKey:  pk,
+		fixture:    f,
+	}
+	f.ProxyAccounts[name] = acc
+
+	return acc
+}
+
 func (f *Fixture) CreateTestAccount(name string, initialBalanceSeda int64) TestAccount {
 	addrPrivKey := ed25519.GenPrivKey()
 	addr := sdk.AccAddress(addrPrivKey.PubKey().Address())
@@ -441,13 +463,20 @@ func (f *Fixture) CreateTestAccount(name string, initialBalanceSeda int64) TestA
 		addr:       addr,
 		signingKey: secp256k1.GenPrivKey(),
 		fixture:    f,
-		Sequence:   0,
 	}
-	bigAmountSeda := math.NewInt(initialBalanceSeda)
-	bigAmount := bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))
-	f.initAccountWithCoins(f.tb, acc.AccAddress(), sdk.NewCoins(sdk.NewCoin(BondDenom, bigAmount)))
+	f.initAccountWithCoins(f.tb, acc.AccAddress(), sdk.NewCoins(sdk.NewCoin(BondDenom, f.SedaToAseda(initialBalanceSeda))))
 
 	f.TestAccounts[name] = acc
+	return acc
+}
+
+func (f *Fixture) CreateStakedTestAccount(name string, initialBalanceSeda, stakeAmountSeda int64) TestAccount {
+	acc := f.CreateTestAccount(name, initialBalanceSeda)
+	_, err := f.Creator.AddToAllowlist(acc.PublicKeyHex())
+	require.NoError(f.tb, err)
+	_, err = acc.Stake(stakeAmountSeda)
+	require.NoError(f.tb, err)
+
 	return acc
 }
 
@@ -463,6 +492,36 @@ func (f *Fixture) SetDataProxyConfig(proxyPubKey, payoutAddr string, proxyFee sd
 		},
 	)
 	return err
+}
+
+func (f *Fixture) AdvanceBlocks(numBlocks int64) {
+	for range numBlocks {
+		f.AddBlock()
+		err := f.CoreKeeper.EndBlock(f.Context())
+		require.NoError(f.tb, err)
+	}
+}
+
+func (f *Fixture) SetTx(gasLimit uint64, feePayer sdk.AccAddress, msg sdk.Msg) {
+	fee := sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(gasLimit).Mul(math.NewInt(1e10))))
+
+	txf := clientTx.Factory{}.
+		WithChainID(f.ChainID).
+		WithTxConfig(f.TxConfig).
+		WithFees(fee.String()).
+		WithFeePayer(feePayer)
+
+	tx, err := txf.BuildUnsignedTx(msg)
+	require.NoError(f.tb, err)
+
+	txBytes, err := f.TxConfig.TxEncoder()(tx.GetTx())
+	require.NoError(f.tb, err)
+
+	f.SetContextTxBytes(txBytes)
+	f.SetBasicGasMeter(gasLimit)
+
+	err = f.BankKeeper.SendCoinsFromAccountToModule(f.Context(), feePayer, authtypes.FeeCollectorName, fee)
+	require.NoError(f.tb, err)
 }
 
 var setStakingConfigMsg = `{
