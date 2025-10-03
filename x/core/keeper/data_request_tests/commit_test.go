@@ -18,7 +18,7 @@ func TestFailsIfNotStaked(t *testing.T) {
 	alice := f.CreateTestAccount("alice", 22)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -43,7 +43,7 @@ func TestFailsIfCommitTimedOut(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 	bob := f.CreateTestAccount("bob", 22)
 
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -72,7 +72,7 @@ func TestCommitFailsOnExpiredDr(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 	bob := f.CreateTestAccount("bob", 22)
 
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -109,7 +109,7 @@ func TestFailsIfNotEnoughStaked(t *testing.T) {
 	f.Creator.SetStakingConfig(*config)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -137,7 +137,7 @@ func TestCommitWorks(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -168,7 +168,7 @@ func TestMustMeetReplicationFactor(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIdAndArgs("1", 2)
+	dr := bob.CalculateDrIDAndArgs("1", 2)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -213,9 +213,9 @@ func TestFailsDoubleCommit(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
-	bob := f.CreateTestAccount("bob", 22)
+	bob := f.CreateStakedTestAccount("bob", 22, 10)
 
-	dr := bob.CalculateDrIdAndArgs("1", 2)
+	dr := bob.CalculateDrIDAndArgs("1", 2)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -248,7 +248,7 @@ func TestFailsAfterRevealStarted(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -289,7 +289,7 @@ func TestWrongSignatureFails(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -312,7 +312,7 @@ func TestWrongSignatureFails(t *testing.T) {
 		Proof:     "deadbeef",
 	}
 
-	f.SetTx(20_000, alice.AccAddress(), msg)
+	f.SetTx(100_000, alice.AccAddress(), msg)
 	_, err = f.CoreMsgServer.Commit(f.Context(), msg)
 	require.ErrorContains(t, err, "invalid commit proof")
 }
@@ -323,7 +323,7 @@ func TestMustBeOnAllowlistToCommit(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 	bob := f.CreateTestAccount("bob", 22)
 
-	dr := bob.CalculateDrIdAndArgs("1", 2)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -342,5 +342,5 @@ func TestMustBeOnAllowlistToCommit(t *testing.T) {
 	}
 	aliceRevealMsg := alice.CreateRevealMsg(aliceReveal)
 	_, err = alice.CommitResult(aliceRevealMsg)
-	require.ErrorContains(t, err, "Public key is not in allowlist")
+	require.ErrorContains(t, err, "public key is not in allowlist")
 }

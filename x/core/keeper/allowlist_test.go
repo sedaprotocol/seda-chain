@@ -120,10 +120,6 @@ func TestGetAllowlist(t *testing.T) {
 	require.Contains(t, resp.PublicKeys, bob.PublicKeyHex())
 }
 
-// TODO: test removing from allowlist unstakes user
-
-// TODO: test to update config to disable allowlist test
-
 func TestRemoveFromAllowlistUnstakesUser(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
@@ -135,7 +131,6 @@ func TestRemoveFromAllowlistUnstakesUser(t *testing.T) {
 
 	// alice can now stake
 	_, err = alice.Stake(10)
-	t.Log("stake err", err)
 	require.NoError(t, err)
 
 	// owner can remove from allowlist
@@ -146,5 +141,5 @@ func TestRemoveFromAllowlistUnstakesUser(t *testing.T) {
 	stakeResp, err := alice.GetStaker()
 	require.NoError(t, err)
 	require.Equal(t, math.ZeroInt(), stakeResp.Staker.Staked)
-	require.Equal(t, math.NewInt(10), stakeResp.Staker.PendingWithdrawal)
+	require.Equal(t, f.SedaToAseda(10), stakeResp.Staker.PendingWithdrawal)
 }

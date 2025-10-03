@@ -15,7 +15,7 @@ func TestRevealWorks(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 2)
+	dr := bob.CalculateDrIDAndArgs("1", 2)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -65,7 +65,7 @@ func TestWorksWithProxies(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -101,7 +101,7 @@ func TestFailsProxyWhenInvalidHex(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -130,7 +130,7 @@ func TestNoErrorWhenNotRealProxyKey(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -159,7 +159,7 @@ func TestFailsIfNotInRevealPhase(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -185,7 +185,7 @@ func TestFailsIfRevealTimedOut(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -219,7 +219,7 @@ func TestRevealFailsOnExpiredDr(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -253,7 +253,7 @@ func TestFailsIfUserDidNotCommit(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -291,7 +291,7 @@ func TestFailsOnDoubleReveal(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 2)
+	dr := bob.CalculateDrIDAndArgs("1", 2)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -337,7 +337,7 @@ func TestFailsIfRevealDoesNotMatchCommit(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -368,7 +368,7 @@ func TestFailsIfProxyPubKeysChangeBetweenPhases(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -402,7 +402,7 @@ func TestWorksAfterUnstaking(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -441,7 +441,7 @@ func TestCannotFrontRunCommitReveal(t *testing.T) {
 	charlie := f.CreateStakedTestAccount("charlie", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -471,7 +471,7 @@ func TestCannontFrontRunReveal(t *testing.T) {
 	charlie := f.CreateStakedTestAccount("charlie", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -501,7 +501,7 @@ func TestFailsWhenRevealTooBig(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -535,7 +535,7 @@ func TestFailsWhenRevealTooBigAccountedForRf(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 2)
+	dr := bob.CalculateDrIDAndArgs("1", 2)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
