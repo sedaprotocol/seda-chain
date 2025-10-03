@@ -1,6 +1,8 @@
 package types
 
 import (
+	"errors"
+
 	"cosmossdk.io/collections"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -38,7 +40,11 @@ func (s StakerIndexing) Set(ctx sdk.Context, pubKey string, staker Staker) error
 	// and increment the count.
 	count, err := s.count.Get(ctx)
 	if err != nil {
-		return err
+		// The count may not be found if it is accessed without initialization.
+		if !errors.Is(err, collections.ErrNotFound) {
+			return err
+		}
+		count = 0
 	}
 
 	err = s.indexToKey.Set(ctx, count, pubKey)
