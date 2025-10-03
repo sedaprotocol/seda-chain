@@ -87,6 +87,7 @@ func TestDrsAreSortedByGasPrice(t *testing.T) {
 	drsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, nil)
 	require.NoError(t, err)
 	require.Len(t, drsResp.DataRequests, 3)
+	t.Log(drsResp.DataRequests[0])
 	require.Equal(t, dr2.GasPrice, drsResp.DataRequests[0].GasPrice)
 	require.Equal(t, dr3.GasPrice, drsResp.DataRequests[1].GasPrice)
 	require.Equal(t, dr1.GasPrice, drsResp.DataRequests[2].GasPrice)
@@ -359,6 +360,6 @@ func TestQueryStatusesWorks(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, statusesResp.Statuses, 3)
 	require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, statusesResp.Statuses[postDrResult1.DrID])
-	require.Equal(t, types.DATA_REQUEST_STATUS_UNSPECIFIED, statusesResp.Statuses[postDrResult2.DrID])
+	require.Nil(t, statusesResp.Statuses[postDrResult2.DrID])
 	require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, statusesResp.Statuses[postDrResult3.DrID])
 }

@@ -102,6 +102,7 @@ type Fixture struct {
 	Creator           TestAccount
 	Deployer          TestAccount
 	TestAccounts      map[string]TestAccount
+	ProxyAccounts     map[string]ProxyAccount
 	noShim            bool
 }
 
@@ -411,6 +412,7 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		LogBuf:            buf,
 		Router:            router,
 		TestAccounts:      make(map[string]TestAccount),
+		ProxyAccounts:     make(map[string]ProxyAccount),
 		Creator:           creator,
 		noShim:            noShim,
 	}
@@ -435,6 +437,21 @@ func (f *Fixture) GetTestAccount(name string) TestAccount {
 func (f *Fixture) SedaToAseda(amountSeda int64) math.Int {
 	bigAmountSeda := math.NewInt(amountSeda)
 	return bigAmountSeda.Mul(math.NewInt(1_000_000_000_000_000_000))
+}
+
+func (f *Fixture) CreateProxyAccount(name string) ProxyAccount {
+	sk := secp256k1.GenPrivKey()
+	pk := sk.PubKey().(secp256k1.PubKey)
+
+	acc := ProxyAccount{
+		name:       name,
+		privateKey: sk,
+		publicKey:  pk,
+		fixture:    f,
+	}
+	f.ProxyAccounts[name] = acc
+
+	return acc
 }
 
 func (f *Fixture) CreateTestAccount(name string, initialBalanceSeda int64) TestAccount {
