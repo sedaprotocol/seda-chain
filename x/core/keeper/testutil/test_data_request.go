@@ -313,6 +313,13 @@ func (ta *TestAccount) GetDataRequestsByStatus(status types.DataRequestStatus, l
 	return ta.fixture.CoreQuerier.DataRequestsByStatus(ta.fixture.Context(), msg)
 }
 
+func (ta *TestAccount) GetDataRequestStatuses(drIds []string) (*types.QueryDataRequestStatusesResponse, error) {
+	msg := &types.QueryDataRequestStatusesRequest{
+		DataRequestIds: drIds,
+	}
+	return ta.fixture.CoreQuerier.DataRequestStatuses(ta.fixture.Context(), msg)
+}
+
 func (ta *TestAccount) GetDataRequest(drId string) (*types.QueryDataRequestResponse, error) {
 	msg := &types.QueryDataRequestRequest{
 		DrId: drId,
