@@ -3,12 +3,15 @@ package testutil
 import (
 	"encoding/hex"
 
-	"cosmossdk.io/math"
-	"github.com/cometbft/cometbft/crypto/secp256k1"
-	vrf "github.com/sedaprotocol/vrf-go"
 	"github.com/stretchr/testify/require"
 
+	"github.com/cometbft/cometbft/crypto/secp256k1"
+
+	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	vrf "github.com/sedaprotocol/vrf-go"
 )
 
 type TestAccount struct {
