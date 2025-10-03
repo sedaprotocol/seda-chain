@@ -18,7 +18,7 @@ func TestPausePropertyDrQueryByStatus(t *testing.T) {
 	_ = f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	_, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
@@ -58,7 +58,7 @@ func TestDataRequestTxsArePaused(t *testing.T) {
 	require.NoError(t, err)
 
 	// post a dr should fail
-	dr := bob.CalculateDrIdAndArgs("1", 1)
+	dr := bob.CalculateDrIDAndArgs("1", 1)
 	_, err = bob.PostDataRequest(dr, 1, nil)
 	require.ErrorContains(t, err, "module is paused")
 

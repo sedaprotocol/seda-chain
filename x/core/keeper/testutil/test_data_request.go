@@ -216,10 +216,10 @@ func RevealHelperFromString(input string) []byte {
 	return []byte(base64.StdEncoding.EncodeToString(HashStringHelper(input)))
 }
 
-func (ta *TestAccount) CalculateDrIdAndArgs(nonce string, replication_factor uint32) types.MsgPostDataRequest {
-	execProgramId := hex.EncodeToString(HashStringHelper(nonce))
+func (ta *TestAccount) CalculateDrIDAndArgs(nonce string, replicationFactor uint32) types.MsgPostDataRequest {
+	execProgramID := hex.EncodeToString(HashStringHelper(nonce))
 	execInputs := base64.StdEncoding.EncodeToString(HashStringHelper("exec_inputs"))
-	tallyProgramId := hex.EncodeToString(HashStringHelper("tally_program"))
+	tallyProgramID := hex.EncodeToString(HashStringHelper("tally_program"))
 	tallyInputs := base64.StdEncoding.EncodeToString(HashStringHelper("tally_inputs"))
 
 	memo := base64.StdEncoding.EncodeToString(crypto.Keccak256([]byte(ta.fixture.ChainID), []byte(nonce)))
@@ -227,14 +227,14 @@ func (ta *TestAccount) CalculateDrIdAndArgs(nonce string, replication_factor uin
 	return types.MsgPostDataRequest{
 		Sender:            ta.Address(),
 		Version:           "1.0.0",
-		ExecProgramID:     execProgramId,
+		ExecProgramID:     execProgramID,
 		ExecInputs:        []byte(execInputs),
 		ExecGasLimit:      types.MinExecGasLimit,
-		TallyProgramID:    tallyProgramId,
+		TallyProgramID:    tallyProgramID,
 		TallyInputs:       []byte(tallyInputs),
 		TallyGasLimit:     types.MinTallyGasLimit,
 		Memo:              []byte(memo),
-		ReplicationFactor: replication_factor,
+		ReplicationFactor: replicationFactor,
 		ConsensusFilter:   []byte(base64.StdEncoding.EncodeToString([]byte{0})),
 		GasPrice:          types.MinGasPrice,
 	}
@@ -284,18 +284,19 @@ func (ta *TestAccount) CommitResult(revealMsg *types.MsgReveal) (*types.MsgCommi
 		Commit:    hex.EncodeToString(commitment),
 		PublicKey: ta.PublicKeyHex(),
 	}
+	//nolint:gosec // G115: Block height is never negative.
 	hash, err := msg.MsgHash(ta.fixture.ChainID, int64(revealMsg.RevealBody.DrBlockHeight))
 	require.NoError(ta.fixture.tb, err)
 	msg.Proof = ta.Prove(hash)
 
-	ta.fixture.SetTx(20_000, ta.AccAddress(), msg)
+	ta.fixture.SetTx(100_000, ta.AccAddress(), msg)
 	res, err := ta.fixture.CoreMsgServer.Commit(ta.fixture.Context(), msg)
 	ta.fixture.SetInfiniteGasMeter()
 	return res, err
 }
 
 func (ta *TestAccount) RevealResult(msg *types.MsgReveal) (*types.MsgRevealResponse, error) {
-	ta.fixture.SetTx(20_000, ta.AccAddress(), msg)
+	ta.fixture.SetTx(100_000, ta.AccAddress(), msg)
 	res, err := ta.fixture.CoreMsgServer.Reveal(ta.fixture.Context(), msg)
 	ta.fixture.SetInfiniteGasMeter()
 	return res, err
@@ -313,16 +314,16 @@ func (ta *TestAccount) GetDataRequestsByStatus(status types.DataRequestStatus, l
 	return ta.fixture.CoreQuerier.DataRequestsByStatus(ta.fixture.Context(), msg)
 }
 
-func (ta *TestAccount) GetDataRequestStatuses(drIds []string) (*types.QueryDataRequestStatusesResponse, error) {
+func (ta *TestAccount) GetDataRequestStatuses(drIDs []string) (*types.QueryDataRequestStatusesResponse, error) {
 	msg := &types.QueryDataRequestStatusesRequest{
-		DataRequestIds: drIds,
+		DataRequestIds: drIDs,
 	}
 	return ta.fixture.CoreQuerier.DataRequestStatuses(ta.fixture.Context(), msg)
 }
 
-func (ta *TestAccount) GetDataRequest(drId string) (*types.QueryDataRequestResponse, error) {
+func (ta *TestAccount) GetDataRequest(drID string) (*types.QueryDataRequestResponse, error) {
 	msg := &types.QueryDataRequestRequest{
-		DrId: drId,
+		DrId: drID,
 	}
 	return ta.fixture.CoreQuerier.DataRequest(ta.fixture.Context(), msg)
 }

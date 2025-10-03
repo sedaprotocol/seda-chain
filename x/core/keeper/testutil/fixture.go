@@ -472,8 +472,9 @@ func (f *Fixture) CreateTestAccount(name string, initialBalanceSeda int64) TestA
 
 func (f *Fixture) CreateStakedTestAccount(name string, initialBalanceSeda, stakeAmountSeda int64) TestAccount {
 	acc := f.CreateTestAccount(name, initialBalanceSeda)
-	f.Creator.AddToAllowlist(acc.PublicKeyHex())
-	_, err := acc.Stake(stakeAmountSeda)
+	_, err := f.Creator.AddToAllowlist(acc.PublicKeyHex())
+	require.NoError(f.tb, err)
+	_, err = acc.Stake(stakeAmountSeda)
 	require.NoError(f.tb, err)
 
 	return acc
@@ -496,12 +497,13 @@ func (f *Fixture) SetDataProxyConfig(proxyPubKey, payoutAddr string, proxyFee sd
 func (f *Fixture) AdvanceBlocks(numBlocks int64) {
 	for range numBlocks {
 		f.AddBlock()
-		f.CoreKeeper.EndBlock(f.Context())
+		err := f.CoreKeeper.EndBlock(f.Context())
+		require.NoError(f.tb, err)
 	}
 }
 
 func (f *Fixture) SetTx(gasLimit uint64, feePayer sdk.AccAddress, msg sdk.Msg) {
-	fee := sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(100_000).Mul(math.NewInt(1e10))))
+	fee := sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(gasLimit).Mul(math.NewInt(1e10))))
 
 	txf := clientTx.Factory{}.
 		WithChainID(f.ChainID).
@@ -516,7 +518,7 @@ func (f *Fixture) SetTx(gasLimit uint64, feePayer sdk.AccAddress, msg sdk.Msg) {
 	require.NoError(f.tb, err)
 
 	f.SetContextTxBytes(txBytes)
-	f.SetBasicGasMeter(100_000)
+	f.SetBasicGasMeter(gasLimit)
 
 	err = f.BankKeeper.SendCoinsFromAccountToModule(f.Context(), feePayer, authtypes.FeeCollectorName, fee)
 	require.NoError(f.tb, err)
