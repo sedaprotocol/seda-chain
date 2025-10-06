@@ -246,6 +246,9 @@ func PostDataRequest() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if _, err = hex.DecodeString(execInputs); err != nil {
+				return fmt.Errorf("exec-inputs must be a valid hex string")
+			}
 			msg.ExecInputs = []byte(execInputs)
 
 			tallyID, err := cmd.Flags().GetString("tally-program-id")
@@ -261,6 +264,9 @@ func PostDataRequest() *cobra.Command {
 			tallyInputs, err := cmd.Flags().GetString("tally-inputs")
 			if err != nil {
 				return err
+			}
+			if _, err = hex.DecodeString(tallyInputs); err != nil {
+				return fmt.Errorf("tally-inputs must be a valid hex string")
 			}
 			msg.TallyInputs = []byte(tallyInputs)
 
@@ -293,17 +299,11 @@ func PostDataRequest() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			switch consensusFilter {
-			case "":
-				break
-			case "mad":
-				msg.ConsensusFilter = []byte("mad")
-			case "mode":
-				msg.ConsensusFilter = []byte("mode")
-			default:
-				return fmt.Errorf("invalid consensus filter: %s", consensusFilter)
+			bytes, err := hex.DecodeString(consensusFilter)
+			if err != nil {
+				return fmt.Errorf("consensus-filter must be a valid hex string")
 			}
+			msg.ConsensusFilter = bytes
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -313,13 +313,13 @@ func PostDataRequest() *cobra.Command {
 	cmd.Flags().StringP("version", "v", "v1.0.0", "version for the data request")
 	cmd.Flags().Uint32P("replication-factor", "r", 1, "replication factor for the data request")
 	cmd.Flags().String("gas-price", "2000", "gas price for the data request")
-	cmd.Flags().StringP("exec-program-id", "e", "", "execution program ID for the data request")
+	cmd.Flags().StringP("exec-program-id", "e", "", "execution program ID for the data request in ")
 	cmd.Flags().Uint64("exec-gas-limit", 300_000_000_000_000, "execution gas limit for the data request")
 	cmd.Flags().StringP("tally-program-id", "t", "", "tally program ID for the data request")
 	cmd.Flags().Uint64("tally-gas-limit", 300_000_000_000_000, "tally gas limit for the data request")
-	cmd.Flags().String("exec-inputs", "", "execution inputs for the data request")
-	cmd.Flags().String("tally-inputs", "", "tally inputs for the data request")
-	cmd.Flags().StringP("consensus-filter", "", "", "optional consensus filter for the data request (options: mad, mode)")
+	cmd.Flags().String("exec-inputs", "", "execution inputs for the data request encoded in hex")
+	cmd.Flags().String("tally-inputs", "", "tally inputs for the data request encoded in hex")
+	cmd.Flags().StringP("consensus-filter", "", "", "optional consensus filter for the data request encoded in hex")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
