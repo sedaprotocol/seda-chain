@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO: Not sure how to test this... since advancing(calling endblock immediately would tally them?)
 func TestTimedOutRequestsMoveToTally(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
@@ -20,7 +19,7 @@ func TestTimedOutRequestsMoveToTally(t *testing.T) {
 
 	// post a dr
 	dr := bob.CalculateDrIDAndArgs("1", 1)
-	_, err := bob.PostDataRequest(dr, 1, nil)
+	postDr1Result, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
 	drConfigResp, err := f.Creator.GetDataRequestConfig()
@@ -29,13 +28,30 @@ func TestTimedOutRequestsMoveToTally(t *testing.T) {
 	// expire commit period
 	f.AdvanceBlocks(int64(drConfigResp.DataRequestConfig.CommitTimeoutInBlocks))
 
+	// check that the dr is not in commit status
+	commitDrsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, nil)
+	require.NoError(t, err)
+	require.Len(t, commitDrsResp.DataRequests, 0)
+
+	// check that dr is not in reveal status
+	revealDrsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_REVEALING, 10, nil)
+	require.NoError(t, err)
+	require.Len(t, revealDrsResp.DataRequests, 0)
+
+	// check that the dr is not in tally
 	tallyDrsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_TALLYING, 10, nil)
 	require.NoError(t, err)
-	require.Len(t, tallyDrsResp.DataRequests, 1)
+	require.Len(t, tallyDrsResp.DataRequests, 0)
+
+	// check that dr has a result posted
+	dataResult1, err := f.BatchingKeeper.GetDataResult(f.Context(), postDr1Result.DrID, uint64(postDr1Result.Height))
+	require.NoError(t, err)
+	require.NotNil(t, dataResult1)
 
 	// post another dr
+	currentHeight := f.Context().BlockHeight()
 	dr2 := bob.CalculateDrIDAndArgs("2", 1)
-	postDr2Result, err := bob.PostDataRequest(dr2, 1, nil)
+	postDr2Result, err := bob.PostDataRequest(dr2, currentHeight, nil)
 	require.NoError(t, err)
 
 	// Alice commits on second dr
@@ -54,7 +70,23 @@ func TestTimedOutRequestsMoveToTally(t *testing.T) {
 	// expire reveal period
 	f.AdvanceBlocks(int64(drConfigResp.DataRequestConfig.RevealTimeoutInBlocks))
 
+	// check that the dr is not in commit status
+	commitDrsResp, err = bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, nil)
+	require.NoError(t, err)
+	require.Len(t, commitDrsResp.DataRequests, 0)
+
+	// check that dr is not in reveal status
+	revealDrsResp, err = bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_REVEALING, 10, nil)
+	require.NoError(t, err)
+	require.Len(t, revealDrsResp.DataRequests, 0)
+
+	// check that the dr is not in tally
 	tallyDrsResp, err = bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_TALLYING, 10, nil)
 	require.NoError(t, err)
-	require.Len(t, tallyDrsResp.DataRequests, 1)
+	require.Len(t, tallyDrsResp.DataRequests, 0)
+
+	// check that dr has a result posted
+	dataResult2, err := f.BatchingKeeper.GetDataResult(f.Context(), postDr2Result.DrID, uint64(postDr2Result.Height))
+	require.NoError(t, err)
+	require.NotNil(t, dataResult2)
 }

@@ -177,7 +177,6 @@ func TestFailsIfNotInRevealPhase(t *testing.T) {
 	require.ErrorContains(t, err, "reveal phase has not started")
 }
 
-// TODO: failing not correct error message maybe intended?
 func TestFailsIfRevealTimedOut(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
@@ -209,7 +208,12 @@ func TestFailsIfRevealTimedOut(t *testing.T) {
 
 	// alice tries to reveal
 	_, err = alice.RevealResult(aliceRevealMsg)
-	require.ErrorContains(t, err, "expired")
+	require.ErrorContains(t, err, "not found")
+
+	// check data result
+	dataResult, err := f.BatchingKeeper.GetDataResult(f.Context(), postDrResult.DrID, uint64(postDrResult.Height))
+	require.NoError(t, err)
+	require.Equal(t, types.TallyExitCodeFilterError, dataResult.ExitCode)
 }
 
 func TestRevealFailsOnExpiredDr(t *testing.T) {

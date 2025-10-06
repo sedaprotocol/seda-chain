@@ -36,7 +36,6 @@ func TestFailsIfNotStaked(t *testing.T) {
 	require.ErrorContains(t, err, "not found")
 }
 
-// TODO: failing not correct error message maybe intended?
 func TestFailsIfCommitTimedOut(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
@@ -63,7 +62,12 @@ func TestFailsIfCommitTimedOut(t *testing.T) {
 	}
 	aliceRevealMsg := alice.CreateRevealMsg(aliceReveal)
 	_, err = alice.CommitResult(aliceRevealMsg)
-	require.ErrorContains(t, err, "expired")
+	require.ErrorContains(t, err, "not found")
+
+	// check data result
+	dataResult, err := f.BatchingKeeper.GetDataResult(f.Context(), postDrResult.DrID, uint64(postDrResult.Height))
+	require.NoError(t, err)
+	require.Equal(t, types.TallyExitCodeNotEnoughCommits, dataResult.ExitCode)
 }
 
 func TestCommitFailsOnExpiredDr(t *testing.T) {
