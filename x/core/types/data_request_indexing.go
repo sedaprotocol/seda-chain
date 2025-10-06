@@ -185,12 +185,12 @@ func (s DataRequestIndexing) GetDataRequestsByStatus(ctx sdk.Context, status Dat
 		return nil, nil, 0, err
 	}
 
-	rng := collections.NewPrefixedPairRange[DataRequestStatus, DataRequestIndex](status)
-	if lastSeenIndex != nil {
-		rng.StartExclusive(lastSeenIndex)
-	}
+	// rng := collections.NewPrefixedPairRange[DataRequestStatus, DataRequestIndex](status)
+	// if lastSeenIndex != nil {
+	// 	rng.StartExclusive(lastSeenIndex)
+	// }
 
-	iter, err := s.indexing.Iterate(ctx, rng)
+	iter, err := s.indexing.IterateRaw(ctx, []byte{}, lastSeenIndex, collections.OrderDescending)
 	if err != nil {
 		return nil, nil, 0, err
 	}
