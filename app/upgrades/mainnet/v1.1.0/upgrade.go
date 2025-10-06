@@ -42,6 +42,11 @@ func CreateUpgradeHandler(
 	return func(context context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(context)
 
+		versionMap, err := mm.RunMigrations(ctx, configurator, fromVM)
+		if err != nil {
+			return nil, err
+		}
+
 		// Migrate Core Contract state to x/core.
 		contractAddr, err := keepers.WasmStorageKeeper.GetCoreContractAddr(ctx)
 		if err != nil {
@@ -137,6 +142,13 @@ func CreateUpgradeHandler(
 			}
 		}
 
-		return mm.RunMigrations(ctx, configurator, fromVM)
+		ctx.Logger().Info(
+			"Successfully migrated Core Contract state",
+			"owner", owner,
+			"allowlist_len", len(allowlist),
+			"stakers_len", len(stakers),
+		)
+
+		return versionMap, nil
 	}
 }

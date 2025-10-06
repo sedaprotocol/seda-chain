@@ -86,7 +86,7 @@ func TestCoreContractUpgrade(t *testing.T) {
 	require.NoError(t, err)
 
 	moduleManager := testutil.NewMockModuleManager(gomock.NewController(t))
-	moduleManager.EXPECT().RunMigrations(gomock.Any(), gomock.Any(), gomock.Any()).Return(module.VersionMap{}, nil).Times(2)
+	moduleManager.EXPECT().RunMigrations(gomock.Any(), gomock.Any(), gomock.Any()).Return(module.VersionMap{}, nil).Times(3)
 
 	upgradeHandler := v1_1_0.CreateUpgradeHandler(
 		moduleManager, nil,
