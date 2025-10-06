@@ -59,7 +59,6 @@ func TestLimitWorks(t *testing.T) {
 	require.Len(t, drsResp.DataRequests, 2)
 }
 
-// TODO: Failing they are not sorted by gas price correctly
 func TestDrsAreSortedByGasPrice(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
@@ -90,6 +89,53 @@ func TestDrsAreSortedByGasPrice(t *testing.T) {
 	require.Equal(t, dr2.GasPrice, drsResp.DataRequests[0].GasPrice)
 	require.Equal(t, dr3.GasPrice, drsResp.DataRequests[1].GasPrice)
 	require.Equal(t, dr1.GasPrice, drsResp.DataRequests[2].GasPrice)
+}
+
+func TestDrsAreSortedByGasAndHeight(t *testing.T) {
+	f := testutil.InitFixture(t, false, nil)
+	// start at block height 1
+	f.AdvanceBlocks(1)
+
+	bob := f.CreateTestAccount("bob", 22)
+	_ = f.CreateStakedTestAccount("alice", 22, 1)
+
+	dr1 := bob.CalculateDrIDAndArgs("1", 1)
+	dr1.GasPrice = types.MinGasPrice.Add(math.NewInt(1))
+	dr1Funds := (math.NewIntFromUint64(dr1.ExecGasLimit).Add(math.NewIntFromUint64(dr1.TallyGasLimit))).Mul(dr1.GasPrice)
+	_, err := bob.PostDataRequest(dr1, 1, &dr1Funds)
+	require.NoError(t, err)
+
+	dr2 := bob.CalculateDrIDAndArgs("2", 1)
+	dr2.GasPrice = types.MinGasPrice.Add(math.NewInt(10))
+	dr2Funds := (math.NewIntFromUint64(dr2.ExecGasLimit).Add(math.NewIntFromUint64(dr2.TallyGasLimit))).Mul(dr2.GasPrice)
+	_, err = bob.PostDataRequest(dr2, 1, &dr2Funds)
+	require.NoError(t, err)
+
+	f.AdvanceBlocks(1)
+
+	dr3 := bob.CalculateDrIDAndArgs("3", 1)
+	dr3.GasPrice = types.MinGasPrice.Add(math.NewInt(10))
+	dr3Funds := (math.NewIntFromUint64(dr3.ExecGasLimit).Add(math.NewIntFromUint64(dr3.TallyGasLimit))).Mul(dr3.GasPrice)
+	_, err = bob.PostDataRequest(dr3, 2, &dr3Funds)
+	require.NoError(t, err)
+
+	dr4 := bob.CalculateDrIDAndArgs("4", 1)
+	dr4.GasPrice = types.MinGasPrice.Add(math.NewInt(2))
+	dr4Funds := (math.NewIntFromUint64(dr4.ExecGasLimit).Add(math.NewIntFromUint64(dr4.TallyGasLimit))).Mul(dr4.GasPrice)
+	_, err = bob.PostDataRequest(dr4, 2, &dr4Funds)
+	require.NoError(t, err)
+
+	drsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, nil)
+	require.NoError(t, err)
+	require.Len(t, drsResp.DataRequests, 4)
+	require.Equal(t, dr2.GasPrice, drsResp.DataRequests[0].GasPrice)
+	require.Equal(t, int64(1), drsResp.DataRequests[0].PostedHeight)
+	require.Equal(t, dr3.GasPrice, drsResp.DataRequests[1].GasPrice)
+	require.Equal(t, int64(2), drsResp.DataRequests[1].PostedHeight)
+	require.Equal(t, dr4.GasPrice, drsResp.DataRequests[2].GasPrice)
+	require.Equal(t, int64(2), drsResp.DataRequests[2].PostedHeight)
+	require.Equal(t, dr1.GasPrice, drsResp.DataRequests[3].GasPrice)
+	require.Equal(t, int64(1), drsResp.DataRequests[3].PostedHeight)
 }
 
 // TODO: Failing should not include the last seen index in the next page

@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/big"
 	"strconv"
 )
@@ -25,9 +26,10 @@ func (i DataRequestIndex) Strings() []string {
 	if i == nil || len(i) != 56 {
 		return nil
 	}
+
 	return []string{
 		new(big.Int).SetBytes(i[0:16]).String(),
-		strconv.FormatUint(binary.BigEndian.Uint64(i[16:24]), 10),
+		strconv.FormatUint(math.MaxUint64-uint64(binary.BigEndian.Uint64(i[16:24])), 10),
 		string(i[24:]),
 	}
 }
@@ -51,7 +53,7 @@ func DataRequestIndexFromStrings(strings []string) (DataRequestIndex, error) {
 	if err != nil {
 		return index, fmt.Errorf("invalid height component %s: %w", strings[1], err)
 	}
-	binary.BigEndian.PutUint64(index[16:24], height)
+	binary.BigEndian.PutUint64(index[16:24], math.MaxUint64-height)
 
 	// strings[2] is the dr_id.
 	copy(index[24:], []byte(strings[2]))
@@ -66,7 +68,7 @@ func (dr DataRequest) Index() DataRequestIndex {
 
 	heightBytes := make([]byte, 8)
 	//nolint:gosec // G115: Block height is never negative.
-	binary.BigEndian.PutUint64(heightBytes, uint64(dr.PostedHeight))
+	binary.BigEndian.PutUint64(heightBytes, math.MaxUint64-uint64(dr.PostedHeight))
 
 	drIDBytes := []byte(dr.ID) // TODO or convert hex to bytes?
 	return append(append(priceBytes, heightBytes...), drIDBytes...)
