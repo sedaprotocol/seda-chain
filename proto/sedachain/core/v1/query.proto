@@ -321,9 +321,15 @@ message QueryDataRequestStatusesRequest {
   repeated string data_request_ids = 1 [ (gogoproto.jsontag) = "dr_ids" ];
 }
 
+// MaybeDataRequestStatus is a wrapper that contains either a DataRequestStatus
+// value or a null value.
+message MaybeDataRequestStatus {
+  DataRequestStatus value = 1 [ (gogoproto.nullable) = true ];
+}
+
 // The response message for Query/DataRequestStatuses RPC method.
 message QueryDataRequestStatusesResponse {
-  map<string, DataRequestStatus> statuses = 1;
+  map<string, MaybeDataRequestStatus> statuses = 1;
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.

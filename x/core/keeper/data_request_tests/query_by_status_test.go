@@ -276,7 +276,6 @@ func TestQueryByStatusManyMoreDrsWorks(t *testing.T) {
 	require.Len(t, tallyingDrsResp.DataRequests, 0)
 }
 
-// TODO: Should not fail if one of the IDs is not found
 func TestQueryStatusesWorks(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
@@ -300,7 +299,7 @@ func TestQueryStatusesWorks(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, drsResp.Statuses, 3)
 	for _, status := range drsResp.Statuses {
-		require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, status)
+		require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, status.Value)
 	}
 
 	// upgrade one dr to revealing
@@ -347,9 +346,9 @@ func TestQueryStatusesWorks(t *testing.T) {
 	statusesResp, err := bob.GetDataRequestStatuses(drIds)
 	require.NoError(t, err)
 	require.Len(t, statusesResp.Statuses, 3)
-	require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, statusesResp.Statuses[postDrResult1.DrID])
-	require.Equal(t, types.DATA_REQUEST_STATUS_TALLYING, statusesResp.Statuses[postDrResult2.DrID])
-	require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, statusesResp.Statuses[postDrResult3.DrID])
+	require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, statusesResp.Statuses[postDrResult1.DrID].Value)
+	require.Equal(t, types.DATA_REQUEST_STATUS_TALLYING, statusesResp.Statuses[postDrResult2.DrID].Value)
+	require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, statusesResp.Statuses[postDrResult3.DrID].Value)
 
 	// resolve the tally dr
 	f.AdvanceBlocks(1)
@@ -358,7 +357,20 @@ func TestQueryStatusesWorks(t *testing.T) {
 	statusesResp, err = bob.GetDataRequestStatuses(drIds)
 	require.NoError(t, err)
 	require.Len(t, statusesResp.Statuses, 3)
-	require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, statusesResp.Statuses[postDrResult1.DrID])
+	require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, statusesResp.Statuses[postDrResult1.DrID].Value)
 	require.Nil(t, statusesResp.Statuses[postDrResult2.DrID])
-	require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, statusesResp.Statuses[postDrResult3.DrID])
+	require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, statusesResp.Statuses[postDrResult3.DrID].Value)
+}
+
+func TestQueryStatusesNonExistingDr(t *testing.T) {
+	f := testutil.InitFixture(t, false, nil)
+
+	bob := f.CreateStakedTestAccount("bob", 22, 1)
+
+	drIds := []string{"nonexistingdr"}
+
+	resp, err := bob.GetDataRequestStatuses(drIds)
+	require.NoError(t, err)
+	require.Len(t, resp.Statuses, 1)
+	require.Nil(t, resp.Statuses["nonexistingdr"])
 }

@@ -1,6 +1,10 @@
 package keeper
 
 import (
+	"errors"
+
+	"cosmossdk.io/collections"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/x/core/types"
@@ -39,14 +43,18 @@ func (k Keeper) GetDataRequestStatus(ctx sdk.Context, id string) (types.DataRequ
 }
 
 // GetDataRequestStatuses returns the statuses of the data requests given their IDs.
-func (k Keeper) GetDataRequestStatuses(ctx sdk.Context, ids []string) (map[string]types.DataRequestStatus, error) {
-	statuses := make(map[string]types.DataRequestStatus)
+func (k Keeper) GetDataRequestStatuses(ctx sdk.Context, ids []string) (map[string]*types.MaybeDataRequestStatus, error) {
+	statuses := make(map[string]*types.MaybeDataRequestStatus)
 	for _, id := range ids {
 		status, err := k.GetDataRequestStatus(ctx, id)
 		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				statuses[id] = nil
+				continue
+			}
 			return nil, err
 		}
-		statuses[id] = status
+		statuses[id] = &types.MaybeDataRequestStatus{Value: status}
 	}
 	return statuses, nil
 }
