@@ -26,6 +26,8 @@ func GetQueryCmd() *cobra.Command {
 		GetPaused(),
 		GetAllowlist(),
 		GetStaker(),
+		GetExecutors(),
+		GetDataRequest(),
 		GetCmdQueryParams(),
 		GetStakingConfig(),
 		GetDataRequestConfig(),
@@ -143,6 +145,56 @@ func GetStaker() *cobra.Command {
 
 			res, err := queryClient.Staker(cmd.Context(), &types.QueryStakerRequest{
 				PublicKey: args[0],
+			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetExecutors() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "executors",
+		Short: "Query the list of executors",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Executors(cmd.Context(), &types.QueryExecutorsRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetDataRequest() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "data-request [dr_id]",
+		Short: "Query a data request by its ID",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.DataRequest(cmd.Context(), &types.QueryDataRequestRequest{
+				DrId: args[0],
 			})
 			if err != nil {
 				return err
