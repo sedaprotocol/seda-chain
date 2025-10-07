@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -16,7 +17,7 @@ import (
 type DataRequestIndex []byte
 
 func (i DataRequestIndex) DrID() string {
-	return string(i[24:])
+	return hex.EncodeToString(i[24:])
 }
 
 // Strings returns the string-slice representation of the data request index.
@@ -27,15 +28,15 @@ func (i DataRequestIndex) Strings() []string {
 		return nil
 	}
 
-	return []string{
-		new(big.Int).SetBytes(i[0:16]).String(),
-		strconv.FormatUint(math.MaxUint64-uint64(binary.BigEndian.Uint64(i[16:24])), 10),
-		string(i[24:]),
-	}
+	gasPrice := new(big.Int).SetBytes(i[0:16])
+	height := math.MaxUint64 - binary.BigEndian.Uint64(i[16:24])
+	drID := hex.EncodeToString(i[24:])
+
+	return []string{gasPrice.String(), strconv.FormatUint(height, 10), drID}
 }
 
 func DataRequestIndexFromStrings(strings []string) (DataRequestIndex, error) {
-	var index DataRequestIndex
+	index := make([]byte, 56)
 	if len(strings) != 3 {
 		return index, fmt.Errorf("required 3 components, got %d", len(strings))
 	}
@@ -70,7 +71,10 @@ func (dr DataRequest) Index() DataRequestIndex {
 	//nolint:gosec // G115: Block height is never negative.
 	binary.BigEndian.PutUint64(heightBytes, math.MaxUint64-uint64(dr.PostedHeight))
 
-	drIDBytes := []byte(dr.ID) // TODO or convert hex to bytes?
+	drIDBytes, err := hex.DecodeString(dr.ID)
+	if err != nil {
+		return nil
+	}
 	return append(append(priceBytes, heightBytes...), drIDBytes...)
 }
 
