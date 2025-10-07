@@ -138,7 +138,6 @@ func TestDrsAreSortedByGasAndHeight(t *testing.T) {
 	require.Equal(t, int64(1), drsResp.DataRequests[3].PostedHeight)
 }
 
-// TODO: Failing should not include the last seen index in the next page
 func TestLastSeenIndexWorks(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
@@ -149,9 +148,11 @@ func TestLastSeenIndexWorks(t *testing.T) {
 	dr2 := bob.CalculateDrIDAndArgs("2", 1)
 	dr3 := bob.CalculateDrIDAndArgs("3", 1)
 
-	postDrResult1, err := bob.PostDataRequest(dr1, 1, nil)
+	// They all have same gas price, and height so ID will determine order
+	_, err := bob.PostDataRequest(dr1, 1, nil)
 	require.NoError(t, err)
-	_, err = bob.PostDataRequest(dr2, 1, nil)
+	// This dr ID winds up being first
+	postDrResult2, err := bob.PostDataRequest(dr2, 1, nil)
 	require.NoError(t, err)
 	_, err = bob.PostDataRequest(dr3, 1, nil)
 	require.NoError(t, err)
@@ -159,19 +160,19 @@ func TestLastSeenIndexWorks(t *testing.T) {
 	firstDrResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 1, nil)
 	require.NoError(t, err)
 	require.Len(t, firstDrResp.DataRequests, 1)
-	require.Equal(t, postDrResult1.DrID, firstDrResp.DataRequests[0].ID)
+	require.Equal(t, postDrResult2.DrID, firstDrResp.DataRequests[0].ID)
 
 	remainingDrResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, &firstDrResp.LastSeenIndex)
 	require.NoError(t, err)
 	require.Len(t, remainingDrResp.DataRequests, 2)
 
-	var dr1Seen bool
+	var dr2Seen bool
 	for _, dr := range remainingDrResp.DataRequests {
-		if dr.ID == postDrResult1.DrID {
-			dr1Seen = true
+		if dr.ID == postDrResult2.DrID {
+			dr2Seen = true
 		}
 	}
-	require.False(t, dr1Seen)
+	require.False(t, dr2Seen)
 }
 
 func TestQueryByStatusManyDrsWorks(t *testing.T) {
