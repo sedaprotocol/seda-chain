@@ -24,7 +24,6 @@ type Keeper struct {
 	bankKeeper        types.BankKeeper
 	wasmKeeper        wasmtypes.ContractOpsKeeper
 	wasmViewKeeper    wasmtypes.ViewKeeper
-	authority         string
 
 	feeCollectorName string
 	txDecoder        sdk.TxDecoder
@@ -62,7 +61,6 @@ func NewKeeper(
 	bank types.BankKeeper,
 	wk wasmtypes.ContractOpsKeeper,
 	wvk wasmtypes.ViewKeeper,
-	authority string,
 	feeCollectorName string,
 	txDecoder sdk.TxDecoder,
 ) Keeper {
@@ -76,7 +74,6 @@ func NewKeeper(
 		bankKeeper:        bank,
 		wasmKeeper:        wk,
 		wasmViewKeeper:    wvk,
-		authority:         authority,
 		feeCollectorName:  feeCollectorName,
 		txDecoder:         txDecoder,
 		owner:             collections.NewItem(sb, types.OwnerKey, "owner", collections.StringValue),
@@ -219,10 +216,6 @@ func (k Keeper) GetTallyConfig(ctx sdk.Context) (types.TallyConfig, error) {
 		return types.TallyConfig{}, err
 	}
 	return *params.TallyConfig, nil
-}
-
-func (k Keeper) GetAuthority() string {
-	return k.authority
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

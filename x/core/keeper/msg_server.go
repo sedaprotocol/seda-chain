@@ -99,7 +99,7 @@ func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllo
 		return nil, err
 	}
 	if msg.Sender != owner {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", owner, msg.Sender)
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", owner, msg.Sender)
 	}
 
 	// TODO: validate public key format
@@ -138,7 +138,7 @@ func (m msgServer) RemoveFromAllowlist(goCtx context.Context, msg *types.MsgRemo
 		return nil, err
 	}
 	if msg.Sender != owner {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", owner, msg.Sender)
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", owner, msg.Sender)
 	}
 
 	if msg.PublicKey == "" {
@@ -187,7 +187,7 @@ func (m msgServer) Pause(goCtx context.Context, msg *types.MsgPause) (*types.Msg
 		return nil, err
 	}
 	if msg.Sender != owner {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", owner, msg.Sender)
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", owner, msg.Sender)
 	}
 
 	current, err := m.IsPaused(ctx)
@@ -222,7 +222,7 @@ func (m msgServer) Unpause(goCtx context.Context, msg *types.MsgUnpause) (*types
 		return nil, err
 	}
 	if msg.Sender != owner {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", owner, msg.Sender)
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", owner, msg.Sender)
 	}
 
 	current, err := m.IsPaused(ctx)
@@ -502,11 +502,15 @@ func (m msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid authority address: %s", msg.Authority)
+	if _, err := sdk.AccAddressFromBech32(msg.Owner); err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid owner address: %s", msg.Owner)
 	}
-	if m.GetAuthority() != msg.Authority {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized authority; expected %s, got %s", m.GetAuthority(), msg.Authority)
+	owner, err := m.GetOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if owner != msg.Owner {
+		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", owner, msg.Owner)
 	}
 
 	if msg.Params.DataRequestConfig == nil {

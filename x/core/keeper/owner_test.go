@@ -126,7 +126,6 @@ func TestNonOwnerCannotChangeParams(t *testing.T) {
 	require.NotEqual(t, math.NewInt(1), paramsResp.StakingConfig.MinimumStake)
 }
 
-// TODO: Failing bc owner != authority... need to fix
 func TestNewOwnerCanChangeParams(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 

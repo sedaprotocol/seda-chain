@@ -37,7 +37,7 @@ type KeeperTestSuite struct {
 	msgSrvr       types.MsgServer
 	queryClient   types.QueryClient
 	serverCtx     *server.Context
-	authority     string
+	owner         string
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -56,7 +56,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	t := s.T()
 	t.Helper()
 
-	s.authority = authtypes.NewModuleAddress("gov").String()
+	s.owner = authtypes.NewModuleAddress("gov").String()
 
 	key := storetypes.NewKVStoreKey(types.StoreKey)
 	testCtx := sdktestutil.DefaultContextWithDB(t, key, storetypes.NewTransientStoreKey("transient_test"))
@@ -77,7 +77,6 @@ func (s *KeeperTestSuite) SetupTest() {
 		s.bankKeeper,
 		nil, // wasmKeeper
 		nil, // wasmViewKeeper
-		s.authority,
 		authtypes.FeeCollectorName,
 		encCfg.TxConfig.TxDecoder(),
 	)
@@ -96,7 +95,7 @@ func (s *KeeperTestSuite) SetupTest() {
 
 	// Set default params
 	genesis := types.DefaultGenesisState()
-	genesis.Owner = s.authority
+	genesis.Owner = s.owner
 	s.keeper.InitGenesis(s.ctx, *genesis)
 }
 
@@ -123,13 +122,13 @@ func (s *KeeperTestSuite) TestMsgServer_AddToAllowlist() {
 		{
 			name: "Happy path - add new public key to allowlist",
 			msg: &types.MsgAddToAllowlist{
-				Sender:    s.authority,
+				Sender:    s.owner,
 				PublicKey: "03d92f44157c939284bb101dccea8a2fc95f71ecfd35b44573a76173e3c25c67a9",
 			},
 			wantErr: nil,
 		},
 		{
-			name: "Invalid authority",
+			name: "Invalid owner",
 			msg: &types.MsgAddToAllowlist{
 				Sender:    "seda1invalid",
 				PublicKey: "03d92f44157c939284bb101dccea8a2fc95f71ecfd35b44573a76173e3c25c67a9",
@@ -139,7 +138,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddToAllowlist() {
 		{
 			name: "Empty public key",
 			msg: &types.MsgAddToAllowlist{
-				Sender:    s.authority,
+				Sender:    s.owner,
 				PublicKey: "",
 			},
 			wantErr: sdkerrors.ErrInvalidRequest,
@@ -147,7 +146,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddToAllowlist() {
 		{
 			name: "Already allowlisted from first test case",
 			msg: &types.MsgAddToAllowlist{
-				Sender:    s.authority,
+				Sender:    s.owner,
 				PublicKey: "03d92f44157c939284bb101dccea8a2fc95f71ecfd35b44573a76173e3c25c67a9",
 			},
 			wantErr: types.ErrAlreadyAllowlisted,
@@ -368,7 +367,8 @@ func (s *KeeperTestSuite) TestMsgServer_Stake() {
 }
 
 func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
-	authority := s.keeper.GetAuthority()
+	owner, err := s.keeper.GetOwner(s.ctx)
+	s.Require().NoError(err)
 
 	tests := []struct {
 		name    string
@@ -378,15 +378,15 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 		{
 			name: "Happy path - valid params update",
 			msg: &types.MsgUpdateParams{
-				Authority: authority,
-				Params:    types.DefaultParams(),
+				Owner:  owner,
+				Params: types.DefaultParams(),
 			},
 			wantErr: nil,
 		},
 		{
-			name: "Invalid authority",
+			name: "Invalid owner",
 			msg: &types.MsgUpdateParams{
-				Authority: "seda1invalid",
+				Owner: "seda1invalid",
 				Params: types.Params{
 					StakingConfig: &types.StakingConfig{
 						MinimumStake:     s.NewIntFromString("1000000000000000000"),
@@ -397,9 +397,9 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 			wantErr: sdkerrors.ErrInvalidAddress,
 		},
 		{
-			name: "Unauthrized authority",
+			name: "Unauthrized owner",
 			msg: &types.MsgUpdateParams{
-				Authority: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
+				Owner: "seda1uea9km4nup9q7qu96ak683kc67x9jf7ste45z5",
 				Params: types.Params{
 					StakingConfig: &types.StakingConfig{
 						MinimumStake:     s.NewIntFromString("1000000000000000000"),
@@ -412,7 +412,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 		{
 			name: "Invalid params",
 			msg: &types.MsgUpdateParams{
-				Authority: authority,
+				Owner: owner,
 				Params: types.Params{
 					StakingConfig: &types.StakingConfig{
 						MinimumStake:     s.NewIntFromString("-1"), // Invalid negative amount

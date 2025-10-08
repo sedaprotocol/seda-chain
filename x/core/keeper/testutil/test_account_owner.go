@@ -50,7 +50,7 @@ func (ta *TestAccount) Unpause() (*types.MsgUnpauseResponse, error) {
 
 func (ta *TestAccount) SetDataRequestConfig(config types.DataRequestConfig) (*types.MsgUpdateParamsResponse, error) {
 	msg := &types.MsgUpdateParams{
-		Authority: ta.Address(),
+		Owner: ta.Address(),
 		Params: types.Params{
 			DataRequestConfig: &config,
 		},
@@ -60,7 +60,7 @@ func (ta *TestAccount) SetDataRequestConfig(config types.DataRequestConfig) (*ty
 
 func (ta *TestAccount) SetStakingConfig(config types.StakingConfig) (*types.MsgUpdateParamsResponse, error) {
 	msg := &types.MsgUpdateParams{
-		Authority: ta.Address(),
+		Owner: ta.Address(),
 		Params: types.Params{
 			StakingConfig: &config,
 		},
@@ -70,7 +70,7 @@ func (ta *TestAccount) SetStakingConfig(config types.StakingConfig) (*types.MsgU
 
 func (ta *TestAccount) SetTallyConfig(config types.TallyConfig) (*types.MsgUpdateParamsResponse, error) {
 	msg := &types.MsgUpdateParams{
-		Authority: ta.Address(),
+		Owner: ta.Address(),
 		Params: types.Params{
 			TallyConfig: &config,
 		},
