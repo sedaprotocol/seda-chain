@@ -88,7 +88,7 @@ func TestExportImport(t *testing.T) {
 			drsBeforeExport = append(drsBeforeExport, dr)
 		}
 
-		commits, err := f.CoreKeeper.GetCommits(f.Context(), drID)
+		commits, err := f.CoreKeeper.GetCommitsHexEncoded(f.Context(), drID)
 		require.NoError(t, err)
 		commitsBeforeExport[drID] = commits
 
@@ -155,7 +155,7 @@ func TestExportImport(t *testing.T) {
 	require.ElementsMatch(t, drsBeforeExport, drsAfterImport)
 
 	for _, dr := range drsAfterImport {
-		commits, err := f2.CoreKeeper.GetCommits(f2.Context(), dr.ID)
+		commits, err := f2.CoreKeeper.GetCommitsHexEncoded(f2.Context(), dr.ID)
 		require.NoError(t, err)
 		require.Equal(t, commitsBeforeExport[dr.ID], commits)
 

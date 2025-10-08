@@ -52,11 +52,27 @@ func (q Querier) Executors(c context.Context, req *types.QueryExecutorsRequest) 
 
 func (q Querier) DataRequest(c context.Context, req *types.QueryDataRequestRequest) (*types.QueryDataRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+
 	dataRequest, err := q.GetDataRequest(ctx, req.DrId)
 	if err != nil {
 		return nil, err
 	}
-	return &types.QueryDataRequestResponse{DataRequest: dataRequest}, nil
+	commits, err := q.GetCommits(ctx, req.DrId)
+	if err != nil {
+		return nil, err
+	}
+	reveals, err := q.GetRevealBodies(ctx, req.DrId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryDataRequestResponse{
+		DataRequest: types.DataRequestResponse{
+			DataRequest: dataRequest,
+			Commits:     commits,
+			Reveals:     reveals,
+		},
+	}, nil
 }
 
 func (q Querier) DataRequestCommitment(c context.Context, req *types.QueryDataRequestCommitmentRequest) (*types.QueryDataRequestCommitmentResponse, error) {
@@ -73,7 +89,7 @@ func (q Querier) DataRequestCommitment(c context.Context, req *types.QueryDataRe
 
 func (q Querier) DataRequestCommitments(c context.Context, req *types.QueryDataRequestCommitmentsRequest) (*types.QueryDataRequestCommitmentsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	commits, err := q.GetCommits(ctx, req.DrId)
+	commits, err := q.GetCommitsHexEncoded(ctx, req.DrId)
 	if err != nil {
 		return nil, err
 	}
@@ -111,9 +127,31 @@ func (q Querier) DataRequestsByStatus(c context.Context, req *types.QueryDataReq
 		}
 	}
 
-	dataRequests, newLastSeenIndex, total, err := q.GetDataRequestsByStatus(ctx, req.Status, req.Limit, lastSeenIndex)
+	ids, newLastSeenIndex, total, err := q.dataRequests.GetDataRequestIDsByStatusPaginated(ctx, req.Status, req.Limit, lastSeenIndex)
 	if err != nil {
 		return nil, err
+	}
+
+	dataRequests := make([]types.DataRequestResponse, 0, len(ids))
+	for _, id := range ids {
+		dataRequest, err := q.GetDataRequest(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		commits, err := q.GetCommits(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		reveals, err := q.GetRevealBodies(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		dataRequests = append(dataRequests, types.DataRequestResponse{
+			DataRequest: dataRequest,
+			Commits:     commits,
+			Reveals:     reveals,
+		})
 	}
 
 	isPaused, err := q.IsPaused(ctx)
@@ -194,20 +232,34 @@ func (q Querier) DataRequestConfig(c context.Context, _ *types.QueryDataRequestC
 
 func (q Querier) AccountSeq(c context.Context, req *types.QueryAccountSeqRequest) (*types.QueryAccountSeqResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+
 	staker, err := q.GetStaker(ctx, req.PublicKey)
 	if err != nil {
+		// An account that does not exist has a sequence number of 0.
 		if errors.Is(err, collections.ErrNotFound) {
 			return &types.QueryAccountSeqResponse{
 				AccountSeq: 0,
 			}, nil
 		}
-
 		return nil, err
 	}
 
 	return &types.QueryAccountSeqResponse{
 		AccountSeq: staker.SequenceNum,
 	}, nil
+}
+
+func (q Querier) StakerAndSeq(c context.Context, req *types.QueryStakerAndSeqRequest) (*types.QueryStakerAndSeqResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	staker, err := q.GetStaker(ctx, req.PublicKey)
+	if err != nil {
+		// An account that does not exist has a sequence number of 0.
+		if errors.Is(err, collections.ErrNotFound) {
+			return &types.QueryStakerAndSeqResponse{}, nil
+		}
+		return nil, err
+	}
+	return &types.QueryStakerAndSeqResponse{Staker: staker, SequenceNum: staker.SequenceNum}, nil
 }
 
 func (q Querier) IsStakerExecutor(c context.Context, req *types.QueryIsStakerExecutorRequest) (*types.QueryIsStakerExecutorResponse, error) {

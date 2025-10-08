@@ -78,25 +78,48 @@ func (dr DataRequest) Index() DataRequestIndex {
 	return append(append(priceBytes, heightBytes...), drIDBytes...)
 }
 
-func (dr DataRequest) MarshalJSON() ([]byte, error) {
-	type Alias DataRequest
-	if dr.ExecInputs == nil {
-		dr.ExecInputs = []byte{}
+// MarshalJSON flattens the JSON serialization of DataRequestResponse and
+// initializes nil fields to avoid their omission.
+func (dr DataRequestResponse) MarshalJSON() ([]byte, error) {
+	flattened := struct {
+		DataRequest
+		Commits map[string][]byte      `json:"commits"`
+		Reveals map[string]*RevealBody `json:"reveals"`
+	}{
+		DataRequest: dr.DataRequest,
+		Commits:     dr.Commits,
+		Reveals:     dr.Reveals,
 	}
-	if dr.TallyInputs == nil {
-		dr.TallyInputs = []byte{}
+
+	if flattened.ExecInputs == nil {
+		flattened.ExecInputs = []byte{}
 	}
-	if dr.ConsensusFilter == nil {
-		dr.ConsensusFilter = []byte{}
+	if flattened.TallyInputs == nil {
+		flattened.TallyInputs = []byte{}
 	}
-	if dr.Memo == nil {
-		dr.Memo = []byte{}
+	if flattened.ConsensusFilter == nil {
+		flattened.ConsensusFilter = []byte{}
 	}
-	if dr.PaybackAddress == nil {
-		dr.PaybackAddress = []byte{}
+	if flattened.Memo == nil {
+		flattened.Memo = []byte{}
 	}
-	if dr.SEDAPayload == nil {
-		dr.SEDAPayload = []byte{}
+	if flattened.PaybackAddress == nil {
+		flattened.PaybackAddress = []byte{}
 	}
-	return json.Marshal(Alias(dr))
+	if flattened.SEDAPayload == nil {
+		flattened.SEDAPayload = []byte{}
+	}
+
+	if flattened.Commits == nil {
+		flattened.Commits = map[string][]byte{}
+	}
+	if flattened.Reveals == nil {
+		flattened.Reveals = map[string]*RevealBody{}
+	}
+
+	bz, err := json.Marshal(flattened)
+	if err != nil {
+		return nil, err
+	}
+	return bz, nil
 }

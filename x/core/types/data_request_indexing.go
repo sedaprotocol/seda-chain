@@ -174,6 +174,42 @@ func (idx DataRequestIndexing) GetDataRequestIDsByStatus(ctx sdk.Context, status
 	return ids, nil
 }
 
+func (idx DataRequestIndexing) GetDataRequestIDsByStatusPaginated(ctx sdk.Context, status DataRequestStatus, limit uint64, lastSeenIndex DataRequestIndex) ([]string, DataRequestIndex, uint64, error) {
+	total, err := idx.GetDataRequestCountByStatus(ctx, status)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+
+	rng := collections.NewPrefixedPairRange[DataRequestStatus, DataRequestIndex](status).Descending()
+	if lastSeenIndex != nil {
+		rng.EndExclusive(lastSeenIndex)
+	}
+
+	iter, err := idx.indexing.Iterate(ctx, rng)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+	defer iter.Close()
+
+	var ids []string
+	var newLastSeenIndex DataRequestIndex
+	count := uint64(0)
+	for ; iter.Valid(); iter.Next() {
+		key, err := iter.Key()
+		if err != nil {
+			return nil, nil, 0, err
+		}
+		ids = append(ids, key.K2().DrID())
+
+		newLastSeenIndex = append([]byte(nil), key.K2()...)
+		count++
+		if count >= limit {
+			break
+		}
+	}
+	return ids, newLastSeenIndex, total, nil
+}
+
 // GetDataRequestsByStatus returns data requests by status. You can specify the
 // limit of the query by proving a non-zero limit. If you provide a non-nil
 // lastSeenIndex, the query will start from the next data request after the

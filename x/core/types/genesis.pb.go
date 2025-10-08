@@ -159,6 +159,7 @@ func (m *GenesisState) GetReveals() []GenesisStateReveal {
 	return nil
 }
 
+// GenesisStateCommit is used to store commits in the genesis state.
 type GenesisStateCommit struct {
 	DrID      string `protobuf:"bytes,1,opt,name=dr_i_d,json=drID,proto3" json:"dr_id"`
 	PublicKey string `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`

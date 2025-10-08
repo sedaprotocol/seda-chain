@@ -44,7 +44,7 @@ type Keeper struct {
 	stakers types.StakerIndexing
 
 	// Data request-related states:
-	// dataRequestIndexing is a set of data request indices under different statuses.
+	// dataRequests contains data requests and their status indexing and counts.
 	dataRequests types.DataRequestIndexing
 	// commits is a map of data request ID - public key pairs to commits.
 	commits collections.Map[collections.Pair[string, string], []byte]
@@ -217,7 +217,7 @@ func (k Keeper) GetAllRevealBodies(ctx sdk.Context) ([]types.RevealBody, error) 
 func (k Keeper) AddCommit(ctx sdk.Context, drID, publicKey string, commit []byte) (uint32, error) {
 	ranger := collections.NewPrefixedPairRange[string, string](drID)
 	var count uint32
-	err := k.commits.Walk(ctx, ranger, func(key collections.Pair[string, string], value []byte) (stop bool, err error) {
+	err := k.commits.Walk(ctx, ranger, func(key collections.Pair[string, string], _ []byte) (stop bool, err error) {
 		if key.K2() == publicKey {
 			return true, types.ErrAlreadyCommitted
 		}
@@ -240,9 +240,34 @@ func (k Keeper) GetCommit(ctx sdk.Context, drID, publicKey string) ([]byte, erro
 	return k.commits.Get(ctx, collections.Join(drID, publicKey))
 }
 
-// GetCommits returns a map of hex-encoded public keys to their commits for the
+// GetCommits returns a map of public keys to their commits in bytes for the
 // given data request ID.
-func (k Keeper) GetCommits(ctx sdk.Context, drID string) (map[string]string, error) {
+func (k Keeper) GetCommits(ctx sdk.Context, drID string) (map[string][]byte, error) {
+	rng := collections.NewPrefixedPairRange[string, string](drID)
+	iter, err := k.commits.Iterate(ctx, rng)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	commits := make(map[string][]byte)
+	for ; iter.Valid(); iter.Next() {
+		key, err := iter.Key()
+		if err != nil {
+			return nil, err
+		}
+		value, err := iter.Value()
+		if err != nil {
+			return nil, err
+		}
+		commits[key.K2()] = value
+	}
+	return commits, nil
+}
+
+// GetCommitsHexEncoded returns a map of hex-encoded public keys to their
+// hex-encoded commits for the given data request ID.
+func (k Keeper) GetCommitsHexEncoded(ctx sdk.Context, drID string) (map[string]string, error) {
 	rng := collections.NewPrefixedPairRange[string, string](drID)
 	iter, err := k.commits.Iterate(ctx, rng)
 	if err != nil {

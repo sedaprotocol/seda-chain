@@ -55,8 +55,8 @@ func TestCoreContractUpgrade(t *testing.T) {
 		drIDs[j] = dr.GetDataRequestID()
 
 		dr.PostDataRequest(f)
-		dr.CommitDataRequest(f, numCommits)
-		dr.ExecuteReveals(f, numReveals)
+		dr.CommitDataRequest(f, numCommits, nil)
+		dr.ExecuteReveals(f, numReveals, nil)
 	}
 
 	res := f.DrainDataRequestPool(100)
