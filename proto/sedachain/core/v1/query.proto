@@ -90,6 +90,13 @@ service Query {
     option (google.api.http).get = "/seda-chain/core/account_seq/{public_key}";
   }
 
+  // StakerAndSeq returns the staker and its sequence number.
+  rpc StakerAndSeq(QueryStakerAndSeqRequest)
+      returns (QueryStakerAndSeqResponse) {
+    option (google.api.http).get =
+        "/seda-chain/core/staker_and_seq/{public_key}";
+  }
+
   // IsStakerExecutor returns whether the staker is a executor.
   rpc IsStakerExecutor(QueryIsStakerExecutorRequest)
       returns (QueryIsStakerExecutorResponse) {
@@ -190,7 +197,7 @@ message QueryDataRequestRequest { string dr_id = 1; }
 
 // The response message for Query/DataRequest RPC method.
 message QueryDataRequestResponse {
-  DataRequest data_request = 1 [ (gogoproto.nullable) = false ];
+  DataRequestResponse data_request = 1 [ (gogoproto.nullable) = false ];
 }
 
 // The request message for Query/DataRequestCommitment RPC method.
@@ -240,7 +247,8 @@ message QueryDataRequestsByStatusRequest {
 // The response message for Query/DataRequestsByStatus RPC method.
 message QueryDataRequestsByStatusResponse {
   // DataRequests is the list of data requests under the given status.
-  repeated DataRequest data_requests = 1 [ (gogoproto.nullable) = false ];
+  repeated DataRequestResponse data_requests = 1
+      [ (gogoproto.nullable) = false ];
   // IsPaused is indicates whether the core module is paused.
   bool is_paused = 2;
   // Total is the total number of data requests under the given status.
@@ -260,6 +268,15 @@ message QueryAccountSeqRequest {
 message QueryAccountSeqResponse {
   // account_seq is the account sequence number.
   uint64 account_seq = 1;
+}
+
+// The request message for Query/StakerAndSeq RPC method.
+message QueryStakerAndSeqRequest { string public_key = 1; }
+
+// The response message for Query/StakerAndSeq RPC method.
+message QueryStakerAndSeqResponse {
+  Staker staker = 1 [ (gogoproto.nullable) = false ];
+  uint64 sequence_num = 2;
 }
 
 // The request message for Query/IsStakerExecutor RPC method.
@@ -355,4 +372,13 @@ message QueryDataRequestConfigRequest {}
 // The response message for Query/DataRequestConfig RPC method.
 message QueryDataRequestConfigResponse {
   DataRequestConfig data_request_config = 1 [ (gogoproto.nullable) = false ];
+}
+
+// DataRequest is a query response type that contains a data request object
+// along with its commits and reveals.
+message DataRequestResponse {
+  DataRequest data_request = 1
+      [ (gogoproto.embed) = true, (gogoproto.nullable) = false ];
+  map<string, bytes> commits = 2 [ (gogoproto.jsontag) = "commits" ];
+  map<string, RevealBody> reveals = 3 [ (gogoproto.jsontag) = "reveals" ];
 }
