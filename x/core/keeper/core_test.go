@@ -246,12 +246,14 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	// Set max result size to 1 and verify that the data request fails
 	params := types.DefaultParams()
 	params.TallyConfig.MaxResultSize = 1
+	owner, err := f.CoreKeeper.GetOwner(f.Context())
+	require.NoError(t, err)
 	msg := &types.MsgUpdateParams{
-		Authority: f.CoreKeeper.GetAuthority(),
-		Params:    params,
+		Owner:  owner,
+		Params: params,
 	}
 
-	_, err := f.CoreMsgServer.UpdateParams(f.Context(), msg)
+	_, err = f.CoreMsgServer.UpdateParams(f.Context(), msg)
 	require.NoError(t, err)
 
 	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm(), f.Context().BlockTime())
@@ -286,8 +288,8 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 	// Set max result size to 1024 and verify that the data request succeeds
 	params.TallyConfig.MaxResultSize = 1024
 	msg = &types.MsgUpdateParams{
-		Authority: f.CoreKeeper.GetAuthority(),
-		Params:    params,
+		Owner:  owner,
+		Params: params,
 	}
 
 	_, err = f.CoreMsgServer.UpdateParams(f.Context(), msg)

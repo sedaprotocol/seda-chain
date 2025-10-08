@@ -697,7 +697,6 @@ func NewApp(
 		app.BankKeeper,
 		app.WasmContractKeeper,
 		app.WasmKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		authtypes.FeeCollectorName,
 		txConfig.TxDecoder(),
 	)

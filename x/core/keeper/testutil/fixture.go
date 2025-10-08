@@ -154,10 +154,10 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 
 	ctx := sdk.NewContext(cms, cmtproto.Header{Time: time.Now().UTC(), ChainID: chainID}, true, logger)
 
-	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	owner := authtypes.NewModuleAddress(govtypes.ModuleName)
 	creator := TestAccount{
-		name:       "creator",
-		addr:       authority,
+		name:       "owner",
+		addr:       owner,
 		signingKey: secp256k1.GenPrivKey(),
 		fixture:    nil,
 	}
@@ -178,7 +178,7 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		maccPerms,
 		addresscodec.NewBech32Codec(params.Bech32PrefixAccAddr),
 		params.Bech32PrefixAccAddr,
-		authority.String(),
+		owner.String(),
 	)
 
 	blockedAddresses := map[string]bool{
@@ -189,11 +189,11 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		runtime.NewKVStoreService(keys[banktypes.StoreKey]),
 		accountKeeper,
 		blockedAddresses,
-		authority.String(),
+		owner.String(),
 		log.NewNopLogger(),
 	)
 
-	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, authority.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
+	sdkStakingKeeper := sdkstakingkeeper.NewKeeper(cdc, runtime.NewKVStoreService(keys[sdkstakingtypes.StoreKey]), accountKeeper, bankKeeper, owner.String(), addresscodec.NewBech32Codec(params.Bech32PrefixValAddr), addresscodec.NewBech32Codec(params.Bech32PrefixConsAddr))
 	stakingKeeper := stakingkeeper.NewKeeper(sdkStakingKeeper, addresscodec.NewBech32Codec(params.Bech32PrefixValAddr))
 
 	stakingParams := sdkstakingtypes.DefaultParams()
@@ -291,13 +291,12 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		bankKeeper,
 		contractKeeper,
 		wasmKeeper,
-		authority.String(),
 		authtypes.FeeCollectorName,
 		encCfg.TxConfig.TxDecoder(),
 	)
 
 	genesis := types.DefaultGenesisState()
-	genesis.Owner = authority.String()
+	genesis.Owner = owner.String()
 	coreKeeper.InitGenesis(ctx, *genesis)
 
 	coreMsgServer := keeper.NewMsgServerImpl(coreKeeper)
@@ -346,14 +345,14 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 	require.True(tb, ok)
 	err = bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(BondDenom, int1e21)))
 	require.NoError(tb, err)
-	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, authority, sdk.NewCoins(sdk.NewCoin(BondDenom, int1e21)))
+	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, owner, sdk.NewCoins(sdk.NewCoin(BondDenom, int1e21)))
 	require.NoError(tb, err)
 
 	var codeID uint64
 	if coreContractWasm != nil {
-		codeID, _, err = contractKeeper.Create(ctx, authority, coreContractWasm, nil)
+		codeID, _, err = contractKeeper.Create(ctx, owner, coreContractWasm, nil)
 	} else {
-		codeID, _, err = contractKeeper.Create(ctx, authority, testwasms.CoreContractWasm(), nil)
+		codeID, _, err = contractKeeper.Create(ctx, owner, testwasms.CoreContractWasm(), nil)
 	}
 	require.NoError(tb, err)
 	require.Equal(tb, uint64(1), codeID)
@@ -364,13 +363,13 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		ChainID string         `json:"chain_id"`
 	}{
 		Token:   "aseda",
-		Owner:   authority,
+		Owner:   owner,
 		ChainID: chainID,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(tb, err)
 
-	coreContractAddr, _, err := contractKeeper.Instantiate(ctx, codeID, authority, nil, initMsgBz, "Core Contract", sdk.NewCoins())
+	coreContractAddr, _, err := contractKeeper.Instantiate(ctx, codeID, owner, nil, initMsgBz, "Core Contract", sdk.NewCoins())
 	require.NoError(tb, err)
 	require.NotEmpty(tb, coreContractAddr)
 
@@ -384,7 +383,7 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 	_, err = contractKeeper.Execute(
 		ctx,
 		coreContractAddr,
-		authority,
+		owner,
 		[]byte(setStakingConfigMsg),
 		sdk.NewCoins(),
 	)
