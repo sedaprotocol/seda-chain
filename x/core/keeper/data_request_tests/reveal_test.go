@@ -52,7 +52,11 @@ func TestRevealWorks(t *testing.T) {
 	revealingDrsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_REVEALING, 10, nil)
 	require.NoError(t, err)
 	require.Len(t, revealingDrsResp.DataRequests, 1)
-	require.Len(t, revealingDrsResp.DataRequests[0].Reveals, 1)
+
+	revealers, err := f.CoreKeeper.GetRevealers(f.Context(), postDrResult.DrID)
+	require.NoError(t, err)
+	require.Len(t, revealers, 1)
+	require.Equal(t, alice.PublicKeyHex(), revealers[0])
 
 	aliceBalance := alice.Balance()
 	require.Equal(t, f.SedaToAseda(12), aliceBalance)
@@ -91,7 +95,11 @@ func TestWorksWithProxies(t *testing.T) {
 	tallyingDrsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_TALLYING, 10, nil)
 	require.NoError(t, err)
 	require.Len(t, tallyingDrsResp.DataRequests, 1)
-	require.Len(t, tallyingDrsResp.DataRequests[0].Reveals, 1)
+
+	revealers, err := f.CoreKeeper.GetRevealers(f.Context(), postDrResult.DrID)
+	require.NoError(t, err)
+	require.Len(t, revealers, 1)
+	require.Equal(t, alice.PublicKeyHex(), revealers[0])
 }
 
 func TestFailsProxyWhenInvalidHex(t *testing.T) {
@@ -434,7 +442,11 @@ func TestWorksAfterUnstaking(t *testing.T) {
 	tallyingDrsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_TALLYING, 10, nil)
 	require.NoError(t, err)
 	require.Len(t, tallyingDrsResp.DataRequests, 1)
-	require.Len(t, tallyingDrsResp.DataRequests[0].Reveals, 1)
+
+	revealers, err := f.CoreKeeper.GetRevealers(f.Context(), postDrResult.DrID)
+	require.NoError(t, err)
+	require.Len(t, revealers, 1)
+	require.Equal(t, alice.PublicKeyHex(), revealers[0])
 }
 
 func TestCannotFrontRunCommitReveal(t *testing.T) {

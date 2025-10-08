@@ -128,8 +128,10 @@ func TestEndBlock(t *testing.T) {
 				require.Equal(t, types.DATA_REQUEST_STATUS_TALLYING, drCheck.Status)
 			}
 
-			for executor := range drCheck.Reveals {
-				_, err := f.CoreKeeper.GetRevealBody(f.Context(), drID, executor)
+			revealers, err := f.CoreKeeper.GetRevealers(f.Context(), drID)
+			require.NoError(t, err)
+			for _, revealer := range revealers {
+				_, err := f.CoreKeeper.GetRevealBody(f.Context(), drID, revealer)
 				require.NoError(t, err)
 			}
 
@@ -139,8 +141,13 @@ func TestEndBlock(t *testing.T) {
 			// Data request should have been removed from the store.
 			drCheck, err = f.CoreKeeper.GetDataRequest(f.Context(), drID)
 			require.Error(t, err)
-			for executor := range drCheck.Reveals {
-				_, err := f.CoreKeeper.GetRevealBody(f.Context(), drID, executor)
+
+			revealersAfter, err := f.CoreKeeper.GetRevealers(f.Context(), drID)
+			require.NoError(t, err)
+			require.Empty(t, revealersAfter)
+
+			for _, revealer := range revealers {
+				_, err := f.CoreKeeper.GetRevealBody(f.Context(), drID, revealer)
 				require.Error(t, err)
 			}
 
@@ -206,7 +213,7 @@ func TestTxFeeRefund(t *testing.T) {
 			dr.PostDataRequest(f)
 
 			// Commit and check balance
-			dr.CommitDataRequest(f, 1)
+			dr.CommitDataRequest(f, 1, nil)
 
 			afterCommitBalance := f.BankKeeper.GetBalance(f.Context(), f.Stakers[0].Address, testutil.BondDenom)
 			diff := initialBalance.Sub(afterCommitBalance)
@@ -218,7 +225,7 @@ func TestTxFeeRefund(t *testing.T) {
 			}
 
 			// Reveal and check balance
-			dr.ExecuteReveals(f, 1)
+			dr.ExecuteReveals(f, 1, nil)
 
 			afterRevealBalance := f.BankKeeper.GetBalance(f.Context(), f.Stakers[0].Address, testutil.BondDenom)
 			diff = afterCommitBalance.Sub(afterRevealBalance)
@@ -396,7 +403,7 @@ func TestEndBlock_PausedCore(t *testing.T) {
 		1,
 	)
 	noRevealsDR.PostDataRequest(f)
-	noRevealsDR.CommitDataRequest(f, 1)
+	noRevealsDR.CommitDataRequest(f, 1, nil)
 
 	resolvedDR := testutil.NewTestDR(
 		zeroHash, zeroHash,
@@ -408,8 +415,8 @@ func TestEndBlock_PausedCore(t *testing.T) {
 		1,
 	)
 	resolvedDR.PostDataRequest(f)
-	resolvedDR.CommitDataRequest(f, 1)
-	resolvedDR.ExecuteReveals(f, 1)
+	resolvedDR.CommitDataRequest(f, 1, nil)
+	resolvedDR.ExecuteReveals(f, 1, nil)
 
 	afterPostBalance := f.BankKeeper.GetBalance(f.Context(), f.Creator.AccAddress(), testutil.BondDenom)
 	require.True(t, afterPostBalance.IsLT(beforeBalance), "Poster should have escrowed funds")

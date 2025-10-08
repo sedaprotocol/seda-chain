@@ -78,47 +78,8 @@ func (dr DataRequest) Index() DataRequestIndex {
 	return append(append(priceBytes, heightBytes...), drIDBytes...)
 }
 
-func (dr *DataRequest) AddCommit(publicKey string, commit []byte) {
-	if dr.Commits == nil {
-		dr.Commits = make(map[string][]byte)
-	}
-	dr.Commits[publicKey] = commit
-}
-
-func (dr DataRequest) GetCommit(publicKey string) ([]byte, bool) {
-	if dr.Commits == nil {
-		return nil, false
-	}
-	commit, exists := dr.Commits[publicKey]
-	return commit, exists
-}
-
-// MarkAsRevealed adds the given public key to the data request's reveals map
-// and returns the count of reveals.
-func (dr *DataRequest) MarkAsRevealed(publicKey string) int {
-	if dr.Reveals == nil {
-		dr.Reveals = make(map[string]bool)
-	}
-	dr.Reveals[publicKey] = true
-	return len(dr.Reveals)
-}
-
-func (dr DataRequest) HasRevealed(publicKey string) bool {
-	if dr.Reveals == nil {
-		return false
-	}
-	_, exists := dr.Reveals[publicKey]
-	return exists
-}
-
 func (dr DataRequest) MarshalJSON() ([]byte, error) {
 	type Alias DataRequest
-	if dr.Commits == nil {
-		dr.Commits = map[string][]byte{}
-	}
-	if dr.Reveals == nil {
-		dr.Reveals = map[string]bool{}
-	}
 	if dr.ExecInputs == nil {
 		dr.ExecInputs = []byte{}
 	}

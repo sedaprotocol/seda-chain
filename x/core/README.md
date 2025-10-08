@@ -115,13 +115,22 @@ Note the core module’s end blocker is structured so that most errors are caugh
 
 ## State
 ```
-allowlist:    0x00                            -> []PublicKey
-stakers:      0x01 | PublicKey                -> Staker
-dataRequests: 0x02 | DR_ID                    -> DataRequest
-revealBodies: 0x03 | DR_ID | PublicKey        -> RevealBody
-committing:   0x04 | DataRequestIndex         -> ()
-revealing:    0x05 | DataRequestIndex         -> ()
-tallying:     0x06 | DataRequestIndex         -> ()
-timeoutQueue: 0x07 | DR_ID | Timeout_Height   -> ()
-params:       0x08                            -> Params
+allowlist:             0x00 | PublicKey              -> ()
+stakers:               0x01 | PublicKey              -> Staker
+staker_index_to_key:   0x02 | uint32                 -> PublicKey
+staker_key_to_index:   0x03 | PublicKey              -> uint32
+staker_count:          0x04                          -> uint32
+data_requests:         0x05 | DR_ID                  -> DataRequest
+data_request_indexing: 0x06
+committing_count:      0x07 | DataRequestIndex       -> ()
+revealing_count:       0x08 | DataRequestIndex       -> ()
+tallying_count:        0x09 | DataRequestIndex       -> ()
+commits:               0x0A | DR_ID | PublicKey      -> Commit
+revealers:             0x0B | DR_ID | PublicKey      -> ()
+reveal_bodies:         0x0C | DR_ID | PublicKey      -> RevealBody
+timeout_queue:         0x0D | DR_ID | Timeout_Height -> ()
+params:                0x0E                          -> Params
+owner:                 0x0F
+paused:                0x10
+pending_owner:         0x11
 ```

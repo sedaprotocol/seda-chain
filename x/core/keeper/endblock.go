@@ -173,17 +173,22 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 			GasMeter:          types.NewGasMeter(&dr, config.MaxTallyGasLimit, config.BaseGasCost),
 		}
 
+		committers, revealers, err := k.GetCommittersAndRevealers(ctx, dr.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		// Phase 1: Filtering
-		if len(dr.Commits) < int(dr.ReplicationFactor) {
+		if len(committers) < int(dr.ReplicationFactor) {
 			tallyResults[i].FilterResult = FilterResult{Error: types.ErrFilterDidNotRun}
-			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", dr.ReplicationFactor, len(dr.Commits)))
+			dataResults[i].Result = []byte(fmt.Sprintf("need %d commits; received %d", dr.ReplicationFactor, len(committers)))
 			dataResults[i].ExitCode = types.TallyExitCodeNotEnoughCommits
 
 			k.Logger(ctx).Info("data request's number of commits did not meet replication factor", "request_id", dr.ID)
 
-			MeterExecutorGasFallback(dr, config.ExecutionGasCostFallback, tallyResults[i].GasMeter)
+			MeterExecutorGasFallback(tallyResults[i].GasMeter, committers, revealers, uint64(dr.ReplicationFactor), config.ExecutionGasCostFallback)
 		} else {
-			reveals, executors, gasReports := k.LoadRevealsHashSorted(ctx, dr.ID, dr.Reveals, types.GetEntropy(dr.ID, ctx.BlockHeight()))
+			reveals, executors, gasReports := k.LoadRevealsHashSorted(ctx, dr.ID, revealers, types.GetEntropy(dr.ID, ctx.BlockHeight()))
 			//nolint:gosec // G115: Replication factor is guaranteed to fit within uint16.
 			filterResult, filterErr := ExecuteFilter(reveals, dr.ConsensusFilter, uint16(dr.ReplicationFactor), config, tallyResults[i].GasMeter)
 
@@ -211,18 +216,14 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 				}
 
 				if errors.Is(filterErr, types.ErrNoBasicConsensus) {
-					MeterExecutorGasFallback(dr, config.ExecutionGasCostFallback, tallyResults[i].GasMeter)
+					MeterExecutorGasFallback(tallyResults[i].GasMeter, committers, revealers, uint64(dr.ReplicationFactor), config.ExecutionGasCostFallback)
 				} else if errors.Is(filterErr, types.ErrInvalidFilterInput) || errors.Is(filterErr, types.ErrNoConsensus) {
 					tallyResults[i].GasMeter.SetReducedPayoutMode()
 				}
 			}
 		}
 
-		err = k.RemoveRevealBodies(ctx, dr.ID)
-		if err != nil {
-			return nil, nil, err
-		}
-		err = k.RemoveDataRequest(ctx, dr.Index(), dr.Status)
+		err = k.ClearDataRequest(ctx, dr.Index(), dr.Status)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -267,7 +268,7 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 		// Calculate data proxy and executor gas consumptions if basic consensus
 		// was reached.
 		if !errors.Is(filterErr, types.ErrNoBasicConsensus) && !errors.Is(filterErr, types.ErrFilterDidNotRun) {
-			k.MeterProxyGas(ctx, tr.FilterResult.ProxyPubKeys, uint64(tr.ReplicationFactor), tr.GasMeter)
+			k.MeterProxyGas(ctx, tr.GasMeter, tr.FilterResult.ProxyPubKeys, uint64(tr.ReplicationFactor))
 
 			if areGasReportsUniform(tr.GasReports) {
 				tr.MeterExecutorGasUniform()

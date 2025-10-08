@@ -22,22 +22,22 @@ func NewDataRequestIndexing(sb *collections.SchemaBuilder, cdc codec.BinaryCodec
 	return DataRequestIndexing{
 		dataRequests:    collections.NewMap(sb, DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[DataRequest](cdc)),
 		indexing:        collections.NewKeySet(sb, DataRequestIndexingPrefix, "data_request_indexing", collections.PairKeyCodec(collcdc.NewInt32Key[DataRequestStatus](), collcdc.NewBytesKey[DataRequestIndex]())),
-		committingCount: collections.NewItem(sb, DataRequestCommittingKey, "committing_count", collections.Uint64Value),
-		revealingCount:  collections.NewItem(sb, DataRequestRevealingKey, "revealing_count", collections.Uint64Value),
-		tallyingCount:   collections.NewItem(sb, DataRequestTallyingKey, "tallying_count", collections.Uint64Value),
+		committingCount: collections.NewItem(sb, DataRequestCommittingCountKey, "committing_count", collections.Uint64Value),
+		revealingCount:  collections.NewItem(sb, DataRequestRevealingCountKey, "revealing_count", collections.Uint64Value),
+		tallyingCount:   collections.NewItem(sb, DataRequestTallyingCountKey, "tallying_count", collections.Uint64Value),
 	}
 }
 
 // GetDataRequest retrieves a data request given its hex-encoded ID.
-func (s DataRequestIndexing) GetDataRequest(ctx sdk.Context, id string) (DataRequest, error) {
-	return s.dataRequests.Get(ctx, id)
+func (idx DataRequestIndexing) GetDataRequest(ctx sdk.Context, id string) (DataRequest, error) {
+	return idx.dataRequests.Get(ctx, id)
 }
 
 // StoreDataRequest stores a given data request in the store, while also updating
 // the counter and the indexing.
-func (s DataRequestIndexing) StoreDataRequest(ctx sdk.Context, dr DataRequest) error {
+func (idx DataRequestIndexing) StoreDataRequest(ctx sdk.Context, dr DataRequest) error {
 	// Check if a data request with the same ID already exists.
-	exists, err := s.dataRequests.Has(ctx, dr.ID)
+	exists, err := idx.dataRequests.Has(ctx, dr.ID)
 	if err != nil {
 		return err
 	}
@@ -46,26 +46,26 @@ func (s DataRequestIndexing) StoreDataRequest(ctx sdk.Context, dr DataRequest) e
 	}
 
 	// Store the data request, increment the counter, and update the indexing.
-	err = s.dataRequests.Set(ctx, dr.ID, dr)
+	err = idx.dataRequests.Set(ctx, dr.ID, dr)
 	if err != nil {
 		return err
 	}
 
-	err = s.IncrementDataRequestCountByStatus(ctx, dr.Status)
+	err = idx.IncrementDataRequestCountByStatus(ctx, dr.Status)
 	if err != nil {
 		return err
 	}
 
-	return s.indexing.Set(ctx, collections.Join(dr.Status, dr.Index()))
+	return idx.indexing.Set(ctx, collections.Join(dr.Status, dr.Index()))
 }
 
 // RemoveDataRequest removes a data request from the store, while also updating
 // the counter and the indexing.
-func (s DataRequestIndexing) RemoveDataRequest(ctx sdk.Context, index DataRequestIndex, status DataRequestStatus) error {
+func (idx DataRequestIndexing) RemoveDataRequest(ctx sdk.Context, index DataRequestIndex, status DataRequestStatus) error {
 	indexKey := collections.Join(status, index)
 	dataRequestID := index.DrID()
 
-	exists, err := s.indexing.Has(ctx, indexKey)
+	exists, err := idx.indexing.Has(ctx, indexKey)
 	if err != nil {
 		return err
 	}
@@ -73,23 +73,23 @@ func (s DataRequestIndexing) RemoveDataRequest(ctx sdk.Context, index DataReques
 		return ErrDataRequestIndexNotFound.Wrapf("data request ID %s, status %s", dataRequestID, status)
 	}
 
-	err = s.DecrementDataRequestCountByStatus(ctx, status)
+	err = idx.DecrementDataRequestCountByStatus(ctx, status)
 	if err != nil {
 		return err
 	}
 
-	err = s.dataRequests.Remove(ctx, dataRequestID)
+	err = idx.dataRequests.Remove(ctx, dataRequestID)
 	if err != nil {
 		return err
 	}
 
-	return s.indexing.Remove(ctx, indexKey)
+	return idx.indexing.Remove(ctx, indexKey)
 }
 
 // UpdateDataRequest updates an existing data request. If newStatus is not nil,
 // the data request status will also be updated.
-func (s DataRequestIndexing) UpdateDataRequest(ctx sdk.Context, dr *DataRequest, newStatus *DataRequestStatus) error {
-	exists, err := s.dataRequests.Has(ctx, dr.ID)
+func (idx DataRequestIndexing) UpdateDataRequest(ctx sdk.Context, dr *DataRequest, newStatus *DataRequestStatus) error {
+	exists, err := idx.dataRequests.Has(ctx, dr.ID)
 	if err != nil {
 		return err
 	}
@@ -105,30 +105,30 @@ func (s DataRequestIndexing) UpdateDataRequest(ctx sdk.Context, dr *DataRequest,
 		}
 
 		// Decrement the counter and remove the current index.
-		err = s.DecrementDataRequestCountByStatus(ctx, dr.Status)
+		err = idx.DecrementDataRequestCountByStatus(ctx, dr.Status)
 		if err != nil {
 			return err
 		}
 
-		exists, err = s.indexing.Has(ctx, collections.Join(dr.Status, dr.Index()))
+		exists, err = idx.indexing.Has(ctx, collections.Join(dr.Status, dr.Index()))
 		if err != nil {
 			return err
 		}
 		if !exists {
 			return ErrDataRequestIndexNotFound.Wrapf("data request ID %s, status %s", dr.ID, dr.Status)
 		}
-		err = s.indexing.Remove(ctx, collections.Join(dr.Status, dr.Index()))
+		err = idx.indexing.Remove(ctx, collections.Join(dr.Status, dr.Index()))
 		if err != nil {
 			return err
 		}
 
 		// Increment the counter and set the new index.
-		err = s.IncrementDataRequestCountByStatus(ctx, *newStatus)
+		err = idx.IncrementDataRequestCountByStatus(ctx, *newStatus)
 		if err != nil {
 			return err
 		}
 
-		err = s.indexing.Set(ctx, collections.Join(*newStatus, dr.Index()))
+		err = idx.indexing.Set(ctx, collections.Join(*newStatus, dr.Index()))
 		if err != nil {
 			return err
 		}
@@ -136,28 +136,28 @@ func (s DataRequestIndexing) UpdateDataRequest(ctx sdk.Context, dr *DataRequest,
 		dr.Status = *newStatus
 	}
 
-	return s.dataRequests.Set(ctx, dr.ID, *dr)
+	return idx.dataRequests.Set(ctx, dr.ID, *dr)
 }
 
 // RemoveDataRequestIndex removes an index from the indexing, returning an error
 // if the index is not found.
-func (s DataRequestIndexing) RemoveDataRequestIndex(ctx sdk.Context, index DataRequestIndex, status DataRequestStatus) error {
+func (idx DataRequestIndexing) RemoveDataRequestIndex(ctx sdk.Context, index DataRequestIndex, status DataRequestStatus) error {
 	indexKey := collections.Join(status, index)
-	exists, err := s.indexing.Has(ctx, indexKey)
+	exists, err := idx.indexing.Has(ctx, indexKey)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		return ErrDataRequestIndexNotFound.Wrapf("data request ID %s, status %s", index.DrID(), status)
 	}
-	return s.indexing.Remove(ctx, indexKey)
+	return idx.indexing.Remove(ctx, indexKey)
 }
 
 // GetDataRequestIDsByStatus returns the IDs of the data requests under the given status.
-func (s DataRequestIndexing) GetDataRequestIDsByStatus(ctx sdk.Context, status DataRequestStatus) ([]string, error) {
+func (idx DataRequestIndexing) GetDataRequestIDsByStatus(ctx sdk.Context, status DataRequestStatus) ([]string, error) {
 	rng := collections.NewPrefixedPairRange[DataRequestStatus, DataRequestIndex](status)
 
-	iter, err := s.indexing.Iterate(ctx, rng)
+	iter, err := idx.indexing.Iterate(ctx, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -179,8 +179,8 @@ func (s DataRequestIndexing) GetDataRequestIDsByStatus(ctx sdk.Context, status D
 // lastSeenIndex, the query will start from the next data request after the
 // lastSeenIndex. The method also returns the new lastSeenIndex and the total
 // number of data requests under the given status.
-func (s DataRequestIndexing) GetDataRequestsByStatus(ctx sdk.Context, status DataRequestStatus, limit uint64, lastSeenIndex DataRequestIndex) ([]DataRequest, DataRequestIndex, uint64, error) {
-	total, err := s.GetDataRequestCountByStatus(ctx, status)
+func (idx DataRequestIndexing) GetDataRequestsByStatus(ctx sdk.Context, status DataRequestStatus, limit uint64, lastSeenIndex DataRequestIndex) ([]DataRequest, DataRequestIndex, uint64, error) {
+	total, err := idx.GetDataRequestCountByStatus(ctx, status)
 	if err != nil {
 		return nil, nil, 0, err
 	}
@@ -190,7 +190,7 @@ func (s DataRequestIndexing) GetDataRequestsByStatus(ctx sdk.Context, status Dat
 		rng.EndExclusive(lastSeenIndex)
 	}
 
-	iter, err := s.indexing.Iterate(ctx, rng)
+	iter, err := idx.indexing.Iterate(ctx, rng)
 	if err != nil {
 		return nil, nil, 0, err
 	}
@@ -205,7 +205,7 @@ func (s DataRequestIndexing) GetDataRequestsByStatus(ctx sdk.Context, status Dat
 			return nil, nil, 0, err
 		}
 
-		dataRequest, err := s.dataRequests.Get(ctx, key.K2().DrID())
+		dataRequest, err := idx.dataRequests.Get(ctx, key.K2().DrID())
 		if err != nil {
 			return nil, nil, 0, err
 		}
@@ -221,8 +221,8 @@ func (s DataRequestIndexing) GetDataRequestsByStatus(ctx sdk.Context, status Dat
 }
 
 // GetAllDataRequests retrieves all data requests from the store.
-func (s DataRequestIndexing) GetAllDataRequests(ctx sdk.Context) ([]DataRequest, error) {
-	iter, err := s.dataRequests.Iterate(ctx, nil)
+func (idx DataRequestIndexing) GetAllDataRequests(ctx sdk.Context) ([]DataRequest, error) {
+	iter, err := idx.dataRequests.Iterate(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (s DataRequestIndexing) GetAllDataRequests(ctx sdk.Context) ([]DataRequest,
 		if err != nil {
 			return nil, err
 		}
-		dataRequest, err := s.dataRequests.Get(ctx, key)
+		dataRequest, err := idx.dataRequests.Get(ctx, key)
 		if err != nil {
 			return nil, err
 		}
@@ -245,70 +245,70 @@ func (s DataRequestIndexing) GetAllDataRequests(ctx sdk.Context) ([]DataRequest,
 
 // InitializeCounters initializes the counters to 0.
 // Intended to be used in InitGenesis.
-func (s DataRequestIndexing) InitializeCounters(ctx sdk.Context) error {
-	err := s.committingCount.Set(ctx, 0)
+func (idx DataRequestIndexing) InitializeCounters(ctx sdk.Context) error {
+	err := idx.committingCount.Set(ctx, 0)
 	if err != nil {
 		return err
 	}
-	err = s.revealingCount.Set(ctx, 0)
+	err = idx.revealingCount.Set(ctx, 0)
 	if err != nil {
 		return err
 	}
-	err = s.tallyingCount.Set(ctx, 0)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s DataRequestIndexing) IncrementDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus) error {
-	count, err := s.GetDataRequestCountByStatus(ctx, status)
-	if err != nil {
-		return err
-	}
-	err = s.SetDataRequestCountByStatus(ctx, status, count+1)
+	err = idx.tallyingCount.Set(ctx, 0)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s DataRequestIndexing) DecrementDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus) error {
-	count, err := s.GetDataRequestCountByStatus(ctx, status)
+func (idx DataRequestIndexing) IncrementDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus) error {
+	count, err := idx.GetDataRequestCountByStatus(ctx, status)
+	if err != nil {
+		return err
+	}
+	err = idx.SetDataRequestCountByStatus(ctx, status, count+1)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (idx DataRequestIndexing) DecrementDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus) error {
+	count, err := idx.GetDataRequestCountByStatus(ctx, status)
 	if err != nil {
 		return err
 	}
 	if count == 0 {
 		return ErrUnexpectDataRequestCount.Wrapf("count is 0 for status %s", status)
 	}
-	err = s.SetDataRequestCountByStatus(ctx, status, count-1)
+	err = idx.SetDataRequestCountByStatus(ctx, status, count-1)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s DataRequestIndexing) GetDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus) (uint64, error) {
+func (idx DataRequestIndexing) GetDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus) (uint64, error) {
 	switch status {
 	case DATA_REQUEST_STATUS_COMMITTING:
-		return s.committingCount.Get(ctx)
+		return idx.committingCount.Get(ctx)
 	case DATA_REQUEST_STATUS_REVEALING:
-		return s.revealingCount.Get(ctx)
+		return idx.revealingCount.Get(ctx)
 	case DATA_REQUEST_STATUS_TALLYING:
-		return s.tallyingCount.Get(ctx)
+		return idx.tallyingCount.Get(ctx)
 	default:
 		return 0, ErrInvalidDataRequestStatus.Wrapf("invalid status: %s", status)
 	}
 }
 
-func (s DataRequestIndexing) SetDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus, count uint64) error {
+func (idx DataRequestIndexing) SetDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus, count uint64) error {
 	switch status {
 	case DATA_REQUEST_STATUS_COMMITTING:
-		return s.committingCount.Set(ctx, count)
+		return idx.committingCount.Set(ctx, count)
 	case DATA_REQUEST_STATUS_REVEALING:
-		return s.revealingCount.Set(ctx, count)
+		return idx.revealingCount.Set(ctx, count)
 	case DATA_REQUEST_STATUS_TALLYING:
-		return s.tallyingCount.Set(ctx, count)
+		return idx.tallyingCount.Set(ctx, count)
 	default:
 		return ErrInvalidDataRequestStatus.Wrapf("invalid status: %s", status)
 	}

@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/hex"
 	stdmath "math"
+	"slices"
 	"sort"
 
 	"cosmossdk.io/math"
@@ -85,7 +86,7 @@ func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, m
 
 // MeterProxyGas computes and records the gas consumption of data proxies given
 // proxy public keys in basic consensus and the request's replication factor.
-func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicationFactor uint64, gasMeter *types.GasMeter) {
+func (k Keeper) MeterProxyGas(ctx sdk.Context, gasMeter *types.GasMeter, proxyPubKeys []string, replicationFactor uint64) {
 	if len(proxyPubKeys) == 0 || gasMeter.RemainingExecGas() == 0 {
 		return
 	}
@@ -120,29 +121,20 @@ func (k Keeper) MeterProxyGas(ctx sdk.Context, proxyPubKeys []string, replicatio
 // MeterExecutorGasFallback consumes the given fallback gas amount for each
 // committer. If any reveal is present, it will only consume gas for committers
 // that have also revealed.
-func MeterExecutorGasFallback(req types.DataRequest, gasCostFallback uint64, gasMeter *types.GasMeter) {
-	if len(req.Commits) == 0 || gasMeter.RemainingExecGas() == 0 {
+func MeterExecutorGasFallback(gasMeter *types.GasMeter, committers, revealers []string, replicationFactor, gasCostFallback uint64) {
+	if len(committers) == 0 || gasMeter.RemainingExecGas() == 0 {
 		return
 	}
 
-	i := 0
-	committers := make([]string, len(req.Commits))
-	for k := range req.Commits {
-		committers[i] = k
-		i++
-	}
 	sort.Strings(committers)
 
-	gasLimitPerExec := gasMeter.RemainingExecGas() / uint64(req.ReplicationFactor)
+	gasLimitPerExec := gasMeter.RemainingExecGas() / replicationFactor
 
-	hasReveals := len(req.Reveals) > 0
 	for _, committer := range committers {
 		// If there are reveals, only consume gas for committers that have also
 		// revealed.
-		if hasReveals {
-			if _, ok := req.Reveals[committer]; !ok {
-				continue
-			}
+		if len(revealers) > 0 && !slices.Contains(revealers, committer) {
+			continue
 		}
 		gasUsed := min(gasLimitPerExec, gasCostFallback)
 		gasMeter.ConsumeExecGasForExecutor(committer, gasUsed)

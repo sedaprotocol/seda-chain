@@ -21,18 +21,24 @@ message GenesisState {
 
   // Data request-related states:
   repeated DataRequest data_requests = 7 [ (gogoproto.nullable) = false ];
-  repeated GenesisStateRevealBody reveal_bodies = 8
-      [ (gogoproto.nullable) = false ];
-  uint64 committing_count = 9;
-  uint64 revealing_count = 10;
-  uint64 tallying_count = 11;
+  uint64 committing_count = 8;
+  uint64 revealing_count = 9;
+  uint64 tallying_count = 10;
+  repeated GenesisStateCommit commits = 11 [ (gogoproto.nullable) = false ];
+  repeated GenesisStateReveal reveals = 12 [ (gogoproto.nullable) = false ];
 }
 
-// GenesisStateRevealBody is used to store an object of RevealBody type in the
-// genesis state. The executor field allows for self-contained construction of
-// the key in the store.
-message GenesisStateRevealBody {
-  RevealBody reveal_body = 1
-      [ (gogoproto.embed) = true, (gogoproto.nullable) = false ];
-  string executor = 2;
+// GenesisStateCommit is used to store commits in the genesis state.
+message GenesisStateCommit {
+  string dr_i_d = 1 [ (gogoproto.jsontag) = "dr_id" ];
+  string public_key = 2;
+  bytes commit = 3;
+}
+
+// GenesisStateReveal is used to store revealers and their reveal bodies in the
+// genesis state.
+message GenesisStateReveal {
+  string dr_i_d = 1 [ (gogoproto.jsontag) = "dr_id" ];
+  string public_key = 2;
+  RevealBody reveal_body = 3 [ (gogoproto.nullable) = false ];
 }

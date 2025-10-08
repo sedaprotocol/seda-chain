@@ -80,11 +80,21 @@ func TestExportImport(t *testing.T) {
 	require.NoError(t, err)
 
 	var drsBeforeExport []types.DataRequest
+	commitsBeforeExport := make(map[string]map[string]string) // drID -> pubkey -> commit
+	revealersBeforeExport := make(map[string][]string)        // drID -> []pubkey
 	for _, drID := range drIDs {
 		dr, err := f.CoreKeeper.GetDataRequest(f.Context(), drID)
 		if err == nil {
 			drsBeforeExport = append(drsBeforeExport, dr)
 		}
+
+		commits, err := f.CoreKeeper.GetCommits(f.Context(), drID)
+		require.NoError(t, err)
+		commitsBeforeExport[drID] = commits
+
+		revealers, err := f.CoreKeeper.GetRevealers(f.Context(), drID)
+		require.NoError(t, err)
+		revealersBeforeExport[drID] = revealers
 	}
 
 	var allowlistBeforeExport []string
@@ -145,9 +155,17 @@ func TestExportImport(t *testing.T) {
 	require.ElementsMatch(t, drsBeforeExport, drsAfterImport)
 
 	for _, dr := range drsAfterImport {
-		if len(dr.Commits) < int(dr.ReplicationFactor) {
+		commits, err := f2.CoreKeeper.GetCommits(f2.Context(), dr.ID)
+		require.NoError(t, err)
+		require.Equal(t, commitsBeforeExport[dr.ID], commits)
+
+		revealers, err := f2.CoreKeeper.GetRevealers(f2.Context(), dr.ID)
+		require.NoError(t, err)
+		require.Equal(t, revealersBeforeExport[dr.ID], revealers)
+
+		if len(commits) < int(dr.ReplicationFactor) {
 			require.Equal(t, types.DATA_REQUEST_STATUS_COMMITTING, dr.Status)
-		} else if len(dr.Reveals) < int(dr.ReplicationFactor) {
+		} else if len(revealers) < int(dr.ReplicationFactor) {
 			require.Equal(t, types.DATA_REQUEST_STATUS_REVEALING, dr.Status)
 		} else {
 			// This is unreachable because tally endblock execution has removed
@@ -155,11 +173,10 @@ func TestExportImport(t *testing.T) {
 			require.Equal(t, types.DATA_REQUEST_STATUS_TALLYING, dr.Status)
 		}
 
-		for executor := range dr.Reveals {
-			revealBody, err := f2.CoreKeeper.GetRevealBody(f2.Context(), dr.ID, executor)
+		for _, revealer := range revealers {
+			revealBody, err := f2.CoreKeeper.GetRevealBody(f2.Context(), dr.ID, revealer)
 			require.NoError(t, err)
 			require.Equal(t, dr.ID, revealBody.DrID)
-			require.Equal(t, executor, executor)
 		}
 	}
 

@@ -5,9 +5,11 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"strconv"
 	"strings"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,7 +23,6 @@ import (
 func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostDataRequest) (*types.MsgPostDataRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// check if paused
 	paused, err := m.IsPaused(ctx)
 	if err != nil {
 		return nil, err
@@ -99,8 +100,6 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 		Escrow:            msg.Funds.Amount,
 		Status:            types.DATA_REQUEST_STATUS_COMMITTING,
 		TimeoutHeight:     ctx.BlockHeight() + int64(drConfig.CommitTimeoutInBlocks),
-		// Commits:           make(map[string][]byte), // Dropped by proto anyways
-		// Reveals:           make(map[string]bool), // Dropped by proto anyways
 	}
 
 	err = m.AddToTimeoutQueue(ctx, drID, dr.TimeoutHeight)
@@ -145,7 +144,6 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.MsgCommitResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// check if paused
 	paused, err := m.IsPaused(ctx)
 	if err != nil {
 		return nil, err
@@ -167,7 +165,10 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	if dr.Status != types.DATA_REQUEST_STATUS_COMMITTING {
 		return nil, types.ErrNotCommitting
 	}
-	if _, ok := dr.Commits[msg.PublicKey]; ok {
+	exists, err := m.HasCommitted(ctx, msg.DrID, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	} else if exists {
 		return nil, types.ErrAlreadyCommitted
 	}
 	if dr.TimeoutHeight <= ctx.BlockHeight() {
@@ -215,10 +216,13 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 	if err != nil {
 		return nil, err
 	}
-	dr.AddCommit(msg.PublicKey, commit)
+	commitCount, err := m.AddCommit(ctx, msg.DrID, msg.PublicKey, commit)
+	if err != nil {
+		return nil, err
+	}
 
 	var statusUpdate *types.DataRequestStatus
-	if len(dr.Commits) >= int(dr.ReplicationFactor) {
+	if commitCount >= dr.ReplicationFactor {
 		newStatus := types.DATA_REQUEST_STATUS_REVEALING
 		statusUpdate = &newStatus
 
@@ -256,7 +260,6 @@ func (m msgServer) Commit(goCtx context.Context, msg *types.MsgCommit) (*types.M
 func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.MsgRevealResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// check if paused
 	paused, err := m.IsPaused(ctx)
 	if err != nil {
 		return nil, err
@@ -276,13 +279,20 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 	if dr.TimeoutHeight <= ctx.BlockHeight() {
 		return nil, types.ErrDataRequestExpired.Wrapf("reveal phase expired at height %d", dr.TimeoutHeight)
 	}
-	if dr.HasRevealed(msg.PublicKey) {
+	exists, err := m.HasRevealed(ctx, dr.ID, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
 		return nil, types.ErrAlreadyRevealed
 	}
 
-	commit, exists := dr.GetCommit(msg.PublicKey)
-	if !exists {
-		return nil, types.ErrNotCommitted
+	commit, err := m.GetCommit(ctx, dr.ID, msg.PublicKey)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, types.ErrNotCommitted
+		}
+		return nil, err
 	}
 
 	drConfig, err := m.GetDataRequestConfig(ctx)
@@ -321,10 +331,13 @@ func (m msgServer) Reveal(goCtx context.Context, msg *types.MsgReveal) (*types.M
 		return nil, types.ErrInvalidRevealProof.Wrapf("%s", err.Error())
 	}
 
-	revealsCount := dr.MarkAsRevealed(msg.PublicKey)
+	revealCount, err := m.MarkAsRevealed(ctx, dr.ID, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
 
 	var statusUpdate *types.DataRequestStatus
-	if revealsCount >= int(dr.ReplicationFactor) {
+	if revealCount >= dr.ReplicationFactor {
 		newStatus := types.DATA_REQUEST_STATUS_TALLYING
 		statusUpdate = &newStatus
 

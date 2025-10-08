@@ -877,10 +877,6 @@ func TestFilter(t *testing.T) {
 			filterInput, err := hex.DecodeString(tt.tallyInputAsHex)
 			require.NoError(t, err)
 
-			for i := 0; i < len(tt.reveals); i++ {
-				tt.reveals[i].Reveal = tt.reveals[i].Reveal
-			}
-
 			reveals := make([]types.Reveal, len(tt.reveals))
 			for i := range tt.reveals {
 				sort.Strings(tt.reveals[i].ProxyPubKeys)
@@ -1024,10 +1020,6 @@ func TestFilterWildcard(t *testing.T) {
 			filterInput, err := hex.DecodeString(tt.filterInputHex)
 			require.NoError(t, err)
 			filterInput = append(filterInput, []byte(tt.jsonPath)...)
-
-			for i := 0; i < len(tt.reveals); i++ {
-				tt.reveals[i].Reveal = tt.reveals[i].Reveal
-			}
 
 			reveals := make([]types.Reveal, len(tt.reveals))
 			for i := range tt.reveals {

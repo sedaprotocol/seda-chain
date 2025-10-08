@@ -71,14 +71,10 @@ message DataRequest {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
-  // Map from staker public keys to commits.
-  map<string, bytes> commits = 17 [ (gogoproto.jsontag) = "commits" ];
-  // Map from staker public keys to placeholder booleans.
-  map<string, bool> reveals = 18 [ (gogoproto.jsontag) = "reveals" ];
   // Poster of the data request (Bech32 string)
-  string poster = 19 [ (gogoproto.jsontag) = "poster" ];
+  string poster = 18 [ (gogoproto.jsontag) = "poster" ];
   // Funds escrowed for the data request
-  string escrow = 20 [
+  string escrow = 19 [
     (gogoproto.jsontag) = "escrow",
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
@@ -87,9 +83,9 @@ message DataRequest {
   ];
   // Timeout height of the data request (-1 if not set, i.e., under tallying
   // status)
-  int64 timeout_height = 21 [ (gogoproto.jsontag) = "timeout_height" ];
+  int64 timeout_height = 20 [ (gogoproto.jsontag) = "timeout_height" ];
   // Status of the data request
-  DataRequestStatus status = 22 [ (gogoproto.jsontag) = "status" ];
+  DataRequestStatus status = 21 [ (gogoproto.jsontag) = "status" ];
 }
 
 // DataRequestStatus is the status of a data request.

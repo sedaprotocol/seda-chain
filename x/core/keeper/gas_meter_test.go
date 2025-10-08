@@ -25,6 +25,8 @@ func TestMeterExecutorGasFallback(t *testing.T) {
 	tests := []struct {
 		name                    string
 		dataRequest             *types.DataRequest
+		committers              []string
+		revealers               []string
 		tallyGasLimit           uint64
 		baseGasCost             uint64
 		fallbackGasCost         uint64
@@ -33,19 +35,13 @@ func TestMeterExecutorGasFallback(t *testing.T) {
 		{
 			name: "reward all committers",
 			dataRequest: &types.DataRequest{
-				Commits: map[string][]byte{
-					"executorA": []byte("commit"),
-					"executorB": []byte("commit"),
-				},
-				Reveals: map[string]bool{
-					"executorA": true,
-					"executorB": true,
-				},
 				ReplicationFactor: 1,
 				TallyGasLimit:     150000000000000,
 				ExecGasLimit:      300000000000000,
 				PostedGasPrice:    math.NewInt(1e5),
 			},
+			committers:      []string{"executorA", "executorB"},
+			revealers:       []string{"executorA", "executorB"},
 			tallyGasLimit:   types.DefaultMaxTallyGasLimit,
 			baseGasCost:     types.DefaultBaseGasCost,
 			fallbackGasCost: 5e12,
@@ -63,20 +59,13 @@ func TestMeterExecutorGasFallback(t *testing.T) {
 		{
 			name: "if a reveal is present, only reward the executor who revealed",
 			dataRequest: &types.DataRequest{
-				Commits: map[string][]byte{
-					"executorA": []byte("commit"),
-					"executorB": []byte("commit"),
-					"executorC": []byte("commit"),
-				},
-				Reveals: map[string]bool{
-					"executorB": true,
-					"executorC": true,
-				},
 				ReplicationFactor: 1,
 				TallyGasLimit:     150000000000000,
 				ExecGasLimit:      300000000000000,
 				PostedGasPrice:    math.NewInt(1e5),
 			},
+			committers:      []string{"executorA", "executorB", "executorC"},
+			revealers:       []string{"executorB", "executorC"},
 			tallyGasLimit:   types.DefaultMaxTallyGasLimit,
 			baseGasCost:     types.DefaultBaseGasCost,
 			fallbackGasCost: 1,
@@ -96,7 +85,7 @@ func TestMeterExecutorGasFallback(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			gasMeter := types.NewGasMeter(tc.dataRequest, tc.tallyGasLimit, tc.baseGasCost)
-			keeper.MeterExecutorGasFallback(*tc.dataRequest, tc.fallbackGasCost, gasMeter)
+			keeper.MeterExecutorGasFallback(gasMeter, tc.committers, tc.revealers, uint64(tc.dataRequest.ReplicationFactor), tc.fallbackGasCost)
 			dists := gasMeter.ReadGasMeter(ctx, "drID", 1, types.DefaultBurnRatio)
 
 			require.Len(t, dists, len(tc.expectedExecutorRewards)+1)
@@ -139,8 +128,9 @@ func TestReducedPayoutWithProxies(t *testing.T) {
 
 	fixture.CoreKeeper.MeterProxyGas(
 		fixture.Context(),
+		gasMeter,
 		[]string{proxyPubKey2, proxyPubKey1, proxyPubKey1, proxyPubKey1},
-		1, gasMeter,
+		1,
 	)
 
 	tallyRes := keeper.TallyResult{

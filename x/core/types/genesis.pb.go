@@ -34,11 +34,12 @@ type GenesisState struct {
 	Allowlist []string `protobuf:"bytes,5,rep,name=allowlist,proto3" json:"allowlist,omitempty"`
 	Stakers   []Staker `protobuf:"bytes,6,rep,name=stakers,proto3" json:"stakers"`
 	// Data request-related states:
-	DataRequests    []DataRequest            `protobuf:"bytes,7,rep,name=data_requests,json=dataRequests,proto3" json:"data_requests"`
-	RevealBodies    []GenesisStateRevealBody `protobuf:"bytes,8,rep,name=reveal_bodies,json=revealBodies,proto3" json:"reveal_bodies"`
-	CommittingCount uint64                   `protobuf:"varint,9,opt,name=committing_count,json=committingCount,proto3" json:"committing_count,omitempty"`
-	RevealingCount  uint64                   `protobuf:"varint,10,opt,name=revealing_count,json=revealingCount,proto3" json:"revealing_count,omitempty"`
-	TallyingCount   uint64                   `protobuf:"varint,11,opt,name=tallying_count,json=tallyingCount,proto3" json:"tallying_count,omitempty"`
+	DataRequests    []DataRequest        `protobuf:"bytes,7,rep,name=data_requests,json=dataRequests,proto3" json:"data_requests"`
+	CommittingCount uint64               `protobuf:"varint,8,opt,name=committing_count,json=committingCount,proto3" json:"committing_count,omitempty"`
+	RevealingCount  uint64               `protobuf:"varint,9,opt,name=revealing_count,json=revealingCount,proto3" json:"revealing_count,omitempty"`
+	TallyingCount   uint64               `protobuf:"varint,10,opt,name=tallying_count,json=tallyingCount,proto3" json:"tallying_count,omitempty"`
+	Commits         []GenesisStateCommit `protobuf:"bytes,11,rep,name=commits,proto3" json:"commits"`
+	Reveals         []GenesisStateReveal `protobuf:"bytes,12,rep,name=reveals,proto3" json:"reveals"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -123,13 +124,6 @@ func (m *GenesisState) GetDataRequests() []DataRequest {
 	return nil
 }
 
-func (m *GenesisState) GetRevealBodies() []GenesisStateRevealBody {
-	if m != nil {
-		return m.RevealBodies
-	}
-	return nil
-}
-
 func (m *GenesisState) GetCommittingCount() uint64 {
 	if m != nil {
 		return m.CommittingCount
@@ -151,26 +145,38 @@ func (m *GenesisState) GetTallyingCount() uint64 {
 	return 0
 }
 
-// GenesisStateRevealBody is used to store an object of RevealBody type in the
-// genesis state. The executor field allows for self-contained construction of
-// the key in the store.
-type GenesisStateRevealBody struct {
-	RevealBody `protobuf:"bytes,1,opt,name=reveal_body,json=revealBody,proto3,embedded=reveal_body" json:"reveal_body"`
-	Executor   string `protobuf:"bytes,2,opt,name=executor,proto3" json:"executor,omitempty"`
+func (m *GenesisState) GetCommits() []GenesisStateCommit {
+	if m != nil {
+		return m.Commits
+	}
+	return nil
 }
 
-func (m *GenesisStateRevealBody) Reset()         { *m = GenesisStateRevealBody{} }
-func (m *GenesisStateRevealBody) String() string { return proto.CompactTextString(m) }
-func (*GenesisStateRevealBody) ProtoMessage()    {}
-func (*GenesisStateRevealBody) Descriptor() ([]byte, []int) {
+func (m *GenesisState) GetReveals() []GenesisStateReveal {
+	if m != nil {
+		return m.Reveals
+	}
+	return nil
+}
+
+type GenesisStateCommit struct {
+	DrID      string `protobuf:"bytes,1,opt,name=dr_i_d,json=drID,proto3" json:"dr_id"`
+	PublicKey string `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	Commit    []byte `protobuf:"bytes,3,opt,name=commit,proto3" json:"commit,omitempty"`
+}
+
+func (m *GenesisStateCommit) Reset()         { *m = GenesisStateCommit{} }
+func (m *GenesisStateCommit) String() string { return proto.CompactTextString(m) }
+func (*GenesisStateCommit) ProtoMessage()    {}
+func (*GenesisStateCommit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_9ae62d9b0e76089c, []int{1}
 }
-func (m *GenesisStateRevealBody) XXX_Unmarshal(b []byte) error {
+func (m *GenesisStateCommit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *GenesisStateRevealBody) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *GenesisStateCommit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_GenesisStateRevealBody.Marshal(b, m, deterministic)
+		return xxx_messageInfo_GenesisStateCommit.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -180,66 +186,147 @@ func (m *GenesisStateRevealBody) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-func (m *GenesisStateRevealBody) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GenesisStateRevealBody.Merge(m, src)
+func (m *GenesisStateCommit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GenesisStateCommit.Merge(m, src)
 }
-func (m *GenesisStateRevealBody) XXX_Size() int {
+func (m *GenesisStateCommit) XXX_Size() int {
 	return m.Size()
 }
-func (m *GenesisStateRevealBody) XXX_DiscardUnknown() {
-	xxx_messageInfo_GenesisStateRevealBody.DiscardUnknown(m)
+func (m *GenesisStateCommit) XXX_DiscardUnknown() {
+	xxx_messageInfo_GenesisStateCommit.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GenesisStateRevealBody proto.InternalMessageInfo
+var xxx_messageInfo_GenesisStateCommit proto.InternalMessageInfo
 
-func (m *GenesisStateRevealBody) GetExecutor() string {
+func (m *GenesisStateCommit) GetDrID() string {
 	if m != nil {
-		return m.Executor
+		return m.DrID
 	}
 	return ""
 }
 
+func (m *GenesisStateCommit) GetPublicKey() string {
+	if m != nil {
+		return m.PublicKey
+	}
+	return ""
+}
+
+func (m *GenesisStateCommit) GetCommit() []byte {
+	if m != nil {
+		return m.Commit
+	}
+	return nil
+}
+
+// GenesisStateReveal is used to store revealers and their reveal bodies in the
+// genesis state.
+type GenesisStateReveal struct {
+	DrID       string     `protobuf:"bytes,1,opt,name=dr_i_d,json=drID,proto3" json:"dr_id"`
+	PublicKey  string     `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	RevealBody RevealBody `protobuf:"bytes,3,opt,name=reveal_body,json=revealBody,proto3" json:"reveal_body"`
+}
+
+func (m *GenesisStateReveal) Reset()         { *m = GenesisStateReveal{} }
+func (m *GenesisStateReveal) String() string { return proto.CompactTextString(m) }
+func (*GenesisStateReveal) ProtoMessage()    {}
+func (*GenesisStateReveal) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9ae62d9b0e76089c, []int{2}
+}
+func (m *GenesisStateReveal) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GenesisStateReveal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GenesisStateReveal.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GenesisStateReveal) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GenesisStateReveal.Merge(m, src)
+}
+func (m *GenesisStateReveal) XXX_Size() int {
+	return m.Size()
+}
+func (m *GenesisStateReveal) XXX_DiscardUnknown() {
+	xxx_messageInfo_GenesisStateReveal.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GenesisStateReveal proto.InternalMessageInfo
+
+func (m *GenesisStateReveal) GetDrID() string {
+	if m != nil {
+		return m.DrID
+	}
+	return ""
+}
+
+func (m *GenesisStateReveal) GetPublicKey() string {
+	if m != nil {
+		return m.PublicKey
+	}
+	return ""
+}
+
+func (m *GenesisStateReveal) GetRevealBody() RevealBody {
+	if m != nil {
+		return m.RevealBody
+	}
+	return RevealBody{}
+}
+
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "sedachain.core.v1.GenesisState")
-	proto.RegisterType((*GenesisStateRevealBody)(nil), "sedachain.core.v1.GenesisStateRevealBody")
+	proto.RegisterType((*GenesisStateCommit)(nil), "sedachain.core.v1.GenesisStateCommit")
+	proto.RegisterType((*GenesisStateReveal)(nil), "sedachain.core.v1.GenesisStateReveal")
 }
 
 func init() { proto.RegisterFile("sedachain/core/v1/genesis.proto", fileDescriptor_9ae62d9b0e76089c) }
 
 var fileDescriptor_9ae62d9b0e76089c = []byte{
-	// 506 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x93, 0xc1, 0x6e, 0xd3, 0x40,
-	0x10, 0x86, 0x63, 0x92, 0xa6, 0xc9, 0x26, 0x69, 0x61, 0x55, 0x55, 0x6e, 0x04, 0x8e, 0x55, 0x09,
-	0x91, 0x1e, 0x6a, 0xab, 0x20, 0x81, 0x38, 0x70, 0x20, 0x20, 0x41, 0x4f, 0x20, 0x87, 0x13, 0x97,
-	0x68, 0x63, 0x8f, 0x5c, 0x0b, 0xdb, 0x1b, 0x76, 0xd6, 0x69, 0x73, 0xe1, 0x19, 0x78, 0x18, 0x1e,
-	0xa2, 0xc7, 0x88, 0x13, 0x17, 0x2a, 0x94, 0xbc, 0x08, 0xf2, 0xae, 0x13, 0x57, 0x4a, 0xa0, 0x37,
-	0xcf, 0xef, 0x6f, 0xfe, 0x9d, 0xdf, 0xde, 0x21, 0x3d, 0x84, 0x80, 0xf9, 0x17, 0x2c, 0x4a, 0x5d,
-	0x9f, 0x0b, 0x70, 0xa7, 0x67, 0x6e, 0x08, 0x29, 0x60, 0x84, 0xce, 0x44, 0x70, 0xc9, 0xe9, 0x83,
-	0x35, 0xe0, 0xe4, 0x80, 0x33, 0x3d, 0xeb, 0x1e, 0xf9, 0x1c, 0x13, 0x8e, 0x23, 0x05, 0xb8, 0xba,
-	0xd0, 0x74, 0xf7, 0x20, 0xe4, 0x21, 0xd7, 0x7a, 0xfe, 0x54, 0xa8, 0x0f, 0x37, 0x0f, 0x51, 0x5e,
-	0xea, 0xed, 0xf1, 0xef, 0x1a, 0x69, 0xbf, 0xd3, 0x67, 0x0e, 0x25, 0x93, 0x40, 0x5f, 0x90, 0xfa,
-	0x84, 0x09, 0x96, 0xa0, 0x69, 0xd8, 0x46, 0xbf, 0xf5, 0xf4, 0xc8, 0xd9, 0x98, 0xc1, 0xf9, 0xa8,
-	0x80, 0x41, 0xed, 0xfa, 0xa6, 0x57, 0xf1, 0x0a, 0x9c, 0x3a, 0x64, 0x87, 0x5f, 0xa6, 0x20, 0xcc,
-	0x7b, 0xb6, 0xd1, 0x6f, 0x0e, 0xcc, 0x9f, 0x3f, 0x4e, 0x0f, 0x8a, 0xf1, 0x5e, 0x07, 0x81, 0x00,
-	0xc4, 0xa1, 0x14, 0x51, 0x1a, 0x7a, 0x1a, 0xa3, 0xaf, 0x48, 0x67, 0x02, 0x69, 0x10, 0xa5, 0xe1,
-	0x48, 0xf7, 0x55, 0xef, 0xe8, 0x6b, 0x17, 0xf8, 0x07, 0xd5, 0x7e, 0x98, 0xcf, 0x99, 0x21, 0x04,
-	0x66, 0xcd, 0x36, 0xfa, 0x0d, 0xaf, 0xa8, 0xe8, 0x73, 0xd2, 0x64, 0x71, 0xcc, 0x2f, 0xe3, 0x08,
-	0xa5, 0xb9, 0x63, 0x57, 0xff, 0x6b, 0x59, 0xa2, 0xf4, 0x25, 0xd9, 0x45, 0xc9, 0xbe, 0x80, 0x40,
-	0xb3, 0x6e, 0x57, 0xff, 0x11, 0x7c, 0xa8, 0x88, 0x22, 0xf8, 0x8a, 0xa7, 0xe7, 0xa4, 0x13, 0x30,
-	0xc9, 0x46, 0x02, 0xbe, 0x66, 0x80, 0x12, 0xcd, 0x5d, 0x65, 0x60, 0x6d, 0x31, 0x78, 0xcb, 0x24,
-	0xf3, 0x34, 0x56, 0xb8, 0xb4, 0x83, 0x52, 0x42, 0xfa, 0x89, 0x74, 0x04, 0x4c, 0x81, 0xc5, 0xa3,
-	0x31, 0x0f, 0x22, 0x40, 0xb3, 0xa1, 0xac, 0x4e, 0xb6, 0x58, 0xdd, 0xfe, 0x6b, 0x9e, 0xea, 0x19,
-	0xf0, 0x60, 0xb6, 0x72, 0x15, 0x2b, 0x25, 0x02, 0xa4, 0x27, 0xe4, 0xbe, 0xcf, 0x93, 0x24, 0x92,
-	0x32, 0xff, 0xda, 0x3e, 0xcf, 0x52, 0x69, 0x36, 0x6d, 0xa3, 0x5f, 0xf3, 0xf6, 0x4b, 0xfd, 0x4d,
-	0x2e, 0xd3, 0x27, 0x64, 0x5f, 0xb7, 0x96, 0x24, 0x51, 0xe4, 0xde, 0x5a, 0xd6, 0xe0, 0x63, 0xb2,
-	0x27, 0x59, 0x1c, 0xcf, 0x4a, 0xae, 0xa5, 0xb8, 0xce, 0x4a, 0x55, 0xd8, 0xf1, 0x37, 0x72, 0xb8,
-	0x7d, 0x50, 0xfa, 0x9e, 0xb4, 0xca, 0xa8, 0xb3, 0xe2, 0xb6, 0x3d, 0xda, 0x12, 0xf4, 0x56, 0xb8,
-	0x46, 0x1e, 0x6e, 0x7e, 0xd3, 0x33, 0x3c, 0x22, 0x4a, 0xa7, 0x2e, 0x69, 0xc0, 0x15, 0xf8, 0x99,
-	0xe4, 0xc5, 0xe5, 0xf3, 0xd6, 0xf5, 0xe0, 0xfc, 0x7a, 0x61, 0x19, 0xf3, 0x85, 0x65, 0xfc, 0x59,
-	0x58, 0xc6, 0xf7, 0xa5, 0x55, 0x99, 0x2f, 0xad, 0xca, 0xaf, 0xa5, 0x55, 0xf9, 0xec, 0x86, 0x91,
-	0xbc, 0xc8, 0xc6, 0x8e, 0xcf, 0x13, 0x37, 0x3f, 0x54, 0xed, 0x83, 0xcf, 0x63, 0x55, 0x9c, 0xea,
-	0x85, 0xb9, 0xd2, 0x2b, 0x23, 0x67, 0x13, 0xc0, 0x71, 0x5d, 0x11, 0xcf, 0xfe, 0x06, 0x00, 0x00,
-	0xff, 0xff, 0x31, 0x72, 0xc1, 0x7a, 0xb6, 0x03, 0x00, 0x00,
+	// 561 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x93, 0x4f, 0x6f, 0xd3, 0x30,
+	0x18, 0xc6, 0x1b, 0xfa, 0x6f, 0x71, 0xdb, 0x0d, 0xac, 0x09, 0x65, 0x13, 0x4b, 0xa3, 0x4a, 0x13,
+	0xe5, 0xb0, 0x44, 0x1b, 0x12, 0x88, 0x03, 0x07, 0xba, 0x22, 0x54, 0x71, 0x00, 0xa5, 0x37, 0x2e,
+	0x91, 0x1b, 0x5b, 0x59, 0xb4, 0x34, 0x2e, 0xb6, 0xd3, 0x91, 0x6f, 0xc1, 0x85, 0x0b, 0x9f, 0x83,
+	0x0f, 0xb1, 0xe3, 0xc4, 0x89, 0xd3, 0x84, 0xda, 0x1b, 0x9f, 0x02, 0xc5, 0x76, 0x17, 0x50, 0xcb,
+	0x1f, 0x69, 0xb7, 0xf8, 0xc9, 0xef, 0x7d, 0x9e, 0xd7, 0xaf, 0x5e, 0x83, 0x2e, 0x27, 0x18, 0x85,
+	0x67, 0x28, 0x4e, 0xbd, 0x90, 0x32, 0xe2, 0xcd, 0x8f, 0xbd, 0x88, 0xa4, 0x84, 0xc7, 0xdc, 0x9d,
+	0x31, 0x2a, 0x28, 0xbc, 0x77, 0x03, 0xb8, 0x05, 0xe0, 0xce, 0x8f, 0xf7, 0xf7, 0x42, 0xca, 0xa7,
+	0x94, 0x07, 0x12, 0xf0, 0xd4, 0x41, 0xd1, 0xfb, 0xbb, 0x11, 0x8d, 0xa8, 0xd2, 0x8b, 0x2f, 0xad,
+	0x3e, 0x58, 0x0f, 0x91, 0x5e, 0xf2, 0x6f, 0xef, 0x53, 0x1d, 0xb4, 0x5f, 0xa9, 0xcc, 0xb1, 0x40,
+	0x82, 0xc0, 0xa7, 0xa0, 0x31, 0x43, 0x0c, 0x4d, 0xb9, 0x65, 0x38, 0x46, 0xbf, 0x75, 0xb2, 0xe7,
+	0xae, 0xf5, 0xe0, 0xbe, 0x95, 0xc0, 0xa0, 0x76, 0x79, 0xdd, 0xad, 0xf8, 0x1a, 0x87, 0x2e, 0xa8,
+	0xd3, 0x8b, 0x94, 0x30, 0xeb, 0x8e, 0x63, 0xf4, 0xcd, 0x81, 0xf5, 0xf5, 0xcb, 0xd1, 0xae, 0x6e,
+	0xef, 0x05, 0xc6, 0x8c, 0x70, 0x3e, 0x16, 0x2c, 0x4e, 0x23, 0x5f, 0x61, 0xf0, 0x39, 0xe8, 0xcc,
+	0x48, 0x8a, 0xe3, 0x34, 0x0a, 0x54, 0x5d, 0xf5, 0x1f, 0x75, 0x6d, 0x8d, 0xbf, 0x91, 0xe5, 0xf7,
+	0x8b, 0x3e, 0x33, 0x4e, 0xb0, 0x55, 0x73, 0x8c, 0xfe, 0x96, 0xaf, 0x4f, 0xf0, 0x09, 0x30, 0x51,
+	0x92, 0xd0, 0x8b, 0x24, 0xe6, 0xc2, 0xaa, 0x3b, 0xd5, 0xbf, 0x5a, 0x96, 0x28, 0x7c, 0x06, 0x9a,
+	0x5c, 0xa0, 0x73, 0xc2, 0xb8, 0xd5, 0x70, 0xaa, 0x7f, 0xb8, 0xf8, 0x58, 0x12, 0xfa, 0xe2, 0x2b,
+	0x1e, 0x8e, 0x40, 0x07, 0x23, 0x81, 0x02, 0x46, 0xde, 0x67, 0x84, 0x0b, 0x6e, 0x35, 0xa5, 0x81,
+	0xbd, 0xc1, 0x60, 0x88, 0x04, 0xf2, 0x15, 0xa6, 0x5d, 0xda, 0xb8, 0x94, 0x38, 0x7c, 0x04, 0xee,
+	0x86, 0x74, 0x3a, 0x8d, 0x85, 0x28, 0xe6, 0x12, 0xd2, 0x2c, 0x15, 0xd6, 0x96, 0x63, 0xf4, 0x6b,
+	0xfe, 0x4e, 0xa9, 0x9f, 0x16, 0x32, 0x7c, 0x08, 0x76, 0x18, 0x99, 0x13, 0x94, 0x94, 0xa4, 0x29,
+	0xc9, 0xed, 0x1b, 0x59, 0x81, 0x87, 0x60, 0x5b, 0xa0, 0x24, 0xc9, 0x4b, 0x0e, 0x48, 0xae, 0xb3,
+	0x52, 0x15, 0xf6, 0x12, 0x34, 0x55, 0x04, 0xb7, 0x5a, 0xb2, 0xff, 0xc3, 0x0d, 0xfd, 0xff, 0xba,
+	0x2a, 0xa7, 0x92, 0x5e, 0x0d, 0x43, 0xd7, 0x16, 0x36, 0x2a, 0x9f, 0x5b, 0xed, 0xff, 0xb2, 0xf1,
+	0x25, 0xbd, 0xb2, 0xd1, 0xb5, 0xbd, 0x04, 0xc0, 0xf5, 0x2c, 0xd8, 0x05, 0x0d, 0xcc, 0x82, 0x38,
+	0xc0, 0x72, 0x39, 0xcd, 0x81, 0xf9, 0xe3, 0xba, 0x5b, 0x2f, 0x14, 0xec, 0xd7, 0x30, 0x1b, 0x0d,
+	0xe1, 0x01, 0x00, 0xb3, 0x6c, 0x92, 0xc4, 0x61, 0x70, 0x4e, 0x72, 0xb5, 0x89, 0xbe, 0xa9, 0x94,
+	0xd7, 0x24, 0x2f, 0x96, 0x46, 0xf5, 0x29, 0x97, 0xad, 0xed, 0xeb, 0x53, 0xef, 0xb3, 0xf1, 0x7b,
+	0x9c, 0xea, 0xe9, 0xd6, 0x71, 0x43, 0xd0, 0x52, 0xf7, 0x09, 0x26, 0x14, 0xe7, 0x32, 0xb3, 0x75,
+	0x72, 0xb0, 0x61, 0x1e, 0x7a, 0x06, 0x14, 0xe7, 0x7a, 0x0e, 0x80, 0x95, 0xca, 0xe8, 0x72, 0x61,
+	0x1b, 0x57, 0x0b, 0xdb, 0xf8, 0xbe, 0xb0, 0x8d, 0x8f, 0x4b, 0xbb, 0x72, 0xb5, 0xb4, 0x2b, 0xdf,
+	0x96, 0x76, 0xe5, 0x9d, 0x17, 0xc5, 0xe2, 0x2c, 0x9b, 0xb8, 0x21, 0x9d, 0x7a, 0x85, 0xa9, 0x7c,
+	0xd2, 0x21, 0x4d, 0xe4, 0xe1, 0x48, 0xbd, 0xf9, 0x0f, 0xea, 0xd5, 0x8b, 0x7c, 0x46, 0xf8, 0xa4,
+	0x21, 0x89, 0xc7, 0x3f, 0x03, 0x00, 0x00, 0xff, 0xff, 0xd8, 0x26, 0x6b, 0x9d, 0x79, 0x04, 0x00,
+	0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -262,25 +349,10 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.TallyingCount != 0 {
-		i = encodeVarintGenesis(dAtA, i, uint64(m.TallyingCount))
-		i--
-		dAtA[i] = 0x58
-	}
-	if m.RevealingCount != 0 {
-		i = encodeVarintGenesis(dAtA, i, uint64(m.RevealingCount))
-		i--
-		dAtA[i] = 0x50
-	}
-	if m.CommittingCount != 0 {
-		i = encodeVarintGenesis(dAtA, i, uint64(m.CommittingCount))
-		i--
-		dAtA[i] = 0x48
-	}
-	if len(m.RevealBodies) > 0 {
-		for iNdEx := len(m.RevealBodies) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Reveals) > 0 {
+		for iNdEx := len(m.Reveals) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.RevealBodies[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Reveals[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -288,8 +360,37 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x42
+			dAtA[i] = 0x62
 		}
+	}
+	if len(m.Commits) > 0 {
+		for iNdEx := len(m.Commits) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Commits[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x5a
+		}
+	}
+	if m.TallyingCount != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.TallyingCount))
+		i--
+		dAtA[i] = 0x50
+	}
+	if m.RevealingCount != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.RevealingCount))
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.CommittingCount != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.CommittingCount))
+		i--
+		dAtA[i] = 0x40
 	}
 	if len(m.DataRequests) > 0 {
 		for iNdEx := len(m.DataRequests) - 1; iNdEx >= 0; iNdEx-- {
@@ -365,7 +466,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *GenesisStateRevealBody) Marshal() (dAtA []byte, err error) {
+func (m *GenesisStateCommit) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -375,23 +476,60 @@ func (m *GenesisStateRevealBody) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *GenesisStateRevealBody) MarshalTo(dAtA []byte) (int, error) {
+func (m *GenesisStateCommit) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *GenesisStateRevealBody) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *GenesisStateCommit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Executor) > 0 {
-		i -= len(m.Executor)
-		copy(dAtA[i:], m.Executor)
-		i = encodeVarintGenesis(dAtA, i, uint64(len(m.Executor)))
+	if len(m.Commit) > 0 {
+		i -= len(m.Commit)
+		copy(dAtA[i:], m.Commit)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.Commit)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.PublicKey)))
 		i--
 		dAtA[i] = 0x12
 	}
+	if len(m.DrID) > 0 {
+		i -= len(m.DrID)
+		copy(dAtA[i:], m.DrID)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.DrID)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *GenesisStateReveal) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GenesisStateReveal) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GenesisStateReveal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
 	{
 		size, err := m.RevealBody.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
@@ -401,7 +539,21 @@ func (m *GenesisStateRevealBody) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 		i = encodeVarintGenesis(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0xa
+	dAtA[i] = 0x1a
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.DrID) > 0 {
+		i -= len(m.DrID)
+		copy(dAtA[i:], m.DrID)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.DrID)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -453,12 +605,6 @@ func (m *GenesisState) Size() (n int) {
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
-	if len(m.RevealBodies) > 0 {
-		for _, e := range m.RevealBodies {
-			l = e.Size()
-			n += 1 + l + sovGenesis(uint64(l))
-		}
-	}
 	if m.CommittingCount != 0 {
 		n += 1 + sovGenesis(uint64(m.CommittingCount))
 	}
@@ -468,21 +614,58 @@ func (m *GenesisState) Size() (n int) {
 	if m.TallyingCount != 0 {
 		n += 1 + sovGenesis(uint64(m.TallyingCount))
 	}
+	if len(m.Commits) > 0 {
+		for _, e := range m.Commits {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.Reveals) > 0 {
+		for _, e := range m.Reveals {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
 	return n
 }
 
-func (m *GenesisStateRevealBody) Size() (n int) {
+func (m *GenesisStateCommit) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = m.RevealBody.Size()
-	n += 1 + l + sovGenesis(uint64(l))
-	l = len(m.Executor)
+	l = len(m.DrID)
 	if l > 0 {
 		n += 1 + l + sovGenesis(uint64(l))
 	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.Commit)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	return n
+}
+
+func (m *GenesisStateReveal) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.DrID)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = m.RevealBody.Size()
+	n += 1 + l + sovGenesis(uint64(l))
 	return n
 }
 
@@ -739,8 +922,65 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CommittingCount", wireType)
+			}
+			m.CommittingCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CommittingCount |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RevealingCount", wireType)
+			}
+			m.RevealingCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RevealingCount |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 10:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TallyingCount", wireType)
+			}
+			m.TallyingCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TallyingCount |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 11:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RevealBodies", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Commits", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -767,16 +1007,16 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.RevealBodies = append(m.RevealBodies, GenesisStateRevealBody{})
-			if err := m.RevealBodies[len(m.RevealBodies)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Commits = append(m.Commits, GenesisStateCommit{})
+			if err := m.Commits[len(m.Commits)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 9:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CommittingCount", wireType)
+		case 12:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reveals", wireType)
 			}
-			m.CommittingCount = 0
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowGenesis
@@ -786,49 +1026,26 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.CommittingCount |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-		case 10:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RevealingCount", wireType)
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
 			}
-			m.RevealingCount = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.RevealingCount |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
 			}
-		case 11:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TallyingCount", wireType)
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
 			}
-			m.TallyingCount = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.TallyingCount |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
+			m.Reveals = append(m.Reveals, GenesisStateReveal{})
+			if err := m.Reveals[len(m.Reveals)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipGenesis(dAtA[iNdEx:])
@@ -850,7 +1067,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *GenesisStateRevealBody) Unmarshal(dAtA []byte) error {
+func (m *GenesisStateCommit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -873,13 +1090,225 @@ func (m *GenesisStateRevealBody) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: GenesisStateRevealBody: wiretype end group for non-group")
+			return fmt.Errorf("proto: GenesisStateCommit: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GenesisStateRevealBody: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GenesisStateCommit: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DrID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DrID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Commit", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Commit = append(m.Commit[:0], dAtA[iNdEx:postIndex]...)
+			if m.Commit == nil {
+				m.Commit = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GenesisStateReveal) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: GenesisStateReveal: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: GenesisStateReveal: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DrID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DrID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field RevealBody", wireType)
 			}
@@ -911,38 +1340,6 @@ func (m *GenesisStateRevealBody) Unmarshal(dAtA []byte) error {
 			if err := m.RevealBody.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Executor", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Executor = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
