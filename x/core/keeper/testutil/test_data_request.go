@@ -127,10 +127,14 @@ func (dr *TestDR) PostDataRequestShouldErr(f *Fixture, errMsg string) {
 	)
 }
 
-// commitDataRequest executes a commit for each of the given stakers and
-// returns a list of corresponding reveal messages.
-func (dr *TestDR) CommitDataRequest(f *Fixture, numCommits int) {
-	require.LessOrEqual(f.tb, numCommits, len(f.Stakers))
+// commitDataRequest executes n commits from the first n stakers of the stakers
+// list. It returns a list of corresponding reveal messages in order. If
+// stakerIndices is not nil, stakers at the specified indices will be used.
+func (dr *TestDR) CommitDataRequest(f *Fixture, n int, stakerIndices []int) {
+	require.LessOrEqual(f.tb, n, len(f.Stakers))
+	if stakerIndices != nil {
+		require.Equal(f.tb, n, len(stakerIndices))
+	}
 
 	gasLimit := dr.CommitGasLimit
 	if dr.CommitGasLimit == 0 {
@@ -149,26 +153,35 @@ func (dr *TestDR) CommitDataRequest(f *Fixture, numCommits int) {
 		ProxyPubKeys: dr.ProxyPubKeys,
 	}
 
-	var revealMsgs [][]byte
-	for i := 0; i < numCommits; i++ {
-		revealMsg, commitment, _ := f.createRevealMsg(f.Stakers[i], revealBody)
-
-		proof := f.generateCommitProof(f.Stakers[i].Key, drID, commitment, drHeight)
-
-		commitMsg := testutil.CommitMsg(drID, commitment, f.Stakers[i].PubKey, proof)
-		f.executeCommitOrReveal(f.Stakers[i].Address, commitMsg, gasLimit)
-
-		revealMsgs = append(revealMsgs, revealMsg)
+	var indices []int
+	if stakerIndices != nil {
+		indices = stakerIndices
+	} else {
+		indices = make([]int, n)
+		for i := 0; i < n; i++ {
+			indices[i] = i
+		}
 	}
 
-	dr.revealMsgs = revealMsgs
+	for _, i := range indices {
+		revealMsg, commitment, _ := f.createRevealMsg(f.Stakers[i], revealBody)
+		proof := f.generateCommitProof(f.Stakers[i].Key, drID, commitment, drHeight)
+		commitMsg := testutil.CommitMsg(drID, commitment, f.Stakers[i].PubKey, proof)
+
+		f.executeCommitOrReveal(f.Stakers[i].Address, commitMsg, gasLimit)
+		dr.revealMsgs = append(dr.revealMsgs, revealMsg)
+	}
 }
 
-// executeReveals executes a list of reveal messages, one by one using
-// the staker addresses.
-func (dr *TestDR) ExecuteReveals(f *Fixture, numReveals int) {
-	require.LessOrEqual(f.tb, numReveals, len(dr.revealMsgs))
-	require.LessOrEqual(f.tb, numReveals, len(f.Stakers))
+// executeReveals executes n reveals from the first n stakers of the stakers
+// list. If stakerIndices is not nil, stakers at the specified indices will
+// be used.
+func (dr *TestDR) ExecuteReveals(f *Fixture, n int, stakerIndices []int) {
+	require.LessOrEqual(f.tb, n, len(dr.revealMsgs))
+	require.LessOrEqual(f.tb, n, len(f.Stakers))
+	if stakerIndices != nil {
+		require.Equal(f.tb, n, len(stakerIndices))
+	}
 
 	gasLimit := dr.RevealGasLimit
 	if dr.RevealGasLimit == 0 {
@@ -176,15 +189,26 @@ func (dr *TestDR) ExecuteReveals(f *Fixture, numReveals int) {
 		gasLimit = 500000
 	}
 
-	for i := 0; i < numReveals; i++ {
+	// Determine which staker indices to use.
+	var indices []int
+	if stakerIndices != nil {
+		indices = stakerIndices
+	} else {
+		indices = make([]int, n)
+		for i := 0; i < n; i++ {
+			indices[i] = i
+		}
+	}
+
+	for _, i := range indices {
 		f.executeCommitOrReveal(f.Stakers[i].Address, dr.revealMsgs[i], gasLimit)
 	}
 }
 
 func (dr *TestDR) ExecuteDataRequestFlow(f *Fixture, numCommits, numReveals int, timeout bool) string {
 	dr.PostDataRequest(f)
-	dr.CommitDataRequest(f, numCommits)
-	dr.ExecuteReveals(f, numReveals)
+	dr.CommitDataRequest(f, numCommits, nil)
+	dr.ExecuteReveals(f, numReveals, nil)
 
 	if timeout {
 		timeoutBlocks := defaultCommitTimeoutBlocks

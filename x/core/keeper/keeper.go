@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"sort"
 
@@ -45,6 +46,10 @@ type Keeper struct {
 	// Data request-related states:
 	// dataRequestIndexing is a set of data request indices under different statuses.
 	dataRequests types.DataRequestIndexing
+	// commits is a map of data request ID - public key pairs to commits.
+	commits collections.Map[collections.Pair[string, string], []byte]
+	// revealers is a set of data request ID - public key pairs.
+	revealers collections.KeySet[collections.Pair[string, string]]
 	// revealBodies is a map of data request IDs and executor public keys to reveal bodies.
 	revealBodies collections.Map[collections.Pair[string, string], types.RevealBody]
 	// timeoutQueue is a queue of data request IDs and their timeout heights.
@@ -82,7 +87,9 @@ func NewKeeper(
 		allowlist:         collections.NewKeySet(sb, types.AllowlistKey, "allowlist", collections.StringKey),
 		stakers:           types.NewStakerIndexing(sb, cdc),
 		dataRequests:      types.NewDataRequestIndexing(sb, cdc),
-		revealBodies:      collections.NewMap(sb, types.RevealBodiesKeyPrefix, "reveals", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
+		commits:           collections.NewMap(sb, types.CommitsPrefix, "commits", collections.PairKeyCodec(collections.StringKey, collections.StringKey), collections.BytesValue),
+		revealers:         collections.NewKeySet(sb, types.RevealersPrefix, "revealers", collections.PairKeyCodec(collections.StringKey, collections.StringKey)),
+		revealBodies:      collections.NewMap(sb, types.RevealBodiesKeyPrefix, "reveal_bodies", collections.PairKeyCodec(collections.StringKey, collections.StringKey), codec.CollValue[types.RevealBody](cdc)),
 		timeoutQueue:      collections.NewKeySet(sb, types.TimeoutQueueKeyPrefix, "timeout_queue", collections.PairKeyCodec(collections.Int64Key, collections.StringKey)),
 		params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
@@ -100,16 +107,16 @@ func NewKeeper(
 // slices are in the same order sorted by the hash of the executor public key and
 // given entropy. If the entropy is nil, the items are sorted simply by the executor
 // public key without hashing.
-func (k Keeper) LoadRevealsHashSorted(ctx sdk.Context, drID string, revealsMap map[string]bool, entropy []byte) ([]types.Reveal, []string, []uint64) {
-	reveals := make([]types.Reveal, len(revealsMap))
+func (k Keeper) LoadRevealsHashSorted(ctx sdk.Context, drID string, revealers []string, entropy []byte) ([]types.Reveal, []string, []uint64) {
+	reveals := make([]types.Reveal, len(revealers))
 	i := 0
-	for executor := range revealsMap {
-		revealBody, err := k.GetRevealBody(ctx, drID, executor)
+	for _, revealer := range revealers {
+		revealBody, err := k.GetRevealBody(ctx, drID, revealer)
 		if err != nil {
 			// TODO Proper error handling
 			panic(err)
 		}
-		reveals[i] = types.Reveal{Executor: executor, RevealBody: revealBody}
+		reveals[i] = types.Reveal{Executor: revealer, RevealBody: revealBody}
 		sort.Strings(reveals[i].ProxyPubKeys)
 		i++
 	}
@@ -128,6 +135,31 @@ func (k Keeper) LoadRevealsHashSorted(ctx sdk.Context, drID string, revealsMap m
 // GetRevealBody retrieves a reveal body given a data request ID and an executor.
 func (k Keeper) GetRevealBody(ctx sdk.Context, drID string, executor string) (types.RevealBody, error) {
 	return k.revealBodies.Get(ctx, collections.Join(drID, executor))
+}
+
+// GetRevealBodies returns a map of hex-encoded executor public keys to their
+// reveal bodies for the given data request ID.
+func (k Keeper) GetRevealBodies(ctx sdk.Context, drID string) (map[string]*types.RevealBody, error) {
+	rng := collections.NewPrefixedPairRange[string, string](drID)
+	iter, err := k.revealBodies.Iterate(ctx, rng)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	revealBodies := make(map[string]*types.RevealBody)
+	for ; iter.Valid(); iter.Next() {
+		key, err := iter.Key()
+		if err != nil {
+			return nil, err
+		}
+		value, err := iter.Value()
+		if err != nil {
+			return nil, err
+		}
+		revealBodies[key.K2()] = &value
+	}
+	return revealBodies, nil
 }
 
 // SetRevealBody stores a reveal body in the store given the hex-encoded ID of
@@ -178,6 +210,222 @@ func (k Keeper) GetAllRevealBodies(ctx sdk.Context) ([]types.RevealBody, error) 
 		revealBodies = append(revealBodies, revealBody)
 	}
 	return revealBodies, nil
+}
+
+// AddCommit adds a commit to the given data request ID and public key pair and
+// returns the updated count of commits. It return an error if the commit already exists.
+func (k Keeper) AddCommit(ctx sdk.Context, drID, publicKey string, commit []byte) (uint32, error) {
+	ranger := collections.NewPrefixedPairRange[string, string](drID)
+	var count uint32
+	err := k.commits.Walk(ctx, ranger, func(key collections.Pair[string, string], value []byte) (stop bool, err error) {
+		if key.K2() == publicKey {
+			return true, types.ErrAlreadyCommitted
+		}
+		count++
+		return false, nil
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	err = k.commits.Set(ctx, collections.Join(drID, publicKey), commit)
+	if err != nil {
+		return 0, err
+	}
+	return count + 1, nil
+}
+
+// GetCommit returns a commit given a data request ID - public key pair.
+func (k Keeper) GetCommit(ctx sdk.Context, drID, publicKey string) ([]byte, error) {
+	return k.commits.Get(ctx, collections.Join(drID, publicKey))
+}
+
+// GetCommits returns a map of hex-encoded public keys to their commits for the
+// given data request ID.
+func (k Keeper) GetCommits(ctx sdk.Context, drID string) (map[string]string, error) {
+	rng := collections.NewPrefixedPairRange[string, string](drID)
+	iter, err := k.commits.Iterate(ctx, rng)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	commits := make(map[string]string)
+	for ; iter.Valid(); iter.Next() {
+		key, err := iter.Key()
+		if err != nil {
+			return nil, err
+		}
+		value, err := iter.Value()
+		if err != nil {
+			return nil, err
+		}
+		commits[key.K2()] = hex.EncodeToString(value)
+	}
+	return commits, nil
+}
+
+// GetCommitters returns the list of hex-encoded executor public keys that have
+// committed for the given data request.
+func (k Keeper) GetCommitters(ctx sdk.Context, drID string) ([]string, error) {
+	rng := collections.NewPrefixedPairRange[string, string](drID)
+	iter, err := k.commits.Iterate(ctx, rng)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	var committers []string
+	for ; iter.Valid(); iter.Next() {
+		key, err := iter.Key()
+		if err != nil {
+			return nil, err
+		}
+		committers = append(committers, key.K2())
+	}
+	return committers, nil
+}
+
+// HasCommitted checks if the executor with the given public key has committed
+// for the given data request.
+func (k Keeper) HasCommitted(ctx sdk.Context, drID, publicKey string) (bool, error) {
+	return k.commits.Has(ctx, collections.Join(drID, publicKey))
+}
+
+// RemoveCommits removes all commits stored for the given data request.
+func (k Keeper) RemoveCommits(ctx sdk.Context, drID string) error {
+	iter, err := k.commits.Iterate(ctx, collections.NewPrefixedPairRange[string, string](drID))
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key, err := iter.Key()
+		if err != nil {
+			return err
+		}
+		err = k.commits.Remove(ctx, key)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// MarkAsRevealed adds the given public key to the list of the given data request's
+// revealers and returns an updated count of reveals. It returns an error if the
+// public key already exists.
+func (k Keeper) MarkAsRevealed(ctx sdk.Context, drID, publicKey string) (uint32, error) {
+	ranger := collections.NewPrefixedPairRange[string, string](drID)
+	var count uint32
+	err := k.revealers.Walk(ctx, ranger, func(key collections.Pair[string, string]) (stop bool, err error) {
+		if key.K2() == publicKey {
+			return true, types.ErrAlreadyRevealed
+		}
+		count++
+		return false, nil
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	err = k.revealers.Set(ctx, collections.Join(drID, publicKey))
+	if err != nil {
+		return 0, err
+	}
+	return count + 1, nil
+}
+
+// HasRevealed checks if the executor with the given public key has revealed for
+// the given data request.
+func (k Keeper) HasRevealed(ctx sdk.Context, drID, publicKey string) (bool, error) {
+	return k.revealers.Has(ctx, collections.Join(drID, publicKey))
+}
+
+// GetRevealers returns the list of hex-encoded executor public keys that have
+// revealed for the given data request.
+func (k Keeper) GetRevealers(ctx sdk.Context, drID string) ([]string, error) {
+	rng := collections.NewPrefixedPairRange[string, string](drID)
+	iter, err := k.revealers.Iterate(ctx, rng)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	var revealers []string
+	for ; iter.Valid(); iter.Next() {
+		key, err := iter.Key()
+		if err != nil {
+			return nil, err
+		}
+		revealers = append(revealers, key.K2())
+	}
+	return revealers, nil
+}
+
+// RemoveRevealers removes all revealers stored for the given data request.
+func (k Keeper) RemoveRevealers(ctx sdk.Context, drID string) error {
+	iter, err := k.revealers.Iterate(ctx, collections.NewPrefixedPairRange[string, string](drID))
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key, err := iter.Key()
+		if err != nil {
+			return err
+		}
+		err = k.revealers.Remove(ctx, key)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// GetCommittersAndRevealers returns the list of hex-encoded executor public keys
+// that have committed and revealed for the given data request.
+func (k Keeper) GetCommittersAndRevealers(ctx sdk.Context, drID string) ([]string, []string, error) {
+	committers, err := k.GetCommitters(ctx, drID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(committers) == 0 {
+		committers = []string{}
+	}
+
+	revealers, err := k.GetRevealers(ctx, drID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(revealers) == 0 {
+		revealers = []string{}
+	}
+	return committers, revealers, nil
+}
+
+// ClearDataRequest removes all objects corresponding to the given data request
+// from the core module store.
+func (k Keeper) ClearDataRequest(ctx sdk.Context, index types.DataRequestIndex, status types.DataRequestStatus) error {
+	err := k.RemoveRevealBodies(ctx, index.DrID())
+	if err != nil {
+		return err
+	}
+	err = k.RemoveDataRequest(ctx, index, status)
+	if err != nil {
+		return err
+	}
+	err = k.RemoveCommits(ctx, index.DrID())
+	if err != nil {
+		return err
+	}
+	err = k.RemoveRevealers(ctx, index.DrID())
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetParams retrieves the core module parameters.

@@ -61,33 +61,23 @@ func (q Querier) DataRequest(c context.Context, req *types.QueryDataRequestReque
 
 func (q Querier) DataRequestCommitment(c context.Context, req *types.QueryDataRequestCommitmentRequest) (*types.QueryDataRequestCommitmentResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	dataRequest, err := q.GetDataRequest(ctx, req.DrId)
+	commitmentBytes, err := q.GetCommit(ctx, req.DrId, req.PublicKey)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, types.ErrNotCommitted
+		}
 		return nil, err
 	}
-
-	commitmentBytes, exists := dataRequest.GetCommit(req.PublicKey)
-	if !exists {
-		return nil, types.ErrNotCommitted
-	}
-	commitment := hex.EncodeToString(commitmentBytes)
-
-	return &types.QueryDataRequestCommitmentResponse{Commitment: commitment}, nil
+	return &types.QueryDataRequestCommitmentResponse{Commitment: hex.EncodeToString(commitmentBytes)}, nil
 }
 
 func (q Querier) DataRequestCommitments(c context.Context, req *types.QueryDataRequestCommitmentsRequest) (*types.QueryDataRequestCommitmentsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	dataRequest, err := q.GetDataRequest(ctx, req.DrId)
+	commits, err := q.GetCommits(ctx, req.DrId)
 	if err != nil {
 		return nil, err
 	}
-
-	commitments := make(map[string]string, len(dataRequest.Commits))
-	for pubKey, commitBytes := range dataRequest.Commits {
-		commitments[pubKey] = hex.EncodeToString(commitBytes)
-	}
-
-	return &types.QueryDataRequestCommitmentsResponse{Commitments: commitments}, nil
+	return &types.QueryDataRequestCommitmentsResponse{Commitments: commits}, nil
 }
 
 func (q Querier) DataRequestReveal(c context.Context, req *types.QueryDataRequestRevealRequest) (*types.QueryDataRequestRevealResponse, error) {
@@ -102,20 +92,10 @@ func (q Querier) DataRequestReveal(c context.Context, req *types.QueryDataReques
 
 func (q Querier) DataRequestReveals(c context.Context, req *types.QueryDataRequestRevealsRequest) (*types.QueryDataRequestRevealsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	dataRequest, err := q.GetDataRequest(ctx, req.DrId)
+	reveals, err := q.GetRevealBodies(ctx, req.DrId)
 	if err != nil {
 		return nil, err
 	}
-
-	reveals := make(map[string]*types.RevealBody, len(dataRequest.Reveals))
-	for pubKey := range dataRequest.Reveals {
-		revealBody, err := q.GetRevealBody(ctx, req.DrId, pubKey)
-		if err != nil {
-			return nil, err
-		}
-		reveals[pubKey] = &revealBody
-	}
-
 	return &types.QueryDataRequestRevealsResponse{Reveals: reveals}, nil
 }
 

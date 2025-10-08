@@ -69,8 +69,19 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 		}
 	}
 
-	for _, revealBody := range data.RevealBodies {
-		err = k.SetRevealBody(ctx, revealBody.Executor, revealBody.RevealBody)
+	for _, reveal := range data.Reveals {
+		err = k.SetRevealBody(ctx, reveal.PublicKey, reveal.RevealBody)
+		if err != nil {
+			panic(err)
+		}
+		_, err = k.MarkAsRevealed(ctx, reveal.DrID, reveal.PublicKey)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	for _, commit := range data.Commits {
+		_, err = k.AddCommit(ctx, commit.DrID, commit.PublicKey, commit.Commit)
 		if err != nil {
 			panic(err)
 		}
@@ -132,15 +143,44 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 		panic(err)
 	}
 
-	var revealBodies []types.GenesisStateRevealBody
+	var commitState []types.GenesisStateCommit
+	var revealState []types.GenesisStateReveal
 	for _, dataRequest := range gs.DataRequests {
-		reveals, _, _ := k.LoadRevealsHashSorted(ctx, dataRequest.ID, dataRequest.Reveals, nil)
+		committers, revealers, err := k.GetCommittersAndRevealers(ctx, dataRequest.ID)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, committer := range committers {
+			commit, err := k.GetCommit(ctx, dataRequest.ID, committer)
+			if err != nil {
+				panic(err)
+			}
+			commitState = append(
+				commitState,
+				types.GenesisStateCommit{
+					DrID:      dataRequest.ID,
+					PublicKey: committer,
+					Commit:    commit,
+				},
+			)
+		}
+
+		reveals, _, _ := k.LoadRevealsHashSorted(ctx, dataRequest.ID, revealers, nil)
 		for _, reveal := range reveals {
-			revealBodies = append(revealBodies, types.GenesisStateRevealBody{Executor: reveal.Executor, RevealBody: reveal.RevealBody})
+			revealState = append(
+				revealState,
+				types.GenesisStateReveal{
+					DrID:       dataRequest.ID,
+					PublicKey:  reveal.Executor,
+					RevealBody: reveal.RevealBody,
+				},
+			)
 		}
 	}
 
-	gs.RevealBodies = revealBodies
+	gs.Commits = commitState
+	gs.Reveals = revealState
 
 	return gs
 }

@@ -60,7 +60,7 @@ func TestGetDataRequestsByStatus(t *testing.T) {
 
 			// Commit and check
 			for i := range testDRs[:tt.numCommits] {
-				testDRs[i].CommitDataRequest(f, 1)
+				testDRs[i].CommitDataRequest(f, 1, nil)
 			}
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_COMMITTING, tt.numPosts-tt.numCommits, fetchLimit)
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_REVEALING, tt.numCommits, fetchLimit)
@@ -68,13 +68,66 @@ func TestGetDataRequestsByStatus(t *testing.T) {
 
 			// Reveal and check
 			for _, testDR := range testDRs[:tt.numReveals] {
-				testDR.ExecuteReveals(f, 1)
+				testDR.ExecuteReveals(f, 1, nil)
 			}
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_COMMITTING, tt.numPosts-tt.numCommits, fetchLimit)
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_REVEALING, tt.numCommits-tt.numReveals, fetchLimit)
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_TALLYING, tt.numReveals, fetchLimit)
 		})
 	}
+}
+
+func TestGetCommittersAndRevealers(t *testing.T) {
+	f := testutil.InitFixture(t, false, nil)
+	f.AddStakers(t, 15)
+
+	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.HTTPHeavyWasm(), f.Context().BlockTime())
+	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm(), f.Context().BlockTime())
+
+	committers, revealers, err := f.CoreKeeper.GetCommittersAndRevealers(f.Context(), "abcdef")
+	require.NoError(t, err)
+	require.NotNil(t, committers)
+	require.NotNil(t, revealers)
+	require.Equal(t, 0, len(committers))
+	require.Equal(t, 0, len(revealers))
+
+	// Post a DR with RF = 10.
+	testDR := testutil.NewTestDR(
+		execProgram.Hash, tallyProgram.Hash,
+		[]byte("reveal"),
+		base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%x", rand.Int63()))),
+		150000000000000000,
+		0,
+		[]string{},
+		10,
+	)
+	testDR.PostDataRequest(f)
+
+	committers, revealers, err = f.CoreKeeper.GetCommittersAndRevealers(f.Context(), testDR.GetDataRequestID())
+	require.NoError(t, err)
+	require.NotNil(t, committers)
+	require.NotNil(t, revealers)
+	require.Equal(t, 0, len(committers))
+	require.Equal(t, 0, len(revealers))
+
+	// Commit and check.
+	testDR.CommitDataRequest(f, 7, nil)
+
+	committers, revealers, err = f.CoreKeeper.GetCommittersAndRevealers(f.Context(), testDR.GetDataRequestID())
+	require.NoError(t, err)
+	require.Equal(t, 7, len(committers))
+	require.Equal(t, 0, len(revealers))
+
+	// The rest commit to meet the replication factor.
+	testDR.CommitDataRequest(f, 3, []int{7, 8, 9})
+
+	// Reveal and check.
+	testDR.ExecuteReveals(f, 4, nil)
+
+	committers, revealers, err = f.CoreKeeper.GetCommittersAndRevealers(f.Context(), testDR.GetDataRequestID())
+	require.NoError(t, err)
+	require.Equal(t, 10, len(committers))
+	require.Equal(t, 4, len(revealers))
 }
 
 func TestGetExecutors(t *testing.T) {
