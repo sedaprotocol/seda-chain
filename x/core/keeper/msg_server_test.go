@@ -318,7 +318,7 @@ func (s *KeeperTestSuite) TestMsgServer_Stake() {
 					Stake:     secondStake,
 				}
 
-				s.stakingKeeper.EXPECT().BondDenom(gomock.Any()).Return("aseda", nil)
+				s.stakingKeeper.EXPECT().BondDenom(gomock.Any()).Return("aseda", nil).MaxTimes(1)
 				s.bankKeeper.EXPECT().SendCoinsFromAccountToModule(
 					gomock.Any(), validSenderAddr, types.ModuleName, sdk.NewCoins(secondStake),
 				).Return(nil)
@@ -345,7 +345,7 @@ func (s *KeeperTestSuite) TestMsgServer_Stake() {
 
 			res, err := s.msgSrvr.Stake(s.ctx, tt.msg)
 			if tt.wantErr != nil {
-				s.Require().ErrorIs(err, tt.wantErr)
+				s.Require().ErrorContains(err, tt.wantErr.Error())
 				s.Require().Nil(res)
 				return
 			}

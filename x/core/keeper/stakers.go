@@ -10,8 +10,28 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	vrf "github.com/sedaprotocol/vrf-go"
+
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
+
+// VerifyStakerProof verifies a hex-encoded staker proof given its hex-encoded
+// public key and hash (VRF input alpha) in bytes.
+func VerifyStakerProof(publicKey, proof string, hash []byte) error {
+	publicKeyBytes, err := hex.DecodeString(publicKey)
+	if err != nil {
+		return err
+	}
+	proofBytes, err := hex.DecodeString(proof)
+	if err != nil {
+		return err
+	}
+	_, err = vrf.NewK256VRF().Verify(publicKeyBytes, proofBytes, hash)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 // GetStaker retrieves a staker given its public key.
 func (k Keeper) GetStaker(ctx sdk.Context, pubKey string) (types.Staker, error) {

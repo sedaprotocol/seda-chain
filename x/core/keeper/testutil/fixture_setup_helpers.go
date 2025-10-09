@@ -141,22 +141,11 @@ func (f *Fixture) CheckDataRequestsByStatus(tb testing.TB, status types.DataRequ
 func (f *Fixture) generateStakeProof(tb testing.TB, signKey []byte, base64Memo string, seqNum uint64) string {
 	tb.Helper()
 
-	var hash []byte
-	var err error
-	if f.noShim {
-		msg := types.MsgLegacyStake{
-			Memo: base64Memo,
-		}
-		hash, err = msg.MsgHash(f.CoreContractAddr.String(), f.ChainID, seqNum)
-	} else {
-		msg := types.MsgStake{
-			Memo: base64Memo,
-		}
-		hash, err = msg.MsgHash(f.ChainID, seqNum)
+	// We use legacy type to generate legacy hash.
+	msg := types.MsgLegacyStake{
+		Memo: base64Memo,
 	}
-	require.NoError(tb, err)
-
-	proof, err := vrf.NewK256VRF().Prove(signKey, hash)
+	proof, err := vrf.NewK256VRF().Prove(signKey, msg.MsgHash(f.CoreContractAddr.String(), f.ChainID, seqNum))
 	require.NoError(tb, err)
 	return hex.EncodeToString(proof)
 }
@@ -178,9 +167,7 @@ func (f *Fixture) generateCommitProof(signKey []byte, drID, commitment string, d
 	allBytes = append(allBytes, drHeightBytes...)
 	allBytes = append(allBytes, commitmentBytes...)
 	allBytes = append(allBytes, chainIDBytes...)
-	if f.noShim {
-		allBytes = append(allBytes, []byte(f.CoreContractAddr.String())...)
-	}
+	allBytes = append(allBytes, []byte(f.CoreContractAddr.String())...)
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
@@ -206,8 +193,7 @@ func (f *Fixture) initAccountWithCoins(tb testing.TB, addr sdk.AccAddress, coins
 func (f *Fixture) createRevealMsg(staker Staker, revealBody types.RevealBody) ([]byte, string, string) {
 	f.tb.Helper()
 
-	revealBodyHash, err := revealBody.RevealBodyHash()
-	require.NoError(f.tb, err)
+	revealBodyHash := revealBody.RevealBodyHash()
 
 	proof := f.generateRevealProof(f.tb, staker.Key, revealBodyHash)
 
@@ -241,9 +227,7 @@ func (f *Fixture) generateRevealProof(tb testing.TB, signKey []byte, revealBodyH
 	allBytes := []byte("reveal_data_result")
 	allBytes = append(allBytes, revealBodyHash...)
 	allBytes = append(allBytes, []byte(f.ChainID)...)
-	if f.noShim {
-		allBytes = append(allBytes, []byte(f.CoreContractAddr.String())...)
-	}
+	allBytes = append(allBytes, []byte(f.CoreContractAddr.String())...)
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)

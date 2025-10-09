@@ -40,9 +40,7 @@ func (ta *TestAccount) Stake(amountSeda int64) (*types.MsgStakeResponse, error) 
 	}
 	seq, err := ta.GetAccountSequence()
 	require.NoError(ta.fixture.tb, err)
-	hash, err := msg.MsgHash(ta.fixture.ChainID, seq.AccountSeq)
-	require.NoError(ta.fixture.tb, err)
-	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), hash)
+	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), msg.MsgHash("", ta.fixture.ChainID, seq.AccountSeq))
 	require.NoError(ta.fixture.tb, err)
 	msg.Proof = hex.EncodeToString(proof)
 
@@ -63,9 +61,7 @@ func (ta *TestAccount) StakeWithMemo(amountSeda int64, memo string) (*types.MsgS
 	}
 	seq, err := ta.GetAccountSequence()
 	require.NoError(ta.fixture.tb, err)
-	hash, err := msg.MsgHash(ta.fixture.ChainID, seq.AccountSeq)
-	require.NoError(ta.fixture.tb, err)
-	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), hash)
+	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), msg.MsgHash("", ta.fixture.ChainID, seq.AccountSeq))
 	require.NoError(ta.fixture.tb, err)
 	msg.Proof = hex.EncodeToString(proof)
 
@@ -79,9 +75,7 @@ func (ta *TestAccount) Unstake() (*types.MsgUnstakeResponse, error) {
 	}
 	seq, err := ta.GetAccountSequence()
 	require.NoError(ta.fixture.tb, err)
-	hash, err := msg.MsgHash(ta.fixture.ChainID, seq.AccountSeq)
-	require.NoError(ta.fixture.tb, err)
-	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), hash)
+	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), msg.MsgHash("", ta.fixture.ChainID, seq.AccountSeq))
 	require.NoError(ta.fixture.tb, err)
 	msg.Proof = hex.EncodeToString(proof)
 
@@ -102,9 +96,7 @@ func (ta *TestAccount) Withdraw(to *TestAccount) (*types.MsgWithdrawResponse, er
 
 	seq, err := ta.GetAccountSequence()
 	require.NoError(ta.fixture.tb, err)
-	hash, err := msg.MsgHash(ta.fixture.ChainID, seq.AccountSeq)
-	require.NoError(ta.fixture.tb, err)
-	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), hash)
+	proof, err := vrf.NewK256VRF().Prove(ta.signingKey.Bytes(), msg.MsgHash("", ta.fixture.ChainID, seq.AccountSeq))
 	require.NoError(ta.fixture.tb, err)
 	msg.Proof = hex.EncodeToString(proof)
 
