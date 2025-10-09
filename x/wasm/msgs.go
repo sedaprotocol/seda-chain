@@ -19,6 +19,8 @@ type PostRequestResponsePayload struct {
 type CoreContractMsg struct {
 	AddToAllowList   *AddToAllowListMsg   `json:"add_to_allowlist"`
 	Stake            *StakeMsg            `json:"stake"`
+	Unstake          *UnstakeMsg          `json:"unstake"`
+	Withdraw         *WithdrawMsg         `json:"withdraw"`
 	PostDataRequest  *PostDataRequestMsg  `json:"post_data_request"`
 	CommitDataResult *CommitDataResultMsg `json:"commit_data_result"`
 	RevealDataResult *RevealDataResultMsg `json:"reveal_data_result"`
@@ -30,7 +32,7 @@ type AddToAllowListMsg struct {
 
 func (m AddToAllowListMsg) EncodeToSdkMsg(sender string) (sdk.Msg, error) {
 	return &coretypes.MsgAddToAllowlist{
-		Sender:    sender, // TODO ensure security
+		Sender:    sender,
 		PublicKey: m.PublicKey,
 	}, nil
 }
@@ -42,12 +44,40 @@ type StakeMsg struct {
 }
 
 func (m StakeMsg) EncodeToSdkMsg(sender string, stake sdk.Coin) (sdk.Msg, error) {
-	return &coretypes.MsgStake{
-		Sender:    sender, // TODO ensure security
+	return &coretypes.MsgLegacyStake{
+		Sender:    sender,
 		PublicKey: m.PublicKey,
 		Proof:     m.Proof,
 		Memo:      m.Memo,
 		Stake:     stake,
+	}, nil
+}
+
+type UnstakeMsg struct {
+	PublicKey string `json:"public_key"`
+	Proof     string `json:"proof"`
+}
+
+func (m UnstakeMsg) EncodeToSdkMsg(sender string) (sdk.Msg, error) {
+	return &coretypes.MsgLegacyUnstake{
+		Sender:    sender,
+		PublicKey: m.PublicKey,
+		Proof:     m.Proof,
+	}, nil
+}
+
+type WithdrawMsg struct {
+	PublicKey       string `json:"public_key"`
+	Proof           string `json:"proof"`
+	WithdrawAddress string `json:"withdraw_address"`
+}
+
+func (m WithdrawMsg) EncodeToSdkMsg(sender string) (sdk.Msg, error) {
+	return &coretypes.MsgLegacyWithdraw{
+		Sender:          sender,
+		PublicKey:       m.PublicKey,
+		Proof:           m.Proof,
+		WithdrawAddress: m.WithdrawAddress,
 	}, nil
 }
 
@@ -129,8 +159,8 @@ type CommitDataResultMsg struct {
 }
 
 func (m CommitDataResultMsg) EncodeToSdkMsg(sender string) (sdk.Msg, error) {
-	return &coretypes.MsgCommit{
-		Sender:    sender, // TODO ensure security
+	return &coretypes.MsgLegacyCommit{
+		Sender:    sender,
 		DrID:      m.DrID,
 		Commit:    m.Commitment,
 		PublicKey: m.PublicKey,
@@ -147,8 +177,8 @@ type RevealDataResultMsg struct {
 }
 
 func (m RevealDataResultMsg) EncodeToSdkMsg(sender string) (sdk.Msg, error) {
-	return &coretypes.MsgReveal{
-		Sender: sender, // TODO ensure security
+	return &coretypes.MsgLegacyReveal{
+		Sender: sender,
 		RevealBody: &coretypes.RevealBody{
 			DrID:          m.RevealBody.DrID,
 			DrBlockHeight: m.RevealBody.DrBlockHeight,

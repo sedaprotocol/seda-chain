@@ -173,53 +173,9 @@ func (m MsgStake) MsgHash(chainID string, sequenceNum uint64) ([]byte, error) {
 	return hasher.Sum(nil), nil
 }
 
-// LegacyMsgHash computes the hash of a stake message for the old contract format
-// that included the core contract address in the hash. The new format omits
-// this field.
-func (m MsgStake) LegacyMsgHash(coreContractAddr, chainID string, sequenceNum uint64) ([]byte, error) {
-	memoBytes, err := base64.StdEncoding.DecodeString(m.Memo)
-	if err != nil {
-		return nil, err
-	}
-	memoHasher := sha3.NewLegacyKeccak256()
-	memoHasher.Write(memoBytes)
-	memoHash := memoHasher.Sum(nil)
-
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
-	seqBytes := make([]byte, 16)
-	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
-
-	allBytes := append([]byte{}, []byte("stake")...)
-	allBytes = append(allBytes, memoHash...)
-	allBytes = append(allBytes, []byte(chainID)...)
-	allBytes = append(allBytes, []byte(coreContractAddr)...)
-	allBytes = append(allBytes, seqBytes...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil), nil
-}
-
 func (m MsgUnstake) MsgHash(chainID string, sequenceNum uint64) ([]byte, error) {
 	allBytes := append([]byte{}, []byte("unstake")...)
 	allBytes = append(allBytes, []byte(chainID)...)
-
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
-	seqBytes := make([]byte, 16)
-	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
-	allBytes = append(allBytes, seqBytes...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil), nil
-}
-
-func (m MsgUnstake) LegacyMsgHash(coreContractAddr, chainID string, sequenceNum uint64) ([]byte, error) {
-	allBytes := append([]byte{}, []byte("unstake")...)
-	allBytes = append(allBytes, []byte(chainID)...)
-	allBytes = append(allBytes, []byte(coreContractAddr)...)
 
 	// Write to last 8 bytes of 16-byte variable.
 	// TODO contract used uint128
@@ -248,23 +204,6 @@ func (m MsgWithdraw) MsgHash(chainID string, sequenceNum uint64) ([]byte, error)
 	return hasher.Sum(nil), nil
 }
 
-func (m MsgWithdraw) LegacyMsgHash(coreContractAddr, chainID string, sequenceNum uint64) ([]byte, error) {
-	allBytes := append([]byte{}, []byte("withdraw")...)
-	allBytes = append(allBytes, []byte(m.WithdrawAddress)...)
-	allBytes = append(allBytes, []byte(chainID)...)
-	allBytes = append(allBytes, []byte(coreContractAddr)...)
-
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
-	seqBytes := make([]byte, 16)
-	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
-	allBytes = append(allBytes, seqBytes...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil), nil
-}
-
 func (m MsgCommit) MsgHash(chainID string, drHeight int64) ([]byte, error) {
 	drHeightBytes := make([]byte, 8)
 	//nolint:gosec // G115: Block height is never negative.
@@ -275,25 +214,6 @@ func (m MsgCommit) MsgHash(chainID string, drHeight int64) ([]byte, error) {
 	allBytes = append(allBytes, drHeightBytes...)
 	allBytes = append(allBytes, m.Commit...)
 	allBytes = append(allBytes, []byte(chainID)...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil), nil
-}
-
-// LegacyMsgHash computes the hash of a commit message for the old contract format
-// that included the core contract address in the hash. The new format omits
-// this field.
-func (m MsgCommit) LegacyMsgHash(contractAddr, chainID string, drHeight uint64) ([]byte, error) {
-	drHeightBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(drHeightBytes, drHeight)
-
-	allBytes := append([]byte{}, []byte("commit_data_result")...)
-	allBytes = append(allBytes, []byte(m.DrID)...)
-	allBytes = append(allBytes, drHeightBytes...)
-	allBytes = append(allBytes, m.Commit...)
-	allBytes = append(allBytes, []byte(chainID)...)
-	allBytes = append(allBytes, []byte(contractAddr)...)
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
@@ -328,24 +248,6 @@ func (m MsgReveal) MsgHash(chainID string) ([]byte, error) {
 
 	allBytes := append([]byte("reveal_data_result"), revealBodyHash...)
 	allBytes = append(allBytes, []byte(chainID)...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil), nil
-}
-
-// LegacyMsgHash computes the hash of a reveal message for the old contract format
-// that included the core contract address in the hash. The new format omits
-// this field.
-func (m MsgReveal) LegacyMsgHash(contractAddr, chainID string) ([]byte, error) {
-	revealBodyHash, err := m.RevealBody.RevealBodyHash()
-	if err != nil {
-		return nil, err
-	}
-
-	allBytes := append([]byte("reveal_data_result"), revealBodyHash...)
-	allBytes = append(allBytes, []byte(chainID)...)
-	allBytes = append(allBytes, []byte(contractAddr)...)
 
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
@@ -422,16 +324,6 @@ func (q QueryGetExecutorEligibilityRequest) MsgHash(chainID string) []byte {
 	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
 	allBytes = append(allBytes, drIDBytes...)
 	allBytes = append(allBytes, []byte(chainID)...)
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil)
-}
-
-func (q QueryGetExecutorEligibilityRequest) LegacyMsgHash(contractAddr string) []byte {
-	_, drIDBytes, _, _ := q.Parts()
-	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
-	allBytes = append(allBytes, drIDBytes...)
-	allBytes = append(allBytes, []byte(contractAddr)...)
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)
 	return hasher.Sum(nil)

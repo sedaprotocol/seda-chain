@@ -668,6 +668,125 @@ func (m *MsgStakeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgStakeResponse proto.InternalMessageInfo
 
+// The request message for the LegacyStake method.
+type MsgLegacyStake struct {
+	// Address of the tx sender.
+	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// Hex-encoded identity of the executor.
+	PublicKey string `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	// Base64-encoded string.
+	Memo string `protobuf:"bytes,3,opt,name=memo,proto3" json:"memo,omitempty"`
+	// Hex-encoded proof of the executor identity.
+	Proof string `protobuf:"bytes,4,opt,name=proof,proto3" json:"proof,omitempty"`
+	// Amount of SEDA tokens to be staked from the sender account.
+	Stake types.Coin `protobuf:"bytes,5,opt,name=stake,proto3" json:"stake"`
+}
+
+func (m *MsgLegacyStake) Reset()         { *m = MsgLegacyStake{} }
+func (m *MsgLegacyStake) String() string { return proto.CompactTextString(m) }
+func (*MsgLegacyStake) ProtoMessage()    {}
+func (*MsgLegacyStake) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{14}
+}
+func (m *MsgLegacyStake) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLegacyStake) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLegacyStake.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLegacyStake) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLegacyStake.Merge(m, src)
+}
+func (m *MsgLegacyStake) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLegacyStake) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLegacyStake.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLegacyStake proto.InternalMessageInfo
+
+func (m *MsgLegacyStake) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgLegacyStake) GetPublicKey() string {
+	if m != nil {
+		return m.PublicKey
+	}
+	return ""
+}
+
+func (m *MsgLegacyStake) GetMemo() string {
+	if m != nil {
+		return m.Memo
+	}
+	return ""
+}
+
+func (m *MsgLegacyStake) GetProof() string {
+	if m != nil {
+		return m.Proof
+	}
+	return ""
+}
+
+func (m *MsgLegacyStake) GetStake() types.Coin {
+	if m != nil {
+		return m.Stake
+	}
+	return types.Coin{}
+}
+
+// The response message for the LegacyStake method.
+type MsgLegacyStakeResponse struct {
+}
+
+func (m *MsgLegacyStakeResponse) Reset()         { *m = MsgLegacyStakeResponse{} }
+func (m *MsgLegacyStakeResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgLegacyStakeResponse) ProtoMessage()    {}
+func (*MsgLegacyStakeResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{15}
+}
+func (m *MsgLegacyStakeResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLegacyStakeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLegacyStakeResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLegacyStakeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLegacyStakeResponse.Merge(m, src)
+}
+func (m *MsgLegacyStakeResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLegacyStakeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLegacyStakeResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLegacyStakeResponse proto.InternalMessageInfo
+
 // The request message for the Unstake method.
 type MsgUnstake struct {
 	// Address of the tx sender.
@@ -682,7 +801,7 @@ func (m *MsgUnstake) Reset()         { *m = MsgUnstake{} }
 func (m *MsgUnstake) String() string { return proto.CompactTextString(m) }
 func (*MsgUnstake) ProtoMessage()    {}
 func (*MsgUnstake) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{14}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{16}
 }
 func (m *MsgUnstake) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -740,7 +859,7 @@ func (m *MsgUnstakeResponse) Reset()         { *m = MsgUnstakeResponse{} }
 func (m *MsgUnstakeResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgUnstakeResponse) ProtoMessage()    {}
 func (*MsgUnstakeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{15}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{17}
 }
 func (m *MsgUnstakeResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -769,6 +888,107 @@ func (m *MsgUnstakeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUnstakeResponse proto.InternalMessageInfo
 
+// The request message for the LegacyUnstake method.
+type MsgLegacyUnstake struct {
+	// Address of the tx sender.
+	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// Hex-encoded identity of the executor.
+	PublicKey string `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	// Hex-encoded proof of the executor identity.
+	Proof string `protobuf:"bytes,3,opt,name=proof,proto3" json:"proof,omitempty"`
+}
+
+func (m *MsgLegacyUnstake) Reset()         { *m = MsgLegacyUnstake{} }
+func (m *MsgLegacyUnstake) String() string { return proto.CompactTextString(m) }
+func (*MsgLegacyUnstake) ProtoMessage()    {}
+func (*MsgLegacyUnstake) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{18}
+}
+func (m *MsgLegacyUnstake) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLegacyUnstake) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLegacyUnstake.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLegacyUnstake) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLegacyUnstake.Merge(m, src)
+}
+func (m *MsgLegacyUnstake) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLegacyUnstake) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLegacyUnstake.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLegacyUnstake proto.InternalMessageInfo
+
+func (m *MsgLegacyUnstake) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgLegacyUnstake) GetPublicKey() string {
+	if m != nil {
+		return m.PublicKey
+	}
+	return ""
+}
+
+func (m *MsgLegacyUnstake) GetProof() string {
+	if m != nil {
+		return m.Proof
+	}
+	return ""
+}
+
+// The response message for the LegacyUnstake method.
+type MsgLegacyUnstakeResponse struct {
+}
+
+func (m *MsgLegacyUnstakeResponse) Reset()         { *m = MsgLegacyUnstakeResponse{} }
+func (m *MsgLegacyUnstakeResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgLegacyUnstakeResponse) ProtoMessage()    {}
+func (*MsgLegacyUnstakeResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{19}
+}
+func (m *MsgLegacyUnstakeResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLegacyUnstakeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLegacyUnstakeResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLegacyUnstakeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLegacyUnstakeResponse.Merge(m, src)
+}
+func (m *MsgLegacyUnstakeResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLegacyUnstakeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLegacyUnstakeResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLegacyUnstakeResponse proto.InternalMessageInfo
+
 // The request message for the Withdraw method.
 type MsgWithdraw struct {
 	// Address of the tx sender.
@@ -785,7 +1005,7 @@ func (m *MsgWithdraw) Reset()         { *m = MsgWithdraw{} }
 func (m *MsgWithdraw) String() string { return proto.CompactTextString(m) }
 func (*MsgWithdraw) ProtoMessage()    {}
 func (*MsgWithdraw) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{16}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{20}
 }
 func (m *MsgWithdraw) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -850,7 +1070,7 @@ func (m *MsgWithdrawResponse) Reset()         { *m = MsgWithdrawResponse{} }
 func (m *MsgWithdrawResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgWithdrawResponse) ProtoMessage()    {}
 func (*MsgWithdrawResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{17}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{21}
 }
 func (m *MsgWithdrawResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -878,6 +1098,116 @@ func (m *MsgWithdrawResponse) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MsgWithdrawResponse proto.InternalMessageInfo
+
+// The request message for the LegacyWithdraw method.
+type MsgLegacyWithdraw struct {
+	// Address of the tx sender.
+	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// Hex-encoded identity of the executor.
+	PublicKey string `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	// Hex-encoded proof of the executor identity.
+	Proof string `protobuf:"bytes,3,opt,name=proof,proto3" json:"proof,omitempty"`
+	// Address to which the withdrawn rewards will be sent.
+	WithdrawAddress string `protobuf:"bytes,4,opt,name=withdraw_address,json=withdrawAddress,proto3" json:"withdraw_address,omitempty"`
+}
+
+func (m *MsgLegacyWithdraw) Reset()         { *m = MsgLegacyWithdraw{} }
+func (m *MsgLegacyWithdraw) String() string { return proto.CompactTextString(m) }
+func (*MsgLegacyWithdraw) ProtoMessage()    {}
+func (*MsgLegacyWithdraw) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{22}
+}
+func (m *MsgLegacyWithdraw) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLegacyWithdraw) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLegacyWithdraw.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLegacyWithdraw) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLegacyWithdraw.Merge(m, src)
+}
+func (m *MsgLegacyWithdraw) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLegacyWithdraw) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLegacyWithdraw.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLegacyWithdraw proto.InternalMessageInfo
+
+func (m *MsgLegacyWithdraw) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgLegacyWithdraw) GetPublicKey() string {
+	if m != nil {
+		return m.PublicKey
+	}
+	return ""
+}
+
+func (m *MsgLegacyWithdraw) GetProof() string {
+	if m != nil {
+		return m.Proof
+	}
+	return ""
+}
+
+func (m *MsgLegacyWithdraw) GetWithdrawAddress() string {
+	if m != nil {
+		return m.WithdrawAddress
+	}
+	return ""
+}
+
+// The response message for the LegacyWithdraw method.
+type MsgLegacyWithdrawResponse struct {
+}
+
+func (m *MsgLegacyWithdrawResponse) Reset()         { *m = MsgLegacyWithdrawResponse{} }
+func (m *MsgLegacyWithdrawResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgLegacyWithdrawResponse) ProtoMessage()    {}
+func (*MsgLegacyWithdrawResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{23}
+}
+func (m *MsgLegacyWithdrawResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLegacyWithdrawResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLegacyWithdrawResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLegacyWithdrawResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLegacyWithdrawResponse.Merge(m, src)
+}
+func (m *MsgLegacyWithdrawResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLegacyWithdrawResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLegacyWithdrawResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLegacyWithdrawResponse proto.InternalMessageInfo
 
 // The request message for the PostDataRequest method.
 type MsgPostDataRequest struct {
@@ -917,7 +1247,7 @@ func (m *MsgPostDataRequest) Reset()         { *m = MsgPostDataRequest{} }
 func (m *MsgPostDataRequest) String() string { return proto.CompactTextString(m) }
 func (*MsgPostDataRequest) ProtoMessage()    {}
 func (*MsgPostDataRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{18}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{24}
 }
 func (m *MsgPostDataRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1056,7 +1386,7 @@ func (m *MsgPostDataRequestResponse) Reset()         { *m = MsgPostDataRequestRe
 func (m *MsgPostDataRequestResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgPostDataRequestResponse) ProtoMessage()    {}
 func (*MsgPostDataRequestResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{19}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{25}
 }
 func (m *MsgPostDataRequestResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1112,7 +1442,7 @@ func (m *MsgCommit) Reset()         { *m = MsgCommit{} }
 func (m *MsgCommit) String() string { return proto.CompactTextString(m) }
 func (*MsgCommit) ProtoMessage()    {}
 func (*MsgCommit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{20}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{26}
 }
 func (m *MsgCommit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1184,7 +1514,7 @@ func (m *MsgCommitResponse) Reset()         { *m = MsgCommitResponse{} }
 func (m *MsgCommitResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgCommitResponse) ProtoMessage()    {}
 func (*MsgCommitResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{21}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{27}
 }
 func (m *MsgCommitResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1213,6 +1543,120 @@ func (m *MsgCommitResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgCommitResponse proto.InternalMessageInfo
 
+// The request message for the LegacyCommit method.
+type MsgLegacyCommit struct {
+	Sender    string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	DrID      string `protobuf:"bytes,2,opt,name=dr_i_d,json=drID,proto3" json:"dr_id"`
+	Commit    string `protobuf:"bytes,3,opt,name=commit,proto3" json:"commit,omitempty"`
+	PublicKey string `protobuf:"bytes,4,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	Proof     string `protobuf:"bytes,5,opt,name=proof,proto3" json:"proof,omitempty"`
+}
+
+func (m *MsgLegacyCommit) Reset()         { *m = MsgLegacyCommit{} }
+func (m *MsgLegacyCommit) String() string { return proto.CompactTextString(m) }
+func (*MsgLegacyCommit) ProtoMessage()    {}
+func (*MsgLegacyCommit) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{28}
+}
+func (m *MsgLegacyCommit) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLegacyCommit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLegacyCommit.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLegacyCommit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLegacyCommit.Merge(m, src)
+}
+func (m *MsgLegacyCommit) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLegacyCommit) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLegacyCommit.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLegacyCommit proto.InternalMessageInfo
+
+func (m *MsgLegacyCommit) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgLegacyCommit) GetDrID() string {
+	if m != nil {
+		return m.DrID
+	}
+	return ""
+}
+
+func (m *MsgLegacyCommit) GetCommit() string {
+	if m != nil {
+		return m.Commit
+	}
+	return ""
+}
+
+func (m *MsgLegacyCommit) GetPublicKey() string {
+	if m != nil {
+		return m.PublicKey
+	}
+	return ""
+}
+
+func (m *MsgLegacyCommit) GetProof() string {
+	if m != nil {
+		return m.Proof
+	}
+	return ""
+}
+
+// The response message for the LegacyCommit method.
+type MsgLegacyCommitResponse struct {
+}
+
+func (m *MsgLegacyCommitResponse) Reset()         { *m = MsgLegacyCommitResponse{} }
+func (m *MsgLegacyCommitResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgLegacyCommitResponse) ProtoMessage()    {}
+func (*MsgLegacyCommitResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{29}
+}
+func (m *MsgLegacyCommitResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLegacyCommitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLegacyCommitResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLegacyCommitResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLegacyCommitResponse.Merge(m, src)
+}
+func (m *MsgLegacyCommitResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLegacyCommitResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLegacyCommitResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLegacyCommitResponse proto.InternalMessageInfo
+
 // The request message for the Reveal method.
 type MsgReveal struct {
 	Sender     string      `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
@@ -1227,7 +1671,7 @@ func (m *MsgReveal) Reset()         { *m = MsgReveal{} }
 func (m *MsgReveal) String() string { return proto.CompactTextString(m) }
 func (*MsgReveal) ProtoMessage()    {}
 func (*MsgReveal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{22}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{30}
 }
 func (m *MsgReveal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1306,7 +1750,7 @@ func (m *MsgRevealResponse) Reset()         { *m = MsgRevealResponse{} }
 func (m *MsgRevealResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgRevealResponse) ProtoMessage()    {}
 func (*MsgRevealResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{23}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{31}
 }
 func (m *MsgRevealResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1335,6 +1779,128 @@ func (m *MsgRevealResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgRevealResponse proto.InternalMessageInfo
 
+// The request message for the LegacyReveal method.
+type MsgLegacyReveal struct {
+	Sender     string      `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	RevealBody *RevealBody `protobuf:"bytes,2,opt,name=reveal_body,json=revealBody,proto3" json:"reveal_body,omitempty"`
+	PublicKey  string      `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	Proof      string      `protobuf:"bytes,4,opt,name=proof,proto3" json:"proof,omitempty"`
+	Stderr     []string    `protobuf:"bytes,5,rep,name=stderr,proto3" json:"stderr,omitempty"`
+	Stdout     []string    `protobuf:"bytes,6,rep,name=stdout,proto3" json:"stdout,omitempty"`
+}
+
+func (m *MsgLegacyReveal) Reset()         { *m = MsgLegacyReveal{} }
+func (m *MsgLegacyReveal) String() string { return proto.CompactTextString(m) }
+func (*MsgLegacyReveal) ProtoMessage()    {}
+func (*MsgLegacyReveal) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{32}
+}
+func (m *MsgLegacyReveal) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLegacyReveal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLegacyReveal.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLegacyReveal) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLegacyReveal.Merge(m, src)
+}
+func (m *MsgLegacyReveal) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLegacyReveal) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLegacyReveal.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLegacyReveal proto.InternalMessageInfo
+
+func (m *MsgLegacyReveal) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgLegacyReveal) GetRevealBody() *RevealBody {
+	if m != nil {
+		return m.RevealBody
+	}
+	return nil
+}
+
+func (m *MsgLegacyReveal) GetPublicKey() string {
+	if m != nil {
+		return m.PublicKey
+	}
+	return ""
+}
+
+func (m *MsgLegacyReveal) GetProof() string {
+	if m != nil {
+		return m.Proof
+	}
+	return ""
+}
+
+func (m *MsgLegacyReveal) GetStderr() []string {
+	if m != nil {
+		return m.Stderr
+	}
+	return nil
+}
+
+func (m *MsgLegacyReveal) GetStdout() []string {
+	if m != nil {
+		return m.Stdout
+	}
+	return nil
+}
+
+// The response message for the LegacyReveal method.
+type MsgLegacyRevealResponse struct {
+}
+
+func (m *MsgLegacyRevealResponse) Reset()         { *m = MsgLegacyRevealResponse{} }
+func (m *MsgLegacyRevealResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgLegacyRevealResponse) ProtoMessage()    {}
+func (*MsgLegacyRevealResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{33}
+}
+func (m *MsgLegacyRevealResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLegacyRevealResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLegacyRevealResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLegacyRevealResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLegacyRevealResponse.Merge(m, src)
+}
+func (m *MsgLegacyRevealResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLegacyRevealResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLegacyRevealResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLegacyRevealResponse proto.InternalMessageInfo
+
 // The request message for the UpdateParams method.
 type MsgUpdateParams struct {
 	Owner  string `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
@@ -1345,7 +1911,7 @@ func (m *MsgUpdateParams) Reset()         { *m = MsgUpdateParams{} }
 func (m *MsgUpdateParams) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParams) ProtoMessage()    {}
 func (*MsgUpdateParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{24}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{34}
 }
 func (m *MsgUpdateParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1396,7 +1962,7 @@ func (m *MsgUpdateParamsResponse) Reset()         { *m = MsgUpdateParamsResponse
 func (m *MsgUpdateParamsResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParamsResponse) ProtoMessage()    {}
 func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0c9e88c2cee8ff0, []int{25}
+	return fileDescriptor_d0c9e88c2cee8ff0, []int{35}
 }
 func (m *MsgUpdateParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1440,16 +2006,26 @@ func init() {
 	proto.RegisterType((*MsgUnpauseResponse)(nil), "sedachain.core.v1.MsgUnpauseResponse")
 	proto.RegisterType((*MsgStake)(nil), "sedachain.core.v1.MsgStake")
 	proto.RegisterType((*MsgStakeResponse)(nil), "sedachain.core.v1.MsgStakeResponse")
+	proto.RegisterType((*MsgLegacyStake)(nil), "sedachain.core.v1.MsgLegacyStake")
+	proto.RegisterType((*MsgLegacyStakeResponse)(nil), "sedachain.core.v1.MsgLegacyStakeResponse")
 	proto.RegisterType((*MsgUnstake)(nil), "sedachain.core.v1.MsgUnstake")
 	proto.RegisterType((*MsgUnstakeResponse)(nil), "sedachain.core.v1.MsgUnstakeResponse")
+	proto.RegisterType((*MsgLegacyUnstake)(nil), "sedachain.core.v1.MsgLegacyUnstake")
+	proto.RegisterType((*MsgLegacyUnstakeResponse)(nil), "sedachain.core.v1.MsgLegacyUnstakeResponse")
 	proto.RegisterType((*MsgWithdraw)(nil), "sedachain.core.v1.MsgWithdraw")
 	proto.RegisterType((*MsgWithdrawResponse)(nil), "sedachain.core.v1.MsgWithdrawResponse")
+	proto.RegisterType((*MsgLegacyWithdraw)(nil), "sedachain.core.v1.MsgLegacyWithdraw")
+	proto.RegisterType((*MsgLegacyWithdrawResponse)(nil), "sedachain.core.v1.MsgLegacyWithdrawResponse")
 	proto.RegisterType((*MsgPostDataRequest)(nil), "sedachain.core.v1.MsgPostDataRequest")
 	proto.RegisterType((*MsgPostDataRequestResponse)(nil), "sedachain.core.v1.MsgPostDataRequestResponse")
 	proto.RegisterType((*MsgCommit)(nil), "sedachain.core.v1.MsgCommit")
 	proto.RegisterType((*MsgCommitResponse)(nil), "sedachain.core.v1.MsgCommitResponse")
+	proto.RegisterType((*MsgLegacyCommit)(nil), "sedachain.core.v1.MsgLegacyCommit")
+	proto.RegisterType((*MsgLegacyCommitResponse)(nil), "sedachain.core.v1.MsgLegacyCommitResponse")
 	proto.RegisterType((*MsgReveal)(nil), "sedachain.core.v1.MsgReveal")
 	proto.RegisterType((*MsgRevealResponse)(nil), "sedachain.core.v1.MsgRevealResponse")
+	proto.RegisterType((*MsgLegacyReveal)(nil), "sedachain.core.v1.MsgLegacyReveal")
+	proto.RegisterType((*MsgLegacyRevealResponse)(nil), "sedachain.core.v1.MsgLegacyRevealResponse")
 	proto.RegisterType((*MsgUpdateParams)(nil), "sedachain.core.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "sedachain.core.v1.MsgUpdateParamsResponse")
 }
@@ -1457,92 +2033,102 @@ func init() {
 func init() { proto.RegisterFile("sedachain/core/v1/tx.proto", fileDescriptor_d0c9e88c2cee8ff0) }
 
 var fileDescriptor_d0c9e88c2cee8ff0 = []byte{
-	// 1359 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x57, 0xcf, 0x6f, 0x13, 0xc7,
-	0x17, 0xcf, 0x92, 0xd8, 0xc4, 0xcf, 0x49, 0x9c, 0x0c, 0x01, 0x36, 0x4b, 0x70, 0xf2, 0xcd, 0x97,
-	0x1f, 0x01, 0x35, 0x36, 0xa1, 0x6a, 0x2b, 0xe5, 0x50, 0x29, 0x21, 0xa5, 0xb2, 0xc0, 0x22, 0x5a,
-	0x40, 0x95, 0x7a, 0xe8, 0x6a, 0xb2, 0x3b, 0x59, 0xaf, 0xe2, 0xdd, 0x59, 0x76, 0xc6, 0x09, 0xbe,
-	0xa1, 0x1e, 0x7a, 0xea, 0xa1, 0x7f, 0x46, 0x2f, 0x95, 0x38, 0x70, 0xe8, 0x5f, 0x50, 0x71, 0xaa,
-	0x10, 0xa7, 0xaa, 0x87, 0xa8, 0x82, 0x03, 0x12, 0x97, 0xfe, 0x0b, 0xd5, 0xfc, 0xf0, 0x12, 0xdb,
-	0xbb, 0x21, 0x05, 0xca, 0xc5, 0xf2, 0xbc, 0xcf, 0x9b, 0xf7, 0xf9, 0xbc, 0x99, 0x37, 0x33, 0x6f,
-	0xc1, 0x62, 0xc4, 0xc3, 0x6e, 0x0b, 0x07, 0x51, 0xdd, 0xa5, 0x09, 0xa9, 0xef, 0xad, 0xd6, 0xf9,
-	0xc3, 0x5a, 0x9c, 0x50, 0x4e, 0xd1, 0x4c, 0x8a, 0xd5, 0x04, 0x56, 0xdb, 0x5b, 0xb5, 0x66, 0x7d,
-	0xea, 0x53, 0x89, 0xd6, 0xc5, 0x3f, 0xe5, 0x68, 0xcd, 0xe0, 0x30, 0x88, 0x68, 0x5d, 0xfe, 0x6a,
-	0xd3, 0x9c, 0x4b, 0x59, 0x48, 0x99, 0xa3, 0x7c, 0xd5, 0x40, 0x43, 0x67, 0xd5, 0xa8, 0x1e, 0x32,
-	0x5f, 0xd0, 0x85, 0xcc, 0xd7, 0x40, 0x55, 0x03, 0xdb, 0x98, 0x09, 0x21, 0xdb, 0x84, 0xe3, 0xd5,
-	0xba, 0x4b, 0x83, 0x48, 0xe3, 0xf3, 0xc3, 0x5a, 0xa5, 0x2e, 0x89, 0x2e, 0xdd, 0x05, 0xd4, 0x64,
-	0xfe, 0xba, 0xeb, 0x92, 0x98, 0xdf, 0xd9, 0x8f, 0x48, 0xc2, 0x5a, 0x41, 0x8c, 0xae, 0x41, 0x91,
-	0x91, 0xc8, 0x23, 0x89, 0x69, 0x2c, 0x1a, 0xcb, 0xa5, 0x0d, 0xf3, 0xf9, 0x93, 0x95, 0x59, 0x2d,
-	0x67, 0xdd, 0xf3, 0x12, 0xc2, 0xd8, 0x5d, 0x9e, 0x04, 0x91, 0x6f, 0x6b, 0xbf, 0xb5, 0xf2, 0xf7,
-	0xaf, 0x1e, 0x5f, 0xd5, 0x83, 0xa5, 0x79, 0xb0, 0x86, 0x83, 0xda, 0x84, 0xc5, 0x34, 0x62, 0x64,
-	0xe9, 0x47, 0x03, 0x66, 0x9b, 0xcc, 0xbf, 0x97, 0xe0, 0x88, 0xed, 0x90, 0xe4, 0x3d, 0x58, 0xd1,
-	0x67, 0x50, 0x8a, 0xc8, 0xbe, 0x43, 0x45, 0x08, 0xf3, 0xc4, 0x5b, 0x26, 0x8d, 0x47, 0x64, 0x5f,
-	0x92, 0xf5, 0x8b, 0xad, 0xc2, 0x7c, 0x96, 0x9a, 0x54, 0xee, 0x03, 0x98, 0x11, 0xc9, 0x78, 0xde,
-	0x3d, 0xba, 0xde, 0x6e, 0xd3, 0xfd, 0x76, 0xc0, 0xf8, 0x3b, 0x48, 0x3d, 0x0f, 0x10, 0x77, 0xb6,
-	0xdb, 0x81, 0xeb, 0xec, 0x92, 0xae, 0xd2, 0x6a, 0x97, 0x94, 0xe5, 0x16, 0xe9, 0xf6, 0x4b, 0x3a,
-	0x07, 0x73, 0x43, 0x94, 0xa9, 0x9e, 0x3d, 0x38, 0xd3, 0x64, 0xbe, 0x4d, 0x42, 0xba, 0x47, 0x6e,
-	0x26, 0x34, 0xfc, 0x58, 0xa2, 0x16, 0xa1, 0x9a, 0xcd, 0x9b, 0x2a, 0x6b, 0xc0, 0x78, 0x93, 0xf9,
-	0x5b, 0xb8, 0xc3, 0xc8, 0xfb, 0x56, 0x10, 0x82, 0xe9, 0x5e, 0xa8, 0x34, 0xfc, 0x2d, 0x80, 0x26,
-	0xf3, 0xef, 0x47, 0xf1, 0x87, 0x20, 0x98, 0x95, 0x75, 0xaf, 0x83, 0xa5, 0x14, 0xbf, 0x1b, 0x32,
-	0x85, 0xbb, 0x1c, 0xef, 0x92, 0x0f, 0xbe, 0x9c, 0x08, 0xc1, 0x58, 0x48, 0x42, 0x6a, 0x8e, 0x4a,
-	0x40, 0xfe, 0x47, 0xb3, 0x50, 0x88, 0x13, 0x4a, 0x77, 0xcc, 0x31, 0x69, 0x54, 0x03, 0xb4, 0x06,
-	0x05, 0x26, 0x34, 0x98, 0x85, 0x45, 0x63, 0xb9, 0x7c, 0x7d, 0xae, 0xa6, 0x69, 0xc5, 0x19, 0xaf,
-	0xe9, 0x33, 0x5e, 0xbb, 0x41, 0x83, 0x68, 0xa3, 0xf4, 0xf4, 0x60, 0x61, 0xe4, 0xe7, 0x57, 0x8f,
-	0xaf, 0x1a, 0xb6, 0x9a, 0x92, 0xb5, 0x8e, 0x32, 0x9f, 0x34, 0xc9, 0x47, 0x86, 0x5e, 0x48, 0xf6,
-	0xdf, 0xa4, 0x99, 0xa6, 0x34, 0x7a, 0x28, 0xa5, 0xec, 0xd5, 0x67, 0x7d, 0xc2, 0x7e, 0x33, 0xa0,
-	0xdc, 0x64, 0xfe, 0x37, 0x01, 0x6f, 0x79, 0x09, 0xde, 0xff, 0x48, 0xca, 0xd0, 0x0d, 0x98, 0xde,
-	0xd7, 0x94, 0x0e, 0x56, 0x61, 0xd5, 0x6e, 0x1c, 0x41, 0x58, 0xe9, 0xcd, 0xd0, 0xe6, 0xfe, 0xf4,
-	0x4e, 0xc3, 0xa9, 0x43, 0x79, 0xa4, 0xf9, 0xfd, 0x52, 0x90, 0x69, 0x6f, 0x51, 0xc6, 0x37, 0x31,
-	0xc7, 0x36, 0x79, 0xd0, 0x21, 0xef, 0x74, 0x6c, 0xd7, 0xa0, 0xb0, 0xd3, 0x89, 0x3c, 0x26, 0x33,
-	0x3c, 0x76, 0x79, 0xc8, 0x29, 0xc8, 0x84, 0x93, 0x7b, 0x24, 0x61, 0x01, 0x8d, 0xf4, 0x2a, 0xf4,
-	0x86, 0xe8, 0x32, 0x4c, 0x93, 0x87, 0xc4, 0x15, 0x8f, 0x8f, 0x9f, 0xe0, 0xd0, 0x09, 0x1c, 0x4f,
-	0x57, 0xe5, 0xa4, 0xb0, 0x6f, 0x29, 0x73, 0x63, 0x13, 0x2d, 0x40, 0x59, 0x3a, 0x06, 0x51, 0xdc,
-	0xe1, 0x4c, 0xd6, 0xe8, 0x84, 0x0d, 0xc2, 0xd4, 0x90, 0x16, 0x74, 0x01, 0xa6, 0xa4, 0x83, 0x8f,
-	0x99, 0xd3, 0x0e, 0xc2, 0x80, 0x9b, 0xc5, 0x45, 0x63, 0x79, 0xcc, 0x9e, 0x10, 0xd6, 0xaf, 0x31,
-	0xbb, 0x2d, 0x6c, 0xe8, 0x0a, 0xcc, 0x70, 0xdc, 0x6e, 0x77, 0xfb, 0x08, 0x4f, 0x4a, 0xc2, 0x29,
-	0x09, 0xbc, 0x61, 0xfc, 0x1f, 0x4c, 0x28, 0x57, 0x4d, 0x39, 0x2e, 0x29, 0xcb, 0xd2, 0xa6, 0x39,
-	0x2f, 0x41, 0x45, 0xb9, 0xbc, 0x21, 0x2d, 0x49, 0xd2, 0x49, 0x69, 0x4e, 0x59, 0x57, 0x00, 0x25,
-	0x24, 0x6e, 0x07, 0x2e, 0xe6, 0x01, 0x8d, 0x9c, 0x1d, 0xec, 0x72, 0x9a, 0x98, 0xb0, 0x68, 0x2c,
-	0x4f, 0xda, 0x33, 0x87, 0x90, 0x9b, 0x12, 0x40, 0x57, 0x60, 0xda, 0x15, 0x9b, 0x17, 0xb1, 0x0e,
-	0x73, 0x76, 0x82, 0x36, 0x27, 0x89, 0x59, 0x96, 0xec, 0x95, 0xd4, 0x7e, 0x53, 0x9a, 0x51, 0x13,
-	0x4a, 0x82, 0x3b, 0x4e, 0x02, 0x97, 0x98, 0x13, 0x72, 0x2b, 0xaf, 0x89, 0xe5, 0xff, 0xf3, 0x60,
-	0xe1, 0xb4, 0xda, 0x20, 0xe6, 0xed, 0xd6, 0x02, 0x5a, 0x0f, 0x31, 0x6f, 0xd5, 0x1a, 0x11, 0x7f,
-	0xfe, 0x64, 0x05, 0xf4, 0xce, 0x35, 0x22, 0xae, 0x76, 0x69, 0xdc, 0xc7, 0x6c, 0x4b, 0x44, 0x48,
-	0x6f, 0x8b, 0x49, 0xc9, 0xa6, 0x6e, 0x8b, 0xcf, 0xa1, 0xc2, 0x1c, 0xe2, 0x78, 0x0e, 0x76, 0x62,
-	0xdc, 0x6d, 0x53, 0xec, 0x99, 0x53, 0x02, 0xde, 0x98, 0x7e, 0x7d, 0xb0, 0x30, 0x21, 0x1e, 0xfa,
-	0x9e, 0xdd, 0x2e, 0xb3, 0xaf, 0x36, 0xd7, 0xb7, 0xd4, 0x00, 0x5d, 0x86, 0x4a, 0x8c, 0xbb, 0xdb,
-	0xd8, 0xdd, 0x4d, 0x2b, 0xbc, 0x22, 0xc3, 0x4e, 0x69, 0x73, 0x66, 0x19, 0xdf, 0x97, 0xcf, 0xf8,
-	0x40, 0xb9, 0xf6, 0xaa, 0x19, 0x2d, 0x40, 0xd1, 0x4b, 0xe4, 0x9e, 0xa9, 0xb2, 0x2d, 0xbd, 0x3e,
-	0x58, 0x28, 0x08, 0x8b, 0x67, 0x8f, 0x79, 0x49, 0x63, 0x13, 0x9d, 0x81, 0x62, 0x8b, 0x04, 0x7e,
-	0x8b, 0xcb, 0x32, 0x1d, 0xb5, 0xf5, 0x68, 0xe9, 0x57, 0x03, 0x4a, 0x4d, 0xe6, 0xdf, 0xa0, 0xa1,
-	0xd8, 0x8f, 0x7f, 0x5f, 0xfd, 0x6f, 0x88, 0x4f, 0xe4, 0x12, 0xbb, 0x32, 0xb8, 0xae, 0x70, 0x3d,
-	0x1a, 0xb8, 0x1d, 0xc6, 0x72, 0x6f, 0x87, 0x42, 0xee, 0xbd, 0x75, 0x4a, 0xf6, 0x02, 0x4a, 0x79,
-	0x7a, 0xac, 0xff, 0x56, 0xf9, 0xd8, 0x64, 0x8f, 0xe0, 0xf6, 0x3b, 0xe4, 0xf3, 0x25, 0x94, 0x13,
-	0x39, 0xd7, 0xd9, 0xa6, 0x5e, 0x57, 0x9f, 0xe9, 0xf3, 0xb5, 0xa1, 0x36, 0xb2, 0xa6, 0x18, 0x36,
-	0xa8, 0xd7, 0xb5, 0x21, 0x49, 0xff, 0x0f, 0xa4, 0x35, 0x9a, 0x9b, 0x56, 0xdf, 0x0b, 0x73, 0x06,
-	0x8a, 0x8c, 0x7b, 0x24, 0x49, 0xcc, 0xc2, 0xe2, 0xa8, 0x58, 0x23, 0x35, 0xd2, 0x76, 0xda, 0x11,
-	0x47, 0xb6, 0x67, 0xa7, 0x1d, 0x9e, 0xb5, 0x0c, 0x4a, 0x4e, 0xba, 0x0c, 0x3f, 0x18, 0x50, 0x11,
-	0x97, 0x7a, 0xec, 0x61, 0x4e, 0xb6, 0x70, 0x82, 0x43, 0x86, 0x6a, 0x50, 0x50, 0xbd, 0xd9, 0xdb,
-	0xd6, 0x42, 0xb9, 0xa1, 0x2f, 0xa0, 0x18, 0xcb, 0x99, 0xe9, 0xcd, 0x36, 0xbc, 0x0a, 0x2a, 0xf4,
-	0xc6, 0x98, 0x38, 0x5a, 0xb6, 0x76, 0x5f, 0x03, 0x21, 0x4f, 0x05, 0x59, 0x9a, 0x83, 0xb3, 0x03,
-	0x3a, 0x7a, 0x1a, 0xaf, 0x3f, 0x2e, 0xc1, 0x68, 0x93, 0xf9, 0xc8, 0x87, 0xca, 0x60, 0xcb, 0x7b,
-	0x31, 0x83, 0x6a, 0xb8, 0x89, 0xb5, 0x56, 0x8e, 0xe5, 0x96, 0x1e, 0x92, 0x10, 0x66, 0x86, 0xfb,
-	0xdc, 0xcb, 0xd9, 0x31, 0x86, 0x1c, 0xad, 0xfa, 0x31, 0x1d, 0x53, 0x3a, 0x0f, 0xa6, 0x06, 0x1a,
-	0xd5, 0x0b, 0x39, 0x7a, 0xfb, 0xbc, 0xac, 0x4f, 0x8e, 0xe3, 0x95, 0xb2, 0x30, 0x38, 0x95, 0xd5,
-	0x7e, 0x5e, 0xc9, 0x0e, 0x92, 0xe1, 0x6a, 0xad, 0x1e, 0xdb, 0x35, 0x25, 0x6d, 0x40, 0x41, 0x75,
-	0x96, 0xe7, 0xb2, 0xe7, 0x4a, 0xd0, 0xfa, 0xff, 0x11, 0x60, 0x1a, 0xea, 0x0e, 0x9c, 0xec, 0x75,
-	0x91, 0xe7, 0xb3, 0xfd, 0x35, 0x6c, 0x5d, 0x3c, 0x12, 0x3e, 0xac, 0x4d, 0xb5, 0x8c, 0x39, 0xda,
-	0x24, 0x98, 0xa7, 0xad, 0xaf, 0x39, 0x53, 0xda, 0x54, 0x63, 0x96, 0xab, 0x4d, 0xc2, 0xf9, 0xda,
-	0xfa, 0x9a, 0x2a, 0x64, 0xc3, 0x78, 0xda, 0x50, 0x55, 0xb3, 0xa7, 0xf4, 0x70, 0xeb, 0xd2, 0xd1,
-	0x78, 0x1a, 0xd3, 0x87, 0xca, 0x60, 0x13, 0x93, 0xa3, 0x66, 0xc0, 0x2d, 0xef, 0xf8, 0xe4, 0xbd,
-	0x31, 0xb7, 0xa1, 0xa8, 0x9f, 0x89, 0xf9, 0xec, 0x89, 0x0a, 0xb5, 0x2e, 0x1c, 0x85, 0x1e, 0x8e,
-	0xa6, 0x2f, 0xe9, 0xf9, 0xbc, 0xfa, 0x13, 0x68, 0x5e, 0xb4, 0xfe, 0xfb, 0x0e, 0x7d, 0x07, 0x13,
-	0x7d, 0x77, 0xdd, 0x52, 0xce, 0x7e, 0x1c, 0xf2, 0xb1, 0xae, 0xbe, 0xdd, 0xa7, 0x17, 0xdf, 0x2a,
-	0x3c, 0x12, 0x0d, 0xc1, 0x46, 0xe3, 0xe9, 0x8b, 0xaa, 0xf1, 0xec, 0x45, 0xd5, 0xf8, 0xeb, 0x45,
-	0xd5, 0xf8, 0xe9, 0x65, 0x75, 0xe4, 0xd9, 0xcb, 0xea, 0xc8, 0x1f, 0x2f, 0xab, 0x23, 0xdf, 0xd6,
-	0xfd, 0x80, 0xb7, 0x3a, 0xdb, 0x35, 0x97, 0x86, 0x75, 0x11, 0x56, 0x7e, 0xd0, 0xbb, 0xb4, 0x2d,
-	0x07, 0x2b, 0xea, 0x8b, 0xff, 0xa1, 0xfa, 0xe6, 0xe7, 0xdd, 0x98, 0xb0, 0xed, 0xa2, 0xf4, 0xf8,
-	0xf4, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x56, 0x51, 0xa2, 0xd0, 0xbe, 0x10, 0x00, 0x00,
+	// 1518 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe4, 0x58, 0xc1, 0x6f, 0x13, 0x47,
+	0x17, 0xcf, 0x92, 0xd8, 0xc4, 0xcf, 0x49, 0x9c, 0x2c, 0x01, 0x36, 0x4b, 0x70, 0x42, 0x08, 0x90,
+	0xe4, 0x23, 0x36, 0xe1, 0xd3, 0xf7, 0x7d, 0x52, 0x0e, 0x9f, 0x94, 0x90, 0x52, 0x59, 0x60, 0x11,
+	0x2d, 0xa0, 0x4a, 0xad, 0x54, 0x6b, 0xb2, 0x3b, 0xd9, 0xac, 0xe2, 0xdd, 0x59, 0x76, 0xd6, 0x09,
+	0xbe, 0xa1, 0x1e, 0x38, 0xf5, 0xd0, 0x53, 0xff, 0x86, 0x5e, 0x2a, 0x71, 0xe0, 0xd0, 0x53, 0x8f,
+	0x15, 0x87, 0xaa, 0x42, 0xa8, 0x87, 0xaa, 0x87, 0xa8, 0x82, 0x03, 0x12, 0x97, 0x9e, 0x7a, 0xaf,
+	0x76, 0x66, 0x3c, 0xf1, 0xda, 0xbb, 0x8e, 0x0b, 0x94, 0x8a, 0xf6, 0x62, 0x79, 0xde, 0x7b, 0xf3,
+	0x7e, 0xbf, 0x37, 0xf3, 0xe6, 0xcd, 0xbc, 0x05, 0x9d, 0x62, 0x0b, 0x99, 0x3b, 0xc8, 0xf1, 0xca,
+	0x26, 0x09, 0x70, 0x79, 0x6f, 0xa5, 0x1c, 0xde, 0x2f, 0xf9, 0x01, 0x09, 0x89, 0x3a, 0x21, 0x75,
+	0xa5, 0x48, 0x57, 0xda, 0x5b, 0xd1, 0x27, 0x6d, 0x62, 0x13, 0xa6, 0x2d, 0x47, 0xff, 0xb8, 0xa1,
+	0x3e, 0x81, 0x5c, 0xc7, 0x23, 0x65, 0xf6, 0x2b, 0x44, 0x53, 0x26, 0xa1, 0x2e, 0xa1, 0x35, 0x6e,
+	0xcb, 0x07, 0x42, 0x75, 0x9a, 0x8f, 0xca, 0x2e, 0xb5, 0x23, 0x38, 0x97, 0xda, 0x42, 0x51, 0x14,
+	0x8a, 0x2d, 0x44, 0x23, 0x22, 0x5b, 0x38, 0x44, 0x2b, 0x65, 0x93, 0x38, 0x9e, 0xd0, 0x4f, 0x77,
+	0x73, 0x65, 0xbc, 0x98, 0x76, 0xee, 0x36, 0xa8, 0x55, 0x6a, 0xaf, 0x99, 0x26, 0xf6, 0xc3, 0x5b,
+	0xfb, 0x1e, 0x0e, 0xe8, 0x8e, 0xe3, 0xab, 0x57, 0x20, 0x4b, 0xb1, 0x67, 0xe1, 0x40, 0x53, 0x66,
+	0x95, 0x85, 0xdc, 0xba, 0xf6, 0xec, 0xf1, 0xf2, 0xa4, 0xa0, 0xb3, 0x66, 0x59, 0x01, 0xa6, 0xf4,
+	0x76, 0x18, 0x38, 0x9e, 0x6d, 0x08, 0xbb, 0xd5, 0xfc, 0x67, 0x2f, 0x1f, 0x2d, 0x89, 0xc1, 0xdc,
+	0x34, 0xe8, 0xdd, 0x4e, 0x0d, 0x4c, 0x7d, 0xe2, 0x51, 0x3c, 0xf7, 0xb9, 0x02, 0x93, 0x55, 0x6a,
+	0xdf, 0x09, 0x90, 0x47, 0xb7, 0x71, 0xf0, 0x06, 0xa8, 0xea, 0x7f, 0x20, 0xe7, 0xe1, 0xfd, 0x1a,
+	0x89, 0x5c, 0x68, 0xc7, 0x8e, 0x98, 0x34, 0xec, 0xe1, 0x7d, 0x06, 0x16, 0x27, 0x5b, 0x84, 0xe9,
+	0x24, 0x36, 0x92, 0xee, 0x3d, 0x98, 0x88, 0x82, 0xb1, 0xac, 0x3b, 0x64, 0xad, 0x5e, 0x27, 0xfb,
+	0x75, 0x87, 0x86, 0xaf, 0x41, 0xf5, 0x2c, 0x80, 0xdf, 0xd8, 0xaa, 0x3b, 0x66, 0x6d, 0x17, 0x37,
+	0x39, 0x57, 0x23, 0xc7, 0x25, 0x37, 0x70, 0x33, 0x4e, 0xe9, 0x0c, 0x4c, 0x75, 0x41, 0x4a, 0x3e,
+	0x7b, 0x70, 0xaa, 0x4a, 0x6d, 0x03, 0xbb, 0x64, 0x0f, 0x5f, 0x0f, 0x88, 0xfb, 0xae, 0x48, 0xcd,
+	0x42, 0x31, 0x19, 0x57, 0x32, 0xab, 0xc0, 0x70, 0x95, 0xda, 0x9b, 0xa8, 0x41, 0xf1, 0x9b, 0x66,
+	0x90, 0x0a, 0xe3, 0x2d, 0x57, 0xd2, 0xfd, 0x0d, 0x80, 0x2a, 0xb5, 0xef, 0x7a, 0xfe, 0xdb, 0x00,
+	0x98, 0x64, 0x79, 0x2f, 0x9c, 0x49, 0x88, 0x1f, 0x14, 0x16, 0xc2, 0xed, 0x10, 0xed, 0xe2, 0xb7,
+	0xbe, 0x9c, 0xaa, 0x0a, 0x43, 0x2e, 0x76, 0x89, 0x36, 0xc8, 0x14, 0xec, 0xbf, 0x3a, 0x09, 0x19,
+	0x3f, 0x20, 0x64, 0x5b, 0x1b, 0x62, 0x42, 0x3e, 0x50, 0x57, 0x21, 0x43, 0x23, 0x0e, 0x5a, 0x66,
+	0x56, 0x59, 0xc8, 0x5f, 0x9d, 0x2a, 0x09, 0xd8, 0xe8, 0x8c, 0x97, 0xc4, 0x19, 0x2f, 0x5d, 0x23,
+	0x8e, 0xb7, 0x9e, 0x7b, 0x72, 0x30, 0x33, 0xf0, 0xd5, 0xcb, 0x47, 0x4b, 0x8a, 0xc1, 0xa7, 0x24,
+	0xad, 0x23, 0x8b, 0x47, 0x06, 0xf9, 0xa3, 0x02, 0x63, 0x55, 0x6a, 0xdf, 0xc4, 0x36, 0x32, 0x9b,
+	0x7f, 0x9f, 0x50, 0x35, 0x76, 0x2e, 0xda, 0xa2, 0x92, 0x01, 0x3f, 0x50, 0x44, 0xe6, 0xd0, 0x3f,
+	0x27, 0x58, 0x19, 0xd8, 0x60, 0x5b, 0x60, 0xc9, 0xe9, 0x46, 0x63, 0xc4, 0x1e, 0x2a, 0x6c, 0x7b,
+	0x38, 0xe7, 0xbf, 0x92, 0x9e, 0x0e, 0x5a, 0x27, 0x0f, 0x49, 0xf2, 0x3b, 0x05, 0xf2, 0x55, 0x6a,
+	0x7f, 0xe4, 0x84, 0x3b, 0x56, 0x80, 0xf6, 0xdf, 0x11, 0x3f, 0xf5, 0x1a, 0x8c, 0xef, 0x0b, 0xc8,
+	0x1a, 0xe2, 0x6e, 0x79, 0xe2, 0xf4, 0x00, 0x2c, 0xb4, 0x66, 0x08, 0x71, 0x3c, 0xc8, 0x93, 0x70,
+	0xa2, 0x2d, 0x0e, 0x19, 0xdf, 0xf7, 0x0a, 0x2b, 0xf0, 0x3c, 0xf8, 0xf7, 0x3f, 0x4a, 0x7e, 0x77,
+	0xc4, 0xa3, 0x91, 0xb1, 0x7e, 0x9d, 0x61, 0x79, 0xb8, 0x49, 0x68, 0xb8, 0x81, 0x42, 0x64, 0xe0,
+	0x7b, 0x0d, 0xfc, 0x5a, 0x17, 0xc7, 0x2a, 0x64, 0xb6, 0x1b, 0x9e, 0x45, 0x59, 0x9c, 0x7d, 0x9f,
+	0x5a, 0x36, 0x45, 0xd5, 0xe0, 0xf8, 0x1e, 0x0e, 0xa8, 0x43, 0x3c, 0xb1, 0x16, 0xad, 0xa1, 0x7a,
+	0x09, 0xc6, 0xf1, 0x7d, 0x6c, 0x46, 0xcf, 0x1f, 0x3b, 0x40, 0x6e, 0xcd, 0xa9, 0x59, 0xa2, 0x58,
+	0x8c, 0x46, 0xf2, 0x4d, 0x2e, 0xae, 0x6c, 0xa8, 0x33, 0x90, 0x67, 0x86, 0x8e, 0xe7, 0x37, 0x42,
+	0xca, 0x4a, 0xc7, 0x88, 0x01, 0x91, 0xa8, 0xc2, 0x24, 0xea, 0x3c, 0x8c, 0x31, 0x03, 0x1b, 0xd1,
+	0x5a, 0xdd, 0x71, 0x9d, 0x50, 0xcb, 0xce, 0x2a, 0x0b, 0x43, 0xc6, 0x48, 0x24, 0xfd, 0x10, 0xd1,
+	0x9b, 0x91, 0x4c, 0x5d, 0x84, 0x89, 0x10, 0xd5, 0xeb, 0xcd, 0x18, 0xe0, 0x71, 0x06, 0x38, 0xc6,
+	0x14, 0x87, 0x88, 0xe7, 0x60, 0x84, 0x9b, 0x0a, 0xc8, 0x61, 0x06, 0x99, 0x67, 0x32, 0x81, 0x79,
+	0x11, 0x0a, 0xdc, 0xe4, 0x10, 0x34, 0xc7, 0x40, 0x47, 0x99, 0x58, 0xa2, 0x2e, 0x83, 0x1a, 0x60,
+	0xbf, 0xee, 0x98, 0x28, 0x74, 0x88, 0x57, 0xdb, 0x46, 0x66, 0x48, 0x02, 0x0d, 0x66, 0x95, 0x85,
+	0x51, 0x63, 0xa2, 0x4d, 0x73, 0x9d, 0x29, 0xd4, 0x45, 0x18, 0x37, 0xa3, 0xcd, 0xf3, 0x68, 0x83,
+	0xd6, 0xb6, 0x9d, 0x7a, 0x88, 0x03, 0x2d, 0xcf, 0xd0, 0x0b, 0x52, 0x7e, 0x9d, 0x89, 0xd5, 0x2a,
+	0xe4, 0x22, 0x6c, 0x3f, 0x70, 0x4c, 0xac, 0x8d, 0xb0, 0xad, 0xbc, 0x12, 0x2d, 0xff, 0xcf, 0x07,
+	0x33, 0x27, 0xf9, 0x06, 0x51, 0x6b, 0xb7, 0xe4, 0x90, 0xb2, 0x8b, 0xc2, 0x9d, 0x52, 0xc5, 0x0b,
+	0x9f, 0x3d, 0x5e, 0x06, 0xb1, 0x73, 0x15, 0x2f, 0xe4, 0xbb, 0x34, 0x6c, 0x23, 0xba, 0x19, 0x79,
+	0x90, 0x45, 0x7c, 0x94, 0xa1, 0xf1, 0x22, 0xfe, 0x5f, 0x28, 0xd0, 0x1a, 0xae, 0x59, 0x35, 0x54,
+	0xf3, 0x51, 0xb3, 0x4e, 0x90, 0xa5, 0x8d, 0x45, 0xea, 0xf5, 0xf1, 0x57, 0x07, 0x33, 0x23, 0xd1,
+	0x53, 0xb3, 0x25, 0x37, 0xf2, 0xf4, 0x83, 0x8d, 0xb5, 0x4d, 0x3e, 0x50, 0x2f, 0x41, 0xc1, 0x47,
+	0xcd, 0x2d, 0x64, 0xee, 0xca, 0x3c, 0x2f, 0x30, 0xb7, 0x63, 0x42, 0x9c, 0x98, 0xcc, 0x77, 0xd9,
+	0x43, 0xb2, 0x23, 0x5d, 0x5b, 0xd9, 0xac, 0xce, 0x40, 0xd6, 0x0a, 0xd8, 0x9e, 0xf1, 0xb4, 0xcd,
+	0xbd, 0x3a, 0x98, 0xc9, 0x44, 0x12, 0xcb, 0x18, 0xb2, 0x82, 0xca, 0x86, 0x7a, 0x0a, 0xb2, 0x3b,
+	0xd8, 0xb1, 0x77, 0x42, 0x96, 0xa6, 0x83, 0x86, 0x18, 0xcd, 0x7d, 0xa3, 0x40, 0xae, 0x4a, 0xed,
+	0x6b, 0xc4, 0x8d, 0xf6, 0xe3, 0x8f, 0x67, 0xff, 0x21, 0xf0, 0xb1, 0x54, 0x60, 0x93, 0x39, 0x17,
+	0x19, 0x2e, 0x46, 0x1d, 0x35, 0x62, 0x28, 0xb5, 0x46, 0x64, 0x52, 0x2b, 0xf5, 0x09, 0x56, 0xac,
+	0x38, 0x73, 0x79, 0xac, 0xbf, 0x55, 0xa0, 0x20, 0x0f, 0xfd, 0xfb, 0x18, 0xd5, 0x14, 0x9c, 0xee,
+	0xe0, 0x2f, 0x63, 0xfb, 0x95, 0xef, 0x95, 0x81, 0xf7, 0x30, 0xaa, 0xbf, 0x46, 0x54, 0xff, 0x87,
+	0x7c, 0xc0, 0xe6, 0xd6, 0xb6, 0x88, 0xd5, 0x14, 0xf5, 0xea, 0x6c, 0xa9, 0xab, 0x49, 0x2b, 0x71,
+	0x84, 0x75, 0x62, 0x35, 0x0d, 0x08, 0xe4, 0xff, 0x8e, 0xe0, 0x06, 0x53, 0x83, 0x8b, 0x3d, 0x6a,
+	0x4e, 0x41, 0x96, 0x86, 0x16, 0x0e, 0x02, 0x2d, 0x33, 0x3b, 0x18, 0xad, 0x14, 0x1f, 0x09, 0x39,
+	0x69, 0x44, 0xe5, 0xa8, 0x25, 0x27, 0x8d, 0x30, 0x69, 0x8b, 0x39, 0x1d, 0xb9, 0x0c, 0xbf, 0xb5,
+	0x6f, 0xf1, 0x3f, 0x68, 0x31, 0xda, 0x33, 0xa3, 0x63, 0x49, 0x1e, 0xf2, 0x25, 0xb9, 0xeb, 0x5b,
+	0x28, 0xc4, 0x9b, 0x28, 0x40, 0x2e, 0x55, 0x4b, 0x90, 0xe1, 0xcd, 0xe0, 0x51, 0x2b, 0xc2, 0xcd,
+	0xd4, 0xff, 0x41, 0xd6, 0x67, 0x33, 0xe5, 0x45, 0xd6, 0xbd, 0x16, 0xdc, 0xf5, 0xfa, 0x50, 0x54,
+	0x49, 0x0d, 0x61, 0xbe, 0x0a, 0x11, 0x49, 0xee, 0x44, 0x70, 0x6c, 0xe7, 0xd1, 0xe2, 0x78, 0xf5,
+	0xcb, 0x51, 0x18, 0xac, 0x52, 0x5b, 0xb5, 0xa1, 0xd0, 0xd9, 0x63, 0x5f, 0x48, 0x80, 0xea, 0xee,
+	0x9a, 0xf5, 0xe5, 0xbe, 0xcc, 0x64, 0x4d, 0x74, 0x61, 0xa2, 0xbb, 0xb1, 0xbe, 0x94, 0xec, 0xa3,
+	0xcb, 0x50, 0x2f, 0xf7, 0x69, 0x28, 0xe1, 0x2c, 0x18, 0xeb, 0xe8, 0x8c, 0xe7, 0x53, 0xf8, 0xc6,
+	0xac, 0xf4, 0xcb, 0xfd, 0x58, 0x49, 0x14, 0x0a, 0x27, 0x92, 0xfa, 0xdd, 0xc5, 0x64, 0x27, 0x09,
+	0xa6, 0xfa, 0x4a, 0xdf, 0xa6, 0x12, 0xb4, 0x02, 0x19, 0xde, 0xca, 0x9e, 0x49, 0x9e, 0xcb, 0x94,
+	0xfa, 0xf9, 0x1e, 0x4a, 0xe9, 0xea, 0x16, 0x1c, 0x6f, 0xb5, 0xad, 0x67, 0x93, 0xed, 0x85, 0x5a,
+	0xbf, 0xd0, 0x53, 0xdd, 0xce, 0x8d, 0x37, 0x6e, 0x29, 0xdc, 0x98, 0x32, 0x8d, 0x5b, 0xac, 0x39,
+	0x52, 0x3f, 0x81, 0x7c, 0x7b, 0x27, 0x78, 0x2e, 0x79, 0x4e, 0x9b, 0x89, 0xbe, 0x78, 0xa4, 0x49,
+	0x3c, 0x70, 0xde, 0xd6, 0xa4, 0x06, 0xce, 0xd4, 0xe9, 0x81, 0xc7, 0x9a, 0x11, 0x15, 0xc1, 0x68,
+	0xbc, 0x5b, 0x3a, 0xdf, 0x8b, 0x4c, 0xcb, 0xf9, 0xbf, 0xfa, 0x30, 0x92, 0x10, 0x06, 0x0c, 0xcb,
+	0x2e, 0xa0, 0x98, 0x3c, 0xb1, 0xa5, 0xd7, 0x2f, 0xf6, 0xd6, 0xb7, 0x1f, 0x93, 0x8e, 0xfe, 0x62,
+	0xbe, 0x17, 0x25, 0xe9, 0xff, 0x72, 0x3f, 0x56, 0x12, 0xc5, 0x86, 0x42, 0xe7, 0xcb, 0x3e, 0x65,
+	0x59, 0x3b, 0xcc, 0xd2, 0x8a, 0x4c, 0xda, 0xc3, 0xeb, 0x26, 0x64, 0xc5, 0x2b, 0x63, 0x3a, 0x79,
+	0x22, 0xd7, 0xea, 0xf3, 0xbd, 0xb4, 0xd2, 0xdb, 0xa7, 0x30, 0x12, 0x7b, 0xb9, 0xcc, 0xf5, 0x0a,
+	0x5a, 0x78, 0x5e, 0x3a, 0xda, 0xa6, 0x9d, 0xad, 0xb8, 0x30, 0xa7, 0xd3, 0xaa, 0x40, 0xa4, 0x4d,
+	0x63, 0x1b, 0xbf, 0x75, 0x0e, 0xd9, 0x0a, 0x9f, 0x3d, 0xd9, 0x0a, 0xcf, 0x4b, 0x47, 0xdb, 0xb4,
+	0xfb, 0x8f, 0xdd, 0x68, 0x29, 0xfe, 0xdb, 0x6d, 0xd2, 0xfc, 0x27, 0xdd, 0x48, 0x7a, 0xe6, 0x41,
+	0xf4, 0xca, 0x5f, 0xaf, 0x3c, 0x79, 0x5e, 0x54, 0x9e, 0x3e, 0x2f, 0x2a, 0xbf, 0x3c, 0x2f, 0x2a,
+	0x5f, 0xbc, 0x28, 0x0e, 0x3c, 0x7d, 0x51, 0x1c, 0xf8, 0xe9, 0x45, 0x71, 0xe0, 0xe3, 0xb2, 0xed,
+	0x84, 0x3b, 0x8d, 0xad, 0x92, 0x49, 0xdc, 0x72, 0xe4, 0x96, 0x7d, 0x27, 0x36, 0x49, 0x9d, 0x0d,
+	0x96, 0xf9, 0x87, 0xe4, 0xfb, 0xfc, 0x53, 0x72, 0xd8, 0xf4, 0x31, 0xdd, 0xca, 0x32, 0x8b, 0x7f,
+	0xff, 0x1e, 0x00, 0x00, 0xff, 0xff, 0xaf, 0xb6, 0xf3, 0x36, 0x15, 0x17, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1572,16 +2158,29 @@ type MsgClient interface {
 	Unpause(ctx context.Context, in *MsgUnpause, opts ...grpc.CallOption) (*MsgUnpauseResponse, error)
 	// Stake adds a stake to the executor identity.
 	Stake(ctx context.Context, in *MsgStake, opts ...grpc.CallOption) (*MsgStakeResponse, error)
+	// LegacyStake adds a stake to the executor identity using the legacy message
+	// hash format.
+	LegacyStake(ctx context.Context, in *MsgLegacyStake, opts ...grpc.CallOption) (*MsgLegacyStakeResponse, error)
 	// Unstake removes a stake from the executor identity.
 	Unstake(ctx context.Context, in *MsgUnstake, opts ...grpc.CallOption) (*MsgUnstakeResponse, error)
+	// LegacyUnstake removes a stake from the executor identity using the legacy
+	// message hash format.
+	LegacyUnstake(ctx context.Context, in *MsgLegacyUnstake, opts ...grpc.CallOption) (*MsgLegacyUnstakeResponse, error)
 	// Withdraw withdraws available rewards to the sender address.
 	Withdraw(ctx context.Context, in *MsgWithdraw, opts ...grpc.CallOption) (*MsgWithdrawResponse, error)
+	// LegacyWithdraw withdraws available rewards to the sender address using the
+	// legacy message hash format.
+	LegacyWithdraw(ctx context.Context, in *MsgLegacyWithdraw, opts ...grpc.CallOption) (*MsgLegacyWithdrawResponse, error)
 	// PostDataRequest posts a data request.
 	PostDataRequest(ctx context.Context, in *MsgPostDataRequest, opts ...grpc.CallOption) (*MsgPostDataRequestResponse, error)
 	// Commit makes a commitment to reveal a data result.
 	Commit(ctx context.Context, in *MsgCommit, opts ...grpc.CallOption) (*MsgCommitResponse, error)
+	// LegacyCommit makes a commitment using the legacy message hash format.
+	LegacyCommit(ctx context.Context, in *MsgLegacyCommit, opts ...grpc.CallOption) (*MsgLegacyCommitResponse, error)
 	// Reveal reveals a data result.
 	Reveal(ctx context.Context, in *MsgReveal, opts ...grpc.CallOption) (*MsgRevealResponse, error)
+	// LegacyReveal reveals a data result using the legacy message hash format.
+	LegacyReveal(ctx context.Context, in *MsgLegacyReveal, opts ...grpc.CallOption) (*MsgLegacyRevealResponse, error)
 	// UpdateParams updates the module's parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 }
@@ -1657,6 +2256,15 @@ func (c *msgClient) Stake(ctx context.Context, in *MsgStake, opts ...grpc.CallOp
 	return out, nil
 }
 
+func (c *msgClient) LegacyStake(ctx context.Context, in *MsgLegacyStake, opts ...grpc.CallOption) (*MsgLegacyStakeResponse, error) {
+	out := new(MsgLegacyStakeResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Msg/LegacyStake", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *msgClient) Unstake(ctx context.Context, in *MsgUnstake, opts ...grpc.CallOption) (*MsgUnstakeResponse, error) {
 	out := new(MsgUnstakeResponse)
 	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Msg/Unstake", in, out, opts...)
@@ -1666,9 +2274,27 @@ func (c *msgClient) Unstake(ctx context.Context, in *MsgUnstake, opts ...grpc.Ca
 	return out, nil
 }
 
+func (c *msgClient) LegacyUnstake(ctx context.Context, in *MsgLegacyUnstake, opts ...grpc.CallOption) (*MsgLegacyUnstakeResponse, error) {
+	out := new(MsgLegacyUnstakeResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Msg/LegacyUnstake", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *msgClient) Withdraw(ctx context.Context, in *MsgWithdraw, opts ...grpc.CallOption) (*MsgWithdrawResponse, error) {
 	out := new(MsgWithdrawResponse)
 	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Msg/Withdraw", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) LegacyWithdraw(ctx context.Context, in *MsgLegacyWithdraw, opts ...grpc.CallOption) (*MsgLegacyWithdrawResponse, error) {
+	out := new(MsgLegacyWithdrawResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Msg/LegacyWithdraw", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1693,9 +2319,27 @@ func (c *msgClient) Commit(ctx context.Context, in *MsgCommit, opts ...grpc.Call
 	return out, nil
 }
 
+func (c *msgClient) LegacyCommit(ctx context.Context, in *MsgLegacyCommit, opts ...grpc.CallOption) (*MsgLegacyCommitResponse, error) {
+	out := new(MsgLegacyCommitResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Msg/LegacyCommit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *msgClient) Reveal(ctx context.Context, in *MsgReveal, opts ...grpc.CallOption) (*MsgRevealResponse, error) {
 	out := new(MsgRevealResponse)
 	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Msg/Reveal", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) LegacyReveal(ctx context.Context, in *MsgLegacyReveal, opts ...grpc.CallOption) (*MsgLegacyRevealResponse, error) {
+	out := new(MsgLegacyRevealResponse)
+	err := c.cc.Invoke(ctx, "/sedachain.core.v1.Msg/LegacyReveal", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1728,16 +2372,29 @@ type MsgServer interface {
 	Unpause(context.Context, *MsgUnpause) (*MsgUnpauseResponse, error)
 	// Stake adds a stake to the executor identity.
 	Stake(context.Context, *MsgStake) (*MsgStakeResponse, error)
+	// LegacyStake adds a stake to the executor identity using the legacy message
+	// hash format.
+	LegacyStake(context.Context, *MsgLegacyStake) (*MsgLegacyStakeResponse, error)
 	// Unstake removes a stake from the executor identity.
 	Unstake(context.Context, *MsgUnstake) (*MsgUnstakeResponse, error)
+	// LegacyUnstake removes a stake from the executor identity using the legacy
+	// message hash format.
+	LegacyUnstake(context.Context, *MsgLegacyUnstake) (*MsgLegacyUnstakeResponse, error)
 	// Withdraw withdraws available rewards to the sender address.
 	Withdraw(context.Context, *MsgWithdraw) (*MsgWithdrawResponse, error)
+	// LegacyWithdraw withdraws available rewards to the sender address using the
+	// legacy message hash format.
+	LegacyWithdraw(context.Context, *MsgLegacyWithdraw) (*MsgLegacyWithdrawResponse, error)
 	// PostDataRequest posts a data request.
 	PostDataRequest(context.Context, *MsgPostDataRequest) (*MsgPostDataRequestResponse, error)
 	// Commit makes a commitment to reveal a data result.
 	Commit(context.Context, *MsgCommit) (*MsgCommitResponse, error)
+	// LegacyCommit makes a commitment using the legacy message hash format.
+	LegacyCommit(context.Context, *MsgLegacyCommit) (*MsgLegacyCommitResponse, error)
 	// Reveal reveals a data result.
 	Reveal(context.Context, *MsgReveal) (*MsgRevealResponse, error)
+	// LegacyReveal reveals a data result using the legacy message hash format.
+	LegacyReveal(context.Context, *MsgLegacyReveal) (*MsgLegacyRevealResponse, error)
 	// UpdateParams updates the module's parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 }
@@ -1767,11 +2424,20 @@ func (*UnimplementedMsgServer) Unpause(ctx context.Context, req *MsgUnpause) (*M
 func (*UnimplementedMsgServer) Stake(ctx context.Context, req *MsgStake) (*MsgStakeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Stake not implemented")
 }
+func (*UnimplementedMsgServer) LegacyStake(ctx context.Context, req *MsgLegacyStake) (*MsgLegacyStakeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LegacyStake not implemented")
+}
 func (*UnimplementedMsgServer) Unstake(ctx context.Context, req *MsgUnstake) (*MsgUnstakeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Unstake not implemented")
 }
+func (*UnimplementedMsgServer) LegacyUnstake(ctx context.Context, req *MsgLegacyUnstake) (*MsgLegacyUnstakeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LegacyUnstake not implemented")
+}
 func (*UnimplementedMsgServer) Withdraw(ctx context.Context, req *MsgWithdraw) (*MsgWithdrawResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Withdraw not implemented")
+}
+func (*UnimplementedMsgServer) LegacyWithdraw(ctx context.Context, req *MsgLegacyWithdraw) (*MsgLegacyWithdrawResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LegacyWithdraw not implemented")
 }
 func (*UnimplementedMsgServer) PostDataRequest(ctx context.Context, req *MsgPostDataRequest) (*MsgPostDataRequestResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostDataRequest not implemented")
@@ -1779,8 +2445,14 @@ func (*UnimplementedMsgServer) PostDataRequest(ctx context.Context, req *MsgPost
 func (*UnimplementedMsgServer) Commit(ctx context.Context, req *MsgCommit) (*MsgCommitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Commit not implemented")
 }
+func (*UnimplementedMsgServer) LegacyCommit(ctx context.Context, req *MsgLegacyCommit) (*MsgLegacyCommitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LegacyCommit not implemented")
+}
 func (*UnimplementedMsgServer) Reveal(ctx context.Context, req *MsgReveal) (*MsgRevealResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reveal not implemented")
+}
+func (*UnimplementedMsgServer) LegacyReveal(ctx context.Context, req *MsgLegacyReveal) (*MsgLegacyRevealResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LegacyReveal not implemented")
 }
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
@@ -1916,6 +2588,24 @@ func _Msg_Stake_Handler(srv interface{}, ctx context.Context, dec func(interface
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_LegacyStake_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgLegacyStake)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).LegacyStake(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.core.v1.Msg/LegacyStake",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).LegacyStake(ctx, req.(*MsgLegacyStake))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Msg_Unstake_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgUnstake)
 	if err := dec(in); err != nil {
@@ -1934,6 +2624,24 @@ func _Msg_Unstake_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_LegacyUnstake_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgLegacyUnstake)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).LegacyUnstake(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.core.v1.Msg/LegacyUnstake",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).LegacyUnstake(ctx, req.(*MsgLegacyUnstake))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Msg_Withdraw_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgWithdraw)
 	if err := dec(in); err != nil {
@@ -1948,6 +2656,24 @@ func _Msg_Withdraw_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).Withdraw(ctx, req.(*MsgWithdraw))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_LegacyWithdraw_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgLegacyWithdraw)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).LegacyWithdraw(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.core.v1.Msg/LegacyWithdraw",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).LegacyWithdraw(ctx, req.(*MsgLegacyWithdraw))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1988,6 +2714,24 @@ func _Msg_Commit_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_LegacyCommit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgLegacyCommit)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).LegacyCommit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.core.v1.Msg/LegacyCommit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).LegacyCommit(ctx, req.(*MsgLegacyCommit))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Msg_Reveal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgReveal)
 	if err := dec(in); err != nil {
@@ -2002,6 +2746,24 @@ func _Msg_Reveal_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).Reveal(ctx, req.(*MsgReveal))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_LegacyReveal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgLegacyReveal)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).LegacyReveal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sedachain.core.v1.Msg/LegacyReveal",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).LegacyReveal(ctx, req.(*MsgLegacyReveal))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2058,12 +2820,24 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_Stake_Handler,
 		},
 		{
+			MethodName: "LegacyStake",
+			Handler:    _Msg_LegacyStake_Handler,
+		},
+		{
 			MethodName: "Unstake",
 			Handler:    _Msg_Unstake_Handler,
 		},
 		{
+			MethodName: "LegacyUnstake",
+			Handler:    _Msg_LegacyUnstake_Handler,
+		},
+		{
 			MethodName: "Withdraw",
 			Handler:    _Msg_Withdraw_Handler,
+		},
+		{
+			MethodName: "LegacyWithdraw",
+			Handler:    _Msg_LegacyWithdraw_Handler,
 		},
 		{
 			MethodName: "PostDataRequest",
@@ -2074,8 +2848,16 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_Commit_Handler,
 		},
 		{
+			MethodName: "LegacyCommit",
+			Handler:    _Msg_LegacyCommit_Handler,
+		},
+		{
 			MethodName: "Reveal",
 			Handler:    _Msg_Reveal_Handler,
+		},
+		{
+			MethodName: "LegacyReveal",
+			Handler:    _Msg_LegacyReveal_Handler,
 		},
 		{
 			MethodName: "UpdateParams",
@@ -2509,6 +3291,90 @@ func (m *MsgStakeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgLegacyStake) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLegacyStake) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLegacyStake) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Stake.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x2a
+	if len(m.Proof) > 0 {
+		i -= len(m.Proof)
+		copy(dAtA[i:], m.Proof)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Proof)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Memo) > 0 {
+		i -= len(m.Memo)
+		copy(dAtA[i:], m.Memo)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Memo)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLegacyStakeResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLegacyStakeResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLegacyStakeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func (m *MsgUnstake) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -2569,6 +3435,73 @@ func (m *MsgUnstakeResponse) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *MsgUnstakeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLegacyUnstake) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLegacyUnstake) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLegacyUnstake) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Proof) > 0 {
+		i -= len(m.Proof)
+		copy(dAtA[i:], m.Proof)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Proof)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLegacyUnstakeResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLegacyUnstakeResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLegacyUnstakeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -2643,6 +3576,80 @@ func (m *MsgWithdrawResponse) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *MsgWithdrawResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLegacyWithdraw) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLegacyWithdraw) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLegacyWithdraw) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.WithdrawAddress) > 0 {
+		i -= len(m.WithdrawAddress)
+		copy(dAtA[i:], m.WithdrawAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.WithdrawAddress)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Proof) > 0 {
+		i -= len(m.Proof)
+		copy(dAtA[i:], m.Proof)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Proof)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLegacyWithdrawResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLegacyWithdrawResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLegacyWithdrawResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -2894,6 +3901,87 @@ func (m *MsgCommitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgLegacyCommit) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLegacyCommit) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLegacyCommit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Proof) > 0 {
+		i -= len(m.Proof)
+		copy(dAtA[i:], m.Proof)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Proof)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Commit) > 0 {
+		i -= len(m.Commit)
+		copy(dAtA[i:], m.Commit)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Commit)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.DrID) > 0 {
+		i -= len(m.DrID)
+		copy(dAtA[i:], m.DrID)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.DrID)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLegacyCommitResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLegacyCommitResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLegacyCommitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func (m *MsgReveal) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -2984,6 +4072,103 @@ func (m *MsgRevealResponse) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *MsgRevealResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLegacyReveal) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLegacyReveal) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLegacyReveal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Stdout) > 0 {
+		for iNdEx := len(m.Stdout) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Stdout[iNdEx])
+			copy(dAtA[i:], m.Stdout[iNdEx])
+			i = encodeVarintTx(dAtA, i, uint64(len(m.Stdout[iNdEx])))
+			i--
+			dAtA[i] = 0x32
+		}
+	}
+	if len(m.Stderr) > 0 {
+		for iNdEx := len(m.Stderr) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Stderr[iNdEx])
+			copy(dAtA[i:], m.Stderr[iNdEx])
+			i = encodeVarintTx(dAtA, i, uint64(len(m.Stderr[iNdEx])))
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
+	if len(m.Proof) > 0 {
+		i -= len(m.Proof)
+		copy(dAtA[i:], m.Proof)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Proof)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.PublicKey) > 0 {
+		i -= len(m.PublicKey)
+		copy(dAtA[i:], m.PublicKey)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PublicKey)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.RevealBody != nil {
+		{
+			size, err := m.RevealBody.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLegacyRevealResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLegacyRevealResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLegacyRevealResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -3245,6 +4430,42 @@ func (m *MsgStakeResponse) Size() (n int) {
 	return n
 }
 
+func (m *MsgLegacyStake) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Memo)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Proof)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Stake.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgLegacyStakeResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
 func (m *MsgUnstake) Size() (n int) {
 	if m == nil {
 		return 0
@@ -3267,6 +4488,36 @@ func (m *MsgUnstake) Size() (n int) {
 }
 
 func (m *MsgUnstakeResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgLegacyUnstake) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Proof)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgLegacyUnstakeResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3301,6 +4552,40 @@ func (m *MsgWithdraw) Size() (n int) {
 }
 
 func (m *MsgWithdrawResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgLegacyWithdraw) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Proof)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.WithdrawAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgLegacyWithdrawResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3425,6 +4710,44 @@ func (m *MsgCommitResponse) Size() (n int) {
 	return n
 }
 
+func (m *MsgLegacyCommit) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.DrID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Commit)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Proof)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgLegacyCommitResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
 func (m *MsgReveal) Size() (n int) {
 	if m == nil {
 		return 0
@@ -3463,6 +4786,52 @@ func (m *MsgReveal) Size() (n int) {
 }
 
 func (m *MsgRevealResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgLegacyReveal) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.RevealBody != nil {
+		l = m.RevealBody.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.PublicKey)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Proof)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Stderr) > 0 {
+		for _, s := range m.Stderr {
+			l = len(s)
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	if len(m.Stdout) > 0 {
+		for _, s := range m.Stdout {
+			l = len(s)
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *MsgLegacyRevealResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4650,6 +6019,267 @@ func (m *MsgStakeResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *MsgLegacyStake) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLegacyStake: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLegacyStake: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Memo", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Memo = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Proof", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Proof = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Stake", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Stake.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLegacyStakeResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLegacyStakeResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLegacyStakeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *MsgUnstake) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4823,6 +6453,202 @@ func (m *MsgUnstakeResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgUnstakeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLegacyUnstake) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLegacyUnstake: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLegacyUnstake: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Proof", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Proof = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLegacyUnstakeResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLegacyUnstakeResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLegacyUnstakeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -5051,6 +6877,234 @@ func (m *MsgWithdrawResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgWithdrawResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLegacyWithdraw) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLegacyWithdraw: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLegacyWithdraw: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Proof", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Proof = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WithdrawAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WithdrawAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLegacyWithdrawResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLegacyWithdrawResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLegacyWithdrawResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -5941,6 +7995,266 @@ func (m *MsgCommitResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *MsgLegacyCommit) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLegacyCommit: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLegacyCommit: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DrID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DrID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Commit", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Commit = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Proof", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Proof = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLegacyCommitResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLegacyCommitResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLegacyCommitResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *MsgReveal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -6214,6 +8528,302 @@ func (m *MsgRevealResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgRevealResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLegacyReveal) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLegacyReveal: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLegacyReveal: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RevealBody", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.RevealBody == nil {
+				m.RevealBody = &RevealBody{}
+			}
+			if err := m.RevealBody.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Proof", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Proof = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Stderr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Stderr = append(m.Stderr, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Stdout", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Stdout = append(m.Stdout, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLegacyRevealResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLegacyRevealResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLegacyRevealResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

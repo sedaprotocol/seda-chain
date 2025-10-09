@@ -1,10 +1,12 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"errors"
 	"strconv"
+	"strings"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
@@ -17,242 +19,14 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
-var _ types.MsgServer = msgServer{}
-
-type msgServer struct {
-	Keeper
-}
-
-func NewMsgServerImpl(keeper Keeper) types.MsgServer {
-	return &msgServer{Keeper: keeper}
-}
-
-func (m msgServer) AcceptOwnership(goCtx context.Context, msg *types.MsgAcceptOwnership) (*types.MsgAcceptOwnershipResponse, error) {
+func (m msgServer) LegacyStake(goCtx context.Context, msg *types.MsgLegacyStake) (*types.MsgLegacyStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	currentPendingOwner, err := m.GetPendingOwner(ctx)
+	coreContractAddr, err := m.wasmStorageKeeper.GetCoreContractAddr(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if msg.Sender != currentPendingOwner {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", currentPendingOwner, msg.Sender)
-	}
-
-	err = m.SetOwner(ctx, msg.Sender)
-	if err != nil {
-		return nil, err
-	}
-
-	err = m.SetPendingOwner(ctx, "")
-	if err != nil {
-		return nil, err
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeAcceptOwnership,
-			sdk.NewAttribute(types.AttributeNewOwner, msg.Sender),
-		),
-	)
-
-	return &types.MsgAcceptOwnershipResponse{}, nil
-}
-
-func (m msgServer) TransferOwnership(goCtx context.Context, msg *types.MsgTransferOwnership) (*types.MsgTransferOwnershipResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	currentOwner, err := m.GetOwner(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if msg.Sender != currentOwner {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", currentOwner, msg.Sender)
-	}
-
-	// validate new owner address
-	if _, err := sdk.AccAddressFromBech32(msg.NewOwner); err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid new owner address: %s", msg.NewOwner)
-	}
-
-	err = m.SetPendingOwner(ctx, msg.NewOwner)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeTransferOwnership,
-			sdk.NewAttribute(types.AttributePendingOwner, msg.NewOwner),
-		),
-	)
-
-	return &types.MsgTransferOwnershipResponse{}, nil
-}
-
-func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllowlist) (*types.MsgAddToAllowlistResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	owner, err := m.GetOwner(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if msg.Sender != owner {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", owner, msg.Sender)
-	}
-
-	// TODO: validate public key format
-	if msg.PublicKey == "" {
-		return nil, sdkerrors.ErrInvalidRequest.Wrapf("public key is empty")
-	}
-
-	exists, err := m.IsAllowlisted(ctx, msg.PublicKey)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, types.ErrAlreadyAllowlisted
-	}
-
-	err = m.Keeper.AddToAllowlist(ctx, msg.PublicKey)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeAddToAllowlist,
-			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.PublicKey),
-		),
-	)
-
-	return &types.MsgAddToAllowlistResponse{}, nil
-}
-
-func (m msgServer) RemoveFromAllowlist(goCtx context.Context, msg *types.MsgRemoveFromAllowlist) (*types.MsgRemoveFromAllowlistResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	owner, err := m.GetOwner(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if msg.Sender != owner {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", owner, msg.Sender)
-	}
-
-	if msg.PublicKey == "" {
-		return nil, sdkerrors.ErrInvalidRequest.Wrapf("public key is empty")
-	}
-
-	exists, err := m.IsAllowlisted(ctx, msg.PublicKey)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, types.ErrNotAllowlisted
-	}
-
-	err = m.Keeper.RemoveFromAllowlist(ctx, msg.PublicKey)
-	if err != nil {
-		return nil, err
-	}
-
-	if staker, err := m.GetStaker(ctx, msg.PublicKey); err == nil {
-		if staker.Staked.GT(math.ZeroInt()) {
-			staker.PendingWithdrawal = staker.PendingWithdrawal.Add(staker.Staked)
-			staker.Staked = math.ZeroInt()
-			err = m.SetStaker(ctx, staker)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeRemoveFromAllowlist,
-			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.PublicKey),
-		),
-	)
-
-	return &types.MsgRemoveFromAllowlistResponse{}, nil
-}
-
-func (m msgServer) Pause(goCtx context.Context, msg *types.MsgPause) (*types.MsgPauseResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	owner, err := m.GetOwner(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if msg.Sender != owner {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", owner, msg.Sender)
-	}
-
-	current, err := m.IsPaused(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if current {
-		return nil, types.ErrModuleAlreadyPaused
-	}
-
-	err = m.Keeper.Pause(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypePause,
-			sdk.NewAttribute(types.AttributePaused, "true"),
-		),
-	)
-
-	return &types.MsgPauseResponse{}, nil
-}
-
-func (m msgServer) Unpause(goCtx context.Context, msg *types.MsgUnpause) (*types.MsgUnpauseResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	owner, err := m.GetOwner(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if msg.Sender != owner {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", owner, msg.Sender)
-	}
-
-	current, err := m.IsPaused(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if !current {
-		return nil, types.ErrModuleAlreadyUnpaused
-	}
-
-	err = m.Keeper.Unpause(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeUnpause,
-			sdk.NewAttribute(types.AttributePaused, "false"),
-		),
-	)
-
-	return &types.MsgUnpauseResponse{}, nil
-}
-
-func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.MsgStakeResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// check if paused
 	paused, err := m.IsPaused(ctx)
 	if err != nil {
 		return nil, err
@@ -274,7 +48,7 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 		isExistingStaker = true
 	}
 
-	hash, err := msg.MsgHash(ctx.ChainID(), sequenceNum)
+	hash, err := msg.MsgHash(coreContractAddr.String(), ctx.ChainID(), sequenceNum)
 	if err != nil {
 		return nil, err
 	}
@@ -358,13 +132,17 @@ func (m msgServer) Stake(goCtx context.Context, msg *types.MsgStake) (*types.Msg
 			sdk.NewAttribute(types.AttributeSequenceNumber, strconv.FormatUint(sequenceNum, 10)),
 		),
 	)
-	return &types.MsgStakeResponse{}, nil
+	return &types.MsgLegacyStakeResponse{}, nil
 }
 
-func (m msgServer) Unstake(goCtx context.Context, msg *types.MsgUnstake) (*types.MsgUnstakeResponse, error) {
+func (m msgServer) LegacyUnstake(goCtx context.Context, msg *types.MsgLegacyUnstake) (*types.MsgLegacyUnstakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// check if paused
+	coreContractAddr, err := m.wasmStorageKeeper.GetCoreContractAddr(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	paused, err := m.IsPaused(ctx)
 	if err != nil {
 		return nil, err
@@ -390,7 +168,7 @@ func (m msgServer) Unstake(goCtx context.Context, msg *types.MsgUnstake) (*types
 	if err != nil {
 		return nil, err
 	}
-	hash, err := msg.MsgHash(ctx.ChainID(), staker.SequenceNum)
+	hash, err := msg.MsgHash(coreContractAddr.String(), ctx.ChainID(), staker.SequenceNum)
 	if err != nil {
 		return nil, err
 	}
@@ -403,7 +181,7 @@ func (m msgServer) Unstake(goCtx context.Context, msg *types.MsgUnstake) (*types
 		return nil, types.ErrInvalidStakerProof.Wrap(err.Error())
 	}
 
-	// Update staker info
+	// Update staker info.
 	sequenceNum := staker.SequenceNum
 	unstakeAmount := staker.Staked
 	staker.PendingWithdrawal = staker.PendingWithdrawal.Add(unstakeAmount)
@@ -426,13 +204,17 @@ func (m msgServer) Unstake(goCtx context.Context, msg *types.MsgUnstake) (*types
 		),
 	)
 
-	return &types.MsgUnstakeResponse{}, nil
+	return &types.MsgLegacyUnstakeResponse{}, nil
 }
 
-func (m msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*types.MsgWithdrawResponse, error) {
+func (m msgServer) LegacyWithdraw(goCtx context.Context, msg *types.MsgLegacyWithdraw) (*types.MsgLegacyWithdrawResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// check if paused
+	coreContractAddr, err := m.wasmStorageKeeper.GetCoreContractAddr(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	paused, err := m.IsPaused(ctx)
 	if err != nil {
 		return nil, err
@@ -464,7 +246,7 @@ func (m msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 	if err != nil {
 		return nil, err
 	}
-	hash, err := msg.MsgHash(ctx.ChainID(), staker.SequenceNum)
+	hash, err := msg.MsgHash(coreContractAddr.String(), ctx.ChainID(), staker.SequenceNum)
 	if err != nil {
 		return nil, err
 	}
@@ -516,53 +298,251 @@ func (m msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 		),
 	)
 
-	return &types.MsgWithdrawResponse{}, nil
+	return &types.MsgLegacyWithdrawResponse{}, nil
 }
 
-func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+func (m msgServer) LegacyCommit(goCtx context.Context, msg *types.MsgLegacyCommit) (*types.MsgLegacyCommitResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, err := sdk.AccAddressFromBech32(msg.Owner); err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid owner address: %s", msg.Owner)
-	}
-	owner, err := m.GetOwner(ctx)
+	coreContractAddr, err := m.wasmStorageKeeper.GetCoreContractAddr(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if owner != msg.Owner {
-		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", owner, msg.Owner)
-	}
 
-	if msg.Params.DataRequestConfig == nil {
-		currentDataRequestConfig, err := m.GetDataRequestConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-		msg.Params.DataRequestConfig = &currentDataRequestConfig
-	}
-
-	if msg.Params.StakingConfig == nil {
-		currentStakingConfig, err := m.GetStakingConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-		msg.Params.StakingConfig = &currentStakingConfig
-	}
-
-	if msg.Params.TallyConfig == nil {
-		currentTallyConfig, err := m.GetTallyConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-		msg.Params.TallyConfig = &currentTallyConfig
-	}
-
-	if err := msg.Params.Validate(); err != nil {
+	paused, err := m.IsPaused(ctx)
+	if err != nil {
 		return nil, err
 	}
-	if err := m.SetParams(ctx, msg.Params); err != nil {
+	if paused {
+		return nil, types.ErrModulePaused
+	}
+
+	params, err := m.GetParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+	dr, err := m.GetDataRequest(ctx, msg.DrID)
+	if err != nil {
 		return nil, err
 	}
 
-	return &types.MsgUpdateParamsResponse{}, nil
+	// Verify the data request status.
+	if dr.Status != types.DATA_REQUEST_STATUS_COMMITTING {
+		return nil, types.ErrNotCommitting
+	}
+	exists, err := m.HasCommitted(ctx, msg.DrID, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	} else if exists {
+		return nil, types.ErrAlreadyCommitted
+	}
+	if dr.TimeoutHeight <= ctx.BlockHeight() {
+		return nil, types.ErrCommitTimeout
+	}
+
+	// Verify the staker.
+	staker, err := m.GetStaker(ctx, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	if params.StakingConfig.AllowlistEnabled {
+		allowlisted, err := m.IsAllowlisted(ctx, msg.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		if !allowlisted {
+			return nil, types.ErrNotAllowlisted
+		}
+	}
+	if staker.Staked.LT(params.StakingConfig.MinimumStake) {
+		return nil, types.ErrInsufficientStake.Wrapf("%s < %s", staker.Staked, params.StakingConfig.MinimumStake)
+	}
+
+	// Verify the proof.
+	hash, err := msg.MsgHash(coreContractAddr.String(), ctx.ChainID(), dr.PostedHeight)
+	if err != nil {
+		return nil, err
+	}
+	publicKey, err := hex.DecodeString(msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	proof, err := hex.DecodeString(msg.Proof)
+	if err != nil {
+		return nil, err
+	}
+	_, err = vrf.NewK256VRF().Verify(publicKey, proof, hash)
+	if err != nil {
+		return nil, types.ErrInvalidCommitProof.Wrapf("%s", err.Error())
+	}
+
+	// Store the commit and start reveal phase if the data request is ready.
+	commit, err := hex.DecodeString(msg.Commit)
+	if err != nil {
+		return nil, err
+	}
+	commitCount, err := m.AddCommit(ctx, msg.DrID, msg.PublicKey, commit)
+	if err != nil {
+		return nil, err
+	}
+
+	var statusUpdate *types.DataRequestStatus
+	if commitCount >= dr.ReplicationFactor {
+		newStatus := types.DATA_REQUEST_STATUS_REVEALING
+		statusUpdate = &newStatus
+
+		newTimeoutHeight := ctx.BlockHeight() + int64(params.DataRequestConfig.RevealTimeoutInBlocks)
+		err = m.UpdateDataRequestTimeout(ctx, msg.DrID, dr.TimeoutHeight, newTimeoutHeight)
+		if err != nil {
+			return nil, err
+		}
+		dr.TimeoutHeight = newTimeoutHeight
+	}
+
+	err = m.UpdateDataRequest(ctx, &dr, statusUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.RefundTxFees(ctx, msg.DrID, msg.PublicKey, false)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeCommit,
+			sdk.NewAttribute(types.AttributeDataRequestID, msg.DrID),
+			sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatInt(dr.PostedHeight, 10)),
+			sdk.NewAttribute(types.AttributeCommitment, msg.Commit),
+			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.PublicKey),
+		),
+	)
+
+	return &types.MsgLegacyCommitResponse{}, nil
+}
+
+func (m msgServer) LegacyReveal(goCtx context.Context, msg *types.MsgLegacyReveal) (*types.MsgLegacyRevealResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	coreContractAddr, err := m.wasmStorageKeeper.GetCoreContractAddr(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	paused, err := m.IsPaused(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if paused {
+		return nil, types.ErrModulePaused
+	}
+
+	// Check the status of the data request.
+	dr, err := m.GetDataRequest(ctx, msg.RevealBody.DrID)
+	if err != nil {
+		return nil, err
+	}
+	if dr.Status != types.DATA_REQUEST_STATUS_REVEALING {
+		return nil, types.ErrRevealNotStarted
+	}
+	if dr.TimeoutHeight <= ctx.BlockHeight() {
+		return nil, types.ErrDataRequestExpired.Wrapf("reveal phase expired at height %d", dr.TimeoutHeight)
+	}
+	exists, err := m.HasRevealed(ctx, dr.ID, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, types.ErrAlreadyRevealed
+	}
+
+	commit, err := m.GetCommit(ctx, dr.ID, msg.PublicKey)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil, types.ErrNotCommitted
+		}
+		return nil, err
+	}
+
+	drConfig, err := m.GetDataRequestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = msg.Validate(drConfig, dr.ReplicationFactor)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify against the stored commit.
+	expectedCommit, err := msg.RevealHash()
+	if err != nil {
+		return nil, err
+	}
+	if !bytes.Equal(commit, expectedCommit) {
+		return nil, types.ErrRevealMismatch
+	}
+
+	// Verify the reveal proof.
+	publicKey, err := hex.DecodeString(msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	proof, err := hex.DecodeString(msg.Proof)
+	if err != nil {
+		return nil, err
+	}
+	revealHash, err := msg.MsgHash(coreContractAddr.String(), ctx.ChainID())
+	if err != nil {
+		return nil, err
+	}
+	_, err = vrf.NewK256VRF().Verify(publicKey, proof, revealHash)
+	if err != nil {
+		return nil, types.ErrInvalidRevealProof.Wrapf("%s", err.Error())
+	}
+
+	revealCount, err := m.MarkAsRevealed(ctx, dr.ID, msg.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var statusUpdate *types.DataRequestStatus
+	if revealCount >= dr.ReplicationFactor {
+		newStatus := types.DATA_REQUEST_STATUS_TALLYING
+		statusUpdate = &newStatus
+
+		err = m.RemoveFromTimeoutQueue(ctx, dr.ID, dr.TimeoutHeight)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = m.UpdateDataRequest(ctx, &dr, statusUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.SetRevealBody(ctx, msg.PublicKey, *msg.RevealBody)
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.RefundTxFees(ctx, dr.ID, msg.PublicKey, true)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeReveal,
+			sdk.NewAttribute(types.AttributeDataRequestID, dr.ID),
+			sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatInt(dr.PostedHeight, 10)),
+			sdk.NewAttribute(types.AttributeRevealBody, msg.RevealBody.String()),
+			sdk.NewAttribute(types.AttributeRevealStdout, strings.Join(msg.Stdout, ",")),
+			sdk.NewAttribute(types.AttributeRevealStderr, strings.Join(msg.Stderr, ",")),
+			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.PublicKey),
+		),
+	)
+
+	return &types.MsgLegacyRevealResponse{}, nil
 }

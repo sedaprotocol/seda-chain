@@ -66,6 +66,12 @@ func (m msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 		_, stake := msg.Funds.Find(bondDenom)
 		sdkMsg, err = coreContractMsg.Stake.EncodeToSdkMsg(msg.Sender, stake)
 
+	case coreContractMsg.Unstake != nil:
+		sdkMsg, err = coreContractMsg.Unstake.EncodeToSdkMsg(msg.Sender)
+
+	case coreContractMsg.Withdraw != nil:
+		sdkMsg, err = coreContractMsg.Withdraw.EncodeToSdkMsg(msg.Sender)
+
 	case coreContractMsg.PostDataRequest != nil:
 		_, funds := msg.Funds.Find(bondDenom)
 		sdkMsg, err = coreContractMsg.PostDataRequest.EncodeToSdkMsg(msg.Sender, funds)
