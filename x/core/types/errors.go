@@ -8,7 +8,7 @@ var (
 	ErrAlreadyAllowlisted            = errors.Register("core", 2, "public key already exists in allowlist")
 	ErrNotAllowlisted                = errors.Register("core", 3, "public key is not in allowlist")
 	ErrInsufficientStake             = errors.Register("core", 4, "stake amount is insufficient")
-	ErrInvalidStakeProof             = errors.Register("core", 5, "invalid stake proof")
+	ErrInvalidStakerProof            = errors.Register("core", 5, "invalid staker proof")
 	ErrZeroReplicationFactor         = errors.Register("core", 6, "replication factor cannot be zero")
 	ErrGasPriceTooLow                = errors.Register("core", 7, "gas price is too low")
 	ErrGasPriceTooHigh               = errors.Register("core", 8, "gas price must fit within 128 bits (unsigned)")

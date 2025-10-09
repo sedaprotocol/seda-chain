@@ -38,11 +38,23 @@ service Msg {
   // Stake adds a stake to the executor identity.
   rpc Stake(MsgStake) returns (MsgStakeResponse);
 
+  // LegacyStake adds a stake to the executor identity using the legacy message
+  // hash format.
+  rpc LegacyStake(MsgLegacyStake) returns (MsgLegacyStakeResponse);
+
   // Unstake removes a stake from the executor identity.
   rpc Unstake(MsgUnstake) returns (MsgUnstakeResponse);
 
+  // LegacyUnstake removes a stake from the executor identity using the legacy
+  // message hash format.
+  rpc LegacyUnstake(MsgLegacyUnstake) returns (MsgLegacyUnstakeResponse);
+
   // Withdraw withdraws available rewards to the sender address.
   rpc Withdraw(MsgWithdraw) returns (MsgWithdrawResponse);
+
+  // LegacyWithdraw withdraws available rewards to the sender address using the
+  // legacy message hash format.
+  rpc LegacyWithdraw(MsgLegacyWithdraw) returns (MsgLegacyWithdrawResponse);
 
   // PostDataRequest posts a data request.
   rpc PostDataRequest(MsgPostDataRequest) returns (MsgPostDataRequestResponse);
@@ -50,8 +62,14 @@ service Msg {
   // Commit makes a commitment to reveal a data result.
   rpc Commit(MsgCommit) returns (MsgCommitResponse);
 
+  // LegacyCommit makes a commitment using the legacy message hash format.
+  rpc LegacyCommit(MsgLegacyCommit) returns (MsgLegacyCommitResponse);
+
   // Reveal reveals a data result.
   rpc Reveal(MsgReveal) returns (MsgRevealResponse);
+
+  // LegacyReveal reveals a data result using the legacy message hash format.
+  rpc LegacyReveal(MsgLegacyReveal) returns (MsgLegacyRevealResponse);
 
   // UpdateParams updates the module's parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
@@ -139,6 +157,26 @@ message MsgStake {
 // The response message for the Stake method.
 message MsgStakeResponse {}
 
+// The request message for the LegacyStake method.
+message MsgLegacyStake {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  // Address of the tx sender.
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Hex-encoded identity of the executor.
+  string public_key = 2;
+  // Base64-encoded string.
+  string memo = 3;
+  // Hex-encoded proof of the executor identity.
+  string proof = 4;
+  // Amount of SEDA tokens to be staked from the sender account.
+  cosmos.base.v1beta1.Coin stake = 5
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// The response message for the LegacyStake method.
+message MsgLegacyStakeResponse {}
+
 // The request message for the Unstake method.
 message MsgUnstake {
   option (cosmos.msg.v1.signer) = "sender";
@@ -153,6 +191,21 @@ message MsgUnstake {
 
 // The response message for the Unstake method.
 message MsgUnstakeResponse {}
+
+// The request message for the LegacyUnstake method.
+message MsgLegacyUnstake {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  // Address of the tx sender.
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Hex-encoded identity of the executor.
+  string public_key = 2;
+  // Hex-encoded proof of the executor identity.
+  string proof = 3;
+}
+
+// The response message for the LegacyUnstake method.
+message MsgLegacyUnstakeResponse {}
 
 // The request message for the Withdraw method.
 message MsgWithdraw {
@@ -171,6 +224,24 @@ message MsgWithdraw {
 
 // The response message for the Withdraw method.
 message MsgWithdrawResponse {}
+
+// The request message for the LegacyWithdraw method.
+message MsgLegacyWithdraw {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  // Address of the tx sender.
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Hex-encoded identity of the executor.
+  string public_key = 2;
+  // Hex-encoded proof of the executor identity.
+  string proof = 3;
+  // Address to which the withdrawn rewards will be sent.
+  string withdraw_address = 4
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// The response message for the LegacyWithdraw method.
+message MsgLegacyWithdrawResponse {}
 
 // The request message for the PostDataRequest method.
 message MsgPostDataRequest {
@@ -236,6 +307,20 @@ message MsgCommit {
 // The response message for the Commit method.
 message MsgCommitResponse {}
 
+// The request message for the LegacyCommit method.
+message MsgLegacyCommit {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string dr_i_d = 2 [ (gogoproto.jsontag) = "dr_id" ];
+  string commit = 3;
+  string public_key = 4;
+  string proof = 5;
+}
+
+// The response message for the LegacyCommit method.
+message MsgLegacyCommitResponse {}
+
 // The request message for the Reveal method.
 message MsgReveal {
   option (cosmos.msg.v1.signer) = "sender";
@@ -250,6 +335,21 @@ message MsgReveal {
 
 // The response message for the Reveal method.
 message MsgRevealResponse {}
+
+// The request message for the LegacyReveal method.
+message MsgLegacyReveal {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  RevealBody reveal_body = 2;
+  string public_key = 3;
+  string proof = 4;
+  repeated string stderr = 5;
+  repeated string stdout = 6;
+}
+
+// The response message for the LegacyReveal method.
+message MsgLegacyRevealResponse {}
 
 // The request message for the UpdateParams method.
 message MsgUpdateParams {

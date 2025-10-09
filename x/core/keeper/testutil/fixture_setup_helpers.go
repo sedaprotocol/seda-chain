@@ -141,14 +141,17 @@ func (f *Fixture) CheckDataRequestsByStatus(tb testing.TB, status types.DataRequ
 func (f *Fixture) generateStakeProof(tb testing.TB, signKey []byte, base64Memo string, seqNum uint64) string {
 	tb.Helper()
 
-	msg := types.MsgStake{
-		Memo: base64Memo,
-	}
 	var hash []byte
 	var err error
 	if f.noShim {
-		hash, err = msg.LegacyMsgHash(f.CoreContractAddr.String(), f.ChainID, seqNum)
+		msg := types.MsgLegacyStake{
+			Memo: base64Memo,
+		}
+		hash, err = msg.MsgHash(f.CoreContractAddr.String(), f.ChainID, seqNum)
 	} else {
+		msg := types.MsgStake{
+			Memo: base64Memo,
+		}
 		hash, err = msg.MsgHash(f.ChainID, seqNum)
 	}
 	require.NoError(tb, err)

@@ -223,7 +223,7 @@ func (s *KeeperTestSuite) TestMsgServer_Stake() {
 				Proof:     "032c74385c590d76e1a6e15364f515f0ae38ba61077c276dcf6aea4a810a36e4988a32cccfd9b08c8ab74f3e4e6dbb6f8e600364432bb166361018f45b817b350b30ae352b7131ab267dffcd643057c484", // Invalid proof
 				Stake:     validStake,
 			},
-			wantErr: types.ErrInvalidStakeProof,
+			wantErr: types.ErrInvalidStakerProof,
 		},
 		{
 			name: "Invalid stake denom",
