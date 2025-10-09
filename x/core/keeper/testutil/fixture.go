@@ -60,6 +60,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/core"
 	"github.com/sedaprotocol/seda-chain/x/core/keeper"
 	"github.com/sedaprotocol/seda-chain/x/core/types"
+	dataproxy "github.com/sedaprotocol/seda-chain/x/data-proxy"
 	dataproxykeeper "github.com/sedaprotocol/seda-chain/x/data-proxy/keeper"
 	dataproxytypes "github.com/sedaprotocol/seda-chain/x/data-proxy/types"
 	pubkeykeeper "github.com/sedaprotocol/seda-chain/x/pubkey/keeper"
@@ -80,30 +81,32 @@ const (
 type Fixture struct {
 	tb testing.TB
 	*testutil.IntegationApp
-	Codec             codec.Codec
-	TxConfig          client.TxConfig
-	ChainID           string
-	CoreContractAddr  sdk.AccAddress
-	Stakers           []Staker
-	AccountKeeper     authkeeper.AccountKeeper
-	BankKeeper        bankkeeper.Keeper
-	StakingKeeper     stakingkeeper.Keeper
-	ContractKeeper    sdkwasmkeeper.PermissionedKeeper
-	WasmKeeper        sdkwasmkeeper.Keeper
-	WasmStorageKeeper wasmstoragekeeper.Keeper
-	CoreKeeper        keeper.Keeper
-	CoreMsgServer     types.MsgServer
-	CoreQuerier       types.QueryServer
-	BatchingKeeper    batchingkeeper.Keeper
-	DataProxyKeeper   *dataproxykeeper.Keeper
-	WasmViewKeeper    wasmtypes.ViewKeeper
-	LogBuf            *bytes.Buffer
-	Router            *baseapp.MsgServiceRouter
-	Creator           TestAccount
-	Deployer          TestAccount
-	TestAccounts      map[string]TestAccount
-	ProxyAccounts     map[string]ProxyAccount
-	noShim            bool
+	Codec              codec.Codec
+	TxConfig           client.TxConfig
+	ChainID            string
+	CoreContractAddr   sdk.AccAddress
+	Stakers            []Staker
+	AccountKeeper      authkeeper.AccountKeeper
+	BankKeeper         bankkeeper.Keeper
+	StakingKeeper      stakingkeeper.Keeper
+	ContractKeeper     sdkwasmkeeper.PermissionedKeeper
+	WasmKeeper         sdkwasmkeeper.Keeper
+	WasmStorageKeeper  wasmstoragekeeper.Keeper
+	CoreKeeper         keeper.Keeper
+	CoreMsgServer      types.MsgServer
+	CoreQuerier        types.QueryServer
+	BatchingKeeper     batchingkeeper.Keeper
+	DataProxyKeeper    *dataproxykeeper.Keeper
+	DataProxyQuerier   dataproxytypes.QueryServer
+	DataProxyMsgServer dataproxytypes.MsgServer
+	WasmViewKeeper     wasmtypes.ViewKeeper
+	LogBuf             *bytes.Buffer
+	Router             *baseapp.MsgServiceRouter
+	Creator            TestAccount
+	Deployer           TestAccount
+	TestAccounts       map[string]TestAccount
+	ProxyAccounts      map[string]ProxyAccount
+	noShim             bool
 }
 
 // InitFixure sets up a new integration testing fixture.
@@ -164,6 +167,7 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 
 	maccPerms := map[string][]string{
 		authtypes.FeeCollectorName:        nil,
+		dataproxytypes.ModuleName:         {authtypes.Burner},
 		minttypes.ModuleName:              {authtypes.Minter},
 		sdkstakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		sdkstakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
@@ -268,6 +272,10 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		bankKeeper,
 		authtypes.NewModuleAddress("gov").String(),
 	)
+	dataProxyKeeper.InitGenesis(ctx, *dataproxytypes.DefaultGenesisState())
+	require.NoError(tb, err)
+	dataProxyQuerier := dataproxykeeper.Querier{Keeper: *dataProxyKeeper}
+	dataProxyMsgServer := dataproxykeeper.NewMsgServerImpl(*dataProxyKeeper)
 
 	batchingKeeper := batchingkeeper.NewKeeper(
 		cdc,
@@ -305,6 +313,7 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, app.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
+	dataproxyModule := dataproxy.NewAppModule(cdc, *dataProxyKeeper)
 	stakingModule := staking.NewAppModule(cdc, stakingKeeper, accountKeeper, bankKeeper, pubKeyKeeper)
 	wasmStorageModule := wasmstorage.NewAppModule(cdc, *wasmStorageKeeper)
 	wasmModule := wasm.NewAppModule(cdc, wasmKeeper, stakingKeeper, accountKeeper, bankKeeper, router, nil)
@@ -315,6 +324,7 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		map[string]appmodule.AppModule{
 			authtypes.ModuleName:        authModule,
 			banktypes.ModuleName:        bankModule,
+			dataproxytypes.ModuleName:   dataproxyModule,
 			sdkstakingtypes.ModuleName:  stakingModule,
 			wasmstoragetypes.ModuleName: wasmStorageModule,
 			wasmtypes.ModuleName:        wasmModule,
@@ -390,30 +400,32 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 	require.NoError(tb, err)
 
 	f := Fixture{
-		tb:                tb,
-		IntegationApp:     integrationApp,
-		ChainID:           chainID,
-		Codec:             cdc,
-		TxConfig:          encCfg.TxConfig,
-		CoreContractAddr:  coreContractAddr,
-		AccountKeeper:     accountKeeper,
-		BankKeeper:        bankKeeper,
-		StakingKeeper:     *stakingKeeper,
-		ContractKeeper:    *contractKeeper,
-		WasmKeeper:        *wasmKeeper.Keeper,
-		WasmStorageKeeper: *wasmStorageKeeper,
-		CoreKeeper:        coreKeeper,
-		CoreMsgServer:     coreMsgServer,
-		CoreQuerier:       coreQuerier,
-		BatchingKeeper:    batchingKeeper,
-		DataProxyKeeper:   dataProxyKeeper,
-		WasmViewKeeper:    wasmKeeper,
-		LogBuf:            buf,
-		Router:            router,
-		TestAccounts:      make(map[string]TestAccount),
-		ProxyAccounts:     make(map[string]ProxyAccount),
-		Creator:           creator,
-		noShim:            noShim,
+		tb:                 tb,
+		IntegationApp:      integrationApp,
+		ChainID:            chainID,
+		Codec:              cdc,
+		TxConfig:           encCfg.TxConfig,
+		CoreContractAddr:   coreContractAddr,
+		AccountKeeper:      accountKeeper,
+		BankKeeper:         bankKeeper,
+		StakingKeeper:      *stakingKeeper,
+		ContractKeeper:     *contractKeeper,
+		WasmKeeper:         *wasmKeeper.Keeper,
+		WasmStorageKeeper:  *wasmStorageKeeper,
+		CoreKeeper:         coreKeeper,
+		CoreMsgServer:      coreMsgServer,
+		CoreQuerier:        coreQuerier,
+		BatchingKeeper:     batchingKeeper,
+		DataProxyKeeper:    dataProxyKeeper,
+		DataProxyQuerier:   dataProxyQuerier,
+		DataProxyMsgServer: dataProxyMsgServer,
+		WasmViewKeeper:     wasmKeeper,
+		LogBuf:             buf,
+		Router:             router,
+		TestAccounts:       make(map[string]TestAccount),
+		ProxyAccounts:      make(map[string]ProxyAccount),
+		Creator:            creator,
+		noShim:             noShim,
 	}
 	f.Creator.fixture = &f
 	f.Deployer.fixture = &f
@@ -442,12 +454,17 @@ func (f *Fixture) CreateProxyAccount(name string) ProxyAccount {
 	sk := secp256k1.GenPrivKey()
 	pk := sk.PubKey().(secp256k1.PubKey)
 
+	addrPrivKey := ed25519.GenPrivKey()
+	addr := sdk.AccAddress(addrPrivKey.PubKey().Address())
+
 	acc := ProxyAccount{
 		name:       name,
 		privateKey: sk,
 		publicKey:  pk,
 		fixture:    f,
+		addr:       addr,
 	}
+	f.initAccountWithCoins(f.tb, acc.AccAddress(), sdk.NewCoins(sdk.NewCoin(BondDenom, f.SedaToAseda(100))))
 	f.ProxyAccounts[name] = acc
 
 	return acc
