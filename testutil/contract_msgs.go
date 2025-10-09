@@ -68,17 +68,17 @@ func StakeMsg(stakerPubKey, proof, memo string) []byte {
 	}`, stakerPubKey, proof, memo))
 }
 
-func PostDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int) []byte {
+func PostDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int, execGasLimit, tallyGasLimit uint64) []byte {
 	return []byte(fmt.Sprintf(`{
 		"post_data_request": {
 		  "posted_dr": {
 			"version": "0.0.1",
 			"exec_program_id": "%s",
 			"exec_inputs": "ZXhlY19pbnB1dHM=",
-			"exec_gas_limit": 100000000000000000,
+			"exec_gas_limit": %d,
 			"tally_program_id": "%s",
 			"tally_inputs": "dGFsbHlfaW5wdXRz",
-			"tally_gas_limit": 300000000000000,
+			"tally_gas_limit": %d,
 			"replication_factor": %d,
 			"consensus_filter": "AA==",
 			"gas_price": "2000",
@@ -87,5 +87,5 @@ func PostDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string, 
 		  "seda_payload": "",
 		  "payback_address": "AQID"
 		}
-	}`, hex.EncodeToString(execProgHash), hex.EncodeToString(tallyProgHash), replicationFactor, requestMemo))
+	}`, hex.EncodeToString(execProgHash), execGasLimit, hex.EncodeToString(tallyProgHash), tallyGasLimit, replicationFactor, requestMemo))
 }

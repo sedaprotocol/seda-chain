@@ -37,9 +37,10 @@ const (
 func (f *Fixture) uploadOraclePrograms(tb testing.TB) {
 	tb.Helper()
 
-	for _, op := range testwasms.TestWasms {
+	for i, op := range testwasms.TestWasms {
 		execProgram := wasmstoragetypes.NewOracleProgram(op, f.Context().BlockTime())
 		err := f.WasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
+		f.DeployedOPs[testwasms.TestWasmNames[i]] = hex.EncodeToString(execProgram.Hash)
 		require.NoError(tb, err)
 	}
 }
@@ -103,6 +104,13 @@ func (f *Fixture) AddStakers(tb testing.TB, num int) []Staker {
 
 	f.Stakers = append(f.Stakers, stakers...)
 	return stakers
+}
+
+func (f *Fixture) AddDataProxy(tb testing.TB, proxyPubKey, payoutAddr string, proxyFee sdk.Coin) {
+	tb.Helper()
+
+	err := f.SetDataProxyConfig(proxyPubKey, payoutAddr, proxyFee)
+	require.NoError(tb, err)
 }
 
 func (f *Fixture) DrainDataRequestPool(targetHeight uint64) []byte {

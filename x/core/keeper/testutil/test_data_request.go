@@ -95,13 +95,15 @@ func (dr *TestDR) SetCommitRevealGasLimits(commitGasLimit, revealGasLimit uint64
 }
 
 func (dr *TestDR) PostDataRequest(f *Fixture) {
-	amount, ok := math.NewIntFromString("200600000000000000000")
-	require.True(f.tb, ok)
+	execGasLimit := uint64(160e15)
+	tallyGasLimit := uint64(300e12)
+	// (exec gas limit + tally gas limit) * gas price
+	attachedFunds := math.NewIntFromUint64(execGasLimit).Add(math.NewIntFromUint64(tallyGasLimit)).Mul(math.NewInt(2000))
 
 	resJSON := f.executeCoreContract(
 		f.Creator.Address(),
-		testutil.PostDataRequestMsg(dr.ExecProgHash, dr.TallyProgHash, dr.Memo, dr.ReplicationFactor),
-		sdk.NewCoins(sdk.NewCoin(BondDenom, amount)),
+		testutil.PostDataRequestMsg(dr.ExecProgHash, dr.TallyProgHash, dr.Memo, dr.ReplicationFactor, execGasLimit, tallyGasLimit),
+		sdk.NewCoins(sdk.NewCoin(BondDenom, attachedFunds)),
 	)
 
 	type PostDataRequestResponse struct {
@@ -116,13 +118,15 @@ func (dr *TestDR) PostDataRequest(f *Fixture) {
 }
 
 func (dr *TestDR) PostDataRequestShouldErr(f *Fixture, errMsg string) {
-	amount, ok := math.NewIntFromString("200600000000000000000")
-	require.True(f.tb, ok)
+	execGasLimit := uint64(160e15)
+	tallyGasLimit := uint64(300e12)
+	// (exec gas limit + tally gas limit) * gas price
+	attachedFunds := math.NewIntFromUint64(execGasLimit).Add(math.NewIntFromUint64(tallyGasLimit)).Mul(math.NewInt(2000))
 
 	f.executeCoreContractShouldErr(
 		f.Creator.Address(),
-		testutil.PostDataRequestMsg(dr.ExecProgHash, dr.TallyProgHash, dr.Memo, dr.ReplicationFactor),
-		sdk.NewCoins(sdk.NewCoin(BondDenom, amount)),
+		testutil.PostDataRequestMsg(dr.ExecProgHash, dr.TallyProgHash, dr.Memo, dr.ReplicationFactor, execGasLimit, tallyGasLimit),
+		sdk.NewCoins(sdk.NewCoin(BondDenom, attachedFunds)),
 		errMsg,
 	)
 }
@@ -259,7 +263,7 @@ func (ta *TestAccount) CalculateDrIDAndArgs(nonce string, replicationFactor uint
 		TallyGasLimit:     types.MinTallyGasLimit,
 		Memo:              []byte(memo),
 		ReplicationFactor: replicationFactor,
-		ConsensusFilter:   []byte(base64.StdEncoding.EncodeToString([]byte{0})),
+		ConsensusFilter:   []byte{0},
 		GasPrice:          types.MinGasPrice,
 	}
 }

@@ -46,3 +46,25 @@ func (ta *TestAccount) Prove(hash []byte) string {
 	require.NoError(ta.fixture.tb, err)
 	return hex.EncodeToString(vrf)
 }
+
+// ExpectedPayoutUniformCase checks that the executor has received the correct amount
+// of payouts based on the given numbers, assuming a uniform reporting case.
+func (ta *TestAccount) CheckGasPayoutUniformCase(gasUsed uint64, gasPrice math.Int, reduced bool) (math.Int, math.Int) {
+	stakerInfo, err := ta.GetStaker()
+	require.NoError(ta.fixture.tb, err)
+
+	gasUsedInt := math.NewIntFromUint64(gasUsed)
+	payoutAmount := gasUsedInt.Mul(gasPrice)
+	burnAmount := math.ZeroInt()
+
+	if reduced {
+		tallyConfig, err := ta.fixture.CoreKeeper.GetTallyConfig(ta.fixture.Context())
+		require.NoError(ta.fixture.tb, err)
+
+		burnAmount = tallyConfig.BurnRatio.MulInt(gasUsedInt).TruncateInt()
+		payoutAmount = gasUsedInt.Sub(burnAmount).Mul(gasPrice)
+	}
+
+	require.Equal(ta.fixture.tb, payoutAmount.String(), stakerInfo.Staker.PendingWithdrawal.String())
+	return payoutAmount, burnAmount
+}

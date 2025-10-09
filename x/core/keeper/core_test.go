@@ -158,6 +158,79 @@ func TestEndBlock(t *testing.T) {
 	}
 }
 
+// TestPayouts focuses on checking before and after balances of relevant accounts
+// and objects (data request poster, executors, and data proxies).
+func TestPayouts(t *testing.T) {
+	f := testutil.InitFixture(t, false, nil)
+
+	// Set up 5 executors and 2 data proxies.
+	f.AddStakers(t, 5)
+
+	proxyPubKeys := []string{"03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec"}
+	proxyPayoutAddrs := []sdk.AccAddress{sdk.MustAccAddressFromBech32("seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f"), sdk.MustAccAddressFromBech32("seda149sewl80wccuzhhukxgn2jg4kcun02d8qclwkt")}
+	f.AddDataProxy(t, proxyPubKeys[0], proxyPayoutAddrs[0].String(), sdk.NewCoin(testutil.BondDenom, math.NewInt(4e18)))
+	f.AddDataProxy(t, proxyPubKeys[1], proxyPayoutAddrs[1].String(), sdk.NewCoin(testutil.BondDenom, math.NewInt(6e18)))
+
+	tests := []struct {
+		name               string
+		gasUsed            uint64
+		expExecutorRewards [5]math.Int
+		expProxyRewards    [2]math.Int
+	}{
+		{
+			name:               "replication factor of 1",
+			gasUsed:            150e15,
+			expExecutorRewards: [5]math.Int{math.NewInt(145e15).Mul(math.NewInt(2e3)), math.ZeroInt(), math.ZeroInt(), math.ZeroInt(), math.ZeroInt()},
+			expProxyRewards:    [2]math.Int{math.NewInt(4e18), math.NewInt(6e18)},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Check balances before
+			proxyBalancesBefore := make([]math.Int, len(proxyPayoutAddrs))
+			for i, addr := range proxyPayoutAddrs {
+				balance := f.BankKeeper.GetBalance(f.Context(), addr, testutil.BondDenom)
+				proxyBalancesBefore[i] = balance.Amount
+			}
+
+			executorBalancesBefore := make([]math.Int, len(f.Stakers))
+			for i, staker := range f.Stakers {
+				executor, err := f.CoreKeeper.GetStaker(f.Context(), staker.PubKey)
+				require.NoError(t, err)
+				executorBalancesBefore[i] = executor.PendingWithdrawal
+			}
+
+			// Execute data request flow and core end block
+			dr := testutil.NewTestDRWithRandomPrograms(
+				[]byte("reveal"), // reveal
+				base64.StdEncoding.EncodeToString([]byte("memo")), // memo
+				tt.gasUsed, // gas used
+				0,          // exit code
+				proxyPubKeys,
+				1, // replication factor
+				f.Context().BlockTime(),
+			)
+
+			dr.ExecuteDataRequestFlow(f, 1, 1, false)
+
+			err := f.CoreKeeper.EndBlock(f.Context())
+			require.NoError(t, err)
+
+			// Check balances after
+			for i, addr := range proxyPayoutAddrs {
+				balance := f.BankKeeper.GetBalance(f.Context(), addr, testutil.BondDenom)
+				require.Equal(t, proxyBalancesBefore[i].Add(tt.expProxyRewards[i]), balance.Amount)
+			}
+
+			for i, staker := range f.Stakers {
+				executor, err := f.CoreKeeper.GetStaker(f.Context(), staker.PubKey)
+				require.NoError(t, err)
+				require.Equal(t, executorBalancesBefore[i].Add(tt.expExecutorRewards[i]), executor.PendingWithdrawal)
+			}
+		})
+	}
+}
+
 func TestTxFeeRefund(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 	f.AddStakers(t, 5)
