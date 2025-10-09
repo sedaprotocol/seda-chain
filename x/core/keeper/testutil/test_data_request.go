@@ -292,26 +292,19 @@ func (ta *TestAccount) CreateRevealMsg(revealBody *types.RevealBody) *types.MsgR
 		Stderr:     []string{},
 		Stdout:     []string{},
 	}
-	hash, err := msg.MsgHash(ta.fixture.ChainID)
-	require.NoError(ta.fixture.tb, err)
-	msg.Proof = ta.Prove(hash)
+	msg.Proof = ta.Prove(msg.MsgHash("", ta.fixture.ChainID))
 	return msg
 }
 
 func (ta *TestAccount) CommitResult(revealMsg *types.MsgReveal) (*types.MsgCommitResponse, error) {
-	commitment, err := revealMsg.RevealHash()
-	require.NoError(ta.fixture.tb, err)
-
 	msg := &types.MsgCommit{
 		Sender:    ta.Address(),
 		DrID:      revealMsg.RevealBody.DrID,
-		Commit:    hex.EncodeToString(commitment),
+		Commit:    hex.EncodeToString(revealMsg.RevealHash()),
 		PublicKey: ta.PublicKeyHex(),
 	}
 	//nolint:gosec // G115: Block height is never negative.
-	hash, err := msg.MsgHash(ta.fixture.ChainID, int64(revealMsg.RevealBody.DrBlockHeight))
-	require.NoError(ta.fixture.tb, err)
-	msg.Proof = ta.Prove(hash)
+	msg.Proof = ta.Prove(msg.MsgHash("", ta.fixture.ChainID, int64(revealMsg.RevealBody.DrBlockHeight)))
 
 	ta.fixture.SetTx(100_000, ta.AccAddress(), msg)
 	res, err := ta.fixture.CoreMsgServer.Commit(ta.fixture.Context(), msg)

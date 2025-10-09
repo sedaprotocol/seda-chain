@@ -2,12 +2,9 @@ package types
 
 import (
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/hex"
 	"math/big"
-	"strings"
 
-	"golang.org/x/crypto/sha3"
 	"golang.org/x/mod/semver"
 
 	"cosmossdk.io/math"
@@ -97,130 +94,56 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 	return nil
 }
 
-// MsgHash returns the hex-encoded hash of the PostDataRequest message to be used
-// as the data request ID.
-func (m *MsgPostDataRequest) MsgHash() (string, error) {
-	execProgramIDBytes, err := hex.DecodeString(m.ExecProgramID)
+func (m MsgStake) Validate() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
-		return "", err
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", m.Sender)
 	}
-	tallyProgramIDBytes, err := hex.DecodeString(m.TallyProgramID)
+	_, err = base64.StdEncoding.DecodeString(m.Memo)
 	if err != nil {
-		return "", err
+		return err
 	}
-
-	execInputsHasher := sha3.NewLegacyKeccak256()
-	execInputsHasher.Write(m.ExecInputs)
-	execInputsHash := execInputsHasher.Sum(nil)
-
-	tallyInputsHasher := sha3.NewLegacyKeccak256()
-	tallyInputsHasher.Write(m.TallyInputs)
-	tallyInputsHash := tallyInputsHasher.Sum(nil)
-
-	consensusFilterHasher := sha3.NewLegacyKeccak256()
-	consensusFilterHasher.Write(m.ConsensusFilter)
-	consensusFilterHash := consensusFilterHasher.Sum(nil)
-
-	memoHasher := sha3.NewLegacyKeccak256()
-	memoHasher.Write(m.Memo)
-	memoHash := memoHasher.Sum(nil)
-
-	execGasLimitBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(execGasLimitBytes, m.ExecGasLimit)
-	tallyGasLimitBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(tallyGasLimitBytes, m.TallyGasLimit)
-	replicationFactorBytes := make([]byte, 2)
-	//nolint:gosec // G115: Replication factor is guaranteed to fit in uint16.
-	binary.BigEndian.PutUint16(replicationFactorBytes, uint16(m.ReplicationFactor))
-
-	dataRequestHasher := sha3.NewLegacyKeccak256()
-	dataRequestHasher.Write([]byte(m.Version))
-	dataRequestHasher.Write(execProgramIDBytes)
-	dataRequestHasher.Write(execInputsHash)
-	dataRequestHasher.Write(execGasLimitBytes)
-	dataRequestHasher.Write(tallyProgramIDBytes)
-	dataRequestHasher.Write(tallyInputsHash)
-	dataRequestHasher.Write(tallyGasLimitBytes)
-	dataRequestHasher.Write(replicationFactorBytes)
-	dataRequestHasher.Write(consensusFilterHash)
-	dataRequestHasher.Write(m.GasPrice.BigInt().Bytes())
-	dataRequestHasher.Write(memoHash)
-
-	return hex.EncodeToString(dataRequestHasher.Sum(nil)), nil
+	return nil
 }
 
-func (m MsgStake) MsgHash(chainID string, sequenceNum uint64) ([]byte, error) {
-	memoBytes, err := base64.StdEncoding.DecodeString(m.Memo)
+func (m MsgLegacyStake) Validate() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
-		return nil, err
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", m.Sender)
 	}
-	memoHasher := sha3.NewLegacyKeccak256()
-	memoHasher.Write(memoBytes)
-	memoHash := memoHasher.Sum(nil)
-
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
-	seqBytes := make([]byte, 16)
-	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
-
-	allBytes := append([]byte{}, []byte("stake")...)
-	allBytes = append(allBytes, memoHash...)
-	allBytes = append(allBytes, []byte(chainID)...)
-	allBytes = append(allBytes, seqBytes...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil), nil
-}
-
-func (m MsgUnstake) MsgHash(chainID string, sequenceNum uint64) ([]byte, error) {
-	allBytes := append([]byte{}, []byte("unstake")...)
-	allBytes = append(allBytes, []byte(chainID)...)
-
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
-	seqBytes := make([]byte, 16)
-	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
-	allBytes = append(allBytes, seqBytes...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil), nil
-}
-
-func (m MsgWithdraw) MsgHash(chainID string, sequenceNum uint64) ([]byte, error) {
-	allBytes := append([]byte{}, []byte("withdraw")...)
-	allBytes = append(allBytes, []byte(m.WithdrawAddress)...)
-	allBytes = append(allBytes, []byte(chainID)...)
-
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
-	seqBytes := make([]byte, 16)
-	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
-	allBytes = append(allBytes, seqBytes...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil), nil
-}
-
-func (m MsgCommit) MsgHash(chainID string, drHeight int64) ([]byte, error) {
-	drHeightBytes := make([]byte, 8)
-	//nolint:gosec // G115: Block height is never negative.
-	binary.BigEndian.PutUint64(drHeightBytes, uint64(drHeight))
-
-	allBytes := append([]byte{}, []byte("commit_data_result")...)
-	allBytes = append(allBytes, []byte(m.DrID)...)
-	allBytes = append(allBytes, drHeightBytes...)
-	allBytes = append(allBytes, m.Commit...)
-	allBytes = append(allBytes, []byte(chainID)...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil), nil
+	_, err = base64.StdEncoding.DecodeString(m.Memo)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m MsgReveal) Validate(config DataRequestConfig, replicationFactor uint32) error {
+	// Ensure that the exit code fits within 8 bits (unsigned).
+	if m.RevealBody.ExitCode > uint32(^uint8(0)) {
+		return ErrInvalidRevealExitCode
+	}
+
+	_, err := hex.DecodeString(m.RevealBody.DrID)
+	if err != nil {
+		return ErrInvalidDataRequestIDHex.Wrapf("%s", err.Error())
+	}
+
+	revealSizeLimit := config.DrRevealSizeLimitInBytes / replicationFactor
+	if len(m.RevealBody.Reveal) > int(revealSizeLimit) {
+		return ErrRevealTooBig.Wrapf("%d bytes > %d bytes", len(m.RevealBody.Reveal), revealSizeLimit)
+	}
+
+	for _, key := range m.RevealBody.ProxyPubKeys {
+		_, err := hex.DecodeString(key)
+		if err != nil {
+			return ErrInvalidProxyPublicKey.Wrapf("%s", err.Error())
+		}
+	}
+	return nil
+}
+
+func (m MsgLegacyReveal) Validate(config DataRequestConfig, replicationFactor uint32) error {
 	// Ensure that the exit code fits within 8 bits (unsigned).
 	if m.RevealBody.ExitCode > uint32(^uint8(0)) {
 		return ErrInvalidRevealExitCode
@@ -240,76 +163,6 @@ func (m MsgReveal) Validate(config DataRequestConfig, replicationFactor uint32) 
 	return nil
 }
 
-func (m MsgReveal) MsgHash(chainID string) ([]byte, error) {
-	revealBodyHash, err := m.RevealBody.RevealBodyHash()
-	if err != nil {
-		return nil, err
-	}
-
-	allBytes := append([]byte("reveal_data_result"), revealBodyHash...)
-	allBytes = append(allBytes, []byte(chainID)...)
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil), nil
-}
-
-// RevealHash computes a hash of reveal contents to be used as a commitment
-// by the executors.
-func (m MsgReveal) RevealHash() ([]byte, error) {
-	revealBodyHash, err := m.RevealBody.RevealBodyHash()
-	if err != nil {
-		return nil, err
-	}
-
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write([]byte("reveal_message"))
-	hasher.Write(revealBodyHash)
-	hasher.Write([]byte(m.PublicKey))
-	hasher.Write([]byte(m.Proof))
-	hasher.Write([]byte(strings.Join(m.Stderr, "")))
-	hasher.Write([]byte(strings.Join(m.Stdout, "")))
-
-	return hasher.Sum(nil), nil
-}
-
-func (rb RevealBody) RevealBodyHash() ([]byte, error) {
-	revealHasher := sha3.NewLegacyKeccak256()
-	revealHasher.Write(rb.Reveal)
-	revealHash := revealHasher.Sum(nil)
-
-	hasher := sha3.NewLegacyKeccak256()
-
-	idBytes, err := hex.DecodeString(rb.DrID)
-	if err != nil {
-		return nil, err
-	}
-	hasher.Write(idBytes)
-
-	reqHeightBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(reqHeightBytes, rb.DrBlockHeight)
-	hasher.Write(reqHeightBytes)
-
-	// TODO RevealBody validator should bind rb.ExitCode value?
-	hasher.Write([]byte{byte(rb.ExitCode)})
-
-	gasUsedBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(gasUsedBytes, rb.GasUsed)
-	hasher.Write(gasUsedBytes)
-
-	hasher.Write(revealHash)
-
-	proxyPubKeyHasher := sha3.NewLegacyKeccak256()
-	for _, key := range rb.ProxyPubKeys {
-		keyHasher := sha3.NewLegacyKeccak256()
-		keyHasher.Write([]byte(key))
-		proxyPubKeyHasher.Write(keyHasher.Sum(nil))
-	}
-	hasher.Write(proxyPubKeyHasher.Sum(nil))
-
-	return hasher.Sum(nil), nil
-}
-
 // Parts extracts the hex-encoded public key, drID, and proof from the query request.
 func (q QueryGetExecutorEligibilityRequest) Parts() (string, string, string, error) {
 	data, err := base64.StdEncoding.DecodeString(q.Data)
@@ -317,14 +170,4 @@ func (q QueryGetExecutorEligibilityRequest) Parts() (string, string, string, err
 		return "", "", "", err
 	}
 	return string(data[:66]), string(data[67:131]), string(data[132:]), nil
-}
-
-func (q QueryGetExecutorEligibilityRequest) MsgHash(chainID string) []byte {
-	_, drIDBytes, _, _ := q.Parts()
-	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
-	allBytes = append(allBytes, drIDBytes...)
-	allBytes = append(allBytes, []byte(chainID)...)
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(allBytes)
-	return hasher.Sum(nil)
 }

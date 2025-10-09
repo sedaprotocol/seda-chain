@@ -103,12 +103,13 @@ type Fixture struct {
 	Deployer          TestAccount
 	TestAccounts      map[string]TestAccount
 	ProxyAccounts     map[string]ProxyAccount
-	noShim            bool
 }
 
 // InitFixure sets up a new integration testing fixture.
+//
 // If noShim is true, the Core Contract registry will be set to an empty string,
-// thereby effectively deactivating the shim.
+// thereby effectively deactivating the shim. (Txs will be handled by Core Contract)
+//
 // If coreContractWasm is provided, it will be used instead of the default Core Contract WASM.
 func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 	tb.Helper()
@@ -413,7 +414,6 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		TestAccounts:      make(map[string]TestAccount),
 		ProxyAccounts:     make(map[string]ProxyAccount),
 		Creator:           creator,
-		noShim:            noShim,
 	}
 	f.Creator.fixture = &f
 	f.Deployer.fixture = &f
