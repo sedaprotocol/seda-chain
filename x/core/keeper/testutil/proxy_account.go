@@ -66,9 +66,12 @@ func (pa *ProxyAccount) Register(feeSeda int64, payoutAddress *string) {
 	payload = append(payload, chainIDBytes...)
 	hash := crypto.Keccak256(payload)
 
-	signature, err := pa.privateKey.Sign(hash)
+	ecdsaPriv, err := crypto.ToECDSA(pa.privateKey.Bytes())
 	require.NoError(pa.fixture.tb, err)
-	msg.Signature = hex.EncodeToString(signature)
+
+	sig65, err := crypto.Sign(hash, ecdsaPriv)
+	require.NoError(pa.fixture.tb, err)
+	msg.Signature = hex.EncodeToString(sig65[:64])
 
 	_, err = pa.fixture.DataProxyMsgServer.RegisterDataProxy(pa.fixture.Context(), msg)
 	require.NoError(pa.fixture.tb, err)

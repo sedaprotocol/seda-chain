@@ -37,9 +37,10 @@ const (
 func (f *Fixture) uploadOraclePrograms(tb testing.TB) {
 	tb.Helper()
 
-	for _, op := range testwasms.TestWasms {
+	for i, op := range testwasms.TestWasms {
 		execProgram := wasmstoragetypes.NewOracleProgram(op, f.Context().BlockTime())
 		err := f.WasmStorageKeeper.OracleProgram.Set(f.Context(), execProgram.Hash, execProgram)
+		f.DeployedOPs[testwasms.TestWasmNames[i]] = hex.EncodeToString(execProgram.Hash)
 		require.NoError(tb, err)
 	}
 }

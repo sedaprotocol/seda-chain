@@ -235,7 +235,7 @@ func (ta *TestAccount) CalculateDrIDAndArgs(nonce string, replicationFactor uint
 		TallyGasLimit:     types.MinTallyGasLimit,
 		Memo:              []byte(memo),
 		ReplicationFactor: replicationFactor,
-		ConsensusFilter:   []byte(base64.StdEncoding.EncodeToString([]byte{0})),
+		ConsensusFilter:   []byte{0},
 		GasPrice:          types.MinGasPrice,
 	}
 }

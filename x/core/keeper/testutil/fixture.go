@@ -107,6 +107,7 @@ type Fixture struct {
 	TestAccounts       map[string]TestAccount
 	ProxyAccounts      map[string]ProxyAccount
 	noShim             bool
+	DeployedOPs        map[string]string
 }
 
 // InitFixure sets up a new integration testing fixture.
@@ -426,6 +427,7 @@ func InitFixture(tb testing.TB, noShim bool, coreContractWasm []byte) *Fixture {
 		ProxyAccounts:      make(map[string]ProxyAccount),
 		Creator:            creator,
 		noShim:             noShim,
+		DeployedOPs:        make(map[string]string),
 	}
 	f.Creator.fixture = &f
 	f.Deployer.fixture = &f
