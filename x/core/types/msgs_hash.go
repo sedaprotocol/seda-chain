@@ -307,7 +307,7 @@ func (rb RevealBody) RevealBodyHash() []byte {
 	return hasher.Sum(nil)
 }
 
-func (q QueryGetExecutorEligibilityRequest) MsgHash(chainID string) []byte {
+func (q QueryExecutorEligibilityRequest) MsgHash(_, chainID string) []byte {
 	_, drIDBytes, _, _ := q.Parts()
 	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
 	allBytes = append(allBytes, drIDBytes...)
@@ -317,10 +317,11 @@ func (q QueryGetExecutorEligibilityRequest) MsgHash(chainID string) []byte {
 	return hasher.Sum(nil)
 }
 
-func (q QueryGetExecutorEligibilityRequest) LegacyMsgHash(contractAddr string) []byte {
+func (q QueryLegacyExecutorEligibilityRequest) MsgHash(contractAddr, chainID string) []byte {
 	_, drIDBytes, _, _ := q.Parts()
 	allBytes := append([]byte{}, []byte("is_executor_eligible")...)
 	allBytes = append(allBytes, drIDBytes...)
+	allBytes = append(allBytes, []byte(chainID)...)
 	allBytes = append(allBytes, []byte(contractAddr)...)
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(allBytes)

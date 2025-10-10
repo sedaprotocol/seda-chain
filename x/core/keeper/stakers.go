@@ -201,3 +201,68 @@ func (k Keeper) IsEligibleForDataRequest(ctx sdk.Context, pubKeyBytes, drIDBytes
 
 	return lowerHashCount < totalNeeded, nil
 }
+
+type ExecutorEligibilityRequest interface {
+	Parts() (string, string, string, error)
+	MsgHash(contractAddr, chainID string) []byte
+}
+
+func (k Keeper) GetExecutorEligibility(ctx sdk.Context, req ExecutorEligibilityRequest) (types.EligibilityStatus, string, error) {
+	publicKey, drID, proof, err := req.Parts()
+	if err != nil {
+		return types.ELIGIBILITY_STATUS_UNSPECIFIED, "", err
+	}
+
+	// Check the executor's status as a staker.
+	staker, err := k.GetStaker(ctx, publicKey)
+	if err != nil {
+		return types.ELIGIBILITY_STATUS_NOT_STAKER, err.Error(), nil
+	}
+
+	stakingConfig, err := k.GetStakingConfig(ctx)
+	if err != nil {
+		return types.ELIGIBILITY_STATUS_UNSPECIFIED, "", err
+	}
+	if stakingConfig.AllowlistEnabled {
+		isAllowlisted, err := k.IsAllowlisted(ctx, publicKey)
+		if err != nil {
+			return types.ELIGIBILITY_STATUS_UNSPECIFIED, "", err
+		}
+		if !isAllowlisted {
+			return types.ELIGIBILITY_STATUS_NOT_ALLOWLISTED, "", nil
+		}
+	}
+
+	if staker.Staked.LT(stakingConfig.MinimumStake) {
+		return types.ELIGIBILITY_STATUS_INSUFFICIENT_STAKE, "", nil
+	}
+
+	// Verify the proof.
+	publicKeyBytes, err := hex.DecodeString(publicKey)
+	if err != nil {
+		return types.ELIGIBILITY_STATUS_UNSPECIFIED, "", err
+	}
+	proofBytes, err := hex.DecodeString(proof)
+	if err != nil {
+		return types.ELIGIBILITY_STATUS_UNSPECIFIED, "", err
+	}
+	_, err = vrf.NewK256VRF().Verify(publicKeyBytes, proofBytes, req.MsgHash("", ctx.ChainID()))
+	if err != nil {
+		return types.ELIGIBILITY_STATUS_INVALID_SIGNATURE, err.Error(), nil
+	}
+
+	// Verify eligibility with respect to the data request.
+	drIDBytes, err := hex.DecodeString(drID)
+	if err != nil {
+		return types.ELIGIBILITY_STATUS_UNSPECIFIED, "", err
+	}
+
+	isEligible, err := k.IsEligibleForDataRequest(ctx, publicKeyBytes, drIDBytes, stakingConfig.MinimumStake)
+	if err != nil {
+		return types.ELIGIBILITY_STATUS_NOT_ELIGIBLE, err.Error(), nil
+	}
+	if isEligible {
+		return types.ELIGIBILITY_STATUS_ELLIGIBLE, "", nil
+	}
+	return types.ELIGIBILITY_STATUS_NOT_ELIGIBLE, "", nil
+}

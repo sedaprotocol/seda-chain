@@ -354,7 +354,7 @@ const (
 )
 
 func (g GetExecutorEligibility) ToModuleQuery() ([]byte, string, error) {
-	query := &coretypes.QueryGetExecutorEligibilityRequest{
+	query := &coretypes.QueryLegacyExecutorEligibilityRequest{
 		Data: g.Data,
 	}
 	queryProto, err := query.Marshal()
@@ -365,7 +365,7 @@ func (g GetExecutorEligibility) ToModuleQuery() ([]byte, string, error) {
 }
 
 func (g GetExecutorEligibility) FromModuleQuery(cdc codec.Codec, result []byte) ([]byte, error) {
-	var res coretypes.QueryGetExecutorEligibilityResponse
+	var res coretypes.QueryLegacyExecutorEligibilityResponse
 	err := cdc.Unmarshal(result, &res)
 	if err != nil {
 		return nil, err
