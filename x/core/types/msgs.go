@@ -164,10 +164,29 @@ func (m MsgLegacyReveal) Validate(config DataRequestConfig, replicationFactor ui
 }
 
 // Parts extracts the hex-encoded public key, drID, and proof from the query request.
-func (q QueryGetExecutorEligibilityRequest) Parts() (string, string, string, error) {
+//
+// 0          66:67            130:131       195 byte
+// | public_key : data_request_id :   proof   |
+func (q QueryExecutorEligibilityRequest) Parts() (string, string, string, error) {
+	if len(q.Data) != 194 {
+		return "", "", "", ErrInvalidEligibilityProofLength.Wrapf("expected: %d, got: %d", 194, len(q.Data))
+	}
 	data, err := base64.StdEncoding.DecodeString(q.Data)
 	if err != nil {
 		return "", "", "", err
 	}
 	return string(data[:66]), string(data[67:131]), string(data[132:]), nil
+}
+
+// Parts for QueryLegacyExecutorEligibilityRequest is identical to that for
+// QueryExecutorEligibilityRequest.
+func (q QueryLegacyExecutorEligibilityRequest) Parts() (string, string, string, error) {
+	if len(q.Data) != 194 {
+		return "", "", "", ErrInvalidEligibilityProofLength.Wrapf("expected: %d, got: %d", 194, len(q.Data))
+	}
+	data, err := base64.StdEncoding.DecodeString(q.Data)
+	if err != nil {
+		return "", "", "", err
+	}
+	return string(data[:66]), string(data[66:130]), string(data[130:]), nil
 }

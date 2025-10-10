@@ -394,7 +394,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
 					},
 				},
 			},
-			wantErr: sdkerrors.ErrInvalidAddress,
+			wantErr: sdkerrors.ErrUnauthorized,
 		},
 		{
 			name: "Unauthrized owner",

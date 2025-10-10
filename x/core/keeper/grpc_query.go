@@ -9,8 +9,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	vrf "github.com/sedaprotocol/vrf-go"
-
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
@@ -273,79 +271,30 @@ func (q Querier) IsStakerExecutor(c context.Context, req *types.QueryIsStakerExe
 	}, nil
 }
 
-func (q Querier) GetExecutorEligibility(c context.Context, req *types.QueryGetExecutorEligibilityRequest) (*types.QueryGetExecutorEligibilityResponse, error) {
+func (q Querier) ExecutorEligibility(c context.Context, req *types.QueryExecutorEligibilityRequest) (*types.QueryExecutorEligibilityResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	result := &types.QueryGetExecutorEligibilityResponse{
+	status, errMsg, err := q.GetExecutorEligibility(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryExecutorEligibilityResponse{
 		//nolint:gosec // G115: Block height should never be negative.
-		BlockHeight: uint64(ctx.BlockHeight()),
-	}
+		BlockHeight:  uint64(ctx.BlockHeight()),
+		Status:       status,
+		ErrorMessage: errMsg,
+	}, nil
+}
 
-	publicKey, drID, proof, err := req.Parts()
+func (q Querier) LegacyExecutorEligibility(c context.Context, req *types.QueryLegacyExecutorEligibilityRequest) (*types.QueryLegacyExecutorEligibilityResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	status, errMsg, err := q.GetExecutorEligibility(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	// Check the executor's status as a staker.
-	staker, err := q.GetStaker(ctx, publicKey)
-	if err != nil {
-		result.Status = types.ELIGIBILITY_STATUS_NOT_STAKER
-		result.ErrorMessage = err.Error()
-		return result, nil
-	}
-
-	stakingConfig, err := q.GetStakingConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if stakingConfig.AllowlistEnabled {
-		isAllowlisted, err := q.IsAllowlisted(ctx, publicKey)
-		if err != nil {
-			return nil, err
-		}
-		if !isAllowlisted {
-			result.Status = types.ELIGIBILITY_STATUS_NOT_ALLOWLISTED
-			return result, nil
-		}
-	}
-
-	if staker.Staked.LT(stakingConfig.MinimumStake) {
-		result.Status = types.ELIGIBILITY_STATUS_INSUFFICIENT_STAKE
-		return result, nil
-	}
-
-	// Verify the proof.
-	publicKeyBytes, err := hex.DecodeString(publicKey)
-	if err != nil {
-		return nil, err
-	}
-	proofBytes, err := hex.DecodeString(proof)
-	if err != nil {
-		return nil, err
-	}
-	_, err = vrf.NewK256VRF().Verify(publicKeyBytes, proofBytes, req.MsgHash(ctx.ChainID()))
-	if err != nil {
-		result.Status = types.ELIGIBILITY_STATUS_INVALID_SIGNATURE
-		result.ErrorMessage = err.Error()
-		return result, nil
-	}
-
-	// Verify eligibility with respect to the data request.
-	drIDBytes, err := hex.DecodeString(drID)
-	if err != nil {
-		return nil, err
-	}
-
-	isEligible, err := q.IsEligibleForDataRequest(ctx, publicKeyBytes, drIDBytes, stakingConfig.MinimumStake)
-	if err != nil {
-		result.Status = types.ELIGIBILITY_STATUS_NOT_ELIGIBLE
-		result.ErrorMessage = err.Error()
-		return result, nil
-	}
-
-	if isEligible {
-		result.Status = types.ELIGIBILITY_STATUS_ELLIGIBLE
-	} else {
-		result.Status = types.ELIGIBILITY_STATUS_NOT_ELIGIBLE
-	}
-	return result, nil
+	return &types.QueryLegacyExecutorEligibilityResponse{
+		//nolint:gosec // G115: Block height should never be negative.
+		BlockHeight:  uint64(ctx.BlockHeight()),
+		Status:       status,
+		ErrorMessage: errMsg,
+	}, nil
 }

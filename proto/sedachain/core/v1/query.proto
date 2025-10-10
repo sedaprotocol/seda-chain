@@ -104,12 +104,21 @@ service Query {
         "/seda-chain/core/is_staker_executor/{public_key}";
   }
 
-  // GetExecutorEligibility returns the eligibility status of an executor given
+  // ExecutorEligibility returns the eligibility status of an executor given
   // the eligibility message data.
-  rpc GetExecutorEligibility(QueryGetExecutorEligibilityRequest)
-      returns (QueryGetExecutorEligibilityResponse) {
+  rpc ExecutorEligibility(QueryExecutorEligibilityRequest)
+      returns (QueryExecutorEligibilityResponse) {
     option (google.api.http).get =
-        "/seda-chain/core/get_executor_eligibility/{data}";
+        "/seda-chain/core/executor_eligibility/{data}";
+  }
+
+  // LegacyExecutorEligibility returns the eligibility status of an executor
+  // given the eligibility message data where its proof part follows the legacy
+  // format that includes the Core Contract address.
+  rpc LegacyExecutorEligibility(QueryLegacyExecutorEligibilityRequest)
+      returns (QueryLegacyExecutorEligibilityResponse) {
+    option (google.api.http).get =
+        "/seda-chain/core/legacy_executor_eligibility/{data}";
   }
 
   // DataRequestStatuses returns the statuses of data requests given their IDs.
@@ -292,15 +301,41 @@ message QueryIsStakerExecutorResponse {
   bool is_staker_executor = 1;
 }
 
-// The request message for Query/GetExecutorEligibility RPC method.
-message QueryGetExecutorEligibilityRequest {
-  // data is the base64 encoded data used to determine eligibility.
+// The request message for Query/ExecutorEligibility RPC method.
+message QueryExecutorEligibilityRequest {
+  // Data is the base64 encoded hex data used to determine eligibility.
+  //
+  // 0          66:67            130:131       195 byte
+  // | public_key : data_request_id :   proof   |
   string data = 1;
 }
 
-// QueryGetExecutorEligibilityResponse is the response type for the
-// Query/GetExecutorEligibility RPC method.
-message QueryGetExecutorEligibilityResponse {
+// QueryExecutorEligibilityResponse is the response type for the
+// Query/ExecutorEligibility RPC method.
+message QueryExecutorEligibilityResponse {
+  // EligibilityStatus is the eligibility status of the executor with respect
+  // to the data request.
+  EligibilityStatus status = 1;
+  // BlockHeight is the block height when the eligibility was determined.
+  uint64 block_height = 2;
+  // ErrorMessage, if not empty, indicates any error that was intercepted.
+  string error_message = 3;
+}
+
+// The request message for Query/LegacyExecutorEligibility RPC method.
+message QueryLegacyExecutorEligibilityRequest {
+  // Data is the base64-encoded hex data used to determine eligibility.
+  // It must follow the legacy format where the proof includes
+  // the Core Contract address.
+  //
+  // 0          66:67            130:131       195 byte
+  // | public_key : data_request_id :   proof   |
+  string data = 1;
+}
+
+// QueryLegacyExecutorEligibilityResponse is the response type for the
+// Query/LegacyExecutorEligibility RPC method.
+message QueryLegacyExecutorEligibilityResponse {
   // EligibilityStatus is the eligibility status of the executor with respect
   // to the data request.
   EligibilityStatus status = 1;
