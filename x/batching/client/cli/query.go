@@ -125,11 +125,10 @@ func GetCmdQueryBatches() *cobra.Command {
 				return err
 			}
 
-			res, err := queryClient.Batches(cmd.Context(),
-				&types.QueryBatchesRequest{
-					Pagination:   pageReq,
-					WithUnsigned: withUnsigned,
-				})
+			res, err := queryClient.Batches(cmd.Context(), &types.QueryBatchesRequest{
+				Pagination:   pageReq,
+				WithUnsigned: withUnsigned,
+			})
 			if err != nil {
 				return err
 			}
