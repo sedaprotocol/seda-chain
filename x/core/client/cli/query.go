@@ -169,7 +169,19 @@ func GetExecutors() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.Executors(cmd.Context(), &types.QueryExecutorsRequest{})
+			offset, err := cmd.Flags().GetUint32(flags.FlagOffset)
+			if err != nil {
+				return err
+			}
+			limit, err := cmd.Flags().GetUint32(flags.FlagLimit)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.Executors(cmd.Context(), &types.QueryExecutorsRequest{
+				Limit:  limit,
+				Offset: offset,
+			})
 			if err != nil {
 				return err
 			}
@@ -177,6 +189,8 @@ func GetExecutors() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().Uint32(flags.FlagOffset, 0, fmt.Sprintf("pagination offset of executors to query for"))
+	cmd.Flags().Uint32(flags.FlagLimit, 100, fmt.Sprintf("pagination limit of executors to query for"))
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
