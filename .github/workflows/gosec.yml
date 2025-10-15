@@ -1,12 +1,7 @@
 name: Gosec
 
 on:
-  push:
-    branches:
-      - release/*
   pull_request:
-    branches:
-      - release/*
 
 permissions:
   contents: read

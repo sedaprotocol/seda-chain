@@ -2,8 +2,6 @@ module github.com/sedaprotocol/seda-chain
 
 go 1.23.5
 
-toolchain go1.24.2
-
 require (
 	cosmossdk.io/api v0.7.6
 	cosmossdk.io/client/v2 v2.0.0-beta.3
