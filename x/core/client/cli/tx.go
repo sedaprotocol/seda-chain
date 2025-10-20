@@ -304,6 +304,7 @@ func Withdraw() *cobra.Command {
 				return err
 			}
 
+			// Public key and proof must be valid hex strings.
 			publicKey := args[0]
 			proof := args[1]
 
