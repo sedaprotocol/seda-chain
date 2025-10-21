@@ -18,7 +18,7 @@ do
             export PLUGIN_LOG_FILE=$(realpath "./")/plugin.log
             export COSMOS_SDK_ABCI=$(realpath "./build/plugin")
             # These are the default ports and names used by the local indexer.
-            export SQS_QUEUE_URL=${SQS_QUEUE_URL:-"http://localhost/4100/local-updates"}
+            export SQS_QUEUE_URL=${SQS_QUEUE_URL:-"http://localhost/4100/local-updates-queue"}
             export SQS_ENDPOINT=${SQS_ENDPOINT:-"http://localhost:4100"}
             export S3_ENDPOINT=${S3_ENDPOINT:-"http://localhost:9444"}
             export S3_LARGE_MSG_BUCKET_NAME=${S3_LARGE_MSG_BUCKET_NAME:-"indexer-localnet-large-messages"}
