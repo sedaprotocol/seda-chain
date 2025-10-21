@@ -103,7 +103,7 @@ func TransferOwnership() *cobra.Command {
 func AddToAllowlist() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add-to-allowlist [public_key] --from [owner_address]",
-		Short: "Add an executor identity to the allowlist",
+		Short: "Add an executor public key to the allowlist",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -130,7 +130,7 @@ func AddToAllowlist() *cobra.Command {
 func RemoveFromAllowlist() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove-from-allowlist [public_key] --from [owner_address]",
-		Short: "Remove an executor identity from the allowlist",
+		Short: "Remove an executor public key from the allowlist",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
