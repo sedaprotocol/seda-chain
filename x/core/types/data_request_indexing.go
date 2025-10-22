@@ -13,18 +13,18 @@ import (
 type DataRequestIndexing struct {
 	dataRequests    collections.Map[string, DataRequest]
 	indexing        collections.KeySet[collections.Pair[DataRequestStatus, DataRequestIndex]]
-	committingCount collections.Item[uint64]
-	revealingCount  collections.Item[uint64]
-	tallyingCount   collections.Item[uint64]
+	committingCount collections.Item[uint32]
+	revealingCount  collections.Item[uint32]
+	tallyingCount   collections.Item[uint32]
 }
 
 func NewDataRequestIndexing(sb *collections.SchemaBuilder, cdc codec.BinaryCodec) DataRequestIndexing {
 	return DataRequestIndexing{
 		dataRequests:    collections.NewMap(sb, DataRequestsKeyPrefix, "data_requests", collections.StringKey, codec.CollValue[DataRequest](cdc)),
 		indexing:        collections.NewKeySet(sb, DataRequestIndexingPrefix, "data_request_indexing", collections.PairKeyCodec(collcdc.NewInt32Key[DataRequestStatus](), collcdc.NewBytesKey[DataRequestIndex]())),
-		committingCount: collections.NewItem(sb, DataRequestCommittingCountKey, "committing_count", collections.Uint64Value),
-		revealingCount:  collections.NewItem(sb, DataRequestRevealingCountKey, "revealing_count", collections.Uint64Value),
-		tallyingCount:   collections.NewItem(sb, DataRequestTallyingCountKey, "tallying_count", collections.Uint64Value),
+		committingCount: collections.NewItem(sb, DataRequestCommittingCountKey, "committing_count", collections.Uint32Value),
+		revealingCount:  collections.NewItem(sb, DataRequestRevealingCountKey, "revealing_count", collections.Uint32Value),
+		tallyingCount:   collections.NewItem(sb, DataRequestTallyingCountKey, "tallying_count", collections.Uint32Value),
 	}
 }
 
@@ -174,7 +174,7 @@ func (idx DataRequestIndexing) GetDataRequestIDsByStatus(ctx sdk.Context, status
 	return ids, nil
 }
 
-func (idx DataRequestIndexing) GetDataRequestIDsByStatusPaginated(ctx sdk.Context, status DataRequestStatus, limit uint64, lastSeenIndex DataRequestIndex) ([]string, DataRequestIndex, uint64, error) {
+func (idx DataRequestIndexing) GetDataRequestIDsByStatusPaginated(ctx sdk.Context, status DataRequestStatus, limit uint64, lastSeenIndex DataRequestIndex) ([]string, DataRequestIndex, uint32, error) {
 	total, err := idx.GetDataRequestCountByStatus(ctx, status)
 	if err != nil {
 		return nil, nil, 0, err
@@ -215,7 +215,7 @@ func (idx DataRequestIndexing) GetDataRequestIDsByStatusPaginated(ctx sdk.Contex
 // lastSeenIndex, the query will start from the next data request after the
 // lastSeenIndex. The method also returns the new lastSeenIndex and the total
 // number of data requests under the given status.
-func (idx DataRequestIndexing) GetDataRequestsByStatus(ctx sdk.Context, status DataRequestStatus, limit uint64, lastSeenIndex DataRequestIndex) ([]DataRequest, DataRequestIndex, uint64, error) {
+func (idx DataRequestIndexing) GetDataRequestsByStatus(ctx sdk.Context, status DataRequestStatus, limit uint32, lastSeenIndex DataRequestIndex) ([]DataRequest, DataRequestIndex, uint32, error) {
 	total, err := idx.GetDataRequestCountByStatus(ctx, status)
 	if err != nil {
 		return nil, nil, 0, err
@@ -234,7 +234,7 @@ func (idx DataRequestIndexing) GetDataRequestsByStatus(ctx sdk.Context, status D
 
 	var dataRequests []DataRequest
 	var newLastSeenIndex DataRequestIndex
-	count := uint64(0)
+	var count uint32
 	for ; iter.Valid(); iter.Next() {
 		key, err := iter.Key()
 		if err != nil {
@@ -324,7 +324,7 @@ func (idx DataRequestIndexing) DecrementDataRequestCountByStatus(ctx sdk.Context
 	return nil
 }
 
-func (idx DataRequestIndexing) GetDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus) (uint64, error) {
+func (idx DataRequestIndexing) GetDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus) (uint32, error) {
 	switch status {
 	case DATA_REQUEST_STATUS_COMMITTING:
 		return idx.committingCount.Get(ctx)
@@ -337,7 +337,7 @@ func (idx DataRequestIndexing) GetDataRequestCountByStatus(ctx sdk.Context, stat
 	}
 }
 
-func (idx DataRequestIndexing) SetDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus, count uint64) error {
+func (idx DataRequestIndexing) SetDataRequestCountByStatus(ctx sdk.Context, status DataRequestStatus, count uint32) error {
 	switch status {
 	case DATA_REQUEST_STATUS_COMMITTING:
 		return idx.committingCount.Set(ctx, count)

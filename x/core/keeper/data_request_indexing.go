@@ -26,7 +26,7 @@ func (k Keeper) RemoveDataRequest(ctx sdk.Context, index types.DataRequestIndex,
 	return k.dataRequests.RemoveDataRequest(ctx, index, status)
 }
 
-func (k Keeper) GetDataRequestsByStatus(ctx sdk.Context, status types.DataRequestStatus, limit uint64, lastSeenIndex types.DataRequestIndex) ([]types.DataRequest, types.DataRequestIndex, uint64, error) {
+func (k Keeper) GetDataRequestsByStatus(ctx sdk.Context, status types.DataRequestStatus, limit uint32, lastSeenIndex types.DataRequestIndex) ([]types.DataRequest, types.DataRequestIndex, uint32, error) {
 	return k.dataRequests.GetDataRequestsByStatus(ctx, status, limit, lastSeenIndex)
 }
 
