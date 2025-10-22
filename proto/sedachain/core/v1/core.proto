@@ -28,7 +28,7 @@ message Staker {
 // DataRequest is a data request object.
 message DataRequest {
   // Hex-encoded ID of the data request
-  string i_d = 1 [ (gogoproto.jsontag) = "id" ];
+  string i_d = 1 [ (gogoproto.jsontag) = "id", json_name = "id" ];
   // Semantic versioning
   string version = 2 [ (gogoproto.jsontag) = "version" ];
   // Hex-encoded ID (hash) of the execution program
@@ -59,7 +59,8 @@ message DataRequest {
   // Set by the relayer
   bytes payback_address = 13 [ (gogoproto.jsontag) = "payback_address" ];
   // Set by SEDA Protocol (e.g. OEV-enabled data requests)
-  bytes s_e_d_a_payload = 14 [ (gogoproto.jsontag) = "seda_payload" ];
+  bytes s_e_d_a_payload = 14
+      [ (gogoproto.jsontag) = "seda_payload", json_name = "seda_payload" ];
   // Height at which the data request was posted
   int64 posted_height = 15 [ (gogoproto.jsontag) = "height" ];
   // Actual gas price derived by dividing attached funds by the total gas limit

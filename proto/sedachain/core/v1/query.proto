@@ -261,7 +261,7 @@ message QueryDataRequestsByStatusResponse {
   // IsPaused is indicates whether the core module is paused.
   bool is_paused = 2;
   // Total is the total number of data requests under the given status.
-  uint64 total = 3;
+  uint32 total = 3;
   // LastSeenIndex is the index of the last data request retrieved.
   repeated string last_seen_index = 4;
 }
