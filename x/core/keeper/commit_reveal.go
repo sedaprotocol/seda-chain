@@ -251,7 +251,6 @@ func (k Keeper) Reveal(ctx sdk.Context, msg MsgReveal, isLegacy bool) error {
 			types.EventTypeReveal,
 			sdk.NewAttribute(types.AttributeDataRequestID, dr.ID),
 			sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatInt(dr.PostedHeight, 10)),
-			sdk.NewAttribute(types.AttributeRevealBody, revealBody.String()),
 			sdk.NewAttribute(types.AttributeRevealStdout, strings.Join(msg.GetStdout(), ",")),
 			sdk.NewAttribute(types.AttributeRevealStderr, strings.Join(msg.GetStderr(), ",")),
 			sdk.NewAttribute(types.AttributeExecutorIdentity, publicKey),
