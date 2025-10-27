@@ -189,8 +189,8 @@ func GetExecutors() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Uint32(flags.FlagOffset, 0, fmt.Sprintf("pagination offset of executors to query for"))
-	cmd.Flags().Uint32(flags.FlagLimit, 100, fmt.Sprintf("pagination limit of executors to query for"))
+	cmd.Flags().Uint32(flags.FlagOffset, 0, "pagination offset of executors to query for")
+	cmd.Flags().Uint32(flags.FlagLimit, 100, "pagination limit of executors to query for")
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

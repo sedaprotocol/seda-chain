@@ -297,10 +297,15 @@ message MsgPostDataRequestResponse {
 message MsgCommit {
   option (cosmos.msg.v1.signer) = "sender";
 
+  // Sender is the address of the transaction sender.
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // DrID is the hex-encoded ID of the data request.
   string dr_i_d = 2 [ (gogoproto.jsontag) = "dr_id" ];
+  // Commit is the hex-encoded commitment.
   string commit = 3;
+  // PublicKey is the hex-encoded public key of the executor identity.
   string public_key = 4;
+  // Proof is the hex-encoded proof of the message.
   string proof = 5;
 }
 
@@ -311,10 +316,15 @@ message MsgCommitResponse {}
 message MsgLegacyCommit {
   option (cosmos.msg.v1.signer) = "sender";
 
+  // Sender is the address of the transaction sender.
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // DrID is the hex-encoded ID of the data request.
   string dr_i_d = 2 [ (gogoproto.jsontag) = "dr_id" ];
+  // Commit is the hex-encoded commitment.
   string commit = 3;
+  // PublicKey is the hex-encoded public key of the executor identity.
   string public_key = 4;
+  // Proof is the hex-encoded proof of the message.
   string proof = 5;
 }
 
@@ -325,11 +335,17 @@ message MsgLegacyCommitResponse {}
 message MsgReveal {
   option (cosmos.msg.v1.signer) = "sender";
 
+  // Sender is the address of the transaction sender.
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // RevealBody is the content of the reveal.
   RevealBody reveal_body = 2;
+  // PublicKey is the hex-encoded public key of the executor identity.
   string public_key = 3;
+  // Proof is the hex-encoded proof of the message.
   string proof = 4;
+  // Stderr is the standard error output of the reveal.
   repeated string stderr = 5;
+  // Stdout is the standard output of the reveal.
   repeated string stdout = 6;
 }
 
@@ -340,11 +356,17 @@ message MsgRevealResponse {}
 message MsgLegacyReveal {
   option (cosmos.msg.v1.signer) = "sender";
 
+  // Sender is the address of the transaction sender.
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // RevealBody is the content of the reveal.
   RevealBody reveal_body = 2;
+  // PublicKey is the hex-encoded public key of the executor identity.
   string public_key = 3;
+  // Proof is the hex-encoded proof of the message.
   string proof = 4;
+  // Stderr is the standard error output of the reveal.
   repeated string stderr = 5;
+  // Stdout is the standard output of the reveal.
   repeated string stdout = 6;
 }
 

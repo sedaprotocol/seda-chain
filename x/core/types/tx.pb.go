@@ -1431,11 +1431,16 @@ func (m *MsgPostDataRequestResponse) GetHeight() int64 {
 
 // The request message for the Commit method.
 type MsgCommit struct {
-	Sender    string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
-	DrID      string `protobuf:"bytes,2,opt,name=dr_i_d,json=drID,proto3" json:"dr_id"`
-	Commit    string `protobuf:"bytes,3,opt,name=commit,proto3" json:"commit,omitempty"`
+	// Sender is the address of the transaction sender.
+	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// DrID is the hex-encoded ID of the data request.
+	DrID string `protobuf:"bytes,2,opt,name=dr_i_d,json=drID,proto3" json:"dr_id"`
+	// Commit is the hex-encoded commitment.
+	Commit string `protobuf:"bytes,3,opt,name=commit,proto3" json:"commit,omitempty"`
+	// PublicKey is the hex-encoded public key of the executor identity.
 	PublicKey string `protobuf:"bytes,4,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	Proof     string `protobuf:"bytes,5,opt,name=proof,proto3" json:"proof,omitempty"`
+	// Proof is the hex-encoded proof of the message.
+	Proof string `protobuf:"bytes,5,opt,name=proof,proto3" json:"proof,omitempty"`
 }
 
 func (m *MsgCommit) Reset()         { *m = MsgCommit{} }
@@ -1545,11 +1550,16 @@ var xxx_messageInfo_MsgCommitResponse proto.InternalMessageInfo
 
 // The request message for the LegacyCommit method.
 type MsgLegacyCommit struct {
-	Sender    string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
-	DrID      string `protobuf:"bytes,2,opt,name=dr_i_d,json=drID,proto3" json:"dr_id"`
-	Commit    string `protobuf:"bytes,3,opt,name=commit,proto3" json:"commit,omitempty"`
+	// Sender is the address of the transaction sender.
+	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// DrID is the hex-encoded ID of the data request.
+	DrID string `protobuf:"bytes,2,opt,name=dr_i_d,json=drID,proto3" json:"dr_id"`
+	// Commit is the hex-encoded commitment.
+	Commit string `protobuf:"bytes,3,opt,name=commit,proto3" json:"commit,omitempty"`
+	// PublicKey is the hex-encoded public key of the executor identity.
 	PublicKey string `protobuf:"bytes,4,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	Proof     string `protobuf:"bytes,5,opt,name=proof,proto3" json:"proof,omitempty"`
+	// Proof is the hex-encoded proof of the message.
+	Proof string `protobuf:"bytes,5,opt,name=proof,proto3" json:"proof,omitempty"`
 }
 
 func (m *MsgLegacyCommit) Reset()         { *m = MsgLegacyCommit{} }
@@ -1659,12 +1669,18 @@ var xxx_messageInfo_MsgLegacyCommitResponse proto.InternalMessageInfo
 
 // The request message for the Reveal method.
 type MsgReveal struct {
-	Sender     string      `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// Sender is the address of the transaction sender.
+	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// RevealBody is the content of the reveal.
 	RevealBody *RevealBody `protobuf:"bytes,2,opt,name=reveal_body,json=revealBody,proto3" json:"reveal_body,omitempty"`
-	PublicKey  string      `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	Proof      string      `protobuf:"bytes,4,opt,name=proof,proto3" json:"proof,omitempty"`
-	Stderr     []string    `protobuf:"bytes,5,rep,name=stderr,proto3" json:"stderr,omitempty"`
-	Stdout     []string    `protobuf:"bytes,6,rep,name=stdout,proto3" json:"stdout,omitempty"`
+	// PublicKey is the hex-encoded public key of the executor identity.
+	PublicKey string `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	// Proof is the hex-encoded proof of the message.
+	Proof string `protobuf:"bytes,4,opt,name=proof,proto3" json:"proof,omitempty"`
+	// Stderr is the standard error output of the reveal.
+	Stderr []string `protobuf:"bytes,5,rep,name=stderr,proto3" json:"stderr,omitempty"`
+	// Stdout is the standard output of the reveal.
+	Stdout []string `protobuf:"bytes,6,rep,name=stdout,proto3" json:"stdout,omitempty"`
 }
 
 func (m *MsgReveal) Reset()         { *m = MsgReveal{} }
@@ -1781,12 +1797,18 @@ var xxx_messageInfo_MsgRevealResponse proto.InternalMessageInfo
 
 // The request message for the LegacyReveal method.
 type MsgLegacyReveal struct {
-	Sender     string      `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// Sender is the address of the transaction sender.
+	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// RevealBody is the content of the reveal.
 	RevealBody *RevealBody `protobuf:"bytes,2,opt,name=reveal_body,json=revealBody,proto3" json:"reveal_body,omitempty"`
-	PublicKey  string      `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	Proof      string      `protobuf:"bytes,4,opt,name=proof,proto3" json:"proof,omitempty"`
-	Stderr     []string    `protobuf:"bytes,5,rep,name=stderr,proto3" json:"stderr,omitempty"`
-	Stdout     []string    `protobuf:"bytes,6,rep,name=stdout,proto3" json:"stdout,omitempty"`
+	// PublicKey is the hex-encoded public key of the executor identity.
+	PublicKey string `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	// Proof is the hex-encoded proof of the message.
+	Proof string `protobuf:"bytes,4,opt,name=proof,proto3" json:"proof,omitempty"`
+	// Stderr is the standard error output of the reveal.
+	Stderr []string `protobuf:"bytes,5,rep,name=stderr,proto3" json:"stderr,omitempty"`
+	// Stdout is the standard output of the reveal.
+	Stdout []string `protobuf:"bytes,6,rep,name=stdout,proto3" json:"stdout,omitempty"`
 }
 
 func (m *MsgLegacyReveal) Reset()         { *m = MsgLegacyReveal{} }
