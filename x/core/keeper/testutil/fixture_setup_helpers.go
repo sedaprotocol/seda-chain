@@ -115,7 +115,7 @@ func (f *Fixture) DrainDataRequestPool(targetHeight uint64) []byte {
 
 // CheckDataRequestsByStatus checks that the given number of data requests is
 // retrieved by GetDataRequestsByStatus.
-func (f *Fixture) CheckDataRequestsByStatus(tb testing.TB, status types.DataRequestStatus, expectedTotal, fetchLimit uint64) {
+func (f *Fixture) CheckDataRequestsByStatus(tb testing.TB, status types.DataRequestStatus, expectedTotal, fetchLimit uint32) {
 	tb.Helper()
 
 	remainingTotal := expectedTotal
@@ -123,7 +123,7 @@ func (f *Fixture) CheckDataRequestsByStatus(tb testing.TB, status types.DataRequ
 	drs, lastSeen, total, err := f.CoreKeeper.GetDataRequestsByStatus(f.Context(), status, fetchLimit, nil)
 	require.NoError(tb, err)
 	require.Equal(tb, expectedTotal, total)
-	require.Equal(tb, min(remainingTotal, fetchLimit), uint64(len(drs)))
+	require.Equal(tb, min(remainingTotal, fetchLimit), uint32(len(drs))) //nolint:gosec // G115: All positive integers
 
 	for fetchLimit < remainingTotal {
 		remainingTotal -= fetchLimit
@@ -132,7 +132,7 @@ func (f *Fixture) CheckDataRequestsByStatus(tb testing.TB, status types.DataRequ
 		drs, lastSeen, total, err = f.CoreKeeper.GetDataRequestsByStatus(f.Context(), status, fetchLimit, lastSeen)
 		require.NoError(tb, err)
 		require.Equal(tb, expectedTotal, total)
-		require.Equal(tb, min(remainingTotal, fetchLimit), uint64(len(drs)))
+		require.Equal(tb, min(remainingTotal, fetchLimit), uint32(len(drs))) //nolint:gosec // G115: All positive integers
 	}
 }
 

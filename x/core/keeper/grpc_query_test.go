@@ -20,13 +20,13 @@ func TestGetDataRequestsByStatus(t *testing.T) {
 
 	execProgram := wasmstoragetypes.NewOracleProgram(testwasms.HTTPHeavyWasm(), f.Context().BlockTime())
 	tallyProgram := wasmstoragetypes.NewOracleProgram(testwasms.SampleTallyWasm(), f.Context().BlockTime())
-	fetchLimit := uint64(100)
+	fetchLimit := uint32(100)
 
 	tests := []struct {
 		name       string
-		numPosts   uint64
-		numCommits uint64
-		numReveals uint64
+		numPosts   uint32
+		numCommits uint32
+		numReveals uint32
 	}{
 		{
 			name:       "",
@@ -42,7 +42,7 @@ func TestGetDataRequestsByStatus(t *testing.T) {
 
 			// Post and check
 			testDRs := make([]testutil.TestDR, tt.numPosts)
-			for i := uint64(0); i < tt.numPosts; i++ {
+			for i := uint32(0); i < tt.numPosts; i++ {
 				testDRs[i] = testutil.NewTestDR(
 					execProgram.Hash, tallyProgram.Hash,
 					[]byte("reveal"),

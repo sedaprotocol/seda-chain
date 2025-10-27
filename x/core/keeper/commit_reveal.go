@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"strconv"
@@ -127,7 +128,7 @@ func (k Keeper) Commit(ctx sdk.Context, msg MsgCommit, isLegacy bool) error {
 		sdk.NewEvent(
 			types.EventTypeCommit,
 			sdk.NewAttribute(types.AttributeDataRequestID, drID),
-			sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatInt(dr.PostedHeight, 10)),
+			sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatInt(dr.PostedHeight, 10)),
 			sdk.NewAttribute(types.AttributeCommitment, msg.GetCommit()),
 			sdk.NewAttribute(types.AttributeExecutorIdentity, publicKey),
 		),
@@ -158,6 +159,7 @@ func (k Keeper) Reveal(ctx sdk.Context, msg MsgReveal, isLegacy bool) error {
 
 	// Check the status of the data request.
 	revealBody := msg.GetRevealBody()
+
 	dr, err := k.GetDataRequest(ctx, revealBody.DrID)
 	if err != nil {
 		return err
@@ -250,7 +252,11 @@ func (k Keeper) Reveal(ctx sdk.Context, msg MsgReveal, isLegacy bool) error {
 		sdk.NewEvent(
 			types.EventTypeReveal,
 			sdk.NewAttribute(types.AttributeDataRequestID, dr.ID),
-			sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatInt(dr.PostedHeight, 10)),
+			sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatInt(dr.PostedHeight, 10)),
+			sdk.NewAttribute(types.AttributeRevealExitCode, strconv.FormatUint(uint64(revealBody.ExitCode), 10)),
+			sdk.NewAttribute(types.AttributeRevealGasUsed, strconv.FormatUint(revealBody.GasUsed, 10)),
+			sdk.NewAttribute(types.AttributeReveal, base64.StdEncoding.EncodeToString(revealBody.Reveal)),
+			sdk.NewAttribute(types.AttributeRevealProxyPubKeys, strings.Join(revealBody.ProxyPubKeys, ",")),
 			sdk.NewAttribute(types.AttributeRevealStdout, strings.Join(msg.GetStdout(), ",")),
 			sdk.NewAttribute(types.AttributeRevealStderr, strings.Join(msg.GetStderr(), ",")),
 			sdk.NewAttribute(types.AttributeExecutorIdentity, publicKey),
