@@ -87,6 +87,15 @@ func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, m
 
 			ctx.EventManager().EmitEvent(
 				sdk.NewEvent(
+					types.EventTypeExecutorEvent,
+					sdk.NewAttribute(types.AttributeExecutor, staker.PublicKey),
+					sdk.NewAttribute(types.AttributeTokensStaked, staker.Staked.String()),
+					sdk.NewAttribute(types.AttributeTokensPendingWithdrawal, staker.PendingWithdrawal.String()),
+					sdk.NewAttribute(types.AttributeMemo, staker.Memo),
+				),
+			)
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
 					types.EventTypeExecutorReward,
 					sdk.NewAttribute(types.AttributeDataRequestID, tr.ID),
 					sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatUint(tr.Height, 10)),
