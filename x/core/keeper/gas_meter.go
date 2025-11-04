@@ -5,6 +5,7 @@ import (
 	stdmath "math"
 	"slices"
 	"sort"
+	"strconv"
 
 	"cosmossdk.io/math"
 
@@ -20,7 +21,6 @@ func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, m
 
 	remainingEscrow := tr.GasMeter.GetEscrow()
 
-	// TODO Events
 	var amount math.Int
 	for _, dist := range dists {
 		switch {
@@ -30,6 +30,15 @@ func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, m
 			if err != nil {
 				return err
 			}
+
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					types.EventTypeBurn,
+					sdk.NewAttribute(types.AttributeDataRequestID, tr.ID),
+					sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatUint(tr.Height, 10)),
+					sdk.NewAttribute(sdk.AttributeKeyAmount, amount.String()),
+				),
+			)
 
 		case dist.DataProxyReward != nil:
 			amount = math.MinInt(dist.DataProxyReward.Amount, remainingEscrow)
@@ -43,6 +52,17 @@ func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, m
 				return err
 			}
 
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					types.EventTypeDataProxyReward,
+					sdk.NewAttribute(types.AttributeDataRequestID, tr.ID),
+					sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatUint(tr.Height, 10)),
+					sdk.NewAttribute(sdk.AttributeKeyAmount, amount.String()),
+					sdk.NewAttribute(types.AttributePayoutAddress, payoutAddr.String()),
+					sdk.NewAttribute(types.AttributePublicKey, dist.DataProxyReward.PublicKey),
+				),
+			)
+
 		case dist.ExecutorReward != nil:
 			amount = math.MinInt(dist.ExecutorReward.Amount, remainingEscrow)
 			staker, err := k.GetStaker(ctx, dist.ExecutorReward.Identity)
@@ -50,19 +70,31 @@ func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, m
 				return err
 			}
 
-			// Top up staked amount to minimum stake.
-			topup := math.ZeroInt()
+			// Top-up staked amount to minimum stake and reward the rest.
+			reward := amount
+			stakeTopup := math.ZeroInt()
 			if staker.Staked.LT(minimumStake) {
-				topup = math.MinInt(minimumStake.Sub(staker.Staked), amount)
-				staker.Staked = staker.Staked.Add(topup)
-				remainingEscrow = remainingEscrow.Sub(topup)
+				stakeTopup = math.MinInt(minimumStake.Sub(staker.Staked), amount)
+				staker.Staked = staker.Staked.Add(stakeTopup)
+				reward = reward.Sub(stakeTopup)
 			}
-			staker.PendingWithdrawal = staker.PendingWithdrawal.Add(amount.Sub(topup))
+			staker.PendingWithdrawal = staker.PendingWithdrawal.Add(reward)
 
 			err = k.SetStaker(ctx, staker)
 			if err != nil {
 				return err
 			}
+
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					types.EventTypeExecutorReward,
+					sdk.NewAttribute(types.AttributeDataRequestID, tr.ID),
+					sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatUint(tr.Height, 10)),
+					sdk.NewAttribute(sdk.AttributeKeyAmount, reward.String()),
+					sdk.NewAttribute(types.AttributeToppedUp, stakeTopup.String()),
+					sdk.NewAttribute(types.AttributeExecutor, staker.PublicKey),
+				),
+			)
 		}
 
 		remainingEscrow = remainingEscrow.Sub(amount)
@@ -79,6 +111,15 @@ func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, m
 		if err != nil {
 			return err
 		}
+
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeRefund,
+				sdk.NewAttribute(types.AttributeDataRequestID, tr.ID),
+				sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatUint(tr.Height, 10)),
+				sdk.NewAttribute(sdk.AttributeKeyAmount, remainingEscrow.String()),
+			),
+		)
 	}
 
 	return nil

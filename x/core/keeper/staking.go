@@ -121,7 +121,7 @@ func (k Keeper) Stake(ctx sdk.Context, msg MsgStake, isLegacy bool) error {
 		sdk.NewEvent(
 			types.EventTypeExecutorActionEvent,
 			sdk.NewAttribute(types.AttributeAction, types.EventTypeStake),
-			sdk.NewAttribute(types.AttributeExecutorIdentity, staker.PublicKey),
+			sdk.NewAttribute(types.AttributeExecutor, staker.PublicKey),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.GetSender()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, stake.Amount.String()),
 			sdk.NewAttribute(types.AttributeSequenceNumber, strconv.FormatUint(sequenceNum, 10)),
@@ -131,7 +131,7 @@ func (k Keeper) Stake(ctx sdk.Context, msg MsgStake, isLegacy bool) error {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeExecutorEvent,
-			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.GetPublicKey()),
+			sdk.NewAttribute(types.AttributeExecutor, msg.GetPublicKey()),
 			sdk.NewAttribute(types.AttributeTokensStaked, staker.Staked.String()),
 			sdk.NewAttribute(types.AttributeTokensPendingWithdrawal, staker.PendingWithdrawal.String()),
 			sdk.NewAttribute(types.AttributeMemo, staker.Memo),
@@ -198,7 +198,7 @@ func (k Keeper) Unstake(ctx sdk.Context, msg MsgUnstake, isLegacy bool) error {
 		sdk.NewEvent(
 			types.EventTypeExecutorActionEvent,
 			sdk.NewAttribute(types.AttributeAction, types.EventTypeUnstake),
-			sdk.NewAttribute(types.AttributeExecutorIdentity, staker.PublicKey),
+			sdk.NewAttribute(types.AttributeExecutor, staker.PublicKey),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.GetSender()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, unstakeAmount.String()),
 			sdk.NewAttribute(types.AttributeSequenceNumber, strconv.FormatUint(sequenceNum, 10)),
@@ -208,7 +208,7 @@ func (k Keeper) Unstake(ctx sdk.Context, msg MsgUnstake, isLegacy bool) error {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeExecutorEvent,
-			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.GetPublicKey()),
+			sdk.NewAttribute(types.AttributeExecutor, msg.GetPublicKey()),
 			sdk.NewAttribute(types.AttributeTokensStaked, staker.Staked.String()),
 			sdk.NewAttribute(types.AttributeTokensPendingWithdrawal, staker.PendingWithdrawal.String()),
 			sdk.NewAttribute(types.AttributeMemo, staker.Memo),
@@ -297,7 +297,7 @@ func (k Keeper) Withdraw(ctx sdk.Context, msg MsgWithdraw, isLegacy bool) error 
 		sdk.NewEvent(
 			types.EventTypeExecutorActionEvent,
 			sdk.NewAttribute(types.AttributeAction, types.EventTypeWithdraw),
-			sdk.NewAttribute(types.AttributeExecutorIdentity, staker.PublicKey),
+			sdk.NewAttribute(types.AttributeExecutor, staker.PublicKey),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.GetSender()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, amount.String()),
 			sdk.NewAttribute(types.AttributeSequenceNumber, strconv.FormatUint(sequenceNum, 10)),
@@ -307,7 +307,7 @@ func (k Keeper) Withdraw(ctx sdk.Context, msg MsgWithdraw, isLegacy bool) error 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeExecutorEvent,
-			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.GetPublicKey()),
+			sdk.NewAttribute(types.AttributeExecutor, msg.GetPublicKey()),
 			sdk.NewAttribute(types.AttributeTokensStaked, staker.Staked.String()),
 			sdk.NewAttribute(types.AttributeTokensPendingWithdrawal, staker.PendingWithdrawal.String()),
 			sdk.NewAttribute(types.AttributeMemo, staker.Memo),

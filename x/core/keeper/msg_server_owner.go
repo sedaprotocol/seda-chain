@@ -117,7 +117,7 @@ func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllo
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeAddToAllowlist,
-			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.PublicKey),
+			sdk.NewAttribute(types.AttributeExecutor, msg.PublicKey),
 		),
 	)
 
@@ -166,7 +166,7 @@ func (m msgServer) RemoveFromAllowlist(goCtx context.Context, msg *types.MsgRemo
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeRemoveFromAllowlist,
-			sdk.NewAttribute(types.AttributeExecutorIdentity, msg.PublicKey),
+			sdk.NewAttribute(types.AttributeExecutor, msg.PublicKey),
 		),
 	)
 

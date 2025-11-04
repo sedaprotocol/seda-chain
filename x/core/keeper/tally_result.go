@@ -11,7 +11,9 @@ import (
 // TallyResult is used to track results of tally process that are not covered
 // by DataResult.
 type TallyResult struct {
-	ID                string
+	// ID is the data request ID in hex.
+	ID string
+	// Height is the height at which the data request was posted.
 	Height            uint64
 	ReplicationFactor uint16
 	Reveals           []types.Reveal

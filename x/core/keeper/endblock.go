@@ -61,8 +61,6 @@ func (k Keeper) Tally(ctx sdk.Context) error {
 		return nil
 	}
 
-	// TODO remove_requests.rs
-
 	// Store the data results for batching.
 	for i := range dataResults {
 		err := k.batchingKeeper.SetDataResultForBatching(ctx, dataResults[i])

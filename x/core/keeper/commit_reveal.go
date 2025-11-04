@@ -130,7 +130,7 @@ func (k Keeper) Commit(ctx sdk.Context, msg MsgCommit, isLegacy bool) error {
 			sdk.NewAttribute(types.AttributeDataRequestID, drID),
 			sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatInt(dr.PostedHeight, 10)),
 			sdk.NewAttribute(types.AttributeCommitment, msg.GetCommit()),
-			sdk.NewAttribute(types.AttributeExecutorIdentity, publicKey),
+			sdk.NewAttribute(types.AttributeExecutor, publicKey),
 		),
 	)
 
@@ -259,7 +259,7 @@ func (k Keeper) Reveal(ctx sdk.Context, msg MsgReveal, isLegacy bool) error {
 			sdk.NewAttribute(types.AttributeRevealProxyPubKeys, strings.Join(revealBody.ProxyPubKeys, ",")),
 			sdk.NewAttribute(types.AttributeRevealStdout, strings.Join(msg.GetStdout(), ",")),
 			sdk.NewAttribute(types.AttributeRevealStderr, strings.Join(msg.GetStderr(), ",")),
-			sdk.NewAttribute(types.AttributeExecutorIdentity, publicKey),
+			sdk.NewAttribute(types.AttributeExecutor, publicKey),
 		),
 	)
 
