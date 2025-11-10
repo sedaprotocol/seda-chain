@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/hex"
+	"fmt"
 	stdmath "math"
 	"slices"
 	"sort"
@@ -19,10 +20,13 @@ import (
 func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, minimumStake math.Int, burnRatio math.LegacyDec) error {
 	dists := tr.GasMeter.ReadGasMeter(ctx, tr.ID, tr.Height, burnRatio)
 
-	remainingEscrow := tr.GasMeter.GetEscrow()
+	// Collect reward information for executors and data proxies to emit them
+	// in a single event.
+	var execRewardAttrs, dataProxyRewardAttrs []sdk.Attribute
 
-	var amount math.Int
+	remainingEscrow := tr.GasMeter.GetEscrow()
 	for _, dist := range dists {
+		var amount math.Int
 		switch {
 		case dist.Burn != nil:
 			amount = math.MinInt(dist.Burn.Amount, remainingEscrow)
@@ -52,14 +56,10 @@ func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, m
 				return err
 			}
 
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					types.EventTypeDataProxyReward,
-					sdk.NewAttribute(types.AttributeDataRequestID, tr.ID),
-					sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatUint(tr.Height, 10)),
-					sdk.NewAttribute(sdk.AttributeKeyAmount, amount.String()),
-					sdk.NewAttribute(types.AttributePayoutAddress, payoutAddr.String()),
-					sdk.NewAttribute(types.AttributePublicKey, dist.DataProxyReward.PublicKey),
+			dataProxyRewardAttrs = append(dataProxyRewardAttrs,
+				sdk.NewAttribute(
+					types.AttributeDataProxyReward,
+					fmt.Sprintf("%s,%s,%s", dist.DataProxyReward.PublicKey, payoutAddr.String(), amount.String()),
 				),
 			)
 
@@ -94,19 +94,30 @@ func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, m
 					sdk.NewAttribute(types.AttributeMemo, staker.Memo),
 				),
 			)
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					types.EventTypeExecutorReward,
-					sdk.NewAttribute(types.AttributeDataRequestID, tr.ID),
-					sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatUint(tr.Height, 10)),
-					sdk.NewAttribute(sdk.AttributeKeyAmount, reward.String()),
-					sdk.NewAttribute(types.AttributeToppedUp, stakeTopup.String()),
-					sdk.NewAttribute(types.AttributeExecutor, staker.PublicKey),
+			execRewardAttrs = append(execRewardAttrs,
+				sdk.NewAttribute(
+					types.AttributeExecutorReward,
+					fmt.Sprintf("%s,%s,%s", staker.PublicKey, reward.String(), stakeTopup.String()),
 				),
 			)
 		}
 
 		remainingEscrow = remainingEscrow.Sub(amount)
+	}
+
+	if len(execRewardAttrs) > 0 {
+		execRewardAttrs = append(execRewardAttrs,
+			sdk.NewAttribute(types.AttributeDataRequestID, tr.ID),
+			sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatUint(tr.Height, 10)),
+		)
+		ctx.EventManager().EmitEvent(sdk.NewEvent(types.EventTypeExecutorRewards, execRewardAttrs...))
+	}
+	if len(dataProxyRewardAttrs) > 0 {
+		dataProxyRewardAttrs = append(dataProxyRewardAttrs,
+			sdk.NewAttribute(types.AttributeDataRequestID, tr.ID),
+			sdk.NewAttribute(types.AttributePostedDataRequestHeight, strconv.FormatUint(tr.Height, 10)),
+		)
+		ctx.EventManager().EmitEvent(sdk.NewEvent(types.EventTypeDataProxyRewards, dataProxyRewardAttrs...))
 	}
 
 	// Refund the poster.
