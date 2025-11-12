@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	DefaultNumBatchesToKeep      = 12
-	DefaultMaxBatchPrunePerBlock = 5
+	DefaultNumBatchesToKeep      = 10000
+	DefaultMaxBatchPrunePerBlock = 100
 )
 
 // DefaultParams returns default batching module parameters.
@@ -20,7 +20,7 @@ func DefaultParams() Params {
 // ValidateBasic performs basic validation on batching module parameters.
 func (p *Params) Validate() error {
 	if p.NumBatchesToKeep <= 3 {
-		return sdkerrors.ErrInvalidRequest.Wrapf("max result size must be greater than 3: %d", p.NumBatchesToKeep)
+		return sdkerrors.ErrInvalidRequest.Wrapf("num batches to keep must be greater than 3: %d", p.NumBatchesToKeep)
 	}
 	return nil
 }

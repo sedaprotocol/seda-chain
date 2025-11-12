@@ -112,7 +112,6 @@ func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 	return k.params.Get(ctx)
 }
 
-// GetAuthority returns the module's authority.
 func (k Keeper) GetAuthority() string {
 	return k.authority
 }

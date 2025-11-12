@@ -27,7 +27,7 @@ func BenchmarkDataRequestFlow(b *testing.B) {
 	params.MaxTalliesPerBlock = 1000
 	f.tallyKeeper.SetParams(f.Context(), params)
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		b.StopTimer()
 		for j := 0; j < 1000; j++ {
 			f.executeDataRequestFlow(

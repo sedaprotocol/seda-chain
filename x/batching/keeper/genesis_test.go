@@ -23,7 +23,7 @@ func TestExportGenesis(t *testing.T) {
 		IsActivated: true,
 	})
 
-	valAddrs, _, _ := addBatchSigningValidators(t, f, 10)
+	valAddrs, _, _ := f.addBatchSigningValidators(t, 10)
 
 	dataResults := generateDataResults(t, 25)
 	for _, dr := range dataResults {

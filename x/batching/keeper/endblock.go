@@ -36,11 +36,11 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 			return nil
 		}
 		return err
-	} else {
-		err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
-		if err != nil {
-			return err
-		}
+	}
+
+	err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
+	if err != nil {
+		return err
 	}
 
 	return k.PruneBatches(ctx)
@@ -63,25 +63,31 @@ func (k Keeper) PruneBatches(ctx sdk.Context) error {
 		return nil
 	}
 
-	iter, err := k.batches.Indexes.Number.Iterate(ctx, nil)
+	rng := new(collections.Range[uint64]).EndExclusive(currentBatchNum - params.NumBatchesToKeep)
+	iter, err := k.batches.Indexes.Number.Iterate(ctx, rng)
 	if err != nil {
 		return err
 	}
 	defer iter.Close()
 
-	pruneCount := uint64(0)
+	var firstKey *collections.Pair[uint64, int64]
+	var pruneCount uint64
 	for ; iter.Valid(); iter.Next() {
 		fullKey, err := iter.FullKey()
 		if err != nil {
 			return err
 		}
+		if firstKey == nil {
+			firstKey = &fullKey
+		}
 
 		batchNum, batchHeight := fullKey.K1(), fullKey.K2()
 		if batchNum >= currentBatchNum-params.NumBatchesToKeep {
+			// Should not happen because of the range configuration.
 			break
 		}
 
-		err = k.clearBatchData(ctx, batchNum, batchHeight)
+		err = k.batches.Remove(ctx, batchHeight)
 		if err != nil {
 			return err
 		}
@@ -91,6 +97,28 @@ func (k Keeper) PruneBatches(ctx sdk.Context) error {
 		if pruneCount == params.MaxBatchPrunePerBlock {
 			break
 		}
+	}
+
+	if firstKey == nil {
+		// This means nothing was pruned.
+		k.Logger(ctx).Info("no batches to prune")
+		return nil
+	}
+
+	dataRng := new(collections.Range[uint64]).EndExclusive(firstKey.K1() + pruneCount)
+	err = k.dataResultTreeEntries.Clear(ctx, dataRng)
+	if err != nil {
+		return err
+	}
+
+	valRng := new(collections.Range[collections.Pair[uint64, []byte]]).EndExclusive(collections.PairPrefix[uint64, []byte](firstKey.K1() + pruneCount))
+	err = k.validatorTreeEntries.Clear(ctx, valRng)
+	if err != nil {
+		return err
+	}
+	err = k.batchSignatures.Clear(ctx, valRng)
+	if err != nil {
+		return err
 	}
 
 	return nil
