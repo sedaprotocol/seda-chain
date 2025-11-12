@@ -266,3 +266,28 @@ func (k Keeper) SetBatchSigSecp256k1(ctx context.Context, batchNum uint64, valAd
 		},
 	)
 }
+
+func (k Keeper) clearBatchData(ctx context.Context, batchNum uint64, batchHeight int64) error {
+	err := k.batches.Remove(ctx, batchHeight)
+	if err != nil {
+		return err
+	}
+
+	err = k.dataResultTreeEntries.Remove(ctx, batchNum)
+	if err != nil {
+		return err
+	}
+
+	valRng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
+	err = k.validatorTreeEntries.Clear(ctx, valRng)
+	if err != nil {
+		return err
+	}
+
+	sigRng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
+	err = k.batchSignatures.Clear(ctx, sigRng)
+	if err != nil {
+		return err
+	}
+	return nil
+}

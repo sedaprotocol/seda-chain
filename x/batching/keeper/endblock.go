@@ -36,12 +36,63 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 			return nil
 		}
 		return err
+	} else {
+		err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
+	return k.PruneBatches(ctx)
+}
+
+// PruneBatches prunes batches and their associated data based on module
+// parameters NumBatchesToKeep and MaxBatchPrunePerBlock.
+func (k Keeper) PruneBatches(ctx sdk.Context) error {
+	params, err := k.GetParams(ctx)
 	if err != nil {
 		return err
 	}
+
+	currentBatchNum, err := k.GetCurrentBatchNum(ctx)
+	if err != nil {
+		return err
+	}
+	if currentBatchNum <= params.NumBatchesToKeep {
+		k.Logger(ctx).Info("skip batch pruning", "current_batch_num", currentBatchNum, "num_batches_to_keep", params.NumBatchesToKeep)
+		return nil
+	}
+
+	iter, err := k.batches.Indexes.Number.Iterate(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	pruneCount := uint64(0)
+	for ; iter.Valid(); iter.Next() {
+		fullKey, err := iter.FullKey()
+		if err != nil {
+			return err
+		}
+
+		batchNum, batchHeight := fullKey.K1(), fullKey.K2()
+		if batchNum >= currentBatchNum-params.NumBatchesToKeep {
+			break
+		}
+
+		err = k.clearBatchData(ctx, batchNum, batchHeight)
+		if err != nil {
+			return err
+		}
+		k.Logger(ctx).Info("pruned batch", "batch_num", batchNum)
+
+		pruneCount++
+		if pruneCount == params.MaxBatchPrunePerBlock {
+			break
+		}
+	}
+
 	return nil
 }
 

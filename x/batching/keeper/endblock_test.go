@@ -29,6 +29,62 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
+func TestBatchPruning(t *testing.T) {
+	f := initFixture(t)
+
+	err := f.batchingKeeper.SetParams(f.Context(), types.Params{
+		NumBatchesToKeep:      75,
+		MaxBatchPrunePerBlock: 150,
+	})
+	require.NoError(t, err)
+
+	// Create 300 batches.
+	for range 300 {
+		f.AddBlock()
+
+		err := f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+		require.NoError(t, err)
+		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
+		require.NoError(t, err)
+		err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
+		require.NoError(t, err)
+	}
+
+	batches, err := f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 300, len(batches))
+
+	// Should prune first 150 batches.
+	err = f.batchingKeeper.PruneBatches(f.Context())
+	require.NoError(t, err)
+
+	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 150, len(batches))
+	require.Equal(t, uint64(150), batches[0].BatchNumber)
+	require.Equal(t, uint64(299), batches[len(batches)-1].BatchNumber)
+
+	// Should prune second 75 batches.
+	err = f.batchingKeeper.PruneBatches(f.Context())
+	require.NoError(t, err)
+
+	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 75, len(batches))
+	require.Equal(t, uint64(225), batches[0].BatchNumber)
+	require.Equal(t, uint64(299), batches[len(batches)-1].BatchNumber)
+
+	// Should prune nothing.
+	err = f.batchingKeeper.PruneBatches(f.Context())
+	require.NoError(t, err)
+
+	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 75, len(batches))
+	require.Equal(t, uint64(225), batches[0].BatchNumber)
+	require.Equal(t, uint64(299), batches[len(batches)-1].BatchNumber)
+}
+
 func Test_ConstructDataResultTree(t *testing.T) {
 	f := initFixture(t)
 

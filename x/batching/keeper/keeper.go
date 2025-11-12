@@ -18,6 +18,10 @@ import (
 )
 
 type Keeper struct {
+	// authority is the address capable of executing MsgUpdateParams.
+	// Typically, this should be the gov module address.
+	authority string
+
 	stakingKeeper         types.StakingKeeper
 	slashingKeeper        types.SlashingKeeper
 	wasmStorageKeeper     types.WasmStorageKeeper
@@ -34,11 +38,13 @@ type Keeper struct {
 	validatorTreeEntries  collections.Map[collections.Pair[uint64, []byte], types.ValidatorTreeEntry]
 	dataResultTreeEntries collections.Map[uint64, types.DataResultTreeEntries]
 	batchSignatures       collections.Map[collections.Pair[uint64, []byte], types.BatchSignatures]
+	params                collections.Item[types.Params]
 }
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService storetypes.KVStoreService,
+	authority string,
 	sk types.StakingKeeper,
 	slk types.SlashingKeeper,
 	wsk types.WasmStorageKeeper,
@@ -50,6 +56,7 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
+		authority:             authority,
 		stakingKeeper:         sk,
 		slashingKeeper:        slk,
 		wasmStorageKeeper:     wsk,
@@ -64,6 +71,7 @@ func NewKeeper(
 		validatorTreeEntries:  collections.NewMap(sb, types.ValidatorTreeEntriesKeyPrefix, "validator_tree_entries", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.ValidatorTreeEntry](cdc)),
 		dataResultTreeEntries: collections.NewMap(sb, types.DataResultTreeEntriesKeyPrefix, "data_result_tree_entries", collections.Uint64Key, codec.CollValue[types.DataResultTreeEntries](cdc)),
 		batchSignatures:       collections.NewMap(sb, types.BatchSignaturesKeyPrefix, "batch_signatures", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.BatchSignatures](cdc)),
+		params:                collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
 
 	schema, err := sb.Build()
@@ -94,6 +102,19 @@ func (i BatchIndexes) IndexesList() []collections.Index[int64, types.Batch] {
 	return []collections.Index[int64, types.Batch]{
 		i.Number,
 	}
+}
+
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	return k.params.Set(ctx, params)
+}
+
+func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
+	return k.params.Get(ctx)
+}
+
+// GetAuthority returns the module's authority.
+func (k Keeper) GetAuthority() string {
+	return k.authority
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
