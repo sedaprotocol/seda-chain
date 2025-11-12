@@ -85,3 +85,13 @@ message DataResult {
   // process.
   bool consensus = 12 [ (gogoproto.jsontag) = "consensus" ];
 }
+
+// Params defines the parameters for the batching module.
+message Params {
+  // NumBatchesToKeep is the number of batches to keep in the state without
+  // pruning.
+  uint64 num_batches_to_keep = 1;
+  // MaxBatchPrunePerBlock is the maximum number of batches to prune per
+  // block.
+  uint64 max_batch_prune_per_block = 2;
+}

@@ -222,6 +222,7 @@ func initFixture(tb testing.TB) *fixture {
 	batchingKeeper := batchingkeeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(keys[types.StoreKey]),
+		authtypes.NewModuleAddress("gov").String(),
 		stakingKeeper,
 		slashingKeeper,
 		wasmStorageKeeper,

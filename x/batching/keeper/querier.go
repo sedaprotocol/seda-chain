@@ -123,3 +123,12 @@ func (q Querier) DataResult(c context.Context, req *types.QueryDataResultRequest
 	}
 	return result, nil
 }
+
+func (q Querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	params, err := q.GetParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryParamsResponse{Params: params}, nil
+}

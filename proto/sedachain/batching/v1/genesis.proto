@@ -16,6 +16,7 @@ message GenesisState {
   repeated GenesisDataResult data_results = 4 [ (gogoproto.nullable) = false ];
   repeated BatchAssignment batch_assignments = 5
       [ (gogoproto.nullable) = false ];
+  Params params = 6 [ (gogoproto.nullable) = false ];
 }
 
 // BatchAssignment represents a batch assignment for genesis export

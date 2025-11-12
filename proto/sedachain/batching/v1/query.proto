@@ -34,6 +34,11 @@ service Query {
     option (google.api.http).get =
         "/seda-chain/batching/data_result/{data_request_id}";
   }
+
+  // Params returns the total set of batching parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/seda-chain/batching/params";
+  }
 }
 
 // The request message for QueryBatch RPC.
@@ -89,4 +94,13 @@ message QueryDataResultRequest {
 message QueryDataResultResponse {
   DataResult data_result = 1 [ (gogoproto.nullable) = true ];
   BatchAssignment batch_assignment = 2;
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
 }

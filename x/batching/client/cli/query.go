@@ -29,6 +29,7 @@ func GetQueryCmd(_ string) *cobra.Command {
 		GetCmdQueryBatchByHeight(),
 		GetCmdQueryBatches(),
 		GetCmdQueryDataResult(),
+		GetCmdQueryParams(),
 	)
 	return cmd
 }
@@ -167,6 +168,31 @@ func GetCmdQueryDataResult() *cobra.Command {
 				}
 			}
 			res, err := queryClient.DataResult(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryParams returns the command for querying the batching module parameters.
+func GetCmdQueryParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query batching module parameters",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Params(cmd.Context(), &types.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}

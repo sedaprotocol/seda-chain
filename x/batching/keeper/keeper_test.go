@@ -61,7 +61,7 @@ func setupKeeper(t *testing.T) (*keeper.Keeper, moduletestutil.TestEncodingConfi
 	ctx := testCtx.Ctx
 	encCfg := moduletestutil.MakeTestEncodingConfig(batching.AppModuleBasic{})
 
-	keeper := keeper.NewKeeper(encCfg.Codec, runtime.NewKVStoreService(key), nil, nil, nil, nil, nil, nil, nil)
+	keeper := keeper.NewKeeper(encCfg.Codec, runtime.NewKVStoreService(key), "", nil, nil, nil, nil, nil, nil, nil)
 
 	return &keeper, encCfg, ctx
 }
