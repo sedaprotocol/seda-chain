@@ -5,15 +5,17 @@ import (
 )
 
 const (
-	DefaultNumBatchesToKeep      = 10000
-	DefaultMaxBatchPrunePerBlock = 100
+	DefaultNumBatchesToKeep              = 10000
+	DefaultMaxBatchPrunePerBlock         = 100
+	DefaultMaxDataResultsToCheckForPrune = 100
 )
 
 // DefaultParams returns default batching module parameters.
 func DefaultParams() Params {
 	return Params{
-		NumBatchesToKeep:      DefaultNumBatchesToKeep,
-		MaxBatchPrunePerBlock: DefaultMaxBatchPrunePerBlock,
+		NumBatchesToKeep:              DefaultNumBatchesToKeep,
+		MaxBatchPrunePerBlock:         DefaultMaxBatchPrunePerBlock,
+		MaxDataResultsToCheckForPrune: DefaultMaxDataResultsToCheckForPrune,
 	}
 }
 
