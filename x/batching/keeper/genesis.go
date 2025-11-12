@@ -14,9 +14,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 	if err != nil {
 		panic(err)
 	}
-	if err := k.firstBatchNumber.Set(ctx, data.FirstBatchNumber); err != nil {
-		panic(err)
-	}
 	for _, batch := range data.Batches {
 		err := k.setBatch(ctx, batch)
 		if err != nil {
@@ -72,10 +69,6 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
-	firstBatchNumber, err := k.firstBatchNumber.Get(ctx)
-	if err != nil {
-		panic(err)
-	}
 	batches, err := k.GetAllBatches(ctx)
 	if err != nil {
 		panic(err)
@@ -92,5 +85,5 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
-	return types.NewGenesisState(curBatchNum, firstBatchNumber, batches, batchData, dataResults, batchAssignments, params)
+	return types.NewGenesisState(curBatchNum, batches, batchData, dataResults, batchAssignments, params)
 }
