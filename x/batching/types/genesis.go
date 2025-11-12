@@ -13,7 +13,6 @@ import (
 // NewGenesisState constructs a GenesisState object.
 func NewGenesisState(
 	curBatchNum uint64,
-	firstBatchNumber uint64,
 	batches []Batch,
 	batchData []BatchData,
 	dataResults []GenesisDataResult,
@@ -22,7 +21,6 @@ func NewGenesisState(
 ) GenesisState {
 	return GenesisState{
 		CurrentBatchNumber: curBatchNum,
-		FirstBatchNumber:   firstBatchNumber,
 		Batches:            batches,
 		BatchData:          batchData,
 		DataResults:        dataResults,
@@ -33,16 +31,12 @@ func NewGenesisState(
 
 // DefaultGenesisState creates a default GenesisState object.
 func DefaultGenesisState() *GenesisState {
-	state := NewGenesisState(collections.DefaultSequenceStart, 0, nil, nil, nil, nil, DefaultParams())
+	state := NewGenesisState(collections.DefaultSequenceStart, nil, nil, nil, nil, DefaultParams())
 	return &state
 }
 
 // ValidateGenesis validates batching genesis data.
 func ValidateGenesis(gs GenesisState) error {
-	if gs.CurrentBatchNumber != uint64(len(gs.Batches)) {
-		return fmt.Errorf("current batch number %d should be equal to number of batches %d", gs.CurrentBatchNumber, len(gs.Batches))
-	}
-
 	for _, batch := range gs.Batches {
 		if batch.BatchNumber > gs.CurrentBatchNumber {
 			return fmt.Errorf("batch number %d should not exceed current batch number %d", batch.BatchNumber, gs.CurrentBatchNumber)

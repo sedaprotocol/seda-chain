@@ -10,6 +10,7 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
@@ -24,97 +25,44 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 	if err != nil {
 		return err
 	}
-	if !isActivated {
-		k.Logger(ctx).Info("skip batching since proving scheme has not been activated", "index", sedatypes.SEDAKeyIndexSecp256k1)
-		return nil
-	}
 
-	batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
-	if err != nil {
-		if errors.Is(err, types.ErrNoBatchingUpdate) {
+	if isActivated {
+		batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
+		if err != nil {
+			if !errors.Is(err, types.ErrNoBatchingUpdate) {
+				return err
+			}
 			k.Logger(ctx).Info("skip batch creation due to no update", "height", ctx.BlockHeight())
-			return nil
+		} else {
+			err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
+			if err != nil {
+				return err
+			}
 		}
-		return err
+	} else {
+		k.Logger(ctx).Info("skip batching since proving scheme has not been activated", "index", sedatypes.SEDAKeyIndexSecp256k1)
 	}
 
-	err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
-	if err != nil {
-		return err
-	}
-
-	return k.PruneBatches(ctx)
-}
-
-// PruneBatches prunes batches and their associated data based on module
-// parameters NumBatchesToKeep and MaxBatchPrunePerBlock.
-func (k Keeper) PruneBatches(ctx sdk.Context) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Note the current batch number here has not been used yet.
-	currentBatchNum, err := k.GetCurrentBatchNum(ctx)
+	lastPrunedBatchNum, err := k.PruneBatches(ctx, params.NumBatchesToKeep, params.MaxBatchPrunePerBlock)
 	if err != nil {
-		return err
-	}
-	firstBatchNum, err := k.firstBatchNumber.Get(ctx)
-	if err != nil {
-		return err
-	}
-	if currentBatchNum-firstBatchNum <= params.NumBatchesToKeep {
-		k.Logger(ctx).Info("skip batch pruning", "current_batch_num", currentBatchNum, "first_batch_num", firstBatchNum)
+		telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
+		k.Logger(ctx).Error("error while pruning batches", "err", err)
 		return nil
 	}
 
-	// Prune range is [firstBatchNum, newFirstBatchNum)
-	firstBatchHeight, err := k.batches.Indexes.Number.MatchExact(ctx, firstBatchNum)
+	err = k.PruneDataResults(ctx, params.MaxDataResultsToCheckForPrune, lastPrunedBatchNum)
 	if err != nil {
-		return err
+		telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
+		k.Logger(ctx).Error("error while pruning data results", "err", err)
+		return nil
 	}
 
-	newFirstBatchNum := min(firstBatchNum+params.MaxBatchPrunePerBlock, currentBatchNum-params.NumBatchesToKeep)
-	newFirstBatchHeight, err := k.batchIndex.Get(ctx, newFirstBatchNum)
-	if err != nil {
-		return err
-	}
-
-	// Clear batches and their associated data.
-	batchNumRng := new(collections.Range[uint64]).StartInclusive(firstBatchNum).EndExclusive(newFirstBatchNum)
-	err = k.batchIndex.Clear(ctx, batchNumRng)
-	if err != nil {
-		return err
-	}
-	err = k.dataResultTreeEntries.Clear(ctx, batchNumRng)
-	if err != nil {
-		return err
-	}
-
-	batchHeightRng := new(collections.Range[int64]).StartInclusive(firstBatchHeight).EndExclusive(newFirstBatchHeight)
-	err = k.batchesMap.Clear(ctx, batchHeightRng)
-	if err != nil {
-		return err
-	}
-
-	valRng := new(collections.Range[collections.Pair[uint64, []byte]]).
-		StartInclusive(collections.PairPrefix[uint64, []byte](firstBatchNum)).
-		EndExclusive(collections.PairPrefix[uint64, []byte](newFirstBatchNum))
-	err = k.validatorTreeEntries.Clear(ctx, valRng)
-	if err != nil {
-		return err
-	}
-	err = k.batchSignatures.Clear(ctx, valRng)
-	if err != nil {
-		return err
-	}
-
-	err = k.firstBatchNumber.Set(ctx, newFirstBatchNum)
-	if err != nil {
-		return err
-	}
-
-	k.Logger(ctx).Info("successfully pruned batch data")
+	telemetry.SetGauge(0, types.TelemetryKeyBatchingPruningFail)
 	return nil
 }
 

@@ -20,5 +20,4 @@ var (
 	DataResultTreeEntriesKeyPrefix = collections.NewPrefix(6)
 	BatchSignaturesKeyPrefix       = collections.NewPrefix(7)
 	ParamsKey                      = collections.NewPrefix(8)
-	FirstBatchNumberKey            = collections.NewPrefix(9)
 )
