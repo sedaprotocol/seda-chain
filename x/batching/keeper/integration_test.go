@@ -261,6 +261,9 @@ func initFixture(tb testing.TB) *fixture {
 		types.ModuleName:            batchingModule,
 	})
 
+	// TODO figure out why this is not run in NewIntegrationApp
+	batchingKeeper.InitGenesis(ctx, *types.DefaultGenesisState())
+
 	return &fixture{
 		IntegationApp:     integrationApp,
 		cdc:               cdc,
@@ -280,7 +283,7 @@ func initFixture(tb testing.TB) *fixture {
 }
 
 func generateFirstBatch(t *testing.T, f *fixture, numValidators int) ([]sdk.ValAddress, []*ecdsa.PrivateKey, []sdkstakingtypes.Validator) {
-	valAddrs, _, _ := addBatchSigningValidators(t, f, numValidators)
+	valAddrs, _, _ := f.addBatchSigningValidators(t, numValidators)
 
 	// Create private keys for all validators and add them to the first batch
 	privKeys := make([]*ecdsa.PrivateKey, numValidators)

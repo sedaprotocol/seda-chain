@@ -12,6 +12,10 @@ import (
 )
 
 var validGenesisJSON = []byte(`{
+      "params": {
+        "num_batches_to_keep": 12,
+        "max_batch_prune_per_block": 5
+      },
       "current_batch_number": "5",
       "batches": [
         {

@@ -181,6 +181,34 @@ func (k Keeper) GetValidatorTreeEntry(ctx context.Context, batchNum uint64, valA
 	return entry, nil
 }
 
+func (k Keeper) GetValidatorTreeEntries(ctx context.Context, batchNum uint64) ([]types.ValidatorTreeEntry, error) {
+	rng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
+	itr, err := k.validatorTreeEntries.Iterate(ctx, rng)
+	if err != nil {
+		return nil, err
+	}
+	defer itr.Close()
+
+	kvs, err := itr.KeyValues()
+	if err != nil {
+		return nil, err
+	}
+
+	valEntries := make([]types.ValidatorTreeEntry, len(kvs))
+	for i, kv := range kvs {
+		valEntries[i] = kv.Value
+	}
+	return valEntries, nil
+}
+
+func (k Keeper) GetDataResultTreeEntries(ctx context.Context, batchNum uint64) (types.DataResultTreeEntries, error) {
+	dataEntries, err := k.dataResultTreeEntries.Get(ctx, batchNum)
+	if err != nil {
+		return types.DataResultTreeEntries{}, err
+	}
+	return dataEntries, nil
+}
+
 func (k Keeper) setValidatorTreeEntry(ctx context.Context, batchNum uint64, entry types.ValidatorTreeEntry) error {
 	err := k.validatorTreeEntries.Set(ctx, collections.Join(batchNum, entry.ValidatorAddress.Bytes()), entry)
 	if err != nil {
@@ -199,34 +227,18 @@ func (k Keeper) setDataResultTreeEntry(ctx context.Context, batchNum uint64, dat
 
 // GetBatchData returns various data for a given batch.
 func (k Keeper) GetBatchData(ctx context.Context, batchNum uint64) (types.BatchData, error) {
-	// Get data result tree entries.
-	dataEntries, err := k.dataResultTreeEntries.Get(ctx, batchNum)
+	dataEntries, err := k.GetDataResultTreeEntries(ctx, batchNum)
 	if err != nil {
 		return types.BatchData{}, err
 	}
-
-	// Get validator tree entries.
-	valRng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
-	valItr, err := k.validatorTreeEntries.Iterate(ctx, valRng)
+	valEntries, err := k.GetValidatorTreeEntries(ctx, batchNum)
 	if err != nil {
 		return types.BatchData{}, err
 	}
-	defer valItr.Close()
-
-	valKvs, err := valItr.KeyValues()
-	if err != nil {
-		return types.BatchData{}, err
-	}
-	valEntries := make([]types.ValidatorTreeEntry, len(valKvs))
-	for i, kv := range valKvs {
-		valEntries[i] = kv.Value
-	}
-
 	sigs, err := k.GetBatchSignatures(ctx, batchNum)
 	if err != nil {
 		return types.BatchData{}, err
 	}
-
 	return types.BatchData{
 		BatchNumber:       batchNum,
 		DataResultEntries: dataEntries,
@@ -248,6 +260,7 @@ func (k Keeper) GetBatchSignatures(ctx context.Context, batchNum uint64) ([]type
 	if err != nil {
 		return nil, err
 	}
+
 	sigs := make([]types.BatchSignatures, len(kvs))
 	for i, kv := range kvs {
 		sigs[i] = kv.Value
@@ -265,29 +278,4 @@ func (k Keeper) SetBatchSigSecp256k1(ctx context.Context, batchNum uint64, valAd
 			Secp256K1Signature: signature,
 		},
 	)
-}
-
-func (k Keeper) clearBatchData(ctx context.Context, batchNum uint64, batchHeight int64) error {
-	err := k.batches.Remove(ctx, batchHeight)
-	if err != nil {
-		return err
-	}
-
-	err = k.dataResultTreeEntries.Remove(ctx, batchNum)
-	if err != nil {
-		return err
-	}
-
-	valRng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
-	err = k.validatorTreeEntries.Clear(ctx, valRng)
-	if err != nil {
-		return err
-	}
-
-	sigRng := collections.NewPrefixedPairRange[uint64, []byte](batchNum)
-	err = k.batchSignatures.Clear(ctx, sigRng)
-	if err != nil {
-		return err
-	}
-	return nil
 }

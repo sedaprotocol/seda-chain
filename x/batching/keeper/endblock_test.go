@@ -16,6 +16,7 @@ import (
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -32,13 +33,15 @@ import (
 func TestBatchPruning(t *testing.T) {
 	f := initFixture(t)
 
+	f.addBatchSigningValidators(t, 10)
+
 	err := f.batchingKeeper.SetParams(f.Context(), types.Params{
 		NumBatchesToKeep:      75,
 		MaxBatchPrunePerBlock: 150,
 	})
 	require.NoError(t, err)
 
-	// Create 300 batches.
+	// Create 300 batches with random associated data.
 	for range 300 {
 		f.AddBlock()
 
@@ -47,6 +50,8 @@ func TestBatchPruning(t *testing.T) {
 		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
 		require.NoError(t, err)
 		err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
+		require.NoError(t, err)
+		err = f.batchingKeeper.SetBatchSigSecp256k1(f.Context(), batch.BatchNumber, valEntries[0].ValidatorAddress, generateRandomBytes(64))
 		require.NoError(t, err)
 	}
 
@@ -64,6 +69,13 @@ func TestBatchPruning(t *testing.T) {
 	require.Equal(t, uint64(150), batches[0].BatchNumber)
 	require.Equal(t, uint64(299), batches[len(batches)-1].BatchNumber)
 
+	for i := 0; i <= 149; i++ {
+		f.checkNoBatchData(t, uint64(i))
+	}
+	for i := 150; i <= 299; i++ {
+		f.checkBatchData(t, uint64(i))
+	}
+
 	// Should prune second 75 batches.
 	err = f.batchingKeeper.PruneBatches(f.Context())
 	require.NoError(t, err)
@@ -74,6 +86,13 @@ func TestBatchPruning(t *testing.T) {
 	require.Equal(t, uint64(225), batches[0].BatchNumber)
 	require.Equal(t, uint64(299), batches[len(batches)-1].BatchNumber)
 
+	for i := 0; i <= 224; i++ {
+		f.checkNoBatchData(t, uint64(i))
+	}
+	for i := 225; i <= 299; i++ {
+		f.checkBatchData(t, uint64(i))
+	}
+
 	// Should prune nothing.
 	err = f.batchingKeeper.PruneBatches(f.Context())
 	require.NoError(t, err)
@@ -83,6 +102,45 @@ func TestBatchPruning(t *testing.T) {
 	require.Equal(t, 75, len(batches))
 	require.Equal(t, uint64(225), batches[0].BatchNumber)
 	require.Equal(t, uint64(299), batches[len(batches)-1].BatchNumber)
+
+	for i := 0; i <= 224; i++ {
+		f.checkNoBatchData(t, uint64(i))
+	}
+	for i := 225; i <= 299; i++ {
+		f.checkBatchData(t, uint64(i))
+	}
+}
+
+func (f *fixture) checkNoBatchData(t *testing.T, batchNum uint64) {
+	batch, err := f.batchingKeeper.GetBatchByBatchNumber(f.Context(), batchNum)
+	require.ErrorIs(t, err, collections.ErrNotFound)
+	dataEntries, err := f.batchingKeeper.GetDataResultTreeEntries(f.Context(), batchNum)
+	require.ErrorIs(t, err, collections.ErrNotFound)
+	valEntries, _ := f.batchingKeeper.GetValidatorTreeEntries(f.Context(), batchNum)
+	// require.ErrorIs(t, err, collections.ErrNotFound) // this function does not error even if there are no entries.
+	sigs, _ := f.batchingKeeper.GetBatchSignatures(f.Context(), batchNum)
+	// require.ErrorIs(t, err, collections.ErrNotFound) // this function does not error even if there are no entries.
+
+	require.Empty(t, batch)
+	require.Empty(t, dataEntries)
+	require.Empty(t, valEntries)
+	require.Empty(t, sigs)
+}
+
+func (f *fixture) checkBatchData(t *testing.T, batchNum uint64) {
+	batch, err := f.batchingKeeper.GetBatchByBatchNumber(f.Context(), batchNum)
+	require.NoError(t, err)
+	dataEntries, err := f.batchingKeeper.GetDataResultTreeEntries(f.Context(), batchNum)
+	require.NoError(t, err)
+	valEntries, err := f.batchingKeeper.GetValidatorTreeEntries(f.Context(), batchNum)
+	require.NoError(t, err)
+	sigs, err := f.batchingKeeper.GetBatchSignatures(f.Context(), batchNum)
+	require.NoError(t, err)
+
+	require.NotEmpty(t, batch)
+	require.NotEmpty(t, dataEntries)
+	require.NotEmpty(t, valEntries)
+	require.NotEmpty(t, sigs)
 }
 
 func Test_ConstructDataResultTree(t *testing.T) {
@@ -119,7 +177,7 @@ func Test_ConstructDataResultTree(t *testing.T) {
 
 func Test_ConstructValidatorTree(t *testing.T) {
 	f := initFixture(t)
-	_, pks, powers := addBatchSigningValidators(t, f, 10)
+	_, pks, powers := f.addBatchSigningValidators(t, 10)
 
 	entries, root, err := f.batchingKeeper.ConstructValidatorTree(f.Context())
 	require.NoError(t, err)
@@ -163,7 +221,7 @@ func Test_ConstructValidatorTree(t *testing.T) {
 
 // addBatchSigningValidators funds test addresses, adds them as validators,
 // and registers secp256k1 public keys for their batch signing.
-func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddress, [][]byte, []int64) {
+func (f *fixture) addBatchSigningValidators(t testing.TB, num int) ([]sdk.AccAddress, [][]byte, []int64) {
 	t.Helper()
 
 	ctx := f.Context()
@@ -208,7 +266,7 @@ func addBatchSigningValidators(t *testing.T, f *fixture, num int) ([]sdk.AccAddr
 
 // generateDataResults returns a given number of randomly-generated
 // data results.
-func generateDataResults(t *testing.T, num int) []types.DataResult {
+func generateDataResults(t testing.TB, num int) []types.DataResult {
 	t.Helper()
 	dataResults := make([]types.DataResult, num)
 	for i := range dataResults {
@@ -755,7 +813,7 @@ func Test_ConstructValidatorTreeWithTestData(t *testing.T) {
 		log.Fatalf("Error unmarshalling JSON: %v", err)
 	}
 
-	_, _, powers := addBatchSigningValidatorsFromTestData(t, f, data.Validators, data.Wallets)
+	_, _, powers := f.addBatchSigningValidatorsFromTestData(t, data.Validators, data.Wallets)
 
 	entries, root, err := f.batchingKeeper.ConstructValidatorTree(f.Context())
 	require.NoError(t, err)
@@ -788,7 +846,7 @@ func Test_ConstructValidatorTreeWithTestData(t *testing.T) {
 	require.Equal(t, mustHexToBytes(data.ValidatorTree.Root), root)
 }
 
-func addBatchSigningValidatorsFromTestData(t *testing.T, f *fixture, testData []Validator, wallets []Wallet) ([]sdk.AccAddress, [][]byte, []int64) {
+func (f *fixture) addBatchSigningValidatorsFromTestData(t *testing.T, testData []Validator, wallets []Wallet) ([]sdk.AccAddress, [][]byte, []int64) {
 	t.Helper()
 
 	ctx := f.Context()
