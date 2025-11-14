@@ -151,6 +151,72 @@ func TestEndBlock(t *testing.T) {
 	}
 }
 
+// TestPayouts focuses on checking before and after balances of relevant accounts
+// and objects.
+func TestPayouts(t *testing.T) {
+	f := testutil.InitFixture(t, false, nil)
+	f.AddStakers(t, 5)
+
+	proxyPubKeys := []string{"03b27f2df0cbdb5cdadff5b4be0c9fda5aa3a59557ef6d0b49b4298ef42c8ce2b0", "020173bd90e73c5f8576b3141c53aa9959b10a1daf1bc9c0ccf0a942932c703dec"}
+	payoutAddrs := []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32("seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f"),
+		sdk.MustAccAddressFromBech32("seda149sewl80wccuzhhukxgn2jg4kcun02d8qclwkt"),
+	}
+	for i := range proxyPubKeys {
+		f.AddDataProxy(t, proxyPubKeys[i], payoutAddrs[i].String(), sdk.NewCoin(testutil.BondDenom, math.NewInt(5e18)))
+	}
+
+	tests := []struct {
+		name              string
+		memo              string
+		replicationFactor int
+		numCommits        int
+		numReveals        int
+		timeout           bool
+		expExitCode       uint32
+	}{
+		{
+			name:              "full single commit-reveal",
+			memo:              base64.StdEncoding.EncodeToString([]byte("memo0")),
+			replicationFactor: 1,
+			numCommits:        1,
+			numReveals:        1,
+			timeout:           false,
+			expExitCode:       0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Before
+			for _, addr := range payoutAddrs {
+				balance := f.BankKeeper.GetBalance(f.Context(), sdk.AccAddress(addr), testutil.BondDenom)
+				require.Equal(t, math.ZeroInt(), balance.Amount)
+			}
+
+			dr := testutil.NewTestDRWithRandomPrograms(
+				[]byte("reveal"),   // reveal
+				tt.memo,            // memo
+				150000000000000000, // gas used
+				0,                  // exit code
+				proxyPubKeys,
+				tt.replicationFactor,
+				f.Context().BlockTime(),
+			)
+
+			dr.ExecuteDataRequestFlow(f, tt.numCommits, tt.numReveals, tt.timeout)
+
+			err := f.CoreKeeper.EndBlock(f.Context())
+			require.NoError(t, err)
+
+			// After
+			for _, addr := range payoutAddrs {
+				balance := f.BankKeeper.GetBalance(f.Context(), addr, testutil.BondDenom)
+				require.Equal(t, math.NewInt(5e18), balance.Amount)
+			}
+		})
+	}
+}
+
 func TestTxFeeRefund(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 	f.AddStakers(t, 5)

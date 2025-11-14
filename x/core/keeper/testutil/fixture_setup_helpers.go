@@ -106,6 +106,13 @@ func (f *Fixture) AddStakers(tb testing.TB, num int) []Staker {
 	return stakers
 }
 
+func (f *Fixture) AddDataProxy(tb testing.TB, proxyPubKey, payoutAddr string, proxyFee sdk.Coin) {
+	tb.Helper()
+
+	err := f.SetDataProxyConfig(proxyPubKey, payoutAddr, proxyFee)
+	require.NoError(tb, err)
+}
+
 func (f *Fixture) DrainDataRequestPool(targetHeight uint64) []byte {
 	return f.executeCoreContract(
 		f.Creator.Address(),
