@@ -39,6 +39,10 @@ type Keeper struct {
 	dataResultTreeEntries collections.Map[uint64, types.DataResultTreeEntries]
 	batchSignatures       collections.Map[collections.Pair[uint64, []byte], types.BatchSignatures]
 	params                collections.Item[types.Params]
+
+	// Additional maps for efficient pruning
+	batchesMap collections.Map[int64, types.Batch]
+	batchIndex collections.Map[uint64, int64]
 }
 
 func NewKeeper(
@@ -79,6 +83,12 @@ func NewKeeper(
 		panic(err)
 	}
 	k.Schema = schema
+
+	// Additional maps for efficient pruning
+	sbTemp := collections.NewSchemaBuilder(storeService)
+	k.batchesMap = collections.NewMap(sbTemp, types.BatchesKeyPrefix, "batches", collections.Int64Key, codec.CollValue[types.Batch](cdc))
+	k.batchIndex = collections.NewMap(sbTemp, types.BatchNumberKeyPrefix, "batch_by_number", collections.Uint64Key, collections.Int64Value)
+
 	return k
 }
 

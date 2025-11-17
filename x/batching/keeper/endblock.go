@@ -54,6 +54,7 @@ func (k Keeper) PruneBatches(ctx sdk.Context) error {
 		return err
 	}
 
+	// Note the current batch number is the number for the next batch.
 	currentBatchNum, err := k.GetCurrentBatchNum(ctx)
 	if err != nil {
 		return err
@@ -63,55 +64,47 @@ func (k Keeper) PruneBatches(ctx sdk.Context) error {
 		return nil
 	}
 
-	rng := new(collections.Range[uint64]).EndExclusive(currentBatchNum - params.NumBatchesToKeep)
-	iter, err := k.batches.Indexes.Number.Iterate(ctx, rng)
+	iter, err := k.batches.Indexes.Number.Iterate(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer iter.Close()
 
-	var firstKey *collections.Pair[uint64, int64]
-	var pruneCount uint64
-	for ; iter.Valid(); iter.Next() {
-		fullKey, err := iter.FullKey()
-		if err != nil {
-			return err
-		}
-		if firstKey == nil {
-			firstKey = &fullKey
-		}
-
-		batchNum, batchHeight := fullKey.K1(), fullKey.K2()
-		if batchNum >= currentBatchNum-params.NumBatchesToKeep {
-			// Should not happen because of the range configuration.
-			break
-		}
-
-		err = k.batches.Remove(ctx, batchHeight)
-		if err != nil {
-			return err
-		}
-		k.Logger(ctx).Info("pruned batch", "batch_num", batchNum)
-
-		pruneCount++
-		if pruneCount == params.MaxBatchPrunePerBlock {
-			break
-		}
-	}
-
-	if firstKey == nil {
-		// This means nothing was pruned.
-		k.Logger(ctx).Info("no batches to prune")
+	if !iter.Valid() {
+		k.Logger(ctx).Info("nothing was pruned due to invalid iterator - should not happen")
 		return nil
 	}
 
-	dataRng := new(collections.Range[uint64]).EndExclusive(firstKey.K1() + pruneCount)
-	err = k.dataResultTreeEntries.Clear(ctx, dataRng)
+	firstKey, err := iter.FullKey()
+	if err != nil {
+		return err
+	}
+	firstBatchNumber, firstBatchHeight := firstKey.K1(), firstKey.K2()
+	lastBatchNumber := min(firstBatchNumber+params.MaxBatchPrunePerBlock, currentBatchNum-params.NumBatchesToKeep)
+	lastBatchHeight, err := k.batchIndex.Get(ctx, lastBatchNumber)
 	if err != nil {
 		return err
 	}
 
-	valRng := new(collections.Range[collections.Pair[uint64, []byte]]).EndExclusive(collections.PairPrefix[uint64, []byte](firstKey.K1() + pruneCount))
+	batchNumRng := new(collections.Range[uint64]).StartInclusive(firstBatchNumber).EndExclusive(lastBatchNumber)
+	err = k.batchIndex.Clear(ctx, batchNumRng)
+	if err != nil {
+		return err
+	}
+	err = k.dataResultTreeEntries.Clear(ctx, batchNumRng)
+	if err != nil {
+		return err
+	}
+
+	batchHeightRng := new(collections.Range[int64]).StartInclusive(firstBatchHeight).EndExclusive(lastBatchHeight)
+	err = k.batchesMap.Clear(ctx, batchHeightRng)
+	if err != nil {
+		return err
+	}
+
+	valRng := new(collections.Range[collections.Pair[uint64, []byte]]).
+		StartInclusive(collections.PairPrefix[uint64, []byte](firstBatchNumber)).
+		EndInclusive(collections.PairPrefix[uint64, []byte](lastBatchNumber))
 	err = k.validatorTreeEntries.Clear(ctx, valRng)
 	if err != nil {
 		return err
@@ -121,6 +114,7 @@ func (k Keeper) PruneBatches(ctx sdk.Context) error {
 		return err
 	}
 
+	k.Logger(ctx).Info("successfully pruned batch data")
 	return nil
 }
 
