@@ -69,11 +69,11 @@ func TestBatchPruning(t *testing.T) {
 	require.Equal(t, uint64(150), batches[0].BatchNumber)
 	require.Equal(t, uint64(299), batches[len(batches)-1].BatchNumber)
 
-	for i := 0; i <= 149; i++ {
-		f.checkNoBatchData(t, uint64(i))
+	for i := uint64(0); i <= 149; i++ {
+		f.checkNoBatchData(t, i)
 	}
-	for i := 150; i <= 299; i++ {
-		f.checkBatchData(t, uint64(i))
+	for i := uint64(150); i <= 299; i++ {
+		f.checkBatchData(t, i)
 	}
 
 	// Should prune second 75 batches.
@@ -121,10 +121,10 @@ func (f *fixture) checkNoBatchData(t *testing.T, batchNum uint64) {
 	sigs, _ := f.batchingKeeper.GetBatchSignatures(f.Context(), batchNum)
 	// require.ErrorIs(t, err, collections.ErrNotFound) // this function does not error even if there are no entries.
 
-	require.Empty(t, batch)
-	require.Empty(t, dataEntries)
-	require.Empty(t, valEntries)
-	require.Empty(t, sigs)
+	require.Empty(t, batch, "batchNum: %d", batchNum)
+	require.Empty(t, dataEntries, "batchNum: %d", batchNum)
+	require.Empty(t, valEntries, "batchNum: %d", batchNum)
+	require.Empty(t, sigs, "batchNum: %d", batchNum)
 }
 
 func (f *fixture) checkBatchData(t *testing.T, batchNum uint64) {

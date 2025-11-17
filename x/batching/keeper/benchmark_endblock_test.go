@@ -32,6 +32,14 @@ func BenchmarkBatchPruning(b *testing.B) {
 		require.NoError(b, err)
 	}
 
+	// cpuFile, err := os.Create("cpu_refactor.out")
+	// require.NoError(b, err)
+	// defer cpuFile.Close()
+
+	// err = pprof.StartCPUProfile(cpuFile)
+	// require.NoError(b, err)
+	// defer pprof.StopCPUProfile()
+
 	for b.Loop() {
 		err = f.batchingKeeper.PruneBatches(f.Context())
 		require.NoError(b, err)
