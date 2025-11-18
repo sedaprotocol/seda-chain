@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"os"
+	"runtime/pprof"
 	"testing"
 
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
@@ -32,13 +34,13 @@ func BenchmarkBatchPruning(b *testing.B) {
 		require.NoError(b, err)
 	}
 
-	// cpuFile, err := os.Create("cpu_refactor.out")
-	// require.NoError(b, err)
-	// defer cpuFile.Close()
+	cpuFile, err := os.Create("cpu_refactor_new.out")
+	require.NoError(b, err)
+	defer cpuFile.Close()
 
-	// err = pprof.StartCPUProfile(cpuFile)
-	// require.NoError(b, err)
-	// defer pprof.StopCPUProfile()
+	err = pprof.StartCPUProfile(cpuFile)
+	require.NoError(b, err)
+	defer pprof.StopCPUProfile()
 
 	for b.Loop() {
 		err = f.batchingKeeper.PruneBatches(f.Context())
