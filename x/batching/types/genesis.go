@@ -13,6 +13,7 @@ import (
 // NewGenesisState constructs a GenesisState object.
 func NewGenesisState(
 	curBatchNum uint64,
+	firstBatchNumber uint64,
 	batches []Batch,
 	batchData []BatchData,
 	dataResults []GenesisDataResult,
@@ -21,6 +22,7 @@ func NewGenesisState(
 ) GenesisState {
 	return GenesisState{
 		CurrentBatchNumber: curBatchNum,
+		FirstBatchNumber:   firstBatchNumber,
 		Batches:            batches,
 		BatchData:          batchData,
 		DataResults:        dataResults,
@@ -31,7 +33,7 @@ func NewGenesisState(
 
 // DefaultGenesisState creates a default GenesisState object.
 func DefaultGenesisState() *GenesisState {
-	state := NewGenesisState(collections.DefaultSequenceStart, nil, nil, nil, nil, DefaultParams())
+	state := NewGenesisState(collections.DefaultSequenceStart, 0, nil, nil, nil, nil, DefaultParams())
 	return &state
 }
 

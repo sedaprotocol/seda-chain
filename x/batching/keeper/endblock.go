@@ -54,39 +54,34 @@ func (k Keeper) PruneBatches(ctx sdk.Context) error {
 		return err
 	}
 
-	// Note the current batch number is the number for the next batch.
+	// Note the current batch number here has not been used yet.
 	currentBatchNum, err := k.GetCurrentBatchNum(ctx)
 	if err != nil {
 		return err
 	}
-	if currentBatchNum <= params.NumBatchesToKeep {
-		k.Logger(ctx).Info("skip batch pruning", "current_batch_num", currentBatchNum, "num_batches_to_keep", params.NumBatchesToKeep)
+	firstBatchNum, err := k.firstBatchNumber.Get(ctx)
+	if err != nil {
+		return err
+	}
+	if currentBatchNum-firstBatchNum <= params.NumBatchesToKeep {
+		k.Logger(ctx).Info("skip batch pruning", "current_batch_num", currentBatchNum, "first_batch_num", firstBatchNum)
 		return nil
 	}
 
-	iter, err := k.batches.Indexes.Number.Iterate(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer iter.Close()
-
-	if !iter.Valid() {
-		k.Logger(ctx).Info("nothing was pruned due to invalid iterator - should not happen")
-		return nil
-	}
-
-	firstKey, err := iter.FullKey()
-	if err != nil {
-		return err
-	}
-	firstBatchNumber, firstBatchHeight := firstKey.K1(), firstKey.K2()
-	lastBatchNumber := min(firstBatchNumber+params.MaxBatchPrunePerBlock, currentBatchNum-params.NumBatchesToKeep)
-	lastBatchHeight, err := k.batchIndex.Get(ctx, lastBatchNumber)
+	// Prune range is [firstBatchNum, newFirstBatchNum)
+	firstBatchHeight, err := k.batches.Indexes.Number.MatchExact(ctx, firstBatchNum)
 	if err != nil {
 		return err
 	}
 
-	batchNumRng := new(collections.Range[uint64]).StartInclusive(firstBatchNumber).EndExclusive(lastBatchNumber)
+	newFirstBatchNum := min(firstBatchNum+params.MaxBatchPrunePerBlock, currentBatchNum-params.NumBatchesToKeep)
+	newFirstBatchHeight, err := k.batchIndex.Get(ctx, newFirstBatchNum)
+	if err != nil {
+		return err
+	}
+
+	// Clear batches and their associated data.
+	batchNumRng := new(collections.Range[uint64]).StartInclusive(firstBatchNum).EndExclusive(newFirstBatchNum)
 	err = k.batchIndex.Clear(ctx, batchNumRng)
 	if err != nil {
 		return err
@@ -96,20 +91,25 @@ func (k Keeper) PruneBatches(ctx sdk.Context) error {
 		return err
 	}
 
-	batchHeightRng := new(collections.Range[int64]).StartInclusive(firstBatchHeight).EndExclusive(lastBatchHeight)
+	batchHeightRng := new(collections.Range[int64]).StartInclusive(firstBatchHeight).EndExclusive(newFirstBatchHeight)
 	err = k.batchesMap.Clear(ctx, batchHeightRng)
 	if err != nil {
 		return err
 	}
 
 	valRng := new(collections.Range[collections.Pair[uint64, []byte]]).
-		StartInclusive(collections.PairPrefix[uint64, []byte](firstBatchNumber)).
-		EndInclusive(collections.PairPrefix[uint64, []byte](lastBatchNumber))
+		StartInclusive(collections.PairPrefix[uint64, []byte](firstBatchNum)).
+		EndExclusive(collections.PairPrefix[uint64, []byte](newFirstBatchNum))
 	err = k.validatorTreeEntries.Clear(ctx, valRng)
 	if err != nil {
 		return err
 	}
 	err = k.batchSignatures.Clear(ctx, valRng)
+	if err != nil {
+		return err
+	}
+
+	err = k.firstBatchNumber.Set(ctx, newFirstBatchNum)
 	if err != nil {
 		return err
 	}
