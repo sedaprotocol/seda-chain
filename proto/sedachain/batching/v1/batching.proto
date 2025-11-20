@@ -94,4 +94,7 @@ message Params {
   // MaxBatchPrunePerBlock is the maximum number of batches to prune per
   // block.
   uint64 max_batch_prune_per_block = 2;
+  // MaxDataResultsToCheckForPrune is the maximum number of data results to
+  // check for pruning per block.
+  uint64 max_data_results_to_check_for_prune = 3;
 }

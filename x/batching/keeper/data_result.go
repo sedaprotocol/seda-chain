@@ -15,6 +15,10 @@ func (k Keeper) SetDataResultForBatching(ctx context.Context, result types.DataR
 	return k.dataResults.Set(ctx, collections.Join3(false, result.DrId, result.DrBlockHeight), result)
 }
 
+func (k Keeper) RemoveDataResult(ctx context.Context, batched bool, dataReqID string, dataReqHeight uint64) error {
+	return k.dataResults.Remove(ctx, collections.Join3(batched, dataReqID, dataReqHeight))
+}
+
 // MarkDataResultAsBatched removes the "unbatched" variant of the given
 // data result and stores a "batched" variant.
 func (k Keeper) MarkDataResultAsBatched(ctx context.Context, result types.DataResult, batchNum uint64) error {
@@ -145,6 +149,10 @@ func (k Keeper) SetBatchAssignment(ctx context.Context, dataReqID string, dataRe
 // number for a given height.
 func (k Keeper) GetBatchAssignment(ctx context.Context, dataReqID string, dataReqHeight uint64) (uint64, error) {
 	return k.batchAssignments.Get(ctx, collections.Join(dataReqID, dataReqHeight))
+}
+
+func (k Keeper) RemoveBatchAssignment(ctx context.Context, dataReqID string, dataReqHeight uint64) error {
+	return k.batchAssignments.Remove(ctx, collections.Join(dataReqID, dataReqHeight))
 }
 
 // getAllBatchAssignments retrieves all batch assignments from the store.

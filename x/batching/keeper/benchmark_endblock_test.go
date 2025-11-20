@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/sedaprotocol/seda-chain/x/batching/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,12 +13,6 @@ func BenchmarkBatchPruning(b *testing.B) {
 	numBatches := 2000
 	numBatchesToKeep := uint64(1000)
 	maxBatchPrunePerBlock := uint64(100)
-
-	err := f.batchingKeeper.SetParams(f.Context(), types.Params{
-		NumBatchesToKeep:      numBatchesToKeep,
-		MaxBatchPrunePerBlock: maxBatchPrunePerBlock,
-	})
-	require.NoError(b, err)
 
 	for range numBatches {
 		f.AddBlock()
@@ -33,7 +26,7 @@ func BenchmarkBatchPruning(b *testing.B) {
 	}
 
 	for b.Loop() {
-		err = f.batchingKeeper.PruneBatches(f.Context())
+		_, err := f.batchingKeeper.PruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
 		require.NoError(b, err)
 	}
 }
