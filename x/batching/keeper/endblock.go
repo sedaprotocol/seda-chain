@@ -10,6 +10,7 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
@@ -24,34 +25,45 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 	if err != nil {
 		return err
 	}
-	if !isActivated {
-		k.Logger(ctx).Info("skip batching since proving scheme has not been activated", "index", sedatypes.SEDAKeyIndexSecp256k1)
-		return nil
-	}
 
-	batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
-	if err != nil {
-		if errors.Is(err, types.ErrNoBatchingUpdate) {
+	if isActivated {
+		batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
+		if err != nil {
+			if !errors.Is(err, types.ErrNoBatchingUpdate) {
+				return err
+			}
 			k.Logger(ctx).Info("skip batch creation due to no update", "height", ctx.BlockHeight())
-			return nil
+		} else {
+			err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
+			if err != nil {
+				return err
+			}
 		}
-		return err
-	}
-
-	err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
-	if err != nil {
-		return err
+	} else {
+		k.Logger(ctx).Info("skip batching since proving scheme has not been activated", "index", sedatypes.SEDAKeyIndexSecp256k1)
 	}
 
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		return err
 	}
-	lastRemovedBatchNum, err := k.PruneBatches(ctx, params.NumBatchesToKeep, params.MaxBatchPrunePerBlock)
+
+	lastPrunedBatchNum, err := k.PruneBatches(ctx, params.NumBatchesToKeep, params.MaxBatchPrunePerBlock)
 	if err != nil {
-		return err
+		telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
+		k.Logger(ctx).Error("error while pruning batches", "err", err)
+		return nil
 	}
-	return k.PruneDataResults(ctx, params.MaxDataResultsToCheckForPrune, lastRemovedBatchNum)
+
+	err = k.PruneDataResults(ctx, params.MaxDataResultsToCheckForPrune, lastPrunedBatchNum)
+	if err != nil {
+		telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
+		k.Logger(ctx).Error("error while pruning data results", "err", err)
+		return nil
+	}
+
+	telemetry.SetGauge(0, types.TelemetryKeyBatchingPruningFail)
+	return nil
 }
 
 // ConstructBatch constructs a data result tree from unbatched data

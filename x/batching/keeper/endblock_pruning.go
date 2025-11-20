@@ -73,7 +73,7 @@ func (k Keeper) PruneDataResults(ctx sdk.Context, maxDataResultsToCheckForPrune,
 
 // PruneBatches prunes batches and their associated data based on module
 // parameters NumBatchesToKeep and MaxBatchPrunePerBlock. It returns the
-// batch number of the last removed batch.
+// batch number of the last pruned batch.
 func (k Keeper) PruneBatches(ctx sdk.Context, numBatchesToKeep, maxBatchPrunePerBlock uint64) (uint64, error) {
 	currentBatchNum, err := k.GetCurrentBatchNum(ctx)
 	if err != nil {
@@ -93,7 +93,7 @@ func (k Keeper) PruneBatches(ctx sdk.Context, numBatchesToKeep, maxBatchPrunePer
 
 	var firstKey *collections.Pair[uint64, int64]
 	var pruneCount uint64
-	var lastRemovedBatchNum uint64
+	var lastPrunedBatchNum uint64
 	for ; iter.Valid(); iter.Next() {
 		fullKey, err := iter.FullKey()
 		if err != nil {
@@ -115,7 +115,7 @@ func (k Keeper) PruneBatches(ctx sdk.Context, numBatchesToKeep, maxBatchPrunePer
 		}
 		k.Logger(ctx).Info("pruned batch", "batch_num", batchNum)
 
-		lastRemovedBatchNum = batchNum
+		lastPrunedBatchNum = batchNum
 
 		pruneCount++
 		if pruneCount == maxBatchPrunePerBlock {
@@ -146,5 +146,5 @@ func (k Keeper) PruneBatches(ctx sdk.Context, numBatchesToKeep, maxBatchPrunePer
 		return 0, err
 	}
 
-	return lastRemovedBatchNum, nil
+	return lastPrunedBatchNum, nil
 }
