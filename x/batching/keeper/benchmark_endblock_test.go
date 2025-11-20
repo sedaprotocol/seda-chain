@@ -30,3 +30,30 @@ func BenchmarkBatchPruning(b *testing.B) {
 		require.NoError(b, err)
 	}
 }
+
+func BenchmarkDataResultPruning(b *testing.B) {
+	f := initFixture(b)
+
+	maxDataResultsToCheckForPrune := uint64(100)
+
+	// Create 10 data results for each of 1000 batches
+	for i := range uint64(100) {
+		f.AddBlock()
+
+		dataResults := generateDataResults(b, 10)
+		for _, dataResult := range dataResults {
+			err := f.batchingKeeper.SetDataResultForBatching(f.Context(), dataResult)
+			require.NoError(b, err)
+			err = f.batchingKeeper.MarkDataResultAsBatched(f.Context(), dataResult, i)
+			require.NoError(b, err)
+		}
+	}
+
+	for b.Loop() {
+		f.AddBlock()
+		f.SetRandomLastCommitHash()
+
+		err := f.batchingKeeper.PruneDataResults(f.Context(), maxDataResultsToCheckForPrune, 2000)
+		require.NoError(b, err)
+	}
+}

@@ -15,6 +15,7 @@ func (k Keeper) SetDataResultForBatching(ctx context.Context, result types.DataR
 	return k.dataResults.Set(ctx, collections.Join3(false, result.DrId, result.DrBlockHeight), result)
 }
 
+// RemoveDataResult removes a data result from the store.
 func (k Keeper) RemoveDataResult(ctx context.Context, batched bool, dataReqID string, dataReqHeight uint64) error {
 	return k.dataResults.Remove(ctx, collections.Join3(batched, dataReqID, dataReqHeight))
 }

@@ -905,11 +905,11 @@ func TestDataResultPruning(t *testing.T) {
 	err := f.batchingKeeper.PruneDataResults(f.Context(), maxDataResultsToCheckForPrune, 0)
 	require.NoError(t, err)
 
-	// Create 2 data results for each of 100 batches
+	// Create 10 data results for each of 100 batches
 	for i := range uint64(100) {
 		f.AddBlock()
 
-		dataResults := generateDataResults(t, 2)
+		dataResults := generateDataResults(t, 10)
 		for _, dataResult := range dataResults {
 			err := f.batchingKeeper.SetDataResultForBatching(f.Context(), dataResult)
 			require.NoError(t, err)
@@ -918,19 +918,25 @@ func TestDataResultPruning(t *testing.T) {
 		}
 	}
 
-	// Simulate pruning of batches 0-74.
-	err = f.batchingKeeper.PruneDataResults(f.Context(), maxDataResultsToCheckForPrune, 74)
-	require.NoError(t, err)
-
 	dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), true)
 	require.NoError(t, err)
+	require.Equal(t, 1000, len(dataResults))
 
-	// Simulate pruning of remaining batches.
-	err = f.batchingKeeper.PruneDataResults(f.Context(), maxDataResultsToCheckForPrune, 99)
-	require.NoError(t, err)
+	i := 0
+	for ; i < 30; i++ {
+		f.AddBlock()
+		f.SetRandomLastCommitHash()
 
-	// Here we know that all batches that are checked are pruned. (set to 100)
-	dataResults2, err := f.batchingKeeper.GetDataResults(f.Context(), true)
-	require.NoError(t, err)
-	require.Equal(t, len(dataResults)-100, len(dataResults2))
+		err = f.batchingKeeper.PruneDataResults(f.Context(), maxDataResultsToCheckForPrune, uint64(25+25*i))
+		require.NoError(t, err)
+
+		dataResults, err = f.batchingKeeper.GetDataResults(f.Context(), true)
+		require.NoError(t, err)
+		if len(dataResults) == 0 {
+			break
+		}
+	}
+
+	require.Equal(t, 0, len(dataResults))
+	t.Logf("test completed after %d iterations", i)
 }
