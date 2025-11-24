@@ -37,10 +37,6 @@ func DefaultGenesisState() *GenesisState {
 
 // ValidateGenesis validates batching genesis data.
 func ValidateGenesis(gs GenesisState) error {
-	if gs.CurrentBatchNumber != uint64(len(gs.Batches)) {
-		return fmt.Errorf("current batch number %d should be equal to number of batches %d", gs.CurrentBatchNumber, len(gs.Batches))
-	}
-
 	for _, batch := range gs.Batches {
 		if batch.BatchNumber > gs.CurrentBatchNumber {
 			return fmt.Errorf("batch number %d should not exceed current batch number %d", batch.BatchNumber, gs.CurrentBatchNumber)
