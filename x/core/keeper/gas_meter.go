@@ -67,7 +67,8 @@ func (k Keeper) ChargeGasCosts(ctx sdk.Context, denom string, tr *TallyResult, m
 			amount = math.MinInt(dist.ExecutorReward.Amount, remainingEscrow)
 			staker, err := k.GetStaker(ctx, dist.ExecutorReward.Identity)
 			if err != nil {
-				return err
+				ctx.Logger().Error("failed to get staker", "error", err, "public_key", dist.ExecutorReward.Identity)
+				continue
 			}
 
 			// Top-up staked amount to minimum stake and reward the rest.

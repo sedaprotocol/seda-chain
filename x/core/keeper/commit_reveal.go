@@ -179,6 +179,7 @@ func (k Keeper) Reveal(ctx sdk.Context, msg MsgReveal, isLegacy bool) error {
 		return types.ErrAlreadyRevealed
 	}
 
+	// Verify against the stored commit.
 	commit, err := k.GetCommit(ctx, dr.ID, publicKey)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
@@ -186,7 +187,11 @@ func (k Keeper) Reveal(ctx sdk.Context, msg MsgReveal, isLegacy bool) error {
 		}
 		return err
 	}
+	if !bytes.Equal(commit, msg.RevealHash()) {
+		return types.ErrRevealMismatch
+	}
 
+	// Validate the reveal body.
 	drConfig, err := k.GetDataRequestConfig(ctx)
 	if err != nil {
 		return err
@@ -194,11 +199,6 @@ func (k Keeper) Reveal(ctx sdk.Context, msg MsgReveal, isLegacy bool) error {
 	err = msg.Validate(drConfig, dr.ReplicationFactor)
 	if err != nil {
 		return err
-	}
-
-	// Verify against the stored commit.
-	if !bytes.Equal(commit, msg.RevealHash()) {
-		return types.ErrRevealMismatch
 	}
 
 	// Verify the reveal proof.
