@@ -123,14 +123,15 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the module's genesis initialization. It returns no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
-	var genesisState types.GenesisState
-	cdc.MustUnmarshalJSON(gs, &genesisState)
-	am.keeper.InitGenesis(ctx, genesisState)
+	// var genesisState types.GenesisState
+	// cdc.MustUnmarshalJSON(gs, &genesisState)
+	// am.keeper.InitGenesis(ctx, genesisState)
+	am.keeper.StreamImportGenesis(ctx, cdc)
 }
 
 // ExportGenesis returns the module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	// am.keeper.StreamExportGenesis(ctx, cdc)
+	am.keeper.StreamExportGenesis(ctx, cdc)
 	return nil
 
 	// am.keeper.ExportGenesis(ctx)

@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +14,183 @@ import (
 
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
+
+func (k Keeper) StreamImportGenesis(ctx sdk.Context, cdc codec.JSONCodec) {
+	ctx.Logger().Info("stream importing batching genesis")
+
+	f, err := os.Open("batching_export.json")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	dec := json.NewDecoder(bufio.NewReader(f))
+
+	// Expect '{'
+	tok, err := dec.Token()
+	if err != nil {
+		panic(err)
+	}
+	if tok != json.Delim('{') {
+		panic(fmt.Errorf("expected start of object, got %v", tok))
+	}
+
+	// Iterate through top-level keys
+	var batchCount, batchDataCount, dataResultCount, batchAssignmentCount int
+	for dec.More() {
+		t, err := dec.Token()
+		if err != nil {
+			panic(err)
+		}
+		key := t.(string)
+
+		switch key {
+		case "current_batch_number":
+			var v uint64
+			if err := dec.Decode(&v); err != nil {
+				panic(err)
+			}
+			if err := k.setCurrentBatchNum(ctx, v); err != nil {
+				panic(err)
+			}
+
+		case "batches":
+			if err := streamArray(dec, func(raw json.RawMessage) error {
+				var batch types.Batch
+				if err := cdc.UnmarshalJSON(raw, &batch); err != nil {
+					return err
+				}
+				err := k.setBatch(ctx, batch)
+				if err != nil {
+					return err
+				}
+				batchCount++
+				if batchCount%1000 == 0 {
+					ctx.Logger().Info(fmt.Sprintf("imported %d-th batch", batchCount))
+				}
+				return nil
+			}); err != nil {
+				panic(fmt.Errorf("error importing batches: %w", err))
+			}
+
+		case "batch_data":
+			if err := streamArray(dec, func(raw json.RawMessage) error {
+				var data types.BatchData
+				if err := cdc.UnmarshalJSON(raw, &data); err != nil {
+					return err
+				}
+				if err := k.setDataResultTreeEntry(ctx, data.BatchNumber, data.DataResultEntries); err != nil {
+					return err
+				}
+				for _, valEntry := range data.ValidatorEntries {
+					if err := k.setValidatorTreeEntry(ctx, data.BatchNumber, valEntry); err != nil {
+						return err
+					}
+				}
+				for _, sig := range data.BatchSignatures {
+					if err := k.SetBatchSigSecp256k1(ctx, data.BatchNumber, sig.ValidatorAddress, sig.Secp256K1Signature); err != nil {
+						return err
+					}
+				}
+				batchDataCount++
+				if batchDataCount%1000 == 0 {
+					ctx.Logger().Info(fmt.Sprintf("imported %d-th batch_data", batchDataCount))
+				}
+				return nil
+			}); err != nil {
+				panic(fmt.Errorf("error importing batch_data: %w", err))
+			}
+
+		case "data_results":
+			if err := streamArray(dec, func(raw json.RawMessage) error {
+				var dataResult types.GenesisDataResult
+				if err := cdc.UnmarshalJSON(raw, &dataResult); err != nil {
+					return err
+				}
+				err = k.dataResults.Set(ctx, collections.Join3(false, dataResult.DataResult.DrId, dataResult.DataResult.DrBlockHeight), dataResult.DataResult)
+				if err != nil {
+					return err
+				}
+				dataResultCount++
+				if dataResultCount%1000 == 0 {
+					ctx.Logger().Info(fmt.Sprintf("imported %d-th data_result", dataResultCount))
+				}
+				return nil
+			}); err != nil {
+				panic(fmt.Errorf("error importing data_results: %w", err))
+			}
+
+		// -------------------------------------------------------
+		// batch_assignments: [ {...}, {...}, ... ]
+		// -------------------------------------------------------
+		case "batch_assignments":
+			if err := streamArray(dec, func(raw json.RawMessage) error {
+				var ba types.BatchAssignment
+				if err := cdc.UnmarshalJSON(raw, &ba); err != nil {
+					return err
+				}
+				err := k.SetBatchAssignment(ctx, ba.DataRequestId, ba.DataRequestHeight, ba.BatchNumber)
+				if err != nil {
+					return err
+				}
+				batchAssignmentCount++
+				if batchAssignmentCount%1000 == 0 {
+					ctx.Logger().Info(fmt.Sprintf("imported %d-th batch_assignment", batchAssignmentCount))
+				}
+				return nil
+			}); err != nil {
+				panic(fmt.Errorf("error importing batch_assignments: %w", err))
+			}
+
+		default:
+			panic(fmt.Errorf("unexpected key in export: %s", key))
+		}
+	}
+
+	// Expect '}'
+	if _, err := dec.Token(); err != nil {
+		panic(err)
+	}
+
+	err = k.SetParams(ctx, types.DefaultParams())
+	if err != nil {
+		panic(err)
+	}
+
+	ctx.Logger().Info(fmt.Sprintf("stream imported %d batches, %d batch_data, %d data_results, %d batch_assignments", batchCount, batchDataCount, dataResultCount, batchAssignmentCount))
+}
+
+// streamArray reads a JSON array as a sequence of RawMessage elements.
+func streamArray(dec *json.Decoder, handle func(json.RawMessage) error) error {
+	// Expect '['
+	tok, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if tok != json.Delim('[') {
+		return fmt.Errorf("expected [, got %v", tok)
+	}
+
+	for dec.More() {
+		var raw json.RawMessage
+		if err := dec.Decode(&raw); err != nil {
+			return err
+		}
+		if err := handle(raw); err != nil {
+			return err
+		}
+	}
+
+	// Expect ']'
+	tok, err = dec.Token()
+	if err != nil {
+		return err
+	}
+	if tok != json.Delim(']') {
+		return fmt.Errorf("expected ], got %v", tok)
+	}
+	return nil
+}
 
 // InitGenesis puts all data from genesis state into store.
 func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
@@ -39,7 +218,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 		}
 	}
 	for _, dataResult := range data.DataResults {
-		if err := k.dataResults.Set(ctx, collections.Join3(false, dataResult.DataResult.DrId, dataResult.DataResult.DrBlockHeight), dataResult.DataResult); err != nil {
+		if err := k.dataResults.Set(ctx, collections.Join3(dataResult.Batched, dataResult.DataResult.DrId, dataResult.DataResult.DrBlockHeight), dataResult.DataResult); err != nil {
 			panic(err)
 		}
 	}
@@ -60,7 +239,7 @@ func (k Keeper) StreamExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) {
 	// exportBatchAssignmentCount := 100000
 
 	var writer io.Writer
-	f, err := os.Create("betching.json")
+	f, err := os.Create("batching_export.json")
 	if err != nil {
 		panic(err)
 	}
@@ -106,6 +285,9 @@ func (k Keeper) StreamExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) {
 		if count%1000 == 0 {
 			ctx.Logger().Info(fmt.Sprintf("exported %d-th batch", count))
 		}
+		// if count == exportBatchCount {
+		// 	break
+		// }
 	}
 	writer.Write([]byte("],"))
 
@@ -134,7 +316,7 @@ func (k Keeper) StreamExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) {
 		if count%1000 == 0 {
 			ctx.Logger().Info(fmt.Sprintf("exported %d-th batch_data", count))
 		}
-		// if count == exportBatchCount {
+		// if count == exportDataResultCount {
 		// 	break
 		// }
 	}
@@ -157,11 +339,14 @@ func (k Keeper) StreamExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) {
 		}
 		first = false
 
-		dataResult, err := dataResultsIter.Value()
+		dataResult, err := dataResultsIter.KeyValue()
 		if err != nil {
 			panic(err)
 		}
-		dataResultJSON, err := cdc.MarshalJSON(&dataResult)
+		dataResultJSON, err := cdc.MarshalJSON(&types.GenesisDataResult{
+			Batched:    dataResult.Key.K1(),
+			DataResult: dataResult.Value,
+		})
 		if err != nil {
 			panic(err)
 		}
@@ -171,7 +356,7 @@ func (k Keeper) StreamExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) {
 		if count%1000 == 0 {
 			ctx.Logger().Info(fmt.Sprintf("exported %d-th data_result", count))
 		}
-		// if count == exportDataResultCount {
+		// if count == exportBatchAssignmentCount {
 		// 	break
 		// }
 	}

@@ -48,18 +48,20 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 		return err
 	}
 
-	lastPrunedBatchNum, err := k.PruneBatches(ctx, params.NumBatchesToKeep, params.MaxBatchPrunePerBlock)
-	if err != nil {
-		telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
-		k.Logger(ctx).Error("error while pruning batches", "err", err)
-		return nil
-	}
+	if ctx.BlockHeight() > 10 {
+		lastPrunedBatchNum, err := k.PruneBatches(ctx, params.NumBatchesToKeep, params.MaxBatchPrunePerBlock)
+		if err != nil {
+			telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
+			k.Logger(ctx).Error("error while pruning batches", "err", err)
+			return nil
+		}
 
-	err = k.PruneDataResults(ctx, params.MaxDataResultsToCheckForPrune, lastPrunedBatchNum)
-	if err != nil {
-		telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
-		k.Logger(ctx).Error("error while pruning data results", "err", err)
-		return nil
+		err = k.PruneDataResults(ctx, params.MaxDataResultsToCheckForPrune, lastPrunedBatchNum)
+		if err != nil {
+			telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
+			k.Logger(ctx).Error("error while pruning data results", "err", err)
+			return nil
+		}
 	}
 
 	telemetry.SetGauge(0, types.TelemetryKeyBatchingPruningFail)
