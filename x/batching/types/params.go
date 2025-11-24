@@ -6,8 +6,8 @@ import (
 
 const (
 	DefaultNumBatchesToKeep              = 10000
-	DefaultMaxBatchPrunePerBlock         = 100
-	DefaultMaxDataResultsToCheckForPrune = 100
+	DefaultMaxBatchPrunePerBlock         = 1000
+	DefaultMaxDataResultsToCheckForPrune = 1000
 )
 
 // DefaultParams returns default batching module parameters.

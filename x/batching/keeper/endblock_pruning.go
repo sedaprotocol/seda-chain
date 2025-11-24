@@ -67,7 +67,7 @@ func (k Keeper) PruneDataResults(ctx sdk.Context, maxDataResultsToCheckForPrune,
 		}
 	}
 
-	k.Logger(ctx).Info("pruned data results", "num_checked", numChecked, "num_pruned", numPruned)
+	k.Logger(ctx).Info("pruning data results", "num_checked", numChecked, "num_pruned", numPruned)
 	return nil
 }
 

@@ -123,15 +123,19 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the module's genesis initialization. It returns no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
-	var genesisState types.GenesisState
-	cdc.MustUnmarshalJSON(gs, &genesisState)
-	am.keeper.InitGenesis(ctx, genesisState)
+	// var genesisState types.GenesisState
+	// cdc.MustUnmarshalJSON(gs, &genesisState)
+	// am.keeper.InitGenesis(ctx, genesisState)
+	am.keeper.StreamImportGenesis(ctx, cdc)
 }
 
 // ExportGenesis returns the module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	gs := am.keeper.ExportGenesis(ctx)
-	return cdc.MustMarshalJSON(&gs)
+	am.keeper.StreamExportGenesis(ctx, cdc)
+	return nil
+
+	// am.keeper.ExportGenesis(ctx)
+	// return cdc.MustMarshalJSON(&gs)
 }
 
 // ConsensusVersion is a sequence number for state-breaking change of the module. It should be incremented on each consensus-breaking change introduced by the module. To avoid wrong/empty versions, the initial version should be set to 1
