@@ -1,8 +1,10 @@
 package testutil
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cometbft/cometbft/crypto/secp256k1"
@@ -12,6 +14,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	vrf "github.com/sedaprotocol/vrf-go"
+
+	"github.com/sedaprotocol/seda-chain/x/core/types"
 )
 
 type TestAccount struct {
@@ -67,4 +71,122 @@ func (ta *TestAccount) CheckGasPayoutUniformCase(gasUsed uint64, gasPrice math.I
 
 	require.Equal(ta.fixture.tb, payoutAmount.String(), stakerInfo.Staker.PendingWithdrawal.String())
 	return payoutAmount, burnAmount
+}
+
+func (ta *TestAccount) GetDataRequestConfig() (*types.QueryDataRequestConfigResponse, error) {
+	msg := &types.QueryDataRequestConfigRequest{}
+	return ta.fixture.CoreQuerier.DataRequestConfig(ta.fixture.Context(), msg)
+}
+
+func HashStringHelper(input string) []byte {
+	return crypto.Keccak256([]byte(input))
+}
+
+func RevealHelperFromString(input string) []byte {
+	return []byte(base64.StdEncoding.EncodeToString(HashStringHelper(input)))
+}
+
+func (ta *TestAccount) CalculateDrIDAndArgs(nonce string, replicationFactor uint32) types.MsgPostDataRequest {
+	execProgramID := hex.EncodeToString(HashStringHelper(nonce))
+	execInputs := base64.StdEncoding.EncodeToString(HashStringHelper("exec_inputs"))
+	tallyProgramID := hex.EncodeToString(HashStringHelper("tally_program"))
+	tallyInputs := base64.StdEncoding.EncodeToString(HashStringHelper("tally_inputs"))
+
+	memo := base64.StdEncoding.EncodeToString(crypto.Keccak256([]byte(ta.fixture.ChainID), []byte(nonce)))
+
+	return types.MsgPostDataRequest{
+		Sender:            ta.Address(),
+		Version:           "1.0.0",
+		ExecProgramID:     execProgramID,
+		ExecInputs:        []byte(execInputs),
+		ExecGasLimit:      types.MinExecGasLimit,
+		TallyProgramID:    tallyProgramID,
+		TallyInputs:       []byte(tallyInputs),
+		TallyGasLimit:     types.MinTallyGasLimit,
+		Memo:              []byte(memo),
+		ReplicationFactor: replicationFactor,
+		ConsensusFilter:   []byte{0},
+		GasPrice:          types.MinGasPrice,
+	}
+}
+
+func MinimumDrCost() sdk.Coin {
+	return sdk.NewCoin(BondDenom, (math.NewIntFromUint64(types.MinExecGasLimit).Add(math.NewIntFromUint64(types.MinTallyGasLimit)).Mul(types.MinGasPrice)))
+}
+
+func (ta *TestAccount) PostDataRequest(args types.MsgPostDataRequest, blockHeight int64, funds *math.Int) (*types.MsgPostDataRequestResponse, error) {
+	if blockHeight < ta.fixture.Context().BlockHeight() {
+		panic("cannot set block height to the past")
+	}
+
+	ta.fixture.Context().WithBlockHeight(blockHeight)
+
+	if funds != nil {
+		args.Funds = sdk.NewCoin(BondDenom, *funds)
+	} else {
+		args.Funds = MinimumDrCost()
+	}
+
+	return ta.fixture.CoreMsgServer.PostDataRequest(ta.fixture.Context(), &args)
+}
+
+func (ta *TestAccount) CreateRevealMsg(revealBody *types.RevealBody) *types.MsgReveal {
+	msg := &types.MsgReveal{
+		Sender:     ta.Address(),
+		RevealBody: revealBody,
+		PublicKey:  ta.PublicKeyHex(),
+		Stderr:     []string{},
+		Stdout:     []string{},
+	}
+	msg.Proof = ta.Prove(msg.MsgHash("", ta.fixture.ChainID))
+	return msg
+}
+
+func (ta *TestAccount) CommitResult(revealMsg *types.MsgReveal) (*types.MsgCommitResponse, error) {
+	msg := &types.MsgCommit{
+		Sender:    ta.Address(),
+		DrID:      revealMsg.RevealBody.DrID,
+		Commit:    hex.EncodeToString(revealMsg.RevealHash()),
+		PublicKey: ta.PublicKeyHex(),
+	}
+	//nolint:gosec // G115: Block height is never negative.
+	msg.Proof = ta.Prove(msg.MsgHash("", ta.fixture.ChainID, int64(revealMsg.RevealBody.DrBlockHeight)))
+
+	ta.fixture.SetTx(100_000, ta.AccAddress(), msg)
+	res, err := ta.fixture.CoreMsgServer.Commit(ta.fixture.Context(), msg)
+	ta.fixture.SetInfiniteGasMeter()
+	return res, err
+}
+
+func (ta *TestAccount) RevealResult(msg *types.MsgReveal) (*types.MsgRevealResponse, error) {
+	ta.fixture.SetTx(100_000, ta.AccAddress(), msg)
+	res, err := ta.fixture.CoreMsgServer.Reveal(ta.fixture.Context(), msg)
+	ta.fixture.SetInfiniteGasMeter()
+	return res, err
+}
+
+func (ta *TestAccount) GetDataRequestsByStatus(status types.DataRequestStatus, limit uint64, lastSeenIndex *[]string) (*types.QueryDataRequestsByStatusResponse, error) {
+	msg := &types.QueryDataRequestsByStatusRequest{
+		Status: status,
+		Limit:  limit,
+	}
+	if lastSeenIndex != nil {
+		msg.LastSeenIndex = *lastSeenIndex
+	}
+
+	return ta.fixture.CoreQuerier.DataRequestsByStatus(ta.fixture.Context(), msg)
+}
+
+func (ta *TestAccount) GetDataRequestStatuses(drIDs []string) (*types.QueryDataRequestStatusesResponse, error) {
+	msg := &types.QueryDataRequestStatusesRequest{
+		DataRequestIds: drIDs,
+	}
+	return ta.fixture.CoreQuerier.DataRequestStatuses(ta.fixture.Context(), msg)
+}
+
+func (ta *TestAccount) GetDataRequest(drID string) (*types.QueryDataRequestResponse, error) {
+	msg := &types.QueryDataRequestRequest{
+		DrId: drID,
+	}
+	return ta.fixture.CoreQuerier.DataRequest(ta.fixture.Context(), msg)
 }

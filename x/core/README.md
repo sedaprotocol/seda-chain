@@ -1,10 +1,33 @@
 # Core Module
 
+
 ## Overview
 The core module provides interface for the SEDA users to make data requests and Overlay operators to stake, commit, and reveal.
 
 It also tallies the Oracle Program execution results reported by the Overlay Nodes, detects outliers, and calculates payouts.
 
+
+## State
+```
+allowlist:             0x00 | PublicKey              -> ()
+stakers:               0x01 | PublicKey              -> Staker
+staker_index_to_key:   0x02 | uint32                 -> PublicKey
+staker_key_to_index:   0x03 | PublicKey              -> uint32
+staker_count:          0x04                          -> uint32
+data_requests:         0x05 | DR_ID                  -> DataRequest
+data_request_indexing: 0x06
+committing_count:      0x07 | DataRequestIndex       -> ()
+revealing_count:       0x08 | DataRequestIndex       -> ()
+tallying_count:        0x09 | DataRequestIndex       -> ()
+commits:               0x0A | DR_ID | PublicKey      -> Commit
+revealers:             0x0B | DR_ID | PublicKey      -> ()
+reveal_bodies:         0x0C | DR_ID | PublicKey      -> RevealBody
+timeout_queue:         0x0D | DR_ID | Timeout_Height -> ()
+params:                0x0E                          -> Params
+owner:                 0x0F
+paused:                0x10
+pending_owner:         0x11
+```
 
 
 ## Tally Flow
@@ -112,25 +135,3 @@ At every block, the end blocker of the core module queries the Core Contract for
 Once the filtering - tally VM execution - gas calculation sequence is completed, and the results are reported back to the Core Contract, data result entries are stored in the batching module under batch-ready status.
 
 Note the core module’s end blocker is structured so that most errors are caught and logged without causing the chain to halt. Only the most critical operations such as data result ID calculation or state writes can return an error.
-
-## State
-```
-allowlist:             0x00 | PublicKey              -> ()
-stakers:               0x01 | PublicKey              -> Staker
-staker_index_to_key:   0x02 | uint32                 -> PublicKey
-staker_key_to_index:   0x03 | PublicKey              -> uint32
-staker_count:          0x04                          -> uint32
-data_requests:         0x05 | DR_ID                  -> DataRequest
-data_request_indexing: 0x06
-committing_count:      0x07 | DataRequestIndex       -> ()
-revealing_count:       0x08 | DataRequestIndex       -> ()
-tallying_count:        0x09 | DataRequestIndex       -> ()
-commits:               0x0A | DR_ID | PublicKey      -> Commit
-revealers:             0x0B | DR_ID | PublicKey      -> ()
-reveal_bodies:         0x0C | DR_ID | PublicKey      -> RevealBody
-timeout_queue:         0x0D | DR_ID | Timeout_Height -> ()
-params:                0x0E                          -> Params
-owner:                 0x0F
-paused:                0x10
-pending_owner:         0x11
-```

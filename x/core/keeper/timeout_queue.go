@@ -75,6 +75,13 @@ func (k Keeper) ExpireDataRequests(ctx sdk.Context) error {
 			return err
 		}
 		k.Logger(ctx).Debug("expired data request", "ID", drID)
+
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeExpireDataRequest,
+				sdk.NewAttribute(types.AttributeDataRequestID, drID),
+			),
+		)
 	}
 
 	return nil

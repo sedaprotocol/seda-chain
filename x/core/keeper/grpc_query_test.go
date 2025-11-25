@@ -68,7 +68,7 @@ func TestGetDataRequestsByStatus(t *testing.T) {
 
 			// Reveal and check
 			for _, testDR := range testDRs[:tt.numReveals] {
-				testDR.ExecuteReveals(f, 1, nil)
+				testDR.RevealDataRequest(f, 1, nil)
 			}
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_COMMITTING, tt.numPosts-tt.numCommits, fetchLimit)
 			f.CheckDataRequestsByStatus(t, types.DATA_REQUEST_STATUS_REVEALING, tt.numCommits-tt.numReveals, fetchLimit)
@@ -122,7 +122,7 @@ func TestGetCommittersAndRevealers(t *testing.T) {
 	testDR.CommitDataRequest(f, 3, []int{7, 8, 9})
 
 	// Reveal and check.
-	testDR.ExecuteReveals(f, 4, nil)
+	testDR.RevealDataRequest(f, 4, nil)
 
 	committers, revealers, err = f.CoreKeeper.GetCommittersAndRevealers(f.Context(), testDR.GetDataRequestID())
 	require.NoError(t, err)

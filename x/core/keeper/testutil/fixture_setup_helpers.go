@@ -34,6 +34,43 @@ const (
 	defaultRevealTimeoutBlocks = 5
 )
 
+func (f *Fixture) executeMsg(msg sdk.Msg, sender sdk.AccAddress, gasLimit uint64) *sdk.Result {
+	fee := sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(gasLimit).Mul(math.NewInt(1e10))))
+	txf := tx.Factory{}.
+		WithChainID(f.ChainID).
+		WithTxConfig(f.TxConfig).
+		WithFees(fee.String()).
+		WithFeePayer(sender)
+
+	tx, err := txf.BuildUnsignedTx(msg)
+	require.NoError(f.tb, err)
+	txBytes, err := f.TxConfig.TxEncoder()(tx.GetTx())
+	require.NoError(f.tb, err)
+	f.SetContextTxBytes(txBytes)
+
+	if gasLimit > 0 {
+		f.SetBasicGasMeter(gasLimit)
+	} else {
+		f.SetInfiniteGasMeter()
+	}
+
+	// Transfer the fee to the fee collector.
+	// This simulates the ante handler DeductFees.
+	err = f.BankKeeper.SendCoinsFromAccountToModule(f.Context(), sender, authtypes.FeeCollectorName, fee)
+	require.NoError(f.tb, err)
+
+	handler := f.Router.Handler(msg)
+	require.NotNil(f.tb, handler)
+
+	result, err := handler(f.Context(), msg)
+	require.NoError(f.tb, err)
+
+	// Reset to infinite gas meter to prevent out of gas error in other operations.
+	f.SetInfiniteGasMeter()
+
+	return result
+}
+
 func (f *Fixture) uploadOraclePrograms(tb testing.TB) {
 	tb.Helper()
 
@@ -56,13 +93,25 @@ func (f *Fixture) mintCoinsForAccount(tb testing.TB, address sdk.AccAddress, sed
 }
 
 type Staker struct {
-	Key     []byte
+	PrivKey []byte
 	PubKey  string
-	Address []byte
+	// Address is the SEDA account address that holds SEDA tokens. It is normally
+	// separate from staker (privKey, pubKey) pair, but we derive the address from
+	// the staker private key here for convenience.
+	Address sdk.AccAddress
 }
 
-// AddStakers generates stakers and adds them to the allowlist. The
-// stakers subsequently send their stakes to the core contract.
+type MsgHasher interface {
+	MsgHash(coreContractAddr, chainID string, sequenceNum uint64) []byte
+}
+
+func (s *Staker) GenerateProof(tb testing.TB, hash []byte) string {
+	tb.Helper()
+	proof, err := vrf.NewK256VRF().Prove(s.PrivKey, hash)
+	require.NoError(tb, err)
+	return hex.EncodeToString(proof)
+}
+
 func (f *Fixture) AddStakers(tb testing.TB, num int) []Staker {
 	tb.Helper()
 
@@ -70,7 +119,55 @@ func (f *Fixture) AddStakers(tb testing.TB, num int) []Staker {
 	for i := 0; i < num; i++ {
 		privKey := secp256k1.GenPrivKey()
 		stakers[i] = Staker{
-			Key:     privKey.Bytes(),
+			PrivKey: privKey.Bytes(),
+			PubKey:  hex.EncodeToString(privKey.PubKey().Bytes()),
+			Address: privKey.PubKey().Address().Bytes(),
+		}
+
+		f.mintCoinsForAccount(tb, stakers[i].Address, 100)
+		f.initAccountWithCoins(tb, stakers[i].Address, sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(1e18))))
+
+		// Add to allowlist.
+		f.executeMsg(&types.MsgAddToAllowlist{
+			Sender:    f.Creator.Address(),
+			PublicKey: stakers[i].PubKey,
+		}, f.Creator.addr, 0)
+
+		// Stake.
+		stakeMsg := &types.MsgStake{
+			Sender:    stakers[i].Address.String(),
+			PublicKey: stakers[i].PubKey,
+			Memo:      "YWRkcmVzcw==",
+			Stake:     sdk.NewCoin(BondDenom, math.NewIntFromUint64(1000000000000000000)),
+		}
+		stakeMsg.Proof = stakers[i].GenerateProof(f.tb, stakeMsg.MsgHash("", f.ChainID, 0))
+		f.executeMsg(stakeMsg, stakers[i].Address, 0)
+
+		// Second stake to test sequence number.
+		stakeMsg2 := &types.MsgStake{
+			Sender:    stakers[i].Address.String(),
+			PublicKey: stakers[i].PubKey,
+			Memo:      "YWRkcmVzcw==",
+			Stake:     sdk.NewCoin(BondDenom, math.NewIntFromUint64(500000000000000000)),
+		}
+		stakeMsg2.Proof = stakers[i].GenerateProof(f.tb, stakeMsg.MsgHash("", f.ChainID, 1))
+		f.executeMsg(stakeMsg2, stakers[i].Address, 0)
+	}
+
+	f.Stakers = append(f.Stakers, stakers...)
+	return stakers
+}
+
+// AddStakers generates stakers and adds them to the allowlist. The
+// stakers subsequently send their stakes to the core contract.
+func (f *Fixture) AddStakersContract(tb testing.TB, num int) []Staker {
+	tb.Helper()
+
+	stakers := make([]Staker, num)
+	for i := 0; i < num; i++ {
+		privKey := secp256k1.GenPrivKey()
+		stakers[i] = Staker{
+			PrivKey: privKey.Bytes(),
 			PubKey:  hex.EncodeToString(privKey.PubKey().Bytes()),
 			Address: privKey.PubKey().Address().Bytes(),
 		}
@@ -80,24 +177,24 @@ func (f *Fixture) AddStakers(tb testing.TB, num int) []Staker {
 		// Add to allowlist.
 		f.executeCoreContract(
 			f.Creator.Address(),
-			testutil.AddToAllowListMsg(stakers[i].PubKey),
+			testutil.AddToAllowListMsgContract(stakers[i].PubKey),
 			sdk.NewCoins(),
 		)
 
 		// Stake.
 		f.initAccountWithCoins(tb, stakers[i].Address, sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(1e18))))
-		proof := f.generateStakeProof(tb, stakers[i].Key, "YWRkcmVzcw==", 0)
+		proof := f.generateStakeProof(tb, stakers[i].PrivKey, "YWRkcmVzcw==", 0)
 		f.executeCoreContract(
-			sdk.AccAddress(stakers[i].Address).String(),
-			testutil.StakeMsg(stakers[i].PubKey, proof, "YWRkcmVzcw=="),
+			stakers[i].Address.String(),
+			testutil.StakeMsgContract(stakers[i].PubKey, proof, "YWRkcmVzcw=="),
 			sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(1000000000000000000))),
 		)
 
 		// Second stake to test sequence number.
-		proof = f.generateStakeProof(tb, stakers[i].Key, "YWRkcmVzcw==", 1)
+		proof = f.generateStakeProof(tb, stakers[i].PrivKey, "YWRkcmVzcw==", 1)
 		f.executeCoreContract(
 			f.Creator.Address(),
-			testutil.StakeMsg(stakers[i].PubKey, proof, "YWRkcmVzcw=="),
+			testutil.StakeMsgContract(stakers[i].PubKey, proof, "YWRkcmVzcw=="),
 			sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(500000000000000000))),
 		)
 	}
@@ -116,7 +213,7 @@ func (f *Fixture) AddDataProxy(tb testing.TB, proxyPubKey, payoutAddr string, pr
 func (f *Fixture) DrainDataRequestPool(targetHeight uint64) []byte {
 	return f.executeCoreContract(
 		f.Creator.Address(),
-		testutil.DrainDataRequestPoolMsg(targetHeight),
+		testutil.DrainDataRequestPoolMsgContract(targetHeight),
 		sdk.NewCoins(sdk.NewCoin(BondDenom, math.NewIntFromUint64(500000000000000000))),
 	)
 }
@@ -196,16 +293,36 @@ func (f *Fixture) initAccountWithCoins(tb testing.TB, addr sdk.AccAddress, coins
 	require.NoError(tb, err)
 }
 
-// createRevealMsg constructs and returns a reveal message and its corresponding
-// commitment and proof.
-func (f *Fixture) createRevealMsg(staker Staker, revealBody types.RevealBody) ([]byte, string, string) {
+func (f *Fixture) createRevealMsg(staker Staker, revealBody types.RevealBody) (types.MsgReveal, string, string) {
 	f.tb.Helper()
 
 	revealBodyHash := revealBody.RevealBodyHash()
 
-	proof := f.generateRevealProof(f.tb, staker.Key, revealBodyHash)
+	proof := f.generateRevealProof(f.tb, staker.PrivKey, revealBodyHash)
 
-	msg := testutil.RevealMsg(
+	msg := types.MsgReveal{
+		Sender:     staker.Address.String(),
+		RevealBody: &revealBody,
+		PublicKey:  staker.PubKey,
+		Proof:      proof,
+		Stderr:     []string{""},
+		Stdout:     []string{""},
+	}
+
+	msg.Proof = staker.GenerateProof(f.tb, msg.MsgHash("", f.ChainID))
+	return msg, hex.EncodeToString(msg.RevealHash()), proof
+}
+
+// createRevealMsg constructs and returns a reveal message and its corresponding
+// commitment and proof.
+func (f *Fixture) createRevealMsgContract(staker Staker, revealBody types.RevealBody) ([]byte, string, string) {
+	f.tb.Helper()
+
+	revealBodyHash := revealBody.RevealBodyHash()
+
+	proof := f.generateRevealProof(f.tb, staker.PrivKey, revealBodyHash)
+
+	msg := testutil.RevealMsgContract(
 		revealBody.DrID,
 		base64.StdEncoding.EncodeToString(revealBody.Reveal),
 		staker.PubKey,
@@ -248,7 +365,7 @@ func (f *Fixture) generateRevealProof(tb testing.TB, signKey []byte, revealBodyH
 }
 
 // executeCommitOrReveal executes a commit msg or a reveal msg.
-func (f *Fixture) executeCommitOrReveal(sender sdk.AccAddress, msg []byte, gasLimit uint64) {
+func (f *Fixture) executeCommitOrRevealContract(sender sdk.AccAddress, msg []byte, gasLimit uint64) {
 	contractMsg := wasmtypes.MsgExecuteContract{
 		Sender:   sender.String(),
 		Contract: f.CoreContractAddr.String(),

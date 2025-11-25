@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func CommitMsg(drID, commitment, stakerPubKey, proof string) []byte {
+func CommitMsgContract(drID, commitment, stakerPubKey, proof string) []byte {
 	return []byte(fmt.Sprintf(`{
 		"commit_data_result": {
 		  "dr_id": "%s",
@@ -17,7 +17,7 @@ func CommitMsg(drID, commitment, stakerPubKey, proof string) []byte {
 	}`, drID, commitment, stakerPubKey, proof))
 }
 
-func RevealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, exitCode byte, drHeight, gasUsed uint64) []byte {
+func RevealMsgContract(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, exitCode byte, drHeight, gasUsed uint64) []byte {
 	quotedObjects := []string{}
 	for _, obj := range proxyPubKeys {
 		quotedObjects = append(quotedObjects, fmt.Sprintf("%q", obj))
@@ -42,7 +42,7 @@ func RevealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, 
 	}`, drID, drHeight, exitCode, gasUsed, reveal, pks, stakerPubKey, proof))
 }
 
-func DrainDataRequestPoolMsg(targetHeight uint64) []byte {
+func DrainDataRequestPoolMsgContract(targetHeight uint64) []byte {
 	return []byte(fmt.Sprintf(`{
 		"drain_data_request_pool": {
 		  "target_height": %d
@@ -50,7 +50,7 @@ func DrainDataRequestPoolMsg(targetHeight uint64) []byte {
 	}`, targetHeight))
 }
 
-func AddToAllowListMsg(stakerPubKey string) []byte {
+func AddToAllowListMsgContract(stakerPubKey string) []byte {
 	return []byte(fmt.Sprintf(`{
 		"add_to_allowlist": {
 		  "public_key": "%s"
@@ -58,7 +58,7 @@ func AddToAllowListMsg(stakerPubKey string) []byte {
 	}`, stakerPubKey))
 }
 
-func StakeMsg(stakerPubKey, proof, memo string) []byte {
+func StakeMsgContract(stakerPubKey, proof, memo string) []byte {
 	return []byte(fmt.Sprintf(`{
 		"stake": {
 		  "public_key": "%s",
@@ -68,7 +68,7 @@ func StakeMsg(stakerPubKey, proof, memo string) []byte {
 	}`, stakerPubKey, proof, memo))
 }
 
-func PostDataRequestMsg(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int, execGasLimit, tallyGasLimit uint64) []byte {
+func PostDataRequestMsgContract(execProgHash, tallyProgHash []byte, requestMemo string, replicationFactor int, execGasLimit, tallyGasLimit uint64) []byte {
 	return []byte(fmt.Sprintf(`{
 		"post_data_request": {
 		  "posted_dr": {

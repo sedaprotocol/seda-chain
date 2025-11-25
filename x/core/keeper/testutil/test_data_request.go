@@ -3,11 +3,9 @@ package testutil
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 
@@ -15,7 +13,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/sedaprotocol/seda-chain/testutil"
 	"github.com/sedaprotocol/seda-chain/testutil/testwasms"
 	"github.com/sedaprotocol/seda-chain/x/core/types"
 	wasmstoragetypes "github.com/sedaprotocol/seda-chain/x/wasm-storage/types"
@@ -38,9 +35,11 @@ type TestDR struct {
 	RevealGasLimit uint64 // defaults to 100000 if not set or set to 0
 
 	// For tracking intermediate results
-	postedID     string   // set after post (DR ID)
-	postedHeight uint64   // set after post (height)
-	revealMsgs   [][]byte // set after commit to be used in reveal
+	postedID           string            // set after post (DR ID)
+	postedHeight       uint64            // set after post (height)
+	revealMsgsContract [][]byte          // set after commit to be used in reveal (Core Contract)
+	revealMsgs         []types.MsgReveal // set after commit to be used in reveal (x/core module)
+	revealProofs       []string          // set after commit to be used in reveal (x/core module)
 }
 
 // NewTestDR instantiates a new TestDR object with given parameters.
@@ -89,130 +88,10 @@ func NewRandomTestDR(f *Fixture, rf int) TestDR {
 	)
 }
 
-func (dr *TestDR) SetCommitRevealGasLimits(commitGasLimit, revealGasLimit uint64) {
-	dr.CommitGasLimit = commitGasLimit
-	dr.RevealGasLimit = revealGasLimit
-}
-
-func (dr *TestDR) PostDataRequest(f *Fixture) {
-	execGasLimit := uint64(160e15)
-	tallyGasLimit := uint64(300e12)
-	// (exec gas limit + tally gas limit) * gas price
-	attachedFunds := math.NewIntFromUint64(execGasLimit).Add(math.NewIntFromUint64(tallyGasLimit)).Mul(math.NewInt(2000))
-
-	resJSON := f.executeCoreContract(
-		f.Creator.Address(),
-		testutil.PostDataRequestMsg(dr.ExecProgHash, dr.TallyProgHash, dr.Memo, dr.ReplicationFactor, execGasLimit, tallyGasLimit),
-		sdk.NewCoins(sdk.NewCoin(BondDenom, attachedFunds)),
-	)
-
-	type PostDataRequestResponse struct {
-		DrID   string `json:"dr_id"`
-		Height uint64 `json:"height"`
-	}
-	var res PostDataRequestResponse
-	err := json.Unmarshal(resJSON, &res)
-	require.NoError(f.tb, err)
-	dr.postedID = res.DrID
-	dr.postedHeight = res.Height
-}
-
-func (dr *TestDR) PostDataRequestShouldErr(f *Fixture, errMsg string) {
-	execGasLimit := uint64(160e15)
-	tallyGasLimit := uint64(300e12)
-	// (exec gas limit + tally gas limit) * gas price
-	attachedFunds := math.NewIntFromUint64(execGasLimit).Add(math.NewIntFromUint64(tallyGasLimit)).Mul(math.NewInt(2000))
-
-	f.executeCoreContractShouldErr(
-		f.Creator.Address(),
-		testutil.PostDataRequestMsg(dr.ExecProgHash, dr.TallyProgHash, dr.Memo, dr.ReplicationFactor, execGasLimit, tallyGasLimit),
-		sdk.NewCoins(sdk.NewCoin(BondDenom, attachedFunds)),
-		errMsg,
-	)
-}
-
-// commitDataRequest executes n commits from the first n stakers of the stakers
-// list. It returns a list of corresponding reveal messages in order. If
-// stakerIndices is not nil, stakers at the specified indices will be used.
-func (dr *TestDR) CommitDataRequest(f *Fixture, n int, stakerIndices []int) {
-	require.LessOrEqual(f.tb, n, len(f.Stakers))
-	if stakerIndices != nil {
-		require.Equal(f.tb, n, len(stakerIndices))
-	}
-
-	gasLimit := dr.CommitGasLimit
-	if dr.CommitGasLimit == 0 {
-		// TODO Use gastimation formula
-		gasLimit = 500000
-	}
-
-	drID := dr.postedID
-	drHeight := dr.postedHeight
-
-	revealBody := types.RevealBody{
-		DrID:         drID,
-		Reveal:       dr.Reveal,
-		GasUsed:      dr.GasUsed,
-		ExitCode:     uint32(dr.ExitCode),
-		ProxyPubKeys: dr.ProxyPubKeys,
-	}
-
-	var indices []int
-	if stakerIndices != nil {
-		indices = stakerIndices
-	} else {
-		indices = make([]int, n)
-		for i := 0; i < n; i++ {
-			indices[i] = i
-		}
-	}
-
-	for _, i := range indices {
-		revealMsg, commitment, _ := f.createRevealMsg(f.Stakers[i], revealBody)
-		proof := f.generateCommitProof(f.Stakers[i].Key, drID, commitment, drHeight)
-		commitMsg := testutil.CommitMsg(drID, commitment, f.Stakers[i].PubKey, proof)
-
-		f.executeCommitOrReveal(f.Stakers[i].Address, commitMsg, gasLimit)
-		dr.revealMsgs = append(dr.revealMsgs, revealMsg)
-	}
-}
-
-// executeReveals executes n reveals from the first n stakers of the stakers
-// list. If stakerIndices is not nil, stakers at the specified indices will
-// be used.
-func (dr *TestDR) ExecuteReveals(f *Fixture, n int, stakerIndices []int) {
-	require.LessOrEqual(f.tb, n, len(dr.revealMsgs))
-	require.LessOrEqual(f.tb, n, len(f.Stakers))
-	if stakerIndices != nil {
-		require.Equal(f.tb, n, len(stakerIndices))
-	}
-
-	gasLimit := dr.RevealGasLimit
-	if dr.RevealGasLimit == 0 {
-		// TODO Use gastimation formula
-		gasLimit = 500000
-	}
-
-	// Determine which staker indices to use.
-	var indices []int
-	if stakerIndices != nil {
-		indices = stakerIndices
-	} else {
-		indices = make([]int, n)
-		for i := 0; i < n; i++ {
-			indices[i] = i
-		}
-	}
-
-	for _, i := range indices {
-		f.executeCommitOrReveal(f.Stakers[i].Address, dr.revealMsgs[i], gasLimit)
-	}
-}
-
 func (dr *TestDR) ExecuteDataRequestFlow(f *Fixture, numCommits, numReveals int, timeout bool) string {
 	dr.PostDataRequest(f)
 	dr.CommitDataRequest(f, numCommits, nil)
-	dr.ExecuteReveals(f, numReveals, nil)
+	dr.RevealDataRequest(f, numReveals, nil)
 
 	if timeout {
 		timeoutBlocks := defaultCommitTimeoutBlocks
@@ -231,120 +110,122 @@ func (dr TestDR) GetDataRequestID() string {
 	return dr.postedID
 }
 
-func (ta *TestAccount) GetDataRequestConfig() (*types.QueryDataRequestConfigResponse, error) {
-	msg := &types.QueryDataRequestConfigRequest{}
-	return ta.fixture.CoreQuerier.DataRequestConfig(ta.fixture.Context(), msg)
+func (dr *TestDR) SetCommitRevealGasLimits(commitGasLimit, revealGasLimit uint64) {
+	dr.CommitGasLimit = commitGasLimit
+	dr.RevealGasLimit = revealGasLimit
 }
 
-func HashStringHelper(input string) []byte {
-	return crypto.Keccak256([]byte(input))
+func (dr *TestDR) PostDataRequest(f *Fixture) {
+	execGasLimit := uint64(160e15)
+	tallyGasLimit := uint64(300e12)
+	// (exec gas limit + tally gas limit) * gas price
+	attachedFunds := math.NewIntFromUint64(execGasLimit).Add(math.NewIntFromUint64(tallyGasLimit)).Mul(math.NewInt(2000))
+
+	res, err := f.CoreMsgServer.PostDataRequest(
+		f.Context(),
+		&types.MsgPostDataRequest{
+			Sender:            f.Creator.Address(),
+			Funds:             sdk.NewCoin(BondDenom, attachedFunds),
+			Version:           "0.0.1",
+			ExecProgramID:     hex.EncodeToString(dr.ExecProgHash),
+			ExecInputs:        []byte("exec_inputs"),
+			ExecGasLimit:      execGasLimit,
+			TallyProgramID:    hex.EncodeToString(dr.TallyProgHash),
+			TallyInputs:       []byte("tally_inputs"),
+			TallyGasLimit:     tallyGasLimit,
+			ReplicationFactor: uint32(dr.ReplicationFactor), //nolint:gosec
+			ConsensusFilter:   []byte{0x00},
+			GasPrice:          math.NewInt(2000),
+			Memo:              []byte(dr.Memo),
+			SEDAPayload:       []byte{},
+			PaybackAddress:    []byte{0x01, 0x02, 0x03},
+		},
+	)
+	require.NoError(f.tb, err)
+
+	dr.postedID = res.DrID
+	dr.postedHeight = uint64(res.Height) //nolint:gosec
 }
 
-func RevealHelperFromString(input string) []byte {
-	return []byte(base64.StdEncoding.EncodeToString(HashStringHelper(input)))
-}
-
-func (ta *TestAccount) CalculateDrIDAndArgs(nonce string, replicationFactor uint32) types.MsgPostDataRequest {
-	execProgramID := hex.EncodeToString(HashStringHelper(nonce))
-	execInputs := base64.StdEncoding.EncodeToString(HashStringHelper("exec_inputs"))
-	tallyProgramID := hex.EncodeToString(HashStringHelper("tally_program"))
-	tallyInputs := base64.StdEncoding.EncodeToString(HashStringHelper("tally_inputs"))
-
-	memo := base64.StdEncoding.EncodeToString(crypto.Keccak256([]byte(ta.fixture.ChainID), []byte(nonce)))
-
-	return types.MsgPostDataRequest{
-		Sender:            ta.Address(),
-		Version:           "1.0.0",
-		ExecProgramID:     execProgramID,
-		ExecInputs:        []byte(execInputs),
-		ExecGasLimit:      types.MinExecGasLimit,
-		TallyProgramID:    tallyProgramID,
-		TallyInputs:       []byte(tallyInputs),
-		TallyGasLimit:     types.MinTallyGasLimit,
-		Memo:              []byte(memo),
-		ReplicationFactor: replicationFactor,
-		ConsensusFilter:   []byte{0},
-		GasPrice:          types.MinGasPrice,
-	}
-}
-
-func MinimumDrCost() sdk.Coin {
-	return sdk.NewCoin(BondDenom, (math.NewIntFromUint64(types.MinExecGasLimit).Add(math.NewIntFromUint64(types.MinTallyGasLimit)).Mul(types.MinGasPrice)))
-}
-
-func (ta *TestAccount) PostDataRequest(args types.MsgPostDataRequest, blockHeight int64, funds *math.Int) (*types.MsgPostDataRequestResponse, error) {
-	if blockHeight < ta.fixture.Context().BlockHeight() {
-		panic("cannot set block height to the past")
+// CommitDataRequest executes commit messages from the first n stakers.
+// If stakerIndices is not nil, stakers at the specified indices will be used.
+func (dr *TestDR) CommitDataRequest(f *Fixture, n int, stakerIndices []int) {
+	if stakerIndices != nil {
+		require.Equal(f.tb, n, len(stakerIndices))
 	}
 
-	ta.fixture.Context().WithBlockHeight(blockHeight)
+	gasLimit := dr.CommitGasLimit
+	if dr.CommitGasLimit == 0 {
+		// TODO Use gastimation formula
+		gasLimit = 500000
+	}
 
-	if funds != nil {
-		args.Funds = sdk.NewCoin(BondDenom, *funds)
+	revealBody := types.RevealBody{
+		DrID:         dr.postedID,
+		Reveal:       dr.Reveal,
+		GasUsed:      dr.GasUsed,
+		ExitCode:     uint32(dr.ExitCode),
+		ProxyPubKeys: dr.ProxyPubKeys,
+	}
+
+	var indices []int
+	if stakerIndices != nil {
+		indices = stakerIndices
 	} else {
-		args.Funds = MinimumDrCost()
+		// Use indices 0, 1, ..., n-1.
+		indices = make([]int, n)
+		for i := 0; i < n; i++ {
+			indices[i] = i
+		}
 	}
 
-	return ta.fixture.CoreMsgServer.PostDataRequest(ta.fixture.Context(), &args)
+	for _, i := range indices {
+		revealMsg, commitment, revealProof := f.createRevealMsg(f.Stakers[i], revealBody)
+		commitMsg := &types.MsgCommit{
+			Sender:    f.Stakers[i].Address.String(),
+			DrID:      dr.postedID,
+			Commit:    commitment,
+			PublicKey: f.Stakers[i].PubKey,
+		}
+		commitMsg.Proof = f.Stakers[i].GenerateProof(f.tb, commitMsg.MsgHash("", f.ChainID, f.Context().BlockHeight()))
+
+		f.executeMsg(commitMsg, f.Stakers[i].Address, gasLimit)
+
+		dr.revealMsgs = append(dr.revealMsgs, revealMsg)
+		dr.revealProofs = append(dr.revealProofs, revealProof)
+	}
 }
 
-func (ta *TestAccount) CreateRevealMsg(revealBody *types.RevealBody) *types.MsgReveal {
-	msg := &types.MsgReveal{
-		Sender:     ta.Address(),
-		RevealBody: revealBody,
-		PublicKey:  ta.PublicKeyHex(),
-		Stderr:     []string{},
-		Stdout:     []string{},
-	}
-	msg.Proof = ta.Prove(msg.MsgHash("", ta.fixture.ChainID))
-	return msg
-}
-
-func (ta *TestAccount) CommitResult(revealMsg *types.MsgReveal) (*types.MsgCommitResponse, error) {
-	msg := &types.MsgCommit{
-		Sender:    ta.Address(),
-		DrID:      revealMsg.RevealBody.DrID,
-		Commit:    hex.EncodeToString(revealMsg.RevealHash()),
-		PublicKey: ta.PublicKeyHex(),
-	}
-	//nolint:gosec // G115: Block height is never negative.
-	msg.Proof = ta.Prove(msg.MsgHash("", ta.fixture.ChainID, int64(revealMsg.RevealBody.DrBlockHeight)))
-
-	ta.fixture.SetTx(100_000, ta.AccAddress(), msg)
-	res, err := ta.fixture.CoreMsgServer.Commit(ta.fixture.Context(), msg)
-	ta.fixture.SetInfiniteGasMeter()
-	return res, err
-}
-
-func (ta *TestAccount) RevealResult(msg *types.MsgReveal) (*types.MsgRevealResponse, error) {
-	ta.fixture.SetTx(100_000, ta.AccAddress(), msg)
-	res, err := ta.fixture.CoreMsgServer.Reveal(ta.fixture.Context(), msg)
-	ta.fixture.SetInfiniteGasMeter()
-	return res, err
-}
-
-func (ta *TestAccount) GetDataRequestsByStatus(status types.DataRequestStatus, limit uint64, lastSeenIndex *[]string) (*types.QueryDataRequestsByStatusResponse, error) {
-	msg := &types.QueryDataRequestsByStatusRequest{
-		Status: status,
-		Limit:  limit,
-	}
-	if lastSeenIndex != nil {
-		msg.LastSeenIndex = *lastSeenIndex
+// RevealDataRequest executes reveal messages stored from execution of
+// CommitDataRequest using the first n stakers.
+// If stakerIndices is not nil, stakers at the specified indices will be used.
+// After execution, stored reveal messages are cleared.
+func (dr *TestDR) RevealDataRequest(f *Fixture, n int, stakerIndices []int) {
+	require.LessOrEqual(f.tb, n, len(dr.revealMsgs))
+	if stakerIndices != nil {
+		require.Equal(f.tb, n, len(stakerIndices))
 	}
 
-	return ta.fixture.CoreQuerier.DataRequestsByStatus(ta.fixture.Context(), msg)
-}
-
-func (ta *TestAccount) GetDataRequestStatuses(drIDs []string) (*types.QueryDataRequestStatusesResponse, error) {
-	msg := &types.QueryDataRequestStatusesRequest{
-		DataRequestIds: drIDs,
+	gasLimit := dr.RevealGasLimit
+	if dr.RevealGasLimit == 0 {
+		// TODO Use gastimation formula
+		gasLimit = 500000
 	}
-	return ta.fixture.CoreQuerier.DataRequestStatuses(ta.fixture.Context(), msg)
-}
 
-func (ta *TestAccount) GetDataRequest(drID string) (*types.QueryDataRequestResponse, error) {
-	msg := &types.QueryDataRequestRequest{
-		DrId: drID,
+	// Determine which staker indices to use.
+	var indices []int
+	if stakerIndices != nil {
+		indices = stakerIndices
+	} else {
+		// Use indices 0, 1, ..., n-1.
+		indices = make([]int, n)
+		for i := 0; i < n; i++ {
+			indices[i] = i
+		}
 	}
-	return ta.fixture.CoreQuerier.DataRequest(ta.fixture.Context(), msg)
+
+	for _, i := range indices {
+		f.executeMsg(&dr.revealMsgs[i], f.Stakers[i].Address, gasLimit)
+	}
+	dr.revealMsgs = nil
 }
