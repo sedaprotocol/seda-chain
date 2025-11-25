@@ -138,7 +138,7 @@ func TestDrsAreSortedByGasAndHeight(t *testing.T) {
 	require.Equal(t, int64(1), drsResp.DataRequests[3].PostedHeight)
 }
 
-func TestLastSeenIndexWorks(t *testing.T) {
+func TestLastSeenIndex(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
 	bob := f.CreateTestAccount("bob", 22)
@@ -148,34 +148,34 @@ func TestLastSeenIndexWorks(t *testing.T) {
 	dr2 := bob.CalculateDrIDAndArgs("2", 1)
 	dr3 := bob.CalculateDrIDAndArgs("3", 1)
 
-	// They all have same gas price, and height so ID will determine order
-	_, err := bob.PostDataRequest(dr1, 1, nil)
+	// They all have same gas price and height, so ID will determine order
+	// Note the sorted order is descending by gas price, then height, then ID.
+	postResult1, err := bob.PostDataRequest(dr1, 1, nil) // b426fdf3c5aabe17ab030427965f3e1c35de064090343dc78eb7f5967b57b949
 	require.NoError(t, err)
-	// This dr ID winds up being first
-	postDrResult2, err := bob.PostDataRequest(dr2, 1, nil)
+	_, err = bob.PostDataRequest(dr2, 1, nil) // 43699c923a6696aa63315589b04a8cf181aab5560239725b1454fb0f66993e27
 	require.NoError(t, err)
-	_, err = bob.PostDataRequest(dr3, 1, nil)
+	_, err = bob.PostDataRequest(dr3, 1, nil) // 13bcf175ebdd0ab970bfff9e773ac15ef95ee0ac4bdbbbff8a36c8405b1f8056
 	require.NoError(t, err)
 
 	firstDrResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 1, nil)
 	require.NoError(t, err)
 	require.Len(t, firstDrResp.DataRequests, 1)
-	require.Equal(t, postDrResult2.DrID, firstDrResp.DataRequests[0].ID)
+	require.Equal(t, postResult1.DrID, firstDrResp.DataRequests[0].ID)
 
 	remainingDrResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, &firstDrResp.LastSeenIndex)
 	require.NoError(t, err)
 	require.Len(t, remainingDrResp.DataRequests, 2)
 
-	var dr2Seen bool
+	var dr1Seen bool
 	for _, dr := range remainingDrResp.DataRequests {
-		if dr.ID == postDrResult2.DrID {
-			dr2Seen = true
+		if dr.ID == postResult1.DrID {
+			dr1Seen = true
 		}
 	}
-	require.False(t, dr2Seen)
+	require.False(t, dr1Seen)
 }
 
-func TestQueryByStatusManyDrsWorks(t *testing.T) {
+func TestQueryByStatusManyDrs(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
 	bob := f.CreateTestAccount("bob", 2+25*20)
@@ -220,7 +220,7 @@ func TestQueryByStatusManyDrsWorks(t *testing.T) {
 	require.Len(t, tallyingDrsResp.DataRequests, 3)
 }
 
-func TestQueryByStatusManyMoreDrsWorks(t *testing.T) {
+func TestQueryByStatusManyMoreDrs(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
 	bob := f.CreateTestAccount("bob", 2+163*20)
@@ -323,7 +323,7 @@ func TestQueryByStatusManyMoreDrsWorks(t *testing.T) {
 	require.Len(t, tallyingDrsResp.DataRequests, 0)
 }
 
-func TestQueryStatusesWorks(t *testing.T) {
+func TestQueryStatuses(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
 	bob := f.CreateStakedTestAccount("bob", 22, 1)

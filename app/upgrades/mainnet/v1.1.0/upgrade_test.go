@@ -28,7 +28,7 @@ import (
 func TestCoreContractUpgrade(t *testing.T) {
 	// Setup with arbitrary data
 	f := coretest.InitFixture(t, true, testwasms.CoreContractUpgradeReadyWasm())
-	stakers := f.AddStakers(t, 15)
+	stakers := f.AddStakersContract(t, 15)
 
 	totalDRs := 250
 	drIDs := make([]string, totalDRs)
@@ -54,9 +54,9 @@ func TestCoreContractUpgrade(t *testing.T) {
 		dr := coretest.NewRandomTestDR(f, rf)
 		drIDs[j] = dr.GetDataRequestID()
 
-		dr.PostDataRequest(f)
-		dr.CommitDataRequest(f, numCommits, nil)
-		dr.ExecuteReveals(f, numReveals, nil)
+		dr.PostDataRequestContract(f)
+		dr.CommitDataRequestContract(f, numCommits, nil)
+		dr.RevealDataRequestContract(f, numReveals, nil)
 	}
 
 	res := f.DrainDataRequestPool(100)
@@ -66,17 +66,17 @@ func TestCoreContractUpgrade(t *testing.T) {
 	// upgrade_height - (commitTimeout + revealTimeout + backupDelay)
 	// = 100 - (50 + 5 + 5) = 40
 	dr := coretest.NewRandomTestDR(f, rf)
-	dr.PostDataRequest(f)
+	dr.PostDataRequestContract(f)
 
 	f.SimulateLegacyTallyEndblock(t, 39) // Block 39
 
 	dr = coretest.NewRandomTestDR(f, rf)
-	dr.PostDataRequest(f)
+	dr.PostDataRequestContract(f)
 
 	f.SimulateLegacyTallyEndblock(t, 1) // Block 40
 
 	dr = coretest.NewRandomTestDR(f, rf)
-	dr.PostDataRequestShouldErr(f, "Cannot post request: Data request pool is draining")
+	dr.PostDataRequestContractShouldErr(f, "Cannot post request: Data request pool is draining")
 
 	//
 	// Upgrade handler execution

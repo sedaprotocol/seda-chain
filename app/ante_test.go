@@ -69,7 +69,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
+					Msg:      testutil.CommitMsgContract("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&coretypes.MsgCommit{
@@ -81,7 +81,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.RevealMsg("dr_id_2", "reveal", "public_key", "proof", []string{}, 0, 99, 35000),
+					Msg:      testutil.RevealMsgContract("dr_id_2", "reveal", "public_key", "proof", []string{}, 0, 99, 35000),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&coretypes.MsgReveal{
@@ -101,13 +101,13 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
+					Msg:      testutil.CommitMsgContract("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.RevealMsg("dr_id", "reveal", "public_key", "proof", []string{}, 0, 99, 35000),
+					Msg:      testutil.RevealMsgContract("dr_id", "reveal", "public_key", "proof", []string{}, 0, 99, 35000),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 			},
@@ -153,7 +153,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
+					Msg:      testutil.CommitMsgContract("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&coretypes.MsgCommit{
@@ -171,19 +171,19 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
+					Msg:      testutil.CommitMsgContract("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.RevealMsg("dr_id", "reveal", "public_key", "proofproof", []string{"b"}, 1, 5, 27000),
+					Msg:      testutil.RevealMsgContract("dr_id", "reveal", "public_key", "proofproof", []string{"b"}, 1, 5, 27000),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.RevealMsg("dr_id_2", "reveal", "public_key", "proof", []string{"a"}, 0, 99, 35000),
+					Msg:      testutil.RevealMsgContract("dr_id_2", "reveal", "public_key", "proof", []string{"a"}, 0, 99, 35000),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&coretypes.MsgReveal{
@@ -208,7 +208,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
+					Msg:      testutil.CommitMsgContract("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&coretypes.MsgCommit{
@@ -226,7 +226,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
+					Msg:      testutil.CommitMsgContract("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&wasmstoragetypes.MsgStoreOracleProgram{
@@ -249,13 +249,13 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
+					Msg:      testutil.CommitMsgContract("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.RevealMsg("dr_id", "reveal", "public_key", "proof", []string{}, 0, 99, 35000),
+					Msg:      testutil.RevealMsgContract("dr_id", "reveal", "public_key", "proof", []string{}, 0, 99, 35000),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 				&coretypes.MsgReveal{
@@ -307,7 +307,7 @@ func TestCommitRevealDecorator_AnteHandle(t *testing.T) {
 				&wasmtypes.MsgExecuteContract{
 					Sender:   sender.String(),
 					Contract: coreContractAddr.String(),
-					Msg:      testutil.CommitMsg("dr_id", "commitment", "public_key", "proof"),
+					Msg:      testutil.CommitMsgContract("dr_id", "commitment", "public_key", "proof"),
 					Funds:    sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewIntFromUint64(1))),
 				},
 			},

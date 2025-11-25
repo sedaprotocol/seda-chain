@@ -96,6 +96,25 @@ var TestWasms = [][]byte{
 	HelloWorldWasm(),
 }
 
+var TestWasmNames = []string{
+	"sample_tally",
+	"sample_tally_2",
+	"random_string_tally",
+	"invalid_import",
+	"chaos_dr",
+	"data_proxy",
+	"http_heavy",
+	"long_http",
+	"max_dr",
+	"max_result",
+	"memory",
+	"mock_api",
+	"price_feed",
+	"random_number",
+	"big",
+	"hello_world",
+}
+
 // v1.0.16 Core Contract with commit/reveal refund tx call removed
 func CoreContractWasm() []byte {
 	return coreContract

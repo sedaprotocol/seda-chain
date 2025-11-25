@@ -23,6 +23,7 @@ const (
 	EventTypeDataProxyRewards    = "data_proxy_rewards"
 	EventTypeBurn                = "core_burn"
 	EventTypeRefund              = "core_refund"
+	EventTypeExpireDataRequest   = "expire_data_request"
 
 	AttributeNewOwner                = "new_owner"
 	AttributePendingOwner            = "pending_owner"
