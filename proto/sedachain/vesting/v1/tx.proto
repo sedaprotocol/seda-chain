@@ -51,6 +51,7 @@ message MsgCreateVestingAccountResponse {}
 // MsgClawback defines a message that returns the vesting funds to the funder.
 message MsgClawback {
   option (cosmos.msg.v1.signer) = "funder_address";
+  option (amino.name) = "sedachain/MsgClawback";
 
   // funder_address is the address which funded the account.
   string funder_address = 1;

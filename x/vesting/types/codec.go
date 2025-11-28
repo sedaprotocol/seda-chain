@@ -19,6 +19,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&authvestingtypes.ContinuousVestingAccount{}, "cosmos-sdk/ContinuousVestingAccount", nil)
 	cdc.RegisterConcrete(&ClawbackContinuousVestingAccount{}, "sedachain/ClawbackContinuousVestingAccount", nil)
 	legacy.RegisterAminoMsg(cdc, &MsgCreateVestingAccount{}, "cosmos-sdk/MsgCreateVestingAccount")
+	legacy.RegisterAminoMsg(cdc, &MsgClawback{}, "sedachain/MsgClawback")
 }
 
 // RegisterInterfaces associates protoName with AccountI and VestingAccount
