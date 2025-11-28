@@ -34,47 +34,48 @@ func (k Keeper) setBatch(ctx context.Context, batch types.Batch) error {
 	return k.batches.Set(ctx, batch.BlockHeight, batch)
 }
 
-// SetNewBatch increments the current batch number and stores a given
-// batch at that index. It also stores the given data result tree
-// entries, validator tree entries, and batch signature entries (at
-// the next batch index, to be populated with signatures later). It
-// returns an error if a batch already exists at the given batch's
-// block height or if the given batch's batch number does not match
-// the next batch number.
-func (k Keeper) SetNewBatch(ctx context.Context, batch types.Batch, dataEntries types.DataResultTreeEntries, valEntries []types.ValidatorTreeEntry) error {
+// SetNewBatch stores a new batch and its associated data at current batch number
+// and increments the current batch number. If successful, it returns the batch number
+// of the newly created batch.
+func (k Keeper) SetNewBatch(ctx sdk.Context, batch types.Batch, dataEntries types.DataResultTreeEntries, valEntries []types.ValidatorTreeEntry) (uint64, error) {
 	found, err := k.batches.Has(ctx, batch.BlockHeight)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if found {
-		return types.ErrBatchAlreadyExists.Wrapf("batch block height %d", batch.BlockHeight)
+		return 0, types.ErrBatchAlreadyExists.Wrapf("batch block height %d", batch.BlockHeight)
 	}
 
 	batchNum, err := k.GetCurrentBatchNum(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if batch.BatchNumber != batchNum {
-		return types.ErrInvalidBatchNumber.Wrapf("got %d; expected %d", batch.BatchNumber, batchNum)
+		return 0, types.ErrInvalidBatchNumber.Wrapf("got %d; expected %d", batch.BatchNumber, batchNum)
 	}
 
 	err = k.setDataResultTreeEntry(ctx, batchNum, dataEntries)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	for _, valEntry := range valEntries {
 		err = k.setValidatorTreeEntry(ctx, batchNum, valEntry)
 		if err != nil {
-			return err
+			return 0, err
 		}
 	}
 
 	_, err = k.incrementCurrentBatchNum(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return k.batches.Set(ctx, batch.BlockHeight, batch)
+
+	err = k.batches.Set(ctx, batch.BlockHeight, batch)
+	if err != nil {
+		return 0, err
+	}
+	return batchNum, nil
 }
 
 func (k Keeper) GetBatchForHeight(ctx context.Context, blockHeight int64) (types.Batch, error) {

@@ -5,7 +5,7 @@ The batching module collects data rseults, current validators, and their signatu
 
 ## State
 ```
-0x00 | is_batched | data_request_id | data_request_height -> data_result
+0x00 | is_batched | data_request_id | data_request_height -> legacy_data_results
 0x01 | data_request_id | data_request_height              -> batch_number
 0x02                                                      -> current_batch_number
 0x03 | block_height                                       -> batch
@@ -13,6 +13,11 @@ The batching module collects data rseults, current validators, and their signatu
 0x05 | batch_number | validator_address                   -> validator_tree_entries
 0x06 | batch_number                                       -> data_tree_entries
 0x07 | batch_number | validator_address                   -> batch_signature
+0x08                                                      -> parameters
+0x09 | is_batched | data_request_id | data_request_height -> data_result
+0x10 | batch_number                                       -> data_request_id | data_request_height
+0x11                                                      -> batch_number_at_upgrade
+0x12                                                      -> has_pruning_caught_up
 ```
 
 ### Batches

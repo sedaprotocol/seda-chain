@@ -324,7 +324,7 @@ func generateFirstBatch(t *testing.T, f *fixture, numValidators int) ([]sdk.ValA
 		BatchNumber: collections.DefaultSequenceStart,
 		BlockHeight: 1,
 	}
-	err := f.batchingKeeper.SetNewBatch(f.Context(), batch, types.DataResultTreeEntries{}, validatorEntries)
+	_, err := f.batchingKeeper.SetNewBatch(f.Context(), batch, types.DataResultTreeEntries{}, validatorEntries)
 	require.NoError(t, err)
 
 	return validatorAddrs, privKeys, validators
