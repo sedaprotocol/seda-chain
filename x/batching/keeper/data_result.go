@@ -139,34 +139,3 @@ func (k Keeper) IterateDataResults(ctx context.Context, batched bool, cb func(ke
 	rng := collections.NewPrefixedTripleRange[bool, string, uint64](batched)
 	return k.dataResults.Walk(ctx, rng, cb)
 }
-
-// SetBatchAssignment assigns a given batch number to the given data
-// request ID and data request height.
-func (k Keeper) SetBatchAssignment(ctx context.Context, dataReqID string, dataReqHeight uint64, batchNumber uint64) error {
-	return k.batchAssignments.Set(ctx, collections.Join(dataReqID, dataReqHeight), batchNumber)
-}
-
-// GetBatchAssignment returns the given data request's assigned batch
-// number for a given height.
-func (k Keeper) GetBatchAssignment(ctx context.Context, dataReqID string, dataReqHeight uint64) (uint64, error) {
-	return k.batchAssignments.Get(ctx, collections.Join(dataReqID, dataReqHeight))
-}
-
-func (k Keeper) RemoveBatchAssignment(ctx context.Context, dataReqID string, dataReqHeight uint64) error {
-	return k.batchAssignments.Remove(ctx, collections.Join(dataReqID, dataReqHeight))
-}
-
-// getAllBatchAssignments retrieves all batch assignments from the store.
-// Used for genesis export.
-func (k Keeper) getAllBatchAssignments(ctx context.Context) ([]types.BatchAssignment, error) {
-	var batchAssignments []types.BatchAssignment
-	err := k.batchAssignments.Walk(ctx, nil, func(key collections.Pair[string, uint64], value uint64) (stop bool, err error) {
-		batchAssignments = append(batchAssignments, types.BatchAssignment{
-			BatchNumber:       value,
-			DataRequestId:     key.K1(),
-			DataRequestHeight: key.K2(),
-		})
-		return false, nil
-	})
-	return batchAssignments, err
-}

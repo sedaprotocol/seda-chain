@@ -13,6 +13,8 @@ The batching module collects data rseults, current validators, and their signatu
 0x05 | batch_number | validator_address                   -> validator_tree_entries
 0x06 | batch_number                                       -> data_tree_entries
 0x07 | batch_number | validator_address                   -> batch_signature
+0x08                                                      -> parameters
+0x09 | batch_number                                       -> data_request_id | data_request_height
 ```
 
 ### Batches

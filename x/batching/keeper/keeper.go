@@ -33,6 +33,7 @@ type Keeper struct {
 	Schema                collections.Schema
 	dataResults           collections.Map[collections.Triple[bool, string, uint64], types.DataResult]
 	batchAssignments      collections.Map[collections.Pair[string, uint64], uint64]
+	batchDataResults      collections.Map[uint64, types.DataRequestIDHeights]
 	currentBatchNumber    collections.Sequence
 	batches               *collections.IndexedMap[int64, types.Batch, BatchIndexes]
 	validatorTreeEntries  collections.Map[collections.Pair[uint64, []byte], types.ValidatorTreeEntry]
@@ -66,6 +67,7 @@ func NewKeeper(
 		validatorAddressCodec: validatorAddressCodec,
 		dataResults:           collections.NewMap(sb, types.DataResultsPrefix, "data_results", collections.TripleKeyCodec(collections.BoolKey, collections.StringKey, collections.Uint64Key), codec.CollValue[types.DataResult](cdc)),
 		batchAssignments:      collections.NewMap(sb, types.BatchAssignmentsPrefix, "batch_assignments", collections.PairKeyCodec(collections.StringKey, collections.Uint64Key), collections.Uint64Value),
+		batchDataResults:      collections.NewMap(sb, types.BatchDataResultsPrefix, "batch_data_results", collections.Uint64Key, codec.CollValue[types.DataRequestIDHeights](cdc)),
 		currentBatchNumber:    collections.NewSequence(sb, types.CurrentBatchNumberKey, "current_batch_number"),
 		batches:               collections.NewIndexedMap(sb, types.BatchesKeyPrefix, "batches", collections.Int64Key, codec.CollValue[types.Batch](cdc), NewBatchIndexes(sb)),
 		validatorTreeEntries:  collections.NewMap(sb, types.ValidatorTreeEntriesKeyPrefix, "validator_tree_entries", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.ValidatorTreeEntry](cdc)),

@@ -21,12 +21,12 @@ func BenchmarkBatchPruning(b *testing.B) {
 		require.NoError(b, err)
 		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
 		require.NoError(b, err)
-		err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
+		_, err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
 		require.NoError(b, err)
 	}
 
 	for b.Loop() {
-		_, err := f.batchingKeeper.PruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
+		_, err := f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
 		require.NoError(b, err)
 	}
 }
@@ -53,7 +53,7 @@ func BenchmarkDataResultPruning(b *testing.B) {
 		f.AddBlock()
 		f.SetRandomLastCommitHash()
 
-		err := f.batchingKeeper.PruneDataResults(f.Context(), maxDataResultsToCheckForPrune, 2000)
+		err := f.batchingKeeper.BatchPruneDataResults(f.Context(), maxDataResultsToCheckForPrune, 2000)
 		require.NoError(b, err)
 	}
 }

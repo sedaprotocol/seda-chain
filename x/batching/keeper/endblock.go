@@ -19,6 +19,11 @@ import (
 )
 
 func (k Keeper) EndBlock(ctx sdk.Context) error {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return err
+	}
+
 	// Since we're only using the secp256k1 key for batching, we only
 	// need to check if the secp256k1 proving scheme is activated.
 	isActivated, err := k.pubKeyKeeper.IsProvingSchemeActivated(ctx, sedatypes.SEDAKeyIndexSecp256k1)
@@ -34,28 +39,30 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 			}
 			k.Logger(ctx).Info("skip batch creation due to no update", "height", ctx.BlockHeight())
 		} else {
-			err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
+			newBatchNum, err := k.SetNewBatch(ctx, batch, dataEntries, valEntries)
 			if err != nil {
 				return err
+			}
+
+			if newBatchNum >= params.NumBatchesToKeep {
+				err = k.PruneBatch(ctx, newBatchNum-params.NumBatchesToKeep)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	} else {
 		k.Logger(ctx).Info("skip batching since proving scheme has not been activated", "index", sedatypes.SEDAKeyIndexSecp256k1)
 	}
 
-	params, err := k.GetParams(ctx)
-	if err != nil {
-		return err
-	}
-
-	lastPrunedBatchNum, err := k.PruneBatches(ctx, params.NumBatchesToKeep, params.MaxBatchPrunePerBlock)
+	lastPrunedBatchNum, err := k.BatchPruneBatches(ctx, params.NumBatchesToKeep, params.MaxBatchPrunePerBlock)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
 		k.Logger(ctx).Error("error while pruning batches", "err", err)
 		return nil
 	}
 
-	err = k.PruneDataResults(ctx, params.MaxDataResultsToCheckForPrune, lastPrunedBatchNum)
+	err = k.BatchPruneDataResults(ctx, params.MaxDataResultsToCheckForPrune, lastPrunedBatchNum)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
 		k.Logger(ctx).Error("error while pruning data results", "err", err)
