@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"cosmossdk.io/collections"
 	collcdc "cosmossdk.io/collections/codec"
 
@@ -185,6 +187,14 @@ func (idx DataRequestIndexing) GetDataRequestIDsByStatusPaginated(ctx sdk.Contex
 		rng.EndExclusive(lastSeenIndex)
 	}
 
+	start, end, order, err := rng.RangeValues()
+	if err != nil {
+		return nil, nil, 0, err
+	}
+	fmt.Printf("start: %v\n", start)
+	fmt.Printf("end: %v\n", end)
+	fmt.Printf("order: %v\n", order)
+
 	iter, err := idx.indexing.Iterate(ctx, rng)
 	if err != nil {
 		return nil, nil, 0, err
@@ -200,6 +210,8 @@ func (idx DataRequestIndexing) GetDataRequestIDsByStatusPaginated(ctx sdk.Contex
 			return nil, nil, 0, err
 		}
 		ids = append(ids, key.K2().DrID())
+
+		fmt.Printf("iterating %s\n", key.K2().DrID())
 
 		newLastSeenIndex = append([]byte(nil), key.K2()...)
 		count++

@@ -2,6 +2,7 @@ package datarequesttests
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -138,7 +139,7 @@ func TestDrsAreSortedByGasAndHeight(t *testing.T) {
 	require.Equal(t, int64(1), drsResp.DataRequests[3].PostedHeight)
 }
 
-func TestLastSeenIndex(t *testing.T) {
+func TestDataRequestsByStatus(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
 	bob := f.CreateTestAccount("bob", 22)
@@ -147,32 +148,42 @@ func TestLastSeenIndex(t *testing.T) {
 	dr1 := bob.CalculateDrIDAndArgs("1", 1)
 	dr2 := bob.CalculateDrIDAndArgs("2", 1)
 	dr3 := bob.CalculateDrIDAndArgs("3", 1)
+	dr4 := bob.CalculateDrIDAndArgs("4", 1)
 
 	// They all have same gas price and height, so ID will determine order
 	// Note the sorted order is descending by gas price, then height, then ID.
-	postResult1, err := bob.PostDataRequest(dr1, 1, nil) // b426fdf3c5aabe17ab030427965f3e1c35de064090343dc78eb7f5967b57b949
+	postResult1, err := bob.PostDataRequest(dr1, 1, nil)
 	require.NoError(t, err)
-	_, err = bob.PostDataRequest(dr2, 1, nil) // 43699c923a6696aa63315589b04a8cf181aab5560239725b1454fb0f66993e27
+	postResult2, err := bob.PostDataRequest(dr2, 1, nil)
 	require.NoError(t, err)
-	_, err = bob.PostDataRequest(dr3, 1, nil) // 13bcf175ebdd0ab970bfff9e773ac15ef95ee0ac4bdbbbff8a36c8405b1f8056
+	postResult3, err := bob.PostDataRequest(dr3, 1, nil)
+	require.NoError(t, err)
+	postResult4, err := bob.PostDataRequest(dr4, 1, nil)
 	require.NoError(t, err)
 
-	firstDrResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 1, nil)
-	require.NoError(t, err)
-	require.Len(t, firstDrResp.DataRequests, 1)
-	require.Equal(t, postResult1.DrID, firstDrResp.DataRequests[0].ID)
+	ids := []string{postResult1.DrID, postResult2.DrID, postResult3.DrID, postResult4.DrID}
+	slices.Sort(ids)
 
-	remainingDrResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, &firstDrResp.LastSeenIndex)
+	result, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 1, nil)
 	require.NoError(t, err)
-	require.Len(t, remainingDrResp.DataRequests, 2)
+	require.Len(t, result.DataRequests, 1)
+	require.Equal(t, ids[3], result.DataRequests[0].ID)
+	require.Contains(t, result.LastSeenIndex, ids[3])
 
-	var dr1Seen bool
-	for _, dr := range remainingDrResp.DataRequests {
-		if dr.ID == postResult1.DrID {
-			dr1Seen = true
-		}
-	}
-	require.False(t, dr1Seen)
+	// bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 4, &result.LastSeenIndex) // debug
+
+	result2, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 1, &result.LastSeenIndex)
+	require.NoError(t, err)
+	require.Len(t, result2.DataRequests, 1)
+	require.Equal(t, ids[2], result2.DataRequests[0].ID)
+	require.Contains(t, result2.LastSeenIndex, ids[2])
+
+	// Should return remaining 2 data requests
+	result3, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, &result2.LastSeenIndex)
+	require.NoError(t, err)
+	require.Len(t, result3.DataRequests, 2)
+	require.Contains(t, result3.DataRequests, ids[0])
+	require.Contains(t, result3.DataRequests, ids[1])
 }
 
 func TestQueryByStatusManyDrs(t *testing.T) {
