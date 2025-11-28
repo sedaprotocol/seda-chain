@@ -476,17 +476,12 @@ func NewApp(
 		app.AccountKeeper.AddressCodec(),
 	)
 
-	groupConfig := group.DefaultConfig()
-	/*
-		Example of setting group params:
-		groupConfig.MaxMetadataLen = 1000
-	*/
 	app.GroupKeeper = groupkeeper.NewKeeper(
 		keys[group.StoreKey],
 		appCodec,
 		app.MsgServiceRouter(),
 		app.AccountKeeper,
-		groupConfig,
+		group.DefaultConfig(),
 	)
 
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))

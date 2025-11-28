@@ -16,22 +16,32 @@ func NewGenesisState(
 	batches []Batch,
 	batchData []BatchData,
 	dataResults []GenesisDataResult,
+	legacyDataResults []GenesisDataResult,
 	batchAssignments []BatchAssignment,
 	params Params,
+	hasPruningCaughtUp bool,
+	batchNumberAtUpgrade uint64,
 ) GenesisState {
 	return GenesisState{
-		CurrentBatchNumber: curBatchNum,
-		Batches:            batches,
-		BatchData:          batchData,
-		DataResults:        dataResults,
-		BatchAssignments:   batchAssignments,
-		Params:             params,
+		CurrentBatchNumber:   curBatchNum,
+		Batches:              batches,
+		BatchData:            batchData,
+		DataResults:          dataResults,
+		LegacyDataResults:    legacyDataResults,
+		BatchAssignments:     batchAssignments,
+		Params:               params,
+		HasPruningCaughtUp:   hasPruningCaughtUp,
+		BatchNumberAtUpgrade: batchNumberAtUpgrade,
 	}
 }
 
 // DefaultGenesisState creates a default GenesisState object.
 func DefaultGenesisState() *GenesisState {
-	state := NewGenesisState(collections.DefaultSequenceStart, nil, nil, nil, nil, DefaultParams())
+	state := NewGenesisState(
+		collections.DefaultSequenceStart,
+		nil, nil, nil, nil, nil,
+		DefaultParams(), true, 0,
+	)
 	return &state
 }
 

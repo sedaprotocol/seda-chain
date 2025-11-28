@@ -19,6 +19,15 @@ import (
 )
 
 func (k Keeper) EndBlock(ctx sdk.Context) error {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return err
+	}
+	batchNumAtUpgrade, err := k.GetBatchNumberAtUpgrade(ctx)
+	if err != nil {
+		return err
+	}
+
 	// Since we're only using the secp256k1 key for batching, we only
 	// need to check if the secp256k1 proving scheme is activated.
 	isActivated, err := k.pubKeyKeeper.IsProvingSchemeActivated(ctx, sedatypes.SEDAKeyIndexSecp256k1)
@@ -34,32 +43,60 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 			}
 			k.Logger(ctx).Info("skip batch creation due to no update", "height", ctx.BlockHeight())
 		} else {
-			err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
+			newBatchNum, err := k.SetNewBatch(ctx, batch, dataEntries, valEntries)
 			if err != nil {
 				return err
+			}
+
+			// Try pruning a batch.
+			// If there has been an upgrade (batchNumAtUpgrade is not 0),
+			// then prune only if the batch was created after the upgrade.
+			batchNumToPrune := newBatchNum - params.NumBatchesToKeep
+			if newBatchNum >= params.NumBatchesToKeep &&
+				(batchNumAtUpgrade == 0 || batchNumToPrune > batchNumAtUpgrade) {
+				err = k.TryPruneBatch(ctx, batchNumToPrune)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	} else {
 		k.Logger(ctx).Info("skip batching since proving scheme has not been activated", "index", sedatypes.SEDAKeyIndexSecp256k1)
 	}
 
-	params, err := k.GetParams(ctx)
+	hasCaughtUp, err := k.HasPruningCaughtUp(ctx)
 	if err != nil {
 		return err
 	}
+	if !hasCaughtUp {
+		// Batch prune MaxBatchPrunePerBlock batches and switch HasPruningCaughtUp
+		// to true if all batches up to the batch number at the time of the upgrade
+		// have been pruned.
+		// Note this operation does not prune data results, which will be pruned
+		// separately in the else clause.
+		lastPrunedBatchNum, err := k.BatchPruneBatches(ctx, params.NumBatchesToKeep, params.MaxBatchPrunePerBlock, batchNumAtUpgrade)
+		if err != nil {
+			telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
+			k.Logger(ctx).Error("error while pruning batches", "err", err)
+			return nil
+		}
 
-	lastPrunedBatchNum, err := k.PruneBatches(ctx, params.NumBatchesToKeep, params.MaxBatchPrunePerBlock)
-	if err != nil {
-		telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
-		k.Logger(ctx).Error("error while pruning batches", "err", err)
-		return nil
-	}
-
-	err = k.PruneDataResults(ctx, params.MaxDataResultsToCheckForPrune, lastPrunedBatchNum)
-	if err != nil {
-		telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
-		k.Logger(ctx).Error("error while pruning data results", "err", err)
-		return nil
+		if lastPrunedBatchNum >= batchNumAtUpgrade {
+			err = k.SetHasPruningCaughtUp(ctx, true)
+			if err != nil {
+				return err
+			}
+			k.Logger(ctx).Info("batch pruning has caught up")
+		}
+	} else {
+		// Now batch pruning of batches is terminated, and we start pruning legacy
+		// data results collection, which is no longer used.
+		err = k.PruneLegacyDataResults(ctx, params.MaxLegacyDataResultPrunePerBlock)
+		if err != nil {
+			telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
+			k.Logger(ctx).Error("error while pruning legacy data results", "err", err)
+			return nil
+		}
 	}
 
 	telemetry.SetGauge(0, types.TelemetryKeyBatchingPruningFail)

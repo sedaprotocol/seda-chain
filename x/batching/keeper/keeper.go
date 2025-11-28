@@ -30,8 +30,8 @@ type Keeper struct {
 	wasmViewKeeper        wasmtypes.ViewKeeper
 	validatorAddressCodec addresscodec.Codec
 
-	Schema                collections.Schema
-	dataResults           collections.Map[collections.Triple[bool, string, uint64], types.DataResult]
+	Schema collections.Schema
+
 	batchAssignments      collections.Map[collections.Pair[string, uint64], uint64]
 	currentBatchNumber    collections.Sequence
 	batches               *collections.IndexedMap[int64, types.Batch, BatchIndexes]
@@ -39,6 +39,21 @@ type Keeper struct {
 	dataResultTreeEntries collections.Map[uint64, types.DataResultTreeEntries]
 	batchSignatures       collections.Map[collections.Pair[uint64, []byte], types.BatchSignatures]
 	params                collections.Item[types.Params]
+	// dataResults is the newer version of dataResults. The items in this collection
+	// have corresponding items in batchDataResults.
+	dataResults collections.Map[collections.Triple[bool, string, uint64], types.DataResult]
+	// batchDataResults maps batch number to a list of data request ID - posted height
+	// pairs to support simple pruning of data results.
+	batchDataResults collections.Map[uint64, types.DataRequestIDHeights]
+	// legacyDataResults is the older version of dataResults. The items in this
+	// collection do not have corresponding items in batchDataResults.
+	legacyDataResults collections.Map[collections.Triple[bool, string, uint64], types.DataResult]
+	// hasPruningCaughtUp indicates that all batches up to batchNumberAtUpgrade have
+	// been pruned by batch pruning.
+	hasPruningCaughtUp collections.Item[bool]
+	// batchNumberAtUpgrade is the batch number of the latest batch at upgrade time
+	// except when its value is 0, in which case there was no upgrade.
+	batchNumberAtUpgrade collections.Item[uint64]
 }
 
 func NewKeeper(
@@ -64,8 +79,12 @@ func NewKeeper(
 		wasmKeeper:            wk,
 		wasmViewKeeper:        wvk,
 		validatorAddressCodec: validatorAddressCodec,
+		legacyDataResults:     collections.NewMap(sb, types.LegacyDataResultsPrefix, "legacy_data_results", collections.TripleKeyCodec(collections.BoolKey, collections.StringKey, collections.Uint64Key), codec.CollValue[types.DataResult](cdc)),
+		hasPruningCaughtUp:    collections.NewItem(sb, types.HasPruningCaughtUpKey, "has_pruning_caught_up", collections.BoolValue),
 		dataResults:           collections.NewMap(sb, types.DataResultsPrefix, "data_results", collections.TripleKeyCodec(collections.BoolKey, collections.StringKey, collections.Uint64Key), codec.CollValue[types.DataResult](cdc)),
 		batchAssignments:      collections.NewMap(sb, types.BatchAssignmentsPrefix, "batch_assignments", collections.PairKeyCodec(collections.StringKey, collections.Uint64Key), collections.Uint64Value),
+		batchDataResults:      collections.NewMap(sb, types.BatchDataResultsPrefix, "batch_data_results", collections.Uint64Key, codec.CollValue[types.DataRequestIDHeights](cdc)),
+		batchNumberAtUpgrade:  collections.NewItem(sb, types.BatchNumberAtUpgradeKey, "batch_number_at_upgrade", collections.Uint64Value),
 		currentBatchNumber:    collections.NewSequence(sb, types.CurrentBatchNumberKey, "current_batch_number"),
 		batches:               collections.NewIndexedMap(sb, types.BatchesKeyPrefix, "batches", collections.Int64Key, codec.CollValue[types.Batch](cdc), NewBatchIndexes(sb)),
 		validatorTreeEntries:  collections.NewMap(sb, types.ValidatorTreeEntriesKeyPrefix, "validator_tree_entries", collections.PairKeyCodec(collections.Uint64Key, collections.BytesKey), codec.CollValue[types.ValidatorTreeEntry](cdc)),
