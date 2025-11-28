@@ -28,6 +28,10 @@ func mustDecodeBase64(s string) []byte {
 // ComputeDataRequestID computes the hex-encoded hash of the PostDataRequest
 // message to be used as the data request ID.
 func (m *MsgPostDataRequest) ComputeDataRequestID() (string, error) {
+	versionHasher := sha3.NewLegacyKeccak256()
+	versionHasher.Write([]byte(m.Version))
+	versionHash := versionHasher.Sum(nil)
+
 	execProgramIDBytes, err := hex.DecodeString(m.ExecProgramID)
 	if err != nil {
 		return "", err
@@ -62,7 +66,7 @@ func (m *MsgPostDataRequest) ComputeDataRequestID() (string, error) {
 	binary.BigEndian.PutUint16(replicationFactorBytes, uint16(m.ReplicationFactor))
 
 	dataRequestHasher := sha3.NewLegacyKeccak256()
-	dataRequestHasher.Write([]byte(m.Version))
+	dataRequestHasher.Write(versionHash)
 	dataRequestHasher.Write(execProgramIDBytes)
 	dataRequestHasher.Write(execInputsHash)
 	dataRequestHasher.Write(execGasLimitBytes)

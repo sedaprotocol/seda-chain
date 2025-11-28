@@ -19,16 +19,19 @@ func TestPostWorks(t *testing.T) {
 	_ = f.CreateStakedTestAccount("alice", 22, 10)
 
 	// try to get dr that doesn't exist yet
-	_, err := bob.GetDataRequest("b426fdf3c5aabe17ab030427965f3e1c35de064090343dc78eb7f5967b57b949")
+	dr := bob.CalculateDrIDAndArgs("1", 1)
+	drID, err := dr.ComputeDataRequestID()
+	require.NoError(t, err)
+
+	_, err = bob.GetDataRequest(drID)
 	require.ErrorContains(t, err, "not found")
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIDAndArgs("1", 1)
 	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
 	require.NoError(t, err)
 
 	// Dr can now be found
-	drFound, err := bob.GetDataRequest("b426fdf3c5aabe17ab030427965f3e1c35de064090343dc78eb7f5967b57b949")
+	drFound, err := bob.GetDataRequest(drID)
 	require.NoError(t, err)
 	require.Equal(t, postDrResult.DrID, drFound.DataRequest.ID)
 
