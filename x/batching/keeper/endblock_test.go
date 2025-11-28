@@ -28,6 +28,7 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/utils"
 	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
+	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
 func Test_ConstructDataResultTree(t *testing.T) {
@@ -787,7 +788,7 @@ func TestBatchPruning(t *testing.T) {
 	maxBatchPrunePerBlock := uint64(150)
 
 	// Should prune nothing.
-	lastRemovedBatchNum, err := f.batchingKeeper.PruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
+	lastRemovedBatchNum, err := f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0), lastRemovedBatchNum)
 
@@ -799,7 +800,7 @@ func TestBatchPruning(t *testing.T) {
 		require.NoError(t, err)
 		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
 		require.NoError(t, err)
-		err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
+		_, err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
 		require.NoError(t, err)
 		err = f.batchingKeeper.SetBatchSigSecp256k1(f.Context(), batch.BatchNumber, valEntries[0].ValidatorAddress, generateRandomBytes(64))
 		require.NoError(t, err)
@@ -810,7 +811,7 @@ func TestBatchPruning(t *testing.T) {
 	require.Equal(t, 300, len(batches))
 
 	// Should prune first 150 batches.
-	lastRemovedBatchNum, err = f.batchingKeeper.PruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
+	lastRemovedBatchNum, err = f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
 	require.NoError(t, err)
 	require.Equal(t, uint64(149), lastRemovedBatchNum)
 
@@ -824,11 +825,11 @@ func TestBatchPruning(t *testing.T) {
 		f.checkNoBatchData(t, uint64(i))
 	}
 	for i := 150; i <= 299; i++ {
-		f.checkBatchData(t, uint64(i))
+		f.checkBatchData(t, uint64(i), true)
 	}
 
 	// Should prune second 75 batches.
-	lastRemovedBatchNum, err = f.batchingKeeper.PruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
+	lastRemovedBatchNum, err = f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
 	require.NoError(t, err)
 	require.Equal(t, uint64(224), lastRemovedBatchNum)
 
@@ -842,11 +843,11 @@ func TestBatchPruning(t *testing.T) {
 		f.checkNoBatchData(t, uint64(i))
 	}
 	for i := 225; i <= 299; i++ {
-		f.checkBatchData(t, uint64(i))
+		f.checkBatchData(t, uint64(i), true)
 	}
 
 	// Should prune nothing.
-	lastRemovedBatchNum, err = f.batchingKeeper.PruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
+	lastRemovedBatchNum, err = f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0), lastRemovedBatchNum)
 
@@ -860,7 +861,7 @@ func TestBatchPruning(t *testing.T) {
 		f.checkNoBatchData(t, uint64(i))
 	}
 	for i := 225; i <= 299; i++ {
-		f.checkBatchData(t, uint64(i))
+		f.checkBatchData(t, uint64(i), true)
 	}
 }
 
@@ -880,20 +881,22 @@ func (f *fixture) checkNoBatchData(t *testing.T, batchNum uint64) {
 	require.Empty(t, sigs, "batchNum: %d", batchNum)
 }
 
-func (f *fixture) checkBatchData(t *testing.T, batchNum uint64) {
+func (f *fixture) checkBatchData(t *testing.T, batchNum uint64, checkSigs bool) {
 	batch, err := f.batchingKeeper.GetBatchByBatchNumber(f.Context(), batchNum)
 	require.NoError(t, err)
 	dataEntries, err := f.batchingKeeper.GetDataResultTreeEntries(f.Context(), batchNum)
 	require.NoError(t, err)
 	valEntries, err := f.batchingKeeper.GetValidatorTreeEntries(f.Context(), batchNum)
 	require.NoError(t, err)
-	sigs, err := f.batchingKeeper.GetBatchSignatures(f.Context(), batchNum)
-	require.NoError(t, err)
 
-	require.NotEmpty(t, batch)
-	require.NotEmpty(t, dataEntries)
-	require.NotEmpty(t, valEntries)
-	require.NotEmpty(t, sigs)
+	require.NotEmpty(t, batch, "batch number %d batch should not be empty", batchNum)
+	require.NotEmpty(t, dataEntries, "batch number %d data entriesshould not be empty", batchNum)
+	require.NotEmpty(t, valEntries, "batch number %d validator entries should not be empty", batchNum)
+	if checkSigs {
+		sigs, err := f.batchingKeeper.GetBatchSignatures(f.Context(), batchNum)
+		require.NoError(t, err)
+		require.NotEmpty(t, sigs, "batch number %d signatures should not be empty", batchNum)
+	}
 }
 
 func TestDataResultPruning(t *testing.T) {
@@ -902,7 +905,7 @@ func TestDataResultPruning(t *testing.T) {
 	maxDataResultsToCheckForPrune := uint64(100)
 
 	// Should prune nothing.
-	err := f.batchingKeeper.PruneDataResults(f.Context(), maxDataResultsToCheckForPrune, 0)
+	err := f.batchingKeeper.BatchPruneDataResults(f.Context(), maxDataResultsToCheckForPrune, 0)
 	require.NoError(t, err)
 
 	// Create 10 data results for each of 100 batches
@@ -927,7 +930,7 @@ func TestDataResultPruning(t *testing.T) {
 		f.AddBlock()
 		f.SetRandomLastCommitHash()
 
-		err = f.batchingKeeper.PruneDataResults(f.Context(), maxDataResultsToCheckForPrune, uint64(25+25*i))
+		err = f.batchingKeeper.BatchPruneDataResults(f.Context(), maxDataResultsToCheckForPrune, uint64(25+25*i))
 		require.NoError(t, err)
 
 		dataResults, err = f.batchingKeeper.GetDataResults(f.Context(), true)
@@ -939,4 +942,275 @@ func TestDataResultPruning(t *testing.T) {
 
 	require.Equal(t, 0, len(dataResults))
 	t.Logf("test completed after %d iterations", i)
+}
+
+// TestSimplePruning tests simple pruning with batch pruning disabled.
+func TestSimplePruning(t *testing.T) {
+	f := initFixture(t)
+
+	f.addBatchSigningValidators(t, 10)
+
+	err := f.pubKeyKeeper.SetProvingScheme(f.Context(), pubkeytypes.ProvingScheme{
+		Index:       uint32(sedatypes.SEDAKeyIndexSecp256k1),
+		IsActivated: true,
+	})
+	require.NoError(t, err)
+
+	params := types.Params{
+		NumBatchesToKeep:      15,
+		MaxBatchPrunePerBlock: 0, // disable batch pruning
+	}
+	err = f.batchingKeeper.SetParams(f.Context(), params)
+	require.NoError(t, err)
+
+	// Should prune nothing.
+	lastRemovedBatchNum, err := f.batchingKeeper.BatchPruneBatches(f.Context(), params.NumBatchesToKeep, params.MaxBatchPrunePerBlock)
+	require.NoError(t, err)
+	require.Equal(t, uint64(0), lastRemovedBatchNum)
+
+	// Create 30 batches with random associated data.
+	for range 30 {
+		f.AddBlock()
+
+		err := f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+		require.NoError(t, err)
+		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
+		require.NoError(t, err)
+		_, err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
+		require.NoError(t, err)
+		err = f.batchingKeeper.SetBatchSigSecp256k1(f.Context(), batch.BatchNumber, valEntries[0].ValidatorAddress, generateRandomBytes(64))
+		require.NoError(t, err)
+	}
+
+	batches, err := f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 30, len(batches))
+
+	// Should not prune anything because no batch is created.
+	f.AddBlock()
+	err = f.batchingKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 30, len(batches))
+
+	// Should create 31st batch Batch 30 and prune Batch 15.
+	f.AddBlock()
+	err = f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+	require.NoError(t, err)
+	err = f.batchingKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 30, len(batches))
+
+	for i := 0; i < 15; i++ {
+		f.checkBatchData(t, uint64(i), true)
+	}
+	f.checkNoBatchData(t, 15)
+	for i := 16; i <= 30; i++ {
+		f.checkBatchData(t, uint64(i), false)
+	}
+}
+
+func TestNoSimplePruningUntilNumBatchesToKeepIsReached(t *testing.T) {
+	f := initFixture(t)
+
+	f.addBatchSigningValidators(t, 10)
+
+	err := f.pubKeyKeeper.SetProvingScheme(f.Context(), pubkeytypes.ProvingScheme{
+		Index:       uint32(sedatypes.SEDAKeyIndexSecp256k1),
+		IsActivated: true,
+	})
+	require.NoError(t, err)
+
+	err = f.batchingKeeper.SetParams(f.Context(), types.Params{
+		NumBatchesToKeep:      11,
+		MaxBatchPrunePerBlock: 0,
+	})
+	require.NoError(t, err)
+
+	// Create 10 batches with random associated data.
+	for range 10 {
+		f.AddBlock()
+
+		err := f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+		require.NoError(t, err)
+		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
+		require.NoError(t, err)
+		_, err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
+		require.NoError(t, err)
+		err = f.batchingKeeper.SetBatchSigSecp256k1(f.Context(), batch.BatchNumber, valEntries[0].ValidatorAddress, generateRandomBytes(64))
+		require.NoError(t, err)
+	}
+
+	batches, err := f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 10, len(batches))
+
+	// Should create 11th batch Batch 10 and not prune anything.
+	f.AddBlock()
+	err = f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+	require.NoError(t, err)
+	err = f.batchingKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 11, len(batches))
+
+	// Should create 12th batch Batch 11 and prune Batch 0.
+	f.AddBlock()
+	err = f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+	require.NoError(t, err)
+	err = f.batchingKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 11, len(batches))
+	require.Equal(t, uint64(1), batches[0].BatchNumber)
+	f.checkNoBatchData(t, 0)
+	for i := 1; i <= 9; i++ {
+		f.checkBatchData(t, uint64(i), true)
+	}
+	f.checkBatchData(t, 10, false) // did not add signatures for latest two batches
+	f.checkBatchData(t, 11, false)
+}
+
+func TestBatchPruningCatchesUp(t *testing.T) {
+	f := initFixture(t)
+
+	f.addBatchSigningValidators(t, 10)
+
+	err := f.pubKeyKeeper.SetProvingScheme(f.Context(), pubkeytypes.ProvingScheme{
+		Index:       uint32(sedatypes.SEDAKeyIndexSecp256k1),
+		IsActivated: true,
+	})
+	require.NoError(t, err)
+
+	err = f.batchingKeeper.SetParams(f.Context(), types.Params{
+		NumBatchesToKeep:      15,
+		MaxBatchPrunePerBlock: 20,
+	})
+	require.NoError(t, err)
+
+	// Create 30 batches with random associated data.
+	for range 30 {
+		f.AddBlock()
+
+		err := f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+		require.NoError(t, err)
+		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
+		require.NoError(t, err)
+		_, err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
+		require.NoError(t, err)
+		err = f.batchingKeeper.SetBatchSigSecp256k1(f.Context(), batch.BatchNumber, valEntries[0].ValidatorAddress, generateRandomBytes(64))
+		require.NoError(t, err)
+	}
+
+	// Should create 31st batch Batch 30 and batch prune Batches 0-15.
+	f.AddBlock()
+	err = f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+	require.NoError(t, err)
+	err = f.batchingKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	batches, err := f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 15, len(batches))
+	for i := 0; i <= 15; i++ {
+		f.checkNoBatchData(t, uint64(i))
+	}
+	for i := 16; i <= 30; i++ {
+		f.checkBatchData(t, uint64(i), false)
+	}
+
+	// Now batch pruning is not needed and simple pruning should keep
+	// the number of batches at 15.
+	for i := range 10 {
+		f.AddBlock()
+		err = f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+		require.NoError(t, err)
+		err = f.batchingKeeper.EndBlock(f.Context())
+		require.NoError(t, err)
+
+		batches, err = f.batchingKeeper.GetAllBatches(f.Context())
+		require.NoError(t, err)
+		require.Equal(t, 15, len(batches))
+		require.Equal(t, uint64(17+i), batches[0].BatchNumber)
+		require.Equal(t, uint64(31+i), batches[len(batches)-1].BatchNumber)
+	}
+}
+
+func TestBatchPruningCatchesUpWithMockedUpgrade(t *testing.T) {
+	f := initFixture(t)
+
+	f.addBatchSigningValidators(t, 10)
+
+	err := f.pubKeyKeeper.SetProvingScheme(f.Context(), pubkeytypes.ProvingScheme{
+		Index:       uint32(sedatypes.SEDAKeyIndexSecp256k1),
+		IsActivated: true,
+	})
+	require.NoError(t, err)
+
+	err = f.batchingKeeper.SetParams(f.Context(), types.Params{
+		NumBatchesToKeep:      15,
+		MaxBatchPrunePerBlock: 20,
+	})
+	require.NoError(t, err)
+
+	// Create 30 batches with random associated data.
+	for range 30 {
+		f.AddBlock()
+
+		err := f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+		require.NoError(t, err)
+		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
+		require.NoError(t, err)
+		_, err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
+		require.NoError(t, err)
+		err = f.batchingKeeper.SetBatchSigSecp256k1(f.Context(), batch.BatchNumber, valEntries[0].ValidatorAddress, generateRandomBytes(64))
+		require.NoError(t, err)
+
+		// Delete batchResults maping to mock state prior to upgrade.
+		f.batchingKeeper.RemoveBatchDataResults(f.Context(), batch.BatchNumber)
+	}
+
+	// Should create 31st batch Batch 30 and batch prune Batches 0-15.
+	f.AddBlock()
+	err = f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+	require.NoError(t, err)
+	err = f.batchingKeeper.EndBlock(f.Context())
+	require.NoError(t, err)
+
+	batches, err := f.batchingKeeper.GetAllBatches(f.Context())
+	require.NoError(t, err)
+	require.Equal(t, 15, len(batches))
+	for i := 0; i <= 15; i++ {
+		f.checkNoBatchData(t, uint64(i))
+	}
+	for i := 16; i <= 30; i++ {
+		f.checkBatchData(t, uint64(i), false)
+	}
+
+	// Now batch pruning is not needed and simple pruning should keep
+	// the number of batches at 15.
+	for i := range 20 {
+		f.AddBlock()
+		err = f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
+		require.NoError(t, err)
+		err = f.batchingKeeper.EndBlock(f.Context())
+		require.NoError(t, err)
+
+		batches, err = f.batchingKeeper.GetAllBatches(f.Context())
+		require.NoError(t, err)
+		require.Equal(t, 15, len(batches))
+		require.Equal(t, uint64(17+i), batches[0].BatchNumber)
+		require.Equal(t, uint64(31+i), batches[len(batches)-1].BatchNumber)
+
+		f.checkNoBatchData(t, uint64(16+i))
+	}
 }
