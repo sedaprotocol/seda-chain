@@ -86,7 +86,7 @@ func RevealHelperFromString(input string) []byte {
 	return []byte(base64.StdEncoding.EncodeToString(HashStringHelper(input)))
 }
 
-func (ta *TestAccount) CalculateDrIDAndArgs(nonce string, replicationFactor uint32) types.MsgPostDataRequest {
+func (ta TestAccount) CreatePostDRMsg(nonce string, replicationFactor uint32) types.MsgPostDataRequest {
 	execProgramID := hex.EncodeToString(HashStringHelper(nonce))
 	execInputs := base64.StdEncoding.EncodeToString(HashStringHelper("exec_inputs"))
 	tallyProgramID := hex.EncodeToString(HashStringHelper("tally_program"))
@@ -110,24 +110,13 @@ func (ta *TestAccount) CalculateDrIDAndArgs(nonce string, replicationFactor uint
 	}
 }
 
-func MinimumDrCost() sdk.Coin {
-	return sdk.NewCoin(BondDenom, (math.NewIntFromUint64(types.MinExecGasLimit).Add(math.NewIntFromUint64(types.MinTallyGasLimit)).Mul(types.MinGasPrice)))
-}
-
-func (ta *TestAccount) PostDataRequest(args types.MsgPostDataRequest, blockHeight int64, funds *math.Int) (*types.MsgPostDataRequestResponse, error) {
-	if blockHeight < ta.fixture.Context().BlockHeight() {
-		panic("cannot set block height to the past")
-	}
-
-	ta.fixture.Context().WithBlockHeight(blockHeight)
-
+func (ta *TestAccount) PostDataRequest(msg types.MsgPostDataRequest, funds *math.Int) (*types.MsgPostDataRequestResponse, error) {
 	if funds != nil {
-		args.Funds = sdk.NewCoin(BondDenom, *funds)
+		msg.Funds = sdk.NewCoin(BondDenom, *funds)
 	} else {
-		args.Funds = MinimumDrCost()
+		msg.Funds = sdk.NewCoin(BondDenom, math.NewIntFromUint64(msg.ExecGasLimit).Add(math.NewIntFromUint64(msg.TallyGasLimit)).Mul(msg.GasPrice))
 	}
-
-	return ta.fixture.CoreMsgServer.PostDataRequest(ta.fixture.Context(), &args)
+	return ta.fixture.CoreMsgServer.PostDataRequest(ta.fixture.Context(), &msg)
 }
 
 func (ta *TestAccount) CreateRevealMsg(revealBody *types.RevealBody) *types.MsgReveal {

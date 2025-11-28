@@ -18,8 +18,8 @@ func TestFailsIfNotStaked(t *testing.T) {
 	alice := f.CreateTestAccount("alice", 22)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// Alice tries to commit
@@ -42,8 +42,8 @@ func TestFailsIfCommitTimedOut(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 	bob := f.CreateTestAccount("bob", 22)
 
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// move past the commit window
@@ -76,8 +76,8 @@ func TestCommitFailsOnExpiredDr(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 	bob := f.CreateTestAccount("bob", 22)
 
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// move past the commit window
@@ -113,8 +113,8 @@ func TestFailsIfNotEnoughStaked(t *testing.T) {
 	f.Creator.SetStakingConfig(*config)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// Alice tries to commit
@@ -141,8 +141,8 @@ func TestCommitWorks(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// Alice tries to commit
@@ -172,8 +172,8 @@ func TestMustMeetReplicationFactor(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIDAndArgs("1", 2)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 2)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// Alice commits
@@ -219,8 +219,8 @@ func TestFailsDoubleCommit(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 	bob := f.CreateStakedTestAccount("bob", 22, 10)
 
-	dr := bob.CalculateDrIDAndArgs("1", 2)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 2)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// Alice tries to commit
@@ -252,8 +252,8 @@ func TestFailsAfterRevealStarted(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// Alice tries to commit
@@ -293,8 +293,8 @@ func TestWrongSignatureFails(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// Bob posts a data request
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// Alice tries to commit
@@ -327,8 +327,8 @@ func TestMustBeOnAllowlistToCommit(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 	bob := f.CreateTestAccount("bob", 22)
 
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// Owner removes Alice from allowlist

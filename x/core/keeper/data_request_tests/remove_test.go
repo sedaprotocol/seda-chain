@@ -17,10 +17,10 @@ func TestBasicPayout(t *testing.T) {
 	// create the dr executors
 	executor1 := f.CreateStakedTestAccount("executor1", 22, 1)
 
-	dr := poster.CalculateDrIDAndArgs("1", 1)
+	dr := poster.CreatePostDRMsg("1", 1)
 	dr.ExecProgramID = f.DeployedOPs["hello_world"]
 	dr.TallyProgramID = f.DeployedOPs["hello_world"]
-	postDrResult, err := poster.PostDataRequest(dr, 1, nil)
+	postDrResult, err := poster.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// executor 1 commits with 5 gas used
@@ -69,8 +69,8 @@ func TestReducedPayout(t *testing.T) {
 	// create the dr executors
 	executor1 := f.CreateStakedTestAccount("executor1", 22, 1)
 
-	dr := poster.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := poster.PostDataRequest(dr, 1, nil)
+	dr := poster.CreatePostDRMsg("1", 1)
+	postDrResult, err := poster.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// executor 1 commits with 5 gas used
@@ -120,10 +120,10 @@ func TestUniformGasUsedPayout(t *testing.T) {
 	executor2 := f.CreateStakedTestAccount("executor2", 22, 1)
 	executor3 := f.CreateStakedTestAccount("executor3", 22, 1)
 
-	dr := poster.CalculateDrIDAndArgs("1", 3)
+	dr := poster.CreatePostDRMsg("1", 3)
 	dr.ExecProgramID = f.DeployedOPs["hello_world"]
 	dr.TallyProgramID = f.DeployedOPs["hello_world"]
-	postDrResult, err := poster.PostDataRequest(dr, 1, nil)
+	postDrResult, err := poster.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	reveal := &types.RevealBody{
@@ -185,10 +185,10 @@ func TestReplicationFactorDifferentGasUsedPayout(t *testing.T) {
 	executor2 := f.CreateStakedTestAccount("executor2", 22, 1)
 	executor3 := f.CreateStakedTestAccount("executor3", 22, 1)
 
-	dr := poster.CalculateDrIDAndArgs("1", 3)
+	dr := poster.CreatePostDRMsg("1", 3)
 	dr.ExecProgramID = f.DeployedOPs["hello_world"]
 	dr.TallyProgramID = f.DeployedOPs["hello_world"]
-	postDrResult, err := poster.PostDataRequest(dr, 1, nil)
+	postDrResult, err := poster.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// executor 1 commits with 500 gas used

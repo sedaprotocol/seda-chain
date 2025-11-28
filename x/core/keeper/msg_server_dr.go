@@ -59,7 +59,7 @@ func (m msgServer) PostDataRequest(goCtx context.Context, msg *types.MsgPostData
 	postedGasPrice := msg.Funds.Amount.Quo(totalGasLimit)
 	if postedGasPrice.LT(msg.GasPrice) {
 		requiredFunds, _ := totalGasLimit.SafeMul(msg.GasPrice)
-		return nil, sdkerrors.ErrInsufficientFunds.Wrapf("required: %s, got %s", requiredFunds, msg.GasPrice)
+		return nil, sdkerrors.ErrInsufficientFunds.Wrapf("required: %s, got %s", requiredFunds, msg.Funds.Amount)
 	}
 
 	err = m.bankKeeper.SendCoinsFromAccountToModule(

@@ -12,8 +12,8 @@ import (
 
 // DataRequestIndex is a 56-byte index for data requests used to sort them by
 // their posted gas prices and heights.
-// 0                  16       24      56 (byte)
-// | posted_gas_price | height | dr_id |
+// 0                 16                24      56 (byte)
+// | posted_gas_price | inverted_height | dr_id |
 type DataRequestIndex []byte
 
 func (i DataRequestIndex) DrID() string {
@@ -40,11 +40,14 @@ func DataRequestIndexFromStrings(strings []string) (DataRequestIndex, error) {
 	if len(strings) != 3 {
 		return index, fmt.Errorf("required 3 components, got %d", len(strings))
 	}
+	if len(strings[2]) != 64 {
+		return index, fmt.Errorf("invalid data request ID component %s: must be 64 characters long", strings[2])
+	}
 
 	// strings[0] is the posted gas price.
 	postedGasPrice, ok := new(big.Int).SetString(strings[0], 10)
 	if !ok {
-		return index, fmt.Errorf("invalid big-int component %s", strings[0])
+		return index, fmt.Errorf("invalid gas price component %s", strings[0])
 	}
 	postedGasPriceBytes := postedGasPrice.FillBytes(make([]byte, 16))
 	copy(index[0:16], postedGasPriceBytes)
@@ -57,7 +60,11 @@ func DataRequestIndexFromStrings(strings []string) (DataRequestIndex, error) {
 	binary.BigEndian.PutUint64(index[16:24], math.MaxUint64-height)
 
 	// strings[2] is the dr_id.
-	copy(index[24:], []byte(strings[2]))
+	drIDBytes, err := hex.DecodeString(strings[2])
+	if err != nil {
+		return index, fmt.Errorf("invalid data request ID component %s: %w", strings[2], err)
+	}
+	copy(index[24:], drIDBytes)
 
 	return index, nil
 }

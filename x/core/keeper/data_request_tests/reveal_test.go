@@ -15,8 +15,8 @@ func TestRevealWorks(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 2)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 2)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// alice commits
@@ -65,8 +65,8 @@ func TestWorksWithProxies(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	proxy1 := f.CreateProxyAccount("proxy1")
@@ -101,8 +101,8 @@ func TestFailsProxyWhenInvalidHex(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// alice commits with an invalid proxy
@@ -130,8 +130,8 @@ func TestNoErrorWhenNotRealProxyKey(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// alice commits with an invalid proxy
@@ -159,8 +159,8 @@ func TestFailsIfNotInRevealPhase(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// alice tries to reveal without committing first
@@ -184,8 +184,8 @@ func TestFailsIfRevealTimedOut(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// commit and move to reveal phase
@@ -223,8 +223,8 @@ func TestRevealFailsOnExpiredDr(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// commit and reveal
@@ -257,8 +257,8 @@ func TestFailsIfUserDidNotCommit(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// alice commits moving dr to reveal phase
@@ -295,8 +295,8 @@ func TestFailsOnDoubleReveal(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 2)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 2)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// alice commits
@@ -341,8 +341,8 @@ func TestFailsIfRevealDoesNotMatchCommit(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// alice commits
@@ -372,8 +372,8 @@ func TestFailsIfProxyPubKeysChangeBetweenPhases(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	proxy1 := f.CreateProxyAccount("proxy1")
@@ -406,8 +406,8 @@ func TestWorksAfterUnstaking(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// alice commits
@@ -445,8 +445,8 @@ func TestCannotFrontRunCommitReveal(t *testing.T) {
 	charlie := f.CreateStakedTestAccount("charlie", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// charlie commits using alice's reveal
@@ -475,8 +475,8 @@ func TestCannontFrontRunReveal(t *testing.T) {
 	charlie := f.CreateStakedTestAccount("charlie", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// alice commits
@@ -505,8 +505,8 @@ func TestFailsWhenRevealTooBig(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	drConfigResp, err := bob.GetDataRequestConfig()
@@ -539,8 +539,8 @@ func TestFailsWhenRevealTooBigAccountedForRf(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 2)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 2)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	// alice commits

@@ -18,8 +18,8 @@ func TestTimedOutRequestsMoveToTally(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 10)
 
 	// post a dr
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDr1Result, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDr1Result, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	drConfigResp, err := f.Creator.GetDataRequestConfig()
@@ -49,9 +49,8 @@ func TestTimedOutRequestsMoveToTally(t *testing.T) {
 	require.NotNil(t, dataResult1)
 
 	// post another dr
-	currentHeight := f.Context().BlockHeight()
-	dr2 := bob.CalculateDrIDAndArgs("2", 1)
-	postDr2Result, err := bob.PostDataRequest(dr2, currentHeight, nil)
+	dr2 := bob.CreatePostDRMsg("2", 1)
+	postDr2Result, err := bob.PostDataRequest(dr2, nil)
 	require.NoError(t, err)
 
 	// Alice commits on second dr

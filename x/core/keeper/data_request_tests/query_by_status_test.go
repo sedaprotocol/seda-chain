@@ -2,6 +2,7 @@ package datarequesttests
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -26,8 +27,8 @@ func TestOneWorks(t *testing.T) {
 	bob := f.CreateTestAccount("bob", 22)
 	_ = f.CreateStakedTestAccount("alice", 22, 1)
 
-	dr := bob.CalculateDrIDAndArgs("1", 1)
-	postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+	dr := bob.CreatePostDRMsg("1", 1)
+	postDrResult, err := bob.PostDataRequest(dr, nil)
 	require.NoError(t, err)
 
 	drsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, nil)
@@ -43,15 +44,15 @@ func TestLimitWorks(t *testing.T) {
 	bob := f.CreateTestAccount("bob", 22)
 	_ = f.CreateStakedTestAccount("alice", 22, 1)
 
-	dr1 := bob.CalculateDrIDAndArgs("1", 1)
-	dr2 := bob.CalculateDrIDAndArgs("2", 1)
-	dr3 := bob.CalculateDrIDAndArgs("3", 1)
+	dr1 := bob.CreatePostDRMsg("1", 1)
+	dr2 := bob.CreatePostDRMsg("2", 1)
+	dr3 := bob.CreatePostDRMsg("3", 1)
 
-	_, err := bob.PostDataRequest(dr1, 1, nil)
+	_, err := bob.PostDataRequest(dr1, nil)
 	require.NoError(t, err)
-	_, err = bob.PostDataRequest(dr2, 1, nil)
+	_, err = bob.PostDataRequest(dr2, nil)
 	require.NoError(t, err)
-	_, err = bob.PostDataRequest(dr3, 1, nil)
+	_, err = bob.PostDataRequest(dr3, nil)
 	require.NoError(t, err)
 
 	drsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 2, nil)
@@ -65,22 +66,22 @@ func TestDrsAreSortedByGasPrice(t *testing.T) {
 	bob := f.CreateTestAccount("bob", 22)
 	_ = f.CreateStakedTestAccount("alice", 22, 1)
 
-	dr1 := bob.CalculateDrIDAndArgs("1", 1)
+	dr1 := bob.CreatePostDRMsg("1", 1)
 	dr1.GasPrice = types.MinGasPrice.Add(math.NewInt(1))
 	dr1Funds := (math.NewIntFromUint64(dr1.ExecGasLimit).Add(math.NewIntFromUint64(dr1.TallyGasLimit))).Mul(dr1.GasPrice)
-	_, err := bob.PostDataRequest(dr1, 1, &dr1Funds)
+	_, err := bob.PostDataRequest(dr1, &dr1Funds)
 	require.NoError(t, err)
 
-	dr2 := bob.CalculateDrIDAndArgs("2", 1)
+	dr2 := bob.CreatePostDRMsg("2", 1)
 	dr2.GasPrice = types.MinGasPrice.Add(math.NewInt(3))
 	dr2Funds := (math.NewIntFromUint64(dr2.ExecGasLimit).Add(math.NewIntFromUint64(dr2.TallyGasLimit))).Mul(dr2.GasPrice)
-	_, err = bob.PostDataRequest(dr2, 1, &dr2Funds)
+	_, err = bob.PostDataRequest(dr2, &dr2Funds)
 	require.NoError(t, err)
 
-	dr3 := bob.CalculateDrIDAndArgs("3", 1)
+	dr3 := bob.CreatePostDRMsg("3", 1)
 	dr3.GasPrice = types.MinGasPrice.Add(math.NewInt(2))
 	dr3Funds := (math.NewIntFromUint64(dr3.ExecGasLimit).Add(math.NewIntFromUint64(dr3.TallyGasLimit))).Mul(dr3.GasPrice)
-	_, err = bob.PostDataRequest(dr3, 1, &dr3Funds)
+	_, err = bob.PostDataRequest(dr3, &dr3Funds)
 	require.NoError(t, err)
 
 	drsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, nil)
@@ -99,30 +100,30 @@ func TestDrsAreSortedByGasAndHeight(t *testing.T) {
 	bob := f.CreateTestAccount("bob", 22)
 	_ = f.CreateStakedTestAccount("alice", 22, 1)
 
-	dr1 := bob.CalculateDrIDAndArgs("1", 1)
+	dr1 := bob.CreatePostDRMsg("1", 1)
 	dr1.GasPrice = types.MinGasPrice.Add(math.NewInt(1))
 	dr1Funds := (math.NewIntFromUint64(dr1.ExecGasLimit).Add(math.NewIntFromUint64(dr1.TallyGasLimit))).Mul(dr1.GasPrice)
-	_, err := bob.PostDataRequest(dr1, 1, &dr1Funds)
+	_, err := bob.PostDataRequest(dr1, &dr1Funds)
 	require.NoError(t, err)
 
-	dr2 := bob.CalculateDrIDAndArgs("2", 1)
+	dr2 := bob.CreatePostDRMsg("2", 1)
 	dr2.GasPrice = types.MinGasPrice.Add(math.NewInt(10))
 	dr2Funds := (math.NewIntFromUint64(dr2.ExecGasLimit).Add(math.NewIntFromUint64(dr2.TallyGasLimit))).Mul(dr2.GasPrice)
-	_, err = bob.PostDataRequest(dr2, 1, &dr2Funds)
+	_, err = bob.PostDataRequest(dr2, &dr2Funds)
 	require.NoError(t, err)
 
 	f.AdvanceBlocks(1)
 
-	dr3 := bob.CalculateDrIDAndArgs("3", 1)
+	dr3 := bob.CreatePostDRMsg("3", 1)
 	dr3.GasPrice = types.MinGasPrice.Add(math.NewInt(10))
 	dr3Funds := (math.NewIntFromUint64(dr3.ExecGasLimit).Add(math.NewIntFromUint64(dr3.TallyGasLimit))).Mul(dr3.GasPrice)
-	_, err = bob.PostDataRequest(dr3, 2, &dr3Funds)
+	_, err = bob.PostDataRequest(dr3, &dr3Funds)
 	require.NoError(t, err)
 
-	dr4 := bob.CalculateDrIDAndArgs("4", 1)
+	dr4 := bob.CreatePostDRMsg("4", 1)
 	dr4.GasPrice = types.MinGasPrice.Add(math.NewInt(2))
 	dr4Funds := (math.NewIntFromUint64(dr4.ExecGasLimit).Add(math.NewIntFromUint64(dr4.TallyGasLimit))).Mul(dr4.GasPrice)
-	_, err = bob.PostDataRequest(dr4, 2, &dr4Funds)
+	_, err = bob.PostDataRequest(dr4, &dr4Funds)
 	require.NoError(t, err)
 
 	drsResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, nil)
@@ -138,41 +139,109 @@ func TestDrsAreSortedByGasAndHeight(t *testing.T) {
 	require.Equal(t, int64(1), drsResp.DataRequests[3].PostedHeight)
 }
 
-func TestLastSeenIndex(t *testing.T) {
+func TestDataRequestsByStatusLastSeenIndexID(t *testing.T) {
 	f := testutil.InitFixture(t, false, nil)
 
 	bob := f.CreateTestAccount("bob", 22)
 	_ = f.CreateStakedTestAccount("alice", 22, 1)
 
-	dr1 := bob.CalculateDrIDAndArgs("1", 1)
-	dr2 := bob.CalculateDrIDAndArgs("2", 1)
-	dr3 := bob.CalculateDrIDAndArgs("3", 1)
+	dr1 := bob.CreatePostDRMsg("1", 1)
+	dr2 := bob.CreatePostDRMsg("2", 1)
+	dr3 := bob.CreatePostDRMsg("3", 1)
+	dr4 := bob.CreatePostDRMsg("4", 1)
 
 	// They all have same gas price and height, so ID will determine order
 	// Note the sorted order is descending by gas price, then height, then ID.
-	postResult1, err := bob.PostDataRequest(dr1, 1, nil) // b426fdf3c5aabe17ab030427965f3e1c35de064090343dc78eb7f5967b57b949
+	postResult1, err := bob.PostDataRequest(dr1, nil)
 	require.NoError(t, err)
-	_, err = bob.PostDataRequest(dr2, 1, nil) // 43699c923a6696aa63315589b04a8cf181aab5560239725b1454fb0f66993e27
+	postResult2, err := bob.PostDataRequest(dr2, nil)
 	require.NoError(t, err)
-	_, err = bob.PostDataRequest(dr3, 1, nil) // 13bcf175ebdd0ab970bfff9e773ac15ef95ee0ac4bdbbbff8a36c8405b1f8056
+	postResult3, err := bob.PostDataRequest(dr3, nil)
+	require.NoError(t, err)
+	postResult4, err := bob.PostDataRequest(dr4, nil)
 	require.NoError(t, err)
 
-	firstDrResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 1, nil)
-	require.NoError(t, err)
-	require.Len(t, firstDrResp.DataRequests, 1)
-	require.Equal(t, postResult1.DrID, firstDrResp.DataRequests[0].ID)
+	sortedIDs := []string{postResult1.DrID, postResult2.DrID, postResult3.DrID, postResult4.DrID}
+	slices.Sort(sortedIDs)
 
-	remainingDrResp, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, &firstDrResp.LastSeenIndex)
+	// Query 1 data request
+	result, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 1, nil)
 	require.NoError(t, err)
-	require.Len(t, remainingDrResp.DataRequests, 2)
+	require.Len(t, result.DataRequests, 1)
+	require.Equal(t, sortedIDs[3], result.DataRequests[0].ID)
+	require.Equal(t, sortedIDs[3], result.LastSeenIndex[2])
 
-	var dr1Seen bool
-	for _, dr := range remainingDrResp.DataRequests {
-		if dr.ID == postResult1.DrID {
-			dr1Seen = true
-		}
-	}
-	require.False(t, dr1Seen)
+	// Query next 4 data requests - should return 3
+	result2, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 4, &result.LastSeenIndex)
+	require.NoError(t, err)
+	require.Len(t, result2.DataRequests, 3)
+
+	// Query next 1 data request from first query
+	result3, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 1, &result.LastSeenIndex)
+	require.NoError(t, err)
+	require.Len(t, result3.DataRequests, 1)
+	require.Equal(t, sortedIDs[2], result3.DataRequests[0].ID)
+	require.Equal(t, sortedIDs[2], result3.LastSeenIndex[2])
+
+	// Query data requests remaining after 3rd query - should return 2
+	result4, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, &result3.LastSeenIndex)
+	require.NoError(t, err)
+	require.Len(t, result4.DataRequests, 2)
+	require.Equal(t, sortedIDs[1], result4.DataRequests[0].ID)
+	require.Equal(t, sortedIDs[0], result4.DataRequests[1].ID)
+	require.Equal(t, sortedIDs[0], result4.LastSeenIndex[2])
+}
+
+func TestDataRequestsByStatusLastSeenIndexGasPriceAndHeight(t *testing.T) {
+	f := testutil.InitFixture(t, false, nil)
+
+	bob := f.CreateTestAccount("bob", 22)
+	_ = f.CreateStakedTestAccount("alice", 22, 1)
+
+	dr1 := bob.CreatePostDRMsg("1", 1)
+	dr2 := bob.CreatePostDRMsg("2", 1)
+	dr3 := bob.CreatePostDRMsg("3", 1)
+	dr4 := bob.CreatePostDRMsg("4", 1)
+
+	// Since gas limits are consistent, we adjust attached funds to post with
+	// different posted gas prices.
+	totalGasLimit := math.NewIntFromUint64(dr1.ExecGasLimit).Add(math.NewIntFromUint64(dr1.TallyGasLimit))
+	lowFunds := totalGasLimit.Mul(math.NewInt(2000))
+	highFunds := totalGasLimit.Mul(math.NewInt(2100))
+
+	// DR1 (high gas price) and DR2 (low gas price) are posted.
+	postResult1, err := bob.PostDataRequest(dr1, &highFunds)
+	require.NoError(t, err)
+	postResult2, err := bob.PostDataRequest(dr2, &lowFunds)
+	require.NoError(t, err)
+
+	// DR3 (low gas price) and DR4 (high gas price) are posted at the next block.
+	f.AdvanceBlocks(1)
+	postResult3, err := bob.PostDataRequest(dr3, &lowFunds)
+	require.NoError(t, err)
+	postResult4, err := bob.PostDataRequest(dr4, &highFunds)
+	require.NoError(t, err)
+
+	// Query 1 data request - Should return DR1 for higher gas price and lower height.
+	result, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 1, nil)
+	require.NoError(t, err)
+	require.Len(t, result.DataRequests, 1)
+	require.Equal(t, postResult1.DrID, result.DataRequests[0].ID)
+	require.Equal(t, postResult1.DrID, result.LastSeenIndex[2])
+
+	// Query next 1 data request - Should return DR4 for higher gas price.
+	result2, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 1, &result.LastSeenIndex)
+	require.NoError(t, err)
+	require.Len(t, result2.DataRequests, 1)
+	require.Equal(t, postResult4.DrID, result2.DataRequests[0].ID)
+	require.Equal(t, postResult4.DrID, result2.LastSeenIndex[2])
+
+	// Query next 2 remaining data requests - Should return DR2 then DR3.
+	result3, err := bob.GetDataRequestsByStatus(types.DATA_REQUEST_STATUS_COMMITTING, 10, &result2.LastSeenIndex)
+	require.NoError(t, err)
+	require.Len(t, result3.DataRequests, 2)
+	require.Equal(t, postResult2.DrID, result3.DataRequests[0].ID)
+	require.Equal(t, postResult3.DrID, result3.DataRequests[1].ID)
 }
 
 func TestQueryByStatusManyDrs(t *testing.T) {
@@ -182,8 +251,8 @@ func TestQueryByStatusManyDrs(t *testing.T) {
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 
 	for i := range 25 {
-		dr := bob.CalculateDrIDAndArgs(fmt.Sprintf("%d", i), 1)
-		postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+		dr := bob.CreatePostDRMsg(fmt.Sprintf("%d", i), 1)
+		postDrResult, err := bob.PostDataRequest(dr, nil)
 		require.NoError(t, err)
 
 		aliceReveal := &types.RevealBody{
@@ -231,8 +300,8 @@ func TestQueryByStatusManyMoreDrs(t *testing.T) {
 
 	// post 100 drs, commit half of them, and post another 50 drs
 	for i := range 100 {
-		dr := bob.CalculateDrIDAndArgs(fmt.Sprintf("%d", i), 1)
-		postDrResult, err := bob.PostDataRequest(dr, 1, nil)
+		dr := bob.CreatePostDRMsg(fmt.Sprintf("%d", i), 1)
+		postDrResult, err := bob.PostDataRequest(dr, nil)
 		require.NoError(t, err)
 
 		if i == 0 {
@@ -253,8 +322,8 @@ func TestQueryByStatusManyMoreDrs(t *testing.T) {
 			_, err = alice.CommitResult(aliceRevealMsg)
 			require.NoError(t, err)
 
-			anotherDR := bob.CalculateDrIDAndArgs(fmt.Sprintf("%d", i+20_000), 1)
-			_, err = bob.PostDataRequest(anotherDR, 1, nil)
+			anotherDR := bob.CreatePostDRMsg(fmt.Sprintf("%d", i+20_000), 1)
+			_, err = bob.PostDataRequest(anotherDR, nil)
 			require.NoError(t, err)
 		}
 	}
@@ -288,8 +357,8 @@ func TestQueryByStatusManyMoreDrs(t *testing.T) {
 			_, err = alice.RevealResult(aliceRevealMsg)
 			require.NoError(t, err)
 
-			anotherDR := bob.CalculateDrIDAndArgs(fmt.Sprintf("%d", i+10_000), 1)
-			_, err = bob.PostDataRequest(anotherDR, 1, nil)
+			anotherDR := bob.CreatePostDRMsg(fmt.Sprintf("%d", i+10_000), 1)
+			_, err = bob.PostDataRequest(anotherDR, nil)
 			require.NoError(t, err)
 
 		}
@@ -329,15 +398,15 @@ func TestQueryStatuses(t *testing.T) {
 	bob := f.CreateStakedTestAccount("bob", 22, 1)
 	alice := f.CreateStakedTestAccount("alice", 22, 1)
 
-	dr1 := bob.CalculateDrIDAndArgs("1", 2)
-	dr2 := bob.CalculateDrIDAndArgs("2", 1)
-	dr3 := bob.CalculateDrIDAndArgs("3", 1)
+	dr1 := bob.CreatePostDRMsg("1", 2)
+	dr2 := bob.CreatePostDRMsg("2", 1)
+	dr3 := bob.CreatePostDRMsg("3", 1)
 
-	postDrResult1, err := bob.PostDataRequest(dr1, 1, nil)
+	postDrResult1, err := bob.PostDataRequest(dr1, nil)
 	require.NoError(t, err)
-	postDrResult2, err := bob.PostDataRequest(dr2, 1, nil)
+	postDrResult2, err := bob.PostDataRequest(dr2, nil)
 	require.NoError(t, err)
-	postDrResult3, err := bob.PostDataRequest(dr3, 1, nil)
+	postDrResult3, err := bob.PostDataRequest(dr3, nil)
 	require.NoError(t, err)
 
 	drIds := []string{postDrResult1.DrID, postDrResult2.DrID, postDrResult3.DrID}

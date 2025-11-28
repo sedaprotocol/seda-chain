@@ -55,6 +55,7 @@ var (
 	ErrUnexpectedZeroCount           = errors.Register("core", 49, "unexpected zero count")
 	ErrUnexpectedStakerKey           = errors.Register("core", 50, "unexpected staker key at index")
 	ErrInvalidEligibilityProofLength = errors.Register("core", 51, "invalid eligibility proof length")
+
 	// Errors used in filter:
 	ErrInvalidFilterType      = errors.Register("core", 100, "invalid filter type")
 	ErrFilterInputTooShort    = errors.Register("core", 101, "filter input length too short")
