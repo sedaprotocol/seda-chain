@@ -1,0 +1,28 @@
+syntax = "proto3";
+package sedachain.batching.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "sedachain/batching/v1/batching.proto";
+
+option go_package = "github.com/sedaprotocol/seda-chain/x/batching/types";
+
+// Msg service defines the batching tx gRPC methods.
+service Msg {
+  // The UpdateParams method updates the module's parameters.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+}
+
+// The request message for the UpdateParams method.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // Authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  Params params = 2 [ (gogoproto.nullable) = false ];
+}
+
+// The response message for the UpdateParams method.
+message MsgUpdateParamsResponse {}
