@@ -174,6 +174,11 @@ func (idx DataRequestIndexing) GetDataRequestIDsByStatus(ctx sdk.Context, status
 	return ids, nil
 }
 
+// GetDataRequestIDsByStatusPaginated returns the IDs of the data requests under the
+// given status based on pagination parameters. Limit specfies the maximum number of
+// data request IDs to return, and non-nil lastSeenIndex specifies the starting point
+// (exclusive) of the query. It returns IDs, new lastSeenIndex, total number of items
+// in the store, and an error if any.
 func (idx DataRequestIndexing) GetDataRequestIDsByStatusPaginated(ctx sdk.Context, status DataRequestStatus, limit uint64, lastSeenIndex DataRequestIndex) ([]string, DataRequestIndex, uint32, error) {
 	total, err := idx.GetDataRequestCountByStatus(ctx, status)
 	if err != nil {
@@ -210,11 +215,10 @@ func (idx DataRequestIndexing) GetDataRequestIDsByStatusPaginated(ctx sdk.Contex
 	return ids, newLastSeenIndex, total, nil
 }
 
-// GetDataRequestsByStatus returns data requests by status. You can specify the
-// limit of the query by proving a non-zero limit. If you provide a non-nil
-// lastSeenIndex, the query will start from the next data request after the
-// lastSeenIndex. The method also returns the new lastSeenIndex and the total
-// number of data requests under the given status.
+// GetDataRequestsByStatus returns data requests by status. Limit specfies the
+// maximum number of data request IDs to return, and non-nil lastSeenIndex specifies
+// the starting point (exclusive) of the query. It returns IDs, new lastSeenIndex,
+// total number of items in the store, and an error if any.
 func (idx DataRequestIndexing) GetDataRequestsByStatus(ctx sdk.Context, status DataRequestStatus, limit uint32, lastSeenIndex DataRequestIndex) ([]DataRequest, DataRequestIndex, uint32, error) {
 	total, err := idx.GetDataRequestCountByStatus(ctx, status)
 	if err != nil {

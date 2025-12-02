@@ -103,18 +103,17 @@ func NewKeeper(
 }
 
 // LoadRevealsHashSorted returns reveals, executors, and gas reports corresponding
-// to the given data request ID and map of reveal executors' public keys. Returned
-// slices are in the same order sorted by the hash of the executor public key and
-// given entropy. If the entropy is nil, the items are sorted simply by the executor
-// public key without hashing.
-func (k Keeper) LoadRevealsHashSorted(ctx sdk.Context, drID string, revealers []string, entropy []byte) ([]types.Reveal, []string, []uint64) {
+// to the given data request ID and list of reveal executors' public keys. Returned
+// lists are in the same order based on hash sorting. Note hash sorting amounts to
+// simple alphanumeric sorting of executor public keys if entropy is nil. It returns
+// an error if a reveal body is not found, which should not happen.
+func (k Keeper) LoadRevealsHashSorted(ctx sdk.Context, drID string, revealers []string, entropy []byte) ([]types.Reveal, []string, []uint64, error) {
 	reveals := make([]types.Reveal, len(revealers))
 	i := 0
 	for _, revealer := range revealers {
 		revealBody, err := k.GetRevealBody(ctx, drID, revealer)
 		if err != nil {
-			// TODO Proper error handling
-			panic(err)
+			return nil, nil, nil, err
 		}
 		reveals[i] = types.Reveal{Executor: revealer, RevealBody: revealBody}
 		sort.Strings(reveals[i].ProxyPubKeys)
@@ -129,7 +128,7 @@ func (k Keeper) LoadRevealsHashSorted(ctx sdk.Context, drID string, revealers []
 		executors[i] = reveal.Executor
 		gasReports[i] = reveal.GasUsed
 	}
-	return sortedReveals, executors, gasReports
+	return sortedReveals, executors, gasReports, nil
 }
 
 // GetRevealBody retrieves a reveal body given a data request ID and an executor.

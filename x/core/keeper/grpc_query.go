@@ -125,7 +125,7 @@ func (q Querier) DataRequestsByStatus(c context.Context, req *types.QueryDataReq
 		}
 	}
 
-	ids, newLastSeenIndex, total, err := q.dataRequests.GetDataRequestIDsByStatusPaginated(ctx, req.Status, req.Limit, lastSeenIndex)
+	ids, newLastSeenIndex, total, err := q.GetDataRequestIDsByStatusPaginated(ctx, req.Status, req.Limit, lastSeenIndex)
 	if err != nil {
 		return nil, err
 	}

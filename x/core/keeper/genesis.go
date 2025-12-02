@@ -166,7 +166,10 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 			)
 		}
 
-		reveals, _, _ := k.LoadRevealsHashSorted(ctx, dataRequest.ID, revealers, nil)
+		reveals, _, _, err := k.LoadRevealsHashSorted(ctx, dataRequest.ID, revealers, nil)
+		if err != nil {
+			panic(err)
+		}
 		for _, reveal := range reveals {
 			revealState = append(
 				revealState,

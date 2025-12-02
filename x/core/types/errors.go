@@ -38,7 +38,7 @@ var (
 	ErrRevealTimeout                 = errors.Register("core", 32, "reveal timeout")
 	ErrRevealTooBig                  = errors.Register("core", 33, "reveal is too big")
 	ErrInvalidDataRequestIDHex       = errors.Register("core", 34, "invalid hex-encoded data request ID")
-	ErrInvalidProxyPublicKey         = errors.Register("core", 35, "invalid hex-encoded proxy public key")
+	ErrInvalidStakerPublicKey        = errors.Register("core", 35, "invalid hex-encoded staker public key")
 	ErrInvalidRevealExitCode         = errors.Register("core", 36, "invalid reveal exit code")
 	ErrRevealMismatch                = errors.Register("core", 37, "revealed result does not match the committed result")
 	ErrInvalidCommitProof            = errors.Register("core", 38, "invalid commit proof")
@@ -55,6 +55,7 @@ var (
 	ErrUnexpectedZeroCount           = errors.Register("core", 49, "unexpected zero count")
 	ErrUnexpectedStakerKey           = errors.Register("core", 50, "unexpected staker key at index")
 	ErrInvalidEligibilityProofLength = errors.Register("core", 51, "invalid eligibility proof length")
+	ErrInvalidDataProxyPublicKey     = errors.Register("core", 52, "invalid hex-encoded data proxy public key")
 
 	// Errors used in filter:
 	ErrInvalidFilterType      = errors.Register("core", 100, "invalid filter type")

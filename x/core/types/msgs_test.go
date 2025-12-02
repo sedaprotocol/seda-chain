@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	vrf "github.com/sedaprotocol/vrf-go"
 	"github.com/stretchr/testify/require"
 
@@ -208,6 +209,57 @@ func TestMsgPostDataRequest_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.msg.Validate(tt.config)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestAddToAllowlist_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		msg     MsgAddToAllowlist
+		wantErr error
+	}{
+		{
+			name: "valid message",
+			msg: MsgAddToAllowlist{
+				Sender:    "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f",
+				PublicKey: "03d92f44157c939284bb101dccea8a2fc95f71ecfd35b44573a76173e3c25c67a9",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "invalid sender",
+			msg: MsgAddToAllowlist{
+				Sender:    "seda1invalid",
+				PublicKey: "03d92f44157c939284bb101dccea8a2fc95f71ecfd35b44573a76173e3c25c67a9",
+			},
+			wantErr: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid public key",
+			msg: MsgAddToAllowlist{
+				Sender:    "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f",
+				PublicKey: "invalid",
+			},
+			wantErr: ErrInvalidStakerPublicKey,
+		},
+		{
+			name: "empty public key",
+			msg: MsgAddToAllowlist{
+				Sender:    "seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f",
+				PublicKey: "",
+			},
+			wantErr: ErrInvalidStakerPublicKey,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.msg.Validate()
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 			} else {

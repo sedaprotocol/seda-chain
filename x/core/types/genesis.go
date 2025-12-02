@@ -6,18 +6,17 @@ import (
 )
 
 const (
-	DefaultPaused = false
 	// Testnet/Mainnet Security Group
-	DefaultOwner = "seda1afk9zr2hn2jsac63h4hm60vl9z3e5u69gndzf7c99cqge3vzwjzs026662"
+	DefaultOwner  = "seda1afk9zr2hn2jsac63h4hm60vl9z3e5u69gndzf7c99cqge3vzwjzs026662"
+	DefaultPaused = false
 )
 
 // DefaultGenesisState creates a default GenesisState object.
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		// TODO add other states
+		Owner:  DefaultOwner,
 		Params: DefaultParams(),
 		Paused: DefaultPaused,
-		Owner:  DefaultOwner,
 	}
 }
 

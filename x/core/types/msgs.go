@@ -31,10 +31,10 @@ func (m MsgPostDataRequest) Validate(config DataRequestConfig) error {
 		return sdkerrors.ErrInvalidAddress.Wrapf("%s", err.Error())
 	}
 
+	// Ensure that the replication factor is non-zero and fits within 16 bits (unsigned).
 	if m.ReplicationFactor == 0 {
 		return ErrZeroReplicationFactor
 	}
-	// Ensure that the replication factor fits within 16 bits (unsigned).
 	if m.ReplicationFactor > uint32(^uint16(0)) {
 		return ErrReplicationFactorNotUint16
 	}
@@ -135,9 +135,12 @@ func (m MsgReveal) Validate(config DataRequestConfig, replicationFactor uint32) 
 	}
 
 	for _, key := range m.RevealBody.ProxyPubKeys {
+		if key == "" {
+			return ErrInvalidDataProxyPublicKey.Wrapf("public key is empty")
+		}
 		_, err := hex.DecodeString(key)
 		if err != nil {
-			return ErrInvalidProxyPublicKey.Wrapf("%s", err.Error())
+			return ErrInvalidDataProxyPublicKey.Wrapf("%s: %s", err.Error(), m.PublicKey)
 		}
 	}
 	return nil
@@ -155,10 +158,40 @@ func (m MsgLegacyReveal) Validate(config DataRequestConfig, replicationFactor ui
 	}
 
 	for _, key := range m.RevealBody.ProxyPubKeys {
+		if key == "" {
+			return ErrInvalidDataProxyPublicKey.Wrapf("public key is empty")
+		}
 		_, err := hex.DecodeString(key)
 		if err != nil {
-			return ErrInvalidProxyPublicKey.Wrapf("%s", err.Error())
+			return ErrInvalidDataProxyPublicKey.Wrapf("%s: %s", err.Error(), key)
 		}
+	}
+	return nil
+}
+
+func (m MsgAddToAllowlist) Validate() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", m.Sender)
+	}
+	if m.PublicKey == "" {
+		return ErrInvalidStakerPublicKey.Wrapf("public key is empty")
+	}
+	_, err = hex.DecodeString(m.PublicKey)
+	if err != nil {
+		return ErrInvalidStakerPublicKey.Wrapf("%s: %s", err.Error(), m.PublicKey)
+	}
+	return nil
+}
+
+func (m MsgTransferOwnership) Validate() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address: %s", m.Sender)
+	}
+	_, err = sdk.AccAddressFromBech32(m.NewOwner)
+	if err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid new owner address: %s", m.NewOwner)
 	}
 	return nil
 }

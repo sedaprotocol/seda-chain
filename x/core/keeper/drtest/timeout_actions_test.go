@@ -1,4 +1,4 @@
-package datarequesttests
+package drtest
 
 import (
 	"testing"

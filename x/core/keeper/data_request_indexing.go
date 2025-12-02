@@ -34,6 +34,10 @@ func (k Keeper) GetDataRequestIDsByStatus(ctx sdk.Context, status types.DataRequ
 	return k.dataRequests.GetDataRequestIDsByStatus(ctx, status)
 }
 
+func (k Keeper) GetDataRequestIDsByStatusPaginated(ctx sdk.Context, status types.DataRequestStatus, limit uint64, lastSeenIndex types.DataRequestIndex) ([]string, types.DataRequestIndex, uint32, error) {
+	return k.dataRequests.GetDataRequestIDsByStatusPaginated(ctx, status, limit, lastSeenIndex)
+}
+
 func (k Keeper) GetDataRequestStatus(ctx sdk.Context, id string) (types.DataRequestStatus, error) {
 	dr, err := k.GetDataRequest(ctx, id)
 	if err != nil {

@@ -18,7 +18,6 @@ import (
 )
 
 func (k Keeper) EndBlock(ctx sdk.Context) error {
-	// TODO Memory considerations (Check old queryContract with params.MaxTalliesPerBlock)
 	err := k.ExpireDataRequests(ctx)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
@@ -32,7 +31,15 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 // Tally fetches from a list of tally-ready requests, tallies them, reports
 // results to the contract, and stores results for batching.
 func (k Keeper) Tally(ctx sdk.Context) error {
-	drIDs, err := k.GetDataRequestIDsByStatus(ctx, types.DATA_REQUEST_STATUS_TALLYING)
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
+		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally params", "err", err)
+		return nil
+	}
+	tallyvm.TallyMaxBytes = uint(params.TallyConfig.MaxResultSize)
+
+	drIDs, _, _, err := k.GetDataRequestIDsByStatusPaginated(ctx, types.DATA_REQUEST_STATUS_TALLYING, uint64(params.TallyConfig.MaxTalliesPerBlock), nil)
 	if err != nil {
 		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
 		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tallying data request IDs", "err", err)
@@ -45,14 +52,6 @@ func (k Keeper) Tally(ctx sdk.Context) error {
 		return nil
 	}
 	k.Logger(ctx).Info("non-empty tally list - starting tally process")
-
-	params, err := k.GetParams(ctx)
-	if err != nil {
-		telemetry.SetGauge(1, types.TelemetryKeyDRFlowHalt)
-		k.Logger(ctx).Error("[HALTS_DR_FLOW] failed to get tally params", "err", err)
-		return nil
-	}
-	tallyvm.TallyMaxBytes = uint(params.TallyConfig.MaxResultSize)
 
 	tallyResults, dataResults, err := k.ProcessTallies(ctx, drIDs, *params.TallyConfig, params.StakingConfig.MinimumStake)
 	if err != nil {
@@ -186,7 +185,10 @@ func (k Keeper) ProcessTallies(ctx sdk.Context, drIDs []string, config types.Tal
 
 			MeterExecutorGasFallback(tallyResults[i].GasMeter, committers, revealers, uint64(dr.ReplicationFactor), config.ExecutionGasCostFallback)
 		} else {
-			reveals, executors, gasReports := k.LoadRevealsHashSorted(ctx, dr.ID, revealers, types.GetEntropy(dr.ID, ctx.BlockHeight()))
+			reveals, executors, gasReports, err := k.LoadRevealsHashSorted(ctx, dr.ID, revealers, types.GetEntropy(dr.ID, ctx.BlockHeight()))
+			if err != nil {
+				return nil, nil, err
+			}
 			//nolint:gosec // G115: Replication factor is guaranteed to fit within uint16.
 			filterResult, filterErr := ExecuteFilter(reveals, dr.ConsensusFilter, uint16(dr.ReplicationFactor), config, tallyResults[i].GasMeter)
 

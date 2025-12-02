@@ -35,7 +35,7 @@ func TestNonOwnerCannotTransferOwnership(t *testing.T) {
 
 	someone := f.CreateTestAccount("someone", 10_000)
 
-	_, err := someone.TransferOwnership("newowner")
+	_, err := someone.TransferOwnership("seda1zcds6ws7l0e005h3xrmg5tx0378nyg8gtmn64f")
 	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
 }
 

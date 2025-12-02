@@ -1,4 +1,4 @@
-package datarequesttests
+package drtest
 
 import (
 	"testing"
@@ -120,7 +120,7 @@ func TestFailsProxyWhenInvalidHex(t *testing.T) {
 
 	// alice reveals with an invalid proxy
 	_, err = alice.RevealResult(aliceRevealMsg)
-	require.ErrorContains(t, err, "invalid hex-encoded proxy public key")
+	require.ErrorContains(t, err, "invalid hex-encoded data proxy public key")
 }
 
 func TestNoErrorWhenNotRealProxyKey(t *testing.T) {

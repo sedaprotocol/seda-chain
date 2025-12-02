@@ -87,8 +87,7 @@ func (m MsgStake) MsgHash(_, chainID string, sequenceNum uint64) []byte {
 	memoHasher.Write(mustDecodeBase64(m.Memo))
 	memoHash := memoHasher.Sum(nil)
 
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
+	// Following the uint128 standard for sequence number.
 	seqBytes := make([]byte, 16)
 	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
 
@@ -111,8 +110,7 @@ func (m MsgLegacyStake) MsgHash(coreContractAddr, chainID string, sequenceNum ui
 	memoHasher.Write(mustDecodeBase64(m.Memo))
 	memoHash := memoHasher.Sum(nil)
 
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
+	// Following the uint128 standard for sequence number.
 	seqBytes := make([]byte, 16)
 	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
 
@@ -131,8 +129,7 @@ func (m MsgUnstake) MsgHash(_, chainID string, sequenceNum uint64) []byte {
 	allBytes := append([]byte{}, []byte("unstake")...)
 	allBytes = append(allBytes, []byte(chainID)...)
 
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
+	// Following the uint128 standard for sequence number.
 	seqBytes := make([]byte, 16)
 	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
 	allBytes = append(allBytes, seqBytes...)
@@ -147,8 +144,7 @@ func (m MsgLegacyUnstake) MsgHash(coreContractAddr, chainID string, sequenceNum 
 	allBytes = append(allBytes, []byte(chainID)...)
 	allBytes = append(allBytes, []byte(coreContractAddr)...)
 
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
+	// Following the uint128 standard for sequence number.
 	seqBytes := make([]byte, 16)
 	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
 	allBytes = append(allBytes, seqBytes...)
@@ -163,8 +159,7 @@ func (m MsgWithdraw) MsgHash(_, chainID string, sequenceNum uint64) []byte {
 	allBytes = append(allBytes, []byte(m.WithdrawAddress)...)
 	allBytes = append(allBytes, []byte(chainID)...)
 
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
+	// Following the uint128 standard for sequence number.
 	seqBytes := make([]byte, 16)
 	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
 	allBytes = append(allBytes, seqBytes...)
@@ -180,8 +175,7 @@ func (m MsgLegacyWithdraw) MsgHash(coreContractAddr, chainID string, sequenceNum
 	allBytes = append(allBytes, []byte(chainID)...)
 	allBytes = append(allBytes, []byte(coreContractAddr)...)
 
-	// Write to last 8 bytes of 16-byte variable.
-	// TODO contract used uint128
+	// Following the uint128 standard for sequence number.
 	seqBytes := make([]byte, 16)
 	binary.BigEndian.PutUint64(seqBytes[8:], sequenceNum)
 	allBytes = append(allBytes, seqBytes...)
@@ -291,7 +285,6 @@ func (rb RevealBody) RevealBodyHash() []byte {
 	binary.BigEndian.PutUint64(reqHeightBytes, rb.DrBlockHeight)
 	hasher.Write(reqHeightBytes)
 
-	// TODO RevealBody validator should bind rb.ExitCode value?
 	hasher.Write([]byte{byte(rb.ExitCode)})
 
 	gasUsedBytes := make([]byte, 8)

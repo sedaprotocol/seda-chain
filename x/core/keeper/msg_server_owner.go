@@ -56,6 +56,11 @@ func (m msgServer) AcceptOwnership(goCtx context.Context, msg *types.MsgAcceptOw
 func (m msgServer) TransferOwnership(goCtx context.Context, msg *types.MsgTransferOwnership) (*types.MsgTransferOwnershipResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	err := msg.Validate()
+	if err != nil {
+		return nil, err
+	}
+
 	currentOwner, err := m.GetOwner(ctx)
 	if err != nil {
 		return nil, err
@@ -63,11 +68,6 @@ func (m msgServer) TransferOwnership(goCtx context.Context, msg *types.MsgTransf
 
 	if msg.Sender != currentOwner {
 		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", currentOwner, msg.Sender)
-	}
-
-	// validate new owner address
-	if _, err := sdk.AccAddressFromBech32(msg.NewOwner); err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid new owner address: %s", msg.NewOwner)
 	}
 
 	err = m.SetPendingOwner(ctx, msg.NewOwner)
@@ -88,17 +88,17 @@ func (m msgServer) TransferOwnership(goCtx context.Context, msg *types.MsgTransf
 func (m msgServer) AddToAllowlist(goCtx context.Context, msg *types.MsgAddToAllowlist) (*types.MsgAddToAllowlistResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	err := msg.Validate()
+	if err != nil {
+		return nil, err
+	}
+
 	owner, err := m.GetOwner(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if msg.Sender != owner {
 		return nil, sdkerrors.ErrUnauthorized.Wrapf("unauthorized owner; expected %s, got %s", owner, msg.Sender)
-	}
-
-	// TODO: validate public key format
-	if msg.PublicKey == "" {
-		return nil, sdkerrors.ErrInvalidRequest.Wrapf("public key is empty")
 	}
 
 	exists, err := m.IsAllowlisted(ctx, msg.PublicKey)

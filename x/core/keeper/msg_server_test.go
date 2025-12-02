@@ -133,7 +133,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddToAllowlist() {
 				Sender:    "seda1invalid",
 				PublicKey: "03d92f44157c939284bb101dccea8a2fc95f71ecfd35b44573a76173e3c25c67a9",
 			},
-			wantErr: sdkerrors.ErrUnauthorized,
+			wantErr: sdkerrors.ErrInvalidAddress,
 		},
 		{
 			name: "Empty public key",
@@ -141,7 +141,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddToAllowlist() {
 				Sender:    s.owner,
 				PublicKey: "",
 			},
-			wantErr: sdkerrors.ErrInvalidRequest,
+			wantErr: types.ErrInvalidStakerPublicKey,
 		},
 		{
 			name: "Already allowlisted from first test case",
