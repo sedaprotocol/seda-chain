@@ -90,7 +90,7 @@ func (q Querier) Batches(c context.Context, req *types.QueryBatchesRequest) (*ty
 func (q Querier) DataResult(c context.Context, req *types.QueryDataResultRequest) (*types.QueryDataResultResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	var dataResult *types.DataResult
+	var dataResult types.DataResult
 	var err error
 	if req.DataRequestHeight == 0 {
 		dataResult, err = q.GetLatestDataResult(ctx, req.DataRequestId)
@@ -106,7 +106,7 @@ func (q Querier) DataResult(c context.Context, req *types.QueryDataResultRequest
 	}
 
 	result := &types.QueryDataResultResponse{
-		DataResult: dataResult,
+		DataResult: &dataResult,
 	}
 
 	batchNum, err := q.GetBatchAssignment(ctx, req.DataRequestId, dataResult.DrBlockHeight)

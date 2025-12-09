@@ -43,7 +43,7 @@ func TestHandleEvidence(t *testing.T) {
 		BatchNumber: doubleSignBatchNumber,
 		BlockHeight: doubleSignBlockHeight,
 	}
-	err := f.batchingKeeper.SetNewBatch(f.Context(), batchToDoubleSign, types.DataResultTreeEntries{}, []types.ValidatorTreeEntry{})
+	_, err := f.batchingKeeper.SetNewBatch(f.Context(), batchToDoubleSign, types.DataResultTreeEntries{}, []types.ValidatorTreeEntry{})
 	require.NoError(t, err)
 
 	f.stakingKeeper.SetHistoricalInfo(f.Context(), doubleSignBlockHeight, &sdkstakingtypes.HistoricalInfo{
@@ -115,7 +115,7 @@ func TestHandleEvidence_DifferentBlockHeight(t *testing.T) {
 		BatchNumber: doubleSignBatchNumber,
 		BlockHeight: doubleSignBlockHeight,
 	}
-	err := f.batchingKeeper.SetNewBatch(f.Context(), batchToDoubleSign, types.DataResultTreeEntries{}, []types.ValidatorTreeEntry{})
+	_, err := f.batchingKeeper.SetNewBatch(f.Context(), batchToDoubleSign, types.DataResultTreeEntries{}, []types.ValidatorTreeEntry{})
 	require.NoError(t, err)
 
 	f.stakingKeeper.SetHistoricalInfo(f.Context(), doubleSignBlockHeight, &sdkstakingtypes.HistoricalInfo{
@@ -207,7 +207,7 @@ func TestHandleEvidence_LegitBatchID(t *testing.T) {
 	legitBatchID, err := evidence.GetBatchID()
 	require.NoError(t, err)
 
-	err = f.batchingKeeper.SetNewBatch(f.Context(), types.Batch{
+	_, err = f.batchingKeeper.SetNewBatch(f.Context(), types.Batch{
 		BatchId:     legitBatchID,
 		BatchNumber: 1,
 		BlockHeight: 2,
@@ -273,7 +273,7 @@ func TestHandleEvidence_DifferentPrivateKey(t *testing.T) {
 		BatchNumber: doubleSignBatchNumber,
 		BlockHeight: doubleSignBlockHeight,
 	}
-	err := f.batchingKeeper.SetNewBatch(f.Context(), batchToDoubleSign, types.DataResultTreeEntries{}, []types.ValidatorTreeEntry{})
+	_, err := f.batchingKeeper.SetNewBatch(f.Context(), batchToDoubleSign, types.DataResultTreeEntries{}, []types.ValidatorTreeEntry{})
 	require.NoError(t, err)
 
 	f.stakingKeeper.SetHistoricalInfo(f.Context(), doubleSignBlockHeight, &sdkstakingtypes.HistoricalInfo{
@@ -322,7 +322,7 @@ func TestHandleEvidence_StaleEvidence(t *testing.T) {
 		BatchNumber: doubleSignBatchNumber,
 		BlockHeight: doubleSignBlockHeight,
 	}
-	err := f.batchingKeeper.SetNewBatch(f.Context(), batchToDoubleSign, types.DataResultTreeEntries{}, []types.ValidatorTreeEntry{})
+	_, err := f.batchingKeeper.SetNewBatch(f.Context(), batchToDoubleSign, types.DataResultTreeEntries{}, []types.ValidatorTreeEntry{})
 	require.NoError(t, err)
 
 	f.stakingKeeper.SetHistoricalInfo(f.Context(), doubleSignBlockHeight, &sdkstakingtypes.HistoricalInfo{
@@ -399,7 +399,7 @@ func TestHandleEvidence_TombstonedValidator(t *testing.T) {
 		BatchNumber: doubleSignBatchNumber,
 		BlockHeight: doubleSignBlockHeight,
 	}
-	err := f.batchingKeeper.SetNewBatch(f.Context(), batchToDoubleSign, types.DataResultTreeEntries{}, []types.ValidatorTreeEntry{})
+	_, err := f.batchingKeeper.SetNewBatch(f.Context(), batchToDoubleSign, types.DataResultTreeEntries{}, []types.ValidatorTreeEntry{})
 	require.NoError(t, err)
 
 	f.stakingKeeper.SetHistoricalInfo(f.Context(), doubleSignBlockHeight, &sdkstakingtypes.HistoricalInfo{
