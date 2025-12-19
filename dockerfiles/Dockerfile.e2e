@@ -1,4 +1,4 @@
-ARG GO_VERSION="1.23.5"
+ARG GO_VERSION="1.24"
 ARG RUNNER_IMAGE="alpine:3.17"
 
 # --------------------------------------------------------
