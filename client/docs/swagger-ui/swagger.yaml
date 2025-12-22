@@ -545,6 +545,63 @@ paths:
           format: uint64
       tags:
         - Query
+  /seda-chain/batching/params:
+    get:
+      summary: Params returns the total set of batching parameters.
+      operationId: BatchingParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params defines the parameters of the module.
+                type: object
+                properties:
+                  num_batches_to_keep:
+                    type: string
+                    format: uint64
+                    description: >-
+                      NumBatchesToKeep is the number of batches to keep in the
+                      state without
+
+                      pruning.
+                  max_batch_prune_per_block:
+                    type: string
+                    format: uint64
+                    description: >-
+                      MaxBatchPrunePerBlock is the maximum number of batches to
+                      prune per
+
+                      block.
+            description: >-
+              QueryParamsResponse is the response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
   /seda-chain/data-proxy/data_proxy_config/{pub_key}:
     get:
       summary: >-
@@ -948,6 +1005,375 @@ paths:
                       an oracle
 
                       program in aseda.
+            description: >-
+              QueryParamsResponse is the response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /seda-chain/pubkey/seda_signer:
+    get:
+      summary: SEDASignerStatus returns the status of the node's SEDA signer.
+      operationId: SEDASignerStatus
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              validator_address:
+                type: string
+                description: >-
+                  ValidatorAddress is the address of the validator loaded in the
+                  signer.
+              signer_keys:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    index:
+                      type: integer
+                      format: int64
+                      description: Index is the index of the SEDA key.
+                    index_name:
+                      type: string
+                      description: IndexName is the name of the SEDA key.
+                    is_proving_scheme_active:
+                      type: boolean
+                      description: >-
+                        IsProvingSchemeActive indicates whether the given SEDA
+                        key index is active.
+                    public_key:
+                      type: string
+                      description: >-
+                        PublicKey is the hex-encoded public key of the key
+                        loaded in
+
+                        the SEDA signer.
+                    is_synced:
+                      type: boolean
+                      description: >-
+                        IsSynced indicates whether the keys loaded in the SEDA
+                        signer match
+
+                        the keys registered in the pubkey module.
+                  description: SignerKey is a key loaded in the SEDA signer.
+                description: SignerKeys is the list of keys loaded in the SEDA signer.
+            description: >-
+              QuerySEDASignerStatusResponse is response type for the
+              Query/SEDASignerStatus
+
+              RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /seda-chain/pubkey/params:
+    get:
+      summary: Params returns the total set of pubkey parameters.
+      operationId: PubkeyParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params defines the parameters of the module.
+                type: object
+                properties:
+                  activation_block_delay:
+                    type: string
+                    format: int64
+                    description: >-
+                      activation_block_delay is the number of blocks to wait
+                      before activating a
+
+                      proving scheme.
+                  activation_threshold_percent:
+                    type: integer
+                    format: int64
+                    description: >-
+                      activation_threshold_percent is the percentage of the
+                      total voting power
+
+                      that is required to activate a proving scheme.
+            description: >-
+              QueryParamsResponse is the response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /seda-chain/pubkey/proving_schemes:
+    get:
+      summary: ProvingSchemes returns the statuses of the SEDA proving schemes.
+      operationId: ProvingSchemes
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              proving_schemes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    index:
+                      type: integer
+                      format: int64
+                      description: index is the SEDA key index.
+                    is_activated:
+                      type: boolean
+                      description: >-
+                        is_activated indicates if the proving scheme has been
+                        activated.
+                    activation_height:
+                      type: string
+                      format: int64
+                      description: >-
+                        activation_height is the height at which the proving
+                        scheme is to
+
+                        be activated. This field is set to -1 by default until
+                        the public
+
+                        key registration rate reaches the activation threshold
+                        and is reset
+
+                        if the public key registration rate goes below the
+                        threshold before
+
+                        the scheme is activated.
+                  description: ProvingScheme defines a proving scheme.
+            description: >-
+              QueryProvingSchemesResponse is response type for the
+              Query/ProvingSchemes
+
+              RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /seda-chain/pubkey/validator_keys/{validator_addr}:
+    get:
+      summary: ValidatorKeys returns a given validator's registered keys.
+      operationId: ValidatorKeys
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              validator_pub_keys:
+                type: object
+                properties:
+                  validator_addr:
+                    type: string
+                  indexed_pub_keys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        index:
+                          type: integer
+                          format: int64
+                        pub_key:
+                          type: string
+                          format: byte
+                      description: IndexPubKeyPair defines an index - public key pair.
+                description: >-
+                  ValidatorPubKeys defines a validator's list of registered
+                  public keys
+
+                  primarily used in the x/pubkey genesis state.
+            description: >-
+              QueryValidatorKeysResponse is response type for the
+              Query/ValidatorKeys
+
+              RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: validator_addr
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /seda-chain/tally/params:
+    get:
+      summary: Params returns the total set of tally parameters.
+      operationId: TallyParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params defines the parameters of the module.
+                type: object
+                properties:
+                  max_tally_gas_limit:
+                    type: string
+                    format: uint64
+                    description: >-
+                      MaxTallyGasLimit is the maximum gas limit for a tally
+                      request.
+                  filter_gas_cost_none:
+                    type: string
+                    format: uint64
+                    description: FilterGasCostNone is the gas cost for a filter type none.
+                  filter_gas_cost_multiplier_mode:
+                    type: string
+                    format: uint64
+                    description: >-
+                      FilterGasCostMultiplierMode is the gas cost multiplier for
+                      a filter type
+
+                      mode.
+                  filter_gas_cost_multiplier_m_a_d:
+                    type: string
+                    format: uint64
+                    description: >-
+                      FilterGasCostMAD is the gas cost multiplier for a filter
+                      type
+
+                      Median Absolute Deviation.
+                  gas_cost_base:
+                    type: string
+                    format: uint64
+                    description: GasCostBase is the base gas cost for a data request.
+                  execution_gas_cost_fallback:
+                    type: string
+                    format: uint64
+                    description: >-
+                      GasCostFallback is the gas cost incurred for data request
+                      execution when
+
+                      even basic consensus has not been reached.
+                  burn_ratio:
+                    type: string
+                    description: >-
+                      BurnRatio is the ratio of the gas cost to be burned in
+                      case of reduced
+
+                      payout scenarios.
+                  max_result_size:
+                    type: integer
+                    format: int64
+                    description: >-
+                      MaxResultSize is the maximum size of the result of a data
+                      request in bytes.
+                  max_tallies_per_block:
+                    type: integer
+                    format: int64
+                    description: >-
+                      MaxTalliesPerBlock specifies the maximum number of tallies
+                      per block.
             description: >-
               QueryParamsResponse is the response type for the Query/Params RPC
               method.
@@ -32848,6 +33274,22 @@ definitions:
     description: |-
       DataResultTreeEntries is a list of data result tree entries for a
       given batch.
+  sedachain.batching.v1.Params:
+    type: object
+    properties:
+      num_batches_to_keep:
+        type: string
+        format: uint64
+        description: |-
+          NumBatchesToKeep is the number of batches to keep in the state without
+          pruning.
+      max_batch_prune_per_block:
+        type: string
+        format: uint64
+        description: |-
+          MaxBatchPrunePerBlock is the maximum number of batches to prune per
+          block.
+    description: Params defines the parameters for the batching module.
   sedachain.batching.v1.QueryBatchForHeightResponse:
     type: object
     properties:
@@ -33126,6 +33568,30 @@ definitions:
           BatchAssignment represents a batch assignment for genesis export
           and import.
     description: The response message for QueryDataResult RPC.
+  sedachain.batching.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params defines the parameters of the module.
+        type: object
+        properties:
+          num_batches_to_keep:
+            type: string
+            format: uint64
+            description: >-
+              NumBatchesToKeep is the number of batches to keep in the state
+              without
+
+              pruning.
+          max_batch_prune_per_block:
+            type: string
+            format: uint64
+            description: >-
+              MaxBatchPrunePerBlock is the maximum number of batches to prune
+              per
+
+              block.
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
   sedachain.batching.v1.ValidatorTreeEntry:
     type: object
     properties:
@@ -33424,6 +33890,344 @@ definitions:
               oracle
 
               program in aseda.
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
+  sedachain.app.v1.QuerySEDASignerStatusResponse:
+    type: object
+    properties:
+      validator_address:
+        type: string
+        description: ValidatorAddress is the address of the validator loaded in the signer.
+      signer_keys:
+        type: array
+        items:
+          type: object
+          properties:
+            index:
+              type: integer
+              format: int64
+              description: Index is the index of the SEDA key.
+            index_name:
+              type: string
+              description: IndexName is the name of the SEDA key.
+            is_proving_scheme_active:
+              type: boolean
+              description: >-
+                IsProvingSchemeActive indicates whether the given SEDA key index
+                is active.
+            public_key:
+              type: string
+              description: |-
+                PublicKey is the hex-encoded public key of the key loaded in
+                the SEDA signer.
+            is_synced:
+              type: boolean
+              description: >-
+                IsSynced indicates whether the keys loaded in the SEDA signer
+                match
+
+                the keys registered in the pubkey module.
+          description: SignerKey is a key loaded in the SEDA signer.
+        description: SignerKeys is the list of keys loaded in the SEDA signer.
+    description: >-
+      QuerySEDASignerStatusResponse is response type for the
+      Query/SEDASignerStatus
+
+      RPC method.
+  sedachain.app.v1.SignerKey:
+    type: object
+    properties:
+      index:
+        type: integer
+        format: int64
+        description: Index is the index of the SEDA key.
+      index_name:
+        type: string
+        description: IndexName is the name of the SEDA key.
+      is_proving_scheme_active:
+        type: boolean
+        description: >-
+          IsProvingSchemeActive indicates whether the given SEDA key index is
+          active.
+      public_key:
+        type: string
+        description: |-
+          PublicKey is the hex-encoded public key of the key loaded in
+          the SEDA signer.
+      is_synced:
+        type: boolean
+        description: |-
+          IsSynced indicates whether the keys loaded in the SEDA signer match
+          the keys registered in the pubkey module.
+    description: SignerKey is a key loaded in the SEDA signer.
+  sedachain.pubkey.v1.IndexedPubKey:
+    type: object
+    properties:
+      index:
+        type: integer
+        format: int64
+      pub_key:
+        type: string
+        format: byte
+    description: IndexPubKeyPair defines an index - public key pair.
+  sedachain.pubkey.v1.Params:
+    type: object
+    properties:
+      activation_block_delay:
+        type: string
+        format: int64
+        description: >-
+          activation_block_delay is the number of blocks to wait before
+          activating a
+
+          proving scheme.
+      activation_threshold_percent:
+        type: integer
+        format: int64
+        description: >-
+          activation_threshold_percent is the percentage of the total voting
+          power
+
+          that is required to activate a proving scheme.
+    description: Params defines the parameters for the pubkey module.
+  sedachain.pubkey.v1.ProvingScheme:
+    type: object
+    properties:
+      index:
+        type: integer
+        format: int64
+        description: index is the SEDA key index.
+      is_activated:
+        type: boolean
+        description: is_activated indicates if the proving scheme has been activated.
+      activation_height:
+        type: string
+        format: int64
+        description: |-
+          activation_height is the height at which the proving scheme is to
+          be activated. This field is set to -1 by default until the public
+          key registration rate reaches the activation threshold and is reset
+          if the public key registration rate goes below the threshold before
+          the scheme is activated.
+    description: ProvingScheme defines a proving scheme.
+  sedachain.pubkey.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params defines the parameters of the module.
+        type: object
+        properties:
+          activation_block_delay:
+            type: string
+            format: int64
+            description: >-
+              activation_block_delay is the number of blocks to wait before
+              activating a
+
+              proving scheme.
+          activation_threshold_percent:
+            type: integer
+            format: int64
+            description: >-
+              activation_threshold_percent is the percentage of the total voting
+              power
+
+              that is required to activate a proving scheme.
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
+  sedachain.pubkey.v1.QueryProvingSchemesResponse:
+    type: object
+    properties:
+      proving_schemes:
+        type: array
+        items:
+          type: object
+          properties:
+            index:
+              type: integer
+              format: int64
+              description: index is the SEDA key index.
+            is_activated:
+              type: boolean
+              description: is_activated indicates if the proving scheme has been activated.
+            activation_height:
+              type: string
+              format: int64
+              description: >-
+                activation_height is the height at which the proving scheme is
+                to
+
+                be activated. This field is set to -1 by default until the
+                public
+
+                key registration rate reaches the activation threshold and is
+                reset
+
+                if the public key registration rate goes below the threshold
+                before
+
+                the scheme is activated.
+          description: ProvingScheme defines a proving scheme.
+    description: |-
+      QueryProvingSchemesResponse is response type for the Query/ProvingSchemes
+      RPC method.
+  sedachain.pubkey.v1.QueryValidatorKeysResponse:
+    type: object
+    properties:
+      validator_pub_keys:
+        type: object
+        properties:
+          validator_addr:
+            type: string
+          indexed_pub_keys:
+            type: array
+            items:
+              type: object
+              properties:
+                index:
+                  type: integer
+                  format: int64
+                pub_key:
+                  type: string
+                  format: byte
+              description: IndexPubKeyPair defines an index - public key pair.
+        description: |-
+          ValidatorPubKeys defines a validator's list of registered public keys
+          primarily used in the x/pubkey genesis state.
+    description: |-
+      QueryValidatorKeysResponse is response type for the Query/ValidatorKeys
+      RPC method.
+  sedachain.pubkey.v1.ValidatorPubKeys:
+    type: object
+    properties:
+      validator_addr:
+        type: string
+      indexed_pub_keys:
+        type: array
+        items:
+          type: object
+          properties:
+            index:
+              type: integer
+              format: int64
+            pub_key:
+              type: string
+              format: byte
+          description: IndexPubKeyPair defines an index - public key pair.
+    description: |-
+      ValidatorPubKeys defines a validator's list of registered public keys
+      primarily used in the x/pubkey genesis state.
+  sedachain.tally.v1.Params:
+    type: object
+    properties:
+      max_tally_gas_limit:
+        type: string
+        format: uint64
+        description: MaxTallyGasLimit is the maximum gas limit for a tally request.
+      filter_gas_cost_none:
+        type: string
+        format: uint64
+        description: FilterGasCostNone is the gas cost for a filter type none.
+      filter_gas_cost_multiplier_mode:
+        type: string
+        format: uint64
+        description: >-
+          FilterGasCostMultiplierMode is the gas cost multiplier for a filter
+          type
+
+          mode.
+      filter_gas_cost_multiplier_m_a_d:
+        type: string
+        format: uint64
+        description: |-
+          FilterGasCostMAD is the gas cost multiplier for a filter type
+          Median Absolute Deviation.
+      gas_cost_base:
+        type: string
+        format: uint64
+        description: GasCostBase is the base gas cost for a data request.
+      execution_gas_cost_fallback:
+        type: string
+        format: uint64
+        description: >-
+          GasCostFallback is the gas cost incurred for data request execution
+          when
+
+          even basic consensus has not been reached.
+      burn_ratio:
+        type: string
+        description: |-
+          BurnRatio is the ratio of the gas cost to be burned in case of reduced
+          payout scenarios.
+      max_result_size:
+        type: integer
+        format: int64
+        description: >-
+          MaxResultSize is the maximum size of the result of a data request in
+          bytes.
+      max_tallies_per_block:
+        type: integer
+        format: int64
+        description: MaxTalliesPerBlock specifies the maximum number of tallies per block.
+    description: Params defines the parameters for the tally module.
+  sedachain.tally.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params defines the parameters of the module.
+        type: object
+        properties:
+          max_tally_gas_limit:
+            type: string
+            format: uint64
+            description: MaxTallyGasLimit is the maximum gas limit for a tally request.
+          filter_gas_cost_none:
+            type: string
+            format: uint64
+            description: FilterGasCostNone is the gas cost for a filter type none.
+          filter_gas_cost_multiplier_mode:
+            type: string
+            format: uint64
+            description: >-
+              FilterGasCostMultiplierMode is the gas cost multiplier for a
+              filter type
+
+              mode.
+          filter_gas_cost_multiplier_m_a_d:
+            type: string
+            format: uint64
+            description: |-
+              FilterGasCostMAD is the gas cost multiplier for a filter type
+              Median Absolute Deviation.
+          gas_cost_base:
+            type: string
+            format: uint64
+            description: GasCostBase is the base gas cost for a data request.
+          execution_gas_cost_fallback:
+            type: string
+            format: uint64
+            description: >-
+              GasCostFallback is the gas cost incurred for data request
+              execution when
+
+              even basic consensus has not been reached.
+          burn_ratio:
+            type: string
+            description: >-
+              BurnRatio is the ratio of the gas cost to be burned in case of
+              reduced
+
+              payout scenarios.
+          max_result_size:
+            type: integer
+            format: int64
+            description: >-
+              MaxResultSize is the maximum size of the result of a data request
+              in bytes.
+          max_tallies_per_block:
+            type: integer
+            format: int64
+            description: >-
+              MaxTalliesPerBlock specifies the maximum number of tallies per
+              block.
     description: QueryParamsResponse is the response type for the Query/Params RPC method.
   cosmos.app.v1alpha1.Config:
     type: object
