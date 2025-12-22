@@ -25,6 +25,12 @@ func TestExportGenesis(t *testing.T) {
 
 	valAddrs, _, _ := f.addBatchSigningValidators(t, 10)
 
+	legacyDataResults := generateDataResults(t, 25)
+	for _, dr := range legacyDataResults {
+		err := f.batchingKeeper.LegacySetDataResultForBatching(f.Context(), dr)
+		require.NoError(t, err)
+	}
+
 	dataResults := generateDataResults(t, 25)
 	for _, dr := range dataResults {
 		err := f.batchingKeeper.SetDataResultForBatching(f.Context(), dr)
@@ -51,6 +57,9 @@ func TestExportGenesis(t *testing.T) {
 	require.NoError(t, err)
 
 	batchSigsBefore, err := f.batchingKeeper.GetBatchSignatures(f.Context(), latestBatchBefore.BatchNumber)
+	require.NoError(t, err)
+
+	legacyDataResultsBefore, err := f.batchingKeeper.GetLegacyDataResults(f.Context(), false)
 	require.NoError(t, err)
 
 	// Export and import genesis.
@@ -87,6 +96,10 @@ func TestExportGenesis(t *testing.T) {
 	batchSigsAfter, err := f.batchingKeeper.GetBatchSignatures(f.Context(), latestBatchBefore.BatchNumber)
 	require.NoError(t, err)
 	require.ElementsMatch(t, batchSigsBefore, batchSigsAfter)
+
+	legacyDataResultsAfter, err := f.batchingKeeper.GetLegacyDataResults(f.Context(), false)
+	require.NoError(t, err)
+	require.ElementsMatch(t, legacyDataResultsBefore, legacyDataResultsAfter)
 }
 
 func (suite *KeeperTestSuite) TestInitGenesis() {

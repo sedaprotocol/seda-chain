@@ -17,7 +17,10 @@ message GenesisState {
   repeated BatchAssignment batch_assignments = 5
       [ (gogoproto.nullable) = false ];
   Params params = 6 [ (gogoproto.nullable) = false ];
-  uint64 first_batch_number = 7;
+  repeated GenesisDataResult legacy_data_results = 7
+      [ (gogoproto.nullable) = false ];
+  bool has_pruning_caught_up = 8;
+  uint64 batch_number_at_upgrade = 9;
 }
 
 // BatchAssignment represents a batch assignment for genesis export
