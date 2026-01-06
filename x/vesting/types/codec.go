@@ -18,7 +18,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&authvestingtypes.BaseVestingAccount{}, "cosmos-sdk/BaseVestingAccount", nil)
 	cdc.RegisterConcrete(&authvestingtypes.ContinuousVestingAccount{}, "cosmos-sdk/ContinuousVestingAccount", nil)
 	cdc.RegisterConcrete(&ClawbackContinuousVestingAccount{}, "sedachain/ClawbackContinuousVestingAccount", nil)
-	legacy.RegisterAminoMsg(cdc, &MsgCreateVestingAccount{}, "cosmos-sdk/MsgCreateVestingAccount")
+	legacy.RegisterAminoMsg(cdc, &MsgCreateVestingAccount{}, "sedachain/MsgCreateVestingAccount")
 	legacy.RegisterAminoMsg(cdc, &MsgClawback{}, "sedachain/MsgClawback")
 }
 

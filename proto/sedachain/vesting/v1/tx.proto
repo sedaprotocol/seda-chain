@@ -24,7 +24,7 @@ service Msg {
 // MsgCreateVestingAccount defines a message that creates a vesting account.
 message MsgCreateVestingAccount {
   option (cosmos.msg.v1.signer) = "from_address";
-  option (amino.name) = "cosmos-sdk/MsgCreateVestingAccount";
+  option (amino.name) = "sedachain/MsgCreateVestingAccount";
 
   option (gogoproto.equal) = true;
 
@@ -41,7 +41,7 @@ message MsgCreateVestingAccount {
   int64 end_time = 4;
 
   // if true, leave funder field empty and disable clawback
-  bool disable_clawback = 5;
+  bool disable_clawback = 5 [ (amino.dont_omitempty) = true ];
 }
 
 // MsgCreateVestingAccountResponse defines the CreateVestingAccount response
