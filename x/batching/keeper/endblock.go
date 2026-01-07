@@ -18,6 +18,10 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
+// NumBatchesToKeep is the number of batches to keep in the state without pruning.
+// This value must be at least 4 to avoid interruption of batch signing logic.
+var NumBatchesToKeep uint64 = 15
+
 func (k Keeper) EndBlock(ctx sdk.Context) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
@@ -48,16 +52,9 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 				return err
 			}
 
-			// Try pruning a batch.
-			// If there has been an upgrade (batchNumAtUpgrade is not 0),
-			// then prune only if the batch was created after the upgrade.
-			batchNumToPrune := newBatchNum - params.NumBatchesToKeep
-			if newBatchNum >= params.NumBatchesToKeep &&
-				(batchNumAtUpgrade == 0 || batchNumToPrune > batchNumAtUpgrade) {
-				err = k.TryPruneBatch(ctx, batchNumToPrune)
-				if err != nil {
-					return err
-				}
+			err = k.BasicPruneBatch(ctx, newBatchNum, NumBatchesToKeep, batchNumAtUpgrade)
+			if err != nil {
+				return err
 			}
 		}
 	} else {
@@ -74,7 +71,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 		// have been pruned.
 		// Note this operation does not prune data results, which will be pruned
 		// separately in the else clause.
-		lastPrunedBatchNum, err := k.BatchPruneBatches(ctx, params.NumBatchesToKeep, params.MaxBatchPrunePerBlock, batchNumAtUpgrade)
+		lastPrunedBatchNum, err := k.BatchPruneBatches(ctx, NumBatchesToKeep, params.MaxBatchPrunePerBlock, batchNumAtUpgrade)
 		if err != nil {
 			telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
 			k.Logger(ctx).Error("error while pruning batches", "err", err)

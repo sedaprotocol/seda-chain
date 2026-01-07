@@ -19,7 +19,7 @@ func CommitMsg(drID, commitment, stakerPubKey, proof string, gasUsed uint64) []b
 }
 
 func RevealMsg(drID, reveal, stakerPubKey, proof string, proxyPubKeys []string, exitCode byte, drHeight, gasUsed uint64) []byte {
-	quotedObjects := []string{}
+	quotedObjects := make([]string, 0, len(proxyPubKeys))
 	for _, obj := range proxyPubKeys {
 		quotedObjects = append(quotedObjects, fmt.Sprintf("%q", obj))
 	}
