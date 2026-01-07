@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/collections"
 
 	sedatypes "github.com/sedaprotocol/seda-chain/types"
+	"github.com/sedaprotocol/seda-chain/x/batching/keeper"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
@@ -114,10 +115,14 @@ func TestLegacyDataResultPruning(t *testing.T) {
 	err = f.batchingKeeper.SetHasPruningCaughtUp(f.Context(), false)
 	require.NoError(t, err)
 
-	err = f.batchingKeeper.SetParams(f.Context(), types.Params{
-		MaxLegacyDataResultPrunePerBlock: 101,
-		NumBatchesToKeep:                 10,
-	})
+	// Adjust the global variable for the test.
+	original := keeper.NumBatchesToKeep
+	defer func() {
+		keeper.NumBatchesToKeep = original
+	}()
+	keeper.NumBatchesToKeep = 10
+
+	err = f.batchingKeeper.SetParams(f.Context(), types.Params{MaxLegacyDataResultPrunePerBlock: 101})
 	require.NoError(t, err)
 
 	// Create 10 data results for each of 100 batches
@@ -169,8 +174,8 @@ func TestLegacyDataResultPruning(t *testing.T) {
 	}
 }
 
-// TestSimplePruning tests simple pruning with batch pruning disabled.
-func TestSimplePruning(t *testing.T) {
+// TestBasicPruning tests basic pruning with batch pruning disabled.
+func TestBasicPruning(t *testing.T) {
 	f := initFixture(t)
 
 	f.addBatchSigningValidators(t, 10)
@@ -181,10 +186,14 @@ func TestSimplePruning(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	params := types.Params{
-		NumBatchesToKeep:      15,
-		MaxBatchPrunePerBlock: 0, // disable batch pruning
-	}
+	// Adjust the global variable for the test.
+	original := keeper.NumBatchesToKeep
+	defer func() {
+		keeper.NumBatchesToKeep = original
+	}()
+	keeper.NumBatchesToKeep = 15
+
+	params := types.Params{MaxBatchPrunePerBlock: 0} // Disable batch pruning
 	err = f.batchingKeeper.SetParams(f.Context(), params)
 	require.NoError(t, err)
 
@@ -235,7 +244,7 @@ func TestSimplePruning(t *testing.T) {
 	}
 }
 
-func TestNoSimplePruningUntilNumBatchesToKeepIsReached(t *testing.T) {
+func TestNoBasicPruningUntilNumBatchesToKeepIsReached(t *testing.T) {
 	f := initFixture(t)
 
 	f.addBatchSigningValidators(t, 10)
@@ -246,10 +255,14 @@ func TestNoSimplePruningUntilNumBatchesToKeepIsReached(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = f.batchingKeeper.SetParams(f.Context(), types.Params{
-		NumBatchesToKeep:      11,
-		MaxBatchPrunePerBlock: 0,
-	})
+	// Adjust the global variable for the test.
+	original := keeper.NumBatchesToKeep
+	defer func() {
+		keeper.NumBatchesToKeep = original
+	}()
+	keeper.NumBatchesToKeep = 11
+
+	err = f.batchingKeeper.SetParams(f.Context(), types.Params{MaxBatchPrunePerBlock: 0})
 	require.NoError(t, err)
 
 	// Create 10 batches with random associated data.
@@ -311,8 +324,14 @@ func TestPruningMockedUpgrade(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	// Adjust the global variable for the test.
+	original := keeper.NumBatchesToKeep
+	defer func() {
+		keeper.NumBatchesToKeep = original
+	}()
+	keeper.NumBatchesToKeep = 10
+
 	err = f.batchingKeeper.SetParams(f.Context(), types.Params{
-		NumBatchesToKeep:                 10,
 		MaxBatchPrunePerBlock:            15,
 		MaxLegacyDataResultPrunePerBlock: 80,
 	})
@@ -390,7 +409,7 @@ func TestPruningMockedUpgrade(t *testing.T) {
 	}
 
 	// Block 40 - 43:
-	// - Batch creation at every block but number of batches stays at 10 with simple pruning.
+	// - Batch creation at every block but number of batches stays at 10 with basic pruning.
 	// - HasPruningCaughtUp is now True and legacy data results pruning is in effect.
 	for i := range 4 {
 		f.BatchingEndBlock(t, 10)

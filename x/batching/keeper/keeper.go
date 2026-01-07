@@ -43,7 +43,7 @@ type Keeper struct {
 	// have corresponding items in batchDataResults.
 	dataResults collections.Map[collections.Triple[bool, string, uint64], types.DataResult]
 	// batchDataResults maps batch number to a list of data request ID - posted height
-	// pairs to support simple pruning of data results.
+	// pairs to support basic pruning of data results.
 	batchDataResults collections.Map[uint64, types.DataRequestIDHeights]
 	// legacyDataResults is the older version of dataResults. The items in this
 	// collection do not have corresponding items in batchDataResults.
