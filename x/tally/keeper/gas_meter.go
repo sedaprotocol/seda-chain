@@ -18,22 +18,24 @@ import (
 // sent to the core contract based on the given gas meter. It takes the ID and
 // the height of the request for event emission.
 func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeight uint64, gasMeter *types.GasMeter, burnRatio math.LegacyDec) []types.Distribution {
-	//nolint:prealloc // TODO: To be addressed in the future
-	dists := []types.Distribution{}
-	//nolint:prealloc // TODO: To be addressed in the future
-	attrs := []sdk.Attribute{
-		sdk.NewAttribute(types.AttributeDataRequestID, reqID),
-		sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatUint(reqHeight, 10)),
-		sdk.NewAttribute(types.AttributeReducedPayout, strconv.FormatBool(gasMeter.ReducedPayout)),
-	}
+	proxyReports := gasMeter.GetProxyGasUsed(reqID, ctx.BlockHeight())
+	executorReports := gasMeter.GetExecutorGasUsed()
+
+	dists := make([]types.Distribution, 0, 1+len(proxyReports)+len(executorReports))
+	attrs := make([]sdk.Attribute, 0, 4+len(proxyReports)+len(executorReports))
 
 	// First distribution message is the combined burn.
 	burn := types.NewBurn(math.NewIntFromUint64(gasMeter.TallyGasUsed()), gasMeter.GasPrice())
 	dists = append(dists, burn)
-	attrs = append(attrs, sdk.NewAttribute(types.AttributeTallyGas, strconv.FormatUint(gasMeter.TallyGasUsed(), 10)))
+	attrs = append(attrs, []sdk.Attribute{
+		sdk.NewAttribute(types.AttributeDataRequestID, reqID),
+		sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatUint(reqHeight, 10)),
+		sdk.NewAttribute(types.AttributeReducedPayout, strconv.FormatBool(gasMeter.ReducedPayout)),
+		sdk.NewAttribute(types.AttributeTallyGas, strconv.FormatUint(gasMeter.TallyGasUsed(), 10)),
+	}...)
 
 	// Append distribution messages for data proxies.
-	for _, proxy := range gasMeter.GetProxyGasUsed(reqID, ctx.BlockHeight()) {
+	for _, proxy := range proxyReports {
 		proxyDist := types.NewDataProxyReward(proxy.PublicKey, proxy.PayoutAddress, proxy.Amount, gasMeter.GasPrice())
 		dists = append(dists, proxyDist)
 		attrs = append(attrs, sdk.NewAttribute(types.AttributeDataProxyGas,
@@ -43,7 +45,7 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 	// Append distribution messages for executors, burning a portion of their
 	// payouts in case of a reduced payout scenario.
 	reducedPayoutBurn := math.ZeroInt()
-	for _, executor := range gasMeter.GetExecutorGasUsed() {
+	for _, executor := range executorReports {
 		payoutAmt := executor.Amount
 		if gasMeter.ReducedPayout {
 			burnAmt := burnRatio.MulInt(executor.Amount).TruncateInt()
@@ -57,6 +59,7 @@ func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeig
 			fmt.Sprintf("%s,%s", executor.PublicKey, payoutAmt.String())))
 	}
 
+	// Add the reduced payout burn (may be zero) to the burn distribution.
 	dists[0].Burn.Amount = dists[0].Burn.Amount.Add(reducedPayoutBurn.Mul(gasMeter.GasPrice()))
 	attrs = append(attrs, sdk.NewAttribute(types.AttributeReducedPayoutBurn, reducedPayoutBurn.String()))
 
