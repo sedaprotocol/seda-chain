@@ -16,7 +16,12 @@ func (k Keeper) SetBatchNumberAtUpgrade(ctx sdk.Context) error {
 	if err != nil {
 		return err
 	}
-	return k.batchNumberAtUpgrade.Set(ctx, currentBatchNum-1)
+	err = k.batchNumberAtUpgrade.Set(ctx, currentBatchNum-1)
+	if err != nil {
+		return err
+	}
+	k.Logger(ctx).Info("set batch number at upgrade", "batch_number", currentBatchNum-1)
+	return nil
 }
 
 func (k Keeper) GetBatchNumberAtUpgrade(ctx sdk.Context) (uint64, error) {
@@ -150,7 +155,7 @@ func (k Keeper) BatchPruneBatches(ctx sdk.Context, numBatchesToKeep, maxBatchPru
 		if err != nil {
 			return false, err
 		}
-		k.Logger(ctx).Info("pruned a batch (batch pruning strategy)", "batch_num", batchNum)
+		k.Logger(ctx).Debug("[batch pruning strategy] pruned a batch", "batch_num", batchNum)
 
 		lastPrunedBatchNum = batchNum
 
@@ -188,7 +193,7 @@ func (k Keeper) BatchPruneBatches(ctx sdk.Context, numBatchesToKeep, maxBatchPru
 
 func (k Keeper) PruneLegacyDataResults(ctx sdk.Context, maxDataResultPrunePerBlock uint64) error {
 	if maxDataResultPrunePerBlock == 0 {
-		k.Logger(ctx).Info("skip legacy data result pruning", "max_data_results_to_check_for_prune", maxDataResultPrunePerBlock)
+		k.Logger(ctx).Info("[legacy data result pruning] disabled")
 		return nil
 	}
 
@@ -198,7 +203,7 @@ func (k Keeper) PruneLegacyDataResults(ctx sdk.Context, maxDataResultPrunePerBlo
 	}
 	defer iter.Close()
 
-	var numPruned uint64
+	var pruneCount uint64
 	for ; iter.Valid(); iter.Next() {
 		kv, err := iter.KeyValue()
 		if err != nil {
@@ -214,12 +219,12 @@ func (k Keeper) PruneLegacyDataResults(ctx sdk.Context, maxDataResultPrunePerBlo
 			return err
 		}
 
-		numPruned++
-		if numPruned == maxDataResultPrunePerBlock {
+		pruneCount++
+		if pruneCount == maxDataResultPrunePerBlock {
 			break
 		}
 	}
 
-	k.Logger(ctx).Info("pruned legacy data results", "num_pruned", numPruned)
+	k.Logger(ctx).Info("[legacy data result pruning] pruned legacy data results", "count", pruneCount)
 	return nil
 }
