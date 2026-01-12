@@ -170,6 +170,7 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) (ty
 
 	entries := make([][]byte, len(dataResults))
 	treeEntries := make([][]byte, len(dataResults))
+	dataRequestIDHeights := make([]types.DataRequestIDHeight, len(dataResults))
 	for i, res := range dataResults {
 		resID, err := hex.DecodeString(res.Id)
 		if err != nil {
@@ -182,6 +183,18 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) (ty
 		if err != nil {
 			return types.DataResultTreeEntries{}, nil, err
 		}
+
+		dataRequestIDHeights[i] = types.DataRequestIDHeight{
+			DataRequestId:     res.DrId,
+			DataRequestHeight: res.DrBlockHeight,
+		}
+	}
+
+	err = k.SetBatchDataResults(ctx, newBatchNum, types.DataRequestIDHeights{
+		DataRequestIdHeights: dataRequestIDHeights,
+	})
+	if err != nil {
+		return types.DataResultTreeEntries{}, nil, err
 	}
 
 	return types.DataResultTreeEntries{Entries: entries}, utils.RootFromEntries(treeEntries), nil

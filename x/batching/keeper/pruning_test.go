@@ -13,6 +13,50 @@ import (
 	pubkeytypes "github.com/sedaprotocol/seda-chain/x/pubkey/types"
 )
 
+func TestBasicPruneBatch(t *testing.T) {
+	f := initFixture(t)
+
+	f.addBatchSigningValidators(t, 1)
+
+	err := f.pubKeyKeeper.SetProvingScheme(f.Context(), pubkeytypes.ProvingScheme{
+		Index:       uint32(sedatypes.SEDAKeyIndexSecp256k1),
+		IsActivated: true,
+	})
+	require.NoError(t, err)
+
+	// Adjust the global variable for the test.
+	original := keeper.NumBatchesToKeep
+	defer func() {
+		keeper.NumBatchesToKeep = original
+	}()
+	keeper.NumBatchesToKeep = 5
+
+	err = f.batchingKeeper.SetParams(f.Context(), types.Params{
+		MaxBatchPrunePerBlock:            15,
+		MaxLegacyDataResultPrunePerBlock: 80,
+	})
+	require.NoError(t, err)
+
+	// 5 batching endblocks create 5 batches.
+	for i := range 5 {
+		if i == 1 {
+			// Create Batch 2 with a validator change only without new data results.
+			f.addBatchSigningValidators(t, 1)
+			f.BatchingEndBlock(t, 0)
+		} else {
+			f.BatchingEndBlock(t, 5)
+		}
+	}
+
+	// Creates batch 6 and prunes batch 1
+	f.BatchingEndBlock(t, 5)
+
+	// Creates Batch 7 (with no data results) and prunes Batch 2,
+	// which does not have associated data results.
+	f.addBatchSigningValidators(t, 1)
+	f.BatchingEndBlock(t, 0)
+}
+
 func TestBatchPruneBatches(t *testing.T) {
 	f := initFixture(t)
 
@@ -375,7 +419,12 @@ func TestPruningMockedUpgrade(t *testing.T) {
 	// - Creates 31st batch Batch 30
 	// - Basic pruning prunes Batch 20
 	// - Batch prunes Batches 0-14
-	f.BatchingEndBlock(t, 10)
+	f.BatchingEndBlock(t, 12) // 12 data results
+
+	// Check that batchDataResults collection was used.
+	drIDHeights, err := f.batchingKeeper.GetBatchDataResults(f.Context(), 30)
+	require.NoError(t, err)
+	require.Equal(t, 12, len(drIDHeights.DataRequestIdHeights))
 
 	batches, err := f.batchingKeeper.GetAllBatches(f.Context())
 	require.NoError(t, err)
@@ -452,7 +501,6 @@ func TestPruningMockedUpgrade(t *testing.T) {
 	// Block 45 without batch creation
 	f.BatchingEndBlock(t, 5)
 	f.checkNumLegacyDataResults(t, 0)
-
 }
 
 // BatchingEndBlock adds a given number of data results to the store and executes
