@@ -14,7 +14,6 @@ func BenchmarkBatchPruning(b *testing.B) {
 	numBatchesToKeep := uint64(1000)
 	maxBatchPrunePerBlock := uint64(100)
 
-	var lastBatchNum uint64
 	for range numBatches {
 		f.AddBlock()
 
@@ -22,12 +21,12 @@ func BenchmarkBatchPruning(b *testing.B) {
 		require.NoError(b, err)
 		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
 		require.NoError(b, err)
-		lastBatchNum, err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
+		_, err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
 		require.NoError(b, err)
 	}
 
 	for b.Loop() {
-		_, err := f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock, lastBatchNum)
+		_, err := f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
 		require.NoError(b, err)
 	}
 }

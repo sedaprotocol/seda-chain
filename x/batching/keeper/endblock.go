@@ -27,10 +27,6 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 	if err != nil {
 		return err
 	}
-	batchNumAtUpgrade, err := k.GetBatchNumberAtUpgrade(ctx)
-	if err != nil {
-		return err
-	}
 
 	// Since we're only using the secp256k1 key for batching, we only
 	// need to check if the secp256k1 proving scheme is activated.
@@ -52,9 +48,11 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 				return err
 			}
 
-			err = k.BasicPruneBatch(ctx, newBatchNum, NumBatchesToKeep, batchNumAtUpgrade)
-			if err != nil {
-				return err
+			if newBatchNum >= NumBatchesToKeep {
+				err = k.BasicPruneBatch(ctx, newBatchNum-NumBatchesToKeep)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	} else {
@@ -66,19 +64,14 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 		return err
 	}
 	if !hasCaughtUp {
-		// Batch prune MaxBatchPrunePerBlock batches and switch HasPruningCaughtUp
-		// to true if all batches up to the batch number at the time of the upgrade
-		// have been pruned.
-		// Note this operation does not prune data results, which will be pruned
-		// separately in the else clause.
-		lastPrunedBatchNum, err := k.BatchPruneBatches(ctx, NumBatchesToKeep, params.MaxBatchPrunePerBlock, batchNumAtUpgrade)
+		newHasCaughtUp, err := k.BatchPruneBatches(ctx, NumBatchesToKeep, params.MaxBatchPrunePerBlock)
 		if err != nil {
 			telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
 			k.Logger(ctx).Error("error while pruning batches", "err", err)
 			return nil
 		}
 
-		if lastPrunedBatchNum >= batchNumAtUpgrade {
+		if newHasCaughtUp {
 			err = k.SetHasPruningCaughtUp(ctx, true)
 			if err != nil {
 				return err

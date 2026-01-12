@@ -21,13 +21,17 @@ func TestBatchPruneBatches(t *testing.T) {
 	numBatchesToKeep := uint64(75)
 	maxBatchPrunePerBlock := uint64(150)
 
-	// Should prune nothing.
-	lastRemovedBatchNum, err := f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock, 0)
+	err := f.batchingKeeper.SetParams(f.Context(), types.Params{
+		MaxBatchPrunePerBlock: maxBatchPrunePerBlock,
+	})
 	require.NoError(t, err)
-	require.Equal(t, uint64(0), lastRemovedBatchNum)
+
+	// Should prune nothing.
+	hasCaughtUp, err := f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
+	require.NoError(t, err)
+	require.False(t, hasCaughtUp)
 
 	// Create 300 batches with random associated data.
-	var lastBatchNum uint64
 	for range 300 {
 		f.AddBlock()
 
@@ -35,7 +39,7 @@ func TestBatchPruneBatches(t *testing.T) {
 		require.NoError(t, err)
 		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
 		require.NoError(t, err)
-		lastBatchNum, err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
+		_, err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
 		require.NoError(t, err)
 		err = f.batchingKeeper.SetBatchSigSecp256k1(f.Context(), batch.BatchNumber, valEntries[0].ValidatorAddress, generateRandomBytes(64))
 		require.NoError(t, err)
@@ -46,10 +50,15 @@ func TestBatchPruneBatches(t *testing.T) {
 	require.Equal(t, 300, len(batches))
 
 	// Suppose an upgrade happens here and sets batchNumberAtUpgrade.
-	// Should prune first 150 batches (0-149)
-	lastRemovedBatchNum, err = f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock, lastBatchNum)
+	err = f.batchingKeeper.SetBatchNumberAtUpgrade(f.Context())
 	require.NoError(t, err)
-	require.Equal(t, uint64(149), lastRemovedBatchNum)
+	err = f.batchingKeeper.SetHasPruningCaughtUp(f.Context(), false)
+	require.NoError(t, err)
+
+	// Should prune first 150 batches (0-149)
+	hasCaughtUp, err = f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
+	require.NoError(t, err)
+	require.False(t, hasCaughtUp)
 
 	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
 	require.NoError(t, err)
@@ -65,9 +74,9 @@ func TestBatchPruneBatches(t *testing.T) {
 	}
 
 	// Should prune second 75 batches (150-224)
-	lastRemovedBatchNum, err = f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock, lastBatchNum)
+	hasCaughtUp, err = f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
 	require.NoError(t, err)
-	require.Equal(t, uint64(224), lastRemovedBatchNum)
+	require.True(t, hasCaughtUp)
 
 	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
 	require.NoError(t, err)
@@ -83,9 +92,9 @@ func TestBatchPruneBatches(t *testing.T) {
 	}
 
 	// Should prune nothing
-	lastRemovedBatchNum, err = f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock, lastBatchNum)
+	hasCaughtUp, err = f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
 	require.NoError(t, err)
-	require.Equal(t, uint64(224), lastRemovedBatchNum)
+	require.True(t, hasCaughtUp)
 
 	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
 	require.NoError(t, err)
@@ -364,19 +373,21 @@ func TestPruningMockedUpgrade(t *testing.T) {
 
 	// Block 31:
 	// - Creates 31st batch Batch 30
+	// - Basic pruning prunes Batch 20
 	// - Batch prunes Batches 0-14
 	f.BatchingEndBlock(t, 10)
 
 	batches, err := f.batchingKeeper.GetAllBatches(f.Context())
 	require.NoError(t, err)
-	require.Equal(t, 16, len(batches))
+	require.Equal(t, 15, len(batches))
 	require.Equal(t, uint64(15), batches[0].BatchNumber)
 	require.Equal(t, uint64(30), batches[len(batches)-1].BatchNumber)
-	for i := 0; i <= 14; i++ {
-		f.checkNoBatchData(t, uint64(i))
-	}
-	for i := 15; i <= 30; i++ {
-		f.checkBatchData(t, uint64(i), false)
+	for i := 0; i <= 30; i++ {
+		if i <= 14 || i == 20 {
+			f.checkNoBatchData(t, uint64(i))
+		} else {
+			f.checkBatchData(t, uint64(i), false)
+		}
 	}
 	f.checkNumLegacyDataResults(t, 300)
 
@@ -385,8 +396,11 @@ func TestPruningMockedUpgrade(t *testing.T) {
 	require.False(t, hasCaughtUp)
 
 	// Block 32~39:
-	// - Creates 32nd batch Batch 31
-	// - Batch pruning in effect but limited by NumBatchesToKeep
+	//   - Block 32:
+	//     - Creates 32nd batch Batch 31
+	//     - Basic pruning prunes Batch 21
+	//     - Batch pruning prunes Batches 15-21 (20 & 21 already pruned by basic pruning)
+	//     - Legacy data result pruning starts next block
 	for i := range 8 {
 		f.BatchingEndBlock(t, 10)
 
@@ -401,16 +415,15 @@ func TestPruningMockedUpgrade(t *testing.T) {
 		for j := 22 + i; j <= 31+i; j++ {
 			f.checkBatchData(t, uint64(j), false)
 		}
-		f.checkNumLegacyDataResults(t, 300)
+		f.checkNumLegacyDataResults(t, max(300-80*i, 0))
 
 		hasCaughtUp, err = f.batchingKeeper.HasPruningCaughtUp(f.Context())
 		require.NoError(t, err)
-		require.False(t, hasCaughtUp)
+		require.True(t, hasCaughtUp)
 	}
 
 	// Block 40 - 43:
 	// - Batch creation at every block but number of batches stays at 10 with basic pruning.
-	// - HasPruningCaughtUp is now True and legacy data results pruning is in effect.
 	for i := range 4 {
 		f.BatchingEndBlock(t, 10)
 
@@ -425,7 +438,7 @@ func TestPruningMockedUpgrade(t *testing.T) {
 		for j := 30 + i; j <= 39+i; j++ {
 			f.checkBatchData(t, uint64(j), false)
 		}
-		f.checkNumLegacyDataResults(t, 300-80*i)
+		f.checkNumLegacyDataResults(t, 0)
 
 		hasCaughtUp, err = f.batchingKeeper.HasPruningCaughtUp(f.Context())
 		require.NoError(t, err)
@@ -460,9 +473,9 @@ func (f *fixture) BatchingEndBlock(t *testing.T, numDataResults int) {
 
 func (f *fixture) checkNoBatchData(t *testing.T, batchNum uint64) {
 	batch, err := f.batchingKeeper.GetBatchByBatchNumber(f.Context(), batchNum)
-	require.ErrorIs(t, err, collections.ErrNotFound)
+	require.ErrorIs(t, err, collections.ErrNotFound, "batchNum %d", batchNum)
 	dataEntries, err := f.batchingKeeper.GetDataResultTreeEntries(f.Context(), batchNum)
-	require.ErrorIs(t, err, collections.ErrNotFound)
+	require.ErrorIs(t, err, collections.ErrNotFound, "batchNum %d", batchNum)
 	valEntries, _ := f.batchingKeeper.GetValidatorTreeEntries(f.Context(), batchNum)
 	// require.ErrorIs(t, err, collections.ErrNotFound) // this function does not error even if there are no entries.
 	sigs, _ := f.batchingKeeper.GetBatchSignatures(f.Context(), batchNum)
