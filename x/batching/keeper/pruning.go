@@ -31,25 +31,20 @@ func (k Keeper) HasPruningCaughtUp(ctx sdk.Context) (bool, error) {
 	return k.hasPruningCaughtUp.Get(ctx)
 }
 
-// BasicPruneBatch prunes a batch at newBatchNum - numBatchesToKeep and all of its
-// associated data. It returns without error if there is not enough batches or if
-// the batch was created before the upgrade.
-func (k Keeper) BasicPruneBatch(ctx sdk.Context, newBatchNum, numBatchesToKeep, batchNumAtUpgrade uint64) error {
-	// Do not prune until we have sufficient number of batches.
-	if newBatchNum < numBatchesToKeep {
-		return nil
-	}
+// BasicPruneBatch prunes a given batch and its associated tree entries and
+// signatures. It also prunes associated data results if the batchDataResults
+// mapping is available. It returns without error if the batch does not exist
+// (must have been pruned by the batch pruning strategy).
+func (k Keeper) BasicPruneBatch(ctx sdk.Context, batchNumber uint64) error {
+	k.Logger(ctx).Info("[basic pruning strategy] pruning a batch", "batch_num", batchNumber)
 
-	batchNumToPrune := newBatchNum - numBatchesToKeep
-
-	// If there has been an upgrade (i.e., batchNumAtUpgrade is not 0),
-	// then prune only if the batch was created after the upgrade.
-	if batchNumAtUpgrade != 0 && batchNumToPrune <= batchNumAtUpgrade {
-		return nil
-	}
-
-	batch, err := k.GetBatchByBatchNumber(ctx, batchNumToPrune)
+	batch, err := k.GetBatchByBatchNumber(ctx, batchNumber)
 	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			// Batch may have been pruned already.
+			k.Logger(ctx).Info("[basic pruning strategy] batch not found", "batch_num", batchNumber)
+			return nil
+		}
 		return err
 	}
 	batchHeight := batch.BlockHeight
@@ -58,12 +53,12 @@ func (k Keeper) BasicPruneBatch(ctx sdk.Context, newBatchNum, numBatchesToKeep, 
 	if err != nil {
 		return err
 	}
-	err = k.dataResultTreeEntries.Remove(ctx, batchNumToPrune)
+	err = k.dataResultTreeEntries.Remove(ctx, batchNumber)
 	if err != nil {
 		return err
 	}
 
-	valRng := new(collections.Range[collections.Pair[uint64, []byte]]).Prefix(collections.PairPrefix[uint64, []byte](batchNumToPrune))
+	valRng := new(collections.Range[collections.Pair[uint64, []byte]]).Prefix(collections.PairPrefix[uint64, []byte](batchNumber))
 	err = k.validatorTreeEntries.Clear(ctx, valRng)
 	if err != nil {
 		return err
@@ -73,10 +68,12 @@ func (k Keeper) BasicPruneBatch(ctx sdk.Context, newBatchNum, numBatchesToKeep, 
 		return err
 	}
 
-	dataResults, err := k.GetBatchDataResults(ctx, batchNumToPrune)
+	dataResults, err := k.GetBatchDataResults(ctx, batchNumber)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
-			k.Logger(ctx).Info("cannot prune batch because schema change has not been applied", "batch_num", batchNumToPrune)
+			// Batches created before the upgrade do not have batchDataResults
+			// mapping, so we resort to PruneLegacyDataResults().
+			k.Logger(ctx).Info("[basic pruning strategy] skip pruning data results", "batch_num", batchNumber)
 			return nil
 		}
 		return err
@@ -91,54 +88,56 @@ func (k Keeper) BasicPruneBatch(ctx sdk.Context, newBatchNum, numBatchesToKeep, 
 			return err
 		}
 	}
-	err = k.RemoveBatchDataResults(ctx, batchNumToPrune)
+	err = k.RemoveBatchDataResults(ctx, batchNumber)
 	if err != nil {
 		return err
 	}
 
-	k.Logger(ctx).Info("pruned a batch (basic strategy)", "batch_num", batchNumToPrune)
 	return nil
 }
 
-// BatchPruneBatches prunes batches and their associated data, except for data
-// results, in batches based on the module parameters NumBatchesToKeep and
-// MaxBatchPrunePerBlock.
-// It returns the batch number of the last batch that has been confirmed to have
-// been pruned.
-func (k Keeper) BatchPruneBatches(ctx sdk.Context, numBatchesToKeep, maxBatchPrunePerBlock, batchNumAtUpgrade uint64) (uint64, error) {
+// BatchPruneBatches prunes up to MaxBatchPrunePerBlock batches and their associated
+// data except for data results.
+// It returns a boolean hasCaughtUp if either of the following conditions is met:
+// (i) All batches up to batchNumberAtUpgrade have been pruned.
+// (ii) All batches up to (currentBatchNum - numBatchesToKeep) have been pruned.
+func (k Keeper) BatchPruneBatches(ctx sdk.Context, numBatchesToKeep, maxBatchPrunePerBlock uint64) (bool, error) {
 	if maxBatchPrunePerBlock == 0 {
-		k.Logger(ctx).Info("skip batch pruning", "max_batch_prune_per_block", maxBatchPrunePerBlock)
-		return 0, nil
+		k.Logger(ctx).Info("[batch pruning strategy] disabled")
+		return false, nil
 	}
 
-	// Prune up to, but not including, current batch number minus numBatchesToKeep.
+	batchNumAtUpgrade, err := k.GetBatchNumberAtUpgrade(ctx)
+	if err != nil {
+		return false, nil
+	}
+	if batchNumAtUpgrade == 0 {
+		k.Logger(ctx).Info("[batch pruning strategy] skipped due to lack of upgrade")
+		return false, nil
+	}
+
 	currentBatchNum, err := k.GetCurrentBatchNum(ctx)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 	if currentBatchNum <= numBatchesToKeep {
-		k.Logger(ctx).Info("skip batch pruning", "current_batch_num", currentBatchNum, "num_batches_to_keep", numBatchesToKeep)
-		return 0, nil
+		k.Logger(ctx).Info("[batch pruning strategy] skipped", "current_batch_num", currentBatchNum, "num_batches_to_keep", numBatchesToKeep)
+		return false, nil
 	}
 
 	rngEnd := min(currentBatchNum-numBatchesToKeep, batchNumAtUpgrade+1)
 	rng := new(collections.Range[uint64]).EndExclusive(rngEnd)
 	iter, err := k.batches.Indexes.Number.Iterate(ctx, rng)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 	defer iter.Close()
 
-	var firstKey *collections.Pair[uint64, int64]
-	var pruneCount uint64
-	var lastPrunedBatchNum uint64
+	var pruneCount, lastPrunedBatchNum uint64
 	for ; iter.Valid(); iter.Next() {
 		fullKey, err := iter.FullKey()
 		if err != nil {
-			return 0, err
-		}
-		if firstKey == nil {
-			firstKey = &fullKey
+			return false, err
 		}
 
 		batchNum, batchHeight := fullKey.K1(), fullKey.K2()
@@ -149,7 +148,7 @@ func (k Keeper) BatchPruneBatches(ctx sdk.Context, numBatchesToKeep, maxBatchPru
 
 		err = k.batches.Remove(ctx, batchHeight)
 		if err != nil {
-			return 0, err
+			return false, err
 		}
 		k.Logger(ctx).Info("pruned a batch (batch pruning strategy)", "batch_num", batchNum)
 
@@ -161,31 +160,30 @@ func (k Keeper) BatchPruneBatches(ctx sdk.Context, numBatchesToKeep, maxBatchPru
 		}
 	}
 
-	if firstKey == nil {
-		k.Logger(ctx).Info("no batches to prune (batch pruning strategy)")
-		// This means all batches up to batch number rngEnd - 1 have been pruned.
-		// Note we subtract 1 because rngEnd is exclusive.
-		return rngEnd - 1, nil
+	if pruneCount == 0 {
+		k.Logger(ctx).Info("[batch pruning strategy] no batches to prune")
+		return true, nil
 	}
 
-	dataRng := new(collections.Range[uint64]).EndExclusive(firstKey.K1() + pruneCount)
+	dataRng := new(collections.Range[uint64]).EndExclusive(lastPrunedBatchNum + 1)
 	err = k.dataResultTreeEntries.Clear(ctx, dataRng)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 
 	valRng := new(collections.Range[collections.Pair[uint64, []byte]]).
-		EndExclusive(collections.PairPrefix[uint64, []byte](firstKey.K1() + pruneCount))
+		EndExclusive(collections.PairPrefix[uint64, []byte](lastPrunedBatchNum + 1))
 	err = k.validatorTreeEntries.Clear(ctx, valRng)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 	err = k.batchSignatures.Clear(ctx, valRng)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 
-	return lastPrunedBatchNum, nil
+	k.Logger(ctx).Info("[batch pruning strategy] pruned batches", "count", pruneCount)
+	return pruneCount < maxBatchPrunePerBlock, nil
 }
 
 func (k Keeper) PruneLegacyDataResults(ctx sdk.Context, maxDataResultPrunePerBlock uint64) error {
