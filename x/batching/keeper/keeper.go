@@ -48,8 +48,10 @@ type Keeper struct {
 	// legacyDataResults is the older version of dataResults. The items in this
 	// collection do not have corresponding items in batchDataResults.
 	legacyDataResults collections.Map[collections.Triple[bool, string, uint64], types.DataResult]
-	// hasPruningCaughtUp indicates that all batches up to batchNumberAtUpgrade have
-	// been pruned by batch pruning.
+	// hasPruningCaughtUp is switched to true when either of the following conditions
+	// is met:
+	// (i) All batches up to batchNumberAtUpgrade have been pruned.
+	// (ii) All batches up to (currentBatchNum - numBatchesToKeep) have been pruned.
 	hasPruningCaughtUp collections.Item[bool]
 	// batchNumberAtUpgrade is the batch number of the latest batch at upgrade time
 	// except when its value is 0, in which case there was no upgrade.
