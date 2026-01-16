@@ -86,12 +86,26 @@ message DataResult {
   bool consensus = 12 [ (gogoproto.jsontag) = "consensus" ];
 }
 
+// DataRequestIDHeights is a collection of DataRequestIDHeight objects.
+message DataRequestIDHeights {
+  repeated DataRequestIDHeight data_request_id_heights = 1
+      [ (gogoproto.nullable) = false ];
+}
+
+// DataRequestIDHeight is a pair of data request ID and its posted height.
+message DataRequestIDHeight {
+  // DataRequestID is the hex-encoded data request ID.
+  string data_request_id = 1;
+  // DataRequestHeight is the height at which the data request was submitted.
+  uint64 data_request_height = 2;
+}
+
 // Params defines the parameters for the batching module.
 message Params {
-  // NumBatchesToKeep is the number of batches to keep in the state without
-  // pruning.
-  uint64 num_batches_to_keep = 1;
   // MaxBatchPrunePerBlock is the maximum number of batches to prune per
   // block.
-  uint64 max_batch_prune_per_block = 2;
+  uint64 max_batch_prune_per_block = 1;
+  // MaxLegacyDataResultPrunePerBlock is the maximum number of legacy data
+  // results to be checked for pruning per block.
+  uint64 max_legacy_data_result_prune_per_block = 2;
 }

@@ -16,7 +16,6 @@ import (
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -29,119 +28,6 @@ import (
 	sedatypes "github.com/sedaprotocol/seda-chain/types"
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
-
-func TestBatchPruning(t *testing.T) {
-	f := initFixture(t)
-
-	f.addBatchSigningValidators(t, 10)
-
-	err := f.batchingKeeper.SetParams(f.Context(), types.Params{
-		NumBatchesToKeep:      75,
-		MaxBatchPrunePerBlock: 150,
-	})
-	require.NoError(t, err)
-
-	// Create 300 batches with random associated data.
-	for range 300 {
-		f.AddBlock()
-
-		err := f.batchingKeeper.SetDataResultForBatching(f.Context(), generateDataResults(t, 1)[0])
-		require.NoError(t, err)
-		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
-		require.NoError(t, err)
-		err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
-		require.NoError(t, err)
-		err = f.batchingKeeper.SetBatchSigSecp256k1(f.Context(), batch.BatchNumber, valEntries[0].ValidatorAddress, generateRandomBytes(64))
-		require.NoError(t, err)
-	}
-
-	batches, err := f.batchingKeeper.GetAllBatches(f.Context())
-	require.NoError(t, err)
-	require.Equal(t, 300, len(batches))
-
-	// Should prune first 150 batches.
-	err = f.batchingKeeper.PruneBatches(f.Context())
-	require.NoError(t, err)
-
-	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
-	require.NoError(t, err)
-	require.Equal(t, 150, len(batches))
-	require.Equal(t, uint64(150), batches[0].BatchNumber)
-	require.Equal(t, uint64(299), batches[len(batches)-1].BatchNumber)
-
-	for i := uint64(0); i <= 149; i++ {
-		f.checkNoBatchData(t, i)
-	}
-	for i := uint64(150); i <= 299; i++ {
-		f.checkBatchData(t, i)
-	}
-
-	// Should prune second 75 batches.
-	err = f.batchingKeeper.PruneBatches(f.Context())
-	require.NoError(t, err)
-
-	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
-	require.NoError(t, err)
-	require.Equal(t, 75, len(batches))
-	require.Equal(t, uint64(225), batches[0].BatchNumber)
-	require.Equal(t, uint64(299), batches[len(batches)-1].BatchNumber)
-
-	for i := 0; i <= 224; i++ {
-		f.checkNoBatchData(t, uint64(i))
-	}
-	for i := 225; i <= 299; i++ {
-		f.checkBatchData(t, uint64(i))
-	}
-
-	// Should prune nothing.
-	err = f.batchingKeeper.PruneBatches(f.Context())
-	require.NoError(t, err)
-
-	batches, err = f.batchingKeeper.GetAllBatches(f.Context())
-	require.NoError(t, err)
-	require.Equal(t, 75, len(batches))
-	require.Equal(t, uint64(225), batches[0].BatchNumber)
-	require.Equal(t, uint64(299), batches[len(batches)-1].BatchNumber)
-
-	for i := 0; i <= 224; i++ {
-		f.checkNoBatchData(t, uint64(i))
-	}
-	for i := 225; i <= 299; i++ {
-		f.checkBatchData(t, uint64(i))
-	}
-}
-
-func (f *fixture) checkNoBatchData(t *testing.T, batchNum uint64) {
-	batch, err := f.batchingKeeper.GetBatchByBatchNumber(f.Context(), batchNum)
-	require.ErrorIs(t, err, collections.ErrNotFound)
-	dataEntries, err := f.batchingKeeper.GetDataResultTreeEntries(f.Context(), batchNum)
-	require.ErrorIs(t, err, collections.ErrNotFound)
-	valEntries, _ := f.batchingKeeper.GetValidatorTreeEntries(f.Context(), batchNum)
-	// require.ErrorIs(t, err, collections.ErrNotFound) // this function does not error even if there are no entries.
-	sigs, _ := f.batchingKeeper.GetBatchSignatures(f.Context(), batchNum)
-	// require.ErrorIs(t, err, collections.ErrNotFound) // this function does not error even if there are no entries.
-
-	require.Empty(t, batch, "batchNum: %d", batchNum)
-	require.Empty(t, dataEntries, "batchNum: %d", batchNum)
-	require.Empty(t, valEntries, "batchNum: %d", batchNum)
-	require.Empty(t, sigs, "batchNum: %d", batchNum)
-}
-
-func (f *fixture) checkBatchData(t *testing.T, batchNum uint64) {
-	batch, err := f.batchingKeeper.GetBatchByBatchNumber(f.Context(), batchNum)
-	require.NoError(t, err)
-	dataEntries, err := f.batchingKeeper.GetDataResultTreeEntries(f.Context(), batchNum)
-	require.NoError(t, err)
-	valEntries, err := f.batchingKeeper.GetValidatorTreeEntries(f.Context(), batchNum)
-	require.NoError(t, err)
-	sigs, err := f.batchingKeeper.GetBatchSignatures(f.Context(), batchNum)
-	require.NoError(t, err)
-
-	require.NotEmpty(t, batch)
-	require.NotEmpty(t, dataEntries)
-	require.NotEmpty(t, valEntries)
-	require.NotEmpty(t, sigs)
-}
 
 func Test_ConstructDataResultTree(t *testing.T) {
 	f := initFixture(t)

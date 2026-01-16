@@ -19,6 +19,7 @@ var (
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&BatchDoubleSign{},
+		&MsgUpdateParams{},
 	)
 
 	registry.RegisterImplementations(

@@ -135,7 +135,7 @@ func TestEndBlock(t *testing.T) {
 
 			dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
 			require.NoError(t, err)
-			require.Contains(t, dataResults, *dataResult)
+			require.Contains(t, dataResults, dataResult)
 		})
 	}
 }
@@ -180,7 +180,7 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 
 	dataResults, err := f.batchingKeeper.GetDataResults(f.Context(), false)
 	require.NoError(t, err)
-	require.Contains(t, dataResults, *dataResult)
+	require.Contains(t, dataResults, dataResult)
 
 	// Ensure the new DR gets a unique ID
 	f.AddBlock()
@@ -214,7 +214,7 @@ func TestEndBlock_UpdateMaxResultSize(t *testing.T) {
 
 	dataResultsAfter, err := f.batchingKeeper.GetDataResults(f.Context(), false)
 	require.NoError(t, err)
-	require.Contains(t, dataResultsAfter, *dataResultAfter)
+	require.Contains(t, dataResultsAfter, dataResultAfter)
 }
 
 func TestEndBlock_ChunkedContractQuery(t *testing.T) {
@@ -341,7 +341,7 @@ func TestEndBlock_PausedContract(t *testing.T) {
 
 	f.pauseContract(t)
 
-	var noRevealsResult *batchingtypes.DataResult
+	var noRevealsResult batchingtypes.DataResult
 
 	// Ensure the DR without commitments and the DR without reveals are timed out
 	for i := range defaultCommitTimeoutBlocks {
@@ -416,6 +416,6 @@ func TestTallyTestItems(t *testing.T) {
 		require.Equal(t, testItems[i].ExpectedExitCode, dataResult.ExitCode)
 		require.Equal(t, testItems[i].ExpectedGasUsed.String(), dataResult.GasUsed.String())
 
-		require.Contains(t, dataResults, *dataResult)
+		require.Contains(t, dataResults, dataResult)
 	}
 }
