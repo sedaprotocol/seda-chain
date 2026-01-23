@@ -23,7 +23,7 @@ require (
 	github.com/CosmWasm/wasmvm/v2 v2.2.4
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/bgentry/speakeasy v0.2.0
-	github.com/cometbft/cometbft v0.38.19
+	github.com/cometbft/cometbft v0.38.21
 	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.50.14
