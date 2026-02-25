@@ -15,7 +15,8 @@ if [ "$mockgen_version" != "$required_version" ]; then
 fi
 
 # Generate mocks for the given package
-$mockgen_cmd -source=$GOPATH/pkg/mod/github.com/\!cosm\!wasm/wasmd@v0.53.0/x/wasm/types/exported_keepers.go -package testutil -destination=x/wasm-storage/keeper/testutil/wasm_keepers_mock.go
+wasmd_version=$(go list -m -f '{{.Version}}' github.com/CosmWasm/wasmd)
+$mockgen_cmd -source=$GOPATH/pkg/mod/github.com/\!cosm\!wasm/wasmd@${wasmd_version}/x/wasm/types/exported_keepers.go -package testutil -destination=x/wasm-storage/keeper/testutil/wasm_keepers_mock.go
 $mockgen_cmd -source=x/wasm-storage/types/expected_keepers.go -package testutil -destination=x/wasm-storage/keeper/testutil/expected_keepers_mock.go
 $mockgen_cmd -source=x/pubkey/types/expected_keepers.go -package testutil -destination=x/pubkey/keeper/testutil/expected_keepers_mock.go
 $mockgen_cmd -source=x/staking/types/expected_keepers.go -package testutil -destination=x/staking/keeper/testutil/expected_keepers_mock.go
@@ -23,4 +24,5 @@ $mockgen_cmd -source=app/abci/expected_keepers.go -package testutil -destination
 $mockgen_cmd -source=app/ante.go -package testutil -destination=app/testutil/expected_keepers_mock.go
 $mockgen_cmd -source=app/utils/seda_keys.go -package testutil -destination=app/abci/testutil/seda_keys_mock.go
 $mockgen_cmd -source=x/data-proxy/types/expected_keepers.go -package testutil -destination=x/data-proxy/keeper/testutil/expected_keepers_mock.go
-$mockgen_cmd -source=$GOPATH/pkg/mod/github.com/aws/aws-sdk-go@v1.55.5/service/sqs/sqsiface/interface.go -package testutil -destination=plugins/indexing/pluginaws/testutil/sqs_client_mock.go
+aws_sdk_version=$(go list -m -f '{{.Version}}' github.com/aws/aws-sdk-go)
+$mockgen_cmd -source=$GOPATH/pkg/mod/github.com/aws/aws-sdk-go@${aws_sdk_version}/service/sqs/sqsiface/interface.go -package testutil -destination=plugins/indexing/pluginaws/testutil/sqs_client_mock.go

@@ -3,6 +3,7 @@ package base
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -23,10 +24,11 @@ func ExtractBlockUpdate(ctx *types.BlockContext, req abci.RequestFinalizeBlock, 
 			txCount--
 		}
 	}
-	proposerAddress, err := sdk.ConsAddressFromHex(hex.EncodeToString(req.ProposerAddress))
-	if err != nil {
-		return nil, err
+
+	if len(req.ProposerAddress) == 0 {
+		return nil, fmt.Errorf("proposer address is empty")
 	}
+	proposerAddress := sdk.ConsAddress(req.ProposerAddress)
 
 	var filteredEvents []abci.Event
 	for _, event := range res.Events {

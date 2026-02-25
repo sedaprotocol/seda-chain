@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type PrintInfo struct {
@@ -30,6 +28,16 @@ func DisplayInfo(info PrintInfo) error {
 		return err
 	}
 
-	_, err = fmt.Fprintf(os.Stderr, "%s\n", sdk.MustSortJSON(out))
+	// Sort JSON by keys and print.
+	var c any
+	err = json.Unmarshal(out, &c)
+	if err != nil {
+		return err
+	}
+	js, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(os.Stderr, "%s\n", js)
 	return err
 }

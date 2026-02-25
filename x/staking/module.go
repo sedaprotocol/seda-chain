@@ -7,12 +7,12 @@ import (
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
+	"cosmossdk.io/core/appmodule"
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	sdkstaking "github.com/cosmos/cosmos-sdk/x/staking"
@@ -27,10 +27,7 @@ import (
 )
 
 var (
-	_ module.AppModule = AppModule{}
-
-	_ module.AppModuleBasic = AppModuleBasic{}
-	_ module.HasServices    = AppModule{}
+	_ appmodule.AppModule = AppModule{}
 )
 
 // ----------------------------------------------------------------------------
@@ -133,11 +130,6 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 
 	querier := sdkkeeper.Querier{Keeper: am.keeper.Keeper}
 	sdktypes.RegisterQueryServer(cfg.QueryServer(), querier)
-}
-
-// RegisterInvariants registers the staking module invariants.
-func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
-	keeper.RegisterInvariants(ir, am.keeper)
 }
 
 // WeightedOperations returns the all the staking module operations with their respective weights.

@@ -16,8 +16,6 @@ import (
 
 	dbm "github.com/cosmos/cosmos-db"
 
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-
 	"cosmossdk.io/log"
 	evidencetypes "cosmossdk.io/x/evidence/types"
 
@@ -287,6 +285,11 @@ func TestAppExportImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
+	newAppOptions := make(simtestutil.AppOptionsMap, 0)
+	newAppOptions[flags.FlagHome] = t.TempDir()
+	newAppOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
+	newAppOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
+
 	newApp := app.NewApp(
 		log.NewNopLogger(),
 		newDB,
@@ -294,7 +297,7 @@ func TestAppExportImport(t *testing.T) {
 		true,
 		map[int64]bool{},
 		0,
-		appOptions,
+		newAppOptions,
 		baseapp.SetChainID(config.ChainID),
 	)
 	require.Equal(t, app.Name, bApp.Name())
@@ -338,7 +341,6 @@ func TestAppExportImport(t *testing.T) {
 		{bApp.GetKey(banktypes.StoreKey), newApp.GetKey(banktypes.StoreKey), [][]byte{banktypes.BalancesPrefix}},
 		{bApp.GetKey(govtypes.StoreKey), newApp.GetKey(govtypes.StoreKey), [][]byte{}},
 		{bApp.GetKey(evidencetypes.StoreKey), newApp.GetKey(evidencetypes.StoreKey), [][]byte{}},
-		{bApp.GetKey(capabilitytypes.StoreKey), newApp.GetKey(capabilitytypes.StoreKey), [][]byte{}},
 		{bApp.GetKey(authzkeeper.StoreKey), newApp.GetKey(authzkeeper.StoreKey), [][]byte{authzkeeper.GrantKey, authzkeeper.GrantQueuePrefix}},
 	}
 

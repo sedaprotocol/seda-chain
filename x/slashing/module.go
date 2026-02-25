@@ -2,6 +2,7 @@ package slashing
 
 import (
 	addresscodec "cosmossdk.io/core/address"
+	appmodule "cosmossdk.io/core/appmodule"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -13,8 +14,7 @@ import (
 )
 
 var (
-	_ module.AppModule   = AppModule{}
-	_ module.HasServices = AppModule{}
+	_ appmodule.AppModule = AppModule{}
 )
 
 // ----------------------------------------------------------------------------

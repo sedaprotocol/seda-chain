@@ -240,10 +240,12 @@ func addServerCommands(rootCmd *cobra.Command, appCreator servertypes.AppCreator
 	startCmd := server.StartCmdWithOptions(appCreator, defaultNodeHome,
 		server.StartCmdOptions{
 			AddFlags: func(cmd *cobra.Command) {
-				cmd.Flags().Bool(crisis.FlagSkipGenesisInvariants, false, "Skip x/crisis invariants check on startup")
+				// TODO: Remove this deprecated flag
+				cmd.Flags().Bool(crisis.FlagSkipGenesisInvariants, false, "Unused and to be deprecated") //nolint:staticcheck
 			},
 		},
 	)
+
 	// Overwrite PreRunE of start command to add config key for node start.
 	startCmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
 		serverCtx := server.GetServerContextFromCmd(cmd)

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
-	gomock2 "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
@@ -117,13 +116,12 @@ func (s *MsgServerTestSuite) SetupTest() {
 	ctrl := gomock.NewController(s.T())
 	pubKeyKeeper := stakingtestutil.NewMockPubKeyKeeper(ctrl)
 
-	ctrl2 := gomock2.NewController(s.T())
-	accountKeeper := sdkstakingtestutil.NewMockAccountKeeper(ctrl2)
+	accountKeeper := sdkstakingtestutil.NewMockAccountKeeper(ctrl)
 	accountKeeper.EXPECT().GetModuleAddress(sdktypes.BondedPoolName).Return(bondedAcc.GetAddress())
 	accountKeeper.EXPECT().GetModuleAddress(sdktypes.NotBondedPoolName).Return(notBondedAcc.GetAddress())
 	accountKeeper.EXPECT().AddressCodec().Return(address.NewBech32Codec("seda")).AnyTimes()
 
-	bankKeeper := sdkstakingtestutil.NewMockBankKeeper(ctrl2)
+	bankKeeper := sdkstakingtestutil.NewMockBankKeeper(ctrl)
 
 	sdkStakingKeeper := sdkkeeper.NewKeeper(
 		encCfg.Codec,
