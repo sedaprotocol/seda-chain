@@ -350,26 +350,29 @@ test-sim-benchmark:
 ###                                interchaintest                           ###
 ###############################################################################
 
-ictest-sdk-commands: rm-testcache
-	cd interchaintest && go test -race -v -run TestCoreSDKCommands .
-
-ictest-sdk-boundaries: rm-testcache
-	cd interchaintest && go test -race -v -run TestSDKBoundaries .
-
 ictest-chain-start: rm-testcache
 	cd interchaintest && go test -race -v -run TestChainStart .
+
+ictest-sdk-commands: rm-testcache
+	cd interchaintest && go test -race -v -run TestCoreSDKCommands .
 
 ictest-state-sync: rm-testcache
 	cd interchaintest && go test -race -v -run TestStateSync .
 
+ictest-ibc-conformance: rm-testcache
+	cd interchaintest && go test -race -v -run TestConformance .
+
 ictest-ibc-xfer: rm-testcache
 	cd interchaintest && go test -race -v -run TestIBCTransfer .
 
-ictest-packet-forward-middleware: rm-testcache
-	cd interchaintest && go test -race -v -run TestPacketForwardMiddleware .
+ictest-sdk-boundaries: rm-testcache
+	cd interchaintest && go test -race -v -run TestSDKBoundaries .
 
 ictest-ibc-ica: rm-testcache
 	cd interchaintest && go test -race -v -run TestInterchainAccounts .
+
+ictest-packet-forward-middleware: rm-testcache
+	cd interchaintest && go test -race -v -run TestPacketForwardMiddleware .
 
 rm-testcache:
 	go clean -testcache

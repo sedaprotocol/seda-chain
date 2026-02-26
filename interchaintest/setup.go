@@ -12,6 +12,7 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v8/testreporter"
 	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -36,7 +37,7 @@ var (
 	dockerImage = ibc.DockerImage{
 		Repository: "sedad-e2e", // FOR LOCAL IMAGE USE: Docker Image Name
 		Version:    "latest",    // FOR LOCAL IMAGE USE: Docker Image Tag
-		UidGid:     "1025:1025",
+		UIDGID:     "1025:1025",
 	}
 
 	SedaRepo = "ghcr.io/sedaprotocol/seda-chain"
@@ -86,6 +87,34 @@ var (
 	/* =================================================== */
 	GenesisWalletAmount = math.NewInt(10_000_000_000)
 )
+
+// SEDAChainFactory wraps a BuiltinChainFactory and replaces SEDA cosmos.CosmosChain
+// instances with SEDAChain so that the custom Start() method (which handles
+// --key-file-no-encryption in gentx) is used.
+type SEDAChainFactory struct {
+	*interchaintest.BuiltinChainFactory
+	log *zap.Logger
+}
+
+func NewSEDAChainFactory(log *zap.Logger, specs []*interchaintest.ChainSpec) *SEDAChainFactory {
+	return &SEDAChainFactory{
+		BuiltinChainFactory: interchaintest.NewBuiltinChainFactory(log, specs),
+		log:                 log,
+	}
+}
+
+func (f *SEDAChainFactory) Chains(testName string) ([]ibc.Chain, error) {
+	chains, err := f.BuiltinChainFactory.Chains(testName)
+	if err != nil {
+		return nil, err
+	}
+	for i, chain := range chains {
+		if cc, ok := chain.(*cosmos.CosmosChain); ok && cc.Config().Bin == "sedad" {
+			chains[i] = NewSEDAChain(cc, f.log)
+		}
+	}
+	return chains, nil
+}
 
 // sedaEncoding registers the Juno specific module codecs so that the associated types and msgs
 // will be supported when writing to the blocksdb sqlite database.

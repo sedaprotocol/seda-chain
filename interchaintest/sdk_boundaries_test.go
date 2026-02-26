@@ -77,7 +77,7 @@ func TestSDKBoundaries(t *testing.T) {
 				relayer.CustomDockerImage(
 					rly.DefaultContainerImage,
 					tt.relayerVersion,
-					rly.RlyDefaultUidGid,
+					rly.RlyDefaultUIDGID,
 				),
 			)
 

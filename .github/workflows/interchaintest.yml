@@ -53,13 +53,14 @@ jobs:
     strategy:
       matrix:
         test:
-          - "ictest-sdk-commands"
-          - "ictest-sdk-boundaries"
           - "ictest-chain-start"
+          - "ictest-sdk-commands"
           - "ictest-state-sync"
+          # - "ictest-ibc-conformance"
           - "ictest-ibc-xfer"
-          - "ictest-packet-forward-middleware"
+          # - "ictest-sdk-boundaries"
           - "ictest-ibc-ica"
+          - "ictest-packet-forward-middleware"
       fail-fast: false
 
     steps:

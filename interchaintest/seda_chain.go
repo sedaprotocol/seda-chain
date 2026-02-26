@@ -53,7 +53,7 @@ func (c *SEDAChain) Start(_ string, ctx context.Context, additionalGenesisWallet
 	}
 
 	if chainCfg.ModifyGenesisAmounts != nil {
-		genesisAmount, genesisSelfDelegation = chainCfg.ModifyGenesisAmounts()
+		genesisAmount, genesisSelfDelegation = chainCfg.ModifyGenesisAmounts(0)
 	}
 
 	genesisAmounts := []types.Coin{genesisAmount}
@@ -128,7 +128,7 @@ func (c *SEDAChain) Start(_ string, ctx context.Context, additionalGenesisWallet
 	}
 
 	if c.Config().PreGenesis != nil {
-		err := c.Config().PreGenesis(chainCfg)
+		err := c.Config().PreGenesis(c.CosmosChain)
 		if err != nil {
 			return err
 		}

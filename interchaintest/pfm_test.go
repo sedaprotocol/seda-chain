@@ -23,6 +23,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+var (
+	numVals      = 4
+	numFullNodes = 0
+)
+
 type PacketMetadata struct {
 	Forward *ForwardMetadata `json:"forward"`
 }
