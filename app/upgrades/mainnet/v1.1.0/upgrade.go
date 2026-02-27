@@ -1,0 +1,40 @@
+package v1
+
+import (
+	"context"
+
+	storetypes "cosmossdk.io/store/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+
+	"github.com/cosmos/cosmos-sdk/types/module"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+
+	"github.com/sedaprotocol/seda-chain/app/keepers"
+	"github.com/sedaprotocol/seda-chain/app/upgrades"
+)
+
+const (
+	UpgradeName = "v1.1.0"
+
+	capabilityStoreKey = "capability"
+	ibcFeeStoreKey     = "feeibc"
+)
+
+var Upgrade = upgrades.Upgrade{
+	UpgradeName:          UpgradeName,
+	CreateUpgradeHandler: CreateUpgradeHandler,
+	StoreUpgrades: storetypes.StoreUpgrades{
+		Added:   []string{},
+		Deleted: []string{crisistypes.StoreKey, capabilityStoreKey, ibcFeeStoreKey},
+	},
+}
+
+func CreateUpgradeHandler(
+	mm upgrades.ModuleManager,
+	configurator module.Configurator,
+	_ *keepers.AppKeepers,
+) upgradetypes.UpgradeHandler {
+	return func(ctx context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		return mm.RunMigrations(ctx, configurator, fromVM)
+	}
+}
