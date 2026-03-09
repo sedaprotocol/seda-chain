@@ -44,7 +44,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/zerolog v1.34.0
-	github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 v2.6.0
+	github.com/sedaprotocol/seda-wasm-vm/tallyvm/v2 v2.6.1
 	github.com/sedaprotocol/vrf-go v0.0.0-20231211075603-e5a17bb0b87c
 	github.com/spf13/cast v1.10.0
 	github.com/spf13/cobra v1.10.1
