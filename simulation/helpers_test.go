@@ -13,12 +13,12 @@ import (
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -40,11 +40,11 @@ func fauxMerkleModeOpt(bapp *baseapp.BaseApp) {
 
 // simulationOperations retrieves the simulation params from the provided file path
 // and returns all the modules weighted operations
-func simulationOperations(app runtime.AppI, cdc codec.JSONCodec, config simtypes.Config) []simtypes.WeightedOperation {
+func simulationOperations(app runtime.AppI, cdc codec.JSONCodec, config simtypes.Config, txConfig client.TxConfig) []simtypes.WeightedOperation {
 	simState := module.SimulationState{
 		AppParams: make(simtypes.AppParams),
 		Cdc:       cdc,
-		TxConfig:  moduletestutil.MakeTestTxConfig(),
+		TxConfig:  txConfig,
 		BondDenom: sdk.DefaultBondDenom,
 	}
 

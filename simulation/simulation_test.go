@@ -97,7 +97,7 @@ func BenchmarkSimulation(b *testing.B) {
 			app.NewDefaultGenesisState(bApp.AppCodec()),
 		),
 		simulationtypes.RandomAccounts,
-		simulationOperations(bApp, bApp.AppCodec(), config),
+		simulationOperations(bApp, bApp.AppCodec(), config, bApp.TxConfig()),
 		bApp.ModuleAccountAddrs(),
 		config,
 		bApp.AppCodec(),
@@ -176,7 +176,7 @@ func TestAppStateDeterminism(t *testing.T) {
 					app.NewDefaultGenesisState(bApp.AppCodec()),
 				),
 				simulationtypes.RandomAccounts,
-				simulationOperations(bApp, bApp.AppCodec(), config),
+				simulationOperations(bApp, bApp.AppCodec(), config, bApp.TxConfig()),
 				bApp.ModuleAccountAddrs(),
 				config,
 				bApp.AppCodec(),
@@ -249,7 +249,7 @@ func TestAppExportImport(t *testing.T) {
 			app.NewDefaultGenesisState(bApp.AppCodec()),
 		),
 		simulationtypes.RandomAccounts,
-		simulationOperations(bApp, bApp.AppCodec(), config),
+		simulationOperations(bApp, bApp.AppCodec(), config, bApp.TxConfig()),
 		bApp.BlockedModuleAccountAddrs(),
 		config,
 		bApp.AppCodec(),
@@ -287,7 +287,6 @@ func TestAppExportImport(t *testing.T) {
 
 	newAppOptions := make(simtestutil.AppOptionsMap, 0)
 	newAppOptions[flags.FlagHome] = t.TempDir()
-	newAppOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 	newAppOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
 
 	newApp := app.NewApp(
@@ -379,7 +378,6 @@ func TestAppSimulationAfterImport(t *testing.T) {
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
 	appOptions[flags.FlagHome] = t.TempDir()
-	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 	appOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
 
 	bApp := app.NewApp(
@@ -406,7 +404,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 			app.NewDefaultGenesisState(bApp.AppCodec()),
 		),
 		simulationtypes.RandomAccounts,
-		simulationOperations(bApp, bApp.AppCodec(), config),
+		simulationOperations(bApp, bApp.AppCodec(), config, bApp.TxConfig()),
 		bApp.BlockedModuleAccountAddrs(),
 		config,
 		bApp.AppCodec(),
@@ -447,6 +445,10 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
+	newAppOptions := make(simtestutil.AppOptionsMap, 0)
+	newAppOptions[flags.FlagHome] = t.TempDir()
+	newAppOptions[utils.FlagAllowUnencryptedSEDAKeys] = "true"
+
 	newApp := app.NewApp(
 		log.NewNopLogger(),
 		newDB,
@@ -454,7 +456,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		true,
 		map[int64]bool{},
 		0,
-		appOptions,
+		newAppOptions,
 		fauxMerkleModeOpt,
 		baseapp.SetChainID(config.ChainID),
 	)
@@ -476,7 +478,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 			app.NewDefaultGenesisState(bApp.AppCodec()),
 		),
 		simulationtypes.RandomAccounts,
-		simulationOperations(newApp, newApp.AppCodec(), config),
+		simulationOperations(newApp, newApp.AppCodec(), config, newApp.TxConfig()),
 		newApp.BlockedModuleAccountAddrs(),
 		config,
 		bApp.AppCodec(),
