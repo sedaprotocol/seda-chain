@@ -7,4 +7,6 @@ import "sedachain/tally/v1/tally.proto";
 option go_package = "github.com/sedaprotocol/seda-chain/x/tally/types";
 
 // GenesisState defines tally module's genesis state.
-message GenesisState { Params params = 1 [ (gogoproto.nullable) = false ]; }
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+}

@@ -1,9 +1,9 @@
 syntax = "proto3";
 package sedachain.wasm_storage.v1;
 
-import "google/api/annotations.proto";
-import "gogoproto/gogo.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 import "sedachain/wasm_storage/v1/wasm_storage.proto";
 
 option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
@@ -11,23 +11,18 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 // Query defines the gRPC querier service.
 service Query {
   // OracleProgram returns an oracle program given its hash.
-  rpc OracleProgram(QueryOracleProgramRequest)
-      returns (QueryOracleProgramResponse) {
-    option (google.api.http).get =
-        "/seda-chain/wasm-storage/oracle_program/{hash}";
+  rpc OracleProgram(QueryOracleProgramRequest) returns (QueryOracleProgramResponse) {
+    option (google.api.http).get = "/seda-chain/wasm-storage/oracle_program/{hash}";
   }
 
   // OraclePrograms returns all oracle programs.
-  rpc OraclePrograms(QueryOracleProgramsRequest)
-      returns (QueryOracleProgramsResponse) {
+  rpc OraclePrograms(QueryOracleProgramsRequest) returns (QueryOracleProgramsResponse) {
     option (google.api.http).get = "/seda-chain/wasm-storage/oracle_programs";
   }
 
   // CoreContractRegistry returns the Core Contract Registry address.
-  rpc CoreContractRegistry(QueryCoreContractRegistryRequest)
-      returns (QueryCoreContractRegistryResponse) {
-    option (google.api.http).get =
-        "/seda-chain/wasm-storage/core_contract_registry";
+  rpc CoreContractRegistry(QueryCoreContractRegistryRequest) returns (QueryCoreContractRegistryResponse) {
+    option (google.api.http).get = "/seda-chain/wasm-storage/core_contract_registry";
   }
 
   // Params returns the total set of wasm-storage parameters.
@@ -37,10 +32,14 @@ service Query {
 }
 
 // The request message for QueryOracleProgram RPC.
-message QueryOracleProgramRequest { string hash = 1; }
+message QueryOracleProgramRequest {
+  string hash = 1;
+}
 
 // The response message for QueryOracleProgram RPC.
-message QueryOracleProgramResponse { OracleProgram oracle_program = 1; }
+message QueryOracleProgramResponse {
+  OracleProgram oracle_program = 1;
+}
 
 // The request message for QueryOraclePrograms RPC.
 message QueryOracleProgramsRequest {
@@ -58,7 +57,9 @@ message QueryOracleProgramsResponse {
 message QueryCoreContractRegistryRequest {}
 
 // The response message for QueryCoreContractRegistry RPC.
-message QueryCoreContractRegistryResponse { string address = 1; }
+message QueryCoreContractRegistryResponse {
+  string address = 1;
+}
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
 message QueryParamsRequest {}
@@ -66,5 +67,5 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params defines the parameters of the module.
-  Params params = 1 [ (gogoproto.nullable) = false ];
+  Params params = 1 [(gogoproto.nullable) = false];
 }

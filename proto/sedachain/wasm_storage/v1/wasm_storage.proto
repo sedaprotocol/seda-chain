@@ -10,8 +10,10 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/wasm-storage/types";
 message OracleProgram {
   bytes hash = 1;
   bytes bytecode = 2;
-  google.protobuf.Timestamp added_at = 3
-      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+  google.protobuf.Timestamp added_at = 3 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 // Params to define the max wasm size allowed.

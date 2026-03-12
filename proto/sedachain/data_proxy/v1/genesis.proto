@@ -8,13 +8,11 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/data-proxy/types";
 
 // GenesisState defines data_proxy module's genesis state.
 message GenesisState {
-  Params params = 1 [ (gogoproto.nullable) = false ];
+  Params params = 1 [(gogoproto.nullable) = false];
 
-  repeated DataProxyConfig data_proxy_configs = 2
-      [ (gogoproto.nullable) = false ];
+  repeated DataProxyConfig data_proxy_configs = 2 [(gogoproto.nullable) = false];
 
-  repeated FeeUpdateQueueRecord fee_update_queue = 3
-      [ (gogoproto.nullable) = false ];
+  repeated FeeUpdateQueueRecord fee_update_queue = 3 [(gogoproto.nullable) = false];
 }
 
 // DataProxyConfigs define the data proxy entries in the registry.

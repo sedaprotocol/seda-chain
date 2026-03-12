@@ -1,9 +1,9 @@
 syntax = "proto3";
 package sedachain.pubkey.v1;
 
-import "google/api/annotations.proto";
-import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 import "sedachain/pubkey/v1/genesis.proto";
 import "sedachain/pubkey/v1/pubkey.proto";
 
@@ -17,15 +17,12 @@ service Query {
   }
 
   // ValidatorKeys returns a given validator's registered keys.
-  rpc ValidatorKeys(QueryValidatorKeysRequest)
-      returns (QueryValidatorKeysResponse) {
-    option (google.api.http).get =
-        "/seda-chain/pubkey/validator_keys/{validator_addr}";
+  rpc ValidatorKeys(QueryValidatorKeysRequest) returns (QueryValidatorKeysResponse) {
+    option (google.api.http).get = "/seda-chain/pubkey/validator_keys/{validator_addr}";
   }
 
   // ProvingSchemes returns the statuses of the SEDA proving schemes.
-  rpc ProvingSchemes(QueryProvingSchemesRequest)
-      returns (QueryProvingSchemesResponse) {
+  rpc ProvingSchemes(QueryProvingSchemesRequest) returns (QueryProvingSchemesResponse) {
     option (google.api.http).get = "/seda-chain/pubkey/proving_schemes";
   }
 }
@@ -36,20 +33,19 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params defines the parameters of the module.
-  Params params = 1 [ (gogoproto.nullable) = false ];
+  Params params = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryValidatorKeysRequest is request type for the Query/ValidatorKeys
 // RPC method.
 message QueryValidatorKeysRequest {
-  string validator_addr = 1
-      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
+  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
 }
 
 // QueryValidatorKeysResponse is response type for the Query/ValidatorKeys
 // RPC method.
 message QueryValidatorKeysResponse {
-  ValidatorPubKeys validator_pub_keys = 1 [ (gogoproto.nullable) = false ];
+  ValidatorPubKeys validator_pub_keys = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryProvingSchemesRequest is request type for the Query/ProvingSchemes
@@ -59,5 +55,5 @@ message QueryProvingSchemesRequest {}
 // QueryProvingSchemesResponse is response type for the Query/ProvingSchemes
 // RPC method.
 message QueryProvingSchemesResponse {
-  repeated ProvingScheme proving_schemes = 1 [ (gogoproto.nullable) = false ];
+  repeated ProvingScheme proving_schemes = 1 [(gogoproto.nullable) = false];
 }

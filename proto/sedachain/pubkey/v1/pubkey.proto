@@ -8,8 +8,7 @@ option go_package = "github.com/sedaprotocol/seda-chain/x/pubkey/types";
 // IndexPubKeyPair defines an index - public key pair.
 message IndexedPubKey {
   uint32 index = 1;
-  bytes pub_key = 2
-      [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
+  bytes pub_key = 2 [(cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey"];
 }
 
 // ProvingScheme defines a proving scheme.

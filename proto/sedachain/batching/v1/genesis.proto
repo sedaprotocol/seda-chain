@@ -11,12 +11,11 @@ message GenesisState {
   // current_batch_number is the batch number of the most recently-
   // created batch.
   uint64 current_batch_number = 1;
-  repeated Batch batches = 2 [ (gogoproto.nullable) = false ];
-  repeated BatchData batch_data = 3 [ (gogoproto.nullable) = false ];
-  repeated GenesisDataResult data_results = 4 [ (gogoproto.nullable) = false ];
-  repeated BatchAssignment batch_assignments = 5
-      [ (gogoproto.nullable) = false ];
-  Params params = 6 [ (gogoproto.nullable) = false ];
+  repeated Batch batches = 2 [(gogoproto.nullable) = false];
+  repeated BatchData batch_data = 3 [(gogoproto.nullable) = false];
+  repeated GenesisDataResult data_results = 4 [(gogoproto.nullable) = false];
+  repeated BatchAssignment batch_assignments = 5 [(gogoproto.nullable) = false];
+  Params params = 6 [(gogoproto.nullable) = false];
   uint64 first_batch_number = 7;
 }
 
@@ -31,16 +30,13 @@ message BatchAssignment {
 // BatchData represents a given batch's full data.
 message BatchData {
   uint64 batch_number = 1;
-  DataResultTreeEntries data_result_entries = 2
-      [ (gogoproto.nullable) = false ];
-  repeated ValidatorTreeEntry validator_entries = 3
-      [ (gogoproto.nullable) = false ];
-  repeated BatchSignatures batch_signatures = 4
-      [ (gogoproto.nullable) = false ];
+  DataResultTreeEntries data_result_entries = 2 [(gogoproto.nullable) = false];
+  repeated ValidatorTreeEntry validator_entries = 3 [(gogoproto.nullable) = false];
+  repeated BatchSignatures batch_signatures = 4 [(gogoproto.nullable) = false];
 }
 
 // GenesisDataResult includes a data result and its batching status.
 message GenesisDataResult {
   bool batched = 1;
-  DataResult data_result = 2 [ (gogoproto.nullable) = false ];
+  DataResult data_result = 2 [(gogoproto.nullable) = false];
 }
