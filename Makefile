@@ -172,7 +172,7 @@ proto-gen:
 
 proto-fmt:
 	@echo "Formatting Protobuf files"
-	@find ./ -name "*.proto" -exec clang-format -i {} \;
+	@buf format -w ./proto
 
 proto-lint:
 	@echo "Linting Protobuf files"

@@ -31,13 +31,13 @@ message Batch {
 
 // DataResultTreeEntries is a list of data result tree entries for a
 // given batch.
-message DataResultTreeEntries { repeated bytes entries = 1; }
+message DataResultTreeEntries {
+  repeated bytes entries = 1;
+}
 
 // ValidatorTreeEntry is an entry in the validator tree.
 message ValidatorTreeEntry {
-  bytes validator_address = 1
-      [ (gogoproto.casttype) =
-            "github.com/cosmos/cosmos-sdk/types.ValAddress" ];
+  bytes validator_address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.ValAddress"];
   uint32 voting_power_percent = 2;
   bytes eth_address = 3;
 }
@@ -45,29 +45,27 @@ message ValidatorTreeEntry {
 // BatchSignatures contains basic validator data and its batch signatures
 // under various cryptographic schemes.
 message BatchSignatures {
-  bytes validator_address = 1
-      [ (gogoproto.casttype) =
-            "github.com/cosmos/cosmos-sdk/types.ValAddress" ];
+  bytes validator_address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.ValAddress"];
   bytes secp256k1_signature = 2;
 }
 
 // DataResult represents the result of a resolved data request.
 message DataResult {
   // id is the Keccack-256 hash of the data result.
-  string id = 1 [ (gogoproto.jsontag) = "id" ];
+  string id = 1 [(gogoproto.jsontag) = "id"];
   // dr_id is the data request identifier.
-  string dr_id = 2 [ (gogoproto.jsontag) = "dr_id" ];
+  string dr_id = 2 [(gogoproto.jsontag) = "dr_id"];
   // dr_block_height is the height at which the data request was submitted.
-  uint64 dr_block_height = 3 [ (gogoproto.jsontag) = "dr_block_height" ];
+  uint64 dr_block_height = 3 [(gogoproto.jsontag) = "dr_block_height"];
   // version is a semantic version string.
-  string version = 4 [ (gogoproto.jsontag) = "version" ];
+  string version = 4 [(gogoproto.jsontag) = "version"];
   // block_height is the height at which the data request was tallied.
-  uint64 block_height = 5 [ (gogoproto.jsontag) = "block_height" ];
+  uint64 block_height = 5 [(gogoproto.jsontag) = "block_height"];
   // block_timestamp is the unix timestamp in seconds of when the data request
   // was tallied.
-  uint64 block_timestamp = 6 [ (gogoproto.jsontag) = "block_timestamp" ];
+  uint64 block_timestamp = 6 [(gogoproto.jsontag) = "block_timestamp"];
   // exit_code is the exit code of the tally wasm binary execution.
-  uint32 exit_code = 7 [ (gogoproto.jsontag) = "exit_code" ];
+  uint32 exit_code = 7 [(gogoproto.jsontag) = "exit_code"];
   // gas_used is the gas used by the data request execution.
   string gas_used = 8 [
     (cosmos_proto.scalar) = "cosmos.Int",
@@ -75,15 +73,15 @@ message DataResult {
     (gogoproto.jsontag) = "gas_used"
   ];
   // result is the result of the tally wasm binary execution.
-  bytes result = 9 [ (gogoproto.jsontag) = "result" ];
+  bytes result = 9 [(gogoproto.jsontag) = "result"];
   // payback_address is the payback address set by the relayer.
-  string payback_address = 10 [ (gogoproto.jsontag) = "payback_address" ];
+  string payback_address = 10 [(gogoproto.jsontag) = "payback_address"];
   // seda_payload is the payload set by SEDA Protocol (e.g. OEV-enabled
   // data requests)
-  string seda_payload = 11 [ (gogoproto.jsontag) = "seda_payload" ];
+  string seda_payload = 11 [(gogoproto.jsontag) = "seda_payload"];
   // consensus indicates whether consensus was reached in the tally
   // process.
-  bool consensus = 12 [ (gogoproto.jsontag) = "consensus" ];
+  bool consensus = 12 [(gogoproto.jsontag) = "consensus"];
 }
 
 // Params defines the parameters for the batching module.
