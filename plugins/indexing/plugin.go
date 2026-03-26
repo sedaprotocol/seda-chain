@@ -10,6 +10,11 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v10/modules/core"
+	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+
 	streamingabci "cosmossdk.io/store/streaming/abci"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/tx/signing"
@@ -225,6 +230,11 @@ func main() {
 	tallytypes.RegisterInterfaces(interfaceRegistry)
 	dataproxytypes.RegisterInterfaces(interfaceRegistry)
 	batchingtypes.RegisterInterfaces(interfaceRegistry)
+	// IBC modules
+	ibc.AppModuleBasic{}.RegisterInterfaces(interfaceRegistry)
+	ibctm.AppModuleBasic{}.RegisterInterfaces(interfaceRegistry)
+	ibctransfertypes.RegisterInterfaces(interfaceRegistry)
+	icatypes.RegisterInterfaces(interfaceRegistry)
 
 	snsClient, err := pluginaws.NewSnsClient(logger)
 	if err != nil {
