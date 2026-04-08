@@ -18,7 +18,9 @@ import (
 // sent to the core contract based on the given gas meter. It takes the ID and
 // the height of the request for event emission.
 func (k Keeper) DistributionsFromGasMeter(ctx sdk.Context, reqID string, reqHeight uint64, gasMeter *types.GasMeter, burnRatio math.LegacyDec) []types.Distribution {
+	//nolint:prealloc // TODO: To be addressed in the future
 	dists := []types.Distribution{}
+	//nolint:prealloc // TODO: To be addressed in the future
 	attrs := []sdk.Attribute{
 		sdk.NewAttribute(types.AttributeDataRequestID, reqID),
 		sdk.NewAttribute(types.AttributeDataRequestHeight, strconv.FormatUint(reqHeight, 10)),

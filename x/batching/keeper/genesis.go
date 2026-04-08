@@ -14,9 +14,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 	if err != nil {
 		panic(err)
 	}
-	if err := k.firstBatchNumber.Set(ctx, data.FirstBatchNumber); err != nil {
-		panic(err)
-	}
 	for _, batch := range data.Batches {
 		err := k.setBatch(ctx, batch)
 		if err != nil {
@@ -47,13 +44,28 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data types.GenesisState) {
 			panic(err)
 		}
 	}
+	for _, dr := range data.LegacyDataResults {
+		err := k.legacyDataResults.Set(ctx, collections.Join3(dr.Batched, dr.DataResult.DrId, dr.DataResult.DrBlockHeight), dr.DataResult)
+		if err != nil {
+			panic(err)
+		}
+	}
 	for _, batchAssignment := range data.BatchAssignments {
 		err := k.SetBatchAssignment(ctx, batchAssignment.DataRequestId, batchAssignment.DataRequestHeight, batchAssignment.BatchNumber)
 		if err != nil {
 			panic(err)
 		}
 	}
-	if err := k.SetParams(ctx, data.Params); err != nil {
+	err = k.SetParams(ctx, data.Params)
+	if err != nil {
+		panic(err)
+	}
+	err = k.SetHasPruningCaughtUp(ctx, data.HasPruningCaughtUp)
+	if err != nil {
+		panic(err)
+	}
+	err = k.batchNumberAtUpgrade.Set(ctx, data.BatchNumberAtUpgrade)
+	if err != nil {
 		panic(err)
 	}
 }
@@ -64,15 +76,15 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
+	legacyDataResults, err := k.getAllGenesisLegacyDataResults(ctx)
+	if err != nil {
+		panic(err)
+	}
 	batchAssignments, err := k.getAllBatchAssignments(ctx)
 	if err != nil {
 		panic(err)
 	}
 	curBatchNum, err := k.GetCurrentBatchNum(ctx)
-	if err != nil {
-		panic(err)
-	}
-	firstBatchNumber, err := k.firstBatchNumber.Get(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -92,5 +104,17 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	if err != nil {
 		panic(err)
 	}
-	return types.NewGenesisState(curBatchNum, firstBatchNumber, batches, batchData, dataResults, batchAssignments, params)
+	hasPruningCaughtUp, err := k.HasPruningCaughtUp(ctx)
+	if err != nil {
+		panic(err)
+	}
+	batchNumAtUpgrade, err := k.GetBatchNumberAtUpgrade(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return types.NewGenesisState(
+		curBatchNum, batches, batchData,
+		dataResults, legacyDataResults, batchAssignments,
+		params, hasPruningCaughtUp, batchNumAtUpgrade,
+	)
 }

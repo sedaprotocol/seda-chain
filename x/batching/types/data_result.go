@@ -32,6 +32,7 @@ func (dr *DataResult) TryHash() (string, error) {
 	blockTimestampBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(blockTimestampBytes, dr.BlockTimestamp)
 
+	//nolint:gosec // G115: Exit code is guaranteed to fit in a byte.
 	exitCodeByte := byte(dr.ExitCode)
 
 	hasher.Reset()
@@ -64,7 +65,7 @@ func (dr *DataResult) TryHash() (string, error) {
 	sedaPayloadHash := hasher.Sum(nil)
 
 	hasher.Reset()
-	var allBytes []byte
+	allBytes := make([]byte, 0, len(versionHash)+len(drIDBytes)+1+1+len(resultHash)+len(blockHeightBytes)+len(blockTimestampBytes)+len(gasUsedBytes)+len(paybackAddrHash)+len(sedaPayloadHash))
 	allBytes = append(allBytes, versionHash...)
 	allBytes = append(allBytes, drIDBytes...)
 	allBytes = append(allBytes, consensusByte)

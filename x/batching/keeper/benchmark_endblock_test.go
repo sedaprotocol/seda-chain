@@ -1,11 +1,8 @@
 package keeper_test
 
 import (
-	"os"
-	"runtime/pprof"
 	"testing"
 
-	"github.com/sedaprotocol/seda-chain/x/batching/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,12 +14,6 @@ func BenchmarkBatchPruning(b *testing.B) {
 	numBatchesToKeep := uint64(1000)
 	maxBatchPrunePerBlock := uint64(100)
 
-	err := f.batchingKeeper.SetParams(f.Context(), types.Params{
-		NumBatchesToKeep:      numBatchesToKeep,
-		MaxBatchPrunePerBlock: maxBatchPrunePerBlock,
-	})
-	require.NoError(b, err)
-
 	for range numBatches {
 		f.AddBlock()
 
@@ -30,20 +21,12 @@ func BenchmarkBatchPruning(b *testing.B) {
 		require.NoError(b, err)
 		batch, dataEntries, valEntries, err := f.batchingKeeper.ConstructBatch(f.Context())
 		require.NoError(b, err)
-		err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
+		_, err = f.batchingKeeper.SetNewBatch(f.Context(), batch, dataEntries, valEntries)
 		require.NoError(b, err)
 	}
 
-	cpuFile, err := os.Create("cpu_refactor_new.out")
-	require.NoError(b, err)
-	defer cpuFile.Close()
-
-	err = pprof.StartCPUProfile(cpuFile)
-	require.NoError(b, err)
-	defer pprof.StopCPUProfile()
-
 	for b.Loop() {
-		err = f.batchingKeeper.PruneBatches(f.Context())
+		_, err := f.batchingKeeper.BatchPruneBatches(f.Context(), numBatchesToKeep, maxBatchPrunePerBlock)
 		require.NoError(b, err)
 	}
 }

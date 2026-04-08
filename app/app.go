@@ -139,7 +139,6 @@ import (
 	"github.com/sedaprotocol/seda-chain/app/keepers"
 	appparams "github.com/sedaprotocol/seda-chain/app/params"
 	"github.com/sedaprotocol/seda-chain/app/utils"
-
 	// Used in cosmos-sdk when registering the route for swagger docs.
 	_ "github.com/sedaprotocol/seda-chain/client/docs/statik"
 	"github.com/sedaprotocol/seda-chain/cmd/sedad/gentx"
@@ -480,17 +479,12 @@ func NewApp(
 		app.AccountKeeper.AddressCodec(),
 	)
 
-	groupConfig := group.DefaultConfig()
-	/*
-		Example of setting group params:
-		groupConfig.MaxMetadataLen = 1000
-	*/
 	app.GroupKeeper = groupkeeper.NewKeeper(
 		keys[group.StoreKey],
 		appCodec,
 		app.MsgServiceRouter(),
 		app.AccountKeeper,
-		groupConfig,
+		group.DefaultConfig(),
 	)
 
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))

@@ -15,6 +15,11 @@ type msgServer struct {
 
 var _ types.MsgServer = msgServer{}
 
+// NewMsgServerImpl returns an implementation of the MsgServer interface.
+func NewMsgServerImpl(keeper Keeper) types.MsgServer {
+	return &msgServer{Keeper: keeper}
+}
+
 // UpdateParams updates the module parameters.
 func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

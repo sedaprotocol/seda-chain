@@ -87,7 +87,7 @@ func (s *KeeperTestSuite) TestKeeper_GetLatestSignedBatch() {
 	// Height 4
 	// - Batch 0 is created.
 	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
-	err = s.keeper.SetNewBatch(s.ctx, types.Batch{
+	_, err = s.keeper.SetNewBatch(s.ctx, types.Batch{
 		BatchNumber: 0,
 		BlockHeight: s.ctx.BlockHeight(),
 	}, types.DataResultTreeEntries{}, nil)
@@ -102,7 +102,7 @@ func (s *KeeperTestSuite) TestKeeper_GetLatestSignedBatch() {
 	// - Batch 1 is created.
 	// - Signatures for batch 0 has been collected.
 	s.ctx = s.ctx.WithBlockHeight(s.ctx.BlockHeight() + 1)
-	err = s.keeper.SetNewBatch(s.ctx, types.Batch{
+	_, err = s.keeper.SetNewBatch(s.ctx, types.Batch{
 		BatchNumber: 1,
 		BlockHeight: s.ctx.BlockHeight(),
 	}, types.DataResultTreeEntries{}, nil)

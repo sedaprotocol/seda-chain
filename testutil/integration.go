@@ -206,6 +206,7 @@ func (app *IntegationApp) AddTime(seconds int64) {
 }
 
 // AddBlock increments the block number of the application context.
+// It also sets the last commit hash to a random value.
 func (app *IntegationApp) AddBlock() {
 	app.ctx = app.ctx.WithBlockHeight(app.ctx.BlockHeader().Height + 1)
 }

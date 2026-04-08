@@ -10,6 +10,7 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/sedaprotocol/seda-chain/app/utils"
@@ -17,104 +18,78 @@ import (
 	"github.com/sedaprotocol/seda-chain/x/batching/types"
 )
 
+// NumBatchesToKeep is the number of batches to keep in the state without pruning.
+// This value must be at least 4 to avoid interruption of batch signing logic.
+var NumBatchesToKeep uint64 = 10000
+
 func (k Keeper) EndBlock(ctx sdk.Context) error {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return err
+	}
+
 	// Since we're only using the secp256k1 key for batching, we only
 	// need to check if the secp256k1 proving scheme is activated.
 	isActivated, err := k.pubKeyKeeper.IsProvingSchemeActivated(ctx, sedatypes.SEDAKeyIndexSecp256k1)
 	if err != nil {
 		return err
 	}
-	if !isActivated {
+
+	if isActivated {
+		batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
+		if err != nil {
+			if !errors.Is(err, types.ErrNoBatchingUpdate) {
+				return err
+			}
+			k.Logger(ctx).Info("skip batch creation due to no update", "height", ctx.BlockHeight())
+		} else {
+			newBatchNum, err := k.SetNewBatch(ctx, batch, dataEntries, valEntries)
+			if err != nil {
+				return err
+			}
+
+			if newBatchNum >= NumBatchesToKeep {
+				err = k.BasicPruneBatch(ctx, newBatchNum-NumBatchesToKeep)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	} else {
 		k.Logger(ctx).Info("skip batching since proving scheme has not been activated", "index", sedatypes.SEDAKeyIndexSecp256k1)
-		return nil
 	}
 
-	batch, dataEntries, valEntries, err := k.ConstructBatch(ctx)
+	hasCaughtUp, err := k.HasPruningCaughtUp(ctx)
 	if err != nil {
-		if errors.Is(err, types.ErrNoBatchingUpdate) {
-			k.Logger(ctx).Info("skip batch creation due to no update", "height", ctx.BlockHeight())
+		return err
+	}
+	if !hasCaughtUp {
+		newHasCaughtUp, err := k.BatchPruneBatches(ctx, NumBatchesToKeep, params.MaxBatchPrunePerBlock)
+		if err != nil {
+			telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
+			k.Logger(ctx).Error("error while pruning batches", "err", err)
 			return nil
 		}
-		return err
+
+		if newHasCaughtUp {
+			err = k.SetHasPruningCaughtUp(ctx, true)
+			if err != nil {
+				return err
+			}
+			k.Logger(ctx).Info("batch pruning has caught up")
+		}
+	} else {
+		// Now batch pruning of batches is terminated, and we start pruning legacy
+		// data results collection, which is no longer used.
+		err = k.PruneLegacyDataResults(ctx, params.MaxLegacyDataResultPrunePerBlock)
+		if err != nil {
+			telemetry.SetGauge(1, types.TelemetryKeyBatchingPruningFail)
+			k.Logger(ctx).Error("error while pruning legacy data results", "err", err)
+			return nil
+		}
 	}
 
-	err = k.SetNewBatch(ctx, batch, dataEntries, valEntries)
-	if err != nil {
-		return err
-	}
-
-	return k.PruneBatches(ctx)
-}
-
-// PruneBatches prunes batches and their associated data based on module
-// parameters NumBatchesToKeep and MaxBatchPrunePerBlock.
-func (k Keeper) PruneBatches(ctx sdk.Context) error {
-	params, err := k.GetParams(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Note the current batch number here has not been used yet.
-	currentBatchNum, err := k.GetCurrentBatchNum(ctx)
-	if err != nil {
-		return err
-	}
-	firstBatchNum, err := k.firstBatchNumber.Get(ctx)
-	if err != nil {
-		return err
-	}
-	if currentBatchNum-firstBatchNum <= params.NumBatchesToKeep {
-		k.Logger(ctx).Info("skip batch pruning", "current_batch_num", currentBatchNum, "first_batch_num", firstBatchNum)
-		return nil
-	}
-
-	// Prune range is [firstBatchNum, newFirstBatchNum)
-	firstBatchHeight, err := k.batches.Indexes.Number.MatchExact(ctx, firstBatchNum)
-	if err != nil {
-		return err
-	}
-
-	newFirstBatchNum := min(firstBatchNum+params.MaxBatchPrunePerBlock, currentBatchNum-params.NumBatchesToKeep)
-	newFirstBatchHeight, err := k.batchIndex.Get(ctx, newFirstBatchNum)
-	if err != nil {
-		return err
-	}
-
-	// Clear batches and their associated data.
-	batchNumRng := new(collections.Range[uint64]).StartInclusive(firstBatchNum).EndExclusive(newFirstBatchNum)
-	err = k.batchIndex.Clear(ctx, batchNumRng)
-	if err != nil {
-		return err
-	}
-	err = k.dataResultTreeEntries.Clear(ctx, batchNumRng)
-	if err != nil {
-		return err
-	}
-
-	batchHeightRng := new(collections.Range[int64]).StartInclusive(firstBatchHeight).EndExclusive(newFirstBatchHeight)
-	err = k.batchesMap.Clear(ctx, batchHeightRng)
-	if err != nil {
-		return err
-	}
-
-	valRng := new(collections.Range[collections.Pair[uint64, []byte]]).
-		StartInclusive(collections.PairPrefix[uint64, []byte](firstBatchNum)).
-		EndExclusive(collections.PairPrefix[uint64, []byte](newFirstBatchNum))
-	err = k.validatorTreeEntries.Clear(ctx, valRng)
-	if err != nil {
-		return err
-	}
-	err = k.batchSignatures.Clear(ctx, valRng)
-	if err != nil {
-		return err
-	}
-
-	err = k.firstBatchNumber.Set(ctx, newFirstBatchNum)
-	if err != nil {
-		return err
-	}
-
-	k.Logger(ctx).Info("successfully pruned batch data")
+	telemetry.SetGauge(0, types.TelemetryKeyBatchingPruningFail)
 	return nil
 }
 
@@ -195,6 +170,7 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) (ty
 
 	entries := make([][]byte, len(dataResults))
 	treeEntries := make([][]byte, len(dataResults))
+	dataRequestIDHeights := make([]types.DataRequestIDHeight, len(dataResults))
 	for i, res := range dataResults {
 		resID, err := hex.DecodeString(res.Id)
 		if err != nil {
@@ -207,6 +183,18 @@ func (k Keeper) ConstructDataResultTree(ctx sdk.Context, newBatchNum uint64) (ty
 		if err != nil {
 			return types.DataResultTreeEntries{}, nil, err
 		}
+
+		dataRequestIDHeights[i] = types.DataRequestIDHeight{
+			DataRequestId:     res.DrId,
+			DataRequestHeight: res.DrBlockHeight,
+		}
+	}
+
+	err = k.SetBatchDataResults(ctx, newBatchNum, types.DataRequestIDHeights{
+		DataRequestIdHeights: dataRequestIDHeights,
+	})
+	if err != nil {
+		return types.DataResultTreeEntries{}, nil, err
 	}
 
 	return types.DataResultTreeEntries{Entries: entries}, utils.RootFromEntries(treeEntries), nil
