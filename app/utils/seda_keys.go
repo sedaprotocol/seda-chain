@@ -39,7 +39,7 @@ const (
 func ReadSEDAKeyEncryptionKeyFromEnv() string {
 	keyFile := os.Getenv(SEDAKeyEncryptionKeyFile)
 	if keyFile != "" && cmtos.FileExists(keyFile) {
-		keyBytes, err := os.ReadFile(keyFile)
+		keyBytes, err := os.ReadFile(filepath.Clean(keyFile))
 		if err == nil {
 			return string(keyBytes)
 		}

@@ -32,6 +32,7 @@ func (dr *DataResult) TryHash() (string, error) {
 	blockTimestampBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(blockTimestampBytes, dr.BlockTimestamp)
 
+	//nolint:gosec // G115: Exit code is guaranteed to fit in a byte.
 	exitCodeByte := byte(dr.ExitCode)
 
 	hasher.Reset()
